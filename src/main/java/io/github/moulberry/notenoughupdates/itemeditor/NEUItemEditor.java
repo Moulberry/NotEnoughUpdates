@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.LerpingInteger;
 import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
@@ -13,8 +14,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.client.config.GuiUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -44,6 +43,7 @@ public class NEUItemEditor extends GuiScreen {
     private Supplier<String> itemid;
     private Supplier<String> displayname;
     private Supplier<String> lore;
+    private Supplier<String> infoType;
     private Supplier<String> info;
     private Supplier<String> clickcommand;
     private Supplier<String> damage;
@@ -77,8 +77,15 @@ public class NEUItemEditor extends GuiScreen {
         for(int i=0; i<lore.size(); i++) loreA[i] = lore.get(i).getAsString();
         this.lore = addTextFieldWithSupplier(String.join("\n", loreA), COLOUR | MULTILINE);
 
+        options.add(new GuiElementText("Info type: ", Color.WHITE.getRGB()));
+        String infoType = item.has("infoType") ? item.get("infoType").getAsString() : "";
+        this.infoType = addTextFieldWithSupplier(infoType, NO_SPACE | FORCE_CAPS);
+
         options.add(new GuiElementText("Additional information: ", Color.WHITE.getRGB()));
-        this.info = addTextFieldWithSupplier("", COLOUR | MULTILINE);
+        JsonArray info = item.has("info") ? item.get("info").getAsJsonArray() : new JsonArray();
+        String[] infoA = new String[info.size()];
+        for(int i=0; i<info.size(); i++) infoA[i] = info.get(i).getAsString();
+        this.info = addTextFieldWithSupplier(String.join("\n", infoA), COLOUR | MULTILINE);
 
         options.add(new GuiElementText("Click-command (viewrecipe or viewpotion): ", Color.WHITE.getRGB()));
         String clickcommand = item.has("clickcommand") ? item.get("clickcommand").getAsString() : "";
@@ -144,8 +151,8 @@ public class NEUItemEditor extends GuiScreen {
         if(infoA.length == 0 || infoA[0].isEmpty()) {
             infoA = new String[0];
         }
-        return manager.writeItemJson(internalname.get(), itemid.get(), displayname.get(), lore.get().split("\n"),
-                infoA, clickcommand.get(), damageI, nbttag);
+        return manager.writeItemJson(item, internalname.get(), itemid.get(), displayname.get(), lore.get().split("\n"),
+                infoType.get(), infoA, clickcommand.get(), damageI, nbttag);
     }
 
     public boolean upload() {
@@ -159,7 +166,7 @@ public class NEUItemEditor extends GuiScreen {
             infoA = new String[0];
         }
         return manager.uploadItemJson(internalname.get(), itemid.get(), displayname.get(), lore.get().split("\n"),
-                infoA, clickcommand.get(), damageI, nbttag);
+                infoType.get(), infoA, clickcommand.get(), damageI, nbttag);
     }
 
     public void onGuiClosed() {
@@ -292,7 +299,7 @@ public class NEUItemEditor extends GuiScreen {
         text.add(displayname.get());
         text.addAll(Arrays.asList(lore.get().split("\n")));
 
-        GuiUtils.drawHoveringText(text, itemX-20, itemY+itemSize+28, width, height, -1,
+        Utils.drawHoveringText(text, itemX-20, itemY+itemSize+28, width, height, -1,
                 Minecraft.getMinecraft().fontRendererObj);
 
         GlStateManager.disableLighting();

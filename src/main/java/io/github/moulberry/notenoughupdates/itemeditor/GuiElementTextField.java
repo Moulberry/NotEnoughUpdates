@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.util.EnumChatFormatting;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
@@ -21,8 +22,8 @@ public class GuiElementTextField extends GuiElement {
     public static final int COLOUR = 0b00010;
     public static final int MULTILINE = 0b00001;
 
-    private static final int searchBarYSize = 20;
-    private static final int searchBarXSize = 350;
+    private int searchBarYSize = 20;
+    private int searchBarXSize = 350;
     private static final int searchBarPadding = 2;
 
     private int options = 0;
@@ -35,12 +36,27 @@ public class GuiElementTextField extends GuiElement {
     private GuiTextField textField = new GuiTextField(0, Minecraft.getMinecraft().fontRendererObj,
             0 , 0, 0, 0);
 
+    private int customBorderColour = -1;
+
     public GuiElementTextField(String initialText, int options) {
         textField.setFocused(true);
         textField.setCanLoseFocus(false);
         textField.setMaxStringLength(999);
         textField.setText(initialText);
         this.options = options;
+    }
+
+    public void setCustomBorderColour(int colour) {
+        this.customBorderColour = colour;
+    }
+
+    public String getText() {
+        return textField.getText();
+    }
+
+    public void setSize(int searchBarXSize, int searchBarYSize) {
+        this.searchBarXSize  = searchBarXSize;
+        this.searchBarYSize = searchBarYSize;
     }
 
     @Override
@@ -307,17 +323,21 @@ public class GuiElementTextField extends GuiElement {
         int extraSize = (searchBarYSize-8)/2+8;
         int bottomTextBox = y + searchBarYSize + extraSize*(numLines-1);
 
-        //Search bar background
+        int borderColour = focus ? Color.GREEN.getRGB() : Color.WHITE.getRGB();
+        if(customBorderColour != -1) {
+            borderColour = customBorderColour;
+        }
+        //bar background
         drawRect(x - paddingUnscaled,
                 y - paddingUnscaled,
                 x + searchBarXSize + paddingUnscaled,
-                bottomTextBox + paddingUnscaled, focus ? Color.GREEN.getRGB() : Color.WHITE.getRGB());
+                bottomTextBox + paddingUnscaled, borderColour);
         drawRect(x,
                 y,
                 x + searchBarXSize,
                 bottomTextBox, Color.BLACK.getRGB());
 
-        //Search bar text
+        //bar text
         Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6\n])(?!\\u00B6)");
 
         String text = textField.getText();
@@ -373,8 +393,21 @@ public class GuiElementTextField extends GuiElement {
 
             int texX = 0;
             int texY = 0;
+            boolean sectionSignPrev = false;
+            boolean bold = false;
             for(int i=0; i<textNoColor.length(); i++) {
                 char c = textNoColor.charAt(i);
+                if(sectionSignPrev) {
+                    if(c != 'k' && c != 'K'
+                        && c != 'm' && c != 'M'
+                        && c != 'n' && c != 'N'
+                        && c != 'o' && c != 'O') {
+                        bold = c == 'l' || c == 'L';
+                    }
+                }
+                sectionSignPrev = false;
+                if(c == '\u00B6') sectionSignPrev = true;
+
                 if(c == '\n') {
                     if(i >= leftIndex && i < rightIndex) {
                         drawRect(x + 5 + texX,
@@ -388,7 +421,10 @@ public class GuiElementTextField extends GuiElement {
                     continue;
                 }
 
+                //String c2 = bold ? EnumChatFormatting.BOLD.toString() : "" + c;
+
                 int len = Minecraft.getMinecraft().fontRendererObj.getStringWidth(String.valueOf(c));
+                if(bold) len++;
                 if(i >= leftIndex && i < rightIndex) {
                     drawRect(x + 5 + texX,
                             y+(searchBarYSize-8)/2-1 + texY,
@@ -398,6 +434,11 @@ public class GuiElementTextField extends GuiElement {
                     Minecraft.getMinecraft().fontRendererObj.drawString(String.valueOf(c),
                             x + 5 + texX,
                             y+(searchBarYSize-8)/2 + texY, Color.BLACK.getRGB());
+                    if(bold) {
+                        Minecraft.getMinecraft().fontRendererObj.drawString(String.valueOf(c),
+                                x + 5 + texX +1,
+                                y+(searchBarYSize-8)/2 + texY, Color.BLACK.getRGB());
+                    }
                 }
 
                 texX += len;

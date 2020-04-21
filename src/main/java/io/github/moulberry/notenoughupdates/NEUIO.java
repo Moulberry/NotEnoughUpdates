@@ -74,7 +74,9 @@ public class NEUIO {
                     changedFiles.put(content.getName(), content.getSha());
                 }
             }
-        } catch(IOException e) { }
+        } catch(IOException e) {
+            return null;
+        }
         return changedFiles;
     }
 
