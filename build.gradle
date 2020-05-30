@@ -1,0 +1,121 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven { url = "https://files.minecraftforge.net/maven" }
+        maven { url = "https://repo.spongepowered.org/maven" }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+		classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+		classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+version = "1.0"
+group= "io.github.moulberry"
+archivesBaseName = "NotEnoughUpdates"
+String modid = "notenoughupdates"
+String mixinClassifier = "dep"
+
+minecraft {
+    version = "1.8.9-11.15.1.2318-1.8.9"
+    runDir = "run"
+    mappings = "stable_20"
+}
+
+repositories {
+    jcenter()
+    maven { url 'https://repo.spongepowered.org/maven/' }
+}
+
+dependencies {
+    compile('org.spongepowered:mixin:0.7.11-SNAPSHOT')
+	compile('org.kohsuke:github-api:1.108')
+	compile('com.fasterxml.jackson.core:jackson-core:2.10.2')
+    compile('info.bliki.wiki:bliki-core:3.1.0')
+}
+
+mixin {
+    add sourceSets.main, "mixins.${modid}.refmap.json"
+}
+
+jar {
+    manifest.attributes(
+		'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+		'MixinConfigs': "mixins.${modid}.json",
+		'FMLCorePluginContainsFMLMod': true,
+		"ForceLoadAsMod": true
+    )
+}
+
+shadowJar {
+	dependencies {
+        include(dependency('org.kohsuke:github-api:1.108'))
+		include(dependency('org.spongepowered:mixin:0.7.11-SNAPSHOT'))
+		
+        include(dependency('commons-io:commons-io'))
+        include(dependency('org.apache.commons:commons-lang3'))
+        include(dependency('com.fasterxml.jackson.core:jackson-databind:2.10.2'))
+        include(dependency('com.fasterxml.jackson.core:jackson-annotations:2.10.2'))
+        include(dependency('com.fasterxml.jackson.core:jackson-core:2.10.2'))
+		
+		include(dependency('info.bliki.wiki:bliki-core:3.1.0'))
+		include(dependency('org.slf4j:slf4j-api:1.7.18'))
+		include(dependency('org.luaj:luaj-jse:3.0.1'))
+    }
+	
+	relocate 'com.fasterxml.jackson', 'neu.com.fasterxml.jackson'
+	relocate 'org.slf4j', 'neu.org.slf4j'
+	
+	exclude 'module-info.class'
+    exclude 'dummyThing'
+    exclude 'LICENSE.txt'
+
+    classifier = mixinClassifier
+}
+
+reobf {
+	shadowJar { 
+		mappingType = 'SEARGE' 
+	}
+}
+
+
+task runClientFix {
+	doLast {
+		String fileName = "${archivesBaseName}-${version}-${mixinClassifier}.jar"
+		ant.move file: "${buildDir}/libs/${fileName}", tofile: "${projectDir}/run/mods/${fileName}"
+		ant.delete file: "${buildDir}/libs/${archivesBaseName}-${version}.jar"
+	}
+}
+
+runClient {
+	standardInput = System.in
+}
+
+build.dependsOn(shadowJar)
+runClient.dependsOn(build)
+runClient.dependsOn(runClientFix)
+
+processResources
+{
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version':project.version, 'mcversion':project.minecraft.version
+    }
+        
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
