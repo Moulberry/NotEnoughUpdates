@@ -44,6 +44,9 @@ public class HTMLInfoPane extends TextInfoPane {
     private int imageHeight = 0;
     private int imageWidth = 0;
 
+    /**
+     * Creates a wiki model and sets the configuration to work with hypixel-skyblock wikia.
+     */
     static {
         Configuration conf = new Configuration();
         conf.addTokenTag("img", new HTMLTag("img"));
@@ -81,6 +84,9 @@ public class HTMLInfoPane extends TextInfoPane {
         };
     }
 
+    /**
+     * Takes a wiki url, uses NEUManager#getWebFile to download the web file and passed that in to #createFromWiki
+     */
     public static HTMLInfoPane createFromWikiUrl(NEUOverlay overlay, NEUManager manager, String name, String wikiUrl) {
         File f = manager.getWebFile(wikiUrl);
         if(f == null) {
@@ -100,6 +106,12 @@ public class HTMLInfoPane extends TextInfoPane {
         return createFromWiki(overlay, manager, name, sb.toString());
     }
 
+    /**
+     * Takes raw wikia code and uses Bliki to generate HTML. Lot's of shennanigans to get it to render appropriately.
+     * Honestly, I could have just downloaded the raw HTML of the wiki page and displayed that but I wanted
+     * a more permanent solution that can be abstracted to work with arbitrary wiki codes (eg. moulberry.github.io/
+     * files/neu_help.html).
+     */
     public static HTMLInfoPane createFromWiki(NEUOverlay overlay, NEUManager manager, String name, String wiki) {
         String[] split = wiki.split("</infobox>");
         wiki = split[split.length - 1]; //Remove everything before infobox
@@ -123,6 +135,11 @@ public class HTMLInfoPane extends TextInfoPane {
         return new HTMLInfoPane(overlay, manager, name, html);
     }
 
+    /**
+     * Uses the wkhtmltoimage command-line tool to generate an image from the HTML code. This
+     * generation is done asynchronously as sometimes it can take up to 10 seconds for more
+     * complex webpages.
+     */
     public HTMLInfoPane(NEUOverlay overlay, NEUManager manager, String name, String html) {
         super(overlay, manager, name, "");
         this.title = name;
@@ -237,6 +254,9 @@ public class HTMLInfoPane extends TextInfoPane {
         }
     }
 
+    /**
+     * Renders a background, title and the image created in the ctor (if it has been generated).
+     */
     @Override
     public void render(int width, int height, Color bg, Color fg, ScaledResolution scaledresolution, int mouseX, int mouseY) {
         if(imageTemp != null && imageTexture == null) {
@@ -258,38 +278,39 @@ public class HTMLInfoPane extends TextInfoPane {
         int leftSide = rightSide - paneWidth;
 
         int titleLen = fr.getStringWidth(title);
-        fr.drawString(title, (leftSide+rightSide-titleLen)/2, overlay.BOX_PADDING + 5, Color.WHITE.getRGB());
+        fr.drawString(title, (leftSide+rightSide-titleLen)/2, overlay.getBoxPadding() + 5, Color.WHITE.getRGB());
 
-        drawRect(leftSide+overlay.BOX_PADDING-5, overlay.BOX_PADDING-5, rightSide-overlay.BOX_PADDING+5,
-                height-overlay.BOX_PADDING+5, bg.getRGB());
+        drawRect(leftSide+overlay.getBoxPadding()-5, overlay.getBoxPadding()-5, rightSide-overlay.getBoxPadding()+5,
+                height-overlay.getBoxPadding()+5, bg.getRGB());
 
-        int imageW = paneWidth - overlay.BOX_PADDING*2;
+        int imageW = paneWidth - overlay.getBoxPadding()*2;
         float scaleF = IMAGE_WIDTH*ZOOM_FACTOR/(float)imageW;
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(imageTexture);
         GlStateManager.color(1f, 1f, 1f, 1f);
-        if(height-overlay.BOX_PADDING*3 < imageHeight/scaleF) {
-            if(scrollHeight.getValue() > imageHeight/scaleF-height+overlay.BOX_PADDING*3) {
-                scrollHeight.setValue((int)(imageHeight/scaleF-height+overlay.BOX_PADDING*3));
+        if(height-overlay.getBoxPadding()*3 < imageHeight/scaleF) {
+            if(scrollHeight.getValue() > imageHeight/scaleF-height+overlay.getBoxPadding()*3) {
+                scrollHeight.setValue((int)(imageHeight/scaleF-height+overlay.getBoxPadding()*3));
             }
             int yScroll = scrollHeight.getValue();
 
             float vMin = yScroll/(imageHeight/scaleF);
-            float vMax = (yScroll+height-overlay.BOX_PADDING*3)/(imageHeight/scaleF);
-            Utils.drawTexturedRect(leftSide+overlay.BOX_PADDING, overlay.BOX_PADDING*2, imageW,
-                    height-overlay.BOX_PADDING*3,
+            float vMax = (yScroll+height-overlay.getBoxPadding()*3)/(imageHeight/scaleF);
+            Utils.drawTexturedRect(leftSide+overlay.getBoxPadding(), overlay.getBoxPadding()*2, imageW,
+                    height-overlay.getBoxPadding()*3,
                     0, 1, vMin, vMax);
         } else {
             scrollHeight.setValue(0);
 
-            Utils.drawTexturedRect(leftSide+overlay.BOX_PADDING, overlay.BOX_PADDING*2, imageW,
+            Utils.drawTexturedRect(leftSide+overlay.getBoxPadding(), overlay.getBoxPadding()*2, imageW,
                     (int)(imageHeight/scaleF));
         }
         GlStateManager.bindTexture(0);
     }
 
     @Override
-    public void keyboardInput() {
+    public boolean keyboardInput() {
+        return false;
     }
 
     @Override

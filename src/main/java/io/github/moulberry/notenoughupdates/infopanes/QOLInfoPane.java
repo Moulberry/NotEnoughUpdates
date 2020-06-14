@@ -29,6 +29,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class QOLInfoPane extends ScrollableInfoPane {
+
+    /**
+     * Not currently used in BETA-1.6
+     */
+
     private LinkedHashMap<String, ItemStack> accessoryMap = new LinkedHashMap<>();
     private LinkedHashMap<String, JsonObject> allTalismans = new LinkedHashMap<>();
     private List<JsonObject> recommended = new ArrayList<>();
@@ -231,11 +236,11 @@ public class QOLInfoPane extends ScrollableInfoPane {
         int rightSide = (int)(width*overlay.getInfoPaneOffsetFactor());
         int leftSide = rightSide - paneWidth;
 
-        int y=overlay.BOX_PADDING+10;
+        int y=overlay.getBoxPadding()+10;
         y += renderParagraph(width, height, y, "Current Accessories");
 
         ItemStack display = null;
-        int x=leftSide+overlay.BOX_PADDING+5;
+        int x=leftSide+overlay.getBoxPadding()+5;
         for(Map.Entry<String, ItemStack> entry : accessoryMap.entrySet()) {
             if(mouseX > x && mouseX < x+16) {
                 if(mouseY > y && mouseY < y+16) {
@@ -246,8 +251,8 @@ public class QOLInfoPane extends ScrollableInfoPane {
             drawRect(x, y, x+16, y+16, fg.getRGB());
             Utils.drawItemStack(entry.getValue(), x, y);
             x += 20;
-            if(x + 20 + (leftSide+overlay.BOX_PADDING+5) > paneWidth) {
-                x=leftSide+overlay.BOX_PADDING+5;
+            if(x + 20 + (leftSide+overlay.getBoxPadding()+5) > paneWidth) {
+                x=leftSide+overlay.getBoxPadding()+5;
                 y+=20;
             }
         }
@@ -258,7 +263,7 @@ public class QOLInfoPane extends ScrollableInfoPane {
 
         y+=10;
 
-        x=leftSide+overlay.BOX_PADDING+5;
+        x=leftSide+overlay.getBoxPadding()+5;
         for(Map.Entry<String, JsonObject> entry : allTalismans.entrySet()) {
             if(accessoryMap.containsKey(entry.getKey())) {
                 continue;
@@ -272,8 +277,8 @@ public class QOLInfoPane extends ScrollableInfoPane {
             drawRect(x, y, x+16, y+16, fg.getRGB());
             Utils.drawItemStack(manager.jsonToStack(entry.getValue()), x, y);
             x += 20;
-            if(x + 20 + (leftSide+overlay.BOX_PADDING+5) > paneWidth) {
-                x=leftSide+overlay.BOX_PADDING+5;
+            if(x + 20 + (leftSide+overlay.getBoxPadding()+5) > paneWidth) {
+                x=leftSide+overlay.getBoxPadding()+5;
                 y+=20;
             }
         }
@@ -281,7 +286,7 @@ public class QOLInfoPane extends ScrollableInfoPane {
         y+=20;
         y += renderParagraph(width, height, y, "Recommended Accessory Upgrades");
 
-        x=leftSide+overlay.BOX_PADDING+5;
+        x=leftSide+overlay.getBoxPadding()+5;
         for(JsonObject json : recommended) {
             if(mouseX > x && mouseX < x+16) {
                 if(mouseY > y && mouseY < y+16) {
@@ -292,8 +297,8 @@ public class QOLInfoPane extends ScrollableInfoPane {
             drawRect(x, y, x+16, y+16, fg.getRGB());
             Utils.drawItemStack(manager.jsonToStack(json), x, y);
             x += 20;
-            if(x + 20 + (leftSide+overlay.BOX_PADDING+5) > paneWidth) {
-                x=leftSide+overlay.BOX_PADDING+5;
+            if(x + 20 + (leftSide+overlay.getBoxPadding()+5) > paneWidth) {
+                x=leftSide+overlay.getBoxPadding()+5;
                 y+=20;
             }
         }
@@ -317,8 +322,8 @@ public class QOLInfoPane extends ScrollableInfoPane {
         }
     }
 
-    public void keyboardInput() {
-
+    public boolean keyboardInput() {
+        return false;
     }
 
 
@@ -331,9 +336,9 @@ public class QOLInfoPane extends ScrollableInfoPane {
 
         int yOff = 0;
         for(String line : text.split("\n")) {
-            yOff += Utils.renderStringTrimWidth(line, fr, false,leftSide+overlay.BOX_PADDING + 5,
+            yOff += Utils.renderStringTrimWidth(line, fr, false,leftSide+overlay.getBoxPadding() + 5,
                     startY + yOff,
-                    width*1/3-overlay.BOX_PADDING*2-10, Color.WHITE.getRGB(), -1);
+                    width*1/3-overlay.getBoxPadding()*2-10, Color.WHITE.getRGB(), -1);
             yOff += 16;
         }
 

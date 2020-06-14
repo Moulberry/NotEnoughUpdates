@@ -47,7 +47,7 @@ public class SettingsInfoPane extends InfoPane {
         if(page > maxPages-1) page = maxPages-1;
         if(page < 0) page = 0;
 
-        overlay.renderNavElement(leftSide+overlay.BOX_PADDING, rightSide-overlay.BOX_PADDING,
+        overlay.renderNavElement(leftSide+overlay.getBoxPadding(), rightSide-overlay.getBoxPadding(),
                 maxPages,page+1,"Settings: ");
 
         AtomicReference<List<String>> textToDisplay = new AtomicReference<>(null);
@@ -68,8 +68,6 @@ public class SettingsInfoPane extends InfoPane {
                     Utils.renderStringTrimWidth(option.displayName, fr, true, x+(int)(8*mult), y+(int)(8*mult),
                             tileWidth-(int)(16*mult), new Color(100,255,150).getRGB(), 3);
                 }
-
-                if(Keyboard.isKeyDown(Keyboard.KEY_H)) return;
 
                 if(option.value instanceof Boolean) {
                     GlStateManager.color(1f, 1f, 1f, 1f);
@@ -164,8 +162,8 @@ public class SettingsInfoPane extends InfoPane {
             int paneWidth = (int)(width/3*overlay.getWidthMult());
             int rightSide = (int)(width*overlay.getInfoPaneOffsetFactor());
             int leftSide = rightSide - paneWidth;
-            rightSide -= overlay.BOX_PADDING;
-            leftSide += overlay.BOX_PADDING;
+            rightSide -= overlay.getBoxPadding();
+            leftSide += overlay.getBoxPadding();
 
             FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
             float maxStrLen = fr.getStringWidth(EnumChatFormatting.BOLD+"Settings: " + maxPages + "/" + maxPages);
@@ -173,7 +171,7 @@ public class SettingsInfoPane extends InfoPane {
             int buttonXSize = (int)Math.min(maxButtonXSize, overlay.getSearchBarYSize()*480/160f);
             int ySize = (int)(buttonXSize/480f*160);
             int yOffset = (int)((overlay.getSearchBarYSize()-ySize)/2f);
-            int top = overlay.BOX_PADDING+yOffset;
+            int top = overlay.getBoxPadding()+yOffset;
 
             if(mouseY >= top && mouseY <= top+ySize) {
                 int leftPrev = leftSide-1;
@@ -188,7 +186,8 @@ public class SettingsInfoPane extends InfoPane {
         }
     }
 
-    public void keyboardInput() {
+    public boolean keyboardInput() {
+        AtomicBoolean ret = new AtomicBoolean(false);
         iterateSettingTile(new SettingsTileConsumer() {
             @Override
             public void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option) {
@@ -201,10 +200,12 @@ public class SettingsInfoPane extends InfoPane {
                     if(tf.getFocus()) {
                         tf.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
                         onTextfieldChange(tf, option);
+                        ret.set(true);
                     }
                 }
             }
         });
+        return ret.get();
     }
 
     private abstract static class SettingsTileConsumer {
@@ -222,10 +223,10 @@ public class SettingsInfoPane extends InfoPane {
         int rightSide = (int)(width*overlay.getInfoPaneOffsetFactor());
         int leftSide = rightSide - paneWidth;
 
-        int boxLeft = leftSide+overlay.BOX_PADDING-5;
-        int boxRight = rightSide-overlay.BOX_PADDING+5;
+        int boxLeft = leftSide+overlay.getBoxPadding()-5;
+        int boxRight = rightSide-overlay.getBoxPadding()+5;
 
-        int boxBottom = height - overlay.BOX_PADDING + 5;
+        int boxBottom = height - overlay.getBoxPadding() + 5;
 
         int boxWidth = boxRight-boxLeft;
         int tilePadding = 7;
@@ -235,7 +236,7 @@ public class SettingsInfoPane extends InfoPane {
         maxPages=1;
         int currPage=0;
         int x=0;
-        int y=tilePadding+overlay.BOX_PADDING+overlay.getSearchBarYSize();
+        int y=tilePadding+overlay.getBoxPadding()+overlay.getSearchBarYSize();
         for(int i=0; i<manager.config.getOptions().size(); i++) {
             if(i!=0 && i%numHorz==0) {
                 x = 0;
@@ -243,7 +244,7 @@ public class SettingsInfoPane extends InfoPane {
             }
             if(y + tileHeight > boxBottom) {
                 x=0;
-                y=tilePadding+overlay.BOX_PADDING+overlay.getSearchBarYSize();
+                y=tilePadding+overlay.getBoxPadding()+overlay.getSearchBarYSize();
                 currPage++;
                 maxPages = currPage+1;
             }

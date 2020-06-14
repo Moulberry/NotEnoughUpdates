@@ -55,6 +55,8 @@ public class GuiItemUsages extends GuiCrafting {
             }
             if(results.get(currentIndex).has("crafttext")) {
                 craftText = results.get(currentIndex).get("crafttext").getAsString();
+            } else {
+                craftText = "";
             }
             cw.craftResult.setInventorySlotContents(0, manager.jsonToStack(results.get(currentIndex)));
         }

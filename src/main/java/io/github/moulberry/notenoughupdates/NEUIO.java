@@ -3,14 +3,19 @@ package io.github.moulberry.notenoughupdates;
 import org.kohsuke.github.*;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class NEUIO {
 
     private final String accessToken;
+
+    /**
+     * THIS CLASS PROVIDES METHODS FOR INTERFACING WITH THE GIT REPOSITORY NotEnoughUpdates-REPO. THIS REPOSITORY
+     * CONTAINS ALL THE JSON ITEMS. THIS SHOULD NOT BE A PERMANENT SOLUTION AND I SHOULD LOOK AT USING SOME FORM OF
+     * HOSTING SERVICE OTHER THAN A GIT REPOSITORY IF THE USERBASE OF THE MOD GROWS SIGNIFICANTLY. UNFORTUNATELY I
+     * CANT AFFORD HOSTING RIGHT NOW SO THIS IS WHAT YOU GET AND GITHUB WILL PROBABLY THROW A FIT IF A LARGE NUMBER
+     * OF USERS START DOWNLOADING FROM THE REPO ALL AT ONCE.
+     */
 
     public NEUIO(String accessToken) {
         this.accessToken = accessToken;
@@ -68,16 +73,48 @@ public class NEUIO {
             GitHub github = new GitHubBuilder().withOAuthToken(accessToken).build();
             GHRepository repo = github.getRepositoryById("247692460");
 
-            for(GHContent content : repo.getDirectoryContent("items")) {
+            for(GHTreeEntry treeEntry : repo.getTreeRecursive("master", 1).getTree()) {
+                if(treeEntry.getPath().startsWith("items/")) {
+                    String[] split = treeEntry.getPath().split("/");
+                    String name = split[split.length-1];
+
+                    String oldSha = oldShas.get(name);
+                    if(!treeEntry.getSha().equals(oldSha)) {
+                        changedFiles.put(name, treeEntry.getSha());
+                    }
+                }
+            }
+
+            /*for(GHContent content : repo.getDirectoryContent("items")) {
                 String oldSha = oldShas.get(content.getName());
                 if(!content.getSha().equals(oldSha)) {
                     changedFiles.put(content.getName(), content.getSha());
                 }
-            }
+            }*/
         } catch(IOException e) {
             return null;
         }
         return changedFiles;
+    }
+
+    public Set<String> getRemovedItems(Set<String> currentlyInstalled) {
+        Set<String> removedItems = new HashSet<>();
+        Set<String> repoItems = new HashSet<>();
+        try {
+            GitHub github = new GitHubBuilder().withOAuthToken(accessToken).build();
+            GHRepository repo = github.getRepositoryById("247692460");
+
+            for(GHTreeEntry treeEntry : repo.getTreeRecursive("master", 1).getTree()) {
+                String[] split = treeEntry.getPath().split("/");
+                repoItems.add(split[split.length-1].split("\\.")[0]);
+            }
+        } catch(IOException e) {
+            e.printStackTrace();
+            return removedItems;
+        }
+        removedItems.addAll(currentlyInstalled);
+        removedItems.removeAll(repoItems);
+        return removedItems;
     }
 
     /**

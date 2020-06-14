@@ -6,15 +6,18 @@ import io.github.moulberry.notenoughupdates.options.Options;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import javafx.scene.control.Alert;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
+import net.minecraft.network.play.client.C0DPacketCloseWindow;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 
 import javax.swing.*;
@@ -39,6 +42,14 @@ public class NEUManager {
     private TreeMap<String, Set<String>> tagWordMap = new TreeMap<>();
     private TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
     private TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
+
+    public final KeyBinding keybindGive = new KeyBinding("Add item to inventory (Creative-only)", Keyboard.KEY_L, "NotEnoughUpdates");
+    public final KeyBinding keybindFavourite = new KeyBinding("Set item as favourite", Keyboard.KEY_F, "NotEnoughUpdates");
+    public final KeyBinding keybindViewUsages = new KeyBinding("Show usages for item", Keyboard.KEY_U, "NotEnoughUpdates");
+    public final KeyBinding keybindViewRecipe = new KeyBinding("Show recipe for item", Keyboard.KEY_R, "NotEnoughUpdates");
+    public final KeyBinding keybindToggleDisplay = new KeyBinding("Toggle NEU overlay", 0, "NotEnoughUpdates");
+    public final KeyBinding keybindClosePanes = new KeyBinding("Close NEU panes", 0, "NotEnoughUpdates");
+    public final KeyBinding[] keybinds = new KeyBinding[]{keybindGive, keybindFavourite, keybindViewUsages, keybindViewRecipe, keybindToggleDisplay, keybindClosePanes};
 
     public String viewItemAttemptID = null;
     public long viewItemAttemptTime = 0;
@@ -74,13 +85,7 @@ public class NEUManager {
         gsonBuilder.registerTypeAdapter(Options.Option.class, Options.createDeserializer());
         gson = gsonBuilder.create();
 
-        this.configFile = new File(configLocation, "config.json");
-        try {
-            configFile.createNewFile();
-            config = Options.loadFromFile(gson, configFile);
-        } catch(Exception e) {
-            config = new Options();
-        }
+        this.loadConfig();
 
         this.itemsLocation = new File(configLocation, "items");
         itemsLocation.mkdir();
@@ -171,14 +176,37 @@ public class NEUManager {
 
     public class CraftInfo {
         public boolean fromRecipe = false;
+        public boolean vanillaItem = false;
         public float craftCost = -1;
     }
 
+    /**
+     * Recursively calculates the cost of crafting an item from raw materials.
+     */
     public CraftInfo getCraftCost(String internalname) {
         if(craftCost.containsKey(internalname)) {
             return craftCost.get(internalname);
         } else {
             CraftInfo ci = new CraftInfo();
+
+            //Removes trailing numbers and underscores, eg. LEAVES_2-3 -> LEAVES
+            String vanillaName = internalname.split("-")[0];
+            int sub = 0;
+            for(int i=vanillaName.length()-1; i>1; i--) {
+                char c = vanillaName.charAt(i);
+                if((int)c >= 48 && (int)c <= 57) { //0-9
+                    sub++;
+                } else if(c == '_') {
+                    sub++;
+                    break;
+                } else {
+                    break;
+                }
+            }
+            vanillaName = vanillaName.substring(0, vanillaName.length()-sub);
+            if(Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null) {
+                ci.vanillaItem = true;
+            }
 
             JsonObject auctionInfo = getItemAuctionInfo(internalname);
             JsonObject bazaarInfo = getBazaarInfo(internalname);
@@ -187,7 +215,7 @@ public class NEUManager {
                 float bazaarInstantBuyPrice = bazaarInfo.get("curr_buy").getAsFloat();
                 ci.craftCost = bazaarInstantBuyPrice;
             }
-            if(auctionInfo != null) {
+            if(auctionInfo != null && !ci.vanillaItem) { //Don't use auction prices for vanilla items cuz people like to transfer money, messing up the cost of vanilla items.
                 float auctionPrice = auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat();
                 if(ci.craftCost < 0 || auctionPrice < ci.craftCost) {
                     ci.craftCost = auctionPrice;
@@ -212,8 +240,10 @@ public class NEUManager {
                     }
                     float compCost = getCraftCost(itemS).craftCost * count;
                     if(compCost < 0) {
-                        craftCost.put(internalname, ci);
-                        return ci;
+                        if(!getCraftCost(itemS).vanillaItem) { //If it's a vanilla item without a cost attached to it, let compCost = 0.
+                            craftCost.put(internalname, ci);
+                            return ci;
+                        }
                     } else {
                         craftPrice += compCost;
                     }
@@ -233,8 +263,21 @@ public class NEUManager {
         config.saveToFile(gson, configFile);
     }
 
+    public void loadConfig() {
+        this.configFile = new File(configLocation, "config.json");
+        try {
+            configFile.createNewFile();
+            config = Options.loadFromFile(gson, configFile);
+        } catch(Exception e) {
+            config = new Options();
+        }
+    }
+
+    /**
+     * Downloads and sets auctionPricesJson from the URL specified by AUCTIONS_PRICE_URL.
+     */
     public void updatePrices() {
-        if(System.currentTimeMillis() - auctionLastUpdate > 1000*60*30) { //30 minutes
+        if(System.currentTimeMillis() - auctionLastUpdate > 1000*60*120) { //2 hours
             craftCost.clear();
             System.out.println("UPDATING PRICE INFORMATION");
             auctionLastUpdate = System.currentTimeMillis();
@@ -266,23 +309,40 @@ public class NEUManager {
         return e.getAsJsonObject();
     }
 
+    /**
+     * Calculates the cost of enchants + other price modifiers such as pet xp, midas price, etc.
+     */
     public float getCostOfEnchants(String internalname, NBTTagCompound tag) {
         float costOfEnchants = 0;
+        if(true) return 0;
+
         JsonObject info = getItemAuctionInfo(internalname);
         if(info == null || !info.has("price")) {
             return 0;
         }
+        if(!auctionPricesJson.has("ench_prices") || !auctionPricesJson.has("ench_maximums")) {
+            return 0;
+        }
+        JsonObject ench_prices = auctionPricesJson.getAsJsonObject("ench_prices");
+        JsonObject ench_maximums = auctionPricesJson.getAsJsonObject("ench_maximums");
+        if(!ench_prices.has(internalname) || !ench_maximums.has(internalname)) {
+            return 0;
+        }
+        JsonObject iid_variables = ench_prices.getAsJsonObject(internalname);
+        float ench_maximum = ench_maximums.get(internalname).getAsFloat();
+
+        int enchants = 0;
         float price = getItemAuctionInfo(internalname).get("price").getAsFloat();
         if(tag.hasKey("ExtraAttributes")) {
             NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
             if(ea.hasKey("enchantments")) {
-                JsonObject ench_prices = auctionPricesJson.get("ench_prices").getAsJsonObject();
 
                 NBTTagCompound enchs = ea.getCompoundTag("enchantments");
                 for(String ench : enchs.getKeySet()) {
+                    enchants++;
                     int level = enchs.getInteger(ench);
 
-                    for(Map.Entry<String, JsonElement> entry : ench_prices.entrySet()) {
+                    for(Map.Entry<String, JsonElement> entry : iid_variables.entrySet()) {
                         if(matchEnch(ench, level, entry.getKey())) {
                             costOfEnchants += entry.getValue().getAsJsonObject().get("A").getAsFloat()*price +
                                     entry.getValue().getAsJsonObject().get("B").getAsFloat();
@@ -295,15 +355,23 @@ public class NEUManager {
         return costOfEnchants;
     }
 
+    /**
+     * Checks whether a certain enchant (ench name + lvl) matches an enchant id
+     * eg. PROTECTION_GE6 will match -> ench_name = PROTECTION, lvl >= 6
+     */
     private boolean matchEnch(String ench, int level, String id) {
-        String idEnch = id.split(":")[0];
-        String idLevel = id.split(":")[1];
-
-        if(!ench.equals(idEnch)) {
+        if(!id.contains(":")) {
             return false;
         }
 
-        if(String.valueOf(level).equals(idLevel)) {
+        String idEnch = id.split(":")[0];
+        String idLevel = id.split(":")[1];
+
+        if(!ench.equalsIgnoreCase(idEnch)) {
+            return false;
+        }
+
+        if(String.valueOf(level).equalsIgnoreCase(idLevel)) {
             return true;
         }
 
@@ -583,6 +651,22 @@ public class NEUManager {
     }
 
     /**
+     * Calls search for each query, separated by |
+     * eg. search(A|B) = search(A) + search(B)
+     */
+    public Set<String> search(String query, boolean multi) {
+        if(multi) {
+            Set<String> result = new HashSet<>();
+            for(String query2 : query.split("\\|")) {
+                result.addAll(search(query2));
+            }
+            return result;
+        } else {
+            return search(query);
+        }
+    }
+
+    /**
      * Returns the name of items which match a certain search query.
      */
     public Set<String> search(String query) {
@@ -700,7 +784,7 @@ public class NEUManager {
     }
 
     /**
-     * Takes an item stack and produces a JsonObject. This is used in the item editor.
+     * Takes an item stack and produces a JsonObject.
      */
     public JsonObject getJsonForItem(ItemStack stack) {
         NBTTagCompound tag = stack.getTagCompound() == null ? new NBTTagCompound() : stack.getTagCompound();
@@ -775,9 +859,220 @@ public class NEUManager {
             writeJson(json, new File(itemsLocation, internalname+".json"));
         } catch (IOException e) {}
 
-        loadItem(internalname); //Collection: Cocoa Beans VII
+        loadItem(internalname);
     }
 
+    /**
+     * Constructs a GuiItemUsages from the recipe usage data (see #usagesMap) of a given item
+     */
+    public boolean displayGuiItemUsages(String internalName, String text) {
+        List<ItemStack[]> craftMatrices = new ArrayList<>();
+        List<JsonObject> results =  new ArrayList<>();
+
+        if(!usagesMap.containsKey(internalName)) {
+            return false;
+        }
+
+        for(String internalNameResult : usagesMap.get(internalName)) {
+            JsonObject item = getItemInformation().get(internalNameResult);
+            results.add(item);
+
+            if(item != null && item.has("recipe")) {
+                JsonObject recipe = item.get("recipe").getAsJsonObject();
+
+                ItemStack[] craftMatrix = new ItemStack[9];
+
+                String[] x = {"1","2","3"};
+                String[] y = {"A","B","C"};
+                for(int i=0; i<9; i++) {
+                    String name = y[i/3]+x[i%3];
+                    String itemS = recipe.get(name).getAsString();
+                    int count = 1;
+                    if(itemS != null && itemS.split(":").length == 2) {
+                        count = Integer.valueOf(itemS.split(":")[1]);
+                        itemS = itemS.split(":")[0];
+                    }
+                    JsonObject craft = getItemInformation().get(itemS);
+                    if(craft != null) {
+                        ItemStack stack = jsonToStack(craft);
+                        stack.stackSize = count;
+                        craftMatrix[i] = stack;
+                    }
+                }
+
+                craftMatrices.add(craftMatrix);
+            }
+        }
+
+        if(craftMatrices.size() > 0) {
+            Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(
+                    Minecraft.getMinecraft().thePlayer.openContainer.windowId));
+            Minecraft.getMinecraft().displayGuiScreen(new GuiItemUsages(craftMatrices, results, text, this));
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Constructs a GuiItemRecipe from the recipe data of a given item.
+     */
+    public boolean displayGuiItemRecipe(String internalName, String text) {
+        JsonObject item = getItemInformation().get(internalName);
+        if(item != null && item.has("recipe")) {
+            JsonObject recipe = item.get("recipe").getAsJsonObject();
+
+            ItemStack[] craftMatrix = new ItemStack[9];
+
+            String[] x = {"1","2","3"};
+            String[] y = {"A","B","C"};
+            for(int i=0; i<9; i++) {
+                String name = y[i/3]+x[i%3];
+                String itemS = recipe.get(name).getAsString();
+                int count = 1;
+                if(itemS != null && itemS.split(":").length == 2) {
+                    count = Integer.valueOf(itemS.split(":")[1]);
+                    itemS = itemS.split(":")[0];
+                }
+                JsonObject craft = getItemInformation().get(itemS);
+                if(craft != null) {
+                    ItemStack stack = jsonToStack(craft);
+                    stack.stackSize = count;
+                    craftMatrix[i] = stack;
+                }
+            }
+
+            Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(
+                    Minecraft.getMinecraft().thePlayer.openContainer.windowId));
+            Minecraft.getMinecraft().displayGuiScreen(new GuiItemRecipe(craftMatrix, item, text, this));
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Will display guiItemRecipe if a player attempted to view the recipe to an item but they didn't have the recipe
+     * unlocked. See NotEnoughUpdates#onGuiChat for where this method is called.
+     */
+    public boolean failViewItem(String text) {
+        if(viewItemAttemptID != null && !viewItemAttemptID.isEmpty()) {
+            if(System.currentTimeMillis() - viewItemAttemptTime < 500) {
+                return displayGuiItemRecipe(viewItemAttemptID, text);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Downloads a web file, appending some HTML attributes that makes wikia give us the raw wiki syntax.
+     */
+    public File getWebFile(String url) {
+        File f = new File(configLocation, "tmp/"+Base64.getEncoder().encodeToString(url.getBytes())+".html");
+        if(f.exists()) {
+            return f;
+        }
+
+        try {
+            f.getParentFile().mkdirs();
+            f.createNewFile();
+            f.deleteOnExit();
+        } catch (IOException e) {
+            return null;
+        }
+        try (BufferedInputStream inStream = new BufferedInputStream(new URL(url+"?action=raw&templates=expand").openStream());
+             FileOutputStream fileOutputStream = new FileOutputStream(f)) {
+            byte dataBuffer[] = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
+                fileOutputStream.write(dataBuffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return f;
+    }
+
+
+    /**
+     * Modified from https://www.journaldev.com/960/java-unzip-file-example
+     */
+    private static void unzipIgnoreFirstFolder(String zipFilePath, String destDir) {
+        File dir = new File(destDir);
+        // create output directory if it doesn't exist
+        if(!dir.exists()) dir.mkdirs();
+        FileInputStream fis;
+        //buffer for read and write data to file
+        byte[] buffer = new byte[1024];
+        try {
+            fis = new FileInputStream(zipFilePath);
+            ZipInputStream zis = new ZipInputStream(fis);
+            ZipEntry ze = zis.getNextEntry();
+            while(ze != null){
+                if(!ze.isDirectory()) {
+                    String fileName = ze.getName();
+                    fileName = fileName.substring(fileName.split("/")[0].length()+1);
+                    File newFile = new File(destDir + File.separator + fileName);
+                    //create directories for sub directories in zip
+                    new File(newFile.getParent()).mkdirs();
+                    FileOutputStream fos = new FileOutputStream(newFile);
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        fos.write(buffer, 0, len);
+                    }
+                    fos.close();
+                }
+                //close this ZipEntry
+                zis.closeEntry();
+                ze = zis.getNextEntry();
+            }
+            //close last ZipEntry
+            zis.closeEntry();
+            zis.close();
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Modified from https://www.journaldev.com/960/java-unzip-file-example
+     */
+    private static void unzip(InputStream src, File dest) {
+        //buffer for read and write data to file
+        byte[] buffer = new byte[1024];
+        try {
+            ZipInputStream zis = new ZipInputStream(src);
+            ZipEntry ze = zis.getNextEntry();
+            while(ze != null){
+                if(!ze.isDirectory()) {
+                    String fileName = ze.getName();
+                    File newFile = new File(dest, fileName);
+                    //create directories for sub directories in zip
+                    new File(newFile.getParent()).mkdirs();
+                    FileOutputStream fos = new FileOutputStream(newFile);
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        fos.write(buffer, 0, len);
+                    }
+                    fos.close();
+                }
+                //close this ZipEntry
+                zis.closeEntry();
+                ze = zis.getNextEntry();
+            }
+            //close last ZipEntry
+            zis.closeEntry();
+            zis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * From here to the end of the file are various helper functions for creating and writing json files,
+     * in particular json files representing skyblock item data.
+     */
     public JsonObject createItemJson(String internalname, String itemid, String displayname, String[] lore,
                                      String crafttext, String infoType, String[] info,
                                      String clickcommand, int damage, NBTTagCompound nbttag) {
@@ -884,81 +1179,6 @@ public class NEUManager {
         return itemMap;
     }
 
-    /**
-     * Stolen from https://www.journaldev.com/960/java-unzip-file-example
-     */
-    private static void unzipIgnoreFirstFolder(String zipFilePath, String destDir) {
-        File dir = new File(destDir);
-        // create output directory if it doesn't exist
-        if(!dir.exists()) dir.mkdirs();
-        FileInputStream fis;
-        //buffer for read and write data to file
-        byte[] buffer = new byte[1024];
-        try {
-            fis = new FileInputStream(zipFilePath);
-            ZipInputStream zis = new ZipInputStream(fis);
-            ZipEntry ze = zis.getNextEntry();
-            while(ze != null){
-                if(!ze.isDirectory()) {
-                    String fileName = ze.getName();
-                    fileName = fileName.substring(fileName.split("/")[0].length()+1);
-                    File newFile = new File(destDir + File.separator + fileName);
-                    //create directories for sub directories in zip
-                    new File(newFile.getParent()).mkdirs();
-                    FileOutputStream fos = new FileOutputStream(newFile);
-                    int len;
-                    while ((len = zis.read(buffer)) > 0) {
-                        fos.write(buffer, 0, len);
-                    }
-                    fos.close();
-                }
-                //close this ZipEntry
-                zis.closeEntry();
-                ze = zis.getNextEntry();
-            }
-            //close last ZipEntry
-            zis.closeEntry();
-            zis.close();
-            fis.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Stolen from https://www.journaldev.com/960/java-unzip-file-example
-     */
-    private static void unzip(InputStream src, File dest) {
-        //buffer for read and write data to file
-        byte[] buffer = new byte[1024];
-        try {
-            ZipInputStream zis = new ZipInputStream(src);
-            ZipEntry ze = zis.getNextEntry();
-            while(ze != null){
-                if(!ze.isDirectory()) {
-                    String fileName = ze.getName();
-                    File newFile = new File(dest, fileName);
-                    //create directories for sub directories in zip
-                    new File(newFile.getParent()).mkdirs();
-                    FileOutputStream fos = new FileOutputStream(newFile);
-                    int len;
-                    while ((len = zis.read(buffer)) > 0) {
-                        fos.write(buffer, 0, len);
-                    }
-                    fos.close();
-                }
-                //close this ZipEntry
-                zis.closeEntry();
-                ze = zis.getNextEntry();
-            }
-            //close last ZipEntry
-            zis.closeEntry();
-            zis.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public ItemStack jsonToStack(JsonObject json) {
         if(itemstackCache.containsKey(json.get("internalname").getAsString())) {
             return itemstackCache.get(json.get("internalname").getAsString()).copy();
@@ -982,7 +1202,10 @@ public class NEUManager {
             }
 
             if(json.has("lore")) {
-                NBTTagCompound display = stack.getTagCompound().getCompoundTag("display");
+                NBTTagCompound display = new NBTTagCompound();
+                if(stack.getTagCompound() != null && stack.getTagCompound().hasKey("display")) {
+                    display = stack.getTagCompound().getCompoundTag("display");
+                }
                 NBTTagList lore = new NBTTagList();
                 for(JsonElement line : json.get("lore").getAsJsonArray()) {
                     String lineStr = line.getAsString();
@@ -992,7 +1215,7 @@ public class NEUManager {
                     }
                 }
                 display.setTag("Lore", lore);
-                NBTTagCompound tag = stack.getTagCompound();
+                NBTTagCompound tag = stack.getTagCompound() != null ? stack.getTagCompound() : new NBTTagCompound();
                 tag.setTag("display", display);
                 stack.setTagCompound(tag);
             }
@@ -1000,120 +1223,6 @@ public class NEUManager {
 
         itemstackCache.put(json.get("internalname").getAsString(), stack);
         return stack;
-    }
-
-    public boolean displayGuiItemUsages(String internalName, String text) {
-        List<ItemStack[]> craftMatrices = new ArrayList<>();
-        List<JsonObject> results =  new ArrayList<>();
-
-        if(!usagesMap.containsKey(internalName)) {
-            return false;
-        }
-
-        for(String internalNameResult : usagesMap.get(internalName)) {
-            JsonObject item = getItemInformation().get(internalNameResult);
-            results.add(item);
-
-            if(item != null && item.has("recipe")) {
-                JsonObject recipe = item.get("recipe").getAsJsonObject();
-
-                ItemStack[] craftMatrix = new ItemStack[9];
-
-                String[] x = {"1","2","3"};
-                String[] y = {"A","B","C"};
-                for(int i=0; i<9; i++) {
-                    String name = y[i/3]+x[i%3];
-                    String itemS = recipe.get(name).getAsString();
-                    int count = 1;
-                    if(itemS != null && itemS.split(":").length == 2) {
-                        count = Integer.valueOf(itemS.split(":")[1]);
-                        itemS = itemS.split(":")[0];
-                    }
-                    JsonObject craft = getItemInformation().get(itemS);
-                    if(craft != null) {
-                        ItemStack stack = jsonToStack(craft);
-                        stack.stackSize = count;
-                        craftMatrix[i] = stack;
-                    }
-                }
-
-                craftMatrices.add(craftMatrix);
-            }
-        }
-
-        if(craftMatrices.size() > 0) {
-            Minecraft.getMinecraft().displayGuiScreen(new GuiItemUsages(craftMatrices, results, text, this));
-            return true;
-        }
-        return false;
-    }
-
-    public boolean displayGuiItemRecipe(String internalName, String text) {
-        JsonObject item = getItemInformation().get(internalName);
-        if(item != null && item.has("recipe")) {
-            JsonObject recipe = item.get("recipe").getAsJsonObject();
-
-            ItemStack[] craftMatrix = new ItemStack[9];
-
-            String[] x = {"1","2","3"};
-            String[] y = {"A","B","C"};
-            for(int i=0; i<9; i++) {
-                String name = y[i/3]+x[i%3];
-                String itemS = recipe.get(name).getAsString();
-                int count = 1;
-                if(itemS != null && itemS.split(":").length == 2) {
-                    count = Integer.valueOf(itemS.split(":")[1]);
-                    itemS = itemS.split(":")[0];
-                }
-                JsonObject craft = getItemInformation().get(itemS);
-                if(craft != null) {
-                    ItemStack stack = jsonToStack(craft);
-                    stack.stackSize = count;
-                    craftMatrix[i] = stack;
-                }
-            }
-
-            Minecraft.getMinecraft().displayGuiScreen(new GuiItemRecipe(craftMatrix, item, text, this));
-            return true;
-        }
-        return false;
-    }
-
-    public boolean failViewItem(String text) {
-        if(viewItemAttemptID != null && !viewItemAttemptID.isEmpty()) {
-            if(System.currentTimeMillis() - viewItemAttemptTime < 500) {
-                return displayGuiItemRecipe(viewItemAttemptID, text);
-            }
-        }
-        return false;
-    }
-
-    public File getWebFile(String url) {
-        File f = new File(configLocation, "tmp/"+Base64.getEncoder().encodeToString(url.getBytes())+".html");
-        if(f.exists()) {
-            return f;
-        }
-
-        try {
-            f.getParentFile().mkdirs();
-            f.createNewFile();
-            f.deleteOnExit();
-        } catch (IOException e) {
-            return null;
-        }
-        try (BufferedInputStream inStream = new BufferedInputStream(new URL(url+"?action=raw&templates=expand").openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream(f)) {
-            byte dataBuffer[] = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
-                fileOutputStream.write(dataBuffer, 0, bytesRead);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        return f;
     }
 
 }

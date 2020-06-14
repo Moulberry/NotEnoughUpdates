@@ -14,6 +14,11 @@ import java.util.List;
 
 public class Options {
 
+    /**
+     * Ok, I'll be honest. I wrote this class without looking too much in to how to make proper serializable
+     * variables with defaults values/etc. It works. I'm happy.
+     */
+
     public Option<Boolean> enableItemEditing = new Option(
             false,
             "Enable Item Editing",
@@ -24,6 +29,16 @@ public class Options {
             "Only Show On Skyblock",
             false,
             "GUI Overlay only appears when you are playing Skyblock.");
+    public Option<Boolean> hidePotionEffect = new Option(
+            true,
+            "Hide Potion Effect",
+            false,
+            "If true, the potion effects will not show in the inventory GUI.");
+    public Option<Boolean> showQuickCommands = new Option(
+            true,
+            "Quick Commands",
+            false,
+            "If true, shows quick commands above search bar.");
     public Option<Boolean> advancedPriceInfo = new Option(
             false,
             "Advanced Price Information",
@@ -35,7 +50,7 @@ public class Options {
             false,
             "Caches the drawn itempane, drastically improving performance. However, animated textures will not work.");
     public Option<Double> bgBlurFactor = new Option(
-            5.0,
+            10.0,
             "Background Blur Factor",
             false,
             "Changes the strength of pane background blur. 0-50.");
@@ -103,12 +118,28 @@ public class Options {
             "Favourites",
             false,
             "Favourites");
+    public Option<ArrayList<String>> quickCommands = new Option(
+            createDefaultQuickCommands(),
+            "Quick Commands",
+            false,
+            "Quick Commands");
+
+    private ArrayList<String> createDefaultQuickCommands() {
+        ArrayList<String> arr = new ArrayList<>();
+        arr.add("/warp home:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzljODg4MWU0MjkxNWE5ZDI5YmI2MWExNmZiMjZkMDU5OTEzMjA0ZDI2NWRmNWI0MzliM2Q3OTJhY2Q1NiJ9fX0=");
+        arr.add("/warp hub:eyJ0aW1lc3RhbXAiOjE1NTkyMTU0MTY5MDksInByb2ZpbGVJZCI6IjQxZDNhYmMyZDc0OTQwMGM5MDkwZDU0MzRkMDM4MzFiIiwicHJvZmlsZU5hbWUiOiJNZWdha2xvb24iLCJzaWduYXR1cmVSZXF1aXJlZCI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2Q3Y2M2Njg3NDIzZDA1NzBkNTU2YWM1M2UwNjc2Y2I1NjNiYmRkOTcxN2NkODI2OWJkZWJlZDZmNmQ0ZTdiZjgifX19");
+        arr.add("/craft:CRAFTING_TABLE");
+        arr.add("/enderchest:ENDER_CHEST");
+        arr.add("/wardrobe:LEATHER_CHESTPLATE");
+        return arr;
+    }
 
     public List<Option> getOptions() {
         List<Option> options = new ArrayList<>();
 
         tryAddOption(enableItemEditing, options);
         tryAddOption(onlyShowOnSkyblock, options);
+        tryAddOption(hidePotionEffect, options);
         tryAddOption(advancedPriceInfo, options);
         tryAddOption(cacheRenderedItempane, options);
         tryAddOption(autoupdate, options);

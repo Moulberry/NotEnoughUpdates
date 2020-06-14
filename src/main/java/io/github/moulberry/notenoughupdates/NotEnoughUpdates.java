@@ -11,6 +11,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -27,6 +28,7 @@ import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -36,6 +38,8 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -52,7 +56,9 @@ public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
     public static final String VERSION = "1.0.0";
 
-    private NEUManager manager;
+    public static NotEnoughUpdates INSTANCE = null;
+
+    public NEUManager manager;
     private NEUOverlay overlay;
     private NEUIO neuio;
 
@@ -77,8 +83,13 @@ public class NotEnoughUpdates {
         return s;
     }
 
+    /**
+     * Instantiates NEUIo, NEUManager and NEUOverlay instances. Registers keybinds and adds a shutdown hook to clear tmp folder.
+     * @param event
+     */
     @EventHandler
     public void preinit(FMLPreInitializationEvent event) {
+        INSTANCE = this;
         MinecraftForge.EVENT_BUS.register(this);
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
@@ -87,6 +98,10 @@ public class NotEnoughUpdates {
         manager = new NEUManager(this, neuio, f);
         manager.loadItemInformation();
         overlay = new NEUOverlay(manager);
+
+        for(KeyBinding kb : manager.keybinds) {
+            ClientRegistry.registerKeyBinding(kb);
+        }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -135,6 +150,10 @@ public class NotEnoughUpdates {
         }
     }
 
+    /**
+     * If the last chat messages was sent >200ms ago, sends the message.
+     * If the last chat message was sent <200 ago, will cache the message for #onTick to handle.
+     */
     public void sendChatMessage(String message) {
         if (System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
             lastChatMessage = System.currentTimeMillis();
@@ -145,6 +164,10 @@ public class NotEnoughUpdates {
         }
     }
 
+    /**
+     * Will send the cached message from #sendChatMessage when at least 200ms has passed since the last message.
+     * This is used in order to prevent the mod spamming messages.
+     */
     @EventHandler
     public void onTick(TickEvent.ClientTickEvent event) {
         if(currChatMessage != null && System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
@@ -154,16 +177,32 @@ public class NotEnoughUpdates {
         }
     }
 
+    /**
+     * When opening a GuiContainer, will reset the overlay and load the config.
+     * When closing a GuiContainer, will save the config.
+     * Also includes a dev feature used for automatically acquiring crafting information from the "Crafting Table" GUI.
+     */
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
-        if(event.gui != null) {
-            System.out.println("2");
+        //OPEN
+        if(Minecraft.getMinecraft().currentScreen == null
+                && event.gui instanceof GuiContainer) {
+            overlay.reset();
+            manager.loadConfig();
+        }
+        //CLOSE
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer
+                && event.gui == null) {
+            try {
+                manager.saveConfig();
+            } catch(IOException e) {}
+        }
+        if(event.gui != null && manager.config.dev.value) {
             if(event.gui instanceof GuiChest) {
                 GuiChest eventGui = (GuiChest) event.gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
                 IInventory lower = cc.getLowerChestInventory();
-                System.out.println("3");
                 ses.schedule(() -> {
                     if(Minecraft.getMinecraft().currentScreen != event.gui) {
                         return;
@@ -258,19 +297,12 @@ public class NotEnoughUpdates {
                 return;
             }
         }
-        //OPEN
-        if(Minecraft.getMinecraft().currentScreen == null
-                && event.gui instanceof GuiContainer) {
-            overlay.reset();
-        }
-        //CLOSE
-        if(Minecraft.getMinecraft().currentScreen != null && event.gui == null) {
-            try {
-                manager.saveConfig();
-            } catch(IOException e) {}
-        }
     }
 
+    /**
+     * 1) When receiving "You are playing on profile" messages, will set the current profile.
+     * 2) When a /viewrecipe command fails (i.e. player does not have recipe unlocked, will open the custom recipe GUI)
+     */
     @SubscribeEvent
     public void onGuiChat(ClientChatReceivedEvent e) {
         String r = null;
@@ -295,6 +327,17 @@ public class NotEnoughUpdates {
         }
     }
 
+    /**
+     * Sets hoverInv and focusInv variables, representing whether the NEUOverlay should render behind the inventory when
+     * (hoverInv == true) and whether mouse/kbd inputs shouldn't be sent to NEUOverlay (focusInv == true).
+     *
+     * If hoverInv is true, will render the overlay immediately (resulting in the inventory being drawn over the GUI)
+     * If hoverInv is false, the overlay will render in #onGuiScreenDraw (resulting in the GUI being drawn over the inv)
+     *
+     * All of this only matters if players are using gui scale auto which may result in the inventory being drawn
+     * over the various panes.
+     * @param event
+     */
     @SubscribeEvent
     public void onGuiBackgroundDraw(GuiScreenEvent.BackgroundDrawnEvent event) {
         if(event.gui instanceof GuiContainer && isOnSkyblock()) {
@@ -331,6 +374,11 @@ public class NotEnoughUpdates {
         }
     }
 
+    /**
+     * Will draw the NEUOverlay over the inventory if focusInv == false. (z-translation of 300 is so that NEUOverlay
+     * will draw over Items in the inventory (which render at a z value of about 250))
+     * @param event
+     */
     @SubscribeEvent
     public void onGuiScreenDraw(GuiScreenEvent.DrawScreenEvent.Post event) {
         if(event.gui instanceof GuiContainer && isOnSkyblock()) {
@@ -343,6 +391,11 @@ public class NotEnoughUpdates {
         }
     }
 
+    /**
+     * Sends a mouse event to NEUOverlay if the inventory isn't hovered AND focused.
+     * Will also cancel the event if if NEUOverlay#mouseInput returns true.
+     * @param event
+     */
     @SubscribeEvent
     public void onGuiScreenMouse(GuiScreenEvent.MouseInputEvent.Pre event) {
         if(event.gui instanceof GuiContainer && !(hoverInv && focusInv) && isOnSkyblock()) {
@@ -354,13 +407,22 @@ public class NotEnoughUpdates {
 
     ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
 
+    /**
+     * Sends a kbd event to NEUOverlay, cancelling if NEUOverlay#keyboardInput returns true.
+     * Also includes a dev function used for creating custom named json files with recipes.
+     */
     boolean started = false;
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-        if(manager.config.enableItemEditing.value && Minecraft.getMinecraft().theWorld != null &&
+        if(event.gui instanceof GuiContainer && isOnSkyblock()) {
+            if(overlay.keyboardInput(focusInv)) {
+                event.setCanceled(true);
+            }
+        }
+        if(manager.config.dev.value && manager.config.enableItemEditing.value && Minecraft.getMinecraft().theWorld != null &&
                 Keyboard.getEventKey() == Keyboard.KEY_O && Keyboard.getEventKeyState()) {
             GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-            if(gui != null && gui instanceof GuiChest) {
+            if(gui instanceof GuiChest) {
                 GuiChest eventGui = (GuiChest) event.gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
                 IInventory lower = cc.getLowerChestInventory();
@@ -466,15 +528,9 @@ public class NotEnoughUpdates {
 
             ses.schedule(checker, 1000, TimeUnit.MILLISECONDS);
         }*/
-        if(event.gui instanceof GuiContainer && isOnSkyblock()) {
-            if(overlay.keyboardInput(focusInv)) {
-                event.setCanceled(true);
-            }
-        }
     }
 
     /**
-     * This was code leftover from testing but it ended up in the final mod so I guess its staying here.
      * This makes it so that holding LCONTROL while hovering over an item with NBT will show the NBT of the item.
      * @param event
      */
@@ -557,6 +613,10 @@ public class NotEnoughUpdates {
                 }
             }
             event.toolTip.add(sb.toString());
+            if(Keyboard.isKeyDown(Keyboard.KEY_H)) {
+                StringSelection selection = new StringSelection(sb.toString());
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+            }
         }
     }
 

@@ -18,10 +18,13 @@ import java.util.function.Consumer;
 
 public class HypixelApi {
 
+    /**
+     * Not currently used as of BETA-1.6.
+     */
+
     private Gson gson = new Gson();
     private ExecutorService es = Executors.newSingleThreadExecutor();
 
-    //https://api.hypixel.net/skyblock/profiles?key=06b20aa2-ff04-4851-9687-669c8111526f&uuid=d0e05de7-6067-454d-beae-c6d19d886191
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {
         getHypixelApiAsync(generateApiUrl(apiKey, method, args), consumer);
     }

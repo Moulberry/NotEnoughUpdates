@@ -2,6 +2,9 @@ package io.github.moulberry.notenoughupdates.util;
 
 import org.lwjgl.input.Keyboard;
 
+/**
+ * Utility used for positioning GUI elements during development.
+ */
 public class TexLoc {
 
     public int x;

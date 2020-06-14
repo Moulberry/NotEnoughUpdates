@@ -24,21 +24,21 @@ public abstract class InfoPane extends Gui  {
 
     public abstract void mouseInput(int width, int height, int mouseX, int mouseY, boolean mouseDown);
 
-    public abstract void keyboardInput();
+    public abstract boolean keyboardInput();
 
     public void renderDefaultBackground(int width, int height, Color bg) {
         int paneWidth = (int)(width/3*overlay.getWidthMult());
         int rightSide = (int)(width*overlay.getInfoPaneOffsetFactor());
         int leftSide = rightSide - paneWidth;
 
-        int boxLeft = leftSide + overlay.BOX_PADDING - 5;
-        int boxRight = rightSide - overlay.BOX_PADDING + 5;
+        int boxLeft = leftSide + overlay.getBoxPadding() - 5;
+        int boxRight = rightSide - overlay.getBoxPadding() + 5;
 
         overlay.renderBlurredBackground(width, height,
-                boxLeft, overlay.BOX_PADDING-5,
-                boxRight-boxLeft, height-overlay.BOX_PADDING*2+10);
-        drawRect(boxLeft, overlay.BOX_PADDING - 5, boxRight,
-                height - overlay.BOX_PADDING + 5, bg.getRGB());
+                boxLeft, overlay.getBoxPadding()-5,
+                boxRight-boxLeft, height-overlay.getBoxPadding()*2+10);
+        drawRect(boxLeft, overlay.getBoxPadding() - 5, boxRight,
+                height - overlay.getBoxPadding() + 5, bg.getRGB());
     }
 
 }

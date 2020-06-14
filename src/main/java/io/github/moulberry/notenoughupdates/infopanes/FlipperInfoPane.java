@@ -21,6 +21,10 @@ import java.util.List;
 
 public class FlipperInfoPane extends InfoPane {
 
+    /**
+     * Not currently used in BETA-1.6
+     */
+
     protected String title;
     protected String text;
 
@@ -46,7 +50,7 @@ public class FlipperInfoPane extends InfoPane {
         int leftSide = rightSide - paneWidth;
 
         int titleLen = fr.getStringWidth(title);
-        fr.drawString(title, (leftSide+rightSide-titleLen)/2, overlay.BOX_PADDING + 5,
+        fr.drawString(title, (leftSide+rightSide-titleLen)/2, overlay.getBoxPadding() + 5,
                 Color.WHITE.getRGB());
 
         int y = 0;
@@ -73,8 +77,8 @@ public class FlipperInfoPane extends InfoPane {
         fr.drawString("Incl. Stackables: ", x, y, Color.WHITE.getRGB());
         drawButton(x, y, false);
 
-        drawRect(leftSide+overlay.BOX_PADDING-5, overlay.BOX_PADDING-5,
-                rightSide-overlay.BOX_PADDING+5, height-overlay.BOX_PADDING+5, bg.getRGB());
+        drawRect(leftSide+overlay.getBoxPadding()-5, overlay.getBoxPadding()-5,
+                rightSide-overlay.getBoxPadding()+5, height-overlay.getBoxPadding()+5, bg.getRGB());
     }
 
     private void drawButton(int x, int y, boolean enabled) {
@@ -87,8 +91,8 @@ public class FlipperInfoPane extends InfoPane {
 
     }
 
-    public void keyboardInput() {
-
+    public boolean keyboardInput() {
+        return false;
     }
 
     private int renderParagraph(int width, int height, int startY, String text, Color bg) {
@@ -100,9 +104,9 @@ public class FlipperInfoPane extends InfoPane {
 
         int yOff = 0;
         for(String line : text.split("\n")) {
-            yOff += Utils.renderStringTrimWidth(line, fr, false,leftSide+overlay.BOX_PADDING + 5,
-                    startY+overlay.BOX_PADDING + 10 + yOff,
-                    width*1/3-overlay.BOX_PADDING*2-10, Color.WHITE.getRGB(), -1);
+            yOff += Utils.renderStringTrimWidth(line, fr, false,leftSide+overlay.getBoxPadding() + 5,
+                    startY+overlay.getBoxPadding() + 10 + yOff,
+                    width*1/3-overlay.getBoxPadding()*2-10, Color.WHITE.getRGB(), -1);
             yOff += 16;
         }
 

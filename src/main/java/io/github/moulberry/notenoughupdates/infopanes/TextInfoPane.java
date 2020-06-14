@@ -29,30 +29,30 @@ public class TextInfoPane extends ScrollableInfoPane {
 
         int titleLen = fr.getStringWidth(title);
         int yScroll = -scrollHeight.getValue();
-        fr.drawString(title, (leftSide+rightSide-titleLen)/2, yScroll+overlay.BOX_PADDING + 5,
+        fr.drawString(title, (leftSide+rightSide-titleLen)/2, yScroll+overlay.getBoxPadding() + 5,
                 Color.WHITE.getRGB());
 
         int yOff = 20;
         for(String line : text.split("\n")) {
-            yOff += Utils.renderStringTrimWidth(line, fr, false,leftSide+overlay.BOX_PADDING + 5,
-                    yScroll+overlay.BOX_PADDING + 10 + yOff,
-                    width*1/3-overlay.BOX_PADDING*2-10, Color.WHITE.getRGB(), -1);
+            yOff += Utils.renderStringTrimWidth(line, fr, false,leftSide+overlay.getBoxPadding() + 5,
+                    yScroll+overlay.getBoxPadding() + 10 + yOff,
+                    width*1/3-overlay.getBoxPadding()*2-10, Color.WHITE.getRGB(), -1);
             yOff += 16;
         }
 
-        int top = overlay.BOX_PADDING - 5;
+        int top = overlay.getBoxPadding() - 5;
         int totalBoxHeight = yOff+14;
-        int bottom = Math.max(top+totalBoxHeight, height-overlay.BOX_PADDING+5);
+        int bottom = Math.max(top+totalBoxHeight, height-overlay.getBoxPadding()+5);
 
-        if(scrollHeight.getValue() > top+totalBoxHeight-(height-overlay.BOX_PADDING+5)) {
-            scrollHeight.setValue(top+totalBoxHeight-(height-overlay.BOX_PADDING+5));
+        if(scrollHeight.getValue() > top+totalBoxHeight-(height-overlay.getBoxPadding()+5)) {
+            scrollHeight.setValue(top+totalBoxHeight-(height-overlay.getBoxPadding()+5));
         }
-        drawRect(leftSide+overlay.BOX_PADDING-5, yScroll+overlay.BOX_PADDING-5,
-                rightSide-overlay.BOX_PADDING+5, yScroll+bottom, bg.getRGB());
+        drawRect(leftSide+overlay.getBoxPadding()-5, yScroll+overlay.getBoxPadding()-5,
+                rightSide-overlay.getBoxPadding()+5, yScroll+bottom, bg.getRGB());
     }
 
-    public void keyboardInput() {
-
+    public boolean keyboardInput() {
+        return false;
     }
 
     public void mouseInput(int width, int height, int mouseX, int mouseY, boolean mouseDown) {
