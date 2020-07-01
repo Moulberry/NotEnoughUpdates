@@ -54,7 +54,7 @@ public class NEUManager {
     public String viewItemAttemptID = null;
     public long viewItemAttemptTime = 0;
 
-    public String currentProfile = "";
+    public String currentProfile = "Papaya";
     public final HypixelApi hypixelApi = new HypixelApi();
 
     private ResourceLocation wkZip = new ResourceLocation("notenoughupdates:wkhtmltox.zip");
@@ -180,6 +180,25 @@ public class NEUManager {
         public float craftCost = -1;
     }
 
+    public boolean isVanillaItem(String internalname) {
+        //Removes trailing numbers and underscores, eg. LEAVES_2-3 -> LEAVES
+        String vanillaName = internalname.split("-")[0];
+        int sub = 0;
+        for(int i=vanillaName.length()-1; i>1; i--) {
+            char c = vanillaName.charAt(i);
+            if((int)c >= 48 && (int)c <= 57) { //0-9
+                sub++;
+            } else if(c == '_') {
+                sub++;
+                break;
+            } else {
+                break;
+            }
+        }
+        vanillaName = vanillaName.substring(0, vanillaName.length()-sub).toLowerCase();
+        return Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null;
+    }
+
     /**
      * Recursively calculates the cost of crafting an item from raw materials.
      */
@@ -189,24 +208,7 @@ public class NEUManager {
         } else {
             CraftInfo ci = new CraftInfo();
 
-            //Removes trailing numbers and underscores, eg. LEAVES_2-3 -> LEAVES
-            String vanillaName = internalname.split("-")[0];
-            int sub = 0;
-            for(int i=vanillaName.length()-1; i>1; i--) {
-                char c = vanillaName.charAt(i);
-                if((int)c >= 48 && (int)c <= 57) { //0-9
-                    sub++;
-                } else if(c == '_') {
-                    sub++;
-                    break;
-                } else {
-                    break;
-                }
-            }
-            vanillaName = vanillaName.substring(0, vanillaName.length()-sub);
-            if(Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null) {
-                ci.vanillaItem = true;
-            }
+            ci.vanillaItem = isVanillaItem(internalname);
 
             JsonObject auctionInfo = getItemAuctionInfo(internalname);
             JsonObject bazaarInfo = getBazaarInfo(internalname);
@@ -657,9 +659,29 @@ public class NEUManager {
     public Set<String> search(String query, boolean multi) {
         if(multi) {
             Set<String> result = new HashSet<>();
-            for(String query2 : query.split("\\|")) {
-                result.addAll(search(query2));
+
+            StringBuilder query2 = new StringBuilder();
+            char lastOp = '|';
+            for(char c : query.toCharArray()) {
+                if(c == '|' || c == '&') {
+                    if(lastOp == '|') {
+                        result.addAll(search(query2.toString()));
+                    } else if(lastOp == '&') {
+                        result.retainAll(search(query2.toString()));
+                    }
+
+                    query2 = new StringBuilder();
+                    lastOp = c;
+                } else {
+                    query2.append(c);
+                }
             }
+            if(lastOp == '|') {
+                result.addAll(search(query2.toString()));
+            } else if(lastOp == '&') {
+                result.retainAll(search(query2.toString()));
+            }
+
             return result;
         } else {
             return search(query);
@@ -670,6 +692,10 @@ public class NEUManager {
      * Returns the name of items which match a certain search query.
      */
     public Set<String> search(String query) {
+        query = query.trim();
+        boolean negate = query.startsWith("!");
+        if(negate) query = query.substring(1);
+
         LinkedHashSet<String> results = new LinkedHashSet<>();
         if(query.startsWith("title:")) {
             query = query.substring(6);
@@ -691,7 +717,16 @@ public class NEUManager {
             results.addAll(new TreeSet<>(search(query, titleWordMap)));
             results.addAll(new TreeSet<>(search(query, loreWordMap)));
         }
-        return results;
+        if(!negate) {
+            return results;
+        } else {
+            Set<String> negatedResults = new HashSet<>();
+            for(String internalname : itemMap.keySet()) {
+                negatedResults.add(internalname);
+            }
+            negatedResults.removeAll(results);
+            return negatedResults;
+        }
     }
 
     /**

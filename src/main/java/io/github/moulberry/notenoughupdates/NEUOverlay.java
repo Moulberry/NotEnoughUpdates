@@ -30,6 +30,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Matrix4f;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import net.minecraftforge.client.ClientCommandHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -62,10 +63,10 @@ public class NEUOverlay extends Gui {
     };
 
     private ResourceLocation[] orderIcons = new ResourceLocation[] {
-            order_alphabetical, order_rarity
+            order_alphabetical, order_rarity, order_value
     };
     private ResourceLocation[] orderIconsActive = new ResourceLocation[] {
-            order_alphabetical_active, order_rarity_active
+            order_alphabetical_active, order_rarity_active, order_value_active
     };
 
     //Various constants used for GUI structure
@@ -74,9 +75,8 @@ public class NEUOverlay extends Gui {
     private final int searchBarYSize = 40;
     private final int searchBarPadding = 2;
 
-    private static final int BOX_PADDING = 15;
-    public static  final int ITEM_PADDING = 4;
-    public static  final int ITEM_SIZE = 16;
+    public static final int ITEM_PADDING = 4;
+    public static final int ITEM_SIZE = 16;
 
     private Color bg = new Color(90, 90, 140, 50);
     private Color fg = new Color(100,100,100, 255);
@@ -97,6 +97,9 @@ public class NEUOverlay extends Gui {
 
     private boolean searchMode = false;
     private long millisLastLeftClick = 0;
+    private long millisLastMouseMove = 0;
+    private int lastMouseX = 0;
+    private int lastMouseY = 0;
 
     boolean mouseDown = false;
 
@@ -107,6 +110,7 @@ public class NEUOverlay extends Gui {
 
     private static final int COMPARE_MODE_ALPHABETICAL = 0;
     private static final int COMPARE_MODE_RARITY = 1;
+    private static final int COMPARE_MODE_VALUE = 2;
 
     private static final int SORT_MODE_ALL = 0;
     private static final int SORT_MODE_MOB = 1;
@@ -176,6 +180,13 @@ public class NEUOverlay extends Gui {
 
         int mouseX = Mouse.getX() / scaledresolution.getScaleFactor();
         int mouseY = height - Mouse.getY() / scaledresolution.getScaleFactor();
+
+        if(lastMouseX != mouseX || lastMouseY != mouseY) {
+            millisLastMouseMove = System.currentTimeMillis();
+        }
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
 
         if(Mouse.getEventButtonState()) {
             mouseDown = true;
@@ -288,8 +299,8 @@ public class NEUOverlay extends Gui {
         }
 
         //Clicking on "close info pane" button
-        if(mouseX > width*getInfoPaneOffsetFactor()-22 && mouseX < width*getInfoPaneOffsetFactor()-6) {
-            if(mouseY > 7 && mouseY < 23) {
+        if(mouseX > width*getInfoPaneOffsetFactor()-getBoxPadding()-8 && mouseX < width*getInfoPaneOffsetFactor()-getBoxPadding()+8) {
+            if(mouseY > getBoxPadding()-8 && mouseY < getBoxPadding()+8) {
                 if(Mouse.getEventButtonState() && Mouse.getEventButton() < 2) { //Left or right click up
                     displayInformationPane(null);
                     return true;
@@ -321,6 +332,9 @@ public class NEUOverlay extends Gui {
                                 String command = quickCommand.split(":")[0].trim();
                                 if(command.startsWith("/")) {
                                     NotEnoughUpdates.INSTANCE.sendChatMessage(command);
+                                    return true;
+                                } else {
+                                    ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command);
                                     return true;
                                 }
                             }
@@ -376,6 +390,8 @@ public class NEUOverlay extends Gui {
             if(mouseX < width*getInfoPaneOffsetFactor()) {
                 activeInfoPane.mouseInput(width, height, mouseX, mouseY, mouseDown);
                 return true;
+            } else if(Mouse.getEventButton() <= 1 && Mouse.getEventButtonState()) { //Left or right click
+                activeInfoPane.mouseInputOutside();
             }
         }
 
@@ -627,6 +643,12 @@ public class NEUOverlay extends Gui {
 
                 if(rarity1 < rarity2) return mult;
                 if(rarity1 > rarity2) return -mult;
+            } else if(getCompareMode() == COMPARE_MODE_VALUE) {
+                float cost1 = manager.getCraftCost(o1.get("internalname").getAsString()).craftCost;
+                float cost2 = manager.getCraftCost(o2.get("internalname").getAsString()).craftCost;
+
+                if(cost1 < cost2) return mult;
+                if(cost1 > cost2) return -mult;
             }
 
             String i1 = o1.get("internalname").getAsString();
@@ -776,7 +798,8 @@ public class NEUOverlay extends Gui {
     }
 
     public int getBoxPadding() {
-        return (BOX_PADDING-5)*2/scaledresolution.getScaleFactor()+5;
+        double panePadding = Math.max(0, Math.min(20, manager.config.panePadding.value));
+        return (int)(panePadding*2/scaledresolution.getScaleFactor()+5);
     }
 
     private abstract class ItemSlotConsumer {
@@ -1252,7 +1275,7 @@ public class NEUOverlay extends Gui {
 
         //Atomic reference used so that below lambda doesn't complain about non-effectively-final variable
         AtomicReference<JsonObject> tooltipToDisplay = new AtomicReference<>(null);
-
+        List<String> textToDisplay = null;
         if(itemPaneOffsetFactor.getValue() < 1) {
             renderBlurredBackground(width, height,
                     leftSide+getBoxPadding()-5, getBoxPadding()-5,
@@ -1290,6 +1313,19 @@ public class NEUOverlay extends Gui {
                 GlStateManager.color(1f, 1f, 1f, 1f);
                 Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE,0, 1, 0, 1, GL11.GL_NEAREST);
                 GlStateManager.bindTexture(0);
+
+                if(mouseY > iconTop && mouseY < iconTop+scaledITEM_SIZE) {
+                    if(mouseX > orderIconX && mouseX < orderIconX+scaledITEM_SIZE) {
+                        if(System.currentTimeMillis() - millisLastMouseMove > 400) {
+                            String text = EnumChatFormatting.GRAY+"Order ";
+                            if(i == COMPARE_MODE_ALPHABETICAL) text += "Alphabetically";
+                            else if(i == COMPARE_MODE_RARITY) text += "by Rarity";
+                            else if(i == COMPARE_MODE_VALUE) text += "by Item Worth";
+                            else text = null;
+                            if(text != null) textToDisplay = Utils.createList(text);
+                        }
+                    }
+                }
             }
 
             for(int i=0; i<sortIcons.length; i++) {
@@ -1299,6 +1335,22 @@ public class NEUOverlay extends Gui {
                 GlStateManager.color(1f, 1f, 1f, 1f);
                 Utils.drawTexturedRect(sortIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
                 GlStateManager.bindTexture(0);
+
+                if(mouseY > iconTop && mouseY < iconTop+scaledITEM_SIZE) {
+                    if(mouseX > sortIconX && mouseX < sortIconX+scaledITEM_SIZE) {
+                        if(System.currentTimeMillis() - millisLastMouseMove > 400) {
+                            String text = EnumChatFormatting.GRAY+"Filter ";
+                            if(i == SORT_MODE_ALL) text = EnumChatFormatting.GRAY+"No Filter";
+                            else if(i == SORT_MODE_MOB) text += "Mobs";
+                            else if(i == SORT_MODE_PET) text += "Pets";
+                            else if(i == SORT_MODE_TOOL) text += "Tools";
+                            else if(i == SORT_MODE_ARMOR) text += "Armor";
+                            else if(i == SORT_MODE_ACCESSORY) text += "Accessories";
+                            else text = null;
+                            if(text != null) textToDisplay = Utils.createList(text);
+                        }
+                    }
+                }
             }
 
             if(!hoverInv) {
@@ -1355,7 +1407,7 @@ public class NEUOverlay extends Gui {
 
             GlStateManager.color(1f, 1f, 1f, 1f);
             Minecraft.getMinecraft().getTextureManager().bindTexture(close);
-            Utils.drawTexturedRect(rightSide-22, 7, 16, 16);
+            Utils.drawTexturedRect(rightSide-getBoxPadding()-8, getBoxPadding()-8, 16, 16);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
         }
 
@@ -1567,7 +1619,10 @@ public class NEUOverlay extends Gui {
             if(hasClick) text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"LMB/R : View recipe!");
             if(hasInfo) text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"RMB : View additional information!");
 
-            Utils.drawHoveringText(text, mouseX, mouseY, width, height, -1, fr);
+            textToDisplay = text;
+        }
+        if(textToDisplay != null) {
+            Utils.drawHoveringText(textToDisplay, mouseX, mouseY, width, height, -1, fr);
         }
     }
 

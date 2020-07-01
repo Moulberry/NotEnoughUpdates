@@ -14,11 +14,18 @@ public class GuiTextures {
     public static final ResourceLocation item_edit = new ResourceLocation("notenoughupdates:item_edit.png");
     public static final ResourceLocation close = new ResourceLocation("notenoughupdates:close.png");
     public static final ResourceLocation settings = new ResourceLocation("notenoughupdates:settings.png");
+
     public static final ResourceLocation off = new ResourceLocation("notenoughupdates:off.png");
     public static final ResourceLocation on = new ResourceLocation("notenoughupdates:on.png");
     public static final ResourceLocation help = new ResourceLocation("notenoughupdates:help.png");
+    public static final ResourceLocation slider_off = new ResourceLocation("notenoughupdates:slider_off.png");
+    public static final ResourceLocation slider_on = new ResourceLocation("notenoughupdates:slider_on.png");
+    public static final ResourceLocation slider_button = new ResourceLocation("notenoughupdates:slider_button.png");
 
     public static final ResourceLocation item_mask = new ResourceLocation("notenoughupdates:item_mask.png");
+
+    public static final ResourceLocation ah_item_holder = new ResourceLocation("notenoughupdates:ah_item_holder.png");
+    public static final ResourceLocation ah_item_tab = new ResourceLocation("notenoughupdates:ah_item_tab.png");
 
     public static final ResourceLocation logo = new ResourceLocation("notenoughupdates:logo.png");
     public static final ResourceLocation logo_fg = new ResourceLocation("notenoughupdates:logo_fg.png");
@@ -39,8 +46,10 @@ public class GuiTextures {
 
     public static final ResourceLocation order_alphabetical = new ResourceLocation("notenoughupdates:order_alphabetical.png");
     public static final ResourceLocation order_rarity = new ResourceLocation("notenoughupdates:order_rarity.png");
+    public static final ResourceLocation order_value = new ResourceLocation("notenoughupdates:order_value.png");
     public static final ResourceLocation order_alphabetical_active = new ResourceLocation("notenoughupdates:order_alphabetical_active.png");
     public static final ResourceLocation order_rarity_active = new ResourceLocation("notenoughupdates:order_rarity_active.png");
+    public static final ResourceLocation order_value_active = new ResourceLocation("notenoughupdates:order_value_active.png");
     public static final ResourceLocation ascending_overlay = new ResourceLocation("notenoughupdates:ascending_overlay.png");
     public static final ResourceLocation descending_overlay = new ResourceLocation("notenoughupdates:descending_overlay.png");
 

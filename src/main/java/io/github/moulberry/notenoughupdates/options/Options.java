@@ -10,7 +10,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Options {
 
@@ -23,40 +25,50 @@ public class Options {
             false,
             "Enable Item Editing",
             true,
-            "Dev Feature. Please don't use.");
+            "Dev Feature.");
     public Option<Boolean> onlyShowOnSkyblock = new Option(
             true,
             "Only Show On Skyblock",
             false,
-            "GUI Overlay only appears when you are playing Skyblock.");
+            "NEU Overlay only appears when you are playing Skyblock.");
     public Option<Boolean> hidePotionEffect = new Option(
             true,
-            "Hide Potion Effect",
+            "Hide Potion Effects",
             false,
-            "If true, the potion effects will not show in the inventory GUI.");
+            "Potion effects are hidden in the inventory GUI. Contrib: All the gamers that play on GUI AUTO");
     public Option<Boolean> showQuickCommands = new Option(
             true,
             "Quick Commands",
             false,
-            "If true, shows quick commands above search bar.");
+            "Shows QuickCommands™ above search bar.");
     public Option<Boolean> advancedPriceInfo = new Option(
             false,
-            "Advanced Price Information",
+            "Adv. Item Price Info",
             false,
-            "Shows some extra information about item sales.");
+            "Shows some extra information about item prices.");
     public Option<Boolean> cacheRenderedItempane = new Option(
             true,
-            "Cache Rendered Itempane",
+            "Cache Itempane",
             false,
-            "Caches the drawn itempane, drastically improving performance. However, animated textures will not work.");
+            "Caches the drawn itempane, drastically improving performance. Animated textures will not work.");
+    public Option<Boolean> streamerMode = new Option(
+            false,
+            "Streamer Mode",
+            false,
+            "Hides or randomises some stuff on your screen to prevent sniping.");
+    public Option<Boolean> hideApiKey = new Option(
+            false,
+            "Hide Apikey Setting",
+            false,
+            "Hides the Apikey setting (please try not to leak Apikey if you're recording)");
     public Option<Double> bgBlurFactor = new Option(
-            10.0,
-            "Background Blur Factor",
+            5.0,
+            "Background Blur",
             false,
-            "Changes the strength of pane background blur. 0-50.");
+            "Changes the strength of pane background blur. 0-50.", 0, 50);
     public Option<String> apiKey = new Option(
             "",
-            "Api key used for certain features.",
+            "Api Key",
             false,
             "Type /api new to receive key and put it here.");
     public Option<Boolean> autoupdate = new Option(
@@ -71,24 +83,34 @@ public class Options {
             "If true, the itempane will stay open after the gui is closed.");
     public Option<Boolean> itemStyle = new Option(
             true,
-            "Circular Item BG Style",
+            "Circular Item Style",
             false,
-            "If true, uses the circular item background style instead of the square style.");
+            "Uses the circular item background style instead of the square style. Contrib: Calyps0");
+    public Option<Boolean> hideEmptyPanes = new Option(
+            true,
+            "Hide GUI Filler Tooltips",
+            false,
+            "Hides the tooltip of glass panes in skyblock GUIs. Contrib: ThatGravyBoat");
     public Option<Double> paneWidthMult = new Option(
             1.0,
-            "Pane Width Multiplier",
+            "Pane Width",
             false,
-            "Changes how wide the item and info panes are. Value between 0.5-1.5.");
+            "Changes how wide the item and info panes are. Value between 0.5-1.5.", 0.5, 1.5);
     public Option<Double> bgOpacity = new Option(
-            50.0,
+            30.0,
             "Pane Background Opacity",
             false,
-            "Changes the background colour opacity of item and info panes. Value between 0-255.");
+            "Changes the background colour opacity of item and info panes. Value between 0-255.", 0, 255);
     public Option<Double> fgOpacity = new Option(
             255.0,
             "Item Background Opacity",
             false,
-            "Changes the opacity of item background. Value between 0-255.");
+            "Changes the opacity of item background. Value between 0-255.", 0, 255);
+    public Option<Double> panePadding = new Option(
+            10.0,
+            "Pane Padding",
+            false,
+            "Changes the padding of the panes. Value between 0-20.", 0, 20);
 
     /**
      * OPTIONS THAT DON'T SHOW IN GUI
@@ -109,7 +131,7 @@ public class Options {
             false,
             "Sort Mode");
     public Option<ArrayList<Boolean>> compareAscending = new Option(
-            Utils.createList(true, true),
+            Utils.createList(true, true, true),
             "Compare Ascending",
             false,
             "Compare Ascending");
@@ -118,6 +140,11 @@ public class Options {
             "Favourites",
             false,
             "Favourites");
+    public Option<Map<String, ArrayList<String>>> collectionLog = new Option(
+            new HashMap<String, ArrayList<String>>(),
+            "CollectionLog",
+            false,
+            "CollectionLog");
     public Option<ArrayList<String>> quickCommands = new Option(
             createDefaultQuickCommands(),
             "Quick Commands",
@@ -131,31 +158,39 @@ public class Options {
         arr.add("/craft:CRAFTING_TABLE");
         arr.add("/enderchest:ENDER_CHEST");
         arr.add("/wardrobe:LEATHER_CHESTPLATE");
+        arr.add("/collectionlog:MAP");
         return arr;
     }
 
     public List<Option> getOptions() {
         List<Option> options = new ArrayList<>();
 
+        //Buttons
         tryAddOption(enableItemEditing, options);
         tryAddOption(onlyShowOnSkyblock, options);
         tryAddOption(hidePotionEffect, options);
         tryAddOption(advancedPriceInfo, options);
         tryAddOption(cacheRenderedItempane, options);
+        tryAddOption(streamerMode, options);
+        tryAddOption(hideApiKey, options);
         tryAddOption(autoupdate, options);
         tryAddOption(keepopen, options);
         tryAddOption(itemStyle, options);
+        tryAddOption(hideEmptyPanes, options);
+        //Sliders
         tryAddOption(bgBlurFactor, options);
-        tryAddOption(apiKey, options);
         tryAddOption(paneWidthMult, options);
         tryAddOption(bgOpacity, options);
         tryAddOption(fgOpacity, options);
+        tryAddOption(panePadding, options);
+        //Text
+        tryAddOption(apiKey, options);
 
         return options;
     }
 
     private void tryAddOption(Option<?> option, List<Option> list) {
-        if(!option.secret || dev.value) {
+        if(!option.secret) {// || dev.value) {
             list.add(option);
         }
     }
@@ -166,13 +201,21 @@ public class Options {
         public final transient String displayName;
         public final transient boolean secret;
         public final transient String desc;
+        public final transient double minValue;
+        public final transient double maxValue;
 
         public Option(T defaultValue, String displayName, boolean secret, String desc) {
+            this(defaultValue, displayName, secret, desc, 0, 100);
+        }
+
+        public Option(T defaultValue, String displayName, boolean secret, String desc, double minValue, double maxValue) {
             this.value = defaultValue;
             this.defaultValue = defaultValue;
             this.displayName = displayName;
             this.secret = secret;
             this.desc = desc;
+            this.minValue = minValue;
+            this.maxValue = maxValue;
         }
 
         public void setValue(String value) {
@@ -215,6 +258,12 @@ public class Options {
 
         for(Field f : Options.class.getDeclaredFields()) {
             try {
+                if(((Option)f.get(oDefault)).value instanceof List) {
+                    //If the default size of the list is greater than the loaded size, use the default value.
+                    if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
+                        continue;
+                    }
+                }
                 ((Option)f.get(oDefault)).value = ((Option)f.get(oLoad)).value;
             } catch (Exception e) { }
         }

@@ -84,13 +84,6 @@ public class NEUIO {
                     }
                 }
             }
-
-            /*for(GHContent content : repo.getDirectoryContent("items")) {
-                String oldSha = oldShas.get(content.getName());
-                if(!content.getSha().equals(oldSha)) {
-                    changedFiles.put(content.getName(), content.getSha());
-                }
-            }*/
         } catch(IOException e) {
             return null;
         }

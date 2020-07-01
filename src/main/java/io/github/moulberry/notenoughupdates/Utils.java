@@ -112,6 +112,10 @@ public class Utils {
         drawTexturedRect(x, y, width, height, uMin, uMax, vMin , vMax, GL11.GL_LINEAR);
     }
 
+    public static String cleanColour(String in) {
+        return in.replaceAll("(?i)\\u00A7.", "");
+    }
+
     public static void drawTexturedRect(float x, float y, float width, float height, float uMin, float uMax, float vMin, float vMax, int filter) {
         GlStateManager.enableTexture2D();
         GlStateManager.enableBlend();
@@ -136,34 +140,6 @@ public class Utils {
                 .pos(x, y, 0.0D)
                 .tex(uMin, vMin).endVertex();
         tessellator.draw();
-
-        /*Tessellator tessellator = Tessellator.getInstance();
-        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-        worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
-        worldrenderer
-                .pos(x, y + height, 0)
-                .tex(uMin, vMax).endVertex();
-        worldrenderer
-                .pos(x + width, y + height, 0)
-                .tex(uMax, vMax).endVertex();
-        worldrenderer
-                .pos(x + width, y, 0)
-                .tex(uMax, vMin).endVertex();
-        worldrenderer
-                .pos(x, y, 0)
-                .tex(uMin, vMin).endVertex();
-        tessellator.draw();*/
-
-        /*GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-        GL11.glTexCoord2f(uMin, vMin);
-        GL11.glVertex3f(x, y, 0.0F);
-        GL11.glTexCoord2f(uMin, vMax);
-        GL11.glVertex3f(x, y+height, 0.0F);
-        GL11.glTexCoord2f(uMax, vMin);
-        GL11.glVertex3f(x+width, y, 0.0F);
-        GL11.glTexCoord2f(uMax, vMax);
-        GL11.glVertex3f(x+width, y+height, 0.0F);
-        GL11.glEnd();*/
 
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
@@ -204,7 +180,21 @@ public class Utils {
         drawStringScaled(str, fr, x-len/2, y-fontHeight/2, shadow, colour, factor);
     }
 
+    public static void drawStringCenteredYScaled(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
+        int strLen = fr.getStringWidth(str);
+        float factor = len/(float)strLen;
+        float fontHeight = 8*factor;
+
+        drawStringScaled(str, fr, x, y-fontHeight/2, shadow, colour, factor);
+    }
+
     public static int renderStringTrimWidth(String str, FontRenderer fr, boolean shadow, int x, int y, int len, int colour, int maxLines) {
+        return renderStringTrimWidth(str, fr, shadow, x, y, len, colour, maxLines, 1);
+    }
+
+    public static int renderStringTrimWidth(String str, FontRenderer fr, boolean shadow, int x, int y, int len, int colour, int maxLines, float scale) {
+        len = (int)(len/scale);
+
         int yOff = 0;
         String excess;
         String trimmed = trimToWidth(str, len);
@@ -221,26 +211,27 @@ public class Utils {
         int lines = 0;
         while((lines++<maxLines) || maxLines<0) {
             if(trimmed.length() == str.length()) {
-                fr.drawString(trimmed, x, y + yOff, colour, shadow);
+                drawStringScaled(trimmed, fr, x, y+yOff, shadow, colour, scale);
+                //fr.drawString(trimmed, x, y + yOff, colour, shadow);
                 break;
             } else if(trimmed.isEmpty()) {
-                yOff -= 12;
+                yOff -= 12*scale;
                 break;
             } else {
                 if(firstLine) {
-                    fr.drawString(trimmed, x, y + yOff, colour, shadow);
+                    drawStringScaled(trimmed, fr, x, y+yOff, shadow, colour, scale);
                     firstLine = false;
                 } else {
                     if(trimmed.startsWith(" ")) {
                         trimmed = trimmed.substring(1);
                     }
-                    fr.drawString(colourCodes + trimmed, x, y + yOff, colour, shadow);
+                    drawStringScaled(colourCodes + trimmed, fr, x, y+yOff, shadow, colour, scale);
                 }
 
                 excess = str.substring(trimmedCharacters);
                 trimmed = trimToWidth(excess, len);
                 trimmedCharacters += trimmed.length();
-                yOff += 12;
+                yOff += 12*scale;
             }
         }
         return yOff;

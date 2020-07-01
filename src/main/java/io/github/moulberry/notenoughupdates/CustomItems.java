@@ -8,8 +8,8 @@ import net.minecraft.util.EnumChatFormatting;
 public class CustomItems {
 
     /**
-     * So it has come to this, huh? Snooping through the source to find all my carefully crafted easter eggs. Well
-     * guess what, you cheated not only the game, but yourself. You didn't grow. You didn't improve. You took a
+     * So it has come to this, huh? Snooping through the source to find all my carefully crafted easter eggs. You
+     * cheated not only the game, but yourself. You didn't grow. You didn't improve. You took a
      * shortcut and gained nothing. You experienced a hollow victory. Nothing was risked and nothing was gained.
      * It's sad that you don't know the difference.
      */
@@ -22,7 +22,7 @@ public class CustomItems {
             "Dirt, AOTD. Dirt, AOTD.",
             "Ooh, Dirt to Midas! Let's shake it up a little.",
             "",
-            "Also, Did you know that only 10% of the people watching are subscribed?",
+            "Also, did you know that only 8.7% of the people watching are subscribed?",
             "It's OK, everyone makes mistakes",
             "Also follow -> twitch.tv/nullzeelive",
             "Also -> discord.gg/nullzee");

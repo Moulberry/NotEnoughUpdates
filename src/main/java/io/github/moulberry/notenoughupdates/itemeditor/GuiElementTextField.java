@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 
 public class GuiElementTextField extends GuiElement {
 
+    public static final int SCALE_TEXT = 0b100000;
     public static final int NUM_ONLY = 0b10000;
     public static final int NO_SPACE = 0b01000;
     public static final int FORCE_CAPS = 0b00100;
@@ -55,6 +56,10 @@ public class GuiElementTextField extends GuiElement {
         return textField.getText();
     }
 
+    public void setText(String text) {
+        textField.setText(text);
+    }
+
     public void setSize(int searchBarXSize, int searchBarYSize) {
         this.searchBarXSize  = searchBarXSize;
         this.searchBarYSize = searchBarYSize;
@@ -87,6 +92,22 @@ public class GuiElementTextField extends GuiElement {
         int paddingUnscaled = searchBarPadding/scaledresolution.getScaleFactor();
 
         return searchBarXSize + paddingUnscaled*2;
+    }
+
+    private float getScaleFactor(String str) {
+        return Math.min(1, (searchBarXSize-2)/(float)Minecraft.getMinecraft().fontRendererObj.getStringWidth(str));
+    }
+
+    private boolean isScaling() {
+        return (options & SCALE_TEXT) != 0;
+    }
+
+    private float getStringWidth(String str) {
+        if(isScaling()) {
+            return Minecraft.getMinecraft().fontRendererObj.getStringWidth(str)*getScaleFactor(str);
+        } else {
+            return Minecraft.getMinecraft().fontRendererObj.getStringWidth(str);
+        }
     }
 
     public int getCursorPos(int mouseX, int mouseY) {
@@ -302,7 +323,7 @@ public class GuiElementTextField extends GuiElement {
                 }
             }
 
-            if((options & NUM_ONLY) != 0 && textField.getText().matches("[^0-9]")) textField.setText(old);
+            if((options & NUM_ONLY) != 0 && textField.getText().matches("[^0-9.]")) textField.setText(old);
         }
     }
 
@@ -364,8 +385,15 @@ public class GuiElementTextField extends GuiElement {
         for(int yOffI = 0; yOffI < texts.length; yOffI++) {
             int yOff = yOffI*extraSize;
 
-            Minecraft.getMinecraft().fontRendererObj.drawString(Utils.trimToWidth(texts[yOffI], searchBarXSize-10), x + 5,
-                    y+(searchBarYSize-8)/2+yOff, Color.WHITE.getRGB());
+            if(isScaling() && Minecraft.getMinecraft().fontRendererObj.getStringWidth(texts[yOffI])>searchBarXSize-10) {
+                Utils.drawStringCenteredScaledMaxWidth(texts[yOffI], Minecraft.getMinecraft().fontRendererObj, x+searchBarXSize/2f,
+                        y+searchBarYSize/2f+yOff, false,
+                        searchBarXSize-2, Color.WHITE.getRGB());
+            } else {
+                Minecraft.getMinecraft().fontRendererObj.drawString(Utils.trimToWidth(texts[yOffI], searchBarXSize-10), x + 5,
+                        y+(searchBarYSize-8)/2+yOff, Color.WHITE.getRGB());
+            }
+
         }
 
         if(focus && System.currentTimeMillis()%1000>500) {

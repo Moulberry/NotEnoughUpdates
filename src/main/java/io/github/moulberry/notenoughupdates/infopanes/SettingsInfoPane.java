@@ -30,6 +30,10 @@ public class SettingsInfoPane extends InfoPane {
     private int page = 0;
     private int maxPages = 1;
 
+    private Options.Option clickedSlider = null;
+    private int clickedSliderX = 0;
+    private float clickedSliderMult = 0;
+
     public SettingsInfoPane(NEUOverlay overlay, NEUManager manager) {
         super(overlay, manager);
     }
@@ -59,33 +63,65 @@ public class SettingsInfoPane extends InfoPane {
                 float mult = tileWidth/90f;
 
                 drawRect(x, y, x+tileWidth, y+tileHeight, fg.getRGB());
-                if(scaledresolution.getScaleFactor()==4) {
-                    GL11.glScalef(0.5f,0.5f,1);
-                    Utils.renderStringTrimWidth(option.displayName, fr, true, (x+(int)(8*mult))*2, (y+(int)(8*mult))*2,
-                            (tileWidth-(int)(16*mult))*2, new Color(100,255,150).getRGB(), 3);
-                    GL11.glScalef(2,2,1);
-                } else {
-                    Utils.renderStringTrimWidth(option.displayName, fr, true, x+(int)(8*mult), y+(int)(8*mult),
-                            tileWidth-(int)(16*mult), new Color(100,255,150).getRGB(), 3);
-                }
+
+                if(manager.config.hideApiKey.value && option==manager.config.apiKey) return;
+
+                Utils.renderStringTrimWidth(option.displayName, fr, true, x+(int)(8*mult), y+(int)(8*mult),
+                        tileWidth-(int)(16*mult), new Color(100,255,150).getRGB(), 3,
+                        2f/scaledresolution.getScaleFactor());
 
                 if(option.value instanceof Boolean) {
                     GlStateManager.color(1f, 1f, 1f, 1f);
-                    Minecraft.getMinecraft().getTextureManager().bindTexture(((Boolean)option.value) ? on : off);
-                    Utils.drawTexturedRect(x+tileWidth/2-(int)(32*mult), y+tileHeight-(int)(20*mult), (int)(48*mult), (int)(16*mult));
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(((Boolean) option.value) ? on : off);
+                    Utils.drawTexturedRect(x + tileWidth/2f - (int) (32 * mult), y + tileHeight - (int) (20 * mult), (int) (48 * mult), (int) (16 * mult));
 
                     Minecraft.getMinecraft().getTextureManager().bindTexture(help);
-                    Utils.drawTexturedRect(x+tileWidth/2+(int)(19*mult), y+tileHeight-(int)(19*mult), (int)(14*mult), (int)(14*mult));
+                    Utils.drawTexturedRect(x + tileWidth/2f + (int) (19 * mult), y + tileHeight - (int) (19 * mult), (int) (14 * mult), (int) (14 * mult));
                     GlStateManager.bindTexture(0);
 
-                    if(mouseX > x+tileWidth/2+(int)(19*mult) && mouseX < x+tileWidth/2+(int)(19*mult)+(int)(14*mult)) {
-                        if(mouseY > y+tileHeight-(int)(19*mult) && mouseY < y+tileHeight-(int)(19*mult)+(int)(14*mult)) {
+                    if (mouseX > x + tileWidth / 2 + (int) (19 * mult) && mouseX < x + tileWidth / 2 + (int) (19 * mult) + (int) (14 * mult)) {
+                        if (mouseY > y + tileHeight - (int) (19 * mult) && mouseY < y + tileHeight - (int) (19 * mult) + (int) (14 * mult)) {
                             List<String> textLines = new ArrayList<>();
                             textLines.add(option.displayName);
-                            textLines.add(EnumChatFormatting.GRAY+option.desc);
+                            textLines.add(EnumChatFormatting.GRAY + option.desc);
                             textToDisplay.set(textLines);
                         }
                     }
+                } else if(option.value instanceof Double) {
+                    if(!textConfigMap.containsKey(option)) {
+                        textConfigMap.put(option, new GuiElementTextField(String.valueOf(option.value),
+                                GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE | GuiElementTextField.SCALE_TEXT));
+                    }
+                    GuiElementTextField tf = textConfigMap.get(option);
+                    if(tf.getText().trim().endsWith(".0")) {
+                        tf.setText(tf.getText().trim().substring(0, tf.getText().trim().length()-2));
+                    }
+                    if(tf.getFocus()) {
+                        tf.setSize(Math.max((int)(20*mult), fr.getStringWidth(tf.getText())+10), (int)(16*mult));
+                        tfTop.set(tf);
+                        tfTopX.set(x+(int)(65*mult));
+                        tfTopY.set(y+tileHeight-(int)(20*mult));
+                    } else {
+                        tf.setSize((int)(20*mult), (int)(16*mult));
+                        tf.render(x+(int)(65*mult), y+tileHeight-(int)(20*mult));
+                    }
+
+                    double sliderAmount = (((Options.Option<Double>)option).value-option.minValue)/(option.maxValue-option.minValue);
+                    sliderAmount = Math.max(0, Math.min(1, sliderAmount));
+
+                    GlStateManager.color(1f, 1f, 1f, 1f);
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(slider_on);
+                    Utils.drawTexturedRect(x+5*mult, y + tileHeight-20*mult, (float)(54*mult*sliderAmount), 16*mult,
+                            0, (float)sliderAmount, 0, 1);
+
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(slider_off);
+                    Utils.drawTexturedRect((float)(x+5*mult+54*mult*sliderAmount), y + tileHeight - 20*mult,
+                            (float)(54*mult*(1-sliderAmount)), 16*mult,
+                            (float)(sliderAmount), 1, 0, 1);
+
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(slider_button);
+                    Utils.drawTexturedRect(x+1*mult+(float)(54*sliderAmount*mult), y + tileHeight - 20*mult,
+                            8*mult, 16*mult);
                 } else {
                     if(!textConfigMap.containsKey(option)) {
                         textConfigMap.put(option, new GuiElementTextField(String.valueOf(option.value), 0));
@@ -121,6 +157,13 @@ public class SettingsInfoPane extends InfoPane {
         }
     }
 
+    @Override
+    public void mouseInputOutside() {
+        for(GuiElementTextField tf : textConfigMap.values()) {
+            tf.otherComponentClick();
+        }
+    }
+
     public void mouseInput(int width, int height, int mouseX, int mouseY, boolean mouseDown) {
         iterateSettingTile(new SettingsTileConsumer() {
             @Override
@@ -136,13 +179,74 @@ public class SettingsInfoPane extends InfoPane {
                             }
                         }
                     }
+                } else if(option.value instanceof Double) {
+                    if(!textConfigMap.containsKey(option)) {
+                        textConfigMap.put(option, new GuiElementTextField(String.valueOf(option.value),
+                                GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE | GuiElementTextField.SCALE_TEXT));
+                    }
+
+                    GuiElementTextField tf = textConfigMap.get(option);
+                    int tfX = x+(int)(65*mult);
+                    int tfY = y+tileHeight-(int)(20*mult);
+                    int tfWidth = tf.getWidth();
+                    int tfHeight = tf.getHeight();
+                    if(mouseY > tfY && mouseY < tfY+tfHeight) {
+                        if(mouseX > tfX && mouseX < tfX+tfWidth) {
+                            if(Mouse.getEventButtonState()) {
+                                tf.mouseClicked(mouseX, mouseY, Mouse.getEventButton());
+                                onTextfieldChange(tf, option);
+                                return;
+                            } else if(Mouse.getEventButton() == -1 && mouseDown) {
+                                tf.mouseClickMove(mouseX, mouseY, 0, 0); //last 2 values are unused
+                                return;
+                            }
+                        } else if(clickedSlider != option && Mouse.getEventButtonState() && mouseX > x+1*mult && mouseX < x+63*mult) {
+                            clickedSlider = option;
+                            clickedSliderX = x;
+                            clickedSliderMult = mult;
+                        }
+                    }
+
+                    if(clickedSlider == option) {
+                        float xMin = clickedSliderX+5*clickedSliderMult;
+                        float xMax = clickedSliderX+59*clickedSliderMult;
+
+                        float sliderAmount = (mouseX - xMin)/(xMax - xMin);
+                        sliderAmount = Math.max(0, Math.min(1, sliderAmount));
+
+                        double range = option.maxValue - option.minValue;
+                        double value = option.minValue + sliderAmount*range;
+
+                        if(range >= 10) {
+                            value = Math.round(value);
+                        } else if(range >= 1) {
+                            value = Math.round(value*10)/10.0;
+                        } else {
+                            value = Math.round(value*100)/100.0;
+                        }
+
+                        value = Math.max(option.minValue, Math.min(option.maxValue, value));
+
+                        tf.setText(String.valueOf(value));
+                        onTextfieldChange(tf, option);
+
+                        if(Mouse.getEventButton() == 0 && !Mouse.getEventButtonState()) {
+                            clickedSlider = null;
+                        }
+                    }
+
+                    if(Mouse.getEventButtonState()) tf.otherComponentClick();
                 } else {
                     if(!textConfigMap.containsKey(option)) {
                         textConfigMap.put(option, new GuiElementTextField(String.valueOf(option.value), 0));
                     }
                     GuiElementTextField tf = textConfigMap.get(option);
-                    if(mouseX > x+(int)(10*mult) && mouseX < x+(int)(10*mult)+tileWidth-(int)(20*mult)) {
-                        if(mouseY > y+tileHeight-(int)(20*mult) && mouseY < y+tileHeight-(int)(20*mult)+(int)(16*mult)) {
+                    int tfX = x+(int)(10*mult);
+                    int tfY = y+tileHeight-(int)(20*mult);
+                    int tfWidth = tf.getWidth();
+                    int tfHeight = tf.getHeight();
+                    if(mouseX > tfX && mouseX < tfX+tfWidth) {
+                        if(mouseY > tfY && mouseY < tfY+tfHeight) {
                             if(Mouse.getEventButtonState()) {
                                 tf.mouseClicked(mouseX, mouseY, Mouse.getEventButton());
                                 onTextfieldChange(tf, option);

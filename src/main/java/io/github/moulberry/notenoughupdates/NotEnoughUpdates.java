@@ -6,14 +6,20 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
+import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
+import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -23,6 +29,7 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Session;
 import net.minecraft.util.StatCollector;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
@@ -32,6 +39,7 @@ import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
@@ -83,6 +91,29 @@ public class NotEnoughUpdates {
         return s;
     }
 
+    ScheduledExecutorService guiDelaySES = Executors.newScheduledThreadPool(1);
+    SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
+                guiDelaySES.schedule(()->{
+                    Minecraft.getMinecraft().displayGuiScreen(new GuiInventory(Minecraft.getMinecraft().thePlayer));
+                }, 10L, TimeUnit.MILLISECONDS);
+            }
+            manager.updatePrices();
+            overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
+        }
+    });
+
+    SimpleCommand neuAhCommand = new SimpleCommand("neuah", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
+                guiDelaySES.schedule(()->{
+                    Minecraft.getMinecraft().displayGuiScreen(new CustomAH(manager));
+                }, 10L, TimeUnit.MILLISECONDS);
+            }
+        }
+    });
+
     /**
      * Instantiates NEUIo, NEUManager and NEUOverlay instances. Registers keybinds and adds a shutdown hook to clear tmp folder.
      * @param event
@@ -94,6 +125,9 @@ public class NotEnoughUpdates {
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         f.mkdirs();
+        ClientCommandHandler.instance.registerCommand(collectionLogCommand);
+        ClientCommandHandler.instance.registerCommand(neuAhCommand);
+
         neuio = new NEUIO(getAccessToken());
         manager = new NEUManager(this, neuio, f);
         manager.loadItemInformation();
@@ -165,15 +199,63 @@ public class NotEnoughUpdates {
     }
 
     /**
-     * Will send the cached message from #sendChatMessage when at least 200ms has passed since the last message.
+     * 1)Will send the cached message from #sendChatMessage when at least 200ms has passed since the last message.
      * This is used in order to prevent the mod spamming messages.
+     * 2)Adds unique items to the collection log
      */
-    @EventHandler
+    private HashMap<String, Long> newItemAddMap = new HashMap<>();
+    @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if(currChatMessage != null && System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
             lastChatMessage = System.currentTimeMillis();
             Minecraft.getMinecraft().thePlayer.sendChatMessage(currChatMessage);
             currChatMessage = null;
+        }
+        if(hasSkyblockScoreboard() && manager.currentProfile != null && manager.currentProfile.length() > 0) {
+            HashSet<String> newItem = new HashSet<>();
+            for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
+                processUniqueStack(stack, newItem);
+            }
+            boolean usableContainer = true;
+            for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
+                if(stack == null) {
+                    continue;
+                }
+                if(stack.hasTagCompound()) {
+                    NBTTagCompound tag = stack.getTagCompound();
+                    if(tag.hasKey("ExtraAttributes", 10)) {
+                        continue;
+                    }
+                }
+                usableContainer = false;
+                break;
+            }
+            if(usableContainer) {
+                for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
+                    processUniqueStack(stack, newItem);
+                }
+            }
+            newItemAddMap.keySet().retainAll(newItem);
+        }
+    }
+
+    private void processUniqueStack(ItemStack stack, HashSet<String> newItem) {
+        if(stack != null && stack.hasTagCompound()) {
+            String internalname = manager.getInternalNameForItem(stack);
+            if(internalname != null) {
+                ArrayList<String> log = manager.config.collectionLog.value.computeIfAbsent(
+                        manager.currentProfile, k -> new ArrayList<>());
+                if(!log.contains(internalname)) {
+                    newItem.add(internalname);
+                    if(newItemAddMap.containsKey(internalname)) {
+                        if(System.currentTimeMillis() - newItemAddMap.get(internalname) > 1000) {
+                            log.add(internalname);
+                        }
+                    } else {
+                        newItemAddMap.put(internalname, System.currentTimeMillis());
+                    }
+                }
+            }
         }
     }
 
@@ -302,8 +384,9 @@ public class NotEnoughUpdates {
     /**
      * 1) When receiving "You are playing on profile" messages, will set the current profile.
      * 2) When a /viewrecipe command fails (i.e. player does not have recipe unlocked, will open the custom recipe GUI)
+     * 3) Replaces lobby join notifications when streamer mode is active
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOW)
     public void onGuiChat(ClientChatReceivedEvent e) {
         String r = null;
         String unformatted = e.message.getUnformattedText().replaceAll("(?i)\\u00A7.", "");
@@ -319,11 +402,19 @@ public class NotEnoughUpdates {
                 EnumChatFormatting.RED+"Invalid recipe ")) {
             r = "";
         }
-       if(r != null) {
+        if(r != null) {
             if(manager.failViewItem(r)) {
                 e.setCanceled(true);
             }
             missingRecipe.set(true);
+        }
+        //System.out.println(e.message);
+        if(isOnSkyblock() && manager.config.streamerMode.value && e.message instanceof ChatComponentText) {
+            String m = e.message.getFormattedText();
+            String m2 = StreamerMode.filterChat(e.message.getFormattedText());
+            if(!m.equals(m2)) {
+                e.message = new ChatComponentText(m2);
+            }
         }
     }
 
@@ -441,6 +532,9 @@ public class NotEnoughUpdates {
                             JOptionPane.PLAIN_MESSAGE,
                             null, new String[]{"Enter"}, "Enter");
                     resInternalname = tf.getText();
+                    if(resInternalname.trim().length() == 0) {
+                        return;
+                    }
 
                     JsonObject recipe = new JsonObject();
 
@@ -536,6 +630,16 @@ public class NotEnoughUpdates {
      */
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
+        if(!isOnSkyblock()) return;
+        if(manager.config.hideEmptyPanes.value &&
+                event.itemStack.getItem().equals(Item.getItemFromBlock(Blocks.stained_glass_pane))) {
+            String first = Utils.cleanColour(event.toolTip.get(0));
+            first = first.replaceAll("\\(.*\\)", "").trim();
+            if(first.length() == 0) {
+                event.toolTip.clear();
+            }
+        }
+        //AH prices
         if(Minecraft.getMinecraft().currentScreen != null) {
             if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
                 GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
@@ -623,7 +727,10 @@ public class NotEnoughUpdates {
     //Stolen from Biscut's SkyblockAddons
     public boolean isOnSkyblock() {
         if(!manager.config.onlyShowOnSkyblock.value) return true;
+        return hasSkyblockScoreboard();
+    }
 
+    public boolean hasSkyblockScoreboard() {
         Minecraft mc = Minecraft.getMinecraft();
 
         if (mc != null && mc.theWorld != null) {
