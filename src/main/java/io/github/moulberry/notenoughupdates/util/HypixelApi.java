@@ -23,10 +23,10 @@ public class HypixelApi {
      */
 
     private Gson gson = new Gson();
-    private ExecutorService es = Executors.newSingleThreadExecutor();
+    private ExecutorService es = Executors.newCachedThreadPool();
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {
-        getHypixelApiAsync(generateApiUrl(apiKey, method, args), consumer);
+        getHypixelApiAsync(generateApiUrl(apiKey.trim(), method, args), consumer);
     }
 
     public void getHypixelApiAsync(String urlS, Consumer<JsonObject> consumer) {

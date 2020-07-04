@@ -2,7 +2,7 @@ package io.github.moulberry.notenoughupdates.infopanes;
 
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
-import io.github.moulberry.notenoughupdates.Utils;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;

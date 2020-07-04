@@ -1,16 +1,13 @@
 package io.github.moulberry.notenoughupdates.itemeditor;
 
-import com.google.common.base.Predicate;
-import io.github.moulberry.notenoughupdates.Utils;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.EnumChatFormatting;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.Nullable;
 import java.awt.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

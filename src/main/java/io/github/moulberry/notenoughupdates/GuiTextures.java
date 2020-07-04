@@ -11,7 +11,6 @@ public class GuiTextures {
     //public static final ResourceLocation next = new ResourceLocation("notenoughupdates:next.png");
     public static final ResourceLocation rightarrow_overlay = new ResourceLocation("notenoughupdates:rightarrow_overlay.png");
     public static final ResourceLocation rightarrow = new ResourceLocation("notenoughupdates:rightarrow.png");
-    public static final ResourceLocation item_edit = new ResourceLocation("notenoughupdates:item_edit.png");
     public static final ResourceLocation close = new ResourceLocation("notenoughupdates:close.png");
     public static final ResourceLocation settings = new ResourceLocation("notenoughupdates:settings.png");
 
@@ -24,8 +23,9 @@ public class GuiTextures {
 
     public static final ResourceLocation item_mask = new ResourceLocation("notenoughupdates:item_mask.png");
 
-    public static final ResourceLocation ah_item_holder = new ResourceLocation("notenoughupdates:ah_item_holder.png");
-    public static final ResourceLocation ah_item_tab = new ResourceLocation("notenoughupdates:ah_item_tab.png");
+    public static final ResourceLocation auction_view = new ResourceLocation("notenoughupdates:auction_view.png");
+    public static final ResourceLocation auction_price = new ResourceLocation("notenoughupdates:auction_price.png");
+    public static final ResourceLocation auction_view_buttons = new ResourceLocation("notenoughupdates:auction_view_buttons.png");
 
     public static final ResourceLocation logo = new ResourceLocation("notenoughupdates:logo.png");
     public static final ResourceLocation logo_fg = new ResourceLocation("notenoughupdates:logo_fg.png");

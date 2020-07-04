@@ -6,6 +6,7 @@ import io.github.moulberry.notenoughupdates.infopanes.*;
 import io.github.moulberry.notenoughupdates.itemeditor.NEUItemEditor;
 import io.github.moulberry.notenoughupdates.util.LerpingFloat;
 import io.github.moulberry.notenoughupdates.util.LerpingInteger;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -151,16 +152,17 @@ public class NEUOverlay extends Gui {
             for (int i = 0; i < lore.size(); i++) loreA[i] = lore.get(i).getAsString();
             String loreS = StringUtils.join(loreA, "\n");
 
+            String internalname = item.get("internalname").getAsString();
             String name = item.get("displayname").getAsString();
             switch(item.get("infoType").getAsString()) {
                 case "WIKI_URL":
                     displayInformationPane(HTMLInfoPane.createFromWikiUrl(this, manager, name, loreS));
                     return;
                 case "WIKI":
-                    displayInformationPane(HTMLInfoPane.createFromWiki(this, manager, name, loreS));
+                    displayInformationPane(HTMLInfoPane.createFromWiki(this, manager, name, internalname, loreS));
                     return;
                 case "HTML":
-                    displayInformationPane(new HTMLInfoPane(this, manager, name, loreS));
+                    displayInformationPane(new HTMLInfoPane(this, manager, name, internalname, loreS));
                     return;
             }
             displayInformationPane(new TextInfoPane(this, manager, name, loreS));
@@ -964,6 +966,10 @@ public class NEUOverlay extends Gui {
         return Math.min(255, Math.max(0, col));
     }
 
+    public boolean isUsingMobsFilter() {
+        return getSortMode() == SORT_MODE_MOB;
+    }
+
     public float yaw = 0;
     public float pitch = 20;
 
@@ -1395,23 +1401,6 @@ public class NEUOverlay extends Gui {
         }
 
         /**
-         * Item info (left) gui element rendering
-         */
-
-        rightSide = (int)(width*getInfoPaneOffsetFactor());
-        leftSide = rightSide - paneWidth;
-
-        if(activeInfoPane != null) {
-            activeInfoPane.tick();
-            activeInfoPane.render(width, height, bg, fg, scaledresolution, mouseX, mouseY);
-
-            GlStateManager.color(1f, 1f, 1f, 1f);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(close);
-            Utils.drawTexturedRect(rightSide-getBoxPadding()-8, getBoxPadding()-8, 16, 16);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-        }
-
-        /**
          * Search bar
          */
         int paddingUnscaled = searchBarPadding/scaledresolution.getScaleFactor();
@@ -1438,10 +1427,10 @@ public class NEUOverlay extends Gui {
             int y = topTextBox - bigItemSize - bigItemPadding - paddingUnscaled*2;
 
             for(String quickCommand : quickCommands) {
-                if(!quickCommand.contains(":")) {
+                if(quickCommand.split(":").length!=3) {
                     continue;
                 }
-                String display = quickCommand.split(":")[1];
+                String display = quickCommand.split(":")[2];
                 ItemStack render = null;
                 float extraScale = 1;
                 if(display.length() > 20) { //Custom head
@@ -1482,6 +1471,13 @@ public class NEUOverlay extends Gui {
                     GlStateManager.color(fg.getRed() / 255f,fg.getGreen() / 255f,
                             fg.getBlue() / 255f, fg.getAlpha() / 255f);
                     Utils.drawTexturedRect(x, y, bigItemSize, bigItemSize, GL11.GL_NEAREST);
+
+                    if(mouseX > x && mouseX < x+bigItemSize) {
+                        if(mouseY > y && mouseY < y+bigItemSize) {
+                            textToDisplay = new ArrayList<>();
+                            textToDisplay.add(EnumChatFormatting.GRAY+quickCommand.split(":")[1]);
+                        }
+                    }
 
                     float itemScale = bigItemSize/(float)ITEM_SIZE*extraScale;
                     GlStateManager.pushMatrix();
@@ -1559,6 +1555,23 @@ public class NEUOverlay extends Gui {
                     topTextBox+(getSearchBarYSize()-8)/2, Color.BLACK.getRGB());
         }
 
+        /**
+         * Item info (left) gui element rendering
+         */
+
+        rightSide = (int)(width*getInfoPaneOffsetFactor());
+        leftSide = rightSide - paneWidth;
+
+        if(activeInfoPane != null) {
+            activeInfoPane.tick();
+            activeInfoPane.render(width, height, bg, fg, scaledresolution, mouseX, mouseY);
+
+            GlStateManager.color(1f, 1f, 1f, 1f);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(close);
+            Utils.drawTexturedRect(rightSide-getBoxPadding()-8, getBoxPadding()-8, 16, 16);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        }
+
         //Render tooltip
         JsonObject json = tooltipToDisplay.get();
         if(json != null) {
@@ -1624,6 +1637,12 @@ public class NEUOverlay extends Gui {
         if(textToDisplay != null) {
             Utils.drawHoveringText(textToDisplay, mouseX, mouseY, width, height, -1, fr);
         }
+
+        GlStateManager.enableBlend();
+        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.disableLighting();
     }
 
     /**

@@ -2,7 +2,7 @@ package io.github.moulberry.notenoughupdates.infopanes;
 
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
-import io.github.moulberry.notenoughupdates.Utils;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.options.Options;
 import net.minecraft.client.Minecraft;
@@ -12,7 +12,6 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.ArrayList;

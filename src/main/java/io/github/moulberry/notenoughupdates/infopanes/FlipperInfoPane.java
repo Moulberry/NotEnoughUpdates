@@ -2,22 +2,17 @@ package io.github.moulberry.notenoughupdates.infopanes;
 
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
-import io.github.moulberry.notenoughupdates.Utils;
-import io.github.moulberry.notenoughupdates.itemeditor.GuiElementButton;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.EnumChatFormatting;
-import org.lwjgl.opengl.GL11;
 
 import static io.github.moulberry.notenoughupdates.GuiTextures.*;
 import static io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField.*;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class FlipperInfoPane extends InfoPane {
 

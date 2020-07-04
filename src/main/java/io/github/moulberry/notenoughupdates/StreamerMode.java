@@ -20,7 +20,7 @@ public class StreamerMode {
             long obfLobbyNum = (lobbyNum*9182739 + 11) % 500;
             char obfLobbyLetter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt((int)(obfLobbyNum%26));
 
-            line = line.replaceAll("(mini|mega)([0-9]{1,3}[A-Z])", lobbyType+obfLobbyNum+obfLobbyLetter);
+            line = line.replaceAll("(mini|mega|m|M)([0-9]{1,3}[A-Z])", lobbyType+obfLobbyNum+obfLobbyLetter);
         }
         return line;
     }

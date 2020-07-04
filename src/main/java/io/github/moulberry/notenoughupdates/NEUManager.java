@@ -1,10 +1,8 @@
 package io.github.moulberry.notenoughupdates;
 
-import com.google.common.io.CharSource;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.options.Options;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
-import javafx.scene.control.Alert;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Items;
@@ -12,21 +10,19 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.network.play.client.C0DPacketCloseWindow;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 
 import javax.swing.*;
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.text.NumberFormat;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -54,7 +50,7 @@ public class NEUManager {
     public String viewItemAttemptID = null;
     public long viewItemAttemptTime = 0;
 
-    public String currentProfile = "Papaya";
+    public String currentProfile = "";
     public final HypixelApi hypixelApi = new HypixelApi();
 
     private ResourceLocation wkZip = new ResourceLocation("notenoughupdates:wkhtmltox.zip");
@@ -63,6 +59,11 @@ public class NEUManager {
     private static final String AUCTIONS_PRICE_URL = "https://moulberry.github.io/files/auc_avg_jsons/average_3day.json.gz";
     private JsonObject auctionPricesJson = null;
     private long auctionLastUpdate = 0;
+
+    private TreeMap<String, Auction> auctionItems = new TreeMap<>();
+    public CustomAH customAH = new CustomAH(this);
+
+    private HashMap<String, String> uuidToName = new HashMap<>();
 
     private HashMap<String, CraftInfo> craftCost = new HashMap<>();
 
@@ -105,73 +106,47 @@ public class NEUManager {
             } catch (IOException e) {
             }
         }
+    }
 
-        //Unused code, used to automatically grab items from auctions. Leaving here in case I need it.
-        /*try {
-            for(int j=0; j<=89; j++) {
-                JsonObject auctions0 = getJsonFromFile(new File(configLocation, "auctions/auctions"+j+".json"));
+    public class Auction {
+        public String auctioneerUuid;
+        public long end;
+        public int starting_bid;
+        public int highest_bid_amount;
+        public int bid_count;
+        public boolean bin;
+        public String category;
+        public String extras;
+        public String item_bytes;
+        private ItemStack stack;
 
-                JsonArray arr = auctions0.getAsJsonArray("auctions");
-                for(int i=0; i<arr.size(); i++) {
-                    JsonObject item0 = arr.get(i).getAsJsonObject();
-                    try {
-                        String item_bytes = item0.get("item_bytes").getAsString();
-
-                        NBTTagCompound tag = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
-                        tag = tag.getTagList("i", 10).getCompoundTagAt(0);
-                        int id = tag.getShort("id");
-                        int damage = tag.getShort("Damage");
-                        tag = tag.getCompoundTag("tag");
-
-                        String internalname = "";
-                        if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
-                            NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
-
-                            if(ea.hasKey("id", 8)) {
-                                internalname = ea.getString("id");
-                            }
-                        }
-
-                        String[] lore = new String[0];
-                        NBTTagCompound display = tag.getCompoundTag("display");
-
-                        if(display.hasKey("Lore", 9)) {
-                            NBTTagList list = display.getTagList("Lore", 8);
-                            lore = new String[list.tagCount()];
-                            for(int k=0; k<list.tagCount(); k++) {
-                                lore[k] = list.getStringTagAt(k);
-                            }
-                        }
-
-                        if(Item.itemRegistry.getObject(new ResourceLocation(internalname.toLowerCase())) != null) {
-                            continue;
-                        }
-
-                        String itemid = Item.getItemById(id).getRegistryName();
-                        String displayname = display.getString("Name");
-                        String[] info = new String[0];
-                        String clickcommand = "";
-
-                        File file = new File(itemsLocation, internalname+".json");
-                        if(!file.exists()) {
-                            writeItemJson(internalname, itemid, displayname, lore, info, clickcommand, damage, tag);
-                        } else {
-                            JsonObject existing = getJsonFromFile(file);
-                            String nbttag = existing.get("nbttag").toString();
-                            if(nbttag.length() > tag.toString().length()) {
-                                writeItemJson(internalname, itemid, displayname, lore, info, clickcommand, damage, tag);
-                            }
-                        }
-
-                    } catch(Exception e) {
-                    }
-                }
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
+        public Auction(String auctioneerUuid, long end, int starting_bid, int highest_bid_amount, int bid_count,
+                       boolean bin, String category, String extras, String item_bytes) {
+            this.auctioneerUuid = auctioneerUuid;
+            this.end = end;
+            this.starting_bid = starting_bid;
+            this.highest_bid_amount = highest_bid_amount;
+            this.bid_count = bid_count;
+            this.bin = bin;
+            this.category = category;
+            this.extras = extras;
+            this.item_bytes = item_bytes;
         }
 
-        throw new RuntimeException();*/
+        public ItemStack getStack() {
+            if(stack != null) {
+                return stack;
+            } else {
+                JsonObject item = getJsonFromItemBytes(item_bytes);
+                ItemStack stack = jsonToStack(item, false);
+                this.stack = stack;
+                return stack;
+            }
+        }
+    }
+
+    public TreeMap<String, Auction> getAuctionItems() {
+        return auctionItems;
     }
 
     public class CraftInfo {
@@ -497,9 +472,102 @@ public class NEUManager {
             dialog.dispose();
         }
 
+        Set<String> currentlyInstalledItems = new HashSet<>();
         for(File f : itemsLocation.listFiles()) {
-            loadItem(f.getName().substring(0, f.getName().length()-5));
+            currentlyInstalledItems.add(f.getName().substring(0, f.getName().length()-5));
         }
+
+        Set<String> removedItems = neuio.getRemovedItems(currentlyInstalledItems);
+        for(File f : itemsLocation.listFiles()) {
+            String internalname = f.getName().substring(0, f.getName().length()-5);
+            if(!removedItems.contains(internalname)) {
+                loadItem(internalname);
+            }
+        }
+    }
+
+    ScheduledExecutorService auctionUpdateSES = Executors.newSingleThreadScheduledExecutor();
+    private AtomicInteger auctionUpdateId = new AtomicInteger(0);
+    public void updateAuctions() {
+        HashMap<Integer, JsonObject> pages = new HashMap<>();
+
+        HashMap<String, String> args = new HashMap<>();
+        args.put("page", "0");
+        AtomicInteger totalPages = new AtomicInteger(1);
+        AtomicInteger currentPages = new AtomicInteger(0);
+        hypixelApi.getHypixelApiAsync(config.apiKey.value, "skyblock/auctions",
+                args, jsonObject -> {
+                    if (jsonObject.get("success").getAsBoolean()) {
+                        pages.put(0, jsonObject);
+                        totalPages.set(jsonObject.get("totalPages").getAsInt());
+                        currentPages.incrementAndGet();
+
+                        for (int i = 1; i < totalPages.get(); i++) {
+                            int j = i;
+                            HashMap<String, String> args2 = new HashMap<>();
+                            args2.put("page", "" + i);
+                            hypixelApi.getHypixelApiAsync(config.apiKey.value, "skyblock/auctions",
+                                    args2, jsonObject2 -> {
+                                        if (jsonObject2.get("success").getAsBoolean()) {
+                                            pages.put(j, jsonObject2);
+                                            currentPages.incrementAndGet();
+                                        } else {
+                                            currentPages.incrementAndGet();
+                                        }
+                                    }
+                            );
+                        }
+                    }
+                }
+        );
+
+        long startTime = System.currentTimeMillis();
+
+        int currentAuctionUpdateId = auctionUpdateId.incrementAndGet();
+
+        auctionUpdateSES.schedule(new Runnable() {
+            public void run() {
+                if(auctionUpdateId.get() != currentAuctionUpdateId) return;
+                System.out.println(currentPages.get() + "/" + totalPages.get());
+                if (System.currentTimeMillis() - startTime > 20000) return;
+
+                if (currentPages.get() == totalPages.get()) {
+                    TreeMap<String, Auction> auctionItemsTemp = new TreeMap<>();
+
+                    for (int pageNum : pages.keySet()) {
+                        System.out.println(pageNum + "/" + pages.size());
+                        JsonObject page = pages.get(pageNum);
+                        JsonArray auctions = page.get("auctions").getAsJsonArray();
+                        for (int i = 0; i < auctions.size(); i++) {
+                            JsonObject auction = auctions.get(i).getAsJsonObject();
+
+                            String auctionUuid = auction.get("uuid").getAsString();
+                            String auctioneerUuid = auction.get("auctioneer").getAsString();
+                            long end = auction.get("end").getAsLong();
+                            int starting_bid = auction.get("starting_bid").getAsInt();
+                            int highest_bid_amount = auction.get("highest_bid_amount").getAsInt();
+                            int bid_count = auction.get("bids").getAsJsonArray().size();
+                            boolean bin = false;
+                            if(auction.has("bin")) {
+                                bin = auction.get("bin").getAsBoolean();
+                            }
+                            String category = auction.get("category").getAsString();
+                            String extras = auction.get("item_lore").getAsString().replaceAll("\n"," ") + " " +
+                                    auction.get("extra").getAsString();
+                            String item_bytes = auction.get("item_bytes").getAsString();
+
+                            auctionItemsTemp.put(auctionUuid, new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
+                                    bid_count, bin, category, extras, item_bytes));
+                        }
+                    }
+                    auctionItems = auctionItemsTemp;
+                    customAH.updateSearch();
+                    return;
+                }
+
+                auctionUpdateSES.schedule(this, 1000L, TimeUnit.MILLISECONDS);
+            }
+        }, 3000L, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -688,6 +756,38 @@ public class NEUManager {
         }
     }
 
+    /*public TreeMap<ItemStack> searchForStacks(String query, Set<ItemStack> stacks, boolean multi) {
+        if(multi) {
+            Set<String> result = new HashSet<>();
+
+            StringBuilder query2 = new StringBuilder();
+            char lastOp = '|';
+            for(char c : query.toCharArray()) {
+                if(c == '|' || c == '&') {
+                    if(lastOp == '|') {
+                        result.addAll(doesStackMatchSearch(stack, query2.toString()));
+                    } else if(lastOp == '&') {
+                        result.retainAll(search(query2.toString()));
+                    }
+
+                    query2 = new StringBuilder();
+                    lastOp = c;
+                } else {
+                    query2.append(c);
+                }
+            }
+            if(lastOp == '|') {
+                result.addAll(search(query2.toString()));
+            } else if(lastOp == '&') {
+                result.retainAll(search(query2.toString()));
+            }
+
+            return result;
+        } else {
+            return search(query);
+        }
+    }*/
+
     /**
      * Returns the name of items which match a certain search query.
      */
@@ -790,6 +890,70 @@ public class NEUManager {
         char lastChar = input.charAt(lastCharPosition) ;
         char incrementedLastChar = (char) (lastChar + 1);
         return inputWithoutLastChar+incrementedLastChar;
+    }
+
+    public JsonObject getJsonFromItemBytes(String item_bytes) {
+        try {
+            NBTTagCompound tag = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
+            tag = tag.getTagList("i", 10).getCompoundTagAt(0);
+            int id = tag.getShort("id");
+            int damage = tag.getShort("Damage");
+            tag = tag.getCompoundTag("tag");
+
+            String internalname = "";
+            if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+                NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+                if(ea.hasKey("id", 8)) {
+                    internalname = ea.getString("id");
+                }
+            }
+
+            String[] lore = new String[0];
+            NBTTagCompound display = tag.getCompoundTag("display");
+
+            if(display.hasKey("Lore", 9)) {
+                NBTTagList list = display.getTagList("Lore", 8);
+                lore = new String[list.tagCount()];
+                for(int k=0; k<list.tagCount(); k++) {
+                    lore[k] = list.getStringTagAt(k);
+                }
+            }
+
+            Item itemMc = Item.getItemById(id);
+            String itemid = "null";
+            if(itemMc != null) {
+                itemid = itemMc.getRegistryName();
+            }
+            String displayname = display.getString("Name");
+            String[] info = new String[0];
+            String clickcommand = "";
+
+
+            //public JsonObject createItemJson(String internalname, String itemid, String displayname, String[] lore,
+            //        String crafttext, String infoType, String[] info,
+            //        String clickcommand, int damage, NBTTagCompound nbttag) {
+
+            JsonObject item = new JsonObject();
+            item.addProperty("internalname", internalname);
+            item.addProperty("itemid", itemid);
+            item.addProperty("displayname", displayname);
+
+            if(lore != null && lore.length > 0) {
+                JsonArray jsonLore = new JsonArray();
+                for (String line : lore) {
+                    jsonLore.add(new JsonPrimitive(line));
+                }
+                item.add("lore", jsonLore);
+            }
+
+            item.addProperty("damage", damage);
+            item.addProperty("nbttag", tag.toString());
+
+            return item;
+        } catch(IOException e) {
+            return null;
+        }
     }
 
     private String clean(String str) {
@@ -1215,9 +1379,14 @@ public class NEUManager {
     }
 
     public ItemStack jsonToStack(JsonObject json) {
-        if(itemstackCache.containsKey(json.get("internalname").getAsString())) {
+        return jsonToStack(json, true);
+    }
+
+    public ItemStack jsonToStack(JsonObject json, boolean useCache) {
+        if(useCache && itemstackCache.containsKey(json.get("internalname").getAsString())) {
             return itemstackCache.get(json.get("internalname").getAsString()).copy();
         }
+
         ItemStack stack = new ItemStack(Item.itemRegistry.getObject(
                 new ResourceLocation(json.get("itemid").getAsString())));
 
@@ -1256,7 +1425,7 @@ public class NEUManager {
             }
         }
 
-        itemstackCache.put(json.get("internalname").getAsString(), stack);
+        if(useCache) itemstackCache.put(json.get("internalname").getAsString(), stack);
         return stack;
     }
 

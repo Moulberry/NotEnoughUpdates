@@ -1,4 +1,4 @@
-package io.github.moulberry.notenoughupdates;
+package io.github.moulberry.notenoughupdates.util;
 
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
@@ -60,6 +60,8 @@ public class Utils {
     }
 
     public static void drawItemStack(ItemStack stack, int x, int y) {
+        if(stack == null)return;
+
         RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
 
         RenderHelper.enableGUIStandardItemLighting();
@@ -153,6 +155,17 @@ public class Utils {
         factor = Math.min(1, factor);
 
         drawStringScaled(str, fr, x, y, shadow, colour, factor);
+    }
+
+    public static void drawStringCentered(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
+        int strLen = fr.getStringWidth(str);
+
+        float x2 = x - strLen/2f;
+        float y2 = y - fr.FONT_HEIGHT/2f;
+
+        GL11.glTranslatef(x2, y2, 0);
+        fr.drawString(str, 0, 0, colour, shadow);
+        GL11.glTranslatef(-x2, -y2, 0);
     }
 
     public static void drawStringScaled(String str, FontRenderer fr, float x, float y, boolean shadow, int colour, float factor) {

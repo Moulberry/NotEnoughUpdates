@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NEUResourceManager;
-import io.github.moulberry.notenoughupdates.Utils;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -14,12 +14,10 @@ import net.minecraft.client.shader.Shader;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Matrix4f;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,6 +34,9 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     TreeSet<String> items = new TreeSet<>(getItemComparator());
 
     private int buttonHover = -1;
+
+    private int previousAcquiredCount = 0;
+    private int previousScroll = 0;
 
     private static final int FILTER_ALL = 0;
     private static final int FILTER_WEAPON = 1;
@@ -243,6 +244,12 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         return projMatrix;
     }
 
+    public int getCurrentAcquiredCount() {
+        if(getAcquiredItems() == null) return 0;
+        if(!getAcquiredItems().containsKey(manager.currentProfile)) return 0;
+        return getAcquiredItems().get(manager.currentProfile).size();
+    }
+
     private void renderCollectionLog(Color fg, int width, int height, int left, int right, int top, int bottom) {
         ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
 
@@ -261,8 +268,14 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                 scaledresolution.getScaleFactor());
         itemFramebufferGrayscale = checkFramebufferSizes(itemFramebufferGrayscale, width, height,
                 scaledresolution.getScaleFactor());
-        renderItemsToImage(itemFramebuffer, fg, left+5, right, top+1, bottom);
-        renderItemBGToImage(itemBGFramebuffer, fg, left+5, right, top+1, bottom);
+
+        if(!manager.config.cacheRenderedItempane.value || previousAcquiredCount != getCurrentAcquiredCount() ||
+                previousScroll != scrollHeight.getValue()) {
+            renderItemsToImage(itemFramebuffer, fg, left+5, right, top+1, bottom);
+            renderItemBGToImage(itemBGFramebuffer, fg, left+5, right, top+1, bottom);
+        }
+        previousAcquiredCount = getCurrentAcquiredCount();
+        previousScroll = scrollHeight.getValue();
 
         Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
         renderFromImage(itemBGFramebuffer, width, height, left, right, top, bottom);

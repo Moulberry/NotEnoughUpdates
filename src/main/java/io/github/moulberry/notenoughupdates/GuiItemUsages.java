@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiCrafting;
 import net.minecraft.client.resources.I18n;

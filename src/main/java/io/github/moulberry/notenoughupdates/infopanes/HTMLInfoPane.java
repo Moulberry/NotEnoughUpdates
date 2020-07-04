@@ -11,7 +11,7 @@ import info.bliki.wiki.tags.IgnoreTag;
 import io.github.moulberry.notenoughupdates.AllowEmptyHTMLTag;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
-import io.github.moulberry.notenoughupdates.Utils;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
@@ -26,7 +26,6 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -87,10 +86,11 @@ public class HTMLInfoPane extends TextInfoPane {
     /**
      * Takes a wiki url, uses NEUManager#getWebFile to download the web file and passed that in to #createFromWiki
      */
-    public static HTMLInfoPane createFromWikiUrl(NEUOverlay overlay, NEUManager manager, String name, String wikiUrl) {
+    public static HTMLInfoPane createFromWikiUrl(NEUOverlay overlay, NEUManager manager, String name,
+                                                 String wikiUrl) {
         File f = manager.getWebFile(wikiUrl);
         if(f == null) {
-            return new HTMLInfoPane(overlay, manager, "error", "Failed to load wiki url: "+ wikiUrl);
+            return new HTMLInfoPane(overlay, manager, "error", "error","Failed to load wiki url: "+ wikiUrl);
         };
 
         StringBuilder sb = new StringBuilder();
@@ -101,9 +101,9 @@ public class HTMLInfoPane extends TextInfoPane {
                 sb.append(l).append("\n");
             }
         } catch(IOException e) {
-            return new HTMLInfoPane(overlay, manager, "error", "Failed to load wiki url: "+ wikiUrl);
+            return new HTMLInfoPane(overlay, manager, "error", "error","Failed to load wiki url: "+ wikiUrl);
         }
-        return createFromWiki(overlay, manager, name, sb.toString());
+        return createFromWiki(overlay, manager, name, f.getName(), sb.toString());
     }
 
     /**
@@ -112,7 +112,8 @@ public class HTMLInfoPane extends TextInfoPane {
      * a more permanent solution that can be abstracted to work with arbitrary wiki codes (eg. moulberry.github.io/
      * files/neu_help.html).
      */
-    public static HTMLInfoPane createFromWiki(NEUOverlay overlay, NEUManager manager, String name, String wiki) {
+    public static HTMLInfoPane createFromWiki(NEUOverlay overlay, NEUManager manager, String name, String filename,
+                                              String wiki) {
         String[] split = wiki.split("</infobox>");
         wiki = split[split.length - 1]; //Remove everything before infobox
         wiki = wiki.split("<span class=\"navbox-vde\">")[0]; //Remove navbox
@@ -126,13 +127,13 @@ public class HTMLInfoPane extends TextInfoPane {
         try {
             html = wikiModel.render(wiki);
         } catch(IOException e) {
-            return new HTMLInfoPane(overlay, manager, "error", "Could not render wiki.");
+            return new HTMLInfoPane(overlay, manager, "error", "error", "Could not render wiki.");
         }
         try (PrintWriter out = new PrintWriter(new File(manager.configLocation, "debug/html.txt"))) {
             out.println(html);
         } catch (IOException e) {
         }
-        return new HTMLInfoPane(overlay, manager, name, html);
+        return new HTMLInfoPane(overlay, manager, name, filename, html);
     }
 
     /**
@@ -140,14 +141,14 @@ public class HTMLInfoPane extends TextInfoPane {
      * generation is done asynchronously as sometimes it can take up to 10 seconds for more
      * complex webpages.
      */
-    public HTMLInfoPane(NEUOverlay overlay, NEUManager manager, String name, String html) {
+    public HTMLInfoPane(NEUOverlay overlay, NEUManager manager, String name, String filename, String html) {
         super(overlay, manager, name, "");
         this.title = name;
 
         File cssFile = new File(manager.configLocation, "wikia.css");
         File wkHtmlToImage = new File(manager.configLocation, "wkhtmltox/bin/wkhtmltoimage");
         File input = new File(manager.configLocation, "tmp/input.html");
-        String outputFileName = name.replaceAll("(?i)\\u00A7.", "")
+        String outputFileName = filename.replaceAll("(?i)\\u00A7.", "")
                 .replaceAll("[^a-zA-Z0-9_\\-]", "_");
         File output = new File(manager.configLocation, "tmp/"+
                 outputFileName+".png");

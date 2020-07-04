@@ -8,12 +8,11 @@ import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.gui.inventory.GuiChest;
-import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.gui.inventory.GuiInventory;
+import net.minecraft.client.gui.inventory.*;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.init.Blocks;
@@ -28,11 +27,11 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Session;
-import net.minecraft.util.StatCollector;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -43,6 +42,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import javax.swing.*;
@@ -97,7 +97,7 @@ public class NotEnoughUpdates {
             if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
                 guiDelaySES.schedule(()->{
                     Minecraft.getMinecraft().displayGuiScreen(new GuiInventory(Minecraft.getMinecraft().thePlayer));
-                }, 10L, TimeUnit.MILLISECONDS);
+                }, 20L, TimeUnit.MILLISECONDS);
             }
             manager.updatePrices();
             overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
@@ -108,8 +108,10 @@ public class NotEnoughUpdates {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
                 guiDelaySES.schedule(()->{
-                    Minecraft.getMinecraft().displayGuiScreen(new CustomAH(manager));
-                }, 10L, TimeUnit.MILLISECONDS);
+                    Minecraft.getMinecraft().displayGuiScreen(new CustomAHGui());
+                    Mouse.setGrabbed(false);
+                }, 20L, TimeUnit.MILLISECONDS);
+                manager.updateAuctions();
             }
         }
     });
@@ -216,23 +218,26 @@ public class NotEnoughUpdates {
             for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
                 processUniqueStack(stack, newItem);
             }
-            boolean usableContainer = true;
-            for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
-                if(stack == null) {
-                    continue;
-                }
-                if(stack.hasTagCompound()) {
-                    NBTTagCompound tag = stack.getTagCompound();
-                    if(tag.hasKey("ExtraAttributes", 10)) {
+            if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
+                !(Minecraft.getMinecraft().currentScreen instanceof GuiCrafting)) {
+                boolean usableContainer = true;
+                for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
+                    if(stack == null) {
                         continue;
                     }
+                    if(stack.hasTagCompound()) {
+                        NBTTagCompound tag = stack.getTagCompound();
+                        if(tag.hasKey("ExtraAttributes", 10)) {
+                            continue;
+                        }
+                    }
+                    usableContainer = false;
+                    break;
                 }
-                usableContainer = false;
-                break;
-            }
-            if(usableContainer) {
-                for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
-                    processUniqueStack(stack, newItem);
+                if(usableContainer) {
+                    for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
+                        processUniqueStack(stack, newItem);
+                    }
                 }
             }
             newItemAddMap.keySet().retainAll(newItem);
@@ -259,6 +264,14 @@ public class NotEnoughUpdates {
         }
     }
 
+    @SubscribeEvent
+    public void onRenderGameOverlay(RenderGameOverlayEvent event) {
+        if(event.type.equals(RenderGameOverlayEvent.ElementType.BOSSHEALTH) &&
+                Minecraft.getMinecraft().currentScreen instanceof GuiContainer && overlay.isUsingMobsFilter()) {
+            event.setCanceled(true);
+        }
+    }
+
     /**
      * When opening a GuiContainer, will reset the overlay and load the config.
      * When closing a GuiContainer, will save the config.
@@ -267,6 +280,23 @@ public class NotEnoughUpdates {
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
+        if(event.gui == null && manager.customAH.isRenderOverAuctionView() &&
+                !(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)) {
+            //todo
+        }
+
+        if(!(event.gui instanceof GuiChest || event.gui instanceof GuiEditSign)) {
+           manager.customAH.setRenderOverAuctionView(false);
+        } else if(event.gui instanceof GuiChest && (manager.customAH.isRenderOverAuctionView() ||
+                Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)){
+            GuiChest chest = (GuiChest) event.gui;
+            ContainerChest container = (ContainerChest) chest.inventorySlots;
+            String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
+
+            manager.customAH.setRenderOverAuctionView(containerName.trim().equals("Auction View") ||
+                    containerName.trim().equals("BIN Auction View"));
+        }
+
         //OPEN
         if(Minecraft.getMinecraft().currentScreen == null
                 && event.gui instanceof GuiContainer) {
@@ -465,13 +495,21 @@ public class NotEnoughUpdates {
         }
     }
 
+    @SubscribeEvent
+    public void onGuiScreenDrawPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
+        if(event.gui instanceof CustomAHGui || manager.customAH.isRenderOverAuctionView()) {
+            event.setCanceled(true);
+            manager.customAH.drawScreen(event.mouseX, event.mouseY);
+        }
+    }
+
     /**
      * Will draw the NEUOverlay over the inventory if focusInv == false. (z-translation of 300 is so that NEUOverlay
      * will draw over Items in the inventory (which render at a z value of about 250))
      * @param event
      */
     @SubscribeEvent
-    public void onGuiScreenDraw(GuiScreenEvent.DrawScreenEvent.Post event) {
+    public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if(event.gui instanceof GuiContainer && isOnSkyblock()) {
             if(!focusInv) {
                 GL11.glTranslatef(0, 0, 300);
@@ -489,6 +527,12 @@ public class NotEnoughUpdates {
      */
     @SubscribeEvent
     public void onGuiScreenMouse(GuiScreenEvent.MouseInputEvent.Pre event) {
+        if(event.gui instanceof CustomAHGui || manager.customAH.isRenderOverAuctionView()) {
+            event.setCanceled(true);
+            manager.customAH.handleMouseInput();
+            //overlay.mouseInput();
+            return;
+        }
         if(event.gui instanceof GuiContainer && !(hoverInv && focusInv) && isOnSkyblock()) {
             if(overlay.mouseInput()) {
                 event.setCanceled(true);
@@ -505,6 +549,14 @@ public class NotEnoughUpdates {
     boolean started = false;
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
+        if(event.gui instanceof CustomAHGui || manager.customAH.isRenderOverAuctionView()) {
+            if(manager.customAH.keyboardInput()) {
+                event.setCanceled(true);
+                Minecraft.getMinecraft().dispatchKeypresses();
+            }
+            return;
+        }
+
         if(event.gui instanceof GuiContainer && isOnSkyblock()) {
             if(overlay.keyboardInput(focusInv)) {
                 event.setCanceled(true);
@@ -689,7 +741,7 @@ public class NotEnoughUpdates {
             }
         }
         if(!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || !manager.config.dev.value) return;
-        if(event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
+        if(event.toolTip.size()>0&&event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
             event.toolTip.remove(event.toolTip.size()-1);
 
             StringBuilder sb = new StringBuilder();
