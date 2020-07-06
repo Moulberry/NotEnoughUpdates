@@ -183,9 +183,9 @@ public class NEUOverlay extends Gui {
         int mouseX = Mouse.getX() / scaledresolution.getScaleFactor();
         int mouseY = height - Mouse.getY() / scaledresolution.getScaleFactor();
 
-        if(lastMouseX != mouseX || lastMouseY != mouseY) {
-            millisLastMouseMove = System.currentTimeMillis();
-        }
+        //if(lastMouseX != mouseX || lastMouseY != mouseY) {
+        //    millisLastMouseMove = System.currentTimeMillis();
+        //}
 
         lastMouseX = mouseX;
         lastMouseY = mouseY;
@@ -461,7 +461,7 @@ public class NEUOverlay extends Gui {
         if(Minecraft.getMinecraft().currentScreen == null) return false;
         Keyboard.enableRepeatEvents(true);
 
-        int keyPressed = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter() : Keyboard.getEventKey();
+        int keyPressed = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter()+256 : Keyboard.getEventKey();
 
         if(disabled) {
             if(Keyboard.getEventKeyState() && keyPressed == manager.keybindToggleDisplay.getKeyCode()) {
@@ -1307,6 +1307,7 @@ public class NEUOverlay extends Gui {
             int scaledItemPaddedSize = (int)((ITEM_SIZE+ITEM_PADDING)*sortOrderScaleFactor);
             int iconTop = height-getBoxPadding()-(ITEM_SIZE+scaledITEM_SIZE)/2-1;
 
+            boolean hoveredOverControl = false;
             for(int i=0; i<orderIcons.length; i++) {
                 int orderIconX = leftSide+getBoxPadding()+getItemBoxXPadding()+i*scaledItemPaddedSize;
                 drawRect(orderIconX, iconTop,scaledITEM_SIZE+orderIconX,iconTop+scaledITEM_SIZE, fg.getRGB());
@@ -1322,6 +1323,7 @@ public class NEUOverlay extends Gui {
 
                 if(mouseY > iconTop && mouseY < iconTop+scaledITEM_SIZE) {
                     if(mouseX > orderIconX && mouseX < orderIconX+scaledITEM_SIZE) {
+                        hoveredOverControl = true;
                         if(System.currentTimeMillis() - millisLastMouseMove > 400) {
                             String text = EnumChatFormatting.GRAY+"Order ";
                             if(i == COMPARE_MODE_ALPHABETICAL) text += "Alphabetically";
@@ -1344,6 +1346,7 @@ public class NEUOverlay extends Gui {
 
                 if(mouseY > iconTop && mouseY < iconTop+scaledITEM_SIZE) {
                     if(mouseX > sortIconX && mouseX < sortIconX+scaledITEM_SIZE) {
+                        hoveredOverControl = true;
                         if(System.currentTimeMillis() - millisLastMouseMove > 400) {
                             String text = EnumChatFormatting.GRAY+"Filter ";
                             if(i == SORT_MODE_ALL) text = EnumChatFormatting.GRAY+"No Filter";
@@ -1357,6 +1360,10 @@ public class NEUOverlay extends Gui {
                         }
                     }
                 }
+            }
+
+            if(!hoveredOverControl) {
+                millisLastMouseMove = System.currentTimeMillis();
             }
 
             if(!hoverInv) {

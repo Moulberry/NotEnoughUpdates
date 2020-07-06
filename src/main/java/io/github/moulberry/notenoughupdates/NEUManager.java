@@ -1,6 +1,8 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.*;
+import io.github.moulberry.notenoughupdates.auction.AuctionManager;
+import io.github.moulberry.notenoughupdates.auction.CustomAH;
 import io.github.moulberry.notenoughupdates.options.Options;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import net.minecraft.client.Minecraft;
@@ -32,10 +34,10 @@ public class NEUManager {
     private final NotEnoughUpdates neu;
     public final NEUIO neuio;
     public final Gson gson;
+    public final AuctionManager auctionManager;
 
     private TreeMap<String, JsonObject> itemMap = new TreeMap<>();
 
-    private TreeMap<String, Set<String>> tagWordMap = new TreeMap<>();
     private TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
     private TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
 
@@ -60,13 +62,7 @@ public class NEUManager {
     private JsonObject auctionPricesJson = null;
     private long auctionLastUpdate = 0;
 
-    private TreeMap<String, Auction> auctionItems = new TreeMap<>();
-    public CustomAH customAH = new CustomAH(this);
-
-    private HashMap<String, String> uuidToName = new HashMap<>();
-
     private HashMap<String, CraftInfo> craftCost = new HashMap<>();
-
     private HashMap<String, Set<String>> usagesMap = new HashMap<>();
 
     public File configLocation;
@@ -80,6 +76,7 @@ public class NEUManager {
         this.neu = neu;
         this.configLocation = configLocation;
         this.neuio = neuio;
+        this.auctionManager = new AuctionManager(this);
 
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
         gsonBuilder.registerTypeAdapter(Options.Option.class, Options.createSerializer());
@@ -106,47 +103,6 @@ public class NEUManager {
             } catch (IOException e) {
             }
         }
-    }
-
-    public class Auction {
-        public String auctioneerUuid;
-        public long end;
-        public int starting_bid;
-        public int highest_bid_amount;
-        public int bid_count;
-        public boolean bin;
-        public String category;
-        public String extras;
-        public String item_bytes;
-        private ItemStack stack;
-
-        public Auction(String auctioneerUuid, long end, int starting_bid, int highest_bid_amount, int bid_count,
-                       boolean bin, String category, String extras, String item_bytes) {
-            this.auctioneerUuid = auctioneerUuid;
-            this.end = end;
-            this.starting_bid = starting_bid;
-            this.highest_bid_amount = highest_bid_amount;
-            this.bid_count = bid_count;
-            this.bin = bin;
-            this.category = category;
-            this.extras = extras;
-            this.item_bytes = item_bytes;
-        }
-
-        public ItemStack getStack() {
-            if(stack != null) {
-                return stack;
-            } else {
-                JsonObject item = getJsonFromItemBytes(item_bytes);
-                ItemStack stack = jsonToStack(item, false);
-                this.stack = stack;
-                return stack;
-            }
-        }
-    }
-
-    public TreeMap<String, Auction> getAuctionItems() {
-        return auctionItems;
     }
 
     public class CraftInfo {
@@ -486,90 +442,6 @@ public class NEUManager {
         }
     }
 
-    ScheduledExecutorService auctionUpdateSES = Executors.newSingleThreadScheduledExecutor();
-    private AtomicInteger auctionUpdateId = new AtomicInteger(0);
-    public void updateAuctions() {
-        HashMap<Integer, JsonObject> pages = new HashMap<>();
-
-        HashMap<String, String> args = new HashMap<>();
-        args.put("page", "0");
-        AtomicInteger totalPages = new AtomicInteger(1);
-        AtomicInteger currentPages = new AtomicInteger(0);
-        hypixelApi.getHypixelApiAsync(config.apiKey.value, "skyblock/auctions",
-                args, jsonObject -> {
-                    if (jsonObject.get("success").getAsBoolean()) {
-                        pages.put(0, jsonObject);
-                        totalPages.set(jsonObject.get("totalPages").getAsInt());
-                        currentPages.incrementAndGet();
-
-                        for (int i = 1; i < totalPages.get(); i++) {
-                            int j = i;
-                            HashMap<String, String> args2 = new HashMap<>();
-                            args2.put("page", "" + i);
-                            hypixelApi.getHypixelApiAsync(config.apiKey.value, "skyblock/auctions",
-                                    args2, jsonObject2 -> {
-                                        if (jsonObject2.get("success").getAsBoolean()) {
-                                            pages.put(j, jsonObject2);
-                                            currentPages.incrementAndGet();
-                                        } else {
-                                            currentPages.incrementAndGet();
-                                        }
-                                    }
-                            );
-                        }
-                    }
-                }
-        );
-
-        long startTime = System.currentTimeMillis();
-
-        int currentAuctionUpdateId = auctionUpdateId.incrementAndGet();
-
-        auctionUpdateSES.schedule(new Runnable() {
-            public void run() {
-                if(auctionUpdateId.get() != currentAuctionUpdateId) return;
-                System.out.println(currentPages.get() + "/" + totalPages.get());
-                if (System.currentTimeMillis() - startTime > 20000) return;
-
-                if (currentPages.get() == totalPages.get()) {
-                    TreeMap<String, Auction> auctionItemsTemp = new TreeMap<>();
-
-                    for (int pageNum : pages.keySet()) {
-                        System.out.println(pageNum + "/" + pages.size());
-                        JsonObject page = pages.get(pageNum);
-                        JsonArray auctions = page.get("auctions").getAsJsonArray();
-                        for (int i = 0; i < auctions.size(); i++) {
-                            JsonObject auction = auctions.get(i).getAsJsonObject();
-
-                            String auctionUuid = auction.get("uuid").getAsString();
-                            String auctioneerUuid = auction.get("auctioneer").getAsString();
-                            long end = auction.get("end").getAsLong();
-                            int starting_bid = auction.get("starting_bid").getAsInt();
-                            int highest_bid_amount = auction.get("highest_bid_amount").getAsInt();
-                            int bid_count = auction.get("bids").getAsJsonArray().size();
-                            boolean bin = false;
-                            if(auction.has("bin")) {
-                                bin = auction.get("bin").getAsBoolean();
-                            }
-                            String category = auction.get("category").getAsString();
-                            String extras = auction.get("item_lore").getAsString().replaceAll("\n"," ") + " " +
-                                    auction.get("extra").getAsString();
-                            String item_bytes = auction.get("item_bytes").getAsString();
-
-                            auctionItemsTemp.put(auctionUuid, new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
-                                    bid_count, bin, category, extras, item_bytes));
-                        }
-                    }
-                    auctionItems = auctionItemsTemp;
-                    customAH.updateSearch();
-                    return;
-                }
-
-                auctionUpdateSES.schedule(this, 1000L, TimeUnit.MILLISECONDS);
-            }
-        }, 3000L, TimeUnit.MILLISECONDS);
-    }
-
     /**
      * Loads the item in to the itemMap and also stores various words associated with this item
      * in to titleWordMap and loreWordMap. These maps are used in the searching algorithm.
@@ -836,7 +708,7 @@ public class NEUManager {
      * follow a word matching the previous sub query. eg. "ench po" will match "enchanted pork" but will not match
      * "pork enchanted".
      */
-    private Set<String> search(String query, TreeMap<String, HashMap<String, List<Integer>>> wordMap) {
+    public Set<String> search(String query, TreeMap<String, HashMap<String, List<Integer>>> wordMap) {
         HashMap<String, List<Integer>> matches = null;
 
         query = clean(query).toLowerCase();
@@ -898,6 +770,7 @@ public class NEUManager {
             tag = tag.getTagList("i", 10).getCompoundTagAt(0);
             int id = tag.getShort("id");
             int damage = tag.getShort("Damage");
+            int count = tag.getShort("Count");
             tag = tag.getCompoundTag("tag");
 
             String internalname = "";
@@ -948,6 +821,7 @@ public class NEUManager {
             }
 
             item.addProperty("damage", damage);
+            if(count > 1) item.addProperty("count", count);
             item.addProperty("nbttag", tag.toString());
 
             return item;
@@ -1389,6 +1263,10 @@ public class NEUManager {
 
         ItemStack stack = new ItemStack(Item.itemRegistry.getObject(
                 new ResourceLocation(json.get("itemid").getAsString())));
+
+        if(json.has("count")) {
+            stack.stackSize = json.get("count").getAsInt();
+        }
 
         if(stack.getItem() == null) {
             stack = new ItemStack(Items.diamond, 1, 10); //Purple broken texture item

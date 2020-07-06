@@ -14,7 +14,11 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.Session;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -67,6 +71,7 @@ public class Utils {
         RenderHelper.enableGUIStandardItemLighting();
         itemRender.zLevel = -145; //Negates the z-offset of the below method.
         itemRender.renderItemAndEffectIntoGUI(stack, x, y);
+        itemRender.renderItemOverlays(Minecraft.getMinecraft().fontRendererObj, stack, x, y);
         itemRender.zLevel = 0;
         RenderHelper.disableStandardItemLighting();
     }
@@ -147,6 +152,26 @@ public class Utils {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
 
         GlStateManager.disableBlend();
+    }
+
+    public static ItemStack createItemStack(Item item, String displayname, String... lore) {
+        ItemStack stack = new ItemStack(item);
+        NBTTagCompound tag = new NBTTagCompound();
+        NBTTagCompound display = new NBTTagCompound();
+        NBTTagList Lore = new NBTTagList();
+
+        for(String line : lore) {
+            Lore.appendTag(new NBTTagString(line));
+        }
+
+        display.setString("Name", displayname);
+        display.setTag("Lore", Lore);
+
+        tag.setTag("display", display);
+
+        stack.setTagCompound(tag);
+
+        return stack;
     }
 
     public static void drawStringScaledMaxWidth(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {

@@ -6,6 +6,7 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
+import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -91,13 +92,13 @@ public class NotEnoughUpdates {
         return s;
     }
 
+    private GuiScreen openGui = null;
+
     ScheduledExecutorService guiDelaySES = Executors.newScheduledThreadPool(1);
     SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
-                guiDelaySES.schedule(()->{
-                    Minecraft.getMinecraft().displayGuiScreen(new GuiInventory(Minecraft.getMinecraft().thePlayer));
-                }, 20L, TimeUnit.MILLISECONDS);
+                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
             }
             manager.updatePrices();
             overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
@@ -106,13 +107,10 @@ public class NotEnoughUpdates {
 
     SimpleCommand neuAhCommand = new SimpleCommand("neuah", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
-                guiDelaySES.schedule(()->{
-                    Minecraft.getMinecraft().displayGuiScreen(new CustomAHGui());
-                    Mouse.setGrabbed(false);
-                }, 20L, TimeUnit.MILLISECONDS);
-                manager.updateAuctions();
-            }
+            openGui = new CustomAHGui();
+            manager.auctionManager.customAH.lastOpen = System.currentTimeMillis();
+            manager.auctionManager.customAH.clearSearch();
+            manager.auctionManager.customAH.updateSearch();
         }
     });
 
@@ -208,6 +206,13 @@ public class NotEnoughUpdates {
     private HashMap<String, Long> newItemAddMap = new HashMap<>();
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if(openGui != null) {
+            Minecraft.getMinecraft().displayGuiScreen(openGui);
+            openGui = null;
+        }
+        if(hasSkyblockScoreboard()) {
+            manager.auctionManager.tick();
+        }
         if(currChatMessage != null && System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
             lastChatMessage = System.currentTimeMillis();
             Minecraft.getMinecraft().thePlayer.sendChatMessage(currChatMessage);
@@ -280,20 +285,22 @@ public class NotEnoughUpdates {
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
-        if(event.gui == null && manager.customAH.isRenderOverAuctionView() &&
+        manager.auctionManager.customAH.lastGuiScreenSwitch = System.currentTimeMillis();
+
+        if(event.gui == null && manager.auctionManager.customAH.isRenderOverAuctionView() &&
                 !(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)) {
-            //todo
+            event.gui = new CustomAHGui();
         }
 
         if(!(event.gui instanceof GuiChest || event.gui instanceof GuiEditSign)) {
-           manager.customAH.setRenderOverAuctionView(false);
-        } else if(event.gui instanceof GuiChest && (manager.customAH.isRenderOverAuctionView() ||
+           manager.auctionManager.customAH.setRenderOverAuctionView(false);
+        } else if(event.gui instanceof GuiChest && (manager.auctionManager.customAH.isRenderOverAuctionView() ||
                 Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)){
             GuiChest chest = (GuiChest) event.gui;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
             String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
 
-            manager.customAH.setRenderOverAuctionView(containerName.trim().equals("Auction View") ||
+            manager.auctionManager.customAH.setRenderOverAuctionView(containerName.trim().equals("Auction View") ||
                     containerName.trim().equals("BIN Auction View"));
         }
 
@@ -497,9 +504,9 @@ public class NotEnoughUpdates {
 
     @SubscribeEvent
     public void onGuiScreenDrawPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
-        if(event.gui instanceof CustomAHGui || manager.customAH.isRenderOverAuctionView()) {
+        if(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
-            manager.customAH.drawScreen(event.mouseX, event.mouseY);
+            manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
         }
     }
 
@@ -527,9 +534,9 @@ public class NotEnoughUpdates {
      */
     @SubscribeEvent
     public void onGuiScreenMouse(GuiScreenEvent.MouseInputEvent.Pre event) {
-        if(event.gui instanceof CustomAHGui || manager.customAH.isRenderOverAuctionView()) {
+        if(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
-            manager.customAH.handleMouseInput();
+            manager.auctionManager.customAH.handleMouseInput();
             //overlay.mouseInput();
             return;
         }
@@ -549,8 +556,8 @@ public class NotEnoughUpdates {
     boolean started = false;
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-        if(event.gui instanceof CustomAHGui || manager.customAH.isRenderOverAuctionView()) {
-            if(manager.customAH.keyboardInput()) {
+        if(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView()) {
+            if(manager.auctionManager.customAH.keyboardInput()) {
                 event.setCanceled(true);
                 Minecraft.getMinecraft().dispatchKeypresses();
             }

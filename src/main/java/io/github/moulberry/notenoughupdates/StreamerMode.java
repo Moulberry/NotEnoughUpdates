@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 public class StreamerMode {
 
-    private static final Pattern lobbyPattern = Pattern.compile("(mini|mega)([0-9]{1,3}[A-Z])");
+    private static final Pattern lobbyPattern = Pattern.compile("(mini|mega|m|M)([0-9]{1,3}[A-Z])");
 
     public static String filterLobbyNames(String line) {
         Matcher matcher = lobbyPattern.matcher(line);
