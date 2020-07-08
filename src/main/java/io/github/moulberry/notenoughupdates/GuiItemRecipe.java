@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 public class GuiItemRecipe extends GuiCrafting {
 
     private ItemStack[] craftMatrix;
+    private JsonObject result;
     private String text;
     private String craftText = "";
     private NEUManager manager;
@@ -20,9 +21,14 @@ public class GuiItemRecipe extends GuiCrafting {
     public GuiItemRecipe(ItemStack[] craftMatrix, JsonObject result, String text, NEUManager manager) {
         super(Minecraft.getMinecraft().thePlayer.inventory, Minecraft.getMinecraft().theWorld);
         this.craftMatrix = craftMatrix;
+        this.result = result;
         this.text = text;
         this.manager = manager;
 
+        setContents();
+    }
+
+    public void setContents() {
         ContainerWorkbench cw = (ContainerWorkbench) this.inventorySlots;
         for(int i=0; i<Math.min(craftMatrix.length, 9); i++) {
             if(craftMatrix[i] == null) continue;
@@ -35,6 +41,8 @@ public class GuiItemRecipe extends GuiCrafting {
     }
 
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
+        setContents();
+
         String t = text.equals("") ? I18n.format("container.crafting", new Object[0]) : text;
 
         Utils.drawStringScaledMaxWidth(t, fontRendererObj, 28, 6, t.contains("\u00a7"), xSize-38, 4210752);

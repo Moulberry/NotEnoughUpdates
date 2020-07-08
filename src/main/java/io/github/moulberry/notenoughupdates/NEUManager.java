@@ -7,6 +7,7 @@ import io.github.moulberry.notenoughupdates.options.Options;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -323,10 +324,12 @@ public class NEUManager {
      * Parses a file in to a JsonObject.
      */
     public JsonObject getJsonFromFile(File file) throws IOException {
-        InputStream in = new FileInputStream(file);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-        JsonObject json = gson.fromJson(reader, JsonObject.class);
-        return json;
+        try {
+            InputStream in = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            JsonObject json = gson.fromJson(reader, JsonObject.class);
+            return json;
+        } catch(Exception e) { return null; }
     }
 
     /**
@@ -433,7 +436,12 @@ public class NEUManager {
             currentlyInstalledItems.add(f.getName().substring(0, f.getName().length()-5));
         }
 
-        Set<String> removedItems = neuio.getRemovedItems(currentlyInstalledItems);
+        Set<String> removedItems;
+        if(config.autoupdate.value) {
+            removedItems = neuio.getRemovedItems(currentlyInstalledItems);
+        } else {
+            removedItems = new HashSet<>();
+        }
         for(File f : itemsLocation.listFiles()) {
             String internalname = f.getName().substring(0, f.getName().length()-5);
             if(!removedItems.contains(internalname)) {
@@ -454,6 +462,11 @@ public class NEUManager {
             if(json == null) {
                 return;
             }
+
+            String itemid = json.get("itemid").getAsString();
+            itemid = Item.getByNameOrId(itemid).getRegistryName();
+            json.addProperty("itemid", itemid);
+
             itemMap.put(internalName, json);
 
             if(json.has("recipe")) {
@@ -767,67 +780,84 @@ public class NEUManager {
     public JsonObject getJsonFromItemBytes(String item_bytes) {
         try {
             NBTTagCompound tag = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
-            tag = tag.getTagList("i", 10).getCompoundTagAt(0);
-            int id = tag.getShort("id");
-            int damage = tag.getShort("Damage");
-            int count = tag.getShort("Count");
-            tag = tag.getCompoundTag("tag");
-
-            String internalname = "";
-            if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
-                NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
-
-                if(ea.hasKey("id", 8)) {
-                    internalname = ea.getString("id");
-                }
-            }
-
-            String[] lore = new String[0];
-            NBTTagCompound display = tag.getCompoundTag("display");
-
-            if(display.hasKey("Lore", 9)) {
-                NBTTagList list = display.getTagList("Lore", 8);
-                lore = new String[list.tagCount()];
-                for(int k=0; k<list.tagCount(); k++) {
-                    lore[k] = list.getStringTagAt(k);
-                }
-            }
-
-            Item itemMc = Item.getItemById(id);
-            String itemid = "null";
-            if(itemMc != null) {
-                itemid = itemMc.getRegistryName();
-            }
-            String displayname = display.getString("Name");
-            String[] info = new String[0];
-            String clickcommand = "";
-
-
-            //public JsonObject createItemJson(String internalname, String itemid, String displayname, String[] lore,
-            //        String crafttext, String infoType, String[] info,
-            //        String clickcommand, int damage, NBTTagCompound nbttag) {
-
-            JsonObject item = new JsonObject();
-            item.addProperty("internalname", internalname);
-            item.addProperty("itemid", itemid);
-            item.addProperty("displayname", displayname);
-
-            if(lore != null && lore.length > 0) {
-                JsonArray jsonLore = new JsonArray();
-                for (String line : lore) {
-                    jsonLore.add(new JsonPrimitive(line));
-                }
-                item.add("lore", jsonLore);
-            }
-
-            item.addProperty("damage", damage);
-            if(count > 1) item.addProperty("count", count);
-            item.addProperty("nbttag", tag.toString());
-
-            return item;
+            return getJsonFromNBT(tag);
         } catch(IOException e) {
             return null;
         }
+    }
+
+    public String getInternalnameFromNBT(NBTTagCompound tag) {
+        String internalname = "UNKNOWN";
+        if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+            NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+            if(ea.hasKey("id", 8)) {
+                internalname = ea.getString("id");
+            }
+        }
+        return internalname;
+    }
+
+    public String[] getLoreFromNBT(NBTTagCompound tag) {
+        String[] lore = new String[0];
+        NBTTagCompound display = tag.getCompoundTag("display");
+
+        if(display.hasKey("Lore", 9)) {
+            NBTTagList list = display.getTagList("Lore", 8);
+            lore = new String[list.tagCount()];
+            for(int k=0; k<list.tagCount(); k++) {
+                lore[k] = list.getStringTagAt(k);
+            }
+        }
+        return lore;
+    }
+
+    public JsonObject getJsonFromNBT(NBTTagCompound tag) {
+        tag = tag.getTagList("i", 10).getCompoundTagAt(0);
+        int id = tag.getShort("id");
+        int damage = tag.getShort("Damage");
+        int count = tag.getShort("Count");
+        tag = tag.getCompoundTag("tag");
+
+        if(id == 141) id = 391; //for some reason hypixel thinks carrots have id 141
+
+        String internalname = getInternalnameFromNBT(tag);
+
+        NBTTagCompound display = tag.getCompoundTag("display");
+        String[] lore = getLoreFromNBT(tag);
+
+        Item itemMc = Item.getItemById(id);
+        String itemid = "null";
+        if(itemMc != null) {
+            itemid = itemMc.getRegistryName();
+        }
+        String displayname = display.getString("Name");
+        String[] info = new String[0];
+        String clickcommand = "";
+
+
+        //public JsonObject createItemJson(String internalname, String itemid, String displayname, String[] lore,
+        //        String crafttext, String infoType, String[] info,
+        //        String clickcommand, int damage, NBTTagCompound nbttag) {
+
+        JsonObject item = new JsonObject();
+        item.addProperty("internalname", internalname);
+        item.addProperty("itemid", itemid);
+        item.addProperty("displayname", displayname);
+
+        if(lore != null && lore.length > 0) {
+            JsonArray jsonLore = new JsonArray();
+            for (String line : lore) {
+                jsonLore.add(new JsonPrimitive(line));
+            }
+            item.add("lore", jsonLore);
+        }
+
+        item.addProperty("damage", damage);
+        if(count > 1) item.addProperty("count", count);
+        item.addProperty("nbttag", tag.toString());
+
+        return item;
     }
 
     private String clean(String str) {
@@ -1269,7 +1299,7 @@ public class NEUManager {
         }
 
         if(stack.getItem() == null) {
-            stack = new ItemStack(Items.diamond, 1, 10); //Purple broken texture item
+            stack = new ItemStack(Item.getItemFromBlock(Blocks.stone), 0, 255); //Purple broken texture item
         } else {
             if(json.has("damage")) {
                 stack.setItemDamage(json.get("damage").getAsInt());

@@ -73,6 +73,7 @@ public class NotEnoughUpdates {
 
     private static final long CHAT_MSG_COOLDOWN = 200;
     private long lastChatMessage = 0;
+    private long secondLastChatMessage = 0;
     private String currChatMessage = null;
 
     private boolean hoverInv = false;
@@ -107,10 +108,18 @@ public class NotEnoughUpdates {
 
     SimpleCommand neuAhCommand = new SimpleCommand("neuah", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            openGui = new CustomAHGui();
-            manager.auctionManager.customAH.lastOpen = System.currentTimeMillis();
-            manager.auctionManager.customAH.clearSearch();
-            manager.auctionManager.customAH.updateSearch();
+            if(!hasSkyblockScoreboard()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+                        "You must be on Skyblock to use this feature."));
+            } else if(manager.config.apiKey.value == null || manager.config.apiKey.value.isEmpty()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+                        "Can't open NeuAH, Api Key is not set. Run /api new and put the result in settings."));
+            } else {
+                openGui = new CustomAHGui();
+                manager.auctionManager.customAH.lastOpen = System.currentTimeMillis();
+                manager.auctionManager.customAH.clearSearch();
+                manager.auctionManager.customAH.updateSearch();
+            }
         }
     });
 
@@ -189,7 +198,8 @@ public class NotEnoughUpdates {
      * If the last chat message was sent <200 ago, will cache the message for #onTick to handle.
      */
     public void sendChatMessage(String message) {
-        if (System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
+        if(System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN)  {
+            secondLastChatMessage = lastChatMessage;
             lastChatMessage = System.currentTimeMillis();
             Minecraft.getMinecraft().thePlayer.sendChatMessage(message);
             currChatMessage = null;
@@ -239,6 +249,17 @@ public class NotEnoughUpdates {
                     usableContainer = false;
                     break;
                 }
+                if(!usableContainer) {
+                    if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+                        GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+                        ContainerChest container = (ContainerChest) chest.inventorySlots;
+                        String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
+
+                        if(containerName.equals("Accessory Bag")) {
+                            usableContainer = true;
+                        }
+                    }
+                }
                 if(usableContainer) {
                     for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
                         processUniqueStack(stack, newItem);
@@ -271,7 +292,7 @@ public class NotEnoughUpdates {
 
     @SubscribeEvent
     public void onRenderGameOverlay(RenderGameOverlayEvent event) {
-        if(event.type.equals(RenderGameOverlayEvent.ElementType.BOSSHEALTH) &&
+        if(event.type != null && event.type.equals(RenderGameOverlayEvent.ElementType.BOSSHEALTH) &&
                 Minecraft.getMinecraft().currentScreen instanceof GuiContainer && overlay.isUsingMobsFilter()) {
             event.setCanceled(true);
         }
@@ -301,7 +322,7 @@ public class NotEnoughUpdates {
             String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
 
             manager.auctionManager.customAH.setRenderOverAuctionView(containerName.trim().equals("Auction View") ||
-                    containerName.trim().equals("BIN Auction View"));
+                    containerName.trim().equals("BIN Auction View") || containerName.trim().equals("Confirm Bid"));
         }
 
         //OPEN
@@ -468,36 +489,38 @@ public class NotEnoughUpdates {
      */
     @SubscribeEvent
     public void onGuiBackgroundDraw(GuiScreenEvent.BackgroundDrawnEvent event) {
-        if(event.gui instanceof GuiContainer && isOnSkyblock()) {
+        if((event.gui instanceof GuiContainer || event.gui instanceof CustomAHGui) && isOnSkyblock()) {
             ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
             int width = scaledresolution.getScaledWidth();
 
             boolean hoverPane = event.getMouseX() < width*overlay.getInfoPaneOffsetFactor() ||
                     event.getMouseX() > width*overlay.getItemPaneOffsetFactor();
-            try {
-                int xSize = (int) Utils.getField(GuiContainer.class, event.gui, "xSize", "field_146999_f");
-                int ySize = (int) Utils.getField(GuiContainer.class, event.gui, "ySize", "field_147000_g");
-                int guiLeft = (int) Utils.getField(GuiContainer.class, event.gui, "guiLeft", "field_147003_i");
-                int guiTop = (int) Utils.getField(GuiContainer.class, event.gui, "guiTop", "field_147009_r");
 
-                hoverInv = event.getMouseX() > guiLeft && event.getMouseX() < guiLeft + xSize &&
-                        event.getMouseY() > guiTop && event.getMouseY() < guiTop + ySize;
-
-                if(hoverPane) {
-                    if(!hoverInv) focusInv = false;
-                } else {
-                    focusInv = true;
-                }
-            } catch(NullPointerException npe) {
-                npe.printStackTrace();
-                focusInv = !hoverPane;
-            }
-
-            if(focusInv) {
+            if(event.gui instanceof GuiContainer) {
                 try {
-                    overlay.render(event.getMouseX(), event.getMouseY(), hoverInv && focusInv);
-                } catch(ConcurrentModificationException e) {e.printStackTrace();}
-                GL11.glTranslatef(0, 0, 10);
+                    int xSize = (int) Utils.getField(GuiContainer.class, event.gui, "xSize", "field_146999_f");
+                    int ySize = (int) Utils.getField(GuiContainer.class, event.gui, "ySize", "field_147000_g");
+                    int guiLeft = (int) Utils.getField(GuiContainer.class, event.gui, "guiLeft", "field_147003_i");
+                    int guiTop = (int) Utils.getField(GuiContainer.class, event.gui, "guiTop", "field_147009_r");
+
+                    hoverInv = event.getMouseX() > guiLeft && event.getMouseX() < guiLeft + xSize &&
+                            event.getMouseY() > guiTop && event.getMouseY() < guiTop + ySize;
+
+                    if(hoverPane) {
+                        if(!hoverInv) focusInv = false;
+                    } else {
+                        focusInv = true;
+                    }
+                } catch(NullPointerException npe) {
+                    npe.printStackTrace();
+                    focusInv = !hoverPane;
+                }
+                if(focusInv) {
+                    try {
+                        overlay.render(event.getMouseX(), event.getMouseY(), hoverInv && focusInv);
+                    } catch(ConcurrentModificationException e) {e.printStackTrace();}
+                    GL11.glTranslatef(0, 0, 10);
+                }
             }
         }
     }
@@ -506,7 +529,22 @@ public class NotEnoughUpdates {
     public void onGuiScreenDrawPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
         if(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
-            manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
+
+            ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+            int width = scaledResolution.getScaledWidth();
+            int height = scaledResolution.getScaledHeight();
+
+            //Dark background
+            Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
+
+            if(event.mouseX < width*overlay.getWidthMult()/3 || event.mouseX > width-width*overlay.getWidthMult()/3) {
+                manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
+                overlay.render(event.mouseX, event.mouseY, false);
+            } else {
+                overlay.render(event.mouseX, event.mouseY, false);
+                manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
+            }
+
         }
     }
 
@@ -517,13 +555,15 @@ public class NotEnoughUpdates {
      */
     @SubscribeEvent
     public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
-        if(event.gui instanceof GuiContainer && isOnSkyblock()) {
-            if(!focusInv) {
-                GL11.glTranslatef(0, 0, 300);
-                overlay.render(event.mouseX, event.mouseY, hoverInv && focusInv);
-                GL11.glTranslatef(0, 0, -300);
+        if(!(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView())) {
+            if(event.gui instanceof GuiContainer && isOnSkyblock()) {
+                if(!focusInv) {
+                    GL11.glTranslatef(0, 0, 300);
+                    overlay.render(event.mouseX, event.mouseY, hoverInv && focusInv);
+                    GL11.glTranslatef(0, 0, -300);
+                }
+                overlay.renderOverlay(event.mouseX, event.mouseY);
             }
-            overlay.renderOverlay(event.mouseX, event.mouseY);
         }
     }
 
@@ -537,7 +577,7 @@ public class NotEnoughUpdates {
         if(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
             manager.auctionManager.customAH.handleMouseInput();
-            //overlay.mouseInput();
+            overlay.mouseInput();
             return;
         }
         if(event.gui instanceof GuiContainer && !(hoverInv && focusInv) && isOnSkyblock()) {
@@ -553,13 +593,14 @@ public class NotEnoughUpdates {
      * Sends a kbd event to NEUOverlay, cancelling if NEUOverlay#keyboardInput returns true.
      * Also includes a dev function used for creating custom named json files with recipes.
      */
-    boolean started = false;
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
         if(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView()) {
             if(manager.auctionManager.customAH.keyboardInput()) {
                 event.setCanceled(true);
                 Minecraft.getMinecraft().dispatchKeypresses();
+            } else if(overlay.keyboardInput(focusInv)) {
+                event.setCanceled(true);
             }
             return;
         }

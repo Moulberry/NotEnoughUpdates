@@ -66,6 +66,8 @@ public class GuiItemUsages extends GuiCrafting {
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         String t = "Crafting Usages";
 
+        setIndex(currentIndex);
+
         int guiX = mouseX - guiLeft;
         int guiY = mouseY - guiTop;
 

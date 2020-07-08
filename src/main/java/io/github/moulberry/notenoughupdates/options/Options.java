@@ -156,6 +156,7 @@ public class Options {
         arr.add("/enderchest:Ender Chest:ENDER_CHEST");
         arr.add("/wardrobe:Wardrobe:LEATHER_CHESTPLATE");
         arr.add("neucl:Collection Log:MAP");
+        arr.add("neuah:NEU Auction House:GOLD_BLOCK");
         return arr;
     }
 

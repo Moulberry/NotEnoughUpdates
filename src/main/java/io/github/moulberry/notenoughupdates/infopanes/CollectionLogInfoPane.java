@@ -37,6 +37,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
     private int previousAcquiredCount = 0;
     private int previousScroll = 0;
+    private int previousX = 0;
+    private int previousFilter = 0;
 
     private static final int FILTER_ALL = 0;
     private static final int FILTER_WEAPON = 1;
@@ -270,12 +272,14 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                 scaledresolution.getScaleFactor());
 
         if(!manager.config.cacheRenderedItempane.value || previousAcquiredCount != getCurrentAcquiredCount() ||
-                previousScroll != scrollHeight.getValue()) {
+                previousScroll != scrollHeight.getValue() || previousX != left || previousFilter != filterMode) {
             renderItemsToImage(itemFramebuffer, fg, left+5, right, top+1, bottom);
             renderItemBGToImage(itemBGFramebuffer, fg, left+5, right, top+1, bottom);
         }
         previousAcquiredCount = getCurrentAcquiredCount();
         previousScroll = scrollHeight.getValue();
+        previousX = left;
+        previousFilter = filterMode;
 
         Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
         renderFromImage(itemBGFramebuffer, width, height, left, right, top, bottom);

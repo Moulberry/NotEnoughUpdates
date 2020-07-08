@@ -4,9 +4,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,13 +28,23 @@ public class AuctionManager {
     private int totalPages = 0;
     private int lastApiUpdate;
     private LinkedList<Integer> needUpdate = new LinkedList<>();
-    private TreeMap<String, Auction> auctionMap = new TreeMap<>();
 
-    public TreeMap<String, HashMap<String, List<Integer>>> extrasToAucIdMap = new TreeMap<>();
+    private TreeMap<String, Auction> auctionMap = new TreeMap<>();
+    public HashMap<String, HashSet<String>> internalnameToAucIdMap = new HashMap<>();
+    private HashSet<String> playerBids = new HashSet<>();
+
+    public TreeMap<String, HashSet<String>> extrasToAucIdMap = new TreeMap<>();
 
     private long lastPageUpdate = 0;
     private long lastCustomAHSearch = 0;
     private long lastCleanup = 0;
+
+    public int activeAuctions = 0;
+    public int uniqueItems = 0;
+    public int totalTags = 0;
+    public int internalnameTaggedAuctions = 0;
+    public int taggedAuctions = 0;
+    public int processMillis = 0;
 
     public AuctionManager(NEUManager manager) {
         this.manager = manager;
@@ -37,6 +53,14 @@ public class AuctionManager {
 
     public TreeMap<String, Auction> getAuctionItems() {
         return auctionMap;
+    }
+
+    public HashSet<String> getPlayerBids() {
+        return playerBids;
+    }
+
+    public HashSet<String> getAuctionsForInternalname(String internalname) {
+        return internalnameToAucIdMap.computeIfAbsent(internalname, k -> new HashSet<>());
     }
 
     public class Auction {
@@ -48,11 +72,15 @@ public class AuctionManager {
         public boolean bin;
         public String category;
         public String rarity;
-        public String item_bytes;
+        public NBTTagCompound item_tag;
         private ItemStack stack;
 
+        public long lastUpdate = 0;
+
+        public int enchLevel = 0; //0 = clean, 1 = ench, 2 = ench/hpb
+
         public Auction(String auctioneerUuid, long end, int starting_bid, int highest_bid_amount, int bid_count,
-                       boolean bin, String category, String rarity, String item_bytes) {
+                       boolean bin, String category, String rarity, NBTTagCompound item_tag) {
             this.auctioneerUuid = auctioneerUuid;
             this.end = end;
             this.starting_bid = starting_bid;
@@ -61,14 +89,14 @@ public class AuctionManager {
             this.bin = bin;
             this.category = category;
             this.rarity = rarity;
-            this.item_bytes = item_bytes;
+            this.item_tag = item_tag;
         }
 
         public ItemStack getStack() {
             if(stack != null) {
                 return stack;
             } else {
-                JsonObject item = manager.getJsonFromItemBytes(item_bytes);
+                JsonObject item = manager.getJsonFromNBT(item_tag);
                 ItemStack stack = manager.jsonToStack(item, false);
                 this.stack = stack;
                 return stack;
@@ -77,6 +105,7 @@ public class AuctionManager {
     }
 
     public void tick() {
+        customAH.tick();
         if(System.currentTimeMillis() - lastPageUpdate > 5*1000) {
             lastPageUpdate = System.currentTimeMillis();
             updatePageTick();
@@ -87,23 +116,38 @@ public class AuctionManager {
         }
         if(System.currentTimeMillis() - lastCustomAHSearch > 60*1000) {
             lastCustomAHSearch = System.currentTimeMillis();
-            customAH.updateSearch();
+            if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView()) {
+                customAH.updateSearch();
+                calculateStats();
+            }
         }
     }
 
     private void cleanup() {
         try {
+            long currTime = System.currentTimeMillis();
             Set<String> toRemove = new HashSet<>();
             for(Map.Entry<String, Auction> entry : auctionMap.entrySet()) {
-                long timeToEnd = entry.getValue().end - System.currentTimeMillis();
+                long timeToEnd = entry.getValue().end - currTime;
                 if(timeToEnd < -60) {
+                    toRemove.add(entry.getKey());
+                } else if(currTime - entry.getValue().lastUpdate > 5*60*1000) {
                     toRemove.add(entry.getKey());
                 }
             }
+            toRemove.removeAll(playerBids);
             for(String aucid : toRemove) {
                 auctionMap.remove(aucid);
-                extrasToAucIdMap.remove(aucid);
             }
+            for(HashSet<String> aucids : extrasToAucIdMap.values()) {
+                for(String aucid : toRemove) {
+                    aucids.remove(aucid);
+                }
+            }
+            for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
+                aucids.removeAll(toRemove);
+            }
+            playerBids.removeAll(toRemove);
         } catch(ConcurrentModificationException e) {
             cleanup();
         }
@@ -115,12 +159,30 @@ public class AuctionManager {
         } else {
             if(needUpdate.isEmpty()) resetNeedUpdate();
 
-            int pageToUpdate;
-            for(pageToUpdate = needUpdate.pop(); pageToUpdate >= totalPages && !needUpdate.isEmpty();
-                pageToUpdate = needUpdate.pop()) {}
+            int pageToUpdate = needUpdate.pop();
+            while (pageToUpdate >= totalPages && !needUpdate.isEmpty()) {
+                pageToUpdate = needUpdate.pop();
+            }
 
             getPageFromAPI(pageToUpdate);
         }
+    }
+
+    public void calculateStats() {
+        try {
+            uniqueItems = internalnameToAucIdMap.size();
+            Set<String> aucs = new HashSet<>();
+            for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
+                aucs.addAll(aucids);
+            }
+            internalnameTaggedAuctions = aucs.size();
+            totalTags = extrasToAucIdMap.size();
+            aucs = new HashSet<>();
+            for(HashSet<String> aucids : extrasToAucIdMap.values()) {
+                aucs.addAll(aucids);
+            }
+            taggedAuctions = aucs.size();
+        } catch(Exception e) {}
     }
 
     String[] rarityArr = new String[] {
@@ -149,8 +211,8 @@ public class AuctionManager {
         manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/auctions",
             args, jsonObject -> {
                 if (jsonObject.get("success").getAsBoolean()) {
-                    //pages.put(page, jsonObject);
                     totalPages = jsonObject.get("totalPages").getAsInt();
+                    activeAuctions = jsonObject.get("totalAuctions").getAsInt();
 
                     int lastUpdated = jsonObject.get("lastUpdated").getAsInt();
 
@@ -162,7 +224,9 @@ public class AuctionManager {
 
                     String[] categoryItemType = new String[]{"sword","fishingrod","pickaxe","axe",
                             "shovel","petitem","travelscroll","reforgestone","bow"};
+                    String playerUUID = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replaceAll("-","");
 
+                    long startProcess = System.currentTimeMillis();
                     JsonArray auctions = jsonObject.get("auctions").getAsJsonArray();
                     for (int i = 0; i < auctions.size(); i++) {
                         JsonObject auction = auctions.get(i).getAsJsonObject();
@@ -179,27 +243,38 @@ public class AuctionManager {
                         }
                         String sbCategory = auction.get("category").getAsString();
                         String extras = auction.get("extra").getAsString();
+                        String item_name = auction.get("item_name").getAsString();
                         String item_lore = auction.get("item_lore").getAsString();
                         String item_bytes = auction.get("item_bytes").getAsString();
                         String rarity = auction.get("tier").getAsString();
+                        JsonArray bids = auction.get("bids").getAsJsonArray();
 
-                        String tag = extras + " " + Utils.cleanColour(item_lore).replaceAll("\n", " ");
+                        NBTTagCompound item_tag;
+                        try {
+                            item_tag = CompressedStreamTools.readCompressed(
+                                    new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
+                        } catch(IOException e) { continue; }
 
-                        int wordIndex=0;
-                        for(String str : tag.split(" ")) {
+                        NBTTagCompound tag = item_tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
+                        String internalname = manager.getInternalnameFromNBT(tag);
+
+                        for(String str : extras.substring(item_name.length()).split(" ")) {
                             str = Utils.cleanColour(str).toLowerCase();
-                            if(!extrasToAucIdMap.containsKey(str)) {
-                                extrasToAucIdMap.put(str, new HashMap<>());
+                            if(str.length() > 0) {
+                                HashSet<String> aucids = extrasToAucIdMap.computeIfAbsent(str, k -> new HashSet<>());
+                                aucids.add(auctionUuid);
                             }
-                            if(!extrasToAucIdMap.get(str).containsKey(auctionUuid)) {
-                                extrasToAucIdMap.get(str).put(auctionUuid, new ArrayList<>());
+                        }
+
+                        for(int j=0; j<bids.size(); j++) {
+                            JsonObject bid = bids.get(j).getAsJsonObject();
+                            if(bid.get("bidder").getAsString().equalsIgnoreCase(playerUUID)) {
+                                playerBids.add(auctionUuid);
                             }
-                            extrasToAucIdMap.get(str).get(auctionUuid).add(wordIndex);
-                            wordIndex++;
                         }
 
                         //Categories
-                        String category = sbCategory; //§6§lLEGENDARY FISHING ROD
+                        String category = sbCategory;
                         int itemType = checkItemType(item_lore, "SWORD", "FISHING ROD", "PICKAXE",
                                 "AXE", "SHOVEL", "PET ITEM", "TRAVEL SCROLL", "REFORGE STONE", "BOW");
                         if(itemType >= 0 && itemType < categoryItemType.length) {
@@ -208,13 +283,31 @@ public class AuctionManager {
                         if(extras.startsWith("Enchanted Book")) category = "ebook";
                         if(extras.endsWith("Potion")) category = "potion";
                         if(extras.contains("Rune")) category = "rune";
-                        if(item_lore.substring(2).startsWith("Furniture")) category = "furniture";
+                        if(item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";
                         if(item_lore.split("\n")[0].endsWith("Pet") ||
                                 item_lore.split("\n")[0].endsWith("Mount")) category = "pet";
 
-                        auctionMap.put(auctionUuid, new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
-                                bid_count, bin, category, rarity, item_bytes));
+                        Auction auction1 = new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
+                                bid_count, bin, category, rarity, item_tag);
+
+                        if(tag.hasKey("ench")) {
+                            auction1.enchLevel = 1;
+                            if(tag.hasKey("ExtraAttributes", 10)) {
+                                NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+                                int hotpotatocount = ea.getInteger("hot_potato_count");
+                                if(hotpotatocount == 10) {
+                                    auction1.enchLevel = 2;
+                                }
+                            }
+                        }
+
+                        auction1.lastUpdate = System.currentTimeMillis();
+
+                        auctionMap.put(auctionUuid, auction1);
+                        internalnameToAucIdMap.computeIfAbsent(internalname, k -> new HashSet<>()).add(auctionUuid);
                     }
+                    processMillis = (int)(System.currentTimeMillis() - startProcess);
                 }
             }
         );

@@ -24,6 +24,7 @@ public class GuiTextures {
     public static final ResourceLocation item_mask = new ResourceLocation("notenoughupdates:item_mask.png");
 
     public static final ResourceLocation auction_view = new ResourceLocation("notenoughupdates:auction_view.png");
+    public static final ResourceLocation auction_accept = new ResourceLocation("notenoughupdates:auction_accept.png");
     public static final ResourceLocation auction_price = new ResourceLocation("notenoughupdates:auction_price.png");
     public static final ResourceLocation auction_view_buttons = new ResourceLocation("notenoughupdates:auction_view_buttons.png");
 

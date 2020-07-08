@@ -32,11 +32,11 @@ public class DevInfoPane extends TextInfoPane {
                 text += item.getKey() + "\n";
             }
         }*/
-        for(String s : manager.neuio.getRemovedItems(manager.getItemInformation().keySet())) {
+        /*for(String s : manager.neuio.getRemovedItems(manager.getItemInformation().keySet())) {
             text += s + "\n";
         }
 
-        if(true) return text;
+        if(true) return text;*/
 
         /*for(Map.Entry<String, JsonObject> item : manager.getItemInformation().entrySet()) {
             if(!item.getValue().has("infoType") || item.getValue().get("infoType").getAsString().isEmpty()) {
@@ -45,7 +45,13 @@ public class DevInfoPane extends TextInfoPane {
         }*/
         //if(true) return text;
 
-        for(Map.Entry<String, JsonElement> entry : manager.getAuctionPricesJson().get("prices").getAsJsonObject().entrySet()) {
+        for(String internalname : manager.auctionManager.internalnameToAucIdMap.keySet()) {
+            if(!manager.getItemInformation().containsKey(internalname)) {
+                text += internalname + "\n";
+            }
+        }
+
+        /*for(Map.Entry<String, JsonElement> entry : manager.getAuctionPricesJson().get("prices").getAsJsonObject().entrySet()) {
             if(!manager.getItemInformation().keySet().contains(entry.getKey())) {
                 if(entry.getKey().contains("-")) {
                     continue;
@@ -56,7 +62,7 @@ public class DevInfoPane extends TextInfoPane {
                 }
                 text += entry.getKey() + "\n";
             }
-        }
+        }*/
         return text;
     }
 

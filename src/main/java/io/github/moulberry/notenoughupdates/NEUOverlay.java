@@ -76,6 +76,8 @@ public class NEUOverlay extends Gui {
     private final int searchBarYSize = 40;
     private final int searchBarPadding = 2;
 
+    private float oldWidthMult = 0;
+
     public static final int ITEM_PADDING = 4;
     public static final int ITEM_SIZE = 16;
 
@@ -246,10 +248,12 @@ public class NEUOverlay extends Gui {
                     int leftPrev = leftSide-1;
                     if(mouseX > leftPrev && mouseX < leftPrev+buttonXSize) { //"Previous" button
                         setPage(page-1);
+                        Utils.playPressSound();
                     }
                     int leftNext = rightSide+1-buttonXSize;
                     if(mouseX > leftNext && mouseX < leftNext+buttonXSize) { //"Next" button
                         setPage(page+1);
+                        Utils.playPressSound();
                     }
                 }
 
@@ -268,9 +272,11 @@ public class NEUOverlay extends Gui {
                             if(Mouse.getEventButton() == 0) {
                                 manager.config.compareMode.value = new Double(i);
                                 updateSearch();
+                                Utils.playPressSound();
                             } else if(Mouse.getEventButton() == 1) {
                                 manager.config.compareAscending.value.set(i, !manager.config.compareAscending.value.get(i));
                                 updateSearch();
+                                Utils.playPressSound();
                             }
                         }
                     }
@@ -280,6 +286,7 @@ public class NEUOverlay extends Gui {
                         if(mouseX >= sortIconX && mouseX <= sortIconX+scaledITEM_SIZE) {
                             manager.config.sortMode.value = new Double(i);
                             updateSearch();
+                            Utils.playPressSound();
                         }
                     }
                 }
@@ -287,15 +294,17 @@ public class NEUOverlay extends Gui {
             return true;
         }
 
-        if(Mouse.getEventButton() == 2) {
-            Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
-            if(slot != null) {
-                ItemStack hover = slot.getStack();
-                if(hover != null) {
-                    textField.setText("id:"+manager.getInternalNameForItem(hover));
-                    updateSearch();
-                    searchMode = true;
-                    return true;
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
+            if(Mouse.getEventButton() == 2) {
+                Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
+                if(slot != null) {
+                    ItemStack hover = slot.getStack();
+                    if(hover != null) {
+                        textField.setText("id:"+manager.getInternalNameForItem(hover));
+                        updateSearch();
+                        searchMode = true;
+                        return true;
+                    }
                 }
             }
         }
@@ -334,9 +343,11 @@ public class NEUOverlay extends Gui {
                                 String command = quickCommand.split(":")[0].trim();
                                 if(command.startsWith("/")) {
                                     NotEnoughUpdates.INSTANCE.sendChatMessage(command);
+                                    Utils.playPressSound();
                                     return true;
                                 } else {
                                     ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command);
+                                    Utils.playPressSound();
                                     return true;
                                 }
                             }
@@ -375,6 +386,7 @@ public class NEUOverlay extends Gui {
                 if(Mouse.getEventButtonState()) {
                     displayInformationPane(HTMLInfoPane.createFromWikiUrl(this, manager, "Help",
                             "https://moulberry.github.io/files/neu_help.html"));
+                    Utils.playPressSound();
                 }
             } else if(mouseX > width/2 - getSearchBarXSize()/2 - paddingUnscaled*6 - iconSize &&
                     mouseX < width/2 - getSearchBarXSize()/2 - paddingUnscaled*6) {
@@ -384,6 +396,7 @@ public class NEUOverlay extends Gui {
                     } else {
                         displayInformationPane(new SettingsInfoPane(this, manager));
                     }
+                    Utils.playPressSound();
                 }
             }
         }
@@ -405,7 +418,7 @@ public class NEUOverlay extends Gui {
      */
     public int getSearchBarXSize() {
         if(scaledresolution.getScaleFactor()==4) return (int)(searchBarXSize*0.8);
-        return searchBarXSize;
+        return (int)(searchBarXSize);
     }
 
     /**
@@ -505,8 +518,9 @@ public class NEUOverlay extends Gui {
 
                 AtomicReference<String> internalname = new AtomicReference<>(null);
                 AtomicReference<ItemStack> itemstack = new AtomicReference<>(null);
-                Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
-                if(slot != null) {
+                if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
+                        Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen) != null) {
+                    Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
                     ItemStack hover = slot.getStack();
                     if(hover != null) {
                         internalname.set(manager.getInternalNameForItem(hover));
@@ -842,7 +856,8 @@ public class NEUOverlay extends Gui {
 
     public float getWidthMult() {
         float scaleFMult = 1;
-        if(scaledresolution.getScaleFactor()==4) scaleFMult = 0.9f;
+        if(scaledresolution.getScaleFactor()==4) scaleFMult *= 0.9f;
+        if(manager.auctionManager.customAH.isRenderOverAuctionView()) scaleFMult *= 0.8f;
         return (float)Math.max(0.5, Math.min(1.5, manager.config.paneWidthMult.value.floatValue()))*scaleFMult;
     }
 
@@ -1047,32 +1062,34 @@ public class NEUOverlay extends Gui {
      */
     public void renderOverlay(int mouseX, int mouseY) {
         if(searchMode && textField.getText().length() > 0) {
-            GuiContainer inv = (GuiContainer) Minecraft.getMinecraft().currentScreen;
-            int guiLeftI = (int)Utils.getField(GuiContainer.class, inv, "guiLeft", "field_147003_i");
-            int guiTopI = (int)Utils.getField(GuiContainer.class, inv, "guiTop", "field_147009_r");
+            if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
+                GuiContainer inv = (GuiContainer) Minecraft.getMinecraft().currentScreen;
+                int guiLeftI = (int)Utils.getField(GuiContainer.class, inv, "guiLeft", "field_147003_i");
+                int guiTopI = (int)Utils.getField(GuiContainer.class, inv, "guiTop", "field_147009_r");
 
-            GL11.glTranslatef(0, 0, 260);
-            int overlay = new Color(0, 0, 0, 100).getRGB();
-            for(Slot slot : inv.inventorySlots.inventorySlots) {
-                if(slot.getStack() == null || !manager.doesStackMatchSearch(slot.getStack(), textField.getText())) {
-                    drawRect(guiLeftI+slot.xDisplayPosition, guiTopI+slot.yDisplayPosition,
-                            guiLeftI+slot.xDisplayPosition+16, guiTopI+slot.yDisplayPosition+16,
-                            overlay);
+                GL11.glTranslatef(0, 0, 260);
+                int overlay = new Color(0, 0, 0, 100).getRGB();
+                for(Slot slot : inv.inventorySlots.inventorySlots) {
+                    if(slot.getStack() == null || !manager.doesStackMatchSearch(slot.getStack(), textField.getText())) {
+                        drawRect(guiLeftI+slot.xDisplayPosition, guiTopI+slot.yDisplayPosition,
+                                guiLeftI+slot.xDisplayPosition+16, guiTopI+slot.yDisplayPosition+16,
+                                overlay);
+                    }
                 }
-            }
-            if(Utils.getSlotUnderMouse(inv) != null) {
-                ItemStack stack = Utils.getSlotUnderMouse(inv).getStack();
-                //Minecraft.getMinecraft().currentScreen.renderToolTip(stack, mouseX, mouseY);
-                Class<?>[] params = new Class[]{ItemStack.class, int.class, int.class};
-                Method renderToolTip = Utils.getMethod(GuiScreen.class, params, "renderToolTip", "func_146285_a");
-                if(renderToolTip != null) {
-                    renderToolTip.setAccessible(true);
-                    try {
-                        renderToolTip.invoke(Minecraft.getMinecraft().currentScreen, stack, mouseX, mouseY);
-                    } catch(Exception e) {}
+                if(Utils.getSlotUnderMouse(inv) != null) {
+                    ItemStack stack = Utils.getSlotUnderMouse(inv).getStack();
+                    //Minecraft.getMinecraft().currentScreen.renderToolTip(stack, mouseX, mouseY);
+                    Class<?>[] params = new Class[]{ItemStack.class, int.class, int.class};
+                    Method renderToolTip = Utils.getMethod(GuiScreen.class, params, "renderToolTip", "func_146285_a");
+                    if(renderToolTip != null) {
+                        renderToolTip.setAccessible(true);
+                        try {
+                            renderToolTip.invoke(Minecraft.getMinecraft().currentScreen, stack, mouseX, mouseY);
+                        } catch(Exception e) {}
+                    }
                 }
+                GL11.glTranslatef(0, 0, -260);
             }
-            GL11.glTranslatef(0, 0, -260);
         }
     }
 
@@ -1202,6 +1219,11 @@ public class NEUOverlay extends Gui {
 
         if(guiScaleLast != scaledresolution.getScaleFactor()) {
             guiScaleLast = scaledresolution.getScaleFactor();
+            redrawItems = true;
+        }
+
+        if(oldWidthMult != getWidthMult()) {
+            oldWidthMult = getWidthMult();
             redrawItems = true;
         }
 
