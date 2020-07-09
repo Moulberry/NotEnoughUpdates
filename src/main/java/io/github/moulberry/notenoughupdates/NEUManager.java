@@ -223,12 +223,17 @@ public class NEUManager {
         }
     }
 
-    public JsonObject getAuctionPricesJson() {
-        return auctionPricesJson;
+    public boolean hasAuctionInfo(String internalname) {
+        return auctionPricesJson.has("item_data") && auctionPricesJson.get("item_data").getAsJsonObject().has(internalname);
+    }
+
+    public boolean hasBazaarInfo(String internalname) {
+        return auctionPricesJson.has("bazaar") && auctionPricesJson.get("bazaar").getAsJsonObject().has(internalname);
     }
 
     public JsonObject getItemAuctionInfo(String internalname) {
-        JsonElement e = auctionPricesJson.get("prices").getAsJsonObject().get(internalname);
+        if(!hasAuctionInfo(internalname)) return null;
+        JsonElement e = auctionPricesJson.get("item_data").getAsJsonObject().get(internalname);
         if(e == null) {
             return null;
         }
@@ -236,6 +241,7 @@ public class NEUManager {
     }
 
     public JsonObject getBazaarInfo(String internalname) {
+        if(!hasBazaarInfo(internalname)) return null;
         JsonElement e = auctionPricesJson.get("bazaar").getAsJsonObject().get(internalname);
         if(e == null) {
             return null;
@@ -463,8 +469,13 @@ public class NEUManager {
                 return;
             }
 
+            if(json.get("itemid") == null) return;
+
             String itemid = json.get("itemid").getAsString();
-            itemid = Item.getByNameOrId(itemid).getRegistryName();
+            Item mcitem = Item.getByNameOrId(itemid);
+            if(mcitem != null) {
+                itemid = mcitem.getRegistryName();
+            }
             json.addProperty("itemid", itemid);
 
             itemMap.put(internalName, json);
@@ -787,14 +798,36 @@ public class NEUManager {
     }
 
     public String getInternalnameFromNBT(NBTTagCompound tag) {
-        String internalname = "UNKNOWN";
+        String internalname = null;
         if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
             NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
 
             if(ea.hasKey("id", 8)) {
-                internalname = ea.getString("id");
+                internalname = ea.getString("id").replaceAll(":", "-");
+            }
+
+            if("PET".equals(internalname)) {
+                String petInfo = ea.getString("petInfo");
+                if(petInfo.length() > 0) {
+                    JsonObject petInfoObject = gson.fromJson(petInfo, JsonObject.class);
+                    internalname = petInfoObject.get("type").getAsString();
+                    String tier = petInfoObject.get("tier").getAsString();
+                    switch(tier) {
+                        case "COMMON":
+                            internalname += ";0"; break;
+                        case "UNCOMMON":
+                            internalname += ";1"; break;
+                        case "RARE":
+                            internalname += ";2"; break;
+                        case "EPIC":
+                            internalname += ";3"; break;
+                        case "LEGENDARY":
+                            internalname += ";4"; break;
+                    }
+                }
             }
         }
+
         return internalname;
     }
 
@@ -934,15 +967,7 @@ public class NEUManager {
 
     public String getInternalNameForItem(ItemStack stack) {
         NBTTagCompound tag = stack.getTagCompound();
-        //Internal id
-        if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
-            NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
-
-            if(ea.hasKey("id", 8)) {
-                return ea.getString("id").replaceAll(":", "-");
-            }
-        }
-        return null;
+        return getInternalnameFromNBT(tag);
     }
 
     //Currently unused in production.

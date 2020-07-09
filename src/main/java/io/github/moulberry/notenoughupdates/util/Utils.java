@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.util;
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
@@ -21,6 +22,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Session;
 import org.lwjgl.input.Keyboard;
@@ -28,6 +30,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 import javax.swing.*;
+import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -123,7 +126,11 @@ public class Utils {
     }
 
     public static String cleanColour(String in) {
-        return in.replaceAll("(?i)\\u00A7.", "");
+        return in.replaceAll("(?i)\\u00C2\\u00A7.", "").replaceAll("(?i)\\u00A7.", "");
+    }
+
+    public static String fixBrokenAPIColour(String in) {
+        return in.replaceAll("(?i)\\u00C2(\\u00A7.)", "$1");
     }
 
     public static String prettyCase(String str) {
@@ -334,6 +341,10 @@ public class Utils {
     }
 
     public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font) {
+        drawHoveringText(textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font, true);
+    }
+
+    public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font, boolean coloured) {
         if (!textLines.isEmpty())
         {
             GlStateManager.disableRescaleNormal();
@@ -438,7 +449,43 @@ public class Utils {
             drawGradientRect(zLevel, tooltipX - 3, tooltipY - 3, tooltipX + tooltipTextWidth + 3, tooltipY + tooltipHeight + 3, backgroundColor, backgroundColor);
             drawGradientRect(zLevel, tooltipX - 4, tooltipY - 3, tooltipX - 3, tooltipY + tooltipHeight + 3, backgroundColor, backgroundColor);
             drawGradientRect(zLevel, tooltipX + tooltipTextWidth + 3, tooltipY - 3, tooltipX + tooltipTextWidth + 4, tooltipY + tooltipHeight + 3, backgroundColor, backgroundColor);
-            final int borderColorStart = 0x505000FF;
+            //TODO: Coloured Borders
+            int borderColorStart = 0x505000FF;
+            if(NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderColours.value) {
+                if(textLines.size() > 0) {
+                    String first = textLines.get(0);
+                    int lastColourCode = -99;
+                    int currentColour = 0;
+                    int[] mostCommon = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                    for(int i=0; i<first.length(); i++) {
+                        char c = first.charAt(i);
+                        if(c == '\u00A7') {
+                            lastColourCode = i;
+                        } else if(lastColourCode == i-1) {
+                            int colIndex = "0123456789abcdef".indexOf(c);
+                            if(colIndex >= 0) {
+                                currentColour = colIndex;
+                            } else {
+                                currentColour = 0;
+                            }
+                        } else if("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0){
+                            if(currentColour > 0) {
+                                mostCommon[currentColour]++;
+                            }
+                        }
+                    }
+                    int mostCommonCount = 0;
+                    for(int index=0; index<mostCommon.length; index++) {
+                        if(mostCommon[index] > mostCommonCount) {
+                            mostCommonCount = mostCommon[index];
+                            currentColour = index;
+                        }
+                    }
+
+                    int colourInt = font.getColorCode("0123456789abcdef".charAt(currentColour));
+                    borderColorStart = new Color(colourInt).darker().getRGB() & 0x00FFFFFF | 0x80000000;
+                }
+            }
             final int borderColorEnd = (borderColorStart & 0xFEFEFE) >> 1 | borderColorStart & 0xFF000000;
             drawGradientRect(zLevel, tooltipX - 3, tooltipY - 3 + 1, tooltipX - 3 + 1, tooltipY + tooltipHeight + 3 - 1, borderColorStart, borderColorEnd);
             drawGradientRect(zLevel, tooltipX + tooltipTextWidth + 2, tooltipY - 3 + 1, tooltipX + tooltipTextWidth + 3, tooltipY + tooltipHeight + 3 - 1, borderColorStart, borderColorEnd);

@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.*;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.init.Blocks;
@@ -43,7 +44,6 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import javax.swing.*;
@@ -98,11 +98,16 @@ public class NotEnoughUpdates {
     ScheduledExecutorService guiDelaySES = Executors.newScheduledThreadPool(1);
     SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
-                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
+            if(!OpenGlHelper.isFramebufferEnabled()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+                        "This feature requires FBOs to work. Try disabling Optifine's 'Fast Render'."));
+            } else {
+                if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
+                    openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
+                }
+                manager.updatePrices();
+                overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
             }
-            manager.updatePrices();
-            overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
         }
     });
 
@@ -131,6 +136,7 @@ public class NotEnoughUpdates {
     public void preinit(FMLPreInitializationEvent event) {
         INSTANCE = this;
         MinecraftForge.EVENT_BUS.register(this);
+        //MinecraftForge.EVENT_BUS.register(new NEUCape());
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         f.mkdirs();

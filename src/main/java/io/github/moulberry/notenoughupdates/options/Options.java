@@ -38,6 +38,11 @@ public class Options {
             "Quick Commands",
             false,
             "Shows QuickCommands™ above search bar.");
+    public Option<Boolean> tooltipBorderColours = new Option(
+            true,
+            "Coloured Tooltip Borders",
+            false,
+            "Makes the border of tooltips coloured. (Only NEU Tooltips)");
     public Option<Boolean> advancedPriceInfo = new Option(
             false,
             "Adv. Item Price Info",
@@ -170,6 +175,8 @@ public class Options {
         tryAddOption(advancedPriceInfo, options);
         tryAddOption(cacheRenderedItempane, options);
         tryAddOption(streamerMode, options);
+        tryAddOption(showQuickCommands, options);
+        tryAddOption(tooltipBorderColours, options);
         tryAddOption(hideApiKey, options);
         tryAddOption(autoupdate, options);
         tryAddOption(keepopen, options);

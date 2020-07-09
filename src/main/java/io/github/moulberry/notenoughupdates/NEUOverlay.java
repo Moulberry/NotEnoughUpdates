@@ -346,7 +346,7 @@ public class NEUOverlay extends Gui {
                                     Utils.playPressSound();
                                     return true;
                                 } else {
-                                    ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command);
+                                    ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/"+command); //Need to add '/' because of sk1er's patcher being unbelievably shit
                                     Utils.playPressSound();
                                     return true;
                                 }
