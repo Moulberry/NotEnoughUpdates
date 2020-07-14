@@ -8,7 +8,9 @@ import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
+import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
+import io.github.moulberry.notenoughupdates.infopanes.CosmeticsInfoPane;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -95,7 +97,6 @@ public class NotEnoughUpdates {
 
     private GuiScreen openGui = null;
 
-    ScheduledExecutorService guiDelaySES = Executors.newScheduledThreadPool(1);
     SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!OpenGlHelper.isFramebufferEnabled()) {
@@ -108,6 +109,15 @@ public class NotEnoughUpdates {
                 manager.updatePrices();
                 overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
             }
+        }
+    });
+
+    SimpleCommand cosmeticsCommand = new SimpleCommand("neucosmetics", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
+                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
+            }
+            overlay.displayInformationPane(new CosmeticsInfoPane(overlay, manager));
         }
     });
 
@@ -136,11 +146,12 @@ public class NotEnoughUpdates {
     public void preinit(FMLPreInitializationEvent event) {
         INSTANCE = this;
         MinecraftForge.EVENT_BUS.register(this);
-        //MinecraftForge.EVENT_BUS.register(new NEUCape());
+        MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         f.mkdirs();
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
+        ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
 
         neuio = new NEUIO(getAccessToken());

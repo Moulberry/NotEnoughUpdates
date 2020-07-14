@@ -482,7 +482,6 @@ public class NEUCape2 {
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
 
-
         //Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(node1.normalY + " " + node2.normalY + " " + node3.normalY + " " + node4.normalY));
 
         if(offset) {

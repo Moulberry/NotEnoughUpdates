@@ -392,10 +392,12 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         String[] items = getItemList();
         iterateItemSlots(new ItemSlotConsumer() {
             public void consume(int x, int y, int id) {
-                String internalname = items[id];
+                if(id < items.length) {
+                    String internalname = items[id];
 
-                ItemStack stack = manager.jsonToStack(manager.getItemInformation().get(internalname));
-                Utils.drawItemStack(stack, x, y);
+                    ItemStack stack = manager.jsonToStack(manager.getItemInformation().get(internalname));
+                    Utils.drawItemStack(stack, x, y);
+                }
             }
         }, left, right, top, bottom);
     }

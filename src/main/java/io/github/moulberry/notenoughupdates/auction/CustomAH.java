@@ -1028,8 +1028,6 @@ public class CustomAH extends Gui {
             return;
         }
 
-        System.out.println("Updating search:"+searchField.getText());
-
         lastUpdateSearch = System.currentTimeMillis();
         shouldUpdateSearch = false;
 
@@ -1345,7 +1343,6 @@ public class CustomAH extends Gui {
                             }
                         }
 
-                        System.out.println();
                         Utils.playPressSound();
                     } else if(mouseY > guiTop+126 && mouseY < guiTop+126+16 && !leftFiller) {
                         priceField.setFocused(true);

@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -45,7 +46,7 @@ public class HypixelApi {
             return null;
         }
 
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
             StringBuilder builder = new StringBuilder();
             int codePoint;
             while((codePoint = reader.read()) != -1) {

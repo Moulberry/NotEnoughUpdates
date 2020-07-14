@@ -1,0 +1,605 @@
+package io.github.moulberry.notenoughupdates.cosmetics;
+
+import io.github.moulberry.notenoughupdates.util.TexLoc;
+import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.gen.NoiseGeneratorSimplex;
+import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.Sys;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.*;
+import org.lwjgl.util.vector.Vector3f;
+
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.security.Key;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+public class NEUCape {
+
+    public ResourceLocation capeTex = null;
+
+    private List<List<CapeNode>> nodes = null;
+
+    private static double vertOffset = 1.4;
+    private static double shoulderLength = 0.24;
+    private static double shoulderWidth = 0.13;
+
+    public static final int HORZ_NODES = 6;
+    public static final int VERT_NODES = 22;
+
+    public static float targetDist = 1/20f;
+
+    private String shaderName = "cape";
+
+    public NEUCape(String capeName) {
+        setCapeTexture(capeName);
+    }
+
+    public void setCapeTexture(String capeName) {
+        if(capeTex == null || !capeTex.getResourcePath().equals(capeName+".png")) {
+            if(capeName.equalsIgnoreCase("fade")) {
+                shaderName = "fade_cape";
+            } else {
+                shaderName = "cape";
+            }
+            capeTex = new ResourceLocation("notenoughupdates:"+capeName+".png");
+            startTime = System.currentTimeMillis();
+        }
+    }
+
+    public void createCapeNodes(EntityPlayer player) {
+        nodes = new ArrayList<>();
+
+        float pX = (float)player.posX;
+        float pY = (float)player.posY;
+        float pZ = (float)player.posZ;
+
+        float uMinTop = 48/1024f;
+        float uMaxTop = 246/1024f;
+        float uMinBottom = 0/1024f;
+        float uMaxBottom = 293/1024f;
+
+        float vMaxSide = 404/1024f;
+        float vMaxCenter = 419/1024f;
+
+        for(int i=0; i<VERT_NODES; i++) {
+            float uMin = uMinTop + (uMinBottom - uMinTop) * i/(float)(VERT_NODES-1);
+            float uMax = uMaxTop + (uMaxBottom - uMaxTop) * i/(float)(VERT_NODES-1);
+
+            List<CapeNode> row = new ArrayList<>();
+            for(int j=0; j<HORZ_NODES; j++) {
+                float vMin = 0f;
+                float centerMult = 1-Math.abs(j-(HORZ_NODES-1)/2f)/((HORZ_NODES-1)/2f);//0-(horzCapeNodes)  -> 0-1-0
+                float vMax = vMaxSide + (vMaxCenter - vMaxSide) * centerMult;
+
+                CapeNode node = new CapeNode(0, 0, 0);//pX-1, pY+2-i*targetDist, pZ+(j-(horzCapeNodes-1)/2f)*targetDist*2
+                node.texU = uMin + (uMax - uMin) * j/(float)(HORZ_NODES-1);
+                node.texV = vMin + (vMax - vMin) * i/(float)(VERT_NODES-1);
+
+                node.horzDistMult = 2f+1f*i/(float)(VERT_NODES-1);
+
+                if(j == 0 || j == HORZ_NODES-1) {
+                    node.horzSideTexU = 406/1024f * i/(float)(VERT_NODES-1);
+                    if(j == 0) {
+                        node.horzSideTexVTop = 1 - 20/1024f;
+                    } else {
+                        node.horzSideTexVTop = 1 - 40/1024f;
+                    }
+                }
+                if(i == 0) {
+                    node.vertSideTexU = 198/1024f * j/(float)(HORZ_NODES-1);
+                    node.vertSideTexVTop = 1 - 60/1024f;
+                } else if(i == VERT_NODES-1) {
+                    node.vertSideTexU = 300/1024f * j/(float)(HORZ_NODES-1);
+                    node.vertSideTexVTop = 1 - 80/1024f;
+                }
+                row.add(node);
+            }
+
+            nodes.add(row);
+        }
+        for(int y=0; y<nodes.size(); y++) {
+            int xSize = nodes.get(y).size();
+            for(int x=0; x<xSize; x++) {
+                CapeNode node = nodes.get(y).get(x);
+
+                for(Direction dir : Direction.values()) {
+                    for(int i=1; i<=2; i++) {
+                        Offset offset = new Offset(dir, i);
+
+                        int xNeighbor = x+offset.getXOffset();
+                        int yNeighbor = y+offset.getYOffset();
+
+                        if(xNeighbor >= 0 && xNeighbor < nodes.get(y).size()
+                                && yNeighbor >= 0 && yNeighbor < nodes.size()) {
+                            CapeNode neighbor = nodes.get(yNeighbor).get(xNeighbor);
+                            node.setNeighbor(offset, neighbor);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void ensureCapeNodesCreated(EntityPlayer player) {
+        if(nodes == null) createCapeNodes(player);
+    }
+
+    public enum Direction {
+        LEFT(-1, 0),
+        UP(0, 1),
+        RIGHT(1, 0),
+        DOWN(0, -1),
+        UPLEFT(-1, 1),
+        UPRIGHT(1, 1),
+        DOWNLEFT(-1, -1),
+        DOWNRIGHT(1, -1);
+
+        int xOff;
+        int yOff;
+
+        Direction(int xOff, int yOff) {
+            this.xOff = xOff;
+            this.yOff = yOff;
+        }
+
+        public Direction rotateRight90() {
+            int wantXOff = -yOff;
+            int wantYOff = xOff;
+            for(Direction dir : values()) {
+                if(dir.xOff == wantXOff && dir.yOff == wantYOff) {
+                    return dir;
+                }
+            }
+            return this;
+        }
+
+        public Direction rotateLeft90() {
+            int wantXOff = yOff;
+            int wantYOff = -xOff;
+            for(Direction dir : values()) {
+                if(dir.xOff == wantXOff && dir.yOff == wantYOff) {
+                    return dir;
+                }
+            }
+            return this;
+        }
+    }
+
+    public static class Offset {
+        Direction direction;
+        int steps;
+
+        public Offset(Direction direction, int steps) {
+            this.direction = direction;
+            this.steps = steps;
+        }
+
+        public int getXOffset() {
+            return direction.xOff*steps;
+        }
+
+        public int getYOffset() {
+            return direction.yOff*steps;
+        }
+
+        public boolean equals(Object obj) {
+            if(obj instanceof Offset) {
+                Offset other = (Offset) obj;
+                return other.direction == direction && other.steps == steps;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return 13*direction.ordinal() + 7*steps;
+        }
+    }
+
+    private void loadShaderUniforms(ShaderManager shaderManager) {
+        if(shaderName.equalsIgnoreCase("fade_cape")) {
+            shaderManager.loadData(shaderName, "millis", (int)(System.currentTimeMillis()-startTime));
+        }
+    }
+
+    long lastRender = 0;
+    public void onRenderPlayer(RenderPlayerEvent.Post e) {
+        EntityPlayer player = e.entityPlayer;
+
+        ensureCapeNodesCreated(player);
+
+        Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
+        double viewerX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * e.partialRenderTick;
+        double viewerY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * e.partialRenderTick;
+        double viewerZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * e.partialRenderTick;
+
+        GlStateManager.pushMatrix();
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA,
+                GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(capeTex);
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableCull();
+
+        GL11.glTranslatef(-(float)viewerX, -(float)viewerY, -(float)viewerZ);
+
+        ShaderManager shaderManager = ShaderManager.getInstance();
+        shaderManager.loadShader(shaderName);
+        loadShaderUniforms(shaderManager);
+
+        if(!Keyboard.isKeyDown(Keyboard.KEY_K)) renderCape(player, e.partialRenderTick);
+
+        GL11.glTranslatef((float)viewerX, (float)viewerY, (float)viewerZ);
+
+        GL20.glUseProgram(0);
+
+        GL11.glEnable(GL11.GL_CULL_FACE);
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
+        GlStateManager.popMatrix();
+
+        lastRender = System.currentTimeMillis();
+    }
+
+    public void onTick(TickEvent.ClientTickEvent event, EntityPlayer player) {
+        if(player != null && System.currentTimeMillis() - lastRender < 100) {
+            ensureCapeNodesCreated(Minecraft.getMinecraft().thePlayer);
+
+            for(int y=0; y<nodes.size(); y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    CapeNode node = nodes.get(y).get(x);
+                    node.lastPosition.x = node.position.x;
+                    node.lastPosition.y = node.position.y;
+                    node.lastPosition.z = node.position.z;
+                }
+            }
+            updateCape(player);
+        }
+    }
+
+    private Vector3f updateFixedCapeNodes(EntityPlayer player) {
+        double pX = player.posX;//player.lastTickPosX + (player.posX - player.lastTickPosX) * partialRenderTick;
+        double pY = player.posY;//player.lastTickPosY + (player.posY - player.lastTickPosY) * partialRenderTick;
+        double pZ = player.posZ;//player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialRenderTick;
+        double angle = Math.toRadians(player.renderYawOffset);
+
+        double vertOffset2 = vertOffset + (player.isSneaking() ? -0.22f : 0) + (player.getCurrentArmor(2) != null ? 0.06f : 0);
+        double shoulderWidth2 = shoulderWidth + (player.getCurrentArmor(2) != null ? 0.08f : 0);
+
+        float xOff = (float)(Math.cos(angle)*shoulderLength);
+        float zOff = (float)(Math.sin(angle)*shoulderLength);
+
+        float totalDX = 0;
+        float totalDY = 0;
+        float totalDZ = 0;
+        int totalMovements = 0;
+
+        int xSize = nodes.get(0).size();
+        for(int i=0; i<xSize; i++) {
+            float mult = 1 - 2f*i/(xSize-1); //1 -> -1
+            float widthMult = 1.25f-(1.414f*i/(xSize-1) - 0.707f)*(1.414f*i/(xSize-1) - 0.707f);
+            CapeNode node = nodes.get(0).get(i);
+            float x = (float)pX+(float)(xOff*mult-widthMult*Math.cos(angle+Math.PI/2)*shoulderWidth2);
+            float y = (float)pY+(float)(vertOffset2);
+            float z = (float)pZ+(float)(zOff*mult-widthMult*Math.sin(angle+Math.PI/2)*shoulderWidth2);
+            totalDX += x - node.position.x;
+            totalDY += y - node.position.y;
+            totalDZ += z - node.position.z;
+            totalMovements++;
+            node.position.x = x;
+            node.position.y = y;
+            node.position.z = z;
+            node.fixed = true;
+        }
+
+        float avgDX = totalDX/totalMovements;
+        float avgDY = totalDY/totalMovements;
+        float avgDZ = totalDZ/totalMovements;
+
+        return new Vector3f(avgDX, avgDY, avgDZ);
+    }
+
+    private void updateFixedCapeNodesPartial(EntityPlayer player, float partialRenderTick) {
+        double pX = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialRenderTick;
+        double pY = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialRenderTick;
+        double pZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialRenderTick;
+        double angle = Math.toRadians(player.renderYawOffset);
+
+        double vertOffset2 = vertOffset + (player.isSneaking() ? -0.22f : 0) + (player.getCurrentArmor(2) != null ? 0.06f : 0);
+        double shoulderWidth2 = shoulderWidth + (player.getCurrentArmor(2) != null ? 0.08f : 0);
+
+        float xOff = (float)(Math.cos(angle)*shoulderLength);
+        float zOff = (float)(Math.sin(angle)*shoulderLength);
+
+        int xSize = nodes.get(0).size();
+        for(int i=0; i<xSize; i++) {
+            float mult = 1 - 2f*i/(xSize-1); //1 -> -1
+            float widthMult = 1.25f-(1.414f*i/(xSize-1) - 0.707f)*(1.414f*i/(xSize-1) - 0.707f);
+            CapeNode node = nodes.get(0).get(i);
+            node.renderPosition.x = (float)pX+(float)(xOff*mult-widthMult*Math.cos(angle+Math.PI/2)*shoulderWidth2);
+            node.renderPosition.y = (float)pY+(float)(vertOffset2);
+            node.renderPosition.z = (float)pZ+(float)(zOff*mult-widthMult*Math.sin(angle+Math.PI/2)*shoulderWidth2);
+            node.fixed = true;
+        }
+    }
+
+    TexLoc tl = new TexLoc(10, 75, Keyboard.KEY_M);
+
+    private double deltaAngleAccum;
+    private double oldPlayerAngle;
+    private int crouchTicks = 0;
+    long startTime = 0;
+    long updateMillis = 0;
+    long renderMillis = 0;
+    private void updateCape(EntityPlayer player) {
+        Vector3f capeTranslation = updateFixedCapeNodes(player);
+
+        if(System.currentTimeMillis() - lastRender > 100) {
+            for (int y = 0; y < nodes.size(); y++) {
+                for (int x = 0; x < nodes.get(y).size(); x++) {
+                    Vector3f.add(nodes.get(y).get(x).position, capeTranslation, nodes.get(y).get(x).position);
+                    nodes.get(y).get(x).lastPosition.set(nodes.get(y).get(x).position);
+                    nodes.get(y).get(x).renderPosition.set(nodes.get(y).get(x).position);
+                }
+            }
+        } else {
+            double playerAngle = Math.toRadians(player.renderYawOffset);
+            double deltaAngle = playerAngle - oldPlayerAngle;
+            if(deltaAngle > Math.PI) {
+                deltaAngle = 2*Math.PI - deltaAngle;
+            }
+            if(deltaAngle < -Math.PI) {
+                deltaAngle = 2*Math.PI + deltaAngle;
+            }
+            deltaAngleAccum *= 0.5f;
+            deltaAngleAccum += deltaAngle;
+
+            float dX = (float)Math.cos(playerAngle+Math.PI/2f);
+            float dZ = (float)Math.sin(playerAngle+Math.PI/2f);
+
+            float factor = (float)(deltaAngleAccum*deltaAngleAccum);
+
+            tl.handleKeyboardInput();
+
+            float capeTransLength = capeTranslation.length();
+
+            float capeTranslationFactor = 0f;
+            if(capeTransLength > 0.5f) {
+                capeTranslationFactor = (capeTransLength-0.5f)/capeTransLength;
+            }
+            Vector3f lookDir = new Vector3f(dX, 0, dZ);
+            Vector3f lookDirNorm = lookDir.normalise(null);
+            float dot = Vector3f.dot(capeTranslation, lookDirNorm);
+            if(dot < 0) { //Moving backwards
+                for(int y=0; y<nodes.size(); y++) {
+                    for(int x=0; x<nodes.get(y).size(); x++) {
+                        CapeNode node = nodes.get(y).get(x);
+                        if(!node.fixed) {
+                            node.position.x += lookDirNorm.x*dot;
+                            node.position.y += lookDirNorm.y*dot;
+                            node.position.z += lookDirNorm.z*dot;
+                        }
+                    }
+                }
+                //Apply small backwards force
+                factor = 0.05f;
+            }
+
+            if(factor > 0) {
+                for(int y=0; y<nodes.size(); y++) {
+                    for(int x=0; x<nodes.get(y).size(); x++) {
+                        nodes.get(y).get(x).applyForce(-dX*factor, 0, -dZ*factor);
+                    }
+                }
+            }
+
+            if(capeTranslationFactor > 0f) {
+                float capeDX = capeTranslation.x*capeTranslationFactor;
+                float capeDY = capeTranslation.y*capeTranslationFactor;
+                float capeDZ = capeTranslation.z*capeTranslationFactor;
+
+                for(int y=0; y<nodes.size(); y++) {
+                    for(int x=0; x<nodes.get(y).size(); x++) {
+                        CapeNode node = nodes.get(y).get(x);
+                        if(!node.fixed) {
+                            node.position.x += capeDX;
+                            node.position.y += capeDY;
+                            node.position.z += capeDZ;
+                        }
+                    }
+                }
+            }
+
+            //Wind
+            float currTime = (System.currentTimeMillis()-startTime)/1000f;
+            float windRandom = Math.abs((float)(0.5f*Math.sin(0.22f*currTime)+Math.sin(0.44f*currTime)*Math.sin(0.47f*currTime)));
+            double windDir = playerAngle+Math.PI/4f*Math.sin(0.2f*currTime);
+
+            float windDX = (float)Math.cos(windDir+Math.PI/2f);
+            float windDZ = (float)Math.sin(windDir+Math.PI/2f);
+            for(int y=0; y<nodes.size(); y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    nodes.get(y).get(x).applyForce(-windDX*windRandom*0.01f, 0, -windDZ*windRandom*0.01f);
+                }
+            }
+
+            if(player.isSneaking()) {
+                crouchTicks++;
+                float mult = 0.5f;
+                if(crouchTicks < 5) {
+                    mult = 2f;
+                }
+                for(int y=0; y<8; y++) {
+                    for(int x=0; x<nodes.get(y).size(); x++) {
+                        nodes.get(y).get(x).applyForce(-dX*mult, 0, -dZ*mult);
+                    }
+                }
+            } else {
+                crouchTicks = 0;
+            }
+
+            oldPlayerAngle = playerAngle;
+
+            for(int y=0; y<nodes.size(); y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    nodes.get(y).get(x).update();
+                }
+            }
+            int updates = player == Minecraft.getMinecraft().thePlayer ? 50 : 25;
+            for(int i=0; i<updates; i++) {
+                for(int y=0; y<nodes.size(); y++) {
+                    for(int x=0; x<nodes.get(y).size(); x++) {
+                        nodes.get(y).get(x).resolveAll(2+1f*y/nodes.size(), false);
+                    }
+                }
+            }
+        }
+    }
+
+    private int ssbo = -1;
+    private void generateSSBO() {
+        ssbo = GL15.glGenBuffers();
+        loadSBBO();
+    }
+
+    private void loadSBBO() {
+        FloatBuffer buff = BufferUtils.createFloatBuffer(CapeNode.FLOAT_NUM*HORZ_NODES*VERT_NODES);
+        for(int y=0; y<VERT_NODES; y++) {
+            for(int x=0; x<HORZ_NODES; x++) {
+                nodes.get(y).get(x).loadIntoBuffer(buff);
+            }
+        }
+        buff.flip();
+
+        GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
+        GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, buff, GL15.GL_DYNAMIC_DRAW);
+        GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+    }
+
+    private void resolveAllCompute() {
+        if(ssbo == -1) {
+            generateSSBO();
+        }
+        loadSBBO();
+
+        int program = ShaderManager.getInstance().getShader("node");
+
+        int block_index = GL43.glGetProgramResourceIndex(program, GL43.GL_SHADER_STORAGE_BLOCK, "nodes_buffer");
+        int ssbo_binding_point_index = 0;
+        GL43.glShaderStorageBlockBinding(program, block_index, ssbo_binding_point_index);
+        int binding_point_index = 0;
+        GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, binding_point_index, ssbo);
+
+        GL20.glUseProgram(program);
+
+        for(int i=0; i<30; i++) {
+            GL43.glDispatchCompute(VERT_NODES, 1, 1);
+            GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
+        }
+
+        GL20.glUseProgram(0);
+
+        FloatBuffer buff = BufferUtils.createFloatBuffer(CapeNode.FLOAT_NUM*HORZ_NODES*VERT_NODES);
+
+        GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
+        GL15.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buff);
+        GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+
+        for(int y=0; y<VERT_NODES; y++) {
+            for(int x=0; x<HORZ_NODES; x++) {
+                nodes.get(y).get(x).readFromBuffer(buff);
+            }
+        }
+    }
+
+    private Vector3f avgFixedRenderPosition() {
+        Vector3f accum = new Vector3f();
+        int numFixed = 0;
+        for(int y=0; y<nodes.size(); y++) {
+            for(int x=0; x<nodes.get(y).size(); x++) {
+                CapeNode node = nodes.get(y).get(x);
+                if(node.fixed) {
+                    Vector3f.add(accum, node.renderPosition, accum);
+                    numFixed++;
+                }
+            }
+        }
+        if(numFixed != 0) {
+            accum.scale(1f/numFixed);
+        }
+        return accum;
+    }
+
+    private void renderCape(EntityPlayer player, float partialRenderTick) {
+        ensureCapeNodesCreated(player);
+        if(System.currentTimeMillis() - lastRender > 100) {
+            updateCape(player);
+        }
+        updateFixedCapeNodesPartial(player, partialRenderTick);
+
+        for(int y=0; y<nodes.size(); y++) {
+            for(int x=0; x<nodes.get(y).size(); x++) {
+                CapeNode node = nodes.get(y).get(x);
+
+                node.resetNormal();
+
+                if(node.fixed) continue;
+
+                Vector3f avgPositionFixed = avgFixedRenderPosition();
+
+                Vector3f newPosition = new Vector3f();
+                newPosition.x = node.lastPosition.x + (node.position.x - node.lastPosition.x) * partialRenderTick;
+                newPosition.y = node.lastPosition.y + (node.position.y - node.lastPosition.y) * partialRenderTick;
+                newPosition.z = node.lastPosition.z + (node.position.z - node.lastPosition.z) * partialRenderTick;
+
+                if(node.oldRenderPosition[node.oldRenderPosition.length-1] == null || Keyboard.isKeyDown(Keyboard.KEY_B)) {
+                    node.renderPosition = newPosition;
+                } else {
+                    Vector3f accum = new Vector3f();
+                    for(int i=0; i<node.oldRenderPosition.length; i++) {
+                        Vector3f.add(accum, node.oldRenderPosition[i], accum);
+                        Vector3f.add(accum, avgPositionFixed, accum);
+                    }
+                    accum.scale(1/(float)node.oldRenderPosition.length);
+
+                    float blendFactor = 0.5f+0.3f*y/(float)(nodes.size()-1); //0.5/0.5 -> 0.8/0.2 //0-1
+                    accum.scale(blendFactor);
+                    newPosition.scale(1-blendFactor);
+                    Vector3f.add(accum, newPosition, accum);
+                    node.renderPosition = accum;
+                }
+
+                for(int i=node.oldRenderPosition.length-1; i>=0; i--) {
+                    if(i > 0) {
+                        node.oldRenderPosition[i] = node.oldRenderPosition[i-1];
+                    } else {
+                        node.oldRenderPosition[i] = Vector3f.sub(node.renderPosition, avgPositionFixed, null);
+                    }
+                }
+            }
+        }
+        for(int y=0; y<nodes.size(); y++) {
+            for(int x=0; x<nodes.get(y).size(); x++) {
+                nodes.get(y).get(x).renderNode();
+            }
+        }
+    }
+
+}
