@@ -74,13 +74,10 @@ public class NEUIO {
             GHRepository repo = github.getRepositoryById("247692460");
 
             for(GHTreeEntry treeEntry : repo.getTreeRecursive("master", 1).getTree()) {
-                if(treeEntry.getPath().startsWith("items/")) {
-                    String[] split = treeEntry.getPath().split("/");
-                    String name = split[split.length-1];
-
-                    String oldSha = oldShas.get(name);
+                if(treeEntry.getPath().contains(".")) {
+                    String oldSha = oldShas.get(treeEntry.getPath());
                     if(!treeEntry.getSha().equals(oldSha)) {
-                        changedFiles.put(name, treeEntry.getSha());
+                        changedFiles.put(treeEntry.getPath(), treeEntry.getSha());
                     }
                 }
             }
@@ -108,23 +105,5 @@ public class NEUIO {
         removedItems.addAll(currentlyInstalled);
         removedItems.removeAll(repoItems);
         return removedItems;
-    }
-
-    /**
-     * Takes set of filename (eg. BOW.json) and returns map from that filename to the individual download link.
-     */
-    public Map<String, String> getItemsDownload(Set<String> filename) {
-        HashMap<String, String> downloadUrls = new HashMap<>();
-        try {
-            GitHub github = new GitHubBuilder().withOAuthToken(accessToken).build();
-            GHRepository repo = github.getRepositoryById("247692460");
-
-            for(GHContent content : repo.getDirectoryContent("items")) {
-                if(filename.contains(content.getName())) {
-                    downloadUrls.put(content.getName(), content.getDownloadUrl());
-                }
-            }
-        } catch(IOException e) { }
-        return downloadUrls;
     }
 }

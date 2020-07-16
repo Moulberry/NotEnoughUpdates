@@ -16,6 +16,8 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -23,18 +25,19 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Session;
+import net.minecraft.util.*;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Proxy;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -126,7 +129,11 @@ public class Utils {
     }
 
     public static String cleanColour(String in) {
-        return in.replaceAll("(?i)\\u00C2\\u00A7.", "").replaceAll("(?i)\\u00A7.", "");
+        return in.replaceAll("(?i)\\u00A7.", "");
+    }
+
+    public static String cleanColourNotModifiers(String in) {
+        return in.replaceAll("(?i)\\u00A7[0-9a-f]", "");
     }
 
     public static String fixBrokenAPIColour(String in) {
@@ -140,6 +147,31 @@ public class Utils {
     public static void playPressSound() {
         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
                 new ResourceLocation("gui.button.press"), 1.0F));
+    }
+
+    public static String cleanDuplicateColourCodes(String line) {
+        StringBuilder sb = new StringBuilder();
+        char currentColourCode = 'r';
+        boolean sectionSymbolLast = false;
+        for(char c : line.toCharArray()) {
+            if((int)c > 50000) continue;
+
+            if(c == '\u00a7') {
+                sectionSymbolLast = true;
+            } else {
+                if(sectionSymbolLast) {
+                    if(currentColourCode != c) {
+                        sb.append('\u00a7');
+                        sb.append(c);
+                        currentColourCode = c;
+                    }
+                    sectionSymbolLast = false;
+                } else {
+                    sb.append(c);
+                }
+            }
+        }
+        return sb.toString();
     }
 
     public static void drawTexturedRect(float x, float y, float width, float height, float uMin, float uMax, float vMin, float vMax, int filter) {
@@ -344,6 +376,22 @@ public class Utils {
         drawHoveringText(textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font, true);
     }
 
+    public static ChatStyle createClickStyle(ClickEvent.Action action, String value) {
+        ChatStyle style = new ChatStyle();
+        style.setChatClickEvent(new ClickEvent(action, value));
+        style.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW+value)));
+        return style;
+    }
+
+    public static void recursiveDelete(File file) {
+        if(file.isDirectory() && !Files.isSymbolicLink(file.toPath())) {
+            for(File child : file.listFiles()) {
+                recursiveDelete(child);
+            }
+        }
+        file.delete();
+    }
+
     public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font, boolean coloured) {
         if (!textLines.isEmpty())
         {
@@ -451,7 +499,7 @@ public class Utils {
             drawGradientRect(zLevel, tooltipX + tooltipTextWidth + 3, tooltipY - 3, tooltipX + tooltipTextWidth + 4, tooltipY + tooltipHeight + 3, backgroundColor, backgroundColor);
             //TODO: Coloured Borders
             int borderColorStart = 0x505000FF;
-            if(NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderColours.value) {
+            if(NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderColours.value && coloured) {
                 if(textLines.size() > 0) {
                     String first = textLines.get(0);
                     int lastColourCode = -99;
@@ -483,7 +531,8 @@ public class Utils {
                     }
 
                     int colourInt = font.getColorCode("0123456789abcdef".charAt(currentColour));
-                    borderColorStart = new Color(colourInt).darker().getRGB() & 0x00FFFFFF | 0x80000000;
+                    borderColorStart = new Color(colourInt).darker().getRGB() & 0x00FFFFFF |
+                            ((NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderOpacity.value.intValue()) << 24);
                 }
             }
             final int borderColorEnd = (borderColorStart & 0xFEFEFE) >> 1 | borderColorStart & 0xFF000000;

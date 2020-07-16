@@ -68,13 +68,9 @@ public class CosmeticsInfoPane extends InfoPane {
     public void mouseInput(int width, int height, int mouseX, int mouseY, boolean mouseDown) {
         if(mouseDown && selectedCape != null) {
             if(selectedCape.equals(CapeManager.getInstance().getCape(Minecraft.getMinecraft().thePlayer.getName()))) {
-                for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-                    CapeManager.getInstance().setCape(player.getName(), null);
-                }
+                CapeManager.getInstance().setCape(Minecraft.getMinecraft().thePlayer.getName(), null);
             } else {
-                for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-                    CapeManager.getInstance().setCape(player.getName(), selectedCape);
-                }
+                CapeManager.getInstance().setCape(Minecraft.getMinecraft().thePlayer.getName(), selectedCape);
             }
         }
     }

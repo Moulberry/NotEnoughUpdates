@@ -1,9 +1,14 @@
 package io.github.moulberry.notenoughupdates;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.infopanes.*;
 import io.github.moulberry.notenoughupdates.itemeditor.NEUItemEditor;
+import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
+import io.github.moulberry.notenoughupdates.mbgui.MBGuiElement;
+import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupFloating;
+import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupHorz;
 import io.github.moulberry.notenoughupdates.util.LerpingFloat;
 import io.github.moulberry.notenoughupdates.util.LerpingInteger;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -37,6 +42,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
@@ -72,8 +78,8 @@ public class NEUOverlay extends Gui {
 
     //Various constants used for GUI structure
     private int searchBarXSize = 200;
-    private final int searchBarYOffset = 10;
     private final int searchBarYSize = 40;
+    private final int searchBarYOffset = 10;
     private final int searchBarPadding = 2;
 
     private float oldWidthMult = 0;
@@ -109,7 +115,7 @@ public class NEUOverlay extends Gui {
     private boolean redrawItems = false;
 
     private boolean searchBarHasFocus = false;
-    GuiTextField textField = new GuiTextField(0, null, 0, 0, 0, 0);
+    private GuiTextField textField = new GuiTextField(0, null, 0, 0, 0, 0);
 
     private static final int COMPARE_MODE_ALPHABETICAL = 0;
     private static final int COMPARE_MODE_RARITY = 1;
@@ -126,10 +132,403 @@ public class NEUOverlay extends Gui {
 
     private boolean disabled = false;
 
+    private int lastScreenWidth;
+    private int lastScreenHeight;
+    private int lastScale;
+
+    private List<String> textToDisplay = null;
+
+    public MBGuiGroupFloating guiGroup = null;
+
     public NEUOverlay(NEUManager manager) {
         this.manager = manager;
         textField.setFocused(true);
         textField.setCanLoseFocus(false);
+
+        guiGroup = createGuiGroup();
+    }
+
+    private MBGuiElement createSearchBar() {
+        return new MBGuiElement() {
+            public int getWidth() {
+                int paddingUnscaled = getPaddingUnscaled();
+
+                return getSearchBarXSize() + 2*paddingUnscaled;
+            }
+
+            public int getHeight() {
+                int paddingUnscaled = getPaddingUnscaled();
+
+                return getSearchBarYSize() + 2*paddingUnscaled;
+            }
+
+            @Override
+            public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(Mouse.getEventButtonState()) {
+                    setSearchBarFocus(true);
+                    if(Mouse.getEventButton() == 1) { //Right mouse button down
+                        textField.setText("");
+                        updateSearch();
+                    } else {
+                        if(System.currentTimeMillis() - millisLastLeftClick < 300) {
+                            searchMode = !searchMode;
+                        }
+                        textField.setCursorPosition(getClickedIndex(mouseX, mouseY));
+                        millisLastLeftClick = System.currentTimeMillis();
+                    }
+                }
+            }
+
+            @Override
+            public void mouseClickOutside() {
+                setSearchBarFocus(false);
+            }
+
+            @Override
+            public void render(float x, float y) {
+                FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+                int paddingUnscaled = getPaddingUnscaled();
+
+                //Search bar background
+                drawRect((int)x, (int)y,
+                        (int)x + getWidth(), (int)y + getHeight(),
+                        searchMode ? Color.YELLOW.getRGB() : Color.WHITE.getRGB());
+
+                drawRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                        (int)x - paddingUnscaled + getWidth(), (int)y - paddingUnscaled + getHeight(),
+                        Color.BLACK.getRGB());
+
+                //Search bar text
+                fr.drawString(textField.getText(), (int)x + 5,
+                        (int) y-4 + getHeight()/2, Color.WHITE.getRGB());
+
+                //Determines position of cursor. Cursor blinks on and off every 500ms.
+                if(searchBarHasFocus && System.currentTimeMillis()%1000>500) {
+                    String textBeforeCursor = textField.getText().substring(0, textField.getCursorPosition());
+                    int textBeforeCursorWidth = fr.getStringWidth(textBeforeCursor);
+                    drawRect((int)x + 5 + textBeforeCursorWidth,
+                            (int)y-5 + getHeight()/2,
+                            (int)x + 5 + textBeforeCursorWidth+1,
+                            (int)y-4+9 + getHeight()/2, Color.WHITE.getRGB());
+                }
+
+                String selectedText = textField.getSelectedText();
+                if(!selectedText.isEmpty()) {
+                    int selectionWidth = fr.getStringWidth(selectedText);
+
+                    int leftIndex = Math.min(textField.getCursorPosition(), textField.getSelectionEnd());
+                    String textBeforeSelection = textField.getText().substring(0, leftIndex);
+                    int textBeforeSelectionWidth = fr.getStringWidth(textBeforeSelection);
+
+                    drawRect((int)x + 5 + textBeforeSelectionWidth,
+                            (int)y-5 + getHeight()/2,
+                            (int)x + 5 + textBeforeSelectionWidth + selectionWidth,
+                            (int)y-4+9 + getHeight()/2, Color.LIGHT_GRAY.getRGB());
+
+                    fr.drawString(selectedText,
+                            (int)x + 5 + textBeforeSelectionWidth,
+                            (int)y-4 + getHeight()/2, Color.BLACK.getRGB());
+                }
+            }
+
+            @Override
+            public void recalculate() {
+            }
+        };
+    }
+
+    private MBGuiElement createSettingsButton(NEUOverlay overlay) {
+        return new MBGuiElement() {
+            @Override
+            public int getWidth() {
+                return getSearchBarYSize()+getPaddingUnscaled()*2;
+            }
+
+            @Override
+            public int getHeight() {
+                return getWidth();
+            }
+
+            @Override
+            public void recalculate() {
+            }
+
+            @Override
+            public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(Mouse.getEventButtonState()) {
+                    if(activeInfoPane instanceof SettingsInfoPane) {
+                        displayInformationPane(null);
+                    } else {
+                        displayInformationPane(new SettingsInfoPane(overlay, manager));
+                    }
+                    Utils.playPressSound();
+                }
+            }
+
+            @Override
+            public void mouseClickOutside() {
+            }
+
+            @Override
+            public void render(float x, float y) {
+                int paddingUnscaled = getPaddingUnscaled();
+
+                Minecraft.getMinecraft().getTextureManager().bindTexture(settings);
+                drawRect((int)x, (int)y,
+                        (int)x + getWidth(), (int)y + getHeight(),
+                        Color.WHITE.getRGB());
+
+
+                drawRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                        (int)x + getWidth() - paddingUnscaled, (int)y + getHeight() - paddingUnscaled,
+                        Color.GRAY.getRGB());
+
+                GlStateManager.color(1f, 1f, 1f, 1f);
+                Utils.drawTexturedRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                        getSearchBarYSize(), getSearchBarYSize());
+                GlStateManager.bindTexture(0);
+            }
+        };
+    }
+
+    private MBGuiElement createHelpButton(NEUOverlay overlay) {
+        return new MBGuiElement() {
+            @Override
+            public int getWidth() {
+                return getSearchBarYSize()+getPaddingUnscaled()*2;
+            }
+
+            @Override
+            public int getHeight() {
+                return getWidth();
+            }
+
+            @Override
+            public void recalculate() {
+            }
+
+            @Override
+            public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(Mouse.getEventButtonState()) {
+                    displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
+                            "https://moulberry.github.io/files/neu_help.html"));
+                    Utils.playPressSound();
+                }
+            }
+
+            @Override
+            public void mouseClickOutside() {
+            }
+
+            @Override
+            public void render(float x, float y) {
+                int paddingUnscaled = getPaddingUnscaled();
+
+                Minecraft.getMinecraft().getTextureManager().bindTexture(help);
+                drawRect((int)x, (int)y,
+                        (int)x + getWidth(), (int)y + getHeight(),
+                        Color.WHITE.getRGB());
+
+                drawRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                        (int)x + getWidth() - paddingUnscaled, (int)y + getHeight() - paddingUnscaled,
+                        Color.GRAY.getRGB());
+
+                GlStateManager.color(1f, 1f, 1f, 1f);
+                Utils.drawTexturedRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                        getSearchBarYSize(), getSearchBarYSize());
+                GlStateManager.bindTexture(0);
+            }
+        };
+    }
+
+    private MBGuiElement createQuickCommand(String quickCommandStr) {
+        return new MBGuiElement() {
+            @Override
+            public int getWidth() {
+                return getSearchBarYSize()+getPaddingUnscaled()*2;
+            }
+
+            @Override
+            public int getHeight() {
+                return getWidth();
+            }
+
+            @Override
+            public void recalculate() {
+            }
+
+            @Override
+            public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(!manager.config.showQuickCommands.value) return;
+
+                if((manager.config.quickcommandMousePress.value && Mouse.getEventButtonState()) ||
+                        (!manager.config.quickcommandMousePress.value && !Mouse.getEventButtonState() && Mouse.getEventButton() != -1)) {
+                    if(quickCommandStr.contains(":")) {
+                        String command = quickCommandStr.split(":")[0].trim();
+                        if(command.startsWith("/")) {
+                            NotEnoughUpdates.INSTANCE.sendChatMessage(command);
+                            Utils.playPressSound();
+                        } else {
+                            ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/"+command); //Need to add '/' because of sk1er's patcher being unbelievably shit
+                            Utils.playPressSound();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mouseClickOutside() {
+            }
+
+            @Override
+            public void render(float x, float y) {
+                if(!manager.config.showQuickCommands.value) return;
+
+                int paddingUnscaled = getPaddingUnscaled();
+                int bigItemSize = getSearchBarYSize();
+
+                if(quickCommandStr.split(":").length!=3) {
+                    return;
+                }
+                String display = quickCommandStr.split(":")[2];
+                ItemStack render = null;
+                float extraScale = 1;
+                if(display.length() > 20) { //Custom head
+                    render = new ItemStack(Items.skull, 1, 3);
+                    NBTTagCompound nbt = new NBTTagCompound();
+                    NBTTagCompound skullOwner = new NBTTagCompound();
+                    NBTTagCompound properties = new NBTTagCompound();
+                    NBTTagList textures = new NBTTagList();
+                    NBTTagCompound textures_0 = new NBTTagCompound();
+
+
+                    String uuid = UUID.nameUUIDFromBytes(display.getBytes()).toString();
+                    skullOwner.setString("Id", uuid);
+                    skullOwner.setString("Name", uuid);
+
+                    textures_0.setString("Value", display);
+                    textures.appendTag(textures_0);
+
+                    properties.setTag("textures", textures);
+                    skullOwner.setTag("Properties", properties);
+                    nbt.setTag("SkullOwner", skullOwner);
+                    render.setTagCompound(nbt);
+
+                    extraScale = 1.3f;
+                } else if(manager.getItemInformation().containsKey(display)) {
+                    render = manager.jsonToStack(manager.getItemInformation().get(display));
+                } else {
+                    Item item = Item.itemRegistry.getObject(new ResourceLocation(display.toLowerCase()));
+                    if(item != null) {
+                        render = new ItemStack(item);
+                    }
+                }
+                if(render != null) {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(item_mask);
+                    GlStateManager.color(1, 1, 1, 1);
+                    Utils.drawTexturedRect(x, y,
+                            bigItemSize + paddingUnscaled*2, bigItemSize + paddingUnscaled*2, GL11.GL_LINEAR);
+                    GlStateManager.color(fg.getRed() / 255f,fg.getGreen() / 255f,
+                            fg.getBlue() / 255f, fg.getAlpha() / 255f);
+                    Utils.drawTexturedRect(x+paddingUnscaled, y+paddingUnscaled, bigItemSize, bigItemSize, GL11.GL_LINEAR);
+
+                    int mouseX = Mouse.getX() * scaledresolution.getScaledWidth() / Minecraft.getMinecraft().displayWidth;
+                    int mouseY = scaledresolution.getScaledHeight() - Mouse.getY() * scaledresolution.getScaledHeight() / Minecraft.getMinecraft().displayHeight - 1;
+
+                    if(mouseX > x && mouseX < x+bigItemSize) {
+                        if(mouseY > y && mouseY < y+bigItemSize) {
+                            textToDisplay = new ArrayList<>();
+                            textToDisplay.add(EnumChatFormatting.GRAY+quickCommandStr.split(":")[1]);
+                        }
+                    }
+
+                    float itemScale = bigItemSize/(float)ITEM_SIZE*extraScale;
+                    GlStateManager.pushMatrix();
+                    GlStateManager.scale(itemScale, itemScale, 1);
+                    GlStateManager.translate((x-(extraScale-1)*bigItemSize/2+paddingUnscaled) /itemScale,
+                            (y-(extraScale-1)*bigItemSize/2+paddingUnscaled)/itemScale, 0f);
+                    Utils.drawItemStack(render, 0, 0);
+                    GlStateManager.popMatrix();
+                }
+            }
+        };
+    }
+
+    private MBGuiGroupHorz createQuickCommandGroup() {
+        List<MBGuiElement> children = new ArrayList<>();
+        for(String quickCommand : manager.config.quickCommands.value) {
+            children.add(createQuickCommand(quickCommand));
+        }
+        return new MBGuiGroupHorz(children) {
+            public int getPadding() {
+                return getPaddingUnscaled()*4;
+            }
+        };
+    }
+
+    private MBGuiGroupHorz createSearchBarGroup() {
+        List<MBGuiElement> children = Lists.newArrayList(createSettingsButton(this), createSearchBar(), createHelpButton(this));
+        return new MBGuiGroupHorz(children) {
+            public int getPadding() {
+                return getPaddingUnscaled()*4;
+            }
+        };
+    }
+
+    private MBGuiGroupFloating createGuiGroup() {
+        LinkedHashMap<MBGuiElement, MBAnchorPoint> map = new LinkedHashMap<>();
+
+        MBAnchorPoint searchBarAnchor = MBAnchorPoint.createFromString(manager.config.overlaySearchBar.value);
+        MBAnchorPoint quickCommandAnchor = MBAnchorPoint.createFromString(manager.config.overlayQuickCommand.value);
+
+        searchBarAnchor = searchBarAnchor != null ? searchBarAnchor :
+                new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0, -searchBarYOffset));
+        quickCommandAnchor = quickCommandAnchor != null ? quickCommandAnchor :
+                new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0,
+                        -searchBarYOffset-getSearchBarYSize()-getPaddingUnscaled()*4));
+
+        map.put(createSearchBarGroup(), searchBarAnchor);
+        map.put(createQuickCommandGroup(), quickCommandAnchor);
+
+        return new MBGuiGroupFloating(scaledresolution.getScaledWidth(), scaledresolution.getScaledHeight(), map);
+    }
+
+    public void resetAnchors(boolean onlyIfNull) {
+        MBAnchorPoint searchBarAnchor = MBAnchorPoint.createFromString(manager.config.overlaySearchBar.value);
+        MBAnchorPoint quickCommandAnchor = MBAnchorPoint.createFromString(manager.config.overlayQuickCommand.value);
+
+        if(onlyIfNull) {
+            searchBarAnchor = searchBarAnchor != null ? null :
+                    new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0, -searchBarYOffset));
+            quickCommandAnchor = quickCommandAnchor != null ? null :
+                    new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0,
+                            -searchBarYOffset-getSearchBarYSize()-getPaddingUnscaled()*4));
+        } else {
+            searchBarAnchor = searchBarAnchor != null ? searchBarAnchor :
+                    new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0, -searchBarYOffset));
+            quickCommandAnchor = quickCommandAnchor != null ? quickCommandAnchor :
+                    new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0,
+                            -searchBarYOffset-getSearchBarYSize()-getPaddingUnscaled()*4));
+        }
+
+
+        int index = 0;
+        Set<MBGuiElement> set = new LinkedHashSet<>(guiGroup.getChildrenMap().keySet());
+        for(MBGuiElement element : set) {
+            switch(index) {
+                case 0:
+                    if(searchBarAnchor == null) continue;
+                    guiGroup.getChildrenMap().get(element).anchorPoint = searchBarAnchor.anchorPoint;
+                    guiGroup.getChildrenMap().get(element).offset = searchBarAnchor.offset;
+                    break;
+                case 1:
+                    if(quickCommandAnchor == null) continue;
+                    guiGroup.getChildrenMap().get(element).anchorPoint = quickCommandAnchor.anchorPoint;
+                    guiGroup.getChildrenMap().get(element).offset = quickCommandAnchor.offset;
+                    break;
+            }
+            index++;
+        }
     }
 
     /**
@@ -200,6 +599,8 @@ public class NEUOverlay extends Gui {
 
         //Unfocuses the search bar by default. Search bar is focused if the click is on the bar itself.
         if(Mouse.getEventButtonState()) setSearchBarFocus(false);
+
+        guiGroup.mouseClick(0, 0, mouseX, mouseY);
 
         //Item selection (right) gui
         if(mouseX > width*getItemPaneOffsetFactor()) {
@@ -318,89 +719,6 @@ public class NEUOverlay extends Gui {
                 }
             }
         }
-
-
-        //Quickcommands
-        int paddingUnscaled = searchBarPadding/scaledresolution.getScaleFactor();
-        if(paddingUnscaled < 1) paddingUnscaled = 1;
-        int topTextBox = height - searchBarYOffset - getSearchBarYSize();
-
-        if(Mouse.getEventButtonState() && manager.config.showQuickCommands.value) {
-            ArrayList<String> quickCommands = manager.config.quickCommands.value;
-            int bigItemSize = getSearchBarYSize();
-            int bigItemPadding = paddingUnscaled*4;
-            int xStart = width/2 + bigItemPadding/2 - (bigItemSize+bigItemPadding)*quickCommands.size()/2;
-            int xEnd = width/2 - bigItemPadding/2 + (bigItemSize+bigItemPadding)*quickCommands.size()/2;
-            int y = topTextBox - bigItemSize - bigItemPadding - paddingUnscaled*2;
-
-            if(mouseY >= y && mouseY <= topTextBox-paddingUnscaled*2) {
-                if(mouseX > xStart && mouseX < xEnd) {
-                    if((mouseX - xStart)%(bigItemSize+bigItemPadding) < bigItemSize) {
-                        int index = (mouseX - xStart)/(bigItemSize+bigItemPadding);
-                        if(index >= 0 && index < quickCommands.size()) {
-                            String quickCommand = quickCommands.get(index);
-                            if(quickCommand.contains(":")) {
-                                String command = quickCommand.split(":")[0].trim();
-                                if(command.startsWith("/")) {
-                                    NotEnoughUpdates.INSTANCE.sendChatMessage(command);
-                                    Utils.playPressSound();
-                                    return true;
-                                } else {
-                                    ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/"+command); //Need to add '/' because of sk1er's patcher being unbelievably shit
-                                    Utils.playPressSound();
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        //Search bar
-        if(mouseX >= width/2 - getSearchBarXSize()/2 && mouseX <= width/2 + getSearchBarXSize()/2) {
-            if(mouseY >= height - searchBarYOffset - getSearchBarYSize() &&
-                    mouseY <= height - searchBarYOffset) {
-                if(Mouse.getEventButtonState()) {
-                    setSearchBarFocus(true);
-                    if(Mouse.getEventButton() == 1) { //Right mouse button down
-                        textField.setText("");
-                        updateSearch();
-                    } else {
-                        if(System.currentTimeMillis() - millisLastLeftClick < 300) {
-                            searchMode = !searchMode;
-                        }
-                        textField.setCursorPosition(getClickedIndex(mouseX, mouseY));
-                        millisLastLeftClick = System.currentTimeMillis();
-                    }
-                }
-                return true;
-            }
-        }
-
-        int iconSize = getSearchBarYSize()+paddingUnscaled*2;
-
-        if(mouseY > topTextBox - paddingUnscaled && mouseY < topTextBox - paddingUnscaled + iconSize) {
-            if(mouseX > width/2 + getSearchBarXSize()/2 + paddingUnscaled*6 &&
-                    mouseX < width/2 + getSearchBarXSize()/2 + paddingUnscaled*6 + iconSize) {
-                if(Mouse.getEventButtonState()) {
-                    displayInformationPane(HTMLInfoPane.createFromWikiUrl(this, manager, "Help",
-                            "https://moulberry.github.io/files/neu_help.html"));
-                    Utils.playPressSound();
-                }
-            } else if(mouseX > width/2 - getSearchBarXSize()/2 - paddingUnscaled*6 - iconSize &&
-                    mouseX < width/2 - getSearchBarXSize()/2 - paddingUnscaled*6) {
-                if(Mouse.getEventButtonState()) {
-                    if(activeInfoPane instanceof SettingsInfoPane) {
-                        displayInformationPane(null);
-                    } else {
-                        displayInformationPane(new SettingsInfoPane(this, manager));
-                    }
-                    Utils.playPressSound();
-                }
-            }
-        }
-
         if(activeInfoPane != null) {
             if(mouseX < width*getInfoPaneOffsetFactor()) {
                 activeInfoPane.mouseInput(width, height, mouseX, mouseY, mouseDown);
@@ -411,6 +729,13 @@ public class NEUOverlay extends Gui {
         }
 
         return false;
+    }
+
+    public int getPaddingUnscaled() {
+        int paddingUnscaled = searchBarPadding/scaledresolution.getScaleFactor();
+        if(paddingUnscaled < 1) paddingUnscaled = 1;
+
+        return paddingUnscaled;
     }
 
     /**
@@ -554,7 +879,7 @@ public class NEUOverlay extends Gui {
                     JsonObject item = manager.getItemInformation().get(internalname.get());
                     if(item != null) {
                         if(keyPressed == manager.keybindViewUsages.getKeyCode()) {
-                            manager.displayGuiItemUsages(internalname.get(), "");
+                            manager.displayGuiItemUsages(internalname.get());
                             return true;
                         } else if(keyPressed == manager.keybindFavourite.getKeyCode()) {
                             toggleFavourite(item.get("internalname").getAsString());
@@ -660,8 +985,11 @@ public class NEUOverlay extends Gui {
                 if(rarity1 < rarity2) return mult;
                 if(rarity1 > rarity2) return -mult;
             } else if(getCompareMode() == COMPARE_MODE_VALUE) {
-                float cost1 = manager.getCraftCost(o1.get("internalname").getAsString()).craftCost;
-                float cost2 = manager.getCraftCost(o2.get("internalname").getAsString()).craftCost;
+                float cost1 = manager.auctionManager.getLowestBin(o1.get("internalname").getAsString());
+                float cost2 = manager.auctionManager.getLowestBin(o2.get("internalname").getAsString());
+
+                if(cost1 == -1) cost1 = manager.getCraftCost(o1.get("internalname").getAsString()).craftCost;
+                if(cost2 == -1) cost2 = manager.getCraftCost(o2.get("internalname").getAsString()).craftCost;
 
                 if(cost1 < cost2) return mult;
                 if(cost1 > cost2) return -mult;
@@ -1203,6 +1531,24 @@ public class NEUOverlay extends Gui {
         blurOutputVert.unbindFramebufferTexture();
     }
 
+    public void updateGuiGroupSize() {
+        ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+        int width = scaledresolution.getScaledWidth();
+        int height = scaledresolution.getScaledHeight();
+
+        if(lastScreenWidth != width || lastScreenHeight != height || scaledresolution.getScaleFactor() != lastScale) {
+            guiGroup.width = width;
+            guiGroup.height = height;
+
+            resetAnchors(true);
+            guiGroup.recalculate();
+
+            lastScreenWidth = width;
+            lastScreenHeight = height;
+            lastScale = scaledresolution.getScaleFactor();
+        }
+    }
+
     int guiScaleLast = 0;
 
     /**
@@ -1216,6 +1562,8 @@ public class NEUOverlay extends Gui {
         scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledresolution.getScaledWidth();
         int height = scaledresolution.getScaledHeight();
+
+        updateGuiGroupSize();
 
         if(guiScaleLast != scaledresolution.getScaleFactor()) {
             guiScaleLast = scaledresolution.getScaleFactor();
@@ -1285,7 +1633,6 @@ public class NEUOverlay extends Gui {
         int rightSide = leftSide+paneWidth-getBoxPadding()-getItemBoxXPadding();
 
         //Tab
-
         Minecraft.getMinecraft().getTextureManager().bindTexture(itemPaneTabArrow);
         GlStateManager.color(1f, 1f, 1f, 0.3f);
         Utils.drawTexturedRect(width-itemPaneTabOffset.getValue(), height/2 - 50, 20, 100);
@@ -1294,7 +1641,9 @@ public class NEUOverlay extends Gui {
         if(mouseX > width-itemPaneTabOffset.getValue() && mouseY > height/2 - 50
                 && mouseY < height/2 + 50) {
             if(!hoveringItemPaneToggle) {
-                itemPaneOpen = !itemPaneOpen;
+                if(!manager.config.disableItemTabOpen.value) {
+                    itemPaneOpen = !itemPaneOpen;
+                }
                 hoveringItemPaneToggle = true;
             }
         } else {
@@ -1303,7 +1652,6 @@ public class NEUOverlay extends Gui {
 
         //Atomic reference used so that below lambda doesn't complain about non-effectively-final variable
         AtomicReference<JsonObject> tooltipToDisplay = new AtomicReference<>(null);
-        List<String> textToDisplay = null;
         if(itemPaneOffsetFactor.getValue() < 1) {
             renderBlurredBackground(width, height,
                     leftSide+getBoxPadding()-5, getBoxPadding()-5,
@@ -1430,159 +1778,10 @@ public class NEUOverlay extends Gui {
         }
 
         /**
-         * Search bar
+         * Search bar & quickcommand elements
          */
-        int paddingUnscaled = searchBarPadding/scaledresolution.getScaleFactor();
-        if(paddingUnscaled < 1) paddingUnscaled = 1;
-
-        int topTextBox = height - searchBarYOffset - getSearchBarYSize();
-
-        //Search bar background
-        drawRect(width/2 - getSearchBarXSize()/2 - paddingUnscaled,
-                topTextBox - paddingUnscaled,
-                width/2 + getSearchBarXSize()/2 + paddingUnscaled,
-                height - searchBarYOffset + paddingUnscaled, searchMode ? Color.YELLOW.getRGB() : Color.WHITE.getRGB());
-        drawRect(width/2 - getSearchBarXSize()/2,
-                topTextBox,
-                width/2 + getSearchBarXSize()/2,
-                height - searchBarYOffset, Color.BLACK.getRGB());
-
-        //Quickcommands
-        if(manager.config.showQuickCommands.value) {
-            ArrayList<String> quickCommands = manager.config.quickCommands.value;
-            int bigItemSize = getSearchBarYSize();
-            int bigItemPadding = paddingUnscaled*4;
-            int x = width/2 + bigItemPadding/2 - (bigItemSize+bigItemPadding)*quickCommands.size()/2;
-            int y = topTextBox - bigItemSize - bigItemPadding - paddingUnscaled*2;
-
-            for(String quickCommand : quickCommands) {
-                if(quickCommand.split(":").length!=3) {
-                    continue;
-                }
-                String display = quickCommand.split(":")[2];
-                ItemStack render = null;
-                float extraScale = 1;
-                if(display.length() > 20) { //Custom head
-                    render = new ItemStack(Items.skull, 1, 3);
-                    NBTTagCompound nbt = new NBTTagCompound();
-                    NBTTagCompound skullOwner = new NBTTagCompound();
-                    NBTTagCompound properties = new NBTTagCompound();
-                    NBTTagList textures = new NBTTagList();
-                    NBTTagCompound textures_0 = new NBTTagCompound();
-
-
-                    String uuid = UUID.nameUUIDFromBytes(display.getBytes()).toString();
-                    skullOwner.setString("Id", uuid);
-                    skullOwner.setString("Name", uuid);
-
-                    textures_0.setString("Value", display);
-                    textures.appendTag(textures_0);
-
-                    properties.setTag("textures", textures);
-                    skullOwner.setTag("Properties", properties);
-                    nbt.setTag("SkullOwner", skullOwner);
-                    render.setTagCompound(nbt);
-
-                    extraScale = 1.3f;
-                } else if(manager.getItemInformation().containsKey(display)) {
-                    render = manager.jsonToStack(manager.getItemInformation().get(display));
-                } else {
-                    Item item = Item.itemRegistry.getObject(new ResourceLocation(display.toLowerCase()));
-                    if(item != null) {
-                        render = new ItemStack(item);
-                    }
-                }
-                if(render != null) {
-                    Minecraft.getMinecraft().getTextureManager().bindTexture(item_mask);
-                    GlStateManager.color(1, 1, 1, 1);
-                    Utils.drawTexturedRect(x - paddingUnscaled, y - paddingUnscaled,
-                            bigItemSize + paddingUnscaled*2, bigItemSize + paddingUnscaled*2, GL11.GL_NEAREST);
-                    GlStateManager.color(fg.getRed() / 255f,fg.getGreen() / 255f,
-                            fg.getBlue() / 255f, fg.getAlpha() / 255f);
-                    Utils.drawTexturedRect(x, y, bigItemSize, bigItemSize, GL11.GL_NEAREST);
-
-                    if(mouseX > x && mouseX < x+bigItemSize) {
-                        if(mouseY > y && mouseY < y+bigItemSize) {
-                            textToDisplay = new ArrayList<>();
-                            textToDisplay.add(EnumChatFormatting.GRAY+quickCommand.split(":")[1]);
-                        }
-                    }
-
-                    float itemScale = bigItemSize/(float)ITEM_SIZE*extraScale;
-                    GlStateManager.pushMatrix();
-                    GlStateManager.scale(itemScale, itemScale, 1);
-                    GlStateManager.translate((x-(extraScale-1)*bigItemSize/2) /itemScale,
-                            (y-(extraScale-1)*bigItemSize/2)/itemScale, 0f);
-                    Utils.drawItemStack(render, 0, 0);
-                    GlStateManager.popMatrix();
-                }
-                x += bigItemSize + bigItemPadding;
-            }
-        }
-
-        //Settings
-        int iconSize = getSearchBarYSize()+paddingUnscaled*2;
-        Minecraft.getMinecraft().getTextureManager().bindTexture(settings);
-        drawRect(width/2 - getSearchBarXSize()/2 - paddingUnscaled*6 - iconSize,
-                topTextBox - paddingUnscaled,
-                width/2 - getSearchBarXSize()/2 - paddingUnscaled*6,
-                topTextBox - paddingUnscaled + iconSize, Color.WHITE.getRGB());
-
-        drawRect(width/2 - getSearchBarXSize()/2 - paddingUnscaled*5 - iconSize,
-                topTextBox,
-                width/2 - getSearchBarXSize()/2 - paddingUnscaled*7,
-                topTextBox - paddingUnscaled*2 + iconSize, Color.GRAY.getRGB());
-        GlStateManager.color(1f, 1f, 1f, 1f);
-        Utils.drawTexturedRect(width/2 - getSearchBarXSize()/2 - paddingUnscaled*6 - iconSize, topTextBox - paddingUnscaled, iconSize, iconSize);
-        GlStateManager.bindTexture(0);
-
-        //Help
-        Minecraft.getMinecraft().getTextureManager().bindTexture(help);
-        drawRect(width/2 + getSearchBarXSize()/2 + paddingUnscaled*6,
-                topTextBox - paddingUnscaled,
-                width/2 + getSearchBarXSize()/2 + paddingUnscaled*6 + iconSize,
-                topTextBox - paddingUnscaled + iconSize, Color.WHITE.getRGB());
-
-        drawRect(width/2 + getSearchBarXSize()/2 + paddingUnscaled*7,
-                topTextBox,
-                width/2 + getSearchBarXSize()/2 + paddingUnscaled*5 + iconSize,
-                topTextBox - paddingUnscaled*2 + iconSize, Color.GRAY.getRGB());
-        GlStateManager.color(1f, 1f, 1f, 1f);
-        Utils.drawTexturedRect(width/2 + getSearchBarXSize()/2 + paddingUnscaled*7, topTextBox,
-                iconSize-paddingUnscaled*2, iconSize-paddingUnscaled*2);
-        GlStateManager.bindTexture(0);
-
-        //Search bar text
-        fr.drawString(textField.getText(), width/2 - getSearchBarXSize()/2 + 5,
-                topTextBox+(getSearchBarYSize()-8)/2, Color.WHITE.getRGB());
-
-        //Determines position of cursor. Cursor blinks on and off every 500ms.
-        if(searchBarHasFocus && System.currentTimeMillis()%1000>500) {
-            String textBeforeCursor = textField.getText().substring(0, textField.getCursorPosition());
-            int textBeforeCursorWidth = fr.getStringWidth(textBeforeCursor);
-            drawRect(width/2 - getSearchBarXSize()/2 + 5 + textBeforeCursorWidth,
-                    topTextBox+(getSearchBarYSize()-8)/2-1,
-                    width/2 - getSearchBarXSize()/2 + 5 + textBeforeCursorWidth+1,
-                    topTextBox+(getSearchBarYSize()-8)/2+9, Color.WHITE.getRGB());
-        }
-
-        String selectedText = textField.getSelectedText();
-        if(!selectedText.isEmpty()) {
-            int selectionWidth = fr.getStringWidth(selectedText);
-
-            int leftIndex = Math.min(textField.getCursorPosition(), textField.getSelectionEnd());
-            String textBeforeSelection = textField.getText().substring(0, leftIndex);
-            int textBeforeSelectionWidth = fr.getStringWidth(textBeforeSelection);
-
-            drawRect(width/2 - getSearchBarXSize()/2 + 5 + textBeforeSelectionWidth,
-                    topTextBox+(getSearchBarYSize()-8)/2-1,
-                    width/2 - getSearchBarXSize()/2 + 5 + textBeforeSelectionWidth + selectionWidth,
-                    topTextBox+(getSearchBarYSize()-8)/2+9, Color.LIGHT_GRAY.getRGB());
-
-            fr.drawString(selectedText,
-                    width/2 - getSearchBarXSize()/2 + 5 + textBeforeSelectionWidth,
-                    topTextBox+(getSearchBarYSize()-8)/2, Color.BLACK.getRGB());
-        }
+        guiGroup.render(0, 0);
+        resetAnchors(true);
 
         /**
          * Item info (left) gui element rendering
@@ -1611,17 +1810,24 @@ public class NEUOverlay extends Gui {
                 text.add(lore.get(i).getAsString());
             }
 
-            JsonObject auctionInfo = manager.getItemAuctionInfo(json.get("internalname").getAsString());
-            JsonObject bazaarInfo = manager.getBazaarInfo(json.get("internalname").getAsString());
+            String internalname = json.get("internalname").getAsString();
+            JsonObject auctionInfo = manager.getItemAuctionInfo(internalname);
+            JsonObject bazaarInfo = manager.getBazaarInfo(internalname);
 
             boolean hasAuctionPrice = auctionInfo != null;
             boolean hasBazaarPrice = bazaarInfo != null;
+
+            int lowestBin = manager.auctionManager.getLowestBin(internalname);
 
             NumberFormat format = NumberFormat.getInstance(Locale.US);
 
             NEUManager.CraftInfo craftCost = manager.getCraftCost(json.get("internalname").getAsString());
 
-            if(hasAuctionPrice || hasBazaarPrice || craftCost.fromRecipe) text.add("");
+            if(hasAuctionPrice || hasBazaarPrice || craftCost.fromRecipe || lowestBin > 0) text.add("");
+            if(lowestBin > 0) {
+                text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
+                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+            }
             if(hasBazaarPrice) {
                 int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat();
                 text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
@@ -1665,6 +1871,7 @@ public class NEUOverlay extends Gui {
         }
         if(textToDisplay != null) {
             Utils.drawHoveringText(textToDisplay, mouseX, mouseY, width, height, -1, fr);
+            textToDisplay = null;
         }
 
         GlStateManager.enableBlend();

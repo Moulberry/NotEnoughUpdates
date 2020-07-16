@@ -1,10 +1,13 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
+import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -25,8 +28,12 @@ public class CapeManager {
 
     public void setCape(String player, String capename) {
         if(capename == null) {
+            NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value = "";
             capeMap.remove(player);
             return;
+        }
+        if(player.equalsIgnoreCase(Minecraft.getMinecraft().thePlayer.getName())) {
+            NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value = capename;
         }
         if(capeMap.containsKey(player)) {
             Pair<NEUCape, String> capePair = capeMap.get(player);
@@ -56,6 +63,14 @@ public class CapeManager {
 
     @SubscribeEvent
     public void onRenderPlayer(RenderPlayerEvent.Post e) {
+        if(e.partialRenderTick == 1.0F) return; //rendering in inventory
+        if(e.entityPlayer == Minecraft.getMinecraft().thePlayer) {
+            if(NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value != null &&
+                    !NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value.isEmpty()) {
+                setCape(Minecraft.getMinecraft().thePlayer.getName(),
+                        NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value);
+            }
+        }
         if(capeMap.containsKey(e.entityPlayer.getName())) {
             capeMap.get(e.entityPlayer.getName()).getLeft().onRenderPlayer(e);
         }
@@ -87,15 +102,20 @@ public class CapeManager {
         return capes;
     }
 
+    private String[] contributors = new String[]{"thatgravyboat", "twasnt", "traxyrr", "some1sm", "meguminqt", "marethyu_77"};
+
     public boolean getPermissionForCape(String player, String capename) {
         if(capename == null) {
             return false;
         } else if(player.equalsIgnoreCase("Moulberry")) {
             return true; //Oh yeah gimme gimme
-        } else if(capename.equals("nullzee")) {
-            return player.equalsIgnoreCase("Nullzee");
-        } else if(capename.equals("gravy")) {
-            return player.equalsIgnoreCase("ThatGravyBoat");
+        } else {
+            switch(capename) {
+                case "nullzee": return player.equalsIgnoreCase("Nullzee");
+                case "gravy": return player.equalsIgnoreCase("ThatGravyBoat");
+                case "contrib": return ArrayUtils.contains(contributors, player.toLowerCase());
+                case "fade": return true;
+            }
         }
         return false;
     }

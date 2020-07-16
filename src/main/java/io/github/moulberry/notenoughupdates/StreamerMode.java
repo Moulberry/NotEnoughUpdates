@@ -1,5 +1,7 @@
 package io.github.moulberry.notenoughupdates;
 
+import io.github.moulberry.notenoughupdates.util.Utils;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -26,38 +28,13 @@ public class StreamerMode {
     }
 
     public static String filterScoreboard(String line) {
-        line = filterLobbyNames(cleanDuplicateColourCodes(line));
+        line = filterLobbyNames(Utils.cleanDuplicateColourCodes(line));
         return line;
     }
 
     public static String filterChat(String line) {
         line = filterLobbyNames(line);
         return line;
-    }
-
-    private static String cleanDuplicateColourCodes(String line) {
-        StringBuilder sb = new StringBuilder();
-        char currentColourCode = 'r';
-        boolean sectionSymbolLast = false;
-        for(char c : line.toCharArray()) {
-            if((int)c > 50000) continue;
-
-            if(c == '\u00a7') {
-                sectionSymbolLast = true;
-            } else {
-                if(sectionSymbolLast) {
-                    if(currentColourCode != c) {
-                        sb.append('\u00a7');
-                        sb.append(c);
-                        currentColourCode = c;
-                    }
-                    sectionSymbolLast = false;
-                } else {
-                    sb.append(c);
-                }
-            }
-        }
-        return sb.toString();
     }
 
 }

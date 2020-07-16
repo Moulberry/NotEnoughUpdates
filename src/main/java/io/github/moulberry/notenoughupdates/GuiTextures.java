@@ -22,6 +22,9 @@ public class GuiTextures {
     public static final ResourceLocation slider_button = new ResourceLocation("notenoughupdates:slider_button.png");
 
     public static final ResourceLocation item_mask = new ResourceLocation("notenoughupdates:item_mask.png");
+    public static final ResourceLocation button_tex = new ResourceLocation("notenoughupdates:button.png");
+
+    public static final ResourceLocation dungeon_chest_worth = new ResourceLocation("notenoughupdates:dungeon_chest_worth.png");
 
     public static final ResourceLocation auction_view = new ResourceLocation("notenoughupdates:auction_view.png");
     public static final ResourceLocation auction_accept = new ResourceLocation("notenoughupdates:auction_accept.png");

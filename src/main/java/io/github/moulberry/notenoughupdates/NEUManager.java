@@ -1,14 +1,15 @@
 package io.github.moulberry.notenoughupdates;
 
+import com.google.common.collect.Lists;
 import com.google.gson.*;
-import io.github.moulberry.notenoughupdates.auction.AuctionManager;
-import io.github.moulberry.notenoughupdates.auction.CustomAH;
+import io.github.moulberry.notenoughupdates.auction.APIManager;
+import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.options.Options;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
@@ -22,10 +23,6 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -35,7 +32,7 @@ public class NEUManager {
     private final NotEnoughUpdates neu;
     public final NEUIO neuio;
     public final Gson gson;
-    public final AuctionManager auctionManager;
+    public final APIManager auctionManager;
 
     private TreeMap<String, JsonObject> itemMap = new TreeMap<>();
 
@@ -53,7 +50,8 @@ public class NEUManager {
     public String viewItemAttemptID = null;
     public long viewItemAttemptTime = 0;
 
-    public String currentProfile = "";
+    private String currentProfile = "";
+    private String currentProfileBackup = "";
     public final HypixelApi hypixelApi = new HypixelApi();
 
     private ResourceLocation wkZip = new ResourceLocation("notenoughupdates:wkhtmltox.zip");
@@ -67,17 +65,17 @@ public class NEUManager {
     private HashMap<String, Set<String>> usagesMap = new HashMap<>();
 
     public File configLocation;
-    private File itemsLocation;
+    public File repoLocation;
     private File itemShaLocation;
     private JsonObject itemShaConfig;
-    private File configFile;
+    public File configFile;
     public Options config;
 
     public NEUManager(NotEnoughUpdates neu, NEUIO neuio, File configLocation) {
         this.neu = neu;
         this.configLocation = configLocation;
         this.neuio = neuio;
-        this.auctionManager = new AuctionManager(this);
+        this.auctionManager = new APIManager(this);
 
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
         gsonBuilder.registerTypeAdapter(Options.Option.class, Options.createSerializer());
@@ -86,8 +84,8 @@ public class NEUManager {
 
         this.loadConfig();
 
-        this.itemsLocation = new File(configLocation, "items");
-        itemsLocation.mkdir();
+        this.repoLocation = new File(configLocation, "repo");
+        repoLocation.mkdir();
 
         this.itemShaLocation = new File(configLocation, "itemSha.json");
         try {
@@ -110,6 +108,22 @@ public class NEUManager {
         public boolean fromRecipe = false;
         public boolean vanillaItem = false;
         public float craftCost = -1;
+    }
+
+    public void setCurrentProfile(String currentProfile) {
+        this.currentProfile = currentProfile;
+    }
+
+    public void setCurrentProfileBackup(String currentProfile) {
+        this.currentProfileBackup = currentProfile;
+    }
+
+    public String getCurrentProfile() {
+        if(currentProfile == null || currentProfile.length() == 0) {
+            return currentProfileBackup;
+        } else {
+            return currentProfile;
+        }
     }
 
     public boolean isVanillaItem(String internalname) {
@@ -344,54 +358,83 @@ public class NEUManager {
      * repository.
      */
     public void loadItemInformation() {
-        if(config.autoupdate.value) {
-            JOptionPane pane = new JOptionPane("Getting items to download from remote repository.");
-            JDialog dialog = pane.createDialog("NotEnoughUpdates Remote Sync");
-            dialog.setModal(false);
-            //dialog.setVisible(true);
+        try {
+            if(config.autoupdate.value) {
+                JOptionPane pane = new JOptionPane("Getting items to download from remote repository.");
+                JDialog dialog = pane.createDialog("NotEnoughUpdates Remote Sync");
+                dialog.setModal(false);
+                //dialog.setVisible(true);
 
-            if (Display.isActive()) dialog.toFront();
+                if (Display.isActive()) dialog.toFront();
 
-            HashMap<String, String> oldShas = new HashMap<>();
-            for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
-                if (new File(itemsLocation, entry.getKey() + ".json").exists()) {
-                    oldShas.put(entry.getKey() + ".json", entry.getValue().getAsString());
+                HashMap<String, String> oldShas = new HashMap<>();
+                for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
+                    if (new File(repoLocation, entry.getKey() + ".json").exists()) {
+                        oldShas.put(entry.getKey() + ".json", entry.getValue().getAsString());
+                    }
                 }
-            }
-            Map<String, String> changedFiles = neuio.getChangedItems(oldShas);
+                Map<String, String> changedFiles = neuio.getChangedItems(oldShas);
 
-            if (changedFiles != null) {
-                for (Map.Entry<String, String> changedFile : changedFiles.entrySet()) {
-                    itemShaConfig.addProperty(changedFile.getKey().substring(0, changedFile.getKey().length() - 5),
-                            changedFile.getValue());
+                if (changedFiles != null) {
+                    for (Map.Entry<String, String> changedFile : changedFiles.entrySet()) {
+                        itemShaConfig.addProperty(changedFile.getKey().substring(0, changedFile.getKey().length() - 5),
+                                changedFile.getValue());
+                    }
+                    try {
+                        writeJson(itemShaConfig, itemShaLocation);
+                    } catch (IOException e) {
+                    }
                 }
-                try {
-                    writeJson(itemShaConfig, itemShaLocation);
-                } catch (IOException e) {
-                }
-            }
 
-            if (Display.isActive()) dialog.toFront();
+                if (Display.isActive()) dialog.toFront();
 
-            if (changedFiles != null && changedFiles.size() <= 20) {
-                Map<String, String> downloads = neuio.getItemsDownload(changedFiles.keySet());
+                if (changedFiles != null && changedFiles.size() <= 20) {
 
-                String startMessage = "NotEnoughUpdates: Syncing with remote repository (";
-                int downloaded = 0;
+                    String startMessage = "NotEnoughUpdates: Syncing with remote repository (";
+                    int downloaded = 0;
 
-                for (Map.Entry<String, String> entry : downloads.entrySet()) {
-                    pane.setMessage(startMessage + (++downloaded) + "/" + downloads.size() + ")\nCurrent: " + entry.getKey());
+                    String dlUrl = "https://raw.githubusercontent.com/Moulberry/NotEnoughUpdates-REPO/master/";
+
+                    for (String name : changedFiles.keySet()) {
+                        pane.setMessage(startMessage + (++downloaded) + "/" + changedFiles.size() + ")\nCurrent: " + name);
+                        dialog.pack();
+                        dialog.setVisible(true);
+                        if (Display.isActive()) dialog.toFront();
+
+                        File item = new File(repoLocation, name);
+                        try {
+                            item.createNewFile();
+                        } catch (IOException e) {
+                        }
+                        try (BufferedInputStream inStream = new BufferedInputStream(new URL(dlUrl+name).openStream());
+                             FileOutputStream fileOutputStream = new FileOutputStream(item)) {
+                            byte dataBuffer[] = new byte[1024];
+                            int bytesRead;
+                            while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
+                                fileOutputStream.write(dataBuffer, 0, bytesRead);
+                            }
+                        } catch (IOException e) {
+                        }
+                    }
+                } else {
+                    Utils.recursiveDelete(repoLocation);
+                    repoLocation.mkdirs();
+
+                    //TODO: Store hard-coded value somewhere else
+                    String dlUrl = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
+
+                    pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
                     dialog.pack();
                     dialog.setVisible(true);
                     if (Display.isActive()) dialog.toFront();
 
-                    File item = new File(itemsLocation, entry.getKey());
+                    File itemsZip = new File(repoLocation, "neu-items-master.zip");
                     try {
-                        item.createNewFile();
+                        itemsZip.createNewFile();
                     } catch (IOException e) {
                     }
-                    try (BufferedInputStream inStream = new BufferedInputStream(new URL(entry.getValue()).openStream());
-                         FileOutputStream fileOutputStream = new FileOutputStream(item)) {
+                    try (BufferedInputStream inStream = new BufferedInputStream(new URL(dlUrl).openStream());
+                         FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
                         byte dataBuffer[] = new byte[1024];
                         int bytesRead;
                         while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
@@ -400,45 +443,21 @@ public class NEUManager {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }
-            } else {
-                //TODO: Store hard-coded value somewhere else
-                String dlUrl = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
 
-                pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
-                dialog.pack();
-                dialog.setVisible(true);
-                if (Display.isActive()) dialog.toFront();
+                    pane.setMessage("Unzipping NEU Master Archive.");
+                    dialog.pack();
+                    dialog.setVisible(true);
+                    if (Display.isActive()) dialog.toFront();
 
-                File itemsZip = new File(configLocation, "neu-items-master.zip");
-                try {
-                    itemsZip.createNewFile();
-                } catch (IOException e) {
-                }
-                try (BufferedInputStream inStream = new BufferedInputStream(new URL(dlUrl).openStream());
-                     FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
-                    byte dataBuffer[] = new byte[1024];
-                    int bytesRead;
-                    while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
-                        fileOutputStream.write(dataBuffer, 0, bytesRead);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
                 }
 
-                pane.setMessage("Unzipping NEU Master Archive.");
-                dialog.pack();
-                dialog.setVisible(true);
-                if (Display.isActive()) dialog.toFront();
-
-                unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), configLocation.getAbsolutePath());
+                dialog.dispose();
             }
-
-            dialog.dispose();
-        }
+        } catch(Exception e) {}
 
         Set<String> currentlyInstalledItems = new HashSet<>();
-        for(File f : itemsLocation.listFiles()) {
+        for(File f : new File(repoLocation, "items").listFiles()) {
             currentlyInstalledItems.add(f.getName().substring(0, f.getName().length()-5));
         }
 
@@ -448,7 +467,7 @@ public class NEUManager {
         } else {
             removedItems = new HashSet<>();
         }
-        for(File f : itemsLocation.listFiles()) {
+        for(File f : new File(repoLocation, "items").listFiles()) {
             String internalname = f.getName().substring(0, f.getName().length()-5);
             if(!removedItems.contains(internalname)) {
                 loadItem(internalname);
@@ -464,7 +483,7 @@ public class NEUManager {
     public void loadItem(String internalName) {
         itemstackCache.remove(internalName);
         try {
-            JsonObject json = getJsonFromFile(new File(itemsLocation, internalName + ".json"));
+            JsonObject json = getJsonFromFile(new File(new File(repoLocation, "items"), internalName + ".json"));
             if(json == null) {
                 return;
             }
@@ -826,6 +845,14 @@ public class NEUManager {
                     }
                 }
             }
+            if("ENCHANTED_BOOK".equals(internalname)) {
+                NBTTagCompound enchants = ea.getCompoundTag("enchantments");
+
+                for(String enchname : enchants.getKeySet()) {
+                    internalname = enchname.toUpperCase() + ";" + enchants.getInteger(enchname);
+                    break;
+                }
+            }
         }
 
         return internalname;
@@ -966,11 +993,11 @@ public class NEUManager {
     }
 
     public String getInternalNameForItem(ItemStack stack) {
+        if(stack == null) return null;
         NBTTagCompound tag = stack.getTagCompound();
         return getInternalnameFromNBT(tag);
     }
 
-    //Currently unused in production.
     public void writeItemToFile(ItemStack stack) {
         String internalname = getInternalNameForItem(stack);
 
@@ -984,7 +1011,7 @@ public class NEUManager {
         json.addProperty("modver", NotEnoughUpdates.VERSION);
 
         try {
-            writeJson(json, new File(itemsLocation, internalname+".json"));
+            writeJson(json, new File(new File(repoLocation, "items"), internalname+".json"));
         } catch (IOException e) {}
 
         loadItem(internalname);
@@ -993,7 +1020,7 @@ public class NEUManager {
     /**
      * Constructs a GuiItemUsages from the recipe usage data (see #usagesMap) of a given item
      */
-    public boolean displayGuiItemUsages(String internalName, String text) {
+    public boolean displayGuiItemUsages(String internalName) {
         List<ItemStack[]> craftMatrices = new ArrayList<>();
         List<JsonObject> results =  new ArrayList<>();
 
@@ -1035,14 +1062,14 @@ public class NEUManager {
         if(craftMatrices.size() > 0) {
             Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(
                     Minecraft.getMinecraft().thePlayer.openContainer.windowId));
-            Minecraft.getMinecraft().displayGuiScreen(new GuiItemUsages(craftMatrices, results, text, this));
+            Minecraft.getMinecraft().displayGuiScreen(new GuiItemRecipe("Item Usages", craftMatrices, results, this));
             return true;
         }
         return false;
     }
 
     /**
-     * Constructs a GuiItemRecipe from the recipe data of a given item.
+     * Constructs a GuiItemRecipeOld from the recipe data of a given item.
      */
     public boolean displayGuiItemRecipe(String internalName, String text) {
         JsonObject item = getItemInformation().get(internalName);
@@ -1071,7 +1098,8 @@ public class NEUManager {
 
             Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(
                     Minecraft.getMinecraft().thePlayer.openContainer.windowId));
-            Minecraft.getMinecraft().displayGuiScreen(new GuiItemRecipe(craftMatrix, item, text, this));
+            Minecraft.getMinecraft().displayGuiScreen(new GuiItemRecipe(text!=null?text:"Item Recipe",
+                    Lists.<ItemStack[]>newArrayList(craftMatrix), Lists.newArrayList(item), this));
             return true;
         }
         return false;
@@ -1299,7 +1327,7 @@ public class NEUManager {
     }
 
     public void writeJsonDefaultDir(JsonObject json, String filename) throws IOException {
-        File file = new File(itemsLocation, filename);
+        File file = new File(new File(repoLocation, "items"), filename);
         writeJson(json, file);
     }
 
@@ -1335,6 +1363,7 @@ public class NEUManager {
                     NBTTagCompound tag = JsonToNBT.getTagFromJson(json.get("nbttag").getAsString());
                     stack.setTagCompound(tag);
                 } catch(NBTException e) {
+                    if(json.get("internalname").getAsString().equalsIgnoreCase("ROCK;0")) e.printStackTrace();
                 }
             }
 

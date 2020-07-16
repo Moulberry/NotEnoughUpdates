@@ -5,24 +5,22 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public class AuctionManager {
+public class APIManager {
 
     private NEUManager manager;
     public final CustomAH customAH;
@@ -34,10 +32,17 @@ public class AuctionManager {
     private TreeMap<String, Auction> auctionMap = new TreeMap<>();
     public HashMap<String, HashSet<String>> internalnameToAucIdMap = new HashMap<>();
     private HashSet<String> playerBids = new HashSet<>();
+    private HashSet<String> playerBidsNotified = new HashSet<>();
+    private HashSet<String> playerBidsFinishedNotified = new HashSet<>();
 
-    public TreeMap<String, HashSet<String>> extrasToAucIdMap = new TreeMap<>();
+    private HashMap<String, TreeMap<Integer, String>> internalnameToLowestBIN = new HashMap<>();
+
+    private JsonArray playerInformation = null;
+
+    public TreeMap<String, HashMap<Integer, HashSet<String>>> extrasToAucIdMap = new TreeMap<>();
 
     private long lastPageUpdate = 0;
+    private long lastProfileUpdate = 0;
     private long lastCustomAHSearch = 0;
     private long lastCleanup = 0;
 
@@ -48,9 +53,26 @@ public class AuctionManager {
     public int taggedAuctions = 0;
     public int processMillis = 0;
 
-    public AuctionManager(NEUManager manager) {
+    private boolean doFullUpdate = false;
+
+    public APIManager(NEUManager manager) {
         this.manager = manager;
         customAH = new CustomAH(manager);
+    }
+
+    public JsonObject getPlayerInformation() {
+        if(playerInformation == null) return null;
+        for(int i=0; i<playerInformation.size(); i++) {
+            JsonObject profile = playerInformation.get(i).getAsJsonObject();
+            if(profile.get("cute_name").getAsString().equalsIgnoreCase(manager.getCurrentProfile())) {
+                if(!profile.has("members")) return null;
+                JsonObject members = profile.get("members").getAsJsonObject();
+                String uuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
+                if(!members.has(uuid)) return null;
+                return members.get(uuid).getAsJsonObject();
+            }
+        }
+        return null;
     }
 
     public TreeMap<String, Auction> getAuctionItems() {
@@ -111,6 +133,11 @@ public class AuctionManager {
         if(System.currentTimeMillis() - lastPageUpdate > 5*1000) {
             lastPageUpdate = System.currentTimeMillis();
             updatePageTick();
+            ahNotification();
+        }
+        if(System.currentTimeMillis() - lastProfileUpdate > 10*1000) {
+            lastProfileUpdate = System.currentTimeMillis();
+            updateProfiles(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
         }
         if(System.currentTimeMillis() - lastCleanup > 120*1000) {
             lastCleanup = System.currentTimeMillis();
@@ -121,6 +148,100 @@ public class AuctionManager {
             if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView()) {
                 customAH.updateSearch();
                 calculateStats();
+            }
+        }
+    }
+
+    public void updateProfiles(String uuid) {
+        HashMap<String, String> args = new HashMap<>();
+        args.put("uuid", ""+uuid);
+        manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/profiles",
+            args, jsonObject -> {
+                if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
+                    playerInformation = jsonObject.get("profiles").getAsJsonArray();
+                    if(playerInformation == null) return;
+                    String backup = null;
+                    long backupLastSave = 0;
+                    for(int i=0; i<playerInformation.size(); i++) {
+                        JsonObject profile = playerInformation.get(i).getAsJsonObject();
+                        String cute_name = profile.get("cute_name").getAsString();
+
+                        if(backup == null) backup = cute_name;
+
+                        if(!profile.has("members")) continue;
+                        JsonObject members = profile.get("members").getAsJsonObject();
+
+                        if(members.has(uuid)) {
+                            JsonObject member = members.get(uuid).getAsJsonObject();
+                            long last_save = member.get("last_save").getAsLong();
+                            if(last_save > backupLastSave) {
+                                backupLastSave = last_save;
+                                backup = cute_name;
+                            }
+                        }
+                    }
+
+                    manager.setCurrentProfileBackup(backup);
+                }
+            }
+        );
+    }
+
+    private String niceAucId(String aucId) {
+        if(aucId.length()!=32) return aucId;
+
+        StringBuilder niceAucId = new StringBuilder();
+        niceAucId.append(aucId, 0, 8);
+        niceAucId.append("-");
+        niceAucId.append(aucId, 8, 12);
+        niceAucId.append("-");
+        niceAucId.append(aucId, 12, 16);
+        niceAucId.append("-");
+        niceAucId.append(aucId, 16, 20);
+        niceAucId.append("-");
+        niceAucId.append(aucId, 20, 32);
+        return niceAucId.toString();
+    }
+
+    public int getLowestBin(String internalname) {
+        TreeMap<Integer, String> lowestBIN = internalnameToLowestBIN.get(internalname);
+        if(lowestBIN == null || lowestBIN.isEmpty()) return -1;
+        return lowestBIN.firstKey();
+    }
+
+    private void ahNotification() {
+        playerBidsNotified.retainAll(playerBids);
+        playerBidsFinishedNotified.retainAll(playerBids);
+        if(manager.config.ahNotification.value <= 0) {
+            return;
+        }
+        for(String aucid : playerBids) {
+            Auction auc = auctionMap.get(aucid);
+            if(!playerBidsNotified.contains(aucid)) {
+                if(auc != null && auc.end - System.currentTimeMillis() < 1000*60*manager.config.ahNotification.value) {
+                    ChatComponentText message = new ChatComponentText(
+                            EnumChatFormatting.YELLOW+"The " + auc.getStack().getDisplayName() + EnumChatFormatting.YELLOW + " you have bid on is ending soon! Click here to view.");
+                    ChatStyle clickEvent = new ChatStyle().setChatClickEvent(
+                            new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/viewauction " + niceAucId(aucid)));
+                    clickEvent.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW+"View auction")));
+                    message.setChatStyle(clickEvent);
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(message);
+
+                    playerBidsNotified.add(aucid);
+                }
+            }
+            if(!playerBidsFinishedNotified.contains(aucid)) {
+                if(auc != null && auc.end < System.currentTimeMillis()) {
+                    ChatComponentText message = new ChatComponentText(
+                            EnumChatFormatting.YELLOW+"The " + auc.getStack().getDisplayName() + EnumChatFormatting.YELLOW + " you have bid on (might) have ended! Click here to view.");
+                    ChatStyle clickEvent = new ChatStyle().setChatClickEvent(
+                            new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/viewauction " + niceAucId(aucid)));
+                    clickEvent.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW+"View auction")));
+                    message.setChatStyle(clickEvent);
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(message);
+
+                    playerBidsFinishedNotified.add(aucid);
+                }
             }
         }
     }
@@ -141,15 +262,19 @@ public class AuctionManager {
             for(String aucid : toRemove) {
                 auctionMap.remove(aucid);
             }
-            for(HashSet<String> aucids : extrasToAucIdMap.values()) {
-                for(String aucid : toRemove) {
-                    aucids.remove(aucid);
+            for(HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
+                for(HashSet<String> aucids : extrasMap.values()) {
+                    for(String aucid : toRemove) {
+                        aucids.remove(aucid);
+                    }
                 }
             }
             for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
                 aucids.removeAll(toRemove);
             }
-            playerBids.removeAll(toRemove);
+            for(TreeMap<Integer, String> lowestBINs : internalnameToLowestBIN.values()) {
+                lowestBINs.values().removeAll(toRemove);
+            }
         } catch(ConcurrentModificationException e) {
             cleanup();
         }
@@ -158,6 +283,11 @@ public class AuctionManager {
     private void updatePageTick() {
         if(totalPages == 0) {
             getPageFromAPI(0);
+        } else if(doFullUpdate) {
+            doFullUpdate = false;
+            for(int i=0; i<totalPages; i++) {
+                getPageFromAPI(i);
+            }
         } else {
             if(needUpdate.isEmpty()) resetNeedUpdate();
 
@@ -180,8 +310,10 @@ public class AuctionManager {
             internalnameTaggedAuctions = aucs.size();
             totalTags = extrasToAucIdMap.size();
             aucs = new HashSet<>();
-            for(HashSet<String> aucids : extrasToAucIdMap.values()) {
-                aucs.addAll(aucids);
+            for(HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
+                for(HashSet<String> aucids : extrasMap.values()) {
+                    aucs.addAll(aucids);
+                }
             }
             taggedAuctions = aucs.size();
         } catch(Exception e) {}
@@ -191,14 +323,22 @@ public class AuctionManager {
        "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
     };
 
-    public int checkItemType(String lore, String... typeMatches) {
+    public int checkItemType(String lore, boolean contains, String... typeMatches) {
         String[] split = lore.split("\n");
         for(int i=split.length-1; i>=0; i--) {
             String line = split[i];
             for(String rarity : rarityArr) {
                 for(int j=0; j<typeMatches.length; j++) {
-                    if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
-                        return j;
+                    if(contains) {
+                        if(line.trim().contains(rarity + " " + typeMatches[j])) {
+                            return j;
+                        }
+                    } else {
+                        if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
+                            return j;
+                        } else if(line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
+                            return j;
+                        }
                     }
                 }
             }
@@ -219,6 +359,10 @@ public class AuctionManager {
                     int lastUpdated = jsonObject.get("lastUpdated").getAsInt();
 
                     if(lastApiUpdate != lastUpdated) {
+                        if(manager.config.quickAHUpdate.value &&
+                                (Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView())) {
+                            doFullUpdate = true;
+                        }
                         resetNeedUpdate();
                     }
 
@@ -253,7 +397,6 @@ public class AuctionManager {
                         String rarity = auction.get("tier").getAsString();
                         JsonArray bids = auction.get("bids").getAsJsonArray();
 
-
                         for(String lvl4Max : lvl4Maxes) {
                             item_lore = item_lore.replaceAll("\\u00A79("+lvl4Max+" IV)", EnumChatFormatting.DARK_PURPLE+"$1");
                         }
@@ -286,11 +429,23 @@ public class AuctionManager {
                             tag.setTag("display", display);
                             item_tag.getTagList("i", 10).getCompoundTagAt(0).setTag("tag", tag);
 
-                            for(String str : extras.replaceAll(displayNormal, "").split(" ")) {
+                            int index=0;
+                            for(String str : extras.split(" ")) {
                                 str = Utils.cleanColour(str).toLowerCase();
                                 if(str.length() > 0) {
-                                    HashSet<String> aucids = extrasToAucIdMap.computeIfAbsent(str, k -> new HashSet<>());
+                                    HashMap<Integer, HashSet<String>> extrasMap = extrasToAucIdMap.computeIfAbsent(str, k -> new HashMap<>());
+                                    HashSet<String> aucids = extrasMap.computeIfAbsent(index, k -> new HashSet<>());
                                     aucids.add(auctionUuid);
+                                }
+                                index++;
+                            }
+
+                            if(bin) {
+                                TreeMap<Integer, String> lowestBINs = internalnameToLowestBIN.computeIfAbsent(internalname, k -> new TreeMap<>());
+                                int count = item_tag.getInteger("Count");
+                                lowestBINs.put(starting_bid/(count>0?count:1), auctionUuid);
+                                if(lowestBINs.size() > 5) {
+                                    lowestBINs.keySet().remove(lowestBINs.lastKey());
                                 }
                             }
 
@@ -301,9 +456,15 @@ public class AuctionManager {
                                 }
                             }
 
+                            if(checkItemType(item_lore, true, "DUNGEON") >= 0) {
+                                HashMap<Integer, HashSet<String>> extrasMap = extrasToAucIdMap.computeIfAbsent("dungeon", k -> new HashMap<>());
+                                HashSet<String> aucids = extrasMap.computeIfAbsent(0, k -> new HashSet<>());
+                                aucids.add(auctionUuid);
+                            }
+
                             //Categories
                             String category = sbCategory;
-                            int itemType = checkItemType(item_lore, "SWORD", "FISHING ROD", "PICKAXE",
+                            int itemType = checkItemType(item_lore, false,"SWORD", "FISHING ROD", "PICKAXE",
                                     "AXE", "SHOVEL", "PET ITEM", "TRAVEL SCROLL", "REFORGE STONE", "BOW");
                             if(itemType >= 0 && itemType < categoryItemType.length) {
                                 category = categoryItemType[itemType];

@@ -1,8 +1,17 @@
 package io.github.moulberry.notenoughupdates.options;
 
 import com.google.gson.*;
+import io.github.moulberry.notenoughupdates.NEUOverlayPlacements;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.Util;
+import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.client.ForgeHooksClient;
+import org.lwjgl.util.vector.Vector2f;
 
+import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +47,11 @@ public class Options {
             "Quick Commands",
             false,
             "Shows QuickCommands™ above search bar.");
+    public Option<Boolean> showUpdateMsg = new Option(
+            true,
+            "Show Update Notifs",
+            false,
+            "Shows update messages if NEU is out-of-date.");
     public Option<Boolean> tooltipBorderColours = new Option(
             true,
             "Coloured Tooltip Borders",
@@ -63,6 +77,11 @@ public class Options {
             "Hide Apikey Setting",
             false,
             "Hides the Apikey setting (please try not to leak Apikey if you're recording)");
+    public Option<Boolean> quickAHUpdate = new Option(
+            false,
+            "NeuAH Quick Update",
+            false,
+            "Will instantly update the whole AH when an api update is detected (aka as fast as possible). Warning: Uses lots of data.");
     public Option<Double> bgBlurFactor = new Option(
             5.0,
             "Background Blur",
@@ -78,6 +97,16 @@ public class Options {
             "Automatically Update Items",
             false,
             "If true, updated items will automatically download from the remote repository when you start the game. \nHIGHLY RECOMMENDED.");
+    public Option<Boolean> quickcommandMousePress = new Option(
+            false,
+            "QuickCommand on Mouse Press",
+            false,
+            "If true, quickcommands will trigger on mouse down instead of mouse up.");
+    public Option<Boolean> disableItemTabOpen = new Option(
+            false,
+            "No Tab Open",
+            false,
+            "If True, moving your mouse to the item tab on the right side won't open the itempane.");
     public Option<Boolean> keepopen = new Option(
             false,
             "Keep Itempane Open",
@@ -113,6 +142,16 @@ public class Options {
             "Pane Padding",
             false,
             "Changes the padding of the panes. Value between 0-20.", 0, 20);
+    public Option<Double> ahNotification = new Option(
+            2.0,
+            "AH Notification (Mins, 0 = off)",
+            false,
+            "Minutes before AH ends to notify. 0-10.", 0, 10);
+    public Option<Double> tooltipBorderOpacity = new Option(
+            200.0,
+            "Coloured Tooltip Border Opacity",
+            false,
+            "Coloured tooltips only apply to tooltips in my GUIs. Value between 0-255.", 0, 255);
 
     /**
      * OPTIONS THAT DON'T SHOW IN GUI
@@ -122,6 +161,11 @@ public class Options {
             "Show Dev Options",
             true,
             "Dev Feature. Please don't use.");
+    public Option<String> selectedCape = new Option(
+            "",
+            "Selected Cape",
+            true,
+            "Selected Cape");
     public Option<Double> compareMode = new Option(
             0.0,
             "Compare Mode",
@@ -152,6 +196,16 @@ public class Options {
             "Quick Commands",
             false,
             "Quick Commands");
+    public Option<String> overlaySearchBar = new Option(
+            "",
+            "OverlaySearchBar",
+            false,
+            "OverlaySearchBar");
+    public Option<String> overlayQuickCommand = new Option(
+            "",
+            "OverlaySearchBar",
+            false,
+            "OverlaySearchBar");
 
     private ArrayList<String> createDefaultQuickCommands() {
         ArrayList<String> arr = new ArrayList<>();
@@ -160,9 +214,44 @@ public class Options {
         arr.add("/craft:Crafting Table:CRAFTING_TABLE");
         arr.add("/enderchest:Ender Chest:ENDER_CHEST");
         arr.add("/wardrobe:Wardrobe:LEATHER_CHESTPLATE");
+        arr.add("/pets:Pets:BONE");
         arr.add("neucl:Collection Log:MAP");
         arr.add("neuah:NEU Auction House:GOLD_BLOCK");
         return arr;
+    }
+
+    public class Button {
+        public String displayName;
+        public String desc;
+        public Runnable click;
+
+        public Button(String displayName, String desc, Runnable click) {
+            this.displayName = displayName;
+            this.desc = desc;
+            this.click = click;
+        }
+    }
+
+    private transient List<Button> buttons = new ArrayList<>();
+    {
+        buttons.add(new Button("Open Config Folder", "Opens the config folder. Be careful.", () -> {
+            if(Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
+                if(NotEnoughUpdates.INSTANCE.manager.configFile.getParentFile().exists()) {
+                    try {
+                        desktop.open(NotEnoughUpdates.INSTANCE.manager.configFile.getParentFile());
+                    } catch(IOException ignored) {}
+                }
+            }
+        }));
+
+        buttons.add(new Button("Edit Gui Positions", "Allows you to change the position of the search bar, etc.", () -> {
+            Minecraft.getMinecraft().displayGuiScreen(new NEUOverlayPlacements());
+        }));
+    }
+
+    public List<Button> getButtons() {
+        return buttons;
     }
 
     public List<Option> getOptions() {
@@ -171,23 +260,28 @@ public class Options {
         //Buttons
         tryAddOption(enableItemEditing, options);
         tryAddOption(onlyShowOnSkyblock, options);
-        tryAddOption(hidePotionEffect, options);
-        tryAddOption(advancedPriceInfo, options);
-        tryAddOption(cacheRenderedItempane, options);
-        tryAddOption(streamerMode, options);
         tryAddOption(showQuickCommands, options);
+        tryAddOption(hidePotionEffect, options);
+        tryAddOption(hideEmptyPanes, options);
+        //tryAddOption(advancedPriceInfo, options);
+        tryAddOption(showUpdateMsg, options);
         tryAddOption(tooltipBorderColours, options);
         tryAddOption(hideApiKey, options);
+        tryAddOption(streamerMode, options);
+        tryAddOption(quickAHUpdate, options);
         tryAddOption(autoupdate, options);
-        tryAddOption(keepopen, options);
+        tryAddOption(cacheRenderedItempane, options);
         tryAddOption(itemStyle, options);
-        tryAddOption(hideEmptyPanes, options);
+        tryAddOption(keepopen, options);
+        tryAddOption(disableItemTabOpen, options);
         //Sliders
         tryAddOption(bgBlurFactor, options);
         tryAddOption(paneWidthMult, options);
+        tryAddOption(ahNotification, options);
         tryAddOption(bgOpacity, options);
         tryAddOption(fgOpacity, options);
         tryAddOption(panePadding, options);
+        tryAddOption(tooltipBorderOpacity, options);
         //Text
         tryAddOption(apiKey, options);
 

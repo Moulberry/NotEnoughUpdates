@@ -5,10 +5,10 @@
   "description": "Mod that shows recipes and useful info for Hypixel's Skyblock gamemode.",
   "version": "${version}",
   "mcversion": "${mcversion}",
-  "url": "",
-  "updateUrl": "",
+  "url": "https://github.com/Moulberry/NotEnoughUpdates/",
+  "updateUrl": "https://github.com/Moulberry/NotEnoughUpdates/releases",
   "authorList": ["Moulberry"],
-  "credits": "Nullzee for listening to me rant. Contributors, etc. <3",
+  "credits": "",
   "logoFile": "",
   "screenshots": [],
   "dependencies": []

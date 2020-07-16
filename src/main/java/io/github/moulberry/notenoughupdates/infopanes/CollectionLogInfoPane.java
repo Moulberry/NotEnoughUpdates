@@ -40,6 +40,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     private int previousX = 0;
     private int previousFilter = 0;
 
+    private long lastUpdate = 0;
+
     private static final int FILTER_ALL = 0;
     private static final int FILTER_WEAPON = 1;
     private static final int FILTER_ARMOR = 2;
@@ -58,6 +60,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     private Framebuffer itemFramebufferGrayscale = null;
     private Shader grayscaleShader = null;
 
+    private int updateCounter = 0;
+
     public CollectionLogInfoPane(NEUOverlay overlay, NEUManager manager) {
         super(overlay, manager);
         refreshItems();
@@ -75,6 +79,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         items.clear();
         for(String internalname : manager.getItemInformation().keySet()) {
             if(!manager.isVanillaItem(internalname) && !internalname.matches(mobRegex)) {
+                JsonObject item = manager.getItemInformation().get(internalname);
                 JsonArray lore = manager.getItemInformation().get(internalname).get("lore").getAsJsonArray();
                 switch(filterMode) {
                     case FILTER_WEAPON:
@@ -87,19 +92,19 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                         if(overlay.checkItemType(lore, "ACCESSORY") < 0) continue;
                         break;
                     case FILTER_PET:
-                        if(!internalname.matches(petRegex)) continue;
+                        if(!internalname.matches(petRegex) || !item.get("displayname").getAsString().contains("[")) continue;
                         break;
                     case FILTER_TOOL:
                         if(overlay.checkItemType(lore, "AXE", "PICKAXE", "FISHING ROD", "SHOVEL", "HOE") < 0) continue;
                         break;
                     case FILTER_SLAYER_ZOMBIE:
-                        if(!loreContains(lore, "\u00A7c\u2620 \u00A75Requires Zombie")) continue;
+                        if(!item.has("slayer_req") || !item.get("slayer_req").getAsString().startsWith("ZOMBIE")) continue;
                         break;
                     case FILTER_SLAYER_WOLF:
-                        if(!loreContains(lore, "\u00A7c\u2620 \u00A75Requires Wolf")) continue;
+                        if(!item.has("slayer_req") || !item.get("slayer_req").getAsString().startsWith("WOLF")) continue;
                         break;
                     case FILTER_SLAYER_SPIDER:
-                        if(!loreContains(lore, "\u00A7c\u2620 \u00A75Requires Spider")) continue;
+                        if(!item.has("slayer_req") || !item.get("slayer_req").getAsString().startsWith("SPIDER")) continue;
                         break;
                 }
                 items.add(internalname);
@@ -113,8 +118,11 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
     private Comparator<String> getItemComparator() {
         return (o1, o2) -> {
-            float cost1 = manager.getCraftCost(o1).craftCost;
-            float cost2 = manager.getCraftCost(o2).craftCost;
+            float cost1 = manager.auctionManager.getLowestBin(o1);
+            float cost2 = manager.auctionManager.getLowestBin(o2);
+
+            if(cost1 == -1) cost1 = manager.getCraftCost(o1).craftCost;
+            if(cost2 == -1) cost2 = manager.getCraftCost(o2).craftCost;
 
             if(cost1 < cost2) return 1;
             if(cost1 > cost2) return -1;
@@ -160,8 +168,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         int own = 0;
         for(String item : items) {
             if(getAcquiredItems() != null &&
-                    getAcquiredItems().containsKey(manager.currentProfile) &&
-                    getAcquiredItems().get(manager.currentProfile).contains(item)) {
+                    getAcquiredItems().containsKey(manager.getCurrentProfile()) &&
+                    getAcquiredItems().get(manager.getCurrentProfile()).contains(item)) {
                 own++;
             }
 
@@ -248,8 +256,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
     public int getCurrentAcquiredCount() {
         if(getAcquiredItems() == null) return 0;
-        if(!getAcquiredItems().containsKey(manager.currentProfile)) return 0;
-        return getAcquiredItems().get(manager.currentProfile).size();
+        if(!getAcquiredItems().containsKey(manager.getCurrentProfile())) return 0;
+        return getAcquiredItems().get(manager.getCurrentProfile()).size();
     }
 
     private void renderCollectionLog(Color fg, int width, int height, int left, int right, int top, int bottom) {
@@ -272,7 +280,9 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                 scaledresolution.getScaleFactor());
 
         if(!manager.config.cacheRenderedItempane.value || previousAcquiredCount != getCurrentAcquiredCount() ||
-                previousScroll != scrollHeight.getValue() || previousX != left || previousFilter != filterMode) {
+                previousScroll != scrollHeight.getValue() || previousX != left || previousFilter != filterMode ||
+                System.currentTimeMillis() - lastUpdate > 5000) {
+            lastUpdate = System.currentTimeMillis();
             renderItemsToImage(itemFramebuffer, fg, left+5, right, top+1, bottom);
             renderItemBGToImage(itemBGFramebuffer, fg, left+5, right, top+1, bottom);
         }
@@ -316,35 +326,37 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         iterateItemSlots(new ItemSlotConsumer() {
             @Override
             public void consume(int x, int y, int id) {
-                String internalname = items[id];
-                if(id == 0) isTop.set(true);
+                if(id < items.length) {
+                    String internalname = items[id];
+                    if(id == 0) isTop.set(true);
 
-                int leftI = x-1;
-                int rightI = x+17;
-                int topI = y-1;
-                int bottomI = y+17;
+                    int leftI = x-1;
+                    int rightI = x+17;
+                    int topI = y-1;
+                    int bottomI = y+17;
 
-                lowestY.set(Math.max(bottomI, lowestY.get()));
+                    lowestY.set(Math.max(bottomI, lowestY.get()));
 
-                if(mouseX > leftI && mouseX < rightI) {
-                    if(mouseY > topI && mouseY < bottomI) {
-                        tooltipToDisplay.set(manager.getItemInformation().get(internalname));
+                    if(mouseX > leftI && mouseX < rightI) {
+                        if(mouseY > topI && mouseY < bottomI) {
+                            tooltipToDisplay.set(manager.getItemInformation().get(internalname));
+                        }
                     }
+
+                    if(getAcquiredItems() != null &&
+                            getAcquiredItems().containsKey(manager.getCurrentProfile()) &&
+                            getAcquiredItems().get(manager.getCurrentProfile()).contains(internalname)) {
+                        return;
+                    }
+
+
+                    topI = Math.max(topI, top);
+                    bottomI = Math.min(bottomI, bottom);
+
+                    Utils.drawTexturedRect(leftI, topI, rightI-leftI, bottomI-topI,
+                            leftI/(float)width, rightI/(float)width,
+                            (height-topI)/(float)height, (height-bottomI)/(float)height);
                 }
-
-                if(getAcquiredItems() != null &&
-                        getAcquiredItems().containsKey(manager.currentProfile) &&
-                        getAcquiredItems().get(manager.currentProfile).contains(internalname)) {
-                    return;
-                }
-
-
-                topI = Math.max(topI, top);
-                bottomI = Math.min(bottomI, bottom);
-
-                Utils.drawTexturedRect(leftI, topI, rightI-leftI, bottomI-topI,
-                        leftI/(float)width, rightI/(float)width,
-                        (height-topI)/(float)height, (height-bottomI)/(float)height);
             }
         }, left+5, right, top+1, bottom);
 
@@ -410,24 +422,26 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         String[] items = getItemList();
         iterateItemSlots(new ItemSlotConsumer() {
             public void consume(int x, int y, int id) {
-                String internalname = items[id];
+                if(id < items.length) {
+                    String internalname = items[id];
 
-                Color color = fgCustomOpacity;
-                if(getAcquiredItems() != null &&
-                        getAcquiredItems().containsKey(manager.currentProfile) &&
-                        getAcquiredItems().get(manager.currentProfile).contains(internalname)) {
-                    color = fgGold;
-                }
+                    Color color = fgCustomOpacity;
+                    if(getAcquiredItems() != null &&
+                            getAcquiredItems().containsKey(manager.getCurrentProfile()) &&
+                            getAcquiredItems().get(manager.getCurrentProfile()).contains(internalname)) {
+                        color = fgGold;
+                    }
 
-                Minecraft.getMinecraft().getTextureManager().bindTexture(item_mask);
-                if(manager.config.itemStyle.value) {
-                    GlStateManager.color(color.getRed() / 255f, color.getGreen() / 255f,
-                            color.getBlue() / 255f, color.getAlpha() / 255f);
-                    Utils.drawTexturedRect(x - 1, y - 1, overlay.ITEM_SIZE + 2, overlay.ITEM_SIZE + 2, GL11.GL_NEAREST);
-                } else {
-                    drawRect(x-1, y-1, x+overlay.ITEM_SIZE+1, y+overlay.ITEM_SIZE+1, color.getRGB());
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(item_mask);
+                    if(manager.config.itemStyle.value) {
+                        GlStateManager.color(color.getRed() / 255f, color.getGreen() / 255f,
+                                color.getBlue() / 255f, color.getAlpha() / 255f);
+                        Utils.drawTexturedRect(x - 1, y - 1, overlay.ITEM_SIZE + 2, overlay.ITEM_SIZE + 2, GL11.GL_NEAREST);
+                    } else {
+                        drawRect(x-1, y-1, x+overlay.ITEM_SIZE+1, y+overlay.ITEM_SIZE+1, color.getRGB());
+                    }
+                    GlStateManager.bindTexture(0);
                 }
-                GlStateManager.bindTexture(0);
             }
         }, left, right, top, bottom);
     }

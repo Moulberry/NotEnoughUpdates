@@ -11,14 +11,19 @@ import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
 import io.github.moulberry.notenoughupdates.infopanes.CosmeticsInfoPane;
+import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
+import io.github.moulberry.notenoughupdates.questing.NEUQuesting;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.*;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
@@ -29,6 +34,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Session;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -62,15 +68,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static io.github.moulberry.notenoughupdates.GuiTextures.*;
+
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "REL-1.0.0";
 
     public static NotEnoughUpdates INSTANCE = null;
 
     public NEUManager manager;
-    private NEUOverlay overlay;
+    public NEUOverlay overlay;
     private NEUIO neuio;
 
     private static final long CHAT_MSG_COOLDOWN = 200;
@@ -80,6 +88,8 @@ public class NotEnoughUpdates {
 
     private boolean hoverInv = false;
     private boolean focusInv = false;
+
+    private boolean joinedSB = false;
 
     //Stolen from Biscut and used for detecting whether in skyblock
     private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK","\u7A7A\u5C9B\u751F\u5B58");
@@ -100,7 +110,7 @@ public class NotEnoughUpdates {
     SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!OpenGlHelper.isFramebufferEnabled()) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "This feature requires FBOs to work. Try disabling Optifine's 'Fast Render'."));
             } else {
                 if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
@@ -109,6 +119,19 @@ public class NotEnoughUpdates {
                 manager.updatePrices();
                 overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
             }
+        }
+    });
+
+
+    SimpleCommand questingCommand = new SimpleCommand("neuquest", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            openGui = new GuiQuestLine();
+        }
+    });
+
+    SimpleCommand overlayPlacementsCommand = new SimpleCommand("neuoverlay", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            openGui = new NEUOverlayPlacements();
         }
     });
 
@@ -126,7 +149,7 @@ public class NotEnoughUpdates {
             if(!hasSkyblockScoreboard()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
                         "You must be on Skyblock to use this feature."));
-            } else if(manager.config.apiKey.value == null || manager.config.apiKey.value.isEmpty()) {
+            } else if(manager.config.apiKey.value == null || manager.config.apiKey.value.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
                         "Can't open NeuAH, Api Key is not set. Run /api new and put the result in settings."));
             } else {
@@ -152,6 +175,8 @@ public class NotEnoughUpdates {
         f.mkdirs();
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
+        ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
+        //ClientCommandHandler.instance.registerCommand(questingCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
 
         neuio = new NEUIO(getAccessToken());
@@ -178,7 +203,7 @@ public class NotEnoughUpdates {
         }));
 
         //TODO: login code. Ignore this, used for testing.
-        try {
+        /*try {
             Field field = Minecraft.class.getDeclaredField("session");
             YggdrasilUserAuthentication auth = (YggdrasilUserAuthentication)
                     new YggdrasilAuthenticationService(Proxy.NO_PROXY, UUID.randomUUID().toString())
@@ -207,7 +232,7 @@ public class NotEnoughUpdates {
             field.setAccessible(true);
             field.set(Minecraft.getMinecraft(), session);
         } catch (NoSuchFieldException | AuthenticationException | IllegalAccessException e) {
-        }
+        }*/
     }
 
     /**
@@ -239,17 +264,93 @@ public class NotEnoughUpdates {
         }
         if(hasSkyblockScoreboard()) {
             manager.auctionManager.tick();
+            if(!joinedSB && manager.config.showUpdateMsg.value) {
+                File repo = manager.repoLocation;
+                if(repo.exists()) {
+                    File updateJson = new File(repo, "update.json");
+                    try {
+                        JsonObject o = manager.getJsonFromFile(updateJson);
+
+                        String version = o.get("version").getAsString();
+
+                        if(!VERSION.equalsIgnoreCase(version)) {
+                            String update_msg = o.get("update_msg").getAsString();
+                            String discord_link = o.get("discord_link").getAsString();
+                            String youtube_link = o.get("youtube_link").getAsString();
+                            String update_link = o.get("update_link").getAsString();
+                            String github_link = o.get("github_link").getAsString();
+                            String other_text = o.get("other_text").getAsString();
+                            String other_link = o.get("other_link").getAsString();
+
+                            int first_len = -1;
+                            for(String line : update_msg.split("\n")) {
+                                FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+                                int len = fr.getStringWidth(line);
+                                if(first_len == -1) {
+                                    first_len = len;
+                                }
+                                int missing_len = first_len-len;
+                                if(missing_len > 0) {
+                                    StringBuilder sb = new StringBuilder(line);
+                                    for(int i=0; i<missing_len/8; i++) {
+                                        sb.insert(0, " ");
+                                    }
+                                    line = sb.toString();
+                                }
+                                line = line.replaceAll("\\{version}", version);
+                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(line));
+                            }
+                            ChatComponentText other = null;
+                            if(other_text.length() > 0) {
+                                other = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+other_text+EnumChatFormatting.GRAY+"]");
+                                other.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, other_link));
+                            }
+                            ChatComponentText links = new ChatComponentText("");
+                            ChatComponentText separator = new ChatComponentText(
+                                    EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"---":"--"));
+                            ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+"Discord"+EnumChatFormatting.GRAY+"]");
+                            discord.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, discord_link));
+                            ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.RED+"YouTube"+EnumChatFormatting.GRAY+"]");
+                            youtube.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, youtube_link));
+                            ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.GREEN+"Release"+EnumChatFormatting.GRAY+"]");
+                            release.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, update_link));
+                            ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"GitHub"+EnumChatFormatting.GRAY+"]");
+                            github.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, github_link));
+
+
+                            links.appendSibling(separator);
+                            links.appendSibling(discord);
+                            links.appendSibling(separator);
+                            links.appendSibling(youtube);
+                            links.appendSibling(separator);
+                            links.appendSibling(release);
+                            links.appendSibling(separator);
+                            links.appendSibling(github);
+                            links.appendSibling(separator);
+                            if(other != null) {
+                                links.appendSibling(other);
+                                links.appendSibling(separator);
+                            }
+
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(links);
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+
+                        }
+
+                        joinedSB = true;
+                    } catch(Exception ignored) {}
+                }
+            }
+            //NEUQuesting.getInstance().tick();
+            //GuiQuestLine.questLine.tick();
         }
         if(currChatMessage != null && System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
             lastChatMessage = System.currentTimeMillis();
             Minecraft.getMinecraft().thePlayer.sendChatMessage(currChatMessage);
             currChatMessage = null;
         }
-        if(hasSkyblockScoreboard() && manager.currentProfile != null && manager.currentProfile.length() > 0) {
+        if(hasSkyblockScoreboard() && manager.getCurrentProfile() != null && manager.getCurrentProfile().length() > 0) {
             HashSet<String> newItem = new HashSet<>();
-            for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
-                processUniqueStack(stack, newItem);
-            }
             if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
                 !(Minecraft.getMinecraft().currentScreen instanceof GuiCrafting)) {
                 boolean usableContainer = true;
@@ -281,6 +382,14 @@ public class NotEnoughUpdates {
                     for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
                         processUniqueStack(stack, newItem);
                     }
+                    for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
+                        processUniqueStack(stack, newItem);
+                    }
+                }
+            } else {
+
+                for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
+                    processUniqueStack(stack, newItem);
                 }
             }
             newItemAddMap.keySet().retainAll(newItem);
@@ -292,7 +401,7 @@ public class NotEnoughUpdates {
             String internalname = manager.getInternalNameForItem(stack);
             if(internalname != null) {
                 ArrayList<String> log = manager.config.collectionLog.value.computeIfAbsent(
-                        manager.currentProfile, k -> new ArrayList<>());
+                        manager.getCurrentProfile(), k -> new ArrayList<>());
                 if(!log.contains(internalname)) {
                     newItem.add(internalname);
                     if(newItemAddMap.containsKey(internalname)) {
@@ -464,11 +573,14 @@ public class NotEnoughUpdates {
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onGuiChat(ClientChatReceivedEvent e) {
         String r = null;
-        String unformatted = e.message.getUnformattedText().replaceAll("(?i)\\u00A7.", "");
+        String unformatted = Utils.cleanColour(e.message.getUnformattedText());
         if(unformatted.startsWith("You are playing on profile: ")) {
-            manager.currentProfile = unformatted.substring("You are playing on profile: ".length()).split(" ")[0].trim();
+            manager.setCurrentProfile(unformatted.substring("You are playing on profile: ".length()).split(" ")[0].trim());
         } else if(unformatted.startsWith("Your profile was changed to: ")) {//Your profile was changed to:
-            manager.currentProfile = unformatted.substring("Your profile was changed to: ".length()).split(" ")[0].trim();
+            manager.setCurrentProfile(unformatted.substring("Your profile was changed to: ".length()).split(" ")[0].trim());
+        } else if(unformatted.startsWith("Your new API key is ")) {
+            manager.config.apiKey.value = unformatted.substring("Your new API key is ".length());
+            try { manager.saveConfig(); } catch(IOException ioe) {}
         }
         if(e.message.getFormattedText().equals(EnumChatFormatting.RESET.toString()+
                 EnumChatFormatting.RED+"You haven't unlocked this recipe!"+EnumChatFormatting.RESET)) {
@@ -574,12 +686,95 @@ public class NotEnoughUpdates {
     public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if(!(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView())) {
             if(event.gui instanceof GuiContainer && isOnSkyblock()) {
+
+                renderDungeonChestOverlay(event.gui);
+
                 if(!focusInv) {
                     GL11.glTranslatef(0, 0, 300);
                     overlay.render(event.mouseX, event.mouseY, hoverInv && focusInv);
                     GL11.glTranslatef(0, 0, -300);
                 }
                 overlay.renderOverlay(event.mouseX, event.mouseY);
+            }
+        }
+    }
+
+    private void renderDungeonChestOverlay(GuiScreen gui) {
+        if(gui instanceof GuiChest && manager.auctionManager.activeAuctions > 0) {
+            try {
+                int xSize = (int) Utils.getField(GuiContainer.class, gui, "xSize", "field_146999_f");
+                int ySize = (int) Utils.getField(GuiContainer.class, gui, "ySize", "field_147000_g");
+                int guiLeft = (int) Utils.getField(GuiContainer.class, gui, "guiLeft", "field_147003_i");
+                int guiTop = (int) Utils.getField(GuiContainer.class, gui, "guiTop", "field_147009_r");
+
+                GuiChest eventGui = (GuiChest) gui;
+                ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+                IInventory lower = cc.getLowerChestInventory();
+
+                ItemStack rewardChest = lower.getStackInSlot(31);
+                if (rewardChest != null && rewardChest.getDisplayName().endsWith(EnumChatFormatting.GREEN+"Open Reward Chest")) {
+                    int chestCost = 0;
+                    String line6 = Utils.cleanColour(manager.getLoreFromNBT(rewardChest.getTagCompound())[6]);
+                    StringBuilder cost = new StringBuilder();
+                    for(int i=0; i<line6.length(); i++) {
+                        char c = line6.charAt(i);
+                        if("0123456789".indexOf(c) >= 0) {
+                            cost.append(c);
+                        }
+                    }
+                    if(cost.length() > 0) {
+                        chestCost = Integer.parseInt(cost.toString());
+                    }
+
+                    boolean missing = false;
+                    int totalValue = 0;
+                    for(int i=0; i<5; i++) {
+                        ItemStack item = lower.getStackInSlot(11+i);
+                        String internal = manager.getInternalNameForItem(item);
+                        if(internal != null) {
+                            int worth = manager.auctionManager.getLowestBin(internal);
+                            if(worth > 0) {
+                                totalValue += worth;
+                            } else {
+                                missing = true;
+                                break;
+                            }
+                        }
+                    }
+                    int profitLoss = totalValue - chestCost;
+
+                    NumberFormat format = NumberFormat.getInstance(Locale.US);
+                    String valueString;
+                    if(!missing) {
+                        valueString = EnumChatFormatting.BLUE+"Chest value: " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValue) + " coins";
+                    } else {
+                        valueString = EnumChatFormatting.BLUE+"Couldn't find item on AH. Item is very rare!";
+                    }
+                    String plString;
+                    if(missing) {
+                        plString = "";
+                    } else if(profitLoss >= 0) {
+                        plString = EnumChatFormatting.BLUE+"Profit/loss: " + EnumChatFormatting.DARK_GREEN
+                                + EnumChatFormatting.BOLD + "+" + format.format(profitLoss) + " coins";
+                    } else {
+                        plString = EnumChatFormatting.BLUE+"Profit/loss: " + EnumChatFormatting.RED
+                                + EnumChatFormatting.BOLD + "-" + format.format(-profitLoss) + " coins";
+                    }
+
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(dungeon_chest_worth);
+                    GL11.glColor4f(1, 1, 1, 1);
+                    GlStateManager.disableLighting();
+                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 45, 0, 180/256f, 0, 45/256f, GL11.GL_NEAREST);
+
+                    Utils.drawStringCenteredScaledMaxWidth(valueString, Minecraft.getMinecraft().fontRendererObj, guiLeft+xSize+4+90,
+                            guiTop+14, true, 170, Color.BLACK.getRGB());
+                    Utils.drawStringCenteredScaledMaxWidth(plString, Minecraft.getMinecraft().fontRendererObj, guiLeft+xSize+4+90,
+                            guiTop+28, true, 170, Color.BLACK.getRGB());
+
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -757,7 +952,7 @@ public class NotEnoughUpdates {
             }
         }
         //AH prices
-        if(Minecraft.getMinecraft().currentScreen != null) {
+        /*if(Minecraft.getMinecraft().currentScreen != null) {
             if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
                 GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
                 ContainerChest container = (ContainerChest) chest.inventorySlots;
@@ -804,7 +999,7 @@ public class NotEnoughUpdates {
                     }
                 }
             }
-        }
+        }*/
         if(!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || !manager.config.dev.value) return;
         if(event.toolTip.size()>0&&event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
             event.toolTip.remove(event.toolTip.size()-1);

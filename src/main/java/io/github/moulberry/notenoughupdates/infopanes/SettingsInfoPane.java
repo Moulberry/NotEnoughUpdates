@@ -58,12 +58,36 @@ public class SettingsInfoPane extends InfoPane {
         AtomicInteger tfTopX = new AtomicInteger();
         AtomicInteger tfTopY = new AtomicInteger();
         iterateSettingTile(new SettingsTileConsumer() {
-            public void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option) {
+            public void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option, Options.Button button) {
                 float mult = tileWidth/90f;
 
                 drawRect(x, y, x+tileWidth, y+tileHeight, fg.getRGB());
 
                 if(manager.config.hideApiKey.value && option==manager.config.apiKey) return;
+
+                if(option == null) {
+                    Utils.renderStringTrimWidth(button.displayName, fr, true, x+(int)(8*mult), y+(int)(8*mult),
+                            tileWidth-(int)(16*mult), new Color(100,255,150).getRGB(), 3,
+                            2f/scaledresolution.getScaleFactor());
+
+                    GlStateManager.color(1f, 1f, 1f, 1f);
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(button_tex);
+                    Utils.drawTexturedRect(x + tileWidth/2f - (int) (32 * mult), y + tileHeight - (int) (20 * mult), (int) (48 * mult), (int) (16 * mult));
+
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(help);
+                    Utils.drawTexturedRect(x + tileWidth/2f + (int) (19 * mult), y + tileHeight - (int) (19 * mult), (int) (14 * mult), (int) (14 * mult));
+                    GlStateManager.bindTexture(0);
+
+                    if (mouseX > x + tileWidth / 2 + (int) (19 * mult) && mouseX < x + tileWidth / 2 + (int) (19 * mult) + (int) (14 * mult)) {
+                        if (mouseY > y + tileHeight - (int) (19 * mult) && mouseY < y + tileHeight - (int) (19 * mult) + (int) (14 * mult)) {
+                            List<String> textLines = new ArrayList<>();
+                            textLines.add(button.displayName);
+                            textLines.add(EnumChatFormatting.GRAY + button.desc);
+                            textToDisplay.set(textLines);
+                        }
+                    }
+                    return;
+                }
 
                 Utils.renderStringTrimWidth(option.displayName, fr, true, x+(int)(8*mult), y+(int)(8*mult),
                         tileWidth-(int)(16*mult), new Color(100,255,150).getRGB(), 3,
@@ -166,9 +190,18 @@ public class SettingsInfoPane extends InfoPane {
     public void mouseInput(int width, int height, int mouseX, int mouseY, boolean mouseDown) {
         iterateSettingTile(new SettingsTileConsumer() {
             @Override
-            public void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option) {
+            public void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option, Options.Button button) {
                 float mult = tileWidth/90f;
-                if(option.value instanceof Boolean) {
+                if(option == null) {
+                    if(Mouse.getEventButtonState()) {
+                        if(mouseX > x+tileWidth/2-(int)(32*mult) && mouseX < x+tileWidth/2-(int)(32*mult)+(int)(48*mult)) {
+                            if(mouseY > y+tileHeight-(int)(20*mult) && mouseY < y+tileHeight-(int)(20*mult)+(int)(16*mult)) {
+                                button.click.run();
+                                return;
+                            }
+                        }
+                    }
+                } else if(option.value instanceof Boolean) {
                     if(Mouse.getEventButtonState()) {
                         if(mouseX > x+tileWidth/2-(int)(32*mult) && mouseX < x+tileWidth/2-(int)(32*mult)+(int)(48*mult)) {
                             if(mouseY > y+tileHeight-(int)(20*mult) && mouseY < y+tileHeight-(int)(20*mult)+(int)(16*mult)) {
@@ -293,7 +326,9 @@ public class SettingsInfoPane extends InfoPane {
         AtomicBoolean ret = new AtomicBoolean(false);
         iterateSettingTile(new SettingsTileConsumer() {
             @Override
-            public void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option) {
+            public void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option, Options.Button button) {
+                if(option == null) return;
+
                 if(!textConfigMap.containsKey(option)) {
                     textConfigMap.put(option, new GuiElementTextField(String.valueOf(option.value), 0));
                 }
@@ -312,7 +347,7 @@ public class SettingsInfoPane extends InfoPane {
     }
 
     private abstract static class SettingsTileConsumer {
-        public abstract void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option);
+        public abstract void consume(int x, int y, int tileWidth, int tileHeight, Options.Option<?> option, Options.Button button);
     }
 
     public void iterateSettingTile(SettingsTileConsumer settingsTileConsumer) {
@@ -340,7 +375,7 @@ public class SettingsInfoPane extends InfoPane {
         int currPage=0;
         int x=0;
         int y=tilePadding+overlay.getBoxPadding()+overlay.getSearchBarYSize();
-        for(int i=0; i<manager.config.getOptions().size(); i++) {
+        for(int i=0; i<manager.config.getOptions().size()+manager.config.getButtons().size(); i++) {
             if(i!=0 && i%numHorz==0) {
                 x = 0;
                 y += tileHeight+tilePadding;
@@ -354,7 +389,13 @@ public class SettingsInfoPane extends InfoPane {
             x+=tilePadding;
 
             if(currPage == page) {
-                settingsTileConsumer.consume(boxLeft+x, y, tileWidth, tileHeight, manager.config.getOptions().get(i));
+                if(i < manager.config.getButtons().size()) {
+                    settingsTileConsumer.consume(boxLeft+x, y, tileWidth, tileHeight,
+                            null, manager.config.getButtons().get(i));
+                } else {
+                    settingsTileConsumer.consume(boxLeft+x, y, tileWidth, tileHeight,
+                            manager.config.getOptions().get(i-manager.config.getButtons().size()), null);
+                }
             }
 
             x+=tileWidth;

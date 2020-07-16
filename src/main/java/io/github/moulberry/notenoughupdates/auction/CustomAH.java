@@ -1,8 +1,6 @@
 package io.github.moulberry.notenoughupdates.auction;
 
 import io.github.moulberry.notenoughupdates.NEUManager;
-import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -283,7 +281,7 @@ public class CustomAH extends Gui {
     }
 
     public List<String> getTooltipForAucId(String aucId) {
-        AuctionManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucId);
+        APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucId);
 
         List<String> tooltip = new ArrayList<>();
 
@@ -473,7 +471,7 @@ public class CustomAH extends Gui {
                             long auctionViewEndsIn = prettyTimeToMillis(endsInStr);
                             if(auctionViewEndsIn > 0) {
                                 if(System.currentTimeMillis() - currAucIdSetTimer > 1000) {
-                                    AuctionManager.Auction auc = manager.auctionManager.getAuctionItems().get(currentAucId);
+                                    APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(currentAucId);
                                     if(auc != null) {
                                         auc.end = auctionViewEndsIn + lastGuiScreenSwitch;
                                     }
@@ -943,7 +941,7 @@ public class CustomAH extends Gui {
         return mainCategory.subcategories[clickedSubCategory];
     }
 
-    private boolean doesAucMatch(AuctionManager.Auction auc) {
+    private boolean doesAucMatch(APIManager.Auction auc) {
         if(auc == null) return false;
 
         Category currentCategory = getCurrentCategory();
@@ -988,28 +986,48 @@ public class CustomAH extends Gui {
         Set<String> itemMatches = manager.search(query);
         for(String internalname : itemMatches) {
             for(String aucid : manager.auctionManager.getAuctionsForInternalname(internalname)) {
-                AuctionManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
+                APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
                 if(doesAucMatch(auc)) {
-                    matches.add(aucid);
+                    //matches.add(aucid);
                 } else {
                     dontMatch.add(aucid);
                 }
             }
         }
 
-        if(!query.contains(" ")) {
-            for(HashSet<String> aucids : manager.subMapWithKeysThatAreSuffixes(query,
+        HashMap<String, List<Integer>> extrasMatches = new HashMap<>();
+        HashMap<String, List<Integer>> extrasMatchesCurrent = new HashMap<>();
+        boolean first = true;
+        for(String subQuery : query.split(" ")) {
+            for(HashMap<Integer, HashSet<String>> extrasMap : manager.subMapWithKeysThatAreSuffixes(subQuery.toLowerCase(),
                     manager.auctionManager.extrasToAucIdMap).values()) {
-                for(String aucid : aucids) {
-                    AuctionManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
-                    if(!dontMatch.contains(aucid) && doesAucMatch(auc)) {
-                        matches.add(aucid);
-                    } else {
-                        dontMatch.add(aucid);
+                for(int index : extrasMap.keySet()) {
+                    for(String aucid : extrasMap.get(index)) {
+                        APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
+                        if(!dontMatch.contains(aucid) && doesAucMatch(auc)) {
+                            if(first) {
+                                List<Integer> indexList = extrasMatchesCurrent.computeIfAbsent(aucid, k -> new ArrayList<>());
+                                indexList.add(index);
+                            } else {
+                                List<Integer> indexList = extrasMatches.computeIfAbsent(aucid, k -> new ArrayList<>());
+                                if(indexList.contains(index-1)) {
+                                    List<Integer> indexListCurrent = extrasMatchesCurrent.computeIfAbsent(aucid, k -> new ArrayList<>());
+                                    indexListCurrent.add(index);
+                                }
+                            }
+                        } else {
+                            dontMatch.add(aucid);
+                        }
                     }
                 }
+
             }
+
+            extrasMatches = (HashMap<String, List<Integer>>) extrasMatchesCurrent.clone();
+            extrasMatchesCurrent.clear();
+            first = false;
         }
+        matches.addAll(extrasMatches.keySet());
 
         return matches;
     }
@@ -1036,13 +1054,13 @@ public class CustomAH extends Gui {
             auctionIds.clear();
             if(filterMyAuctions) {
                 for(String aucid : manager.auctionManager.getPlayerBids()) {
-                    AuctionManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
+                    APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
                     if(doesAucMatch(auc)) {
                         auctionIds.add(aucid);
                     }
                 }
             } else if(searchField.getText().length() == 0) {
-                for(Map.Entry<String, AuctionManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
+                for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
                     if(doesAucMatch(entry.getValue())) {
                         auctionIds.add(entry.getKey());
                     }
@@ -1053,7 +1071,7 @@ public class CustomAH extends Gui {
 
                 HashSet<String> allMatch = new HashSet<>();
                 if(query.contains("!")) { //only used for inverted queries, so dont need to populate unless ! in query
-                    for(Map.Entry<String, AuctionManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
+                    for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
                         if(doesAucMatch(entry.getValue())) {
                             allMatch.add(entry.getKey());
                         } else {
@@ -1124,8 +1142,8 @@ public class CustomAH extends Gui {
             sortedAuctionIds.clear();
             sortedAuctionIds.addAll(auctionIds);
             sortedAuctionIds.sort((o1, o2) -> {
-                AuctionManager.Auction auc1 = manager.auctionManager.getAuctionItems().get(o1);
-                AuctionManager.Auction auc2 = manager.auctionManager.getAuctionItems().get(o2);
+                APIManager.Auction auc1 = manager.auctionManager.getAuctionItems().get(o1);
+                APIManager.Auction auc2 = manager.auctionManager.getAuctionItems().get(o2);
 
                 if(auc1 == null) return 1;
                 if(auc2 == null) return -1;
@@ -1311,8 +1329,10 @@ public class CustomAH extends Gui {
                         break;
                     case 8:
                         if(rightClicked) {
-                            StringSelection selection = new StringSelection(niceAucId(currentAucId));
-                            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+                            if(currentAucId != null) {
+                                StringSelection selection = new StringSelection(niceAucId(currentAucId));
+                                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+                            }
                         } else {
                             manager.auctionManager.calculateStats();
                         }
@@ -1424,7 +1444,7 @@ public class CustomAH extends Gui {
                     aucid = sortedAuctionIds.get(id);
                 } catch (IndexOutOfBoundsException e) { break out; }
 
-                AuctionManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
+                APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
                 if(auc != null) {
                     if(mouseX > itemX && mouseX < itemX+16) {
                         if(mouseY > itemY && mouseY < itemY+16) {

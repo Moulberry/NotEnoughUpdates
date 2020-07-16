@@ -1,89 +1,241 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.inventory.GuiCrafting;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.inventory.ContainerWorkbench;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
+import net.minecraft.inventory.SlotCrafting;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.vector.Vector2f;
+import org.lwjgl.util.vector.Vector3f;
 
-public class GuiItemRecipe extends GuiCrafting {
+import java.awt.*;
+import java.io.IOException;
+import java.util.List;
 
-    private ItemStack[] craftMatrix;
-    private JsonObject result;
-    private String text;
-    private String craftText = "";
+public class GuiItemRecipe extends GuiScreen {
+
+    private static final ResourceLocation resourcePacksTexture = new ResourceLocation("textures/gui/resource_packs.png");
+    private static final ResourceLocation craftingTableGuiTextures = new ResourceLocation("textures/gui/container/crafting_table.png");
+
+    private List<ItemStack[]> craftMatrices;
+    private List<JsonObject> results;
+    private int currentIndex = 0;
+
+    private String title;
     private NEUManager manager;
 
-    public GuiItemRecipe(ItemStack[] craftMatrix, JsonObject result, String text, NEUManager manager) {
-        super(Minecraft.getMinecraft().thePlayer.inventory, Minecraft.getMinecraft().theWorld);
-        this.craftMatrix = craftMatrix;
-        this.result = result;
-        this.text = text;
+    private int guiLeft = 0;
+    private int guiTop = 0;
+    private int xSize = 176;
+    private int ySize = 166;
+
+    public GuiItemRecipe(String title, List<ItemStack[]> craftMatrices, List<JsonObject> results, NEUManager manager) {
+        this.craftMatrices = craftMatrices;
+        this.results = results;
         this.manager = manager;
-
-        setContents();
+        this.title = title;
     }
 
-    public void setContents() {
-        ContainerWorkbench cw = (ContainerWorkbench) this.inventorySlots;
-        for(int i=0; i<Math.min(craftMatrix.length, 9); i++) {
-            if(craftMatrix[i] == null) continue;
-            cw.craftMatrix.setInventorySlotContents(i, craftMatrix[i]);
+    private String getCraftText() {
+        if(results.get(currentIndex).has("crafttext")) {
+            return results.get(currentIndex).get("crafttext").getAsString();
+        } else {
+            return "";
         }
-        if(result.has("crafttext")) {
-            craftText = result.get("crafttext").getAsString();
-        }
-        cw.craftResult.setInventorySlotContents(0, manager.jsonToStack(result));
     }
 
-    protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        setContents();
+    @Override
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        drawDefaultBackground();
 
-        String t = text.equals("") ? I18n.format("container.crafting", new Object[0]) : text;
+        if(currentIndex < 0) {
+            currentIndex = 0;
+        } else if(currentIndex >= craftMatrices.size()) {
+            currentIndex = craftMatrices.size()-1;
+        }
 
-        Utils.drawStringScaledMaxWidth(t, fontRendererObj, 28, 6, t.contains("\u00a7"), xSize-38, 4210752);
-        this.fontRendererObj.drawString(I18n.format("container.inventory", new Object[0]), 8, this.ySize - 96 + 2, 4210752);
+        FontRenderer fontRendererObj = Minecraft.getMinecraft().fontRendererObj;
 
-        Utils.drawStringCenteredScaledMaxWidth(craftText, fontRendererObj, 132, 25,
+        this.guiLeft = (width - this.xSize) / 2;
+        this.guiTop = (height - this.ySize) / 2;
+
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(craftingTableGuiTextures);
+        this.drawTexturedModalRect(guiLeft, guiTop, 0, 0, this.xSize, this.ySize);
+
+        List<String> tooltipToRender = null;
+        for(int index=0; index <= 45; index++) {
+            Vector2f pos = getPositionForIndex(index);
+            Utils.drawItemStack(getStackForIndex(index), (int)pos.x, (int)pos.y);
+
+            if(mouseX > pos.x && mouseX < pos.x+16) {
+                if(mouseY > pos.y && mouseY < pos.y+16) {
+                    ItemStack stack = getStackForIndex(index);
+                    if(stack != null) {
+                        tooltipToRender = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                    }
+                }
+            }
+        }
+
+        if(craftMatrices.size() > 1) {
+            int guiX = mouseX - guiLeft;
+            int guiY = mouseY - guiTop;
+
+            int buttonWidth = 7;
+            int buttonHeight = 11;
+
+            boolean leftSelected = false;
+            boolean rightSelected = false;
+
+            if(guiY > + 63 && guiY < + 63 + buttonHeight) {
+                if(guiX > + 110 && guiX < 110 + buttonWidth) {
+                    leftSelected = true;
+                } else if(guiX > 147 && guiX < 147 + buttonWidth) {
+                    rightSelected = true;
+                }
+            }
+
+            Minecraft.getMinecraft().getTextureManager().bindTexture(resourcePacksTexture);
+            //Left arrow
+            Utils.drawTexturedRect(guiLeft+110, guiTop+63, 7, 11, 34/256f, 48/256f,
+                    5/256f + (leftSelected ? 32/256f : 0), 27/256f + (leftSelected ? 32/256f : 0));
+            //Right arrow
+            Utils.drawTexturedRect(guiLeft+147, guiTop+63, 7, 11, 10/256f, 24/256f,
+                    5/256f + (rightSelected ? 32/256f : 0), 27/256f + (rightSelected ? 32/256f : 0));
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+
+            String str = (currentIndex+1)+"/"+craftMatrices.size();
+            Utils.drawStringCenteredScaledMaxWidth(str, fontRendererObj, guiLeft+132, guiTop+69,
+                    false, 24, Color.BLACK.getRGB());
+        }
+
+        Utils.drawStringCenteredScaledMaxWidth(getCraftText(), fontRendererObj, guiLeft+132, guiTop+25,
                 false, 75, 4210752);
-    }
 
-    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
-    }
+        Utils.drawStringScaledMaxWidth(title, fontRendererObj, guiLeft+28, guiTop+6, title.contains("\u00a7"), xSize-38, 4210752);
 
-    protected void handleMouseClick(Slot slotIn, int slotId, int clickedButton, int clickType) {
-        ItemStack click = null;
-        if(slotId >= 1 && slotId <= 9) {
-            click = craftMatrix[slotId-1];
-        } else if(slotId == 0) {
-            ContainerWorkbench cw = (ContainerWorkbench) this.inventorySlots;
-            click = cw.craftResult.getStackInSlot(0);
+        if(tooltipToRender != null) {
+            Utils.drawHoveringText(tooltipToRender, mouseX, mouseY, width, height, -1, fontRendererObj);
         }
-        if(click != null) {
-            if(clickedButton == 0) {
-                manager.displayGuiItemRecipe(manager.getInternalNameForItem(click), "");
-            } else if(clickedButton == 1) {
-                manager.displayGuiItemUsages(manager.getInternalNameForItem(click), "");
+    }
+
+    public ItemStack getStackForIndex(int index) {
+        if(index == 0) {
+            return manager.jsonToStack(results.get(currentIndex));
+        } else if(index >= 1 && index <= 9) {
+            return craftMatrices.get(currentIndex)[index-1];
+        } else {
+            return Minecraft.getMinecraft().thePlayer.inventory.getStackInSlot(index-10);
+        }
+    }
+
+    public Vector2f getPositionForIndex(int index) {
+        //0 = result
+        //1-9 = craft matrix
+        //10-18 = hotbar
+        //19-45 = player inv
+
+        if(index == 0) {
+            return new Vector2f(guiLeft+124, guiTop+35);
+        } else if(index >= 1 && index <= 9) {
+            index -= 1;
+            int x = index % 3;
+            int y = index / 3;
+            return new Vector2f(guiLeft+30 + x*18, guiTop+17 + y * 18);
+        } else if(index >= 10 && index <= 18) {
+            index -= 10;
+            return new Vector2f(guiLeft+8 + index*18, guiTop+142);
+        } else if(index >= 19 && index <= 45) {
+            index -= 19;
+            int x = index % 9;
+            int y = index / 9;
+            return new Vector2f(guiLeft+8 + x*18, guiTop+84 + y*18);
+        }
+        return null;
+    }
+
+    @Override
+    public void handleKeyboardInput() throws IOException {
+        super.handleKeyboardInput(); //TODO: r and u
+
+        ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+        int width = scaledResolution.getScaledWidth();
+        int height = scaledResolution.getScaledHeight();
+        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
+
+        int keyPressed = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter()+256 : Keyboard.getEventKey();
+
+        for(int index=0; index <= 45; index++) {
+            Vector2f pos = getPositionForIndex(index);
+            if(mouseX > pos.x && mouseX < pos.x+16) {
+                if(mouseY > pos.y && mouseY < pos.y+16) {
+                    ItemStack stack = getStackForIndex(index);
+                    if(stack != null) {
+                        if(keyPressed == manager.keybindViewRecipe.getKeyCode()) {
+                            manager.displayGuiItemRecipe(manager.getInternalNameForItem(stack), "");
+                        } else if(keyPressed == manager.keybindViewUsages.getKeyCode()) {
+                            manager.displayGuiItemUsages(manager.getInternalNameForItem(stack));
+                        }
+                    }
+                    return;
+                }
             }
         }
     }
 
-    /*public void handleMouseInput() throws IOException {
-        ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-        int height = scaledresolution.getScaledHeight();
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        super.mouseClicked(mouseX, mouseY, mouseButton);
 
-        int mouseX = Mouse.getX() / scaledresolution.getScaleFactor();
-        int mouseY = height - Mouse.getY() / scaledresolution.getScaleFactor();
-        if(mouseY > this.guiTop + this.ySize - 94 || mouseY < this.guiTop ||
-                mouseX < this.guiLeft || mouseX > this.guiLeft+this.xSize) {
-            //Potentially allow mouse input in the future. For now this is still broken.
-            //super.handleMouseInput();
+        int guiX = mouseX - guiLeft;
+        int guiY = mouseY - guiTop;
+
+        int buttonWidth = 7;
+        int buttonHeight = 11;
+
+        if(guiY > + 63 && guiY < + 63 + buttonHeight) {
+            if(guiX > + 110 && guiX < 110 + buttonWidth) {
+                currentIndex--;
+                Utils.playPressSound();
+                return;
+            } else if(guiX > 147 && guiX < 147 + buttonWidth) {
+                currentIndex++;
+                Utils.playPressSound();
+                return;
+            }
         }
-    }*/
 
-    public void onCraftMatrixChanged(IInventory inventoryIn){}
+        for(int index=0; index <= 45; index++) {
+            Vector2f pos = getPositionForIndex(index);
+            if(mouseX > pos.x && mouseX < pos.x+16) {
+                if(mouseY > pos.y && mouseY < pos.y+16) {
+                    ItemStack stack = getStackForIndex(index);
+                    if(stack != null) {
+                        if(mouseButton == 0) {
+                            manager.displayGuiItemRecipe(manager.getInternalNameForItem(stack), "");
+                        } else if(mouseButton == 1) {
+                            manager.displayGuiItemUsages(manager.getInternalNameForItem(stack));
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
 }

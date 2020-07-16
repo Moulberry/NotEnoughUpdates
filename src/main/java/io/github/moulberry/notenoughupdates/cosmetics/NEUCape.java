@@ -244,7 +244,7 @@ public class NEUCape {
         shaderManager.loadShader(shaderName);
         loadShaderUniforms(shaderManager);
 
-        if(!Keyboard.isKeyDown(Keyboard.KEY_K)) renderCape(player, e.partialRenderTick);
+        renderCape(player, e.partialRenderTick);
 
         GL11.glTranslatef((float)viewerX, (float)viewerY, (float)viewerZ);
 
@@ -569,7 +569,7 @@ public class NEUCape {
                 newPosition.y = node.lastPosition.y + (node.position.y - node.lastPosition.y) * partialRenderTick;
                 newPosition.z = node.lastPosition.z + (node.position.z - node.lastPosition.z) * partialRenderTick;
 
-                if(node.oldRenderPosition[node.oldRenderPosition.length-1] == null || Keyboard.isKeyDown(Keyboard.KEY_B)) {
+                if(node.oldRenderPosition[node.oldRenderPosition.length-1] == null) {
                     node.renderPosition = newPosition;
                 } else {
                     Vector3f accum = new Vector3f();
