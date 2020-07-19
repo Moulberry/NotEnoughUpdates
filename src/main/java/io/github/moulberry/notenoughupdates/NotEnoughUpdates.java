@@ -11,6 +11,8 @@ import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
 import io.github.moulberry.notenoughupdates.infopanes.CosmeticsInfoPane;
+import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
+import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
 import io.github.moulberry.notenoughupdates.questing.NEUQuesting;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -29,6 +31,7 @@ import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.scoreboard.ScoreObjective;
@@ -129,6 +132,37 @@ public class NotEnoughUpdates {
         }
     });
 
+    private static ProfileViewer profileViewer;
+
+    SimpleCommand viewProfileCommand = new SimpleCommand("neuprofile", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(args.length != 1) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                        "idiot."));
+            }
+            profileViewer.getProfileByName(args[0], profile -> {
+                openGui = new GuiProfileViewer(profile);
+            });
+        }
+    });
+
+    SimpleCommand linksCommand = new SimpleCommand("neulinks", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            File repo = manager.repoLocation;
+            if(repo.exists()) {
+                File updateJson = new File(repo, "update.json");
+                try {
+                    JsonObject update = manager.getJsonFromFile(updateJson);
+
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                    displayLinks(update);
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    });
+
     SimpleCommand overlayPlacementsCommand = new SimpleCommand("neuoverlay", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             openGui = new NEUOverlayPlacements();
@@ -175,6 +209,8 @@ public class NotEnoughUpdates {
         f.mkdirs();
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
+        ClientCommandHandler.instance.registerCommand(linksCommand);
+        ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         //ClientCommandHandler.instance.registerCommand(questingCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
@@ -183,6 +219,7 @@ public class NotEnoughUpdates {
         manager = new NEUManager(this, neuio, f);
         manager.loadItemInformation();
         overlay = new NEUOverlay(manager);
+        profileViewer = new ProfileViewer(manager);
 
         for(KeyBinding kb : manager.keybinds) {
             ClientRegistry.registerKeyBinding(kb);
@@ -203,7 +240,7 @@ public class NotEnoughUpdates {
         }));
 
         //TODO: login code. Ignore this, used for testing.
-        /*try {
+        try {
             Field field = Minecraft.class.getDeclaredField("session");
             YggdrasilUserAuthentication auth = (YggdrasilUserAuthentication)
                     new YggdrasilAuthenticationService(Proxy.NO_PROXY, UUID.randomUUID().toString())
@@ -232,7 +269,7 @@ public class NotEnoughUpdates {
             field.setAccessible(true);
             field.set(Minecraft.getMinecraft(), session);
         } catch (NoSuchFieldException | AuthenticationException | IllegalAccessException e) {
-        }*/
+        }
     }
 
     /**
@@ -250,6 +287,98 @@ public class NotEnoughUpdates {
         }
     }
 
+    private void displayLinks(JsonObject update) {
+        String discord_link = update.get("discord_link").getAsString();
+        String youtube_link = update.get("youtube_link").getAsString();
+        String update_link = update.get("update_link").getAsString();
+        String github_link = update.get("github_link").getAsString();
+        String other_text = update.get("other_text").getAsString();
+        String other_link = update.get("other_link").getAsString();
+
+        ChatComponentText other = null;
+        if(other_text.length() > 0) {
+            other = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+other_text+EnumChatFormatting.GRAY+"]");
+            other.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, other_link));
+        }
+        ChatComponentText links = new ChatComponentText("");
+        ChatComponentText separator = new ChatComponentText(
+                EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"---":"--"));
+        ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+"Discord"+EnumChatFormatting.GRAY+"]");
+        discord.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, discord_link));
+        ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.RED+"YouTube"+EnumChatFormatting.GRAY+"]");
+        youtube.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, youtube_link));
+        ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.GREEN+"Release"+EnumChatFormatting.GRAY+"]");
+        release.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, update_link));
+        ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"GitHub"+EnumChatFormatting.GRAY+"]");
+        github.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, github_link));
+
+
+        links.appendSibling(separator);
+        links.appendSibling(discord);
+        links.appendSibling(separator);
+        links.appendSibling(youtube);
+        links.appendSibling(separator);
+        links.appendSibling(release);
+        links.appendSibling(separator);
+        links.appendSibling(github);
+        links.appendSibling(separator);
+        if(other != null) {
+            links.appendSibling(other);
+            links.appendSibling(separator);
+        }
+
+        Minecraft.getMinecraft().thePlayer.addChatMessage(links);
+    }
+
+    private boolean displayUpdateMessageIfOutOfDate() {
+        File repo = manager.repoLocation;
+        if(repo.exists()) {
+            File updateJson = new File(repo, "update.json");
+            try {
+                JsonObject o = manager.getJsonFromFile(updateJson);
+
+                String version = o.get("version").getAsString();
+
+                if(!VERSION.equalsIgnoreCase(version)) {
+                    String update_msg = o.get("update_msg").getAsString();
+                    String discord_link = o.get("discord_link").getAsString();
+                    String youtube_link = o.get("youtube_link").getAsString();
+                    String update_link = o.get("update_link").getAsString();
+                    String github_link = o.get("github_link").getAsString();
+                    String other_text = o.get("other_text").getAsString();
+                    String other_link = o.get("other_link").getAsString();
+
+                    int first_len = -1;
+                    for(String line : update_msg.split("\n")) {
+                        FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+                        int len = fr.getStringWidth(line);
+                        if(first_len == -1) {
+                            first_len = len;
+                        }
+                        int missing_len = first_len-len;
+                        if(missing_len > 0) {
+                            StringBuilder sb = new StringBuilder(line);
+                            for(int i=0; i<missing_len/8; i++) {
+                                sb.insert(0, " ");
+                            }
+                            line = sb.toString();
+                        }
+                        line = line.replaceAll("\\{version}", version);
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(line));
+                    }
+
+                    displayLinks(o);
+
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+
+                }
+
+                return true;
+            } catch(Exception ignored) {}
+        }
+        return false;
+    }
+
     /**
      * 1)Will send the cached message from #sendChatMessage when at least 200ms has passed since the last message.
      * This is used in order to prevent the mod spamming messages.
@@ -265,80 +394,8 @@ public class NotEnoughUpdates {
         if(hasSkyblockScoreboard()) {
             manager.auctionManager.tick();
             if(!joinedSB && manager.config.showUpdateMsg.value) {
-                File repo = manager.repoLocation;
-                if(repo.exists()) {
-                    File updateJson = new File(repo, "update.json");
-                    try {
-                        JsonObject o = manager.getJsonFromFile(updateJson);
-
-                        String version = o.get("version").getAsString();
-
-                        if(!VERSION.equalsIgnoreCase(version)) {
-                            String update_msg = o.get("update_msg").getAsString();
-                            String discord_link = o.get("discord_link").getAsString();
-                            String youtube_link = o.get("youtube_link").getAsString();
-                            String update_link = o.get("update_link").getAsString();
-                            String github_link = o.get("github_link").getAsString();
-                            String other_text = o.get("other_text").getAsString();
-                            String other_link = o.get("other_link").getAsString();
-
-                            int first_len = -1;
-                            for(String line : update_msg.split("\n")) {
-                                FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
-                                int len = fr.getStringWidth(line);
-                                if(first_len == -1) {
-                                    first_len = len;
-                                }
-                                int missing_len = first_len-len;
-                                if(missing_len > 0) {
-                                    StringBuilder sb = new StringBuilder(line);
-                                    for(int i=0; i<missing_len/8; i++) {
-                                        sb.insert(0, " ");
-                                    }
-                                    line = sb.toString();
-                                }
-                                line = line.replaceAll("\\{version}", version);
-                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(line));
-                            }
-                            ChatComponentText other = null;
-                            if(other_text.length() > 0) {
-                                other = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+other_text+EnumChatFormatting.GRAY+"]");
-                                other.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, other_link));
-                            }
-                            ChatComponentText links = new ChatComponentText("");
-                            ChatComponentText separator = new ChatComponentText(
-                                    EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"---":"--"));
-                            ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+"Discord"+EnumChatFormatting.GRAY+"]");
-                            discord.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, discord_link));
-                            ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.RED+"YouTube"+EnumChatFormatting.GRAY+"]");
-                            youtube.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, youtube_link));
-                            ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.GREEN+"Release"+EnumChatFormatting.GRAY+"]");
-                            release.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, update_link));
-                            ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"GitHub"+EnumChatFormatting.GRAY+"]");
-                            github.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, github_link));
-
-
-                            links.appendSibling(separator);
-                            links.appendSibling(discord);
-                            links.appendSibling(separator);
-                            links.appendSibling(youtube);
-                            links.appendSibling(separator);
-                            links.appendSibling(release);
-                            links.appendSibling(separator);
-                            links.appendSibling(github);
-                            links.appendSibling(separator);
-                            if(other != null) {
-                                links.appendSibling(other);
-                                links.appendSibling(separator);
-                            }
-
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(links);
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
-
-                        }
-
-                        joinedSB = true;
-                    } catch(Exception ignored) {}
+                if(displayUpdateMessageIfOutOfDate()) {
+                    joinedSB = false;
                 }
             }
             //NEUQuesting.getInstance().tick();
@@ -387,7 +444,6 @@ public class NotEnoughUpdates {
                     }
                 }
             } else {
-
                 for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
                     processUniqueStack(stack, newItem);
                 }
@@ -407,6 +463,7 @@ public class NotEnoughUpdates {
                     if(newItemAddMap.containsKey(internalname)) {
                         if(System.currentTimeMillis() - newItemAddMap.get(internalname) > 1000) {
                             log.add(internalname);
+                            try { manager.saveConfig(); } catch(IOException ignored) {}
                         }
                     } else {
                         newItemAddMap.put(internalname, System.currentTimeMillis());
@@ -732,7 +789,10 @@ public class NotEnoughUpdates {
                         ItemStack item = lower.getStackInSlot(11+i);
                         String internal = manager.getInternalNameForItem(item);
                         if(internal != null) {
-                            int worth = manager.auctionManager.getLowestBin(internal);
+                            float worth = manager.auctionManager.getLowestBin(internal);
+
+                            if(worth == -1) worth = manager.getCraftCost(internal).craftCost;
+
                             if(worth > 0) {
                                 totalValue += worth;
                             } else {

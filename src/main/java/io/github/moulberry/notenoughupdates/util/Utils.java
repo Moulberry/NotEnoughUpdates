@@ -1,5 +1,9 @@
 package io.github.moulberry.notenoughupdates.util;
 
+import com.google.common.base.Splitter;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
@@ -374,6 +378,50 @@ public class Utils {
 
     public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font) {
         drawHoveringText(textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font, true);
+    }
+
+    public static JsonObject getConstant(String constant) {
+        File repo = NotEnoughUpdates.INSTANCE.manager.repoLocation;
+        if(repo.exists()) {
+            File jsonFile = new File(repo, "constants/"+constant+".json");
+            try {
+                return NotEnoughUpdates.INSTANCE.manager.getJsonFromFile(jsonFile);
+            } catch (Exception ignored) {
+            }
+        }
+        System.out.println(constant + " = null");
+        return null;
+    }
+
+    public static float getElementAsFloat(JsonElement element, float def) {
+        if(element == null) return def;
+        if(!element.isJsonPrimitive()) return def;
+        JsonPrimitive prim = element.getAsJsonPrimitive();
+        if(!prim.isNumber()) return def;
+        return prim.getAsFloat();
+    }
+
+    public static String getElementAsString(JsonElement element, String def) {
+        if(element == null) return def;
+        if(!element.isJsonPrimitive()) return def;
+        JsonPrimitive prim = element.getAsJsonPrimitive();
+        if(!prim.isString()) return def;
+        return prim.getAsString();
+    }
+
+    public static Splitter PATH_SPLITTER = Splitter.on(".").omitEmptyStrings().limit(2);
+    public static JsonElement getElement(JsonElement element, String path) {
+        List<String> path_split = PATH_SPLITTER.splitToList(path);
+        if(element instanceof JsonObject) {
+            JsonElement e = element.getAsJsonObject().get(path_split.get(0));
+            if(path_split.size() > 1) {
+                return getElement(e, path_split.get(1));
+            } else {
+                return e;
+            }
+        } else {
+            return element;
+        }
     }
 
     public static ChatStyle createClickStyle(ClickEvent.Action action, String value) {

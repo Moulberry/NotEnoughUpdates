@@ -19,6 +19,7 @@ import net.minecraft.util.EnumChatFormatting;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class APIManager {
 
@@ -60,6 +61,8 @@ public class APIManager {
         customAH = new CustomAH(manager);
     }
 
+    private AtomicInteger playerInfoVersion = new AtomicInteger(0);
+
     public JsonObject getPlayerInformation() {
         if(playerInformation == null) return null;
         for(int i=0; i<playerInformation.size(); i++) {
@@ -73,6 +76,14 @@ public class APIManager {
             }
         }
         return null;
+    }
+
+    public int getPlayerInfoVersion() {
+        return playerInfoVersion.get();
+    }
+
+    public void incPlayerInfoVersion() {
+        playerInfoVersion.incrementAndGet();
     }
 
     public TreeMap<String, Auction> getAuctionItems() {
@@ -158,6 +169,7 @@ public class APIManager {
         manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/profiles",
             args, jsonObject -> {
                 if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
+                    incPlayerInfoVersion();
                     playerInformation = jsonObject.get("profiles").getAsJsonArray();
                     if(playerInformation == null) return;
                     String backup = null;
@@ -332,6 +344,8 @@ public class APIManager {
                     if(contains) {
                         if(line.trim().contains(rarity + " " + typeMatches[j])) {
                             return j;
+                        } else if(line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
+                            return j;
                         }
                     } else {
                         if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
@@ -464,7 +478,7 @@ public class APIManager {
 
                             //Categories
                             String category = sbCategory;
-                            int itemType = checkItemType(item_lore, false,"SWORD", "FISHING ROD", "PICKAXE",
+                            int itemType = checkItemType(item_lore, true,"SWORD", "FISHING ROD", "PICKAXE",
                                     "AXE", "SHOVEL", "PET ITEM", "TRAVEL SCROLL", "REFORGE STONE", "BOW");
                             if(itemType >= 0 && itemType < categoryItemType.length) {
                                 category = categoryItemType[itemType];

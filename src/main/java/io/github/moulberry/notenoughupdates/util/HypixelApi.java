@@ -62,11 +62,11 @@ public class HypixelApi {
     }
 
     public String generateApiUrl(String apiKey, String method, HashMap<String, String> args) {
-        String url = "https://api.hypixel.net/" + method + "?key=" + apiKey;
+        StringBuilder url = new StringBuilder("https://api.hypixel.net/" + method + "?key=" + apiKey);
         for(Map.Entry<String, String> entry : args.entrySet()) {
-            url += "&" + entry.getKey() + "=" + entry.getValue();
+            url.append("&").append(entry.getKey()).append("=").append(entry.getValue());
         }
-        return url;
+        return url.toString();
     }
 
 }

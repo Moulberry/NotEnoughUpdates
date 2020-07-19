@@ -112,10 +112,12 @@ public class NEUManager {
 
     public void setCurrentProfile(String currentProfile) {
         this.currentProfile = currentProfile;
+        this.auctionManager.incPlayerInfoVersion();
     }
 
     public void setCurrentProfileBackup(String currentProfile) {
         this.currentProfileBackup = currentProfile;
+        this.auctionManager.incPlayerInfoVersion();
     }
 
     public String getCurrentProfile() {
@@ -227,7 +229,7 @@ public class NEUManager {
     public void updatePrices() {
         if(System.currentTimeMillis() - auctionLastUpdate > 1000*60*120) { //2 hours
             craftCost.clear();
-            System.out.println("UPDATING PRICE INFORMATION");
+            System.out.println("[NEU] UPDATING PRICE INFORMATION");
             auctionLastUpdate = System.currentTimeMillis();
             try(Reader inReader = new InputStreamReader(new GZIPInputStream(new URL(AUCTIONS_PRICE_URL).openStream()))) {
                 auctionPricesJson = gson.fromJson(inReader, JsonObject.class);
@@ -349,7 +351,7 @@ public class NEUManager {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             JsonObject json = gson.fromJson(reader, JsonObject.class);
             return json;
-        } catch(Exception e) { return null; }
+        } catch(Exception e) { e.printStackTrace(); return null; }
     }
 
     /**
@@ -389,7 +391,6 @@ public class NEUManager {
                 if (Display.isActive()) dialog.toFront();
 
                 if (changedFiles != null && changedFiles.size() <= 20) {
-
                     String startMessage = "NotEnoughUpdates: Syncing with remote repository (";
                     int downloaded = 0;
 
@@ -403,6 +404,7 @@ public class NEUManager {
 
                         File item = new File(repoLocation, name);
                         try {
+                            item.getParentFile().mkdirs();
                             item.createNewFile();
                         } catch (IOException e) {
                         }
@@ -810,6 +812,7 @@ public class NEUManager {
     public JsonObject getJsonFromItemBytes(String item_bytes) {
         try {
             NBTTagCompound tag = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
+            //System.out.println(tag.toString());
             return getJsonFromNBT(tag);
         } catch(IOException e) {
             return null;
@@ -873,7 +876,12 @@ public class NEUManager {
     }
 
     public JsonObject getJsonFromNBT(NBTTagCompound tag) {
-        tag = tag.getTagList("i", 10).getCompoundTagAt(0);
+        return getJsonFromNBTEntry(tag.getTagList("i", 10).getCompoundTagAt(0));
+    }
+
+    public JsonObject getJsonFromNBTEntry(NBTTagCompound tag) {
+        if(tag.getKeySet().size() == 0) return null;
+
         int id = tag.getShort("id");
         int damage = tag.getShort("Damage");
         int count = tag.getShort("Count");
@@ -882,6 +890,7 @@ public class NEUManager {
         if(id == 141) id = 391; //for some reason hypixel thinks carrots have id 141
 
         String internalname = getInternalnameFromNBT(tag);
+        if(internalname == null) return null;
 
         NBTTagCompound display = tag.getCompoundTag("display");
         String[] lore = getLoreFromNBT(tag);
@@ -896,14 +905,24 @@ public class NEUManager {
         String clickcommand = "";
 
 
-        //public JsonObject createItemJson(String internalname, String itemid, String displayname, String[] lore,
-        //        String crafttext, String infoType, String[] info,
-        //        String clickcommand, int damage, NBTTagCompound nbttag) {
 
         JsonObject item = new JsonObject();
         item.addProperty("internalname", internalname);
         item.addProperty("itemid", itemid);
         item.addProperty("displayname", displayname);
+
+        if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+            NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+            if (ea.hasKey("new_year_cake_bag_data", 7)) {
+                byte[] bytes = ea.getByteArray("new_year_cake_bag_data");
+                JsonArray bytesArr = new JsonArray();
+                for(byte b : bytes) {
+                    bytesArr.add(new JsonPrimitive(b));
+                }
+                item.add("item_contents", bytesArr);
+            }
+        }
 
         if(lore != null && lore.length > 0) {
             JsonArray jsonLore = new JsonArray();

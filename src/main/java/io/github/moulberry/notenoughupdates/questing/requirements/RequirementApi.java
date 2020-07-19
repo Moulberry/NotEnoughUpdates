@@ -40,7 +40,6 @@ public class RequirementApi extends Requirement {
     private static JsonElement getElement(JsonElement element, String path) {
         List<String> path_split = PATH_SPLITTER.splitToList(path);
         if(element instanceof JsonObject) {
-            System.out.println(path_split.get(0));
             JsonElement e = element.getAsJsonObject().get(path_split.get(0));
             if(path_split.size() > 1) {
                 return getElement(e, path_split.get(1));

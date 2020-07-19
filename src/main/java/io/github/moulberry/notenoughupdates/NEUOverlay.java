@@ -1097,6 +1097,9 @@ public class NEUOverlay extends Gui {
             case "ducttapedigger":
                 searchedItems.add(CustomItems.DUCTTAPE);
                 break;
+            case "thirtyvirus":
+                searchedItems.add(manager.getItemInformation().get("SPIKED_BAIT"));
+                break;
         }
     }
 
