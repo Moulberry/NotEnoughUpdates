@@ -133,7 +133,7 @@ public class GuiProfileViewer extends GuiScreen {
         try {
             ResourceLocation[] panoramasArray = new ResourceLocation[6];
             for(int i=0; i<6; i++) {
-                panoramasArray[i] = new ResourceLocation("notenoughupdates:panoramas/"+location+"_"+identifier+"/panorama_"+i+".png");
+                panoramasArray[i] = new ResourceLocation("notenoughupdates:panoramas/"+location+"_"+identifier+"/panorama_"+i+".jpg");
                 Minecraft.getMinecraft().getResourceManager().getResource(panoramasArray[i]);
             }
             panoramasMap.put(location, panoramasArray);
@@ -142,7 +142,7 @@ public class GuiProfileViewer extends GuiScreen {
             try {
                 ResourceLocation[] panoramasArray = new ResourceLocation[6];
                 for(int i=0; i<6; i++) {
-                    panoramasArray[i] = new ResourceLocation("notenoughupdates:panoramas/"+location+"/panorama_"+i+".png");
+                    panoramasArray[i] = new ResourceLocation("notenoughupdates:panoramas/"+location+"/panorama_"+i+".jpg");
                     Minecraft.getMinecraft().getResourceManager().getResource(panoramasArray[i]);
                 }
                 panoramasMap.put(location, panoramasArray);
@@ -150,7 +150,7 @@ public class GuiProfileViewer extends GuiScreen {
             } catch(IOException e2) {
                 ResourceLocation[] panoramasArray = new ResourceLocation[6];
                 for(int i=0; i<6; i++) {
-                    panoramasArray[i] = new ResourceLocation("notenoughupdates:panoramas/unknown/panorama_"+i+".png");
+                    panoramasArray[i] = new ResourceLocation("notenoughupdates:panoramas/unknown/panorama_"+i+".jpg");
                 }
                 panoramasMap.put(location, panoramasArray);
                 return panoramasArray;
@@ -453,7 +453,7 @@ public class GuiProfileViewer extends GuiScreen {
                 }
 
                 if(mouseX > x && mouseX < x+80) {
-                    if(mouseY > y+4 && mouseY < y+13) {
+                    if(mouseY > y-4 && mouseY < y+13) {
                         String levelStr;
                         if(skillInfo.get("maxed_"+entry.getKey()).getAsBoolean()) {
                             levelStr = EnumChatFormatting.GOLD+"MAXED!";
