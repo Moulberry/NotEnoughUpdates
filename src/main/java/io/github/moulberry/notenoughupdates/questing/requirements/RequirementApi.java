@@ -3,10 +3,8 @@ package io.github.moulberry.notenoughupdates.questing.requirements;
 import com.google.common.base.Splitter;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.questing.NEUQuesting;
 
 import java.util.List;
-import java.util.Map;
 
 public class RequirementApi extends Requirement {
 

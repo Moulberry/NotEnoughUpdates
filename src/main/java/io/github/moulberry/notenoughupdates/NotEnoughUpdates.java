@@ -14,7 +14,7 @@ import io.github.moulberry.notenoughupdates.infopanes.CosmeticsInfoPane;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
-import io.github.moulberry.notenoughupdates.questing.NEUQuesting;
+import io.github.moulberry.notenoughupdates.questing.SBScoreboardData;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -31,20 +31,15 @@ import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Session;
 import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.client.event.GuiScreenEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -139,10 +134,13 @@ public class NotEnoughUpdates {
             if(args.length != 1) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "idiot."));
+            } else {
+                profileViewer.getProfileByName(args[0], profile -> {
+                    profile.resetCache();
+                    openGui = new GuiProfileViewer(profile);
+                });
             }
-            profileViewer.getProfileByName(args[0], profile -> {
-                openGui = new GuiProfileViewer(profile);
-            });
+            //openGui = new GuiProfileViewer(null);
         }
     });
 
@@ -398,7 +396,7 @@ public class NotEnoughUpdates {
                     joinedSB = false;
                 }
             }
-            //NEUQuesting.getInstance().tick();
+            SBScoreboardData.getInstance().tick();
             //GuiQuestLine.questLine.tick();
         }
         if(currChatMessage != null && System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
@@ -469,6 +467,15 @@ public class NotEnoughUpdates {
                         newItemAddMap.put(internalname, System.currentTimeMillis());
                     }
                 }
+            }
+        }
+    }
+
+    @SubscribeEvent(priority=EventPriority.HIGHEST)
+    public void onRenderEntitySpecials(RenderLivingEvent.Specials.Pre event) {
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiProfileViewer) {
+            if(((GuiProfileViewer)Minecraft.getMinecraft().currentScreen).getEntityPlayer() == event.entity) {
+                event.setCanceled(true);
             }
         }
     }

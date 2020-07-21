@@ -103,7 +103,7 @@ public class CustomAH extends Gui {
     private Category CATEGORY_TRAVEL_SCROLLS = new Category("travelscroll", "Travel Scrolls", "map");
 
     private Category CATEGORY_REFORGE_STONES = new Category("reforgestone", "Reforge Stones", "anvil");
-    private Category CATEGORY_RUNES = new Category("rune", "Runes", "end_portal_frame");
+    private Category CATEGORY_RUNES = new Category("rune", "Runes", "magma_cream");
     private Category CATEGORY_FURNITURE = new Category("furniture", "Furniture", "armor_stand");
 
     private Category CATEGORY_COMBAT = new Category("weapon", "Combat", "golden_sword", CATEGORY_SWORD,

@@ -96,7 +96,6 @@ public class NEUOverlay extends Gui {
     private JsonObject[] searchedItemsArr = null;
 
     private boolean itemPaneOpen = false;
-    private boolean hoveringItemPaneToggle = false;
 
     private int page = 0;
 
@@ -1636,21 +1635,16 @@ public class NEUOverlay extends Gui {
         int rightSide = leftSide+paneWidth-getBoxPadding()-getItemBoxXPadding();
 
         //Tab
-        Minecraft.getMinecraft().getTextureManager().bindTexture(itemPaneTabArrow);
-        GlStateManager.color(1f, 1f, 1f, 0.3f);
-        Utils.drawTexturedRect(width-itemPaneTabOffset.getValue(), height/2 - 50, 20, 100);
-        GlStateManager.bindTexture(0);
+        if(!manager.config.disableItemTabOpen.value) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(itemPaneTabArrow);
+            GlStateManager.color(1f, 1f, 1f, 0.3f);
+            Utils.drawTexturedRect(width-itemPaneTabOffset.getValue(), height/2 - 50, 20, 100);
+            GlStateManager.bindTexture(0);
 
-        if(mouseX > width-itemPaneTabOffset.getValue() && mouseY > height/2 - 50
-                && mouseY < height/2 + 50) {
-            if(!hoveringItemPaneToggle) {
-                if(!manager.config.disableItemTabOpen.value) {
-                    itemPaneOpen = !itemPaneOpen;
-                }
-                hoveringItemPaneToggle = true;
+            if(!itemPaneOpen && mouseX > width-itemPaneTabOffset.getValue() && mouseY > height/2 - 50
+                    && mouseY < height/2 + 50) {
+                itemPaneOpen = true;
             }
-        } else {
-            hoveringItemPaneToggle = false;
         }
 
         //Atomic reference used so that below lambda doesn't complain about non-effectively-final variable

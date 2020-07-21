@@ -1079,8 +1079,6 @@ public class NEUManager {
         }
 
         if(craftMatrices.size() > 0) {
-            Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(
-                    Minecraft.getMinecraft().thePlayer.openContainer.windowId));
             Minecraft.getMinecraft().displayGuiScreen(new GuiItemRecipe("Item Usages", craftMatrices, results, this));
             return true;
         }

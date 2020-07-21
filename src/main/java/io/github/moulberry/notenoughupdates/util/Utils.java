@@ -13,13 +13,18 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
 import net.minecraft.inventory.Slot;
@@ -33,6 +38,7 @@ import net.minecraft.util.*;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import org.lwjgl.util.glu.Project;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,6 +93,80 @@ public class Utils {
         itemRender.renderItemOverlays(Minecraft.getMinecraft().fontRendererObj, stack, x, y);
         itemRender.zLevel = 0;
         RenderHelper.disableStandardItemLighting();
+    }
+
+    private static final EnumChatFormatting[] rainbow = new EnumChatFormatting[]{
+            EnumChatFormatting.RED,
+            EnumChatFormatting.GOLD,
+            EnumChatFormatting.YELLOW,
+            EnumChatFormatting.GREEN,
+            EnumChatFormatting.AQUA,
+            EnumChatFormatting.LIGHT_PURPLE,
+            EnumChatFormatting.DARK_PURPLE
+    };
+
+    public static String chromaString(String str) {
+        long currentTimeMillis = System.currentTimeMillis();
+
+        StringBuilder rainbowText = new StringBuilder();
+        for(int i=0; i<str.length(); i++) {
+            char c = str.charAt(i);
+            int index = (int)(i-currentTimeMillis/100)%rainbow.length;
+            if(index < 0) index += rainbow.length;
+            rainbowText.append(rainbow[index]).append(c);
+        }
+        return rainbowText.toString();
+    }
+
+    public static void drawItemStackLinear(ItemStack stack, int x, int y) {
+        if(stack == null)return;
+
+        RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
+
+        RenderHelper.enableGUIStandardItemLighting();
+        itemRender.zLevel = -145; //Negates the z-offset of the below method.
+
+        IBakedModel ibakedmodel = itemRender.getItemModelMesher().getItemModel(stack);
+        GlStateManager.pushMatrix();
+        Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
+        Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.locationBlocksTexture).setBlurMipmap(true, true);
+        GlStateManager.enableRescaleNormal();
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(770, 771);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        setupGuiTransform(x, y, ibakedmodel.isGui3d());
+        ibakedmodel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ItemCameraTransforms.TransformType.GUI);
+        itemRender.renderItem(stack, ibakedmodel);
+        GlStateManager.disableAlpha();
+        GlStateManager.disableRescaleNormal();
+        GlStateManager.disableLighting();
+        GlStateManager.popMatrix();
+        Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
+        Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.locationBlocksTexture).restoreLastBlurMipmap();
+
+        itemRender.renderItemOverlays(Minecraft.getMinecraft().fontRendererObj, stack, x, y);
+        itemRender.zLevel = 0;
+        RenderHelper.disableStandardItemLighting();
+    }
+
+    private static void setupGuiTransform(int xPosition, int yPosition, boolean isGui3d) {
+        GlStateManager.translate((float)xPosition, (float)yPosition, 5);
+        GlStateManager.translate(8.0F, 8.0F, 0.0F);
+        GlStateManager.scale(1.0F, 1.0F, -1.0F);
+        GlStateManager.scale(0.5F, 0.5F, 0.5F);
+
+        if (isGui3d) {
+            GlStateManager.scale(40.0F, 40.0F, 40.0F);
+            GlStateManager.rotate(210.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.enableLighting();
+        } else {
+            GlStateManager.scale(64.0F, 64.0F, 64.0F);
+            GlStateManager.rotate(180.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.disableLighting();
+        }
     }
 
     public static Method getMethod(Class<?> clazz, Class<?>[] params, String... methodNames) {
@@ -276,6 +356,15 @@ public class Utils {
     public static void drawStringCenteredYScaled(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
         int strLen = fr.getStringWidth(str);
         float factor = len/(float)strLen;
+        float fontHeight = 8*factor;
+
+        drawStringScaled(str, fr, x, y-fontHeight/2, shadow, colour, factor);
+    }
+
+    public static void drawStringCenteredYScaledMaxWidth(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
+        int strLen = fr.getStringWidth(str);
+        float factor = len/(float)strLen;
+        factor = Math.min(1, factor);
         float fontHeight = 8*factor;
 
         drawStringScaled(str, fr, x, y-fontHeight/2, shadow, colour, factor);

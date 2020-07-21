@@ -16,14 +16,14 @@ vec3 hsv2rgb(vec3 c) {
 void main() {
     vec4 texture = texture2D(textureIn, gl_TexCoord[0].st);
 
-    float hue = mod(millis/10000f+gl_TexCoord[0].t, 1f);
+    float hue = mod(millis/10000.0f+gl_TexCoord[0].t, 1.0f);
     float sat = 0.5f;
     float val = 0.5f;
     vec3 fade = hsv2rgb(vec3(hue, sat, val));
 
-    gl_FragColor = vec4(texture.rgb*texture.a + fade*(1-texture.a), 1f) * passColour;
+    gl_FragColor = vec4(texture.rgb*texture.a + fade*(1.0f-texture.a), 1.0f) * passColour;
 
-    vec3 fakeSunNormal = normalize(vec3(0.2f,1f,-0.2f));
+    vec3 fakeSunNormal = normalize(vec3(0.2f,1.0f,-0.2f));
     vec3 normNormal = normalize(passNormal);
     float shading = max(0.6f, dot(fakeSunNormal, normNormal));
 

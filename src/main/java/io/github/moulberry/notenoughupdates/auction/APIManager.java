@@ -168,7 +168,9 @@ public class APIManager {
         args.put("uuid", ""+uuid);
         manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/profiles",
             args, jsonObject -> {
-                if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
+                    if(jsonObject == null) return;
+
+                    if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
                     incPlayerInfoVersion();
                     playerInformation = jsonObject.get("profiles").getAsJsonArray();
                     if(playerInformation == null) return;
@@ -366,7 +368,9 @@ public class APIManager {
         args.put("page", ""+page);
         manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/auctions",
             args, jsonObject -> {
-                if (jsonObject.get("success").getAsBoolean()) {
+                    if(jsonObject == null) return;
+
+                    if (jsonObject.get("success").getAsBoolean()) {
                     totalPages = jsonObject.get("totalPages").getAsInt();
                     activeAuctions = jsonObject.get("totalAuctions").getAsInt();
 

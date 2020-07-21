@@ -114,7 +114,7 @@ public class PlayerStats {
         return stats;
     }
 
-    public static Stats getFairyBonus(int fairyExchanges) {
+    private static Stats getFairyBonus(int fairyExchanges) {
         Stats bonus = new Stats();
 
         bonus.addStat(SPEED, fairyExchanges/10);
@@ -128,7 +128,7 @@ public class PlayerStats {
         return bonus;
     }
 
-    public static Stats getSkillBonus(JsonObject skillInfo) {
+    private static Stats getSkillBonus(JsonObject skillInfo) {
         JsonObject bonuses = Utils.getConstant("bonuses");
         if(bonuses == null) return null;
 
@@ -155,7 +155,7 @@ public class PlayerStats {
         return skillBonus;
     }
 
-    public static Stats getPetBonus(JsonObject profile) {
+    private static Stats getPetBonus(JsonObject profile) {
         JsonObject bonuses = Utils.getConstant("bonuses");
         if(bonuses == null) return null;
 
@@ -192,7 +192,7 @@ public class PlayerStats {
         return petBonus;
     }
 
-    public static float harpBonus(JsonObject profile) {
+    private static float harpBonus(JsonObject profile) {
         String talk_to_melody = Utils.getElementAsString(Utils.getElement(profile, "objectives.talk_to_melody.status"), "INCOMPLETE");
         if(talk_to_melody.equalsIgnoreCase("COMPLETE")) {
             return 26;
@@ -205,7 +205,6 @@ public class PlayerStats {
     public static Stats getPassiveBonuses(JsonObject skillInfo, JsonObject profile) {
         Stats passiveBonuses = new Stats();
 
-        //TODO: null checking
         Stats fairyBonus = getFairyBonus((int)Utils.getElementAsFloat(Utils.getElement(profile, "fairy_exchanges"), 0));
         Stats skillBonus = getSkillBonus(skillInfo);
         Stats petBonus = getPetBonus(profile);
@@ -220,7 +219,7 @@ public class PlayerStats {
         return passiveBonuses;
     }
 
-    public static String getFullset(JsonArray armor, int ignore) {
+    private static String getFullset(JsonArray armor, int ignore) {
         String fullset = null;
         for(int i=0; i<armor.size(); i++) {
             if(i == ignore) continue;
@@ -247,7 +246,7 @@ public class PlayerStats {
         return fullset;
     }
 
-    public static Stats getSetBonuses(Stats stats, JsonObject inventoryInfo, JsonObject collectionInfo, JsonObject skillInfo, JsonObject profile) {
+    private static Stats getSetBonuses(Stats stats, JsonObject inventoryInfo, JsonObject collectionInfo, JsonObject skillInfo, JsonObject profile) {
         JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
 
         Stats bonuses = new Stats();
@@ -320,7 +319,7 @@ public class PlayerStats {
     private static String[] rarityArr = new String[] {
             "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
     };
-    public static int checkItemType(JsonArray lore, boolean contains, String... typeMatches) {
+    private static int checkItemType(JsonArray lore, boolean contains, String... typeMatches) {
         for(int i=lore.size()-1; i>=0; i--) {
             String line = lore.get(i).getAsString();
             for(String rarity : rarityArr) {
@@ -365,7 +364,7 @@ public class PlayerStats {
         STAT_PATTERN_MAP.put("intelligence", INTELLIGENCE_PATTERN);
         STAT_PATTERN_MAP.put("sea_creature_chance", SCC_PATTERN);
     }
-    public static Stats getStatForItem(String internalname, JsonObject item, JsonArray lore) {
+    private static Stats getStatForItem(String internalname, JsonObject item, JsonArray lore) {
         Stats stats = new Stats();
         for(int i=0; i<lore.size(); i++) {
             String line = lore.get(i).getAsString();
@@ -413,7 +412,7 @@ public class PlayerStats {
         }
         return stats;
     }
-    public static Stats getItemBonuses(boolean talismanOnly, JsonArray... inventories) {
+    private static Stats getItemBonuses(boolean talismanOnly, JsonArray... inventories) {
         JsonObject misc = Utils.getConstant("misc");
         if(misc == null) return null;
         JsonElement talisman_upgrades_element = misc.get("talisman_upgrades");
@@ -431,7 +430,7 @@ public class PlayerStats {
                     if(itemBonuses.containsKey(internalname)) {
                         continue;
                     }
-                    if(!talismanOnly || checkItemType(item.get("lore").getAsJsonArray(), true, "ACCESSORY") >= 0) {
+                    if(!talismanOnly || checkItemType(item.get("lore").getAsJsonArray(), true, "ACCESSORY", "HATCCESSORY") >= 0) {
                         Stats itemBonus = getStatForItem(internalname, item, item.get("lore").getAsJsonArray());
 
                         itemBonuses.put(internalname, itemBonus);
@@ -457,7 +456,7 @@ public class PlayerStats {
         return itemBonusesStats;
     }
 
-    public static float getStatMult(JsonObject inventoryInfo) {
+    private static float getStatMult(JsonObject inventoryInfo) {
         float mult = 1f;
 
         JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
@@ -485,7 +484,7 @@ public class PlayerStats {
         return mult;
     }
 
-    public static void applyLimits(Stats stats, JsonObject inventoryInfo) {
+    private static void applyLimits(Stats stats, JsonObject inventoryInfo) {
         //>0
         JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
 
@@ -508,6 +507,8 @@ public class PlayerStats {
     }
 
     public static Stats getStats(JsonObject skillInfo, JsonObject inventoryInfo, JsonObject collectionInfo, JsonObject profile) {
+        if(skillInfo == null || inventoryInfo == null || collectionInfo == null || profile == null) return null;
+
         JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
         JsonArray inventory = Utils.getElement(inventoryInfo, "inv_contents").getAsJsonArray();
         JsonArray talisman_bag = Utils.getElement(inventoryInfo, "talisman_bag").getAsJsonArray();

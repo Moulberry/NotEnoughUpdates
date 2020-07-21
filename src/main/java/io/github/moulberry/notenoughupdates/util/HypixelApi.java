@@ -27,24 +27,28 @@ public class HypixelApi {
     private ExecutorService es = Executors.newCachedThreadPool();
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {
-        getHypixelApiAsync(generateApiUrl(apiKey.trim(), method, args), consumer);
+        getHypixelApiAsync(apiKey, method, args, consumer, () -> {});
     }
 
-    public void getHypixelApiAsync(String urlS, Consumer<JsonObject> consumer) {
+    public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer, Runnable error) {
+        getHypixelApiAsync(generateApiUrl(apiKey.trim(), method, args), consumer, error);
+    }
+
+    public void getHypixelApiAsync(String urlS, Consumer<JsonObject> consumer, Runnable error) {
         es.submit(() -> {
-            consumer.accept(getHypixelApiSync(urlS));
+            try {
+                consumer.accept(getHypixelApiSync(urlS));
+            } catch(IOException e) {
+                error.run();
+            }
         });
     }
 
-    public JsonObject getHypixelApiSync(String urlS) {
-        URLConnection connection;
-        try {
-            URL url = new URL(urlS);
-            connection = url.openConnection();
-            connection.setConnectTimeout(3000);
-        } catch(IOException e) {
-            return null;
-        }
+    public JsonObject getHypixelApiSync(String urlS) throws IOException {
+
+        URL url = new URL(urlS);
+        URLConnection connection = url.openConnection();
+        connection.setConnectTimeout(3000);
 
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
             StringBuilder builder = new StringBuilder();
@@ -56,8 +60,6 @@ public class HypixelApi {
 
             JsonObject json = gson.fromJson(response, JsonObject.class);
             return json;
-        } catch(IOException e) {
-            return null;
         }
     }
 
