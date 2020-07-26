@@ -19,11 +19,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-version = "1.0"
 group= "io.github.moulberry"
-archivesBaseName = "NotEnoughUpdates"
-String modid = "notenoughupdates"
-String mixinClassifier = "dep"
 
 minecraft {
     version = "1.8.9-11.15.1.2318-1.8.9"
