@@ -11,6 +11,7 @@ import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
 import io.github.moulberry.notenoughupdates.infopanes.CosmeticsInfoPane;
+import io.github.moulberry.notenoughupdates.mixins.MixinRenderItem;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
@@ -24,6 +25,8 @@ import net.minecraft.client.gui.inventory.*;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.shader.Framebuffer;
+import net.minecraft.client.shader.Shader;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
@@ -37,6 +40,7 @@ import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.Matrix4f;
 import net.minecraft.util.Session;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.*;
@@ -61,10 +65,13 @@ import java.lang.reflect.Modifier;
 import java.net.Proxy;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static io.github.moulberry.notenoughupdates.GuiTextures.*;
 
@@ -127,10 +134,20 @@ public class NotEnoughUpdates {
         }
     });
 
+    SimpleCommand enchantColourCommand = new SimpleCommand("neuec", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            openGui = new GuiEnchantColour();
+        }
+    });
+
     private static ProfileViewer profileViewer;
 
     SimpleCommand viewProfileCommand = new SimpleCommand("neuprofile", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
+            /*if(!OpenGlHelper.isFramebufferEnabled()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                        "This feature requires FBOs to work. Try disabling Optifine's 'Fast Render'."));
+            } else*/
             if(args.length != 1) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "idiot."));
@@ -210,6 +227,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(linksCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
+        ClientCommandHandler.instance.registerCommand(enchantColourCommand);
         //ClientCommandHandler.instance.registerCommand(questingCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
 
@@ -383,28 +401,39 @@ public class NotEnoughUpdates {
      * 2)Adds unique items to the collection log
      */
     private HashMap<String, Long> newItemAddMap = new HashMap<>();
+    private long lastLongUpdate = 0;
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        boolean longUpdate = false;
+        long currentTime = System.currentTimeMillis();
+        if(currentTime - lastLongUpdate > 1000) {
+            longUpdate = true;
+            lastLongUpdate = currentTime;
+        }
         if(openGui != null) {
             Minecraft.getMinecraft().displayGuiScreen(openGui);
             openGui = null;
         }
-        if(hasSkyblockScoreboard()) {
-            manager.auctionManager.tick();
-            if(!joinedSB && manager.config.showUpdateMsg.value) {
-                if(displayUpdateMessageIfOutOfDate()) {
-                    joinedSB = false;
+        if(longUpdate) {
+            updateSkyblockScoreboard();
+            if(hasSkyblockScoreboard()) {
+                manager.auctionManager.tick();
+                if(!joinedSB && manager.config.showUpdateMsg.value) {
+                    if(displayUpdateMessageIfOutOfDate()) {
+                        joinedSB = false;
+                    }
                 }
+                SBScoreboardData.getInstance().tick();
+                //GuiQuestLine.questLine.tick();
             }
-            SBScoreboardData.getInstance().tick();
-            //GuiQuestLine.questLine.tick();
+            //ItemRarityHalo.resetItemHaloCache();
         }
-        if(currChatMessage != null && System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
-            lastChatMessage = System.currentTimeMillis();
+        if(currChatMessage != null && currentTime - lastChatMessage > CHAT_MSG_COOLDOWN) {
+            lastChatMessage = currentTime;
             Minecraft.getMinecraft().thePlayer.sendChatMessage(currChatMessage);
             currChatMessage = null;
         }
-        if(hasSkyblockScoreboard() && manager.getCurrentProfile() != null && manager.getCurrentProfile().length() > 0) {
+        if(longUpdate && hasSkyblockScoreboard() && manager.getCurrentProfile() != null && manager.getCurrentProfile().length() > 0) {
             HashSet<String> newItem = new HashSet<>();
             if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
                 !(Minecraft.getMinecraft().currentScreen instanceof GuiCrafting)) {
@@ -512,7 +541,8 @@ public class NotEnoughUpdates {
             String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
 
             manager.auctionManager.customAH.setRenderOverAuctionView(containerName.trim().equals("Auction View") ||
-                    containerName.trim().equals("BIN Auction View") || containerName.trim().equals("Confirm Bid"));
+                    containerName.trim().equals("BIN Auction View") || containerName.trim().equals("Confirm Bid") ||
+                    containerName.trim().equals("Confirm Purchase"));
         }
 
         //OPEN
@@ -682,7 +712,7 @@ public class NotEnoughUpdates {
      */
     @SubscribeEvent
     public void onGuiBackgroundDraw(GuiScreenEvent.BackgroundDrawnEvent event) {
-        if((event.gui instanceof GuiContainer || event.gui instanceof CustomAHGui) && isOnSkyblock()) {
+        if((event.gui instanceof GuiContainer || event.gui instanceof CustomAHGui || event.gui instanceof GuiItemRecipe) && isOnSkyblock()) {
             ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
             int width = scaledresolution.getScaledWidth();
 
@@ -749,7 +779,7 @@ public class NotEnoughUpdates {
     @SubscribeEvent
     public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if(!(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView())) {
-            if(event.gui instanceof GuiContainer && isOnSkyblock()) {
+            if((event.gui instanceof GuiContainer || event.gui instanceof GuiItemRecipe) && isOnSkyblock()) {
 
                 renderDungeonChestOverlay(event.gui);
 
@@ -1003,6 +1033,103 @@ public class NotEnoughUpdates {
         }*/
     }
 
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public void onItemTooltipLow(ItemTooltipEvent event) {
+        //NotEnoughUpdates.INSTANCE.manager.config.enchantColours.value
+        int index = 0;
+        List<String> newTooltip = new ArrayList<>();
+        for(String line : event.toolTip) {
+            for(String op : NotEnoughUpdates.INSTANCE.manager.config.enchantColours.value) {
+                List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
+                String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
+                String comparator = GuiEnchantColour.getColourOpIndex(colourOps, 1);
+                String comparison = GuiEnchantColour.getColourOpIndex(colourOps, 2);
+                String colourCode = GuiEnchantColour.getColourOpIndex(colourOps, 3);
+
+                if(enchantName.length() == 0) continue;
+                if(comparator.length() == 0) continue;
+                if(comparison.length() == 0) continue;
+                if(colourCode.length() == 0) continue;
+
+                if(enchantName.contains("(") || enchantName.contains(")")) continue;
+
+                int comparatorI = ">=<".indexOf(comparator.charAt(0));
+
+                int levelToFind = -1;
+                try {
+                    levelToFind = Integer.parseInt(comparison);
+                } catch(Exception e) { continue; }
+
+                if(comparatorI < 0) continue;
+                if("0123456789abcdefz".indexOf(colourCode.charAt(0)) < 0) continue;
+
+                //item_lore = item_lore.replaceAll("\\u00A79("+lvl4Max+" IV)", EnumChatFormatting.DARK_PURPLE+"$1");
+                //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
+                Pattern pattern;
+                try {
+                    String prefix = "\u00A79";
+                    if(enchantName.startsWith("ULT_")) prefix = "\u00A7l\u00A7d";
+                    pattern = Pattern.compile(prefix+"("+enchantName+") ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)");
+                } catch(Exception e) {continue;} //malformed regex
+                Matcher matcher = pattern.matcher(line);
+                int matchCount = 0;
+                while(matcher.find() && matchCount < 5) {
+                    matchCount++;
+                    int level = -1;
+                    String levelStr = matcher.group(2);
+                    if(levelStr == null) continue;
+                    try {
+                        level = Integer.parseInt(levelStr);
+                    } catch(Exception e) {
+                        switch(levelStr) {
+                            case "I":
+                                level = 1; break;
+                            case "II":
+                                level = 2; break;
+                            case "III":
+                                level = 3; break;
+                            case "IV":
+                                level = 4; break;
+                            case "V":
+                                level = 5; break;
+                            case "VI":
+                                level = 6; break;
+                            case "VII":
+                                level = 7; break;
+                            case "VIII":
+                                level = 8; break;
+                            case "IX":
+                                level = 9; break;
+                            case "X":
+                                level = 10; break;
+                        }
+                    }
+                    boolean matches = false;
+                    if(level > 0) {
+                        switch(comparator) {
+                            case ">":
+                                matches = level > levelToFind; break;
+                            case "=":
+                                matches = level == levelToFind; break;
+                            case "<":
+                                matches = level < levelToFind; break;
+                        }
+                    }
+                    if(matches) {
+                        if(!colourCode.equals("z")) {
+                            line = line.replaceAll("\\u00A79"+matcher.group(1), "\u00A7"+colourCode+matcher.group(1));
+                        } else {
+                            line = line.replaceAll("\\u00A79"+matcher.group(1), Utils.chromaString(matcher.group(1)));
+                        }
+                    }
+                }
+            }
+            newTooltip.add(line);
+        }
+        event.toolTip.clear();
+        event.toolTip.addAll(newTooltip);
+    }
+
     /**
      * This makes it so that holding LCONTROL while hovering over an item with NBT will show the NBT of the item.
      * @param event
@@ -1103,13 +1230,19 @@ public class NotEnoughUpdates {
         }
     }
 
-    //Stolen from Biscut's SkyblockAddons
     public boolean isOnSkyblock() {
         if(!manager.config.onlyShowOnSkyblock.value) return true;
         return hasSkyblockScoreboard();
     }
 
+    private boolean hasSkyblockScoreboard;
+
     public boolean hasSkyblockScoreboard() {
+        return hasSkyblockScoreboard;
+    }
+
+    //Stolen from Biscut's SkyblockAddons
+    private void updateSkyblockScoreboard() {
         Minecraft mc = Minecraft.getMinecraft();
 
         if (mc != null && mc.theWorld != null) {
@@ -1119,12 +1252,13 @@ public class NotEnoughUpdates {
                 String objectiveName = sidebarObjective.getDisplayName().replaceAll("(?i)\\u00A7.", "");
                 for (String skyblock : SKYBLOCK_IN_ALL_LANGUAGES) {
                     if (objectiveName.startsWith(skyblock)) {
-                        return true;
+                        hasSkyblockScoreboard = true;
+                        return;
                     }
                 }
             }
         }
 
-        return false;
+        hasSkyblockScoreboard = false;
     }
 }

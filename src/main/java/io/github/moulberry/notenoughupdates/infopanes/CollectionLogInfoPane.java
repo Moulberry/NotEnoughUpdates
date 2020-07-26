@@ -241,19 +241,6 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         }
     }
 
-    private Matrix4f createProjectionMatrix(int width, int height) {
-        Matrix4f projMatrix  = new Matrix4f();
-        projMatrix.setIdentity();
-        projMatrix.m00 = 2.0F / (float)width;
-        projMatrix.m11 = 2.0F / (float)(-height);
-        projMatrix.m22 = -0.0020001999F;
-        projMatrix.m33 = 1.0F;
-        projMatrix.m03 = -1.0F;
-        projMatrix.m13 = 1.0F;
-        projMatrix.m23 = -1.0001999F;
-        return projMatrix;
-    }
-
     public int getCurrentAcquiredCount() {
         if(getAcquiredItems() == null) return 0;
         if(!getAcquiredItems().containsKey(manager.getCurrentProfile())) return 0;
@@ -268,7 +255,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
         if(itemFramebuffer != null && grayscaleShader != null &&
                 (itemFramebuffer.framebufferWidth != width || itemFramebuffer.framebufferHeight != height)) {
-            grayscaleShader.setProjectionMatrix(createProjectionMatrix(
+            grayscaleShader.setProjectionMatrix(Utils.createProjectionMatrix(
                     width*scaledresolution.getScaleFactor(), height*scaledresolution.getScaleFactor()));
         }
 
@@ -300,7 +287,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                 grayscaleShader = new Shader(new NEUResourceManager(Minecraft.getMinecraft().getResourceManager()),
                         "grayscale",
                         itemFramebuffer, itemFramebufferGrayscale);
-                grayscaleShader.setProjectionMatrix(createProjectionMatrix(
+                grayscaleShader.setProjectionMatrix(Utils.createProjectionMatrix(
                         width*scaledresolution.getScaleFactor(), height*scaledresolution.getScaleFactor()));
             } catch(Exception e) {
                 return;

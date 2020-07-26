@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.options;
 
 import com.google.gson.*;
+import io.github.moulberry.notenoughupdates.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
@@ -137,6 +138,11 @@ public class Options {
             "Item Background Opacity",
             false,
             "Changes the opacity of item background. Value between 0-255.", 0, 255);
+    public Option<Double> itemHighlightOpacity = new Option(
+            178.0,
+            "Item Highlight Opacity",
+            false,
+            "Changes the opacity of item highlights. Value between 0-255.", 0, 255);
     public Option<Double> panePadding = new Option(
             10.0,
             "Pane Padding",
@@ -206,6 +212,17 @@ public class Options {
             "OverlaySearchBar",
             false,
             "OverlaySearchBar");
+    public Option<List<String>> enchantColours = new Option(
+            Utils.createList("[a-zA-Z ]+:\u003e:9:6",
+                                    "[a-zA-Z ]+:\u003e:6:c",
+                                    "[a-zA-Z ]+:\u003e:5:5",
+                                    "Experience:\u003e:3:5",
+                                    "Life Steal:\u003e:3:5",
+                                    "Scavenger:\u003e:3:5",
+                                    "Looting:\u003e:3:5"),
+            "enchantColours",
+            false,
+            "enchantColours");
 
     private ArrayList<String> createDefaultQuickCommands() {
         ArrayList<String> arr = new ArrayList<>();
@@ -248,6 +265,11 @@ public class Options {
         buttons.add(new Button("Edit Gui Positions", "Allows you to change the position of the search bar, etc.", () -> {
             Minecraft.getMinecraft().displayGuiScreen(new NEUOverlayPlacements());
         }));
+
+
+        buttons.add(new Button("Edit Enchant Colours", "Allows you to change the colour of any enchant at any level.", () -> {
+            Minecraft.getMinecraft().displayGuiScreen(new GuiEnchantColour());
+        }));
     }
 
     public List<Button> getButtons() {
@@ -280,6 +302,7 @@ public class Options {
         tryAddOption(ahNotification, options);
         tryAddOption(bgOpacity, options);
         tryAddOption(fgOpacity, options);
+        tryAddOption(itemHighlightOpacity, options);
         tryAddOption(panePadding, options);
         tryAddOption(tooltipBorderOpacity, options);
         //Text
@@ -359,9 +382,9 @@ public class Options {
             try {
                 if(((Option)f.get(oDefault)).value instanceof List) {
                     //If the default size of the list is greater than the loaded size, use the default value.
-                    if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
-                        continue;
-                    }
+                    //if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
+                    //    continue;
+                    //}
                 }
                 ((Option)f.get(oDefault)).value = ((Option)f.get(oLoad)).value;
             } catch (Exception e) { }

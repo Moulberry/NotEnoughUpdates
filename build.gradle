@@ -19,7 +19,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-version = "1.0"
+version = "1.11.7"
 group= "io.github.moulberry"
 archivesBaseName = "NotEnoughUpdates"
 String modid = "notenoughupdates"
@@ -49,6 +49,7 @@ mixin {
 
 jar {
     manifest.attributes(
+		'Main-Class': 'NotSkyblockAddonsInstallerFrame',
 		'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
 		'MixinConfigs': "mixins.${modid}.json",
 		'FMLCorePluginContainsFMLMod': true,

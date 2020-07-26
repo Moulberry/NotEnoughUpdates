@@ -48,6 +48,14 @@ public class CustomItems {
                 "incursions on the server, some of which I, a player on this Minecraft",
                 "anarchy server in Minecraft, have participated in. One of this server's",
                 "most infamous Minecraft players on the oldest Minecraft");
+    public static JsonObject LEOCTHL = create("LEOCTHL", "dragon_egg", "--- Stats below may not be entirely accurate ---",
+            "17 legendary dragon pets",
+                  "24 epic dragon pets",
+                  "18 epic golem pets",
+                  "12 legendary golem pets",
+                  "39 legendary phoenix pets",
+                  "",
+                  "get flexed");
 
     /**
      * SHAAAAAAAAAAAAAAAAAAME

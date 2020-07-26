@@ -316,33 +316,6 @@ public class PlayerStats {
         return bonuses;
     }
 
-    private static String[] rarityArr = new String[] {
-            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
-    };
-    private static int checkItemType(JsonArray lore, boolean contains, String... typeMatches) {
-        for(int i=lore.size()-1; i>=0; i--) {
-            String line = lore.get(i).getAsString();
-            for(String rarity : rarityArr) {
-                for(int j=0; j<typeMatches.length; j++) {
-                    if(contains) {
-                        if(line.trim().contains(rarity + " " + typeMatches[j])) {
-                            return j;
-                        } else if(line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
-                            return j;
-                        }
-                    } else {
-                        if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
-                            return j;
-                        } else if(line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
-                            return j;
-                        }
-                    }
-                }
-            }
-        }
-        return -1;
-    }
-
     private static final Pattern HEALTH_PATTERN = Pattern.compile("^Health: \\+([0-9]+)");
     private static final Pattern DEFENCE_PATTERN = Pattern.compile("^Defense: \\+([0-9]+)");
     private static final Pattern STRENGTH_PATTERN = Pattern.compile("^Strength: \\+([0-9]+)");
@@ -372,7 +345,6 @@ public class PlayerStats {
                 Matcher matcher = entry.getValue().matcher(Utils.cleanColour(line));
                 if(matcher.find()) {
                     int bonus = Integer.parseInt(matcher.group(1));
-                    //System.out.println(entry.getKey() + ":" + bonus);
                     stats.addStat(entry.getKey(), bonus);
                 }
             }
@@ -380,7 +352,6 @@ public class PlayerStats {
         if(internalname.equals("DAY_CRYSTAL") || internalname.equals("NIGHT_CRYSTAL")) {
             stats.addStat(STRENGTH, 2.5f);
             stats.addStat(DEFENCE, 2.5f);
-            System.out.println("added day");
         }
         if(internalname.equals("NEW_YEAR_CAKE_BAG") && item.has("item_contents")) {
 
@@ -423,14 +394,13 @@ public class PlayerStats {
         for(JsonArray inventory : inventories) {
             for(int i=0; i<inventory.size(); i++) {
                 JsonElement itemElement = inventory.get(i);
-                //if(itemElement != null) System.out.println("item element:"+itemElement.getClass());
                 if(itemElement != null && itemElement.isJsonObject()) {
                     JsonObject item = itemElement.getAsJsonObject();
                     String internalname = item.get("internalname").getAsString();
                     if(itemBonuses.containsKey(internalname)) {
                         continue;
                     }
-                    if(!talismanOnly || checkItemType(item.get("lore").getAsJsonArray(), true, "ACCESSORY", "HATCCESSORY") >= 0) {
+                    if(!talismanOnly || Utils.checkItemType(item.get("lore").getAsJsonArray(), true, "ACCESSORY", "HATCCESSORY") >= 0) {
                         Stats itemBonus = getStatForItem(internalname, item, item.get("lore").getAsJsonArray());
 
                         itemBonuses.put(internalname, itemBonus);
@@ -514,13 +484,8 @@ public class PlayerStats {
         JsonArray talisman_bag = Utils.getElement(inventoryInfo, "talisman_bag").getAsJsonArray();
 
         Stats passiveBonuses = getPassiveBonuses(skillInfo, profile);
-        System.out.println("passive:"+new Stats(passiveBonuses, getBaseStats()));
         Stats armorBonuses = getItemBonuses(false, armor);
         Stats talismanBonuses = getItemBonuses(true, inventory, talisman_bag);
-
-        if(passiveBonuses == null) System.out.println("passive null");
-        if(armorBonuses == null) System.out.println("armorBonuses null");
-        if(talismanBonuses == null) System.out.println("talismanBonuses null");
 
         if(passiveBonuses == null || armorBonuses == null || talismanBonuses == null) return null;
 

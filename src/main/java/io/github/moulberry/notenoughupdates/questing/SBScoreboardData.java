@@ -28,7 +28,6 @@ public class SBScoreboardData {
 
     public Date currentTimeDate = null;
 
-
     public static SBScoreboardData getInstance() {
         return INSTANCE;
     }
@@ -57,7 +56,6 @@ public class SBScoreboardData {
                 Matcher matcher = timePattern.matcher(lines.get(3));
                 if(matcher.find()) {
                     time = Utils.cleanColour(matcher.group()).trim();
-
                     try {
                         String timeSpace = time.replace("am", " am").replace("pm", " pm");
                         SimpleDateFormat parseFormat = new SimpleDateFormat("hh:mm a");
@@ -69,7 +67,9 @@ public class SBScoreboardData {
                     location = Utils.cleanColour(matcher.group()).trim();
                 }
             }
-        } catch(Exception e) {}
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
         //System.out.println(date + ":" + time + ":" + location);
     }
 

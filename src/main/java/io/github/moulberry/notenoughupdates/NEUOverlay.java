@@ -1053,7 +1053,7 @@ public class NEUOverlay extends Gui {
         } else if(getSortMode() == SORT_MODE_MOB) {
             return internalname.matches(mobRegex);
         } else if(getSortMode() == SORT_MODE_PET) {
-            return internalname.matches(petRegex);
+            return internalname.matches(petRegex) && item.get("displayname").getAsString().contains("[");
         } else if(getSortMode() == SORT_MODE_TOOL) {
             return checkItemType(item.get("lore").getAsJsonArray(),
                     "SWORD", "BOW", "AXE", "PICKAXE", "FISHING ROD", "WAND", "SHOVEL", "HOE") >= 0;
@@ -1098,6 +1098,9 @@ public class NEUOverlay extends Gui {
                 break;
             case "thirtyvirus":
                 searchedItems.add(manager.getItemInformation().get("SPIKED_BAIT"));
+                break;
+            case "leocthl":
+                searchedItems.add(CustomItems.LEOCTHL);
                 break;
         }
     }
@@ -1482,16 +1485,16 @@ public class NEUOverlay extends Gui {
 
         if(blurShaderHorz == null) {
             try {
-                blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                        Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
+                blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(),
+                        "blur", Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
                 blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
                 blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
             } catch(Exception e) { }
         }
         if(blurShaderVert == null) {
             try {
-                blurShaderVert = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                        blurOutputHorz, blurOutputVert);
+                blurShaderVert = new Shader(Minecraft.getMinecraft().getResourceManager(),
+                        "blur", blurOutputHorz, blurOutputVert);
                 blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
                 blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
             } catch(Exception e) { }

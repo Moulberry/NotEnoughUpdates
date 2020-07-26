@@ -45,7 +45,6 @@ public class HypixelApi {
     }
 
     public JsonObject getHypixelApiSync(String urlS) throws IOException {
-
         URL url = new URL(urlS);
         URLConnection connection = url.openConnection();
         connection.setConnectTimeout(3000);

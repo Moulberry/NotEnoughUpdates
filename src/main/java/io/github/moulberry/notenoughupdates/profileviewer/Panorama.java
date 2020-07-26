@@ -31,8 +31,6 @@ public class Panorama {
 
         GL11.glViewport(0, 0, width*scaledresolution.getScaleFactor(), height*scaledresolution.getScaleFactor());
 
-        tl.handleKeyboardInput();
-        tl2.handleKeyboardInput();
         float fov = 97;
 
         {
@@ -60,9 +58,7 @@ public class Panorama {
 
             GlStateManager.translate(0, 0.37f, 0.8f);
 
-            //GlStateManager.rotate(MathHelper.sin(currentTime/1.6f) * 5.0F, 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(angle, 0.0F, 1.0F, 0.0F);
-
 
             for (int k = 0; k < 6; ++k) {
                 GlStateManager.pushMatrix();

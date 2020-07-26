@@ -5,6 +5,7 @@
   "mixins": [
     "MixinItemStack",
     "MixinInventoryEffectRenderer",
-    "MixinGuiIngame"
+    "MixinGuiIngame",
+    "MixinRenderItem"
   ]
 }

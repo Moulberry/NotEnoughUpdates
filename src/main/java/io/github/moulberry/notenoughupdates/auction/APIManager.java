@@ -40,6 +40,8 @@ public class APIManager {
 
     private JsonArray playerInformation = null;
 
+    public HashMap<Integer, Integer> aucUpdates = new HashMap<>();
+
     public TreeMap<String, HashMap<Integer, HashSet<String>>> extrasToAucIdMap = new TreeMap<>();
 
     private long lastPageUpdate = 0;
@@ -141,20 +143,21 @@ public class APIManager {
 
     public void tick() {
         customAH.tick();
-        if(System.currentTimeMillis() - lastPageUpdate > 5*1000) {
+        long currentTime = System.currentTimeMillis();
+        if(currentTime - lastPageUpdate > 5*1000) {
             lastPageUpdate = System.currentTimeMillis();
             updatePageTick();
             ahNotification();
         }
-        if(System.currentTimeMillis() - lastProfileUpdate > 10*1000) {
+        if(currentTime - lastProfileUpdate > 10*1000) {
             lastProfileUpdate = System.currentTimeMillis();
             updateProfiles(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
         }
-        if(System.currentTimeMillis() - lastCleanup > 120*1000) {
+        if(currentTime - lastCleanup > 120*1000) {
             lastCleanup = System.currentTimeMillis();
             cleanup();
         }
-        if(System.currentTimeMillis() - lastCustomAHSearch > 60*1000) {
+        if(currentTime - lastCustomAHSearch > 60*1000) {
             lastCustomAHSearch = System.currentTimeMillis();
             if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView()) {
                 customAH.updateSearch();
@@ -415,11 +418,12 @@ public class APIManager {
                         String rarity = auction.get("tier").getAsString();
                         JsonArray bids = auction.get("bids").getAsJsonArray();
 
-                        for(String lvl4Max : lvl4Maxes) {
-                            item_lore = item_lore.replaceAll("\\u00A79("+lvl4Max+" IV)", EnumChatFormatting.DARK_PURPLE+"$1");
+                        {
+                            Auction old = auctionMap.get(auctionUuid);
+                            if(old != null && old.highest_bid_amount != highest_bid_amount) {
+                                aucUpdates.put(page, aucUpdates.computeIfAbsent(page, k->0)+1);
+                            }
                         }
-                        item_lore = item_lore.replaceAll("\\u00A79([A-Za-z ]+ VI)", EnumChatFormatting.DARK_PURPLE+"$1");
-                        item_lore = item_lore.replaceAll("\\u00A79([A-Za-z ]+ VII)", EnumChatFormatting.RED+"$1");
 
                         try {
                             NBTTagCompound item_tag;

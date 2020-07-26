@@ -23,6 +23,8 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -226,24 +228,29 @@ public class NEUManager {
     /**
      * Downloads and sets auctionPricesJson from the URL specified by AUCTIONS_PRICE_URL.
      */
+    private ExecutorService es = Executors.newCachedThreadPool();
     public void updatePrices() {
         if(System.currentTimeMillis() - auctionLastUpdate > 1000*60*120) { //2 hours
             craftCost.clear();
             System.out.println("[NEU] UPDATING PRICE INFORMATION");
             auctionLastUpdate = System.currentTimeMillis();
-            try(Reader inReader = new InputStreamReader(new GZIPInputStream(new URL(AUCTIONS_PRICE_URL).openStream()))) {
-                auctionPricesJson = gson.fromJson(inReader, JsonObject.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            es.submit(() -> {
+                try(Reader inReader = new InputStreamReader(new GZIPInputStream(new URL(AUCTIONS_PRICE_URL).openStream()))) {
+                    auctionPricesJson = gson.fromJson(inReader, JsonObject.class);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
     public boolean hasAuctionInfo(String internalname) {
+        if(auctionPricesJson == null) return false;
         return auctionPricesJson.has("item_data") && auctionPricesJson.get("item_data").getAsJsonObject().has(internalname);
     }
 
     public boolean hasBazaarInfo(String internalname) {
+        if(auctionPricesJson == null) return false;
         return auctionPricesJson.has("bazaar") && auctionPricesJson.get("bazaar").getAsJsonObject().has(internalname);
     }
 
@@ -276,7 +283,7 @@ public class NEUManager {
         if(info == null || !info.has("price")) {
             return 0;
         }
-        if(!auctionPricesJson.has("ench_prices") || !auctionPricesJson.has("ench_maximums")) {
+        if(auctionPricesJson == null || !auctionPricesJson.has("ench_prices") || !auctionPricesJson.has("ench_maximums")) {
             return 0;
         }
         JsonObject ench_prices = auctionPricesJson.getAsJsonObject("ench_prices");

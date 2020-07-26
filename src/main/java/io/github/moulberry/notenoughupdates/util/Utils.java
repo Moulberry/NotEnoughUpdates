@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.util;
 
 import com.google.common.base.Splitter;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -82,7 +83,7 @@ public class Utils {
         RenderHelper.disableStandardItemLighting();
     }
 
-    public static void drawItemStack(ItemStack stack, int x, int y) {
+    public static void drawItemStackWithText(ItemStack stack, int x, int y, String text) {
         if(stack == null)return;
 
         RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
@@ -90,9 +91,15 @@ public class Utils {
         RenderHelper.enableGUIStandardItemLighting();
         itemRender.zLevel = -145; //Negates the z-offset of the below method.
         itemRender.renderItemAndEffectIntoGUI(stack, x, y);
-        itemRender.renderItemOverlays(Minecraft.getMinecraft().fontRendererObj, stack, x, y);
+        itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRendererObj, stack, x, y, text);
         itemRender.zLevel = 0;
         RenderHelper.disableStandardItemLighting();
+    }
+
+    public static void drawItemStack(ItemStack stack, int x, int y) {
+        if(stack == null)return;
+
+        drawItemStackWithText(stack, x, y, null);
     }
 
     private static final EnumChatFormatting[] rainbow = new EnumChatFormatting[]{
@@ -228,6 +235,33 @@ public class Utils {
         return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
     }
 
+    private static String[] rarityArr = new String[] {
+            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
+    };
+    public static int checkItemType(JsonArray lore, boolean contains, String... typeMatches) {
+        for(int i=lore.size()-1; i>=0; i--) {
+            String line = lore.get(i).getAsString();
+            for(String rarity : rarityArr) {
+                for(int j=0; j<typeMatches.length; j++) {
+                    if(contains) {
+                        if(line.trim().contains(rarity + " " + typeMatches[j])) {
+                            return j;
+                        } else if(line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
+                            return j;
+                        }
+                    } else {
+                        if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
+                            return j;
+                        } else if(line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
+                            return j;
+                        }
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
     public static void playPressSound() {
         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
                 new ResourceLocation("gui.button.press"), 1.0F));
@@ -290,7 +324,11 @@ public class Utils {
     }
 
     public static ItemStack createItemStack(Item item, String displayname, String... lore) {
-        ItemStack stack = new ItemStack(item);
+        return createItemStack(item, displayname, 0, lore);
+    }
+
+    public static ItemStack createItemStack(Item item, String displayname, int damage, String... lore) {
+        ItemStack stack = new ItemStack(item, 1, damage);
         NBTTagCompound tag = new NBTTagCompound();
         NBTTagCompound display = new NBTTagCompound();
         NBTTagList Lore = new NBTTagList();
@@ -303,10 +341,16 @@ public class Utils {
         display.setTag("Lore", Lore);
 
         tag.setTag("display", display);
+        tag.setInteger("HideFlags", 254);
 
         stack.setTagCompound(tag);
 
         return stack;
+    }
+
+    public static void drawStringF(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
+        GL11.glTranslatef(x, y, 0);
+        fr.drawString(str, x, y, colour, shadow);
     }
 
     public static void drawStringScaledMaxWidth(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
@@ -343,6 +387,19 @@ public class Utils {
         float fontHeight = 8*factor;
 
         drawStringScaled(str, fr, x-newLen/2, y-fontHeight/2, shadow, colour, factor);
+    }
+
+    public static Matrix4f createProjectionMatrix(int width, int height) {
+        Matrix4f projMatrix  = new Matrix4f();
+        projMatrix.setIdentity();
+        projMatrix.m00 = 2.0F / (float)width;
+        projMatrix.m11 = 2.0F / (float)(-height);
+        projMatrix.m22 = -0.0020001999F;
+        projMatrix.m33 = 1.0F;
+        projMatrix.m03 = -1.0F;
+        projMatrix.m13 = 1.0F;
+        projMatrix.m23 = -1.0001999F;
+        return projMatrix;
     }
 
     public static void drawStringCenteredScaled(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
@@ -529,6 +586,39 @@ public class Utils {
         file.delete();
     }
 
+    public static Color getPrimaryColour(String displayname) {
+        int lastColourCode = -99;
+        int currentColour = 0;
+        int[] mostCommon = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        for(int i=0; i<displayname.length(); i++) {
+            char c = displayname.charAt(i);
+            if(c == '\u00A7') {
+                lastColourCode = i;
+            } else if(lastColourCode == i-1) {
+                int colIndex = "0123456789abcdef".indexOf(c);
+                if(colIndex >= 0) {
+                    currentColour = colIndex;
+                } else {
+                    currentColour = 0;
+                }
+            } else if("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0){
+                if(currentColour > 0) {
+                    mostCommon[currentColour]++;
+                }
+            }
+        }
+        int mostCommonCount = 0;
+        for(int index=0; index<mostCommon.length; index++) {
+            if(mostCommon[index] > mostCommonCount) {
+                mostCommonCount = mostCommon[index];
+                currentColour = index;
+            }
+        }
+
+        int colourInt = Minecraft.getMinecraft().fontRendererObj.getColorCode("0123456789abcdef".charAt(currentColour));
+        return new Color(colourInt).darker();
+    }
+
     public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font, boolean coloured) {
         if (!textLines.isEmpty())
         {
@@ -639,36 +729,7 @@ public class Utils {
             if(NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderColours.value && coloured) {
                 if(textLines.size() > 0) {
                     String first = textLines.get(0);
-                    int lastColourCode = -99;
-                    int currentColour = 0;
-                    int[] mostCommon = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-                    for(int i=0; i<first.length(); i++) {
-                        char c = first.charAt(i);
-                        if(c == '\u00A7') {
-                            lastColourCode = i;
-                        } else if(lastColourCode == i-1) {
-                            int colIndex = "0123456789abcdef".indexOf(c);
-                            if(colIndex >= 0) {
-                                currentColour = colIndex;
-                            } else {
-                                currentColour = 0;
-                            }
-                        } else if("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0){
-                            if(currentColour > 0) {
-                                mostCommon[currentColour]++;
-                            }
-                        }
-                    }
-                    int mostCommonCount = 0;
-                    for(int index=0; index<mostCommon.length; index++) {
-                        if(mostCommon[index] > mostCommonCount) {
-                            mostCommonCount = mostCommon[index];
-                            currentColour = index;
-                        }
-                    }
-
-                    int colourInt = font.getColorCode("0123456789abcdef".charAt(currentColour));
-                    borderColorStart = new Color(colourInt).darker().getRGB() & 0x00FFFFFF |
+                    borderColorStart = getPrimaryColour(first).getRGB() & 0x00FFFFFF |
                             ((NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderOpacity.value.intValue()) << 24);
                 }
             }
