@@ -19,6 +19,7 @@ import io.github.moulberry.notenoughupdates.questing.SBScoreboardData;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.*;
@@ -38,10 +39,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.Matrix4f;
-import net.minecraft.util.Session;
+import net.minecraft.util.*;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.common.MinecraftForge;
@@ -140,7 +138,7 @@ public class NotEnoughUpdates {
         }
     });
 
-    private static ProfileViewer profileViewer;
+    public static ProfileViewer profileViewer;
 
     SimpleCommand viewProfileCommand = new SimpleCommand("neuprofile", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -148,16 +146,34 @@ public class NotEnoughUpdates {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "This feature requires FBOs to work. Try disabling Optifine's 'Fast Render'."));
             } else*/
-            if(args.length != 1) {
+            if (manager.config.apiKey.value == null || manager.config.apiKey.value.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                        "idiot."));
+                        "Can't view profile, apikey is not set. Run /api new and put the result in settings."));
+            } else if (args.length == 0) {
+                profileViewer.getProfileByName(Minecraft.getMinecraft().thePlayer.getName(), profile -> {
+                    if (profile != null) profile.resetCache();
+                    openGui = new GuiProfileViewer(profile);
+                });
+            } else if (args.length > 1) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                        "Too many arguments. Usage: /neuprofile [name]"));
             } else {
                 profileViewer.getProfileByName(args[0], profile -> {
-                    profile.resetCache();
+                    if (profile != null) profile.resetCache();
                     openGui = new GuiProfileViewer(profile);
                 });
             }
-            //openGui = new GuiProfileViewer(null);
+        }
+    }, new SimpleCommand.TabCompleteRunnable() {
+        @Override
+        public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
+            /*if(args.length) {
+                
+            }*/
+            for(String arg : args) {
+                System.out.println(arg);
+            }
+            return null;
         }
     });
 
@@ -200,7 +216,7 @@ public class NotEnoughUpdates {
                         "You must be on Skyblock to use this feature."));
             } else if(manager.config.apiKey.value == null || manager.config.apiKey.value.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
-                        "Can't open NeuAH, Api Key is not set. Run /api new and put the result in settings."));
+                        "Can't open NeuAH, apikey is not set. Run /api new and put the result in settings."));
             } else {
                 openGui = new CustomAHGui();
                 manager.auctionManager.customAH.lastOpen = System.currentTimeMillis();
@@ -228,7 +244,6 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);
-        //ClientCommandHandler.instance.registerCommand(questingCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
 
         neuio = new NEUIO(getAccessToken());
@@ -712,7 +727,7 @@ public class NotEnoughUpdates {
      */
     @SubscribeEvent
     public void onGuiBackgroundDraw(GuiScreenEvent.BackgroundDrawnEvent event) {
-        if((event.gui instanceof GuiContainer || event.gui instanceof CustomAHGui || event.gui instanceof GuiItemRecipe) && isOnSkyblock()) {
+        if((shouldRenderOverlay(event.gui) || event.gui instanceof CustomAHGui) && isOnSkyblock()) {
             ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
             int width = scaledresolution.getScaledWidth();
 
@@ -771,6 +786,19 @@ public class NotEnoughUpdates {
         }
     }
 
+    private static boolean shouldRenderOverlay(Gui gui) {
+        boolean validGui = gui instanceof GuiContainer || gui instanceof GuiItemRecipe;
+        if(gui instanceof GuiChest) {
+            GuiChest eventGui = (GuiChest) gui;
+            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+            String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if(containerName.trim().equals("Fast Travel")) {
+                validGui = false;
+            }
+        }
+        return validGui;
+    }
+
     /**
      * Will draw the NEUOverlay over the inventory if focusInv == false. (z-translation of 300 is so that NEUOverlay
      * will draw over Items in the inventory (which render at a z value of about 250))
@@ -779,7 +807,7 @@ public class NotEnoughUpdates {
     @SubscribeEvent
     public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if(!(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView())) {
-            if((event.gui instanceof GuiContainer || event.gui instanceof GuiItemRecipe) && isOnSkyblock()) {
+            if(shouldRenderOverlay(event.gui) && isOnSkyblock()) {
 
                 renderDungeonChestOverlay(event.gui);
 
@@ -889,7 +917,7 @@ public class NotEnoughUpdates {
             overlay.mouseInput();
             return;
         }
-        if(event.gui instanceof GuiContainer && !(hoverInv && focusInv) && isOnSkyblock()) {
+        if(shouldRenderOverlay(event.gui) && !(hoverInv && focusInv) && isOnSkyblock()) {
             if(overlay.mouseInput()) {
                 event.setCanceled(true);
             }
@@ -914,7 +942,7 @@ public class NotEnoughUpdates {
             return;
         }
 
-        if(event.gui instanceof GuiContainer && isOnSkyblock()) {
+        if(shouldRenderOverlay(event.gui) && isOnSkyblock()) {
             if(overlay.keyboardInput(focusInv)) {
                 event.setCanceled(true);
             }

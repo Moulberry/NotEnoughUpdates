@@ -66,6 +66,7 @@ public class GuiProfileViewer extends GuiScreen {
     public static final ResourceLocation pv_invs = new ResourceLocation("notenoughupdates:pv_invs.png");
     public static final ResourceLocation pv_cols = new ResourceLocation("notenoughupdates:pv_cols.png");
     public static final ResourceLocation pv_pets = new ResourceLocation("notenoughupdates:pv_pets.png");
+    public static final ResourceLocation pv_dropdown = new ResourceLocation("notenoughupdates:pv_dropdown.png");
     public static final ResourceLocation pv_bg = new ResourceLocation("notenoughupdates:pv_bg.png");
     public static final ResourceLocation pv_elements = new ResourceLocation("notenoughupdates:pv_elements.png");
     public static final ResourceLocation resource_packs = new ResourceLocation("minecraft:textures/gui/resource_packs.png");
@@ -89,11 +90,16 @@ public class GuiProfileViewer extends GuiScreen {
 
     private List<String> tooltipToDisplay = null;
 
+    private String profileId = null;
+    private boolean profileDropdownSelected = false;
+
     public enum ProfileViewerPage {
+        LOADING(null),
+        INVALID_NAME(null),
         BASIC(new ItemStack(Items.paper)),
         INVS(new ItemStack(Item.getItemFromBlock(Blocks.ender_chest))),
-        COLS(new ItemStack(Items.painting)),
-        PETS(new ItemStack(Items.bone));
+        COLS(new ItemStack(Items.painting));
+        //PETS(new ItemStack(Items.bone));
 
         public final ItemStack stack;
 
@@ -105,12 +111,26 @@ public class GuiProfileViewer extends GuiScreen {
 
     public GuiProfileViewer(ProfileViewer.Profile profile) {
         this.profile = profile;
+        String name = "";
+        if(profile != null) {
+            name = profile.getHypixelProfile().get("displayname").getAsString();
+        }
+        playerNameTextField = new GuiElementTextField(name,
+                GuiElementTextField.SCALE_TEXT);
+        playerNameTextField.setSize(100, 20);
     }
+
+    private GuiElementTextField playerNameTextField;
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         currentTime = System.currentTimeMillis();
         if(startTime == 0) startTime = currentTime;
+
+        if(profile == null) currentPage = ProfileViewerPage.INVALID_NAME;
+        if(profileId == null && profile != null && profile.getLatestProfile() != null) {
+            profileId = profile.getLatestProfile();
+        }
 
         this.sizeX = 431;
         this.sizeY = 202;
@@ -121,7 +141,7 @@ public class GuiProfileViewer extends GuiScreen {
         drawDefaultBackground();
 
         blurBackground();
-        renderBlurredBackground(width, height, guiLeft, guiTop, sizeX, sizeY);
+        renderBlurredBackground(width, height, guiLeft+2, guiTop+2, sizeX-4, sizeY-4);
 
         GlStateManager.translate(0, 0, 5);
         renderTabs(true);
@@ -151,13 +171,56 @@ public class GuiProfileViewer extends GuiScreen {
             case COLS:
                 drawColsPage(mouseX, mouseY, partialTicks);
                 break;
-            case PETS:
-                drawPetsPage(mouseX, mouseY, partialTicks);
+            case LOADING:
+                Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Loading player profiles...", Minecraft.getMinecraft().fontRendererObj,
+                        guiLeft+sizeX/2f, guiTop+101, true, 0);
                 break;
+            case INVALID_NAME:
+                Utils.drawStringCentered(EnumChatFormatting.RED+"Invalid name or API is down!", Minecraft.getMinecraft().fontRendererObj,
+                        guiLeft+sizeX/2f, guiTop+101, true, 0);
+                break;
+            //case PETS:
+            //    drawPetsPage(mouseX, mouseY, partialTicks);
+            //    break;
         }
 
         lastTime = currentTime;
 
+        if(!(currentPage == ProfileViewerPage.LOADING)) {
+            playerNameTextField.render(guiLeft+sizeX-100, guiTop+sizeY+5);
+            ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+
+            if(profile != null) {
+                renderBlurredBackground(width, height, guiLeft+2, guiTop+sizeY+3+2, 100-4, 20-4);
+                Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
+                Utils.drawTexturedRect(guiLeft, guiTop+sizeY+3, 100, 20,
+                        0, 100/200f, 0, 20/185f, GL11.GL_NEAREST);
+                Utils.drawStringCenteredScaledMaxWidth(profileId, Minecraft.getMinecraft().fontRendererObj, guiLeft+50,
+                        guiTop+sizeY+3+10, true, 90, new Color(63, 224, 208, 255).getRGB());
+
+                if(profileDropdownSelected && !profile.getProfileIds().isEmpty() && scaledResolution.getScaleFactor() != 4) {
+                    int dropdownOptionSize = scaledResolution.getScaleFactor()==3?10:20;
+
+                    int numProfiles = profile.getProfileIds().size();
+                    int sizeYDropdown = numProfiles*dropdownOptionSize;
+                    renderBlurredBackground(width, height, guiLeft+2, guiTop+sizeY+23, 100-4, sizeYDropdown-2);
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
+                    Utils.drawTexturedRect(guiLeft, guiTop+sizeY+23-3, 100, 3,
+                            100/200f, 1, 0, 3/185f, GL11.GL_NEAREST);
+                    Utils.drawTexturedRect(guiLeft, guiTop+sizeY+23+sizeYDropdown-4, 100, 4,
+                            100/200f, 1, 181/185f, 1, GL11.GL_NEAREST);
+                    Utils.drawTexturedRect(guiLeft, guiTop+sizeY+23, 100, sizeYDropdown-4,
+                            100/200f, 1, (181-sizeYDropdown)/185f, 181/185f, GL11.GL_NEAREST);
+
+                    for(int yIndex=0; yIndex<profile.getProfileIds().size(); yIndex++) {
+                        String otherProfileId = profile.getProfileIds().get(yIndex);
+                        Utils.drawStringCenteredScaledMaxWidth(otherProfileId, Minecraft.getMinecraft().fontRendererObj, guiLeft+50,
+                                guiTop+sizeY+23+dropdownOptionSize/2f+dropdownOptionSize*yIndex, true, 90, new Color(33, 112, 104, 255).getRGB());
+                    }
+
+                }
+            }
+        }
 
         if(tooltipToDisplay != null) {
             List<String> grayTooltip = new ArrayList<>(tooltipToDisplay.size());
@@ -169,12 +232,33 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
+    private boolean isLoadedProfile() {
+        return profile.getProfileInformation(profileId) != null;
+    }
+
+    private boolean isCollectionApiEnabled() {
+        return profile.getCollectionInfo(profileId) != null;
+    }
+
+    private boolean isInventoryApiEnabled() {
+        return profile.getInventoryInfo(profileId) != null;
+    }
+
+    private boolean isSkillsApiEnabled() {
+        return profile.getSkillInfo(profileId) != null;
+    }
+
     private void renderTabs(boolean renderPressed) {
+        int ignoredTabs = 0;
         for(int i=0; i<ProfileViewerPage.values().length; i++) {
             ProfileViewerPage page = ProfileViewerPage.values()[i];
+            if(page.stack == null) {
+                ignoredTabs++;
+                continue;
+            }
             boolean pressed = page == currentPage;
             if(pressed == renderPressed) {
-                renderTab(page.stack, i, pressed);
+                renderTab(page.stack, i-ignoredTabs, pressed);
             }
         }
     }
@@ -203,9 +287,9 @@ public class GuiProfileViewer extends GuiScreen {
                 uMax = 56/256f;
             }
 
-            //if(!Keyboard.isKeyDown(Keyboard.KEY_A)) renderBlurredBackground(width, height, x, y, 28, 28);
+            renderBlurredBackground(width, height, x+2, y+2, 28-4, 28-4);
         } else {
-            //renderBlurredBackground(width, height, x, y+2, 28, 28);
+            renderBlurredBackground(width, height, x+2, y+4, 28-4, 28-4);
         }
 
         GlStateManager.disableLighting();
@@ -222,17 +306,26 @@ public class GuiProfileViewer extends GuiScreen {
 
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        for(int i=0; i<ProfileViewerPage.values().length; i++) {
-            ProfileViewerPage page = ProfileViewerPage.values()[i];
-            int x = guiLeft+i*28;
-            int y = guiTop-28;
+        if(currentPage != ProfileViewerPage.LOADING && currentPage != ProfileViewerPage.INVALID_NAME) {
+            int ignoredTabs = 0;
+            for(int i=0; i<ProfileViewerPage.values().length; i++) {
+                ProfileViewerPage page = ProfileViewerPage.values()[i];
+                if(page.stack == null) {
+                    ignoredTabs++;
+                    continue;
+                }
+                int i2 = i - ignoredTabs;
+                int x = guiLeft+i2*28;
+                int y = guiTop-28;
 
-            if(mouseX > x && mouseX < x+28) {
-                if(mouseY > y && mouseY < y+32) {
-                    if(currentPage != page) Utils.playPressSound();
-                    currentPage = page;
-                    inventoryTextField.otherComponentClick();
-                    return;
+                if(mouseX > x && mouseX < x+28) {
+                    if(mouseY > y && mouseY < y+32) {
+                        if(currentPage != page) Utils.playPressSound();
+                        currentPage = page;
+                        inventoryTextField.otherComponentClick();
+                        playerNameTextField.otherComponentClick();
+                        return;
+                    }
                 }
             }
         }
@@ -242,10 +335,64 @@ public class GuiProfileViewer extends GuiScreen {
                 if(mouseX > guiLeft+19 && mouseX < guiLeft+19+88) {
                     if(mouseY > guiTop+sizeY-26-20 && mouseY < guiTop+sizeY-26) {
                         inventoryTextField.mouseClicked(mouseX, mouseY, mouseButton);
+                        playerNameTextField.otherComponentClick();
                         return;
                     }
                 }
         }
+        if(mouseX > guiLeft+sizeX-100 && mouseX < guiLeft+sizeX) {
+            if(mouseY > guiTop+sizeY+5 && mouseY < guiTop+sizeY+25) {
+                playerNameTextField.mouseClicked(mouseX, mouseY, mouseButton);
+                inventoryTextField.otherComponentClick();
+                return;
+            }
+        }
+        if(mouseX > guiLeft && mouseX < guiLeft+100 && profile != null && !profile.getProfileIds().isEmpty()) {
+            ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+            if(mouseY > guiTop+sizeY+3 && mouseY < guiTop+sizeY+23) {
+                if(scaledResolution.getScaleFactor() == 4) {
+                    profileDropdownSelected = false;
+                    int profileNum = 0;
+                    for(int index=0; index<profile.getProfileIds().size(); index++) {
+                        if(profile.getProfileIds().get(index).equals(profileId)) {
+                            profileNum = index;
+                            break;
+                        }
+                    }
+                    if(mouseButton == 0) {
+                        profileNum++;
+                    } else {
+                        profileNum--;
+                    }
+                    if(profileNum >= profile.getProfileIds().size()) profileNum = 0;
+                    if(profileNum < 0) profileNum = profile.getProfileIds().size()-1;
+
+                    String newProfileId = profile.getProfileIds().get(profileNum);
+                    if(profileId != null && !profileId.equals(newProfileId)) {
+                        resetCache();
+                    }
+                    profileId = newProfileId;
+                } else {
+                    profileDropdownSelected = !profileDropdownSelected;
+                }
+            } else if(scaledResolution.getScaleFactor() != 4) {
+                int dropdownOptionSize = scaledResolution.getScaleFactor()==3?10:20;
+                int extraY = mouseY - (guiTop+sizeY+23);
+                int index = extraY/dropdownOptionSize;
+                if(index >= 0 && index < profile.getProfileIds().size()) {
+                    String newProfileId = profile.getProfileIds().get(index);
+                    if(profileId != null && !profileId.equals(newProfileId)) {
+                        resetCache();
+                    }
+                    profileId = newProfileId;
+                }
+            }
+            playerNameTextField.otherComponentClick();
+            inventoryTextField.otherComponentClick();
+            return;
+        }
+        profileDropdownSelected = false;
+        playerNameTextField.otherComponentClick();
         inventoryTextField.otherComponentClick();
     }
 
@@ -260,6 +407,16 @@ public class GuiProfileViewer extends GuiScreen {
             case COLS:
                 keyTypedCols(typedChar, keyCode);
                 break;
+        }
+        if(playerNameTextField.getFocus() && !(currentPage == ProfileViewerPage.LOADING)) {
+            if(keyCode == Keyboard.KEY_RETURN) {
+                currentPage = ProfileViewerPage.LOADING;
+                NotEnoughUpdates.profileViewer.getProfileByName(playerNameTextField.getText(), profile -> { //todo: invalid name
+                    if(profile != null) profile.resetCache();
+                    Minecraft.getMinecraft().displayGuiScreen(new GuiProfileViewer(profile));
+                });
+            }
+            playerNameTextField.keyTyped(typedChar, keyCode);
         }
     }
 
@@ -347,9 +504,9 @@ public class GuiProfileViewer extends GuiScreen {
                 i++;
             }
 
-            JsonObject inventoryInfo = profile.getInventoryInfo(null);
+            JsonObject inventoryInfo = profile.getInventoryInfo(profileId);
             if(inventoryInfo == null) return;
-            JsonObject collectionInfo = profile.getCollectionInfo(null);
+            JsonObject collectionInfo = profile.getCollectionInfo(profileId);
             if(collectionInfo == null) return;
 
             ItemStack[][][] inventories = getItemsForInventory(inventoryInfo, collectionInfo, selectedInventory);
@@ -394,11 +551,19 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
+    private static HashMap<String, String> minionRarityToNumMap = new HashMap<>();
+    static {
+        minionRarityToNumMap.put("COMMON", "0");
+        minionRarityToNumMap.put("UNCOMMON", "1");
+        minionRarityToNumMap.put("RARE", "2");
+        minionRarityToNumMap.put("EPIC", "3");
+        minionRarityToNumMap.put("LEGENDARY", "4");
+    }
     private void drawPetsPage(int mouseX, int mouseY, float partialTicks) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_pets);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
 
-        JsonObject petsInfo = profile.getPetsInfo(null);
+        JsonObject petsInfo = profile.getPetsInfo(profileId);
         if(petsInfo == null) return;
 
         JsonArray pets = petsInfo.get("pets").getAsJsonArray();
@@ -407,7 +572,7 @@ public class GuiProfileViewer extends GuiScreen {
 
         }
 
-        if(minions != null) {
+        /*if(minions != null) {
             for (int i = 0; i < minions.size(); i++) {
                 String minion = minions.get(i);
                 if (minion != null) {
@@ -421,7 +586,7 @@ public class GuiProfileViewer extends GuiScreen {
                     }
                 }
             }
-        }
+        }*/
     }
 
     private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
@@ -436,8 +601,12 @@ public class GuiProfileViewer extends GuiScreen {
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_cols);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
 
-        JsonObject collectionInfo = profile.getCollectionInfo(null);
-        if(collectionInfo == null) return;
+        JsonObject collectionInfo = profile.getCollectionInfo(profileId);
+        if(collectionInfo == null) {
+            Utils.drawStringCentered(EnumChatFormatting.RED+"Collection API not enabled!", Minecraft.getMinecraft().fontRendererObj,
+                    guiLeft+134, guiTop+101, true, 0);
+            return;
+        }
         JsonObject resourceCollectionInfo = ProfileViewer.getResourceCollectionInformation();
         if(resourceCollectionInfo == null) return;
 
@@ -694,6 +863,7 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     private int getAvailableSlotsForInventory(JsonObject inventoryInfo, JsonObject collectionInfo, String invName) {
+        if(collectionInfo == null) return -1;
         JsonObject misc = Utils.getConstant("misc");
         if(misc == null) return -1;
         JsonElement sizesElement = Utils.getElement(misc, "bag_size."+invName+".sizes");
@@ -793,10 +963,52 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
         inventoryTextField.setSize(88, 20);
 
-        JsonObject inventoryInfo = profile.getInventoryInfo(null);
+        JsonObject inventoryInfo = profile.getInventoryInfo(profileId);
         if(inventoryInfo == null) return;
-        JsonObject collectionInfo = profile.getCollectionInfo(null);
-        if(collectionInfo == null) return;
+        JsonObject collectionInfo = profile.getCollectionInfo(profileId);
+
+        int invNameIndex=0;
+        for(Map.Entry<String, ItemStack> entry : invNameToDisplayMap.entrySet()) {
+            int xIndex = invNameIndex%3;
+            int yIndex = invNameIndex/3;
+
+            int x = 19+34*xIndex;
+            int y = 26+34*yIndex;
+
+            Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
+            if(entry.getKey().equals(selectedInventory)) {
+                Utils.drawTexturedRect(guiLeft+x-2, guiTop+y-2, 20, 20, 20/256f, 0,
+                        20/256f, 0, GL11.GL_NEAREST);
+                x++;
+                y++;
+            } else {
+                Utils.drawTexturedRect(guiLeft+x-2, guiTop+y-2, 20, 20, 0, 20/256f,
+                        0, 20/256f, GL11.GL_NEAREST);
+            }
+
+            Utils.drawItemStackWithText(entry.getValue(), guiLeft+x, guiTop+y, ""+(invNameIndex+1));
+
+            if(mouseX >= guiLeft+x && mouseX <= guiLeft+x+16) {
+                if(mouseY >= guiTop+y && mouseY <= guiTop+y+16) {
+                    tooltipToDisplay = entry.getValue().getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                }
+            }
+
+            invNameIndex++;
+        }
+
+        inventoryTextField.render(guiLeft+19, guiTop+sizeY-26-20);
+
+        ItemStack[][][] inventories = getItemsForInventory(inventoryInfo, collectionInfo, selectedInventory);
+        if(currentInventoryIndex >= inventories.length) currentInventoryIndex = inventories.length-1;
+        if(currentInventoryIndex < 0) currentInventoryIndex = 0;
+
+        ItemStack[][] inventory = inventories[currentInventoryIndex];
+        if(inventory == null) {
+            Utils.drawStringCentered(EnumChatFormatting.RED+"Inventory API not enabled!", Minecraft.getMinecraft().fontRendererObj,
+                    guiLeft+317, guiTop+101, true, 0);
+            return;
+        }
 
         if(bestWeapons == null) {
             bestWeapons = findBestItems(inventoryInfo, 6, new String[]{"inv_contents", "ender_chest_contents"},
@@ -880,45 +1092,6 @@ public class GuiProfileViewer extends GuiScreen {
                 }
             }
         }
-
-        inventoryTextField.render(guiLeft+19, guiTop+sizeY-26-20);
-
-        int i=0;
-        for(Map.Entry<String, ItemStack> entry : invNameToDisplayMap.entrySet()) {
-            int xIndex = i%3;
-            int yIndex = i/3;
-
-            int x = 19+34*xIndex;
-            int y = 26+34*yIndex;
-
-            Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
-            if(entry.getKey().equals(selectedInventory)) {
-                Utils.drawTexturedRect(guiLeft+x-2, guiTop+y-2, 20, 20, 20/256f, 0,
-                        20/256f, 0, GL11.GL_NEAREST);
-                x++;
-                y++;
-            } else {
-                Utils.drawTexturedRect(guiLeft+x-2, guiTop+y-2, 20, 20, 0, 20/256f,
-                        0, 20/256f, GL11.GL_NEAREST);
-            }
-
-            Utils.drawItemStackWithText(entry.getValue(), guiLeft+x, guiTop+y, ""+(i+1));
-
-            if(mouseX >= guiLeft+x && mouseX <= guiLeft+x+16) {
-                if(mouseY >= guiTop+y && mouseY <= guiTop+y+16) {
-                    tooltipToDisplay = entry.getValue().getTooltip(Minecraft.getMinecraft().thePlayer, false);
-                }
-            }
-
-            i++;
-        }
-
-        ItemStack[][][] inventories = getItemsForInventory(inventoryInfo, collectionInfo, selectedInventory);
-        if(currentInventoryIndex >= inventories.length) currentInventoryIndex = inventories.length-1;
-        if(currentInventoryIndex < 0) currentInventoryIndex = 0;
-
-        ItemStack[][] inventory = inventories[currentInventoryIndex];
-        if(inventory == null) return;
 
         int inventoryRows = inventory.length;
 
@@ -1236,7 +1409,7 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.drawStringCentered(statusStr, fr, guiLeft+63, guiTop+160, true, 0);
         }
 
-        if(profile.getPlayerInformation(null) == null) {
+        if(!isLoadedProfile()) {
             //TODO: "Downloading player information"
             return;
         }
@@ -1268,12 +1441,11 @@ public class GuiProfileViewer extends GuiScreen {
             entityPlayer.getDataWatcher().updateObject(10, b);
         }
 
-        JsonObject profileInfo = profile.getProfileInformation(null);
+        JsonObject profileInfo = profile.getProfileInformation(profileId);
         if(profileInfo == null) return;
 
-        JsonObject skillInfo = profile.getSkillInfo(null);
-        JsonObject inventoryInfo = profile.getInventoryInfo(null);
-        JsonObject collectionInfo = profile.getCollectionInfo(null);
+        JsonObject skillInfo = profile.getSkillInfo(profileId);
+        JsonObject inventoryInfo = profile.getInventoryInfo(profileId);
 
         if(backgroundClickedX != -1 && Mouse.isButtonDown(1)) {
             for(int i=0; i<entityPlayer.inventory.armorInventory.length; i++) {
@@ -1314,7 +1486,7 @@ public class GuiProfileViewer extends GuiScreen {
         }
 
         GlStateManager.color(1, 1, 1, 1);
-        JsonObject petsInfo = profile.getPetsInfo(null);
+        JsonObject petsInfo = profile.getPetsInfo(profileId);
         if(petsInfo != null) {
             JsonElement activePetElement = petsInfo.get("active_pet");
             if(activePetElement != null && activePetElement.isJsonObject()) {
@@ -1322,22 +1494,25 @@ public class GuiProfileViewer extends GuiScreen {
 
                 String type = activePet.get("type").getAsString();
 
-                JsonObject item = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(type+";0");
-                if(item != null) {
-                    int x = guiLeft+50;
-                    float y = guiTop+82+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
-                    GlStateManager.translate(x, y, 0);
-                    ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
-                    GlStateManager.scale(-1.5f, 1.5f, 1);
-                    Utils.drawItemStack(stack, 0, 0);
-                    GlStateManager.scale(-1/1.5f, 1/1.5f, 1);
-                    GlStateManager.translate(-x, -y, 0);
+                for(int i=0; i<4; i++) {
+                    JsonObject item = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(type+";"+i);
+                    if(item != null) {
+                        int x = guiLeft+50;
+                        float y = guiTop+82+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
+                        GlStateManager.translate(x, y, 0);
+                        ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
+                        GlStateManager.scale(-1.5f, 1.5f, 1);
+                        Utils.drawItemStack(stack, 0, 0);
+                        GlStateManager.scale(-1/1.5f, 1/1.5f, 1);
+                        GlStateManager.translate(-x, -y, 0);
+                        break;
+                    }
                 }
             }
         }
         drawEntityOnScreen(guiLeft+63, guiTop+128+7, 36, guiLeft+63-mouseX, guiTop+129-mouseY, entityPlayer);
 
-        PlayerStats.Stats stats = profile.getStats(null);
+        PlayerStats.Stats stats = profile.getStats(profileId);
 
         if(stats != null) {
             Splitter splitter = Splitter.on(" ").omitEmptyStrings().limit(2);
@@ -1360,9 +1535,9 @@ public class GuiProfileViewer extends GuiScreen {
                         tooltipToDisplay.add(statNamePretty);
                         int base = Math.round(baseStats.get(statName));
                         tooltipToDisplay.add(EnumChatFormatting.GRAY+"Base "+split.get(1)+": "+EnumChatFormatting.GREEN+base+" "+split.get(0));
-                        int passive = Math.round(profile.getPassiveStats(null).get(statName)-baseStats.get(statName));
+                        int passive = Math.round(profile.getPassiveStats(profileId).get(statName)-baseStats.get(statName));
                         tooltipToDisplay.add(EnumChatFormatting.GRAY+"Passive "+split.get(1)+" Bonus: +"+EnumChatFormatting.YELLOW+passive+" "+split.get(0));
-                        int itemBonus = Math.round(stats.get(statName)-profile.getPassiveStats(null).get(statName));
+                        int itemBonus = Math.round(stats.get(statName)-profile.getPassiveStats(profileId).get(statName));
                         tooltipToDisplay.add(EnumChatFormatting.GRAY+"Item "+split.get(1)+" Bonus: +"+EnumChatFormatting.DARK_PURPLE+itemBonus+" "+split.get(0));
                         int finalStat = Math.round(stats.get(statName));
                         tooltipToDisplay.add(EnumChatFormatting.GRAY+"Final "+split.get(1)+": +"+EnumChatFormatting.RED+finalStat+" "+split.get(0));
@@ -1370,7 +1545,12 @@ public class GuiProfileViewer extends GuiScreen {
                 }
             }
         } else {
-            //"stats not enabled in api"
+            Utils.drawStringCentered(EnumChatFormatting.RED+"Skill/Inv/Coll", Minecraft.getMinecraft().fontRendererObj,
+                    guiLeft+172, guiTop+101-10, true, 0);
+            Utils.drawStringCentered(EnumChatFormatting.RED+"APIs not", Minecraft.getMinecraft().fontRendererObj,
+                    guiLeft+172, guiTop+101, true, 0);
+            Utils.drawStringCentered(EnumChatFormatting.RED+"enabled!", Minecraft.getMinecraft().fontRendererObj,
+                    guiLeft+172, guiTop+101+10, true, 0);
         }
 
         if(skillInfo != null) {
@@ -1423,7 +1603,8 @@ public class GuiProfileViewer extends GuiScreen {
                 position++;
             }
         } else {
-            //api not enabled
+            Utils.drawStringCentered(EnumChatFormatting.RED+"Skills API not enabled!", Minecraft.getMinecraft().fontRendererObj,
+                    guiLeft+322, guiTop+101, true, 0);
         }
     }
 
@@ -1549,6 +1730,21 @@ public class GuiProfileViewer extends GuiScreen {
         GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
     }
 
+    public void resetCache() {
+        bestWeapons = null;
+        bestRods = null;
+        armorItems = null;
+        inventoryItems = new HashMap<>();
+        currentInventoryIndex = 0;
+        arrowCount = -1;
+        greenCandyCount = -1;
+        purpleCandyCount = -1;
+        entityPlayer = null;
+        playerLocationSkin = null;
+        playerLocationCape = null;
+        skinType = null;
+    }
+
     Shader blurShaderHorz = null;
     Framebuffer blurOutputHorz = null;
     Shader blurShaderVert = null;
@@ -1643,13 +1839,13 @@ public class GuiProfileViewer extends GuiScreen {
     public void renderBlurredBackground(int width, int height, int x, int y, int blurWidth, int blurHeight) {
         float uMin = x/(float)width;
         float uMax = (x+blurWidth)/(float)width;
-        float vMin = y/(float)height;
-        float vMax = (y+blurHeight)/(float)height;
+        float vMin = (height-y)/(float)height;
+        float vMax = (height-y-blurHeight)/(float)height;
 
         blurOutputVert.bindFramebufferTexture();
         GlStateManager.color(1f, 1f, 1f, 1f);
         //Utils.setScreen(width*f, height*f, f);
-        Utils.drawTexturedRect(x, y, blurWidth, blurHeight, uMin, uMax, vMax, vMin);
+        Utils.drawTexturedRect(x, y, blurWidth, blurHeight, uMin, uMax, vMin, vMax);
         //Utils.setScreen(width, height, f);
         blurOutputVert.unbindFramebufferTexture();
     }

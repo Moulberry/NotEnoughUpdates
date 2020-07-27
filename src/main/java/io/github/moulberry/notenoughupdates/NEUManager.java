@@ -1359,6 +1359,103 @@ public class NEUManager {
         return itemMap;
     }
 
+    public String removeUnusedDecimal(double num) {
+        if(num % 1 == 0) {
+            return String.valueOf((int)num);
+        } else {
+            return String.valueOf(num);
+        }
+    }
+
+    public HashMap<String, String> getLoreReplacements(String petname, String tier, int level) {
+        JsonObject petnums = null;
+        if(petname != null && tier != null) {
+            petnums = Utils.getConstant("petnums");
+        }
+
+        HashMap<String, String> replacements = new HashMap<>();
+        if(level < 1) {
+            replacements.put("LVL", "1\u27A1100");
+        } else {
+            replacements.put("LVL", ""+level);
+        }
+        if(petnums != null) {
+            if(petnums.has(petname)) {
+                JsonObject petInfo = petnums.get(petname).getAsJsonObject();
+                if(petInfo.has(tier)) {
+                    JsonObject petInfoTier = petInfo.get(tier).getAsJsonObject();
+                    JsonObject min = petInfoTier.get("1").getAsJsonObject();
+                    JsonObject max = petInfoTier.get("100").getAsJsonObject();
+
+                    if(level < 1) {
+                        JsonArray otherNumsMin = min.get("otherNums").getAsJsonArray();
+                        JsonArray otherNumsMax = max.get("otherNums").getAsJsonArray();
+                        for(int i=0; i<otherNumsMax.size(); i++) {
+                            replacements.put(""+i, removeUnusedDecimal(Math.floor(otherNumsMin.get(i).getAsFloat()*10)/10f)+
+                                    "\u27A1"+removeUnusedDecimal(Math.floor(otherNumsMax.get(i).getAsFloat()*10)/10f));
+                        }
+
+                        for(Map.Entry<String, JsonElement> entry : max.get("statNums").getAsJsonObject().entrySet()) {
+                            int statMax = (int)Math.floor(entry.getValue().getAsFloat());
+                            int statMin = (int)Math.floor(min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat());
+                            String statStr = "+"+statMin+"\u27A1"+statMax;
+                            replacements.put(entry.getKey(), statStr);
+                        }
+                    } else {
+
+                    }
+                }
+            }
+        }
+
+        return replacements;
+    }
+
+    public HashMap<String, String> getLoreReplacements(NBTTagCompound tag, int level) {
+        String petname = null;
+        String tier = null;
+        if(tag != null && tag.hasKey("ExtraAttributes")) {
+            NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+            if(ea.hasKey("petInfo")) {
+                String petInfoStr = ea.getString("petInfo");
+                JsonObject petInfo = gson.fromJson(petInfoStr, JsonObject.class);
+                petname = petInfo.get("type").getAsString();
+                tier = petInfo.get("tier").getAsString();
+                if(petInfo.has("heldItem")) {
+                    String heldItem = petInfo.get("heldItem").getAsString();
+                    if(heldItem.equals("PET_ITEM_TIER_BOOST")) {
+                        switch(tier) {
+                            case "COMMON":
+                                tier = "UNCOMMON"; break;
+                            case "UNCOMMON":
+                                tier = "RARE"; break;
+                            case "RARE":
+                                tier = "EPIC"; break;
+                            case "EPIC":
+                                tier = "LEGENDARY"; break;
+                        }
+                    }
+                }
+            }
+        }
+        return getLoreReplacements(petname, tier, level);
+    }
+
+    public NBTTagList processLore(JsonArray lore, HashMap<String, String> replacements) {
+        NBTTagList nbtLore = new NBTTagList();
+        for(JsonElement line : lore) {
+            String lineStr = line.getAsString();
+            if(!lineStr.contains("Click to view recipes!") &&
+                    !lineStr.contains("Click to view recipe!")) {
+                for(Map.Entry<String, String> entry : replacements.entrySet()) {
+                    lineStr = lineStr.replace("{"+entry.getKey()+"}", entry.getValue());
+                }
+                nbtLore.appendTag(new NBTTagString(lineStr));
+            }
+        }
+        return nbtLore;
+    }
+
     public ItemStack jsonToStack(JsonObject json) {
         return jsonToStack(json, true);
     }
@@ -1387,24 +1484,23 @@ public class NEUManager {
                     NBTTagCompound tag = JsonToNBT.getTagFromJson(json.get("nbttag").getAsString());
                     stack.setTagCompound(tag);
                 } catch(NBTException e) {
-                    if(json.get("internalname").getAsString().equalsIgnoreCase("ROCK;0")) e.printStackTrace();
                 }
             }
+
+            HashMap<String, String> replacements = getLoreReplacements(stack.getTagCompound(), -1);
+
+            String displayname = json.get("displayname").getAsString();
+            for(Map.Entry<String, String> entry : replacements.entrySet()) {
+                displayname = displayname.replace("{"+entry.getKey()+"}", entry.getValue());
+            }
+            stack.setStackDisplayName(displayname);
 
             if(json.has("lore")) {
                 NBTTagCompound display = new NBTTagCompound();
                 if(stack.getTagCompound() != null && stack.getTagCompound().hasKey("display")) {
                     display = stack.getTagCompound().getCompoundTag("display");
                 }
-                NBTTagList lore = new NBTTagList();
-                for(JsonElement line : json.get("lore").getAsJsonArray()) {
-                    String lineStr = line.getAsString();
-                    if(!lineStr.contains("Click to view recipes!") &&
-                           !lineStr.contains("Click to view recipe!")) {
-                        lore.appendTag(new NBTTagString(lineStr));
-                    }
-                }
-                display.setTag("Lore", lore);
+                display.setTag("Lore", processLore(json.get("lore").getAsJsonArray(), replacements));
                 NBTTagCompound tag = stack.getTagCompound() != null ? stack.getTagCompound() : new NBTTagCompound();
                 tag.setTag("display", display);
                 stack.setTagCompound(tag);

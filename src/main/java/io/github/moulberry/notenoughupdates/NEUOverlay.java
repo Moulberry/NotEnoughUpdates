@@ -1803,12 +1803,7 @@ public class NEUOverlay extends Gui {
         //Render tooltip
         JsonObject json = tooltipToDisplay.get();
         if(json != null) {
-            List<String> text = new ArrayList<>();
-            text.add(json.get("displayname").getAsString());
-            JsonArray lore = json.get("lore").getAsJsonArray();
-            for(int i=0; i<lore.size(); i++) {
-                text.add(lore.get(i).getAsString());
-            }
+            List<String> text = manager.jsonToStack(json).getTooltip(Minecraft.getMinecraft().thePlayer, false);
 
             String internalname = json.get("internalname").getAsString();
             JsonObject auctionInfo = manager.getItemAuctionInfo(internalname);

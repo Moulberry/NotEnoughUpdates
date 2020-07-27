@@ -261,9 +261,10 @@ public class ProfileViewer {
         private final HashMap<String, JsonObject> skillInfoMap = new HashMap<>();
         private final HashMap<String, JsonObject> inventoryInfoMap = new HashMap<>();
         private final HashMap<String, JsonObject> collectionInfoMap = new HashMap<>();
+        private List<String> profileIds = new ArrayList<>();
         private JsonObject playerStatus = null;
-        private PlayerStats.Stats stats = null;
-        private PlayerStats.Stats passiveStats = null;
+        private HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
+        private HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
 
         public Profile(String uuid) {
             this.uuid = uuid;
@@ -294,6 +295,10 @@ public class ProfileViewer {
             return null;
         }
 
+        public String getLatestProfile() {
+            return latestProfile;
+        }
+
         public JsonArray getPlayerInformation(Runnable runnable) {
             if (playerInformation != null) return playerInformation;
             if (updatingPlayerInfoState.get()) return null;
@@ -312,9 +317,14 @@ public class ProfileViewer {
                             if (playerInformation == null) return;
                             String backup = null;
                             long backupLastSave = 0;
+
+                            profileIds.clear();
+
                             for (int i = 0; i < playerInformation.size(); i++) {
                                 JsonObject profile = playerInformation.get(i).getAsJsonObject();
                                 String cute_name = profile.get("cute_name").getAsString();
+
+                                profileIds.add(cute_name);
 
                                 if (backup == null) backup = cute_name;
 
@@ -343,6 +353,10 @@ public class ProfileViewer {
             return null;
         }
 
+        public List<String> getProfileIds() {
+            return profileIds;
+        }
+
         public JsonObject getProfileInformation(String profileId) {
             JsonArray playerInfo = getPlayerInformation(() -> {});
             if(playerInfo == null) return null;
@@ -358,7 +372,7 @@ public class ProfileViewer {
                 if(profile.get("cute_name").getAsString().equalsIgnoreCase(profileId)) {
                     if(!profile.has("members")) return null;
                     JsonObject members = profile.get("members").getAsJsonObject();
-                    if(!members.has(uuid)) return null;
+                    if(!members.has(uuid)) continue;
                     JsonObject profileInfo = members.get(uuid).getAsJsonObject();
                     if(profile.has("banking")) {
                         profileInfo.add("banking", profile.get("banking").getAsJsonObject());
@@ -406,8 +420,9 @@ public class ProfileViewer {
             playerInformation = null;
             basicInfo = null;
             playerStatus = null;
-            stats = null;
-            passiveStats = null;
+            stats.clear();
+            passiveStats.clear();
+            profileIds.clear();
             profileMap.clear();
             coopProfileMap.clear();
             petsInfoMap.clear();
@@ -638,13 +653,17 @@ public class ProfileViewer {
             JsonElement crafted_generators_element = Utils.getElement(profileInfo, "crafted_generators");
             JsonElement collectionInfoElement = Utils.getElement(profileInfo, "collection");
 
+            if(unlocked_coll_tiers_element == null || crafted_generators_element == null || collectionInfoElement == null) {
+                return null;
+            }
+
             JsonObject collectionInfo = new JsonObject();
             JsonObject collectionTiers = new JsonObject();
             JsonObject minionTiers = new JsonObject();
             JsonObject personalAmounts = new JsonObject();
             JsonObject totalAmounts = new JsonObject();
 
-            if(collectionInfoElement != null && collectionInfoElement.isJsonObject()) {
+            if(collectionInfoElement.isJsonObject()) {
                 personalAmounts = collectionInfoElement.getAsJsonObject();
             }
 
@@ -747,25 +766,28 @@ public class ProfileViewer {
         }
 
         public PlayerStats.Stats getPassiveStats(String profileId) {
-            if(passiveStats != null) return passiveStats;
+            if(passiveStats.get(profileId) != null) return passiveStats.get(profileId);
             JsonObject profileInfo = getProfileInformation(profileId);
             if(profileInfo == null) return null;
 
-            passiveStats = PlayerStats.getPassiveBonuses(getSkillInfo(profileId), profileInfo);
+            PlayerStats.Stats passiveStats = PlayerStats.getPassiveBonuses(getSkillInfo(profileId), profileInfo);
 
             if(passiveStats != null) {
                 passiveStats.add(PlayerStats.getBaseStats());
             }
 
+            this.passiveStats.put(profileId, passiveStats);
+
             return passiveStats;
         }
 
         public PlayerStats.Stats getStats(String profileId) {
-            if(stats != null) return stats;
+            if(stats.get(profileId) != null) return stats.get(profileId);
             JsonObject profileInfo = getProfileInformation(profileId);
             if(profileInfo == null) return null;
 
-            stats = PlayerStats.getStats(getSkillInfo(profileId), getInventoryInfo(profileId), getCollectionInfo(profileId), profileInfo);
+            PlayerStats.Stats stats = PlayerStats.getStats(getSkillInfo(profileId), getInventoryInfo(profileId), getCollectionInfo(profileId), profileInfo);
+            this.stats.put(profileId, stats);
             return stats;
         }
 
@@ -788,12 +810,14 @@ public class ProfileViewer {
         args.put("name", ""+name);
         manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "player",
             args, jsonObject -> {
-                    if(jsonObject == null) return;
-
-                    if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
+                if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()
+                        && jsonObject.get("player").isJsonObject()) {
                     nameToHypixelProfile.put(name, jsonObject.get("player").getAsJsonObject());
                     uuidToHypixelProfile.put(jsonObject.get("player").getAsJsonObject().get("uuid").getAsString(), jsonObject.get("player").getAsJsonObject());
                     if(callback != null) callback.accept(jsonObject);
+                } else {
+                    if(callback != null) callback.accept(null);
+                    return;
                 }
             }
         );
@@ -806,7 +830,12 @@ public class ProfileViewer {
             return profile;
         } else {
             getHypixelProfile(name, jsonObject -> {
-                callback.accept(getProfileReset(jsonObject.get("player").getAsJsonObject().get("uuid").getAsString(), ignored -> {}));
+                if(jsonObject == null) {
+                    callback.accept(null);
+                } else {
+                    callback.accept(getProfileReset(jsonObject.get("player").getAsJsonObject().get("uuid").getAsString(), ignored -> {}));
+                }
+
             });
         }
         return null;

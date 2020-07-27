@@ -365,6 +365,9 @@ public class APIManager {
         return -1;
     }
 
+    private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
+            "XII","XIII","XIV","XV","XVI","XVII","XIX","XX"};
+
     private void getPageFromAPI(int page) {
         //System.out.println("Trying to update page: " + page);
         HashMap<String, String> args = new HashMap<>();
@@ -411,7 +414,7 @@ public class APIManager {
                             bin = auction.get("bin").getAsBoolean();
                         }
                         String sbCategory = auction.get("category").getAsString();
-                        String extras = auction.get("extra").getAsString();
+                        String extras = auction.get("extra").getAsString().toLowerCase();
                         String item_name = auction.get("item_name").getAsString();
                         String item_lore = Utils.fixBrokenAPIColour(auction.get("item_lore").getAsString());
                         String item_bytes = auction.get("item_bytes").getAsString();
@@ -437,6 +440,8 @@ public class APIManager {
                             String displayNormal = "";
                             if(manager.getItemInformation().containsKey(internalname)) {
                                 displayNormal = Utils.cleanColour(manager.getItemInformation().get(internalname).get("displayname").getAsString());
+                            } else {
+
                             }
 
                             String[] lore = new String[0];
@@ -450,6 +455,25 @@ public class APIManager {
                             }
                             tag.setTag("display", display);
                             item_tag.getTagList("i", 10).getCompoundTagAt(0).setTag("tag", tag);
+
+                            if(tag.hasKey("ExtraAttributes", 10)) {
+                                NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+                                if(ea.hasKey("enchantments", 10)) {
+                                    NBTTagCompound enchantments = ea.getCompoundTag("enchantments");
+                                    for(String key : enchantments.getKeySet()) {
+                                        String enchantname = key.toLowerCase().replace("_", " ");
+                                        int enchantlevel = enchantments.getInteger(key);
+                                        String enchantLevelStr;
+                                        if(enchantlevel >= 1 && enchantlevel <= 20) {
+                                            enchantLevelStr = romans[enchantlevel-1];
+                                        } else {
+                                            enchantLevelStr = String.valueOf(enchantlevel);
+                                        }
+                                        extras = extras.replace(enchantname, enchantname + " " + enchantLevelStr);
+                                    }
+                                }
+                            }
 
                             int index=0;
                             for(String str : extras.split(" ")) {
@@ -491,7 +515,7 @@ public class APIManager {
                             if(itemType >= 0 && itemType < categoryItemType.length) {
                                 category = categoryItemType[itemType];
                             }
-                            if(extras.startsWith("Enchanted Book")) category = "ebook";
+                            if(internalname.equals("ENCHANTED_BOOK")) category = "ebook";
                             if(extras.endsWith("Potion")) category = "potion";
                             if(extras.contains("Rune")) category = "rune";
                             if(item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";

@@ -316,15 +316,15 @@ public class PlayerStats {
         return bonuses;
     }
 
-    private static final Pattern HEALTH_PATTERN = Pattern.compile("^Health: \\+([0-9]+)");
-    private static final Pattern DEFENCE_PATTERN = Pattern.compile("^Defense: \\+([0-9]+)");
-    private static final Pattern STRENGTH_PATTERN = Pattern.compile("^Strength: \\+([0-9]+)");
-    private static final Pattern SPEED_PATTERN = Pattern.compile("^Speed: \\+([0-9]+)");
-    private static final Pattern CC_PATTERN = Pattern.compile("^Crit Chance: \\+([0-9]+)");
-    private static final Pattern CD_PATTERN = Pattern.compile("^Crit Damage: \\+([0-9]+)");
-    private static final Pattern ATKSPEED_PATTERN = Pattern.compile("^Bonus Attack Speed: \\+([0-9]+)");
-    private static final Pattern INTELLIGENCE_PATTERN = Pattern.compile("^Intelligence: \\+([0-9]+)");
-    private static final Pattern SCC_PATTERN = Pattern.compile("^Sea Creature Chance: \\+([0-9]+)");
+    private static final Pattern HEALTH_PATTERN = Pattern.compile("^Health: ((?:\\+|-)[0-9]+)");
+    private static final Pattern DEFENCE_PATTERN = Pattern.compile("^Defense: ((?:\\+|-)[0-9]+)");
+    private static final Pattern STRENGTH_PATTERN = Pattern.compile("^Strength: ((?:\\+|-)[0-9]+)");
+    private static final Pattern SPEED_PATTERN = Pattern.compile("^Speed: ((?:\\+|-)[0-9]+)");
+    private static final Pattern CC_PATTERN = Pattern.compile("^Crit Chance: ((?:\\+|-)[0-9]+)");
+    private static final Pattern CD_PATTERN = Pattern.compile("^Crit Damage: ((?:\\+|-)[0-9]+)");
+    private static final Pattern ATKSPEED_PATTERN = Pattern.compile("^Bonus Attack Speed: ((?:\\+|-)[0-9]+)");
+    private static final Pattern INTELLIGENCE_PATTERN = Pattern.compile("^Intelligence: ((?:\\+|-)[0-9]+)");
+    private static final Pattern SCC_PATTERN = Pattern.compile("^Sea Creature Chance: ((?:\\+|-)[0-9]+)");
     private static final HashMap<String, Pattern> STAT_PATTERN_MAP = new HashMap<>();
     static {
         STAT_PATTERN_MAP.put("health", HEALTH_PATTERN);
@@ -472,6 +472,9 @@ public class PlayerStats {
         }
 
         for(Map.Entry<String, JsonElement> statEntry : stats.statsJson.entrySet()) {
+            if(statEntry.getKey().equals(CRIT_DAMAGE) ||
+                    statEntry.getKey().equals(INTELLIGENCE) ||
+                    statEntry.getKey().equals(BONUS_ATTACK_SPEED)) continue;
             stats.statsJson.add(statEntry.getKey(), new JsonPrimitive(Math.max(0, statEntry.getValue().getAsFloat())));
         }
     }
