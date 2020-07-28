@@ -354,7 +354,6 @@ public class PlayerStats {
             stats.addStat(DEFENCE, 2.5f);
         }
         if(internalname.equals("NEW_YEAR_CAKE_BAG") && item.has("item_contents")) {
-
             JsonArray bytesArr = item.get("item_contents").getAsJsonArray();
             byte[] bytes = new byte[bytesArr.size()];
             for(int i=0; i<bytesArr.size(); i++) {

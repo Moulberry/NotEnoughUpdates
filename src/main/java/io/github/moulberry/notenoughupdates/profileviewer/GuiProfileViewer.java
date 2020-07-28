@@ -8,6 +8,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.properties.Property;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.SBAIntegration;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.questing.SBScoreboardData;
@@ -39,6 +40,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.*;
 import net.minecraft.util.*;
 import net.minecraft.world.World;
 import org.apache.commons.codec.binary.Base64;
@@ -51,6 +53,7 @@ import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 
 import java.awt.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.NumberFormat;
@@ -98,8 +101,8 @@ public class GuiProfileViewer extends GuiScreen {
         INVALID_NAME(null),
         BASIC(new ItemStack(Items.paper)),
         INVS(new ItemStack(Item.getItemFromBlock(Blocks.ender_chest))),
-        COLS(new ItemStack(Items.painting));
-        //PETS(new ItemStack(Items.bone));
+        COLS(new ItemStack(Items.painting)),
+        PETS(new ItemStack(Items.bone));
 
         public final ItemStack stack;
 
@@ -127,7 +130,9 @@ public class GuiProfileViewer extends GuiScreen {
         currentTime = System.currentTimeMillis();
         if(startTime == 0) startTime = currentTime;
 
-        if(profile == null) currentPage = ProfileViewerPage.INVALID_NAME;
+        if(profile == null) {
+            currentPage = ProfileViewerPage.INVALID_NAME;
+        }
         if(profileId == null && profile != null && profile.getLatestProfile() != null) {
             profileId = profile.getLatestProfile();
         }
@@ -143,13 +148,12 @@ public class GuiProfileViewer extends GuiScreen {
         blurBackground();
         renderBlurredBackground(width, height, guiLeft+2, guiTop+2, sizeX-4, sizeY-4);
 
+        GlStateManager.enableDepth();
         GlStateManager.translate(0, 0, 5);
         renderTabs(true);
         GlStateManager.translate(0, 0, -3);
 
-        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bg);
-        Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
-
+        GlStateManager.disableDepth();
         GlStateManager.translate(0, 0, -2);
         renderTabs(false);
         GlStateManager.translate(0, 0, 2);
@@ -161,30 +165,8 @@ public class GuiProfileViewer extends GuiScreen {
         GlStateManager.enableAlpha();
         GlStateManager.alphaFunc(516, 0.1F);
 
-        switch (currentPage) {
-            case BASIC:
-                drawBasicPage(mouseX, mouseY, partialTicks);
-                break;
-            case INVS:
-                drawInvsPage(mouseX, mouseY, partialTicks);
-                break;
-            case COLS:
-                drawColsPage(mouseX, mouseY, partialTicks);
-                break;
-            case LOADING:
-                Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Loading player profiles...", Minecraft.getMinecraft().fontRendererObj,
-                        guiLeft+sizeX/2f, guiTop+101, true, 0);
-                break;
-            case INVALID_NAME:
-                Utils.drawStringCentered(EnumChatFormatting.RED+"Invalid name or API is down!", Minecraft.getMinecraft().fontRendererObj,
-                        guiLeft+sizeX/2f, guiTop+101, true, 0);
-                break;
-            //case PETS:
-            //    drawPetsPage(mouseX, mouseY, partialTicks);
-            //    break;
-        }
-
-        lastTime = currentTime;
+        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bg);
+        Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
 
         if(!(currentPage == ProfileViewerPage.LOADING)) {
             playerNameTextField.render(guiLeft+sizeX-100, guiTop+sizeY+5);
@@ -222,6 +204,32 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
 
+        GlStateManager.color(1, 1, 1, 1);
+        switch (currentPage) {
+            case BASIC:
+                drawBasicPage(mouseX, mouseY, partialTicks);
+                break;
+            case INVS:
+                drawInvsPage(mouseX, mouseY, partialTicks);
+                break;
+            case COLS:
+                drawColsPage(mouseX, mouseY, partialTicks);
+                break;
+            case PETS:
+                drawPetsPage(mouseX, mouseY, partialTicks);
+                break;
+            case LOADING:
+                Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Loading player profiles...", Minecraft.getMinecraft().fontRendererObj,
+                        guiLeft+sizeX/2f, guiTop+101, true, 0);
+                break;
+            case INVALID_NAME:
+                Utils.drawStringCentered(EnumChatFormatting.RED+"Invalid name or API is down!", Minecraft.getMinecraft().fontRendererObj,
+                        guiLeft+sizeX/2f, guiTop+101, true, 0);
+                break;
+        }
+
+        lastTime = currentTime;
+
         if(tooltipToDisplay != null) {
             List<String> grayTooltip = new ArrayList<>(tooltipToDisplay.size());
             for(String line : tooltipToDisplay) {
@@ -234,18 +242,6 @@ public class GuiProfileViewer extends GuiScreen {
 
     private boolean isLoadedProfile() {
         return profile.getProfileInformation(profileId) != null;
-    }
-
-    private boolean isCollectionApiEnabled() {
-        return profile.getCollectionInfo(profileId) != null;
-    }
-
-    private boolean isInventoryApiEnabled() {
-        return profile.getInventoryInfo(profileId) != null;
-    }
-
-    private boolean isSkillsApiEnabled() {
-        return profile.getSkillInfo(profileId) != null;
     }
 
     private void renderTabs(boolean renderPressed) {
@@ -265,7 +261,6 @@ public class GuiProfileViewer extends GuiScreen {
 
     private void renderTab(ItemStack stack, int xIndex, boolean pressed) {
         GlStateManager.disableLighting();
-        GlStateManager.enableDepth();
         GlStateManager.enableBlend();
         GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GlStateManager.enableAlpha();
@@ -277,7 +272,7 @@ public class GuiProfileViewer extends GuiScreen {
         float uMin = 0;
         float uMax = 28/256f;
         float vMin = 20/256f;
-        float vMax = 52/256f;
+        float vMax = 51/256f;
         if(pressed) {
             vMin = 52/256f;
             vMax = 84/256f;
@@ -293,14 +288,15 @@ public class GuiProfileViewer extends GuiScreen {
         }
 
         GlStateManager.disableLighting();
-        GlStateManager.enableDepth();
         GlStateManager.enableBlend();
         GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GlStateManager.enableAlpha();
         GlStateManager.alphaFunc(516, 0.1F);
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
-        Utils.drawTexturedRect(x, y, 28, 32, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
+        Utils.drawTexturedRect(x, y, 28, pressed?32:31, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
+
+        GlStateManager.enableDepth();
         Utils.drawItemStack(stack, x+6, y+9);
     }
 
@@ -339,6 +335,26 @@ public class GuiProfileViewer extends GuiScreen {
                         return;
                     }
                 }
+                break;
+            case PETS:
+                JsonObject petsInfo = profile.getPetsInfo(profileId);
+                if(petsInfo == null) break;
+                JsonArray pets = petsInfo.get("pets").getAsJsonArray();
+                for(int i=petsPage*20; i<Math.min(petsPage*20+20, pets.size()); i++) {
+                    int xIndex = i % COLLS_XCOUNT;
+                    int yIndex = i / COLLS_XCOUNT;
+
+                    float x = 5 + COLLS_XPADDING + (COLLS_XPADDING + 20) * xIndex;
+                    float y = 7 + COLLS_YPADDING + (COLLS_YPADDING + 20) * yIndex;
+
+                    if(mouseX > guiLeft+x && mouseX < guiLeft+x+20) {
+                        if(mouseY > guiTop+y && mouseY < guiTop+y+20) {
+                            selectedPet = pets.get(i).getAsJsonObject();
+                            return;
+                        }
+                    }
+                }
+                break;
         }
         if(mouseX > guiLeft+sizeX-100 && mouseX < guiLeft+sizeX) {
             if(mouseY > guiTop+sizeY+5 && mouseY < guiTop+sizeY+25) {
@@ -375,7 +391,7 @@ public class GuiProfileViewer extends GuiScreen {
                 } else {
                     profileDropdownSelected = !profileDropdownSelected;
                 }
-            } else if(scaledResolution.getScaleFactor() != 4) {
+            } else if(scaledResolution.getScaleFactor() != 4 && profileDropdownSelected) {
                 int dropdownOptionSize = scaledResolution.getScaleFactor()==3?10:20;
                 int extraY = mouseY - (guiTop+sizeY+23);
                 int index = extraY/dropdownOptionSize;
@@ -399,6 +415,7 @@ public class GuiProfileViewer extends GuiScreen {
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
+        SBAIntegration.keyTyped(keyCode);
         switch (currentPage) {
             case INVS:
                 keyTypedInvs(typedChar, keyCode);
@@ -551,6 +568,31 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
+    public int getLevel(JsonArray levels, int offset, float exp) {
+        float xpTotal = 0;
+        int level = 1;
+
+        for(int i=offset; i<offset+99; i++) {
+            xpTotal += levels.get(i).getAsFloat();
+
+            if(xpTotal > exp) {
+                break;
+            } else {
+                level += 1;
+            }
+        }
+
+        if(level <= 0) {
+            level = 1;
+        } else if(level > 100) {
+            level = 100;
+        }
+        return level;
+    }
+
+    private JsonObject selectedPet = null;
+    private int petsPage = 0;
+    private List<JsonObject> sortedPets = null;
     private static HashMap<String, String> minionRarityToNumMap = new HashMap<>();
     static {
         minionRarityToNumMap.put("COMMON", "0");
@@ -560,33 +602,154 @@ public class GuiProfileViewer extends GuiScreen {
         minionRarityToNumMap.put("LEGENDARY", "4");
     }
     private void drawPetsPage(int mouseX, int mouseY, float partialTicks) {
+        JsonObject petsInfo = profile.getPetsInfo(profileId);
+        if(petsInfo == null) return;
+        JsonObject petsJson = Utils.getConstant("pets");
+        if(petsJson == null) return;
+
+        String location = null;
+        JsonObject status = profile.getPlayerStatus();
+        if(status != null && status.has("mode")) {
+            location = status.get("mode").getAsString();
+        }
+
+        backgroundRotation += (currentTime - lastTime)/400f;
+        backgroundRotation %= 360;
+
+        String panoramaIdentifier = "day";
+        if(SBScoreboardData.getInstance().currentTimeDate != null) {
+            if(SBScoreboardData.getInstance().currentTimeDate.getHours() <= 6 ||
+                    SBScoreboardData.getInstance().currentTimeDate.getHours() >= 20) {
+                panoramaIdentifier = "night";
+            }
+        }
+
+        Panorama.drawPanorama(-backgroundRotation, guiLeft+212, guiTop+44, 81, 108, -0.37f, 0.6f,
+                getPanoramasForLocation(location==null?"dynamic":location, panoramaIdentifier));
+
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_pets);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
 
-        JsonObject petsInfo = profile.getPetsInfo(profileId);
-        if(petsInfo == null) return;
+        Utils.drawStringCentered(EnumChatFormatting.DARK_PURPLE+"Pets", Minecraft.getMinecraft().fontRendererObj,
+                guiLeft+100, guiTop+14, true, 4210752);
+        GlStateManager.color(1, 1, 1, 1);
 
         JsonArray pets = petsInfo.get("pets").getAsJsonArray();
-        for(int i=0; i<pets.size(); i++) {
-            JsonObject pet = pets.get(i).getAsJsonObject();
 
+        if(sortedPets == null) {
+            sortedPets = new ArrayList<>();
+            for(int i=0; i<pets.size(); i++) {
+                sortedPets.add(pets.get(i).getAsJsonObject());
+            }
+            sortedPets.sort((pet1, pet2) -> {
+                String tier1 = pet1.get("tier").getAsString();
+                String tierNum1 = minionRarityToNumMap.get(tier1);
+                int tierNum1I = Integer.parseInt(tierNum1);
+                float exp1 = pet1.get("exp").getAsFloat();
+
+                String tier2 = pet2.get("tier").getAsString();
+                String tierNum2 = minionRarityToNumMap.get(tier2);
+                int tierNum2I = Integer.parseInt(tierNum2);
+                float exp2 = pet2.get("exp").getAsFloat();
+
+                if(tierNum1I != tierNum2I) {
+                    return tierNum2I - tierNum1I;
+                } else {
+                    return (int)(exp2 - exp1);
+                }
+            });
         }
 
-        /*if(minions != null) {
-            for (int i = 0; i < minions.size(); i++) {
-                String minion = minions.get(i);
-                if (minion != null) {
-                    JsonObject minionJson = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(minion + "_GENERATOR_1");
-                    if (minionJson != null) {
-                        int xIndex = i % COLLS_XCOUNT;
-                        int yIndex = i / COLLS_XCOUNT;
+        for(int i=petsPage*20; i<Math.min(petsPage*20+20, sortedPets.size()); i++) {
+            JsonObject pet = sortedPets.get(i);
+            if(pet != null) {
+                String petname = pet.get("type").getAsString();
+                String tier = pet.get("tier").getAsString();
+                String tierNum = minionRarityToNumMap.get(tier);
+                float exp = pet.get("exp").getAsFloat();
+                if(tierNum == null) continue;
 
-                        float x = 231 + COLLS_XPADDING + (COLLS_XPADDING + 20) * xIndex;
-                        float y = 7 + COLLS_YPADDING + (COLLS_YPADDING + 20) * yIndex;
+                int petRarityOffset = petsJson.get("pet_rarity_offset").getAsJsonObject().get(tier).getAsInt();
+                JsonArray levelsArr = petsJson.get("pet_levels").getAsJsonArray();
+
+                int level = getLevel(levelsArr, petRarityOffset, exp);
+
+                JsonObject petItem = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(petname+";"+tierNum);
+                ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(petItem, false, false);
+                HashMap<String, String> replacements = NotEnoughUpdates.INSTANCE.manager.getLoreReplacements(petname, tier, level);
+
+                NBTTagCompound tag = stack.getTagCompound()==null?new NBTTagCompound():stack.getTagCompound();
+                if(tag.hasKey("display", 10)) {
+                    NBTTagCompound display = tag.getCompoundTag("display");
+                    if(display.hasKey("Lore", 9)) {
+                        NBTTagList newLore = new NBTTagList();
+                        NBTTagList lore = display.getTagList("Lore", 8);
+                        for(int j=0; j<lore.tagCount(); j++) {
+                            String line = lore.getStringTagAt(j);
+                            for(Map.Entry<String, String> replacement : replacements.entrySet()) {
+                                line = line.replace("{"+replacement.getKey()+"}", replacement.getValue());
+                            }
+                            newLore.appendTag(new NBTTagString(line));
+                        }
+                        display.setTag("Lore", newLore);
+                    }
+                    if(display.hasKey("Name", 8)) {
+                        String displayName = display.getString("Name");
+                        for(Map.Entry<String, String> replacement : replacements.entrySet()) {
+                            displayName = displayName.replace("{"+replacement.getKey()+"}", replacement.getValue());
+                        }
+                        display.setTag("Name", new NBTTagString(displayName));
+                    }
+                    tag.setTag("display", display);
+                }
+                stack.setTagCompound(tag);
+
+                int xIndex = i % COLLS_XCOUNT;
+                int yIndex = i / COLLS_XCOUNT;
+
+                float x = 5 + COLLS_XPADDING + (COLLS_XPADDING + 20) * xIndex;
+                float y = 7 + COLLS_YPADDING + (COLLS_YPADDING + 20) * yIndex;
+
+                Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
+                if(pet == selectedPet) {
+                    GlStateManager.color(1, 185/255f, 0, 1);
+                    Utils.drawTexturedRect(guiLeft+x, guiTop+y, 20, 20,
+                            0, 20/256f, 0, 20/256f, GL11.GL_NEAREST);
+                } else {
+                    GlStateManager.color(1, 1, 1, 1);
+                    Utils.drawTexturedRect(guiLeft+x, guiTop+y, 20, 20,
+                            0, 20/256f, 0, 20/256f, GL11.GL_NEAREST);
+                }
+
+                Utils.drawItemStack(stack, guiLeft+(int)x+2, guiTop+(int)y+2);
+
+                if(mouseX > guiLeft+x && mouseX < guiLeft+x+20) {
+                    if(mouseY > guiTop+y && mouseY < guiTop+y+20) {
+                        tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                     }
                 }
             }
-        }*/
+        }
+
+        if(selectedPet != null) {
+            String type = selectedPet.get("type").getAsString();
+
+            for(int i=0; i<4; i++) {
+                JsonObject item = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(type+";"+i);
+                if(item != null) {
+                    int x = guiLeft+280;
+                    float y = guiTop+67+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
+                    GlStateManager.translate(x, y, 0);
+                    ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
+                    GlStateManager.scale(-3.5f, 3.5f, 1);
+                    GlStateManager.enableDepth();
+                    Utils.drawItemStack(stack, 0, 0);
+                    GlStateManager.scale(-1/3.5f, 1/3.5f, 1);
+                    GlStateManager.translate(-x, -y, 0);
+                    break;
+                }
+            }
+        }
     }
 
     private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
@@ -937,7 +1100,29 @@ public class GuiProfileViewer extends GuiScreen {
                     continue;
                 }
 
-                items[yIndex][xIndex] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(jsonInv.get(j).getAsJsonObject(), false);
+                JsonObject item = jsonInv.get(j).getAsJsonObject();
+                ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item, false);
+                if(item.has("item_contents")) {
+                    JsonArray bytesArr = item.get("item_contents").getAsJsonArray();
+                    byte[] bytes = new byte[bytesArr.size()];
+                    for(int bytesArrI=0; bytesArrI<bytesArr.size(); bytesArrI++) {
+                        bytes[bytesArrI] = bytesArr.get(bytesArrI).getAsByte();
+                    }
+                    //byte[] bytes2 = null;
+                    NBTTagCompound tag = stack.getTagCompound();
+                    if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+                        NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+                        for(String key : ea.getKeySet()) {
+                            if(key.endsWith("backpack_data") || key.equals("new_year_cake_bag_data")) {
+                                ea.setTag(key, new NBTTagByteArray(bytes));
+                                break;
+                            }
+                        }
+                        tag.setTag("ExtraAttributes", ea);
+                        stack.setTagCompound(tag);
+                    }
+                }
+                items[yIndex][xIndex] = stack;
             }
             inventories[i] = items;
         }
@@ -957,7 +1142,9 @@ public class GuiProfileViewer extends GuiScreen {
     private int greenCandyCount = -1;
     private int purpleCandyCount = -1;
     private GuiElementTextField inventoryTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
-
+    private ItemStack lastBackpack;
+    private int lastBackpackX;
+    private int lastBackpackY;
     private void drawInvsPage(int mouseX, int mouseY, float partialTicks) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_invs);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
@@ -1132,6 +1319,7 @@ public class GuiProfileViewer extends GuiScreen {
 
         fontRendererObj.drawString(Utils.cleanColour(invNameToDisplayMap.get(selectedInventory).getDisplayName()), x+8, y+6, 4210752);
 
+        ItemStack stackToRender = null;
         int overlay = new Color(0, 0, 0, 100).getRGB();
         for(int yIndex=0; yIndex<inventory.length; yIndex++) {
             if(inventory[yIndex] == null) continue;
@@ -1152,8 +1340,39 @@ public class GuiProfileViewer extends GuiScreen {
 
                 if(mouseX >= x+8+xIndex*18 && mouseX <= x+8+xIndex*18+16) {
                     if(mouseY >= y+18+yIndex*18 && mouseY <= y+18+yIndex*18+16) {
-                        tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                        stackToRender = stack;
                     }
+                }
+            }
+        }
+        if(stackToRender == null && !SBAIntegration.isFreezeBackpack()) lastBackpack = null;
+        if(SBAIntegration.isFreezeBackpack()) {
+            if(lastBackpack != null) {
+                SBAIntegration.setActiveBackpack(lastBackpack, lastBackpackX, lastBackpackY);
+                GlStateManager.translate(0, 0, 100);
+                SBAIntegration.renderActiveBackpack(mouseX, mouseY, fontRendererObj);
+                GlStateManager.translate(0, 0, -100);
+            }
+        } else {
+            if(stackToRender != null) {
+                String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stackToRender);
+                boolean renderedBackpack;
+                if(internalname != null && (internalname.endsWith("BACKPACK") || internalname.equals("NEW_YEAR_CAKE_BAG"))) {
+                    lastBackpack = stackToRender;
+                    lastBackpackX = mouseX;
+                    lastBackpackY = mouseY;
+                    renderedBackpack = SBAIntegration.setActiveBackpack(lastBackpack, lastBackpackX, lastBackpackY);
+                    if(renderedBackpack) {
+                        GlStateManager.translate(0, 0, 100);
+                        renderedBackpack = SBAIntegration.renderActiveBackpack(mouseX, mouseY, fontRendererObj);
+                        GlStateManager.translate(0, 0, -100);
+                    }
+                } else {
+                    renderedBackpack = false;
+                }
+                if(!renderedBackpack) {
+                    lastBackpack = null;
+                    tooltipToDisplay = stackToRender.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                 }
             }
         }
@@ -1313,7 +1532,7 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
 
-        Panorama.drawPanorama(-backgroundRotation-extraRotation, guiLeft+23, guiTop+44, 81, 108,
+        Panorama.drawPanorama(-backgroundRotation-extraRotation, guiLeft+23, guiTop+44, 81, 108, 0.37f, 0.8f,
                 getPanoramasForLocation(location==null?"unknown":location, panoramaIdentifier));
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_basic);
@@ -1398,7 +1617,7 @@ public class GuiProfileViewer extends GuiScreen {
                 if(location != null) {
                     JsonObject misc = Utils.getConstant("misc");
                     if(misc != null) {
-                        locationStr = Utils.getElementAsString(Utils.getElement(misc, "area_names."+location), "Unknown Location");
+                        locationStr = Utils.getElementAsString(Utils.getElement(misc, "area_names."+location), "Unknown");
                     }
                 }
             }
@@ -1407,11 +1626,6 @@ public class GuiProfileViewer extends GuiScreen {
             }
 
             Utils.drawStringCentered(statusStr, fr, guiLeft+63, guiTop+160, true, 0);
-        }
-
-        if(!isLoadedProfile()) {
-            //TODO: "Downloading player information"
-            return;
         }
 
         if(entityPlayer == null) {
@@ -1454,10 +1668,12 @@ public class GuiProfileViewer extends GuiScreen {
         } else {
             if(inventoryInfo != null && inventoryInfo.has("inv_armor")) {
                 JsonArray items = inventoryInfo.get("inv_armor").getAsJsonArray();
-                for(int i=0; i<entityPlayer.inventory.armorInventory.length; i++) {
-                    JsonElement itemElement = items.get(i);
-                    if(itemElement != null && itemElement.isJsonObject()) {
-                        entityPlayer.inventory.armorInventory[i] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(itemElement.getAsJsonObject(), false);
+                if(items != null && items.size() == 4) {
+                    for(int i=0; i<entityPlayer.inventory.armorInventory.length; i++) {
+                        JsonElement itemElement = items.get(i);
+                        if(itemElement != null && itemElement.isJsonObject()) {
+                            entityPlayer.inventory.armorInventory[i] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(itemElement.getAsJsonObject(), false);
+                        }
                     }
                 }
             }
@@ -1502,6 +1718,7 @@ public class GuiProfileViewer extends GuiScreen {
                         GlStateManager.translate(x, y, 0);
                         ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
                         GlStateManager.scale(-1.5f, 1.5f, 1);
+                        GlStateManager.enableDepth();
                         Utils.drawItemStack(stack, 0, 0);
                         GlStateManager.scale(-1/1.5f, 1/1.5f, 1);
                         GlStateManager.translate(-x, -y, 0);

@@ -23,9 +23,8 @@ public class Panorama {
     private static int lastWidth = 0;
     private static int lastHeight = 0;
 
-    public static void drawPanorama(float angle, int x, int y, int width, int height, ResourceLocation[] panoramas) {
+    public static void drawPanorama(float angle, int x, int y, int width, int height, float yOffset, float zOffset, ResourceLocation[] panoramas) {
         Minecraft.getMinecraft().getFramebuffer().unbindFramebuffer();
-        //GlStateManager.viewport(0, 0, 1024, 1024);
 
         ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
 
@@ -56,7 +55,7 @@ public class Panorama {
 
             GlStateManager.pushMatrix();
 
-            GlStateManager.translate(0, 0.37f, 0.8f);
+            GlStateManager.translate(0, yOffset, zOffset);
 
             GlStateManager.rotate(angle, 0.0F, 1.0F, 0.0F);
 

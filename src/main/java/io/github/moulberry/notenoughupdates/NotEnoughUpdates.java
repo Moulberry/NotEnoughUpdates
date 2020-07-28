@@ -29,6 +29,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
@@ -167,13 +168,17 @@ public class NotEnoughUpdates {
     }, new SimpleCommand.TabCompleteRunnable() {
         @Override
         public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
-            /*if(args.length) {
-                
-            }*/
-            for(String arg : args) {
-                System.out.println(arg);
+            if(args.length != 1) return null;
+
+            String lastArg = args[args.length-1];
+            List<String> playerMatches = new ArrayList<>();
+            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                String playerName = player.getName();
+                if(playerName.toLowerCase().startsWith(lastArg.toLowerCase())) {
+                    playerMatches.add(playerName);
+                }
             }
-            return null;
+            return playerMatches;
         }
     });
 
@@ -705,7 +710,8 @@ public class NotEnoughUpdates {
             missingRecipe.set(true);
         }
         //System.out.println(e.message);
-        if(isOnSkyblock() && manager.config.streamerMode.value && e.message instanceof ChatComponentText) {
+        if(unformatted.startsWith("Sending to server") &&
+                isOnSkyblock() && manager.config.streamerMode.value && e.message instanceof ChatComponentText) {
             String m = e.message.getFormattedText();
             String m2 = StreamerMode.filterChat(e.message.getFormattedText());
             if(!m.equals(m2)) {

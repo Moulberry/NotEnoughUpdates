@@ -322,17 +322,20 @@ public class ProfileViewer {
 
                             for (int i = 0; i < playerInformation.size(); i++) {
                                 JsonObject profile = playerInformation.get(i).getAsJsonObject();
-                                String cute_name = profile.get("cute_name").getAsString();
-
-                                profileIds.add(cute_name);
-
-                                if (backup == null) backup = cute_name;
 
                                 if (!profile.has("members")) continue;
                                 JsonObject members = profile.get("members").getAsJsonObject();
 
                                 if (members.has(uuid)) {
                                     JsonObject member = members.get(uuid).getAsJsonObject();
+
+                                    if(member.has("coop_invitation")) {
+                                        continue;
+                                    }
+
+                                    String cute_name = profile.get("cute_name").getAsString();
+                                    if (backup == null) backup = cute_name;
+                                    profileIds.add(cute_name);
                                     if (member.has("last_save")) {
                                         long last_save = member.get("last_save").getAsLong();
                                         if (last_save > backupLastSave) {
@@ -340,6 +343,7 @@ public class ProfileViewer {
                                             backup = cute_name;
                                         }
                                     }
+
                                 }
                             }
                             if (runnable != null) runnable.run();

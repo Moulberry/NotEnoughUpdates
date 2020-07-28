@@ -279,6 +279,8 @@ public class Options {
     public List<Option> getOptions() {
         List<Option> options = new ArrayList<>();
 
+        //Pane width near top so less scuffed
+        tryAddOption(paneWidthMult, options);
         //Buttons
         tryAddOption(enableItemEditing, options);
         tryAddOption(onlyShowOnSkyblock, options);
@@ -298,7 +300,6 @@ public class Options {
         tryAddOption(disableItemTabOpen, options);
         //Sliders
         tryAddOption(bgBlurFactor, options);
-        tryAddOption(paneWidthMult, options);
         tryAddOption(ahNotification, options);
         tryAddOption(bgOpacity, options);
         tryAddOption(fgOpacity, options);

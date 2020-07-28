@@ -515,7 +515,7 @@ public class APIManager {
                             if(itemType >= 0 && itemType < categoryItemType.length) {
                                 category = categoryItemType[itemType];
                             }
-                            if(internalname.equals("ENCHANTED_BOOK")) category = "ebook";
+                            if(internalname.contains("ENCHANTED_BOOK")) category = "ebook";
                             if(extras.endsWith("Potion")) category = "potion";
                             if(extras.contains("Rune")) category = "rune";
                             if(item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";

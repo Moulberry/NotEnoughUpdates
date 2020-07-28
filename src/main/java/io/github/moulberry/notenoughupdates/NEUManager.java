@@ -921,8 +921,14 @@ public class NEUManager {
         if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
             NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
 
-            if (ea.hasKey("new_year_cake_bag_data", 7)) {
-                byte[] bytes = ea.getByteArray("new_year_cake_bag_data");
+            byte[] bytes = null;
+            for(String key : ea.getKeySet()) {
+                if(key.endsWith("backpack_data") || key.equals("new_year_cake_bag_data")) {
+                    bytes = ea.getByteArray(key);
+                    break;
+                }
+            }
+            if(bytes != null) {
                 JsonArray bytesArr = new JsonArray();
                 for(byte b : bytes) {
                     bytesArr.add(new JsonPrimitive(b));
@@ -1384,6 +1390,10 @@ public class NEUManager {
                 JsonObject petInfo = petnums.get(petname).getAsJsonObject();
                 if(petInfo.has(tier)) {
                     JsonObject petInfoTier = petInfo.get(tier).getAsJsonObject();
+                    if(petInfoTier == null || !petInfoTier.has("1") || !petInfoTier.has("100")) {
+                        return replacements;
+                    }
+
                     JsonObject min = petInfoTier.get("1").getAsJsonObject();
                     JsonObject max = petInfoTier.get("100").getAsJsonObject();
 
@@ -1402,7 +1412,23 @@ public class NEUManager {
                             replacements.put(entry.getKey(), statStr);
                         }
                     } else {
+                        float minMix = (100-level)/99f;
+                        float maxMix = (level-1)/99f;
 
+                        JsonArray otherNumsMin = min.get("otherNums").getAsJsonArray();
+                        JsonArray otherNumsMax = max.get("otherNums").getAsJsonArray();
+                        for(int i=0; i<otherNumsMax.size(); i++) {
+                            float val = otherNumsMin.get(i).getAsFloat()*minMix + otherNumsMax.get(i).getAsFloat()*maxMix;
+                            replacements.put(""+i, removeUnusedDecimal(Math.floor(val*10)/10f));
+                        }
+
+                        for(Map.Entry<String, JsonElement> entry : max.get("statNums").getAsJsonObject().entrySet()) {
+                            float statMax = entry.getValue().getAsFloat();
+                            float statMin = min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat();
+                            float val = statMin*minMix + statMax*maxMix;
+                            String statStr = "+"+(int)Math.floor(val);
+                            replacements.put(entry.getKey(), statStr);
+                        }
                     }
                 }
             }
@@ -1461,6 +1487,10 @@ public class NEUManager {
     }
 
     public ItemStack jsonToStack(JsonObject json, boolean useCache) {
+        return jsonToStack(json, useCache, true);
+    }
+
+    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {
         if(useCache && itemstackCache.containsKey(json.get("internalname").getAsString())) {
             return itemstackCache.get(json.get("internalname").getAsString()).copy();
         }
@@ -1487,13 +1517,17 @@ public class NEUManager {
                 }
             }
 
-            HashMap<String, String> replacements = getLoreReplacements(stack.getTagCompound(), -1);
+            HashMap<String, String> replacements = new HashMap<>();
 
-            String displayname = json.get("displayname").getAsString();
-            for(Map.Entry<String, String> entry : replacements.entrySet()) {
-                displayname = displayname.replace("{"+entry.getKey()+"}", entry.getValue());
+            if(useReplacements) {
+                replacements = getLoreReplacements(stack.getTagCompound(), -1);
+
+                String displayname = json.get("displayname").getAsString();
+                for(Map.Entry<String, String> entry : replacements.entrySet()) {
+                    displayname = displayname.replace("{"+entry.getKey()+"}", entry.getValue());
+                }
+                stack.setStackDisplayName(displayname);
             }
-            stack.setStackDisplayName(displayname);
 
             if(json.has("lore")) {
                 NBTTagCompound display = new NBTTagCompound();
