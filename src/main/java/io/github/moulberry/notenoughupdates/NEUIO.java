@@ -63,6 +63,19 @@ public class NEUIO {
         }
     }
 
+    public String getLatestCommit() {
+        try {
+            GitHub github = new GitHubBuilder().withOAuthToken(accessToken).build();
+            GHRepository repo = github.getRepositoryById("247692460");
+            for(GHCommit commit : repo.listCommits()) {
+                return commit.getSHA1();
+            }
+        } catch(IOException e) {
+            return null;
+        }
+        return "";
+    }
+
     /**
      * @param oldShas Map from filename (eg. BOW.json) to the sha in the local repository
      * @return Map from filename to the new shas

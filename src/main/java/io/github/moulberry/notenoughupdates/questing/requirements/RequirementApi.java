@@ -97,12 +97,12 @@ public class RequirementApi extends Requirement {
     @Override
     public void updateRequirement() {
         if(valid) {
-            JsonObject profile = NotEnoughUpdates.INSTANCE.manager.auctionManager.getPlayerInformation();
+            /*JsonObject profile = NotEnoughUpdates.INSTANCE.manager.auctionManager.getPlayerInformation();
             if(profile != null) {
                 System.out.println("-----------");
                 JsonElement element = getElement(profile, requirementLeft);
                 completed = checkElementSatisfiesComparison(element, op, requirementRight);
-            }
+            }*/
         }
     }
 }

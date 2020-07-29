@@ -881,11 +881,6 @@ public class CustomAH extends Gui {
                 lore.add("ID Tagged Auctions: " + manager.auctionManager.internalnameTaggedAuctions);
                 lore.add("Total Tags: " + manager.auctionManager.totalTags);
                 lore.add("Tagged Auctions: " + manager.auctionManager.taggedAuctions);
-                lore.add("AucUpdates(0): " + manager.auctionManager.aucUpdates.computeIfAbsent(0, k->0));
-                lore.add("AucUpdates(1): " + manager.auctionManager.aucUpdates.computeIfAbsent(1, k->0));
-                lore.add("AucUpdates(20): " + manager.auctionManager.aucUpdates.computeIfAbsent(20, k->0));
-                lore.add("AucUpdates(Last-1): " + manager.auctionManager.aucUpdates.computeIfAbsent(manager.auctionManager.aucUpdates.size()-2, k->0));
-                lore.add("AucUpdates(Last): " + manager.auctionManager.aucUpdates.computeIfAbsent(manager.auctionManager.aucUpdates.size()-1, k->0));
                 lore.add("");
                 lore.add(EnumChatFormatting.AQUA + "Right-Click to copy current aucid to clipboard!");
                 lore.add(EnumChatFormatting.YELLOW + "Click to refresh!");

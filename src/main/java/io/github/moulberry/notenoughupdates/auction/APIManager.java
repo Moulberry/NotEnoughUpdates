@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.auction;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -29,8 +30,6 @@ public class APIManager {
     public final CustomAH customAH;
 
     private int totalPages = 0;
-    private int lastApiUpdate;
-    private LinkedList<Integer> needUpdate = new LinkedList<>();
 
     private TreeMap<String, Auction> auctionMap = new TreeMap<>();
     public HashMap<String, HashSet<String>> internalnameToAucIdMap = new HashMap<>();
@@ -42,12 +41,10 @@ public class APIManager {
 
     private JsonArray playerInformation = null;
 
-    public HashMap<Integer, Integer> aucUpdates = new HashMap<>();
-
     public TreeMap<String, HashMap<Integer, HashSet<String>>> extrasToAucIdMap = new TreeMap<>();
 
-    private long lastPageUpdate = 0;
-    private long lastProfileUpdate = 0;
+    private boolean fullDownload = false;
+    private long lastAuctionUpdate = 0;
     private long lastCustomAHSearch = 0;
     private long lastCleanup = 0;
 
@@ -58,36 +55,9 @@ public class APIManager {
     public int taggedAuctions = 0;
     public int processMillis = 0;
 
-    private boolean doFullUpdate = false;
-
     public APIManager(NEUManager manager) {
         this.manager = manager;
         customAH = new CustomAH(manager);
-    }
-
-    private AtomicInteger playerInfoVersion = new AtomicInteger(0);
-
-    public JsonObject getPlayerInformation() {
-        if(playerInformation == null) return null;
-        for(int i=0; i<playerInformation.size(); i++) {
-            JsonObject profile = playerInformation.get(i).getAsJsonObject();
-            if(profile.get("cute_name").getAsString().equalsIgnoreCase(manager.getCurrentProfile())) {
-                if(!profile.has("members")) return null;
-                JsonObject members = profile.get("members").getAsJsonObject();
-                String uuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
-                if(!members.has(uuid)) return null;
-                return members.get(uuid).getAsJsonObject();
-            }
-        }
-        return null;
-    }
-
-    public int getPlayerInfoVersion() {
-        return playerInfoVersion.get();
-    }
-
-    public void incPlayerInfoVersion() {
-        playerInfoVersion.incrementAndGet();
     }
 
     public TreeMap<String, Auction> getAuctionItems() {
@@ -148,8 +118,8 @@ public class APIManager {
 
         customAH.tick();
         long currentTime = System.currentTimeMillis();
-        if(currentTime - lastPageUpdate > 5*1000) {
-            lastPageUpdate = currentTime;
+        if(currentTime - lastAuctionUpdate > 60*1000) {
+            lastAuctionUpdate = currentTime;
             updatePageTick();
             ahNotification();
         }
@@ -168,44 +138,6 @@ public class APIManager {
                 calculateStats();
             }
         }
-    }
-
-    public void updateProfiles(String uuid) {
-        HashMap<String, String> args = new HashMap<>();
-        args.put("uuid", ""+uuid);
-        manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/profiles",
-            args, jsonObject -> {
-                    if(jsonObject == null) return;
-
-                    if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
-                    incPlayerInfoVersion();
-                    playerInformation = jsonObject.get("profiles").getAsJsonArray();
-                    if(playerInformation == null) return;
-                    String backup = null;
-                    long backupLastSave = 0;
-                    for(int i=0; i<playerInformation.size(); i++) {
-                        JsonObject profile = playerInformation.get(i).getAsJsonObject();
-                        String cute_name = profile.get("cute_name").getAsString();
-
-                        if(backup == null) backup = cute_name;
-
-                        if(!profile.has("members")) continue;
-                        JsonObject members = profile.get("members").getAsJsonObject();
-
-                        if(members.has(uuid)) {
-                            JsonObject member = members.get(uuid).getAsJsonObject();
-                            long last_save = member.get("last_save").getAsLong();
-                            if(last_save > backupLastSave) {
-                                backupLastSave = last_save;
-                                backup = cute_name;
-                            }
-                        }
-                    }
-
-                    manager.setCurrentProfileBackup(backup);
-                }
-            }
-        );
     }
 
     private String niceAucId(String aucId) {
@@ -277,50 +209,77 @@ public class APIManager {
                     long timeToEnd = entry.getValue().end - currTime;
                     if(timeToEnd < -60) {
                         toRemove.add(entry.getKey());
-                    } else if(currTime - entry.getValue().lastUpdate > 5*60*1000) {
-                        toRemove.add(entry.getKey());
                     }
                 }
                 toRemove.removeAll(playerBids);
-                for(String aucid : toRemove) {
-                    auctionMap.remove(aucid);
-                }
-                for(HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
-                    for(HashSet<String> aucids : extrasMap.values()) {
-                        for(String aucid : toRemove) {
-                            aucids.remove(aucid);
-                        }
-                    }
-                }
-                for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
-                    aucids.removeAll(toRemove);
-                }
-                for(TreeMap<Integer, String> lowestBINs : internalnameToLowestBIN.values()) {
-                    lowestBINs.values().removeAll(toRemove);
-                }
+                remove(toRemove);
             } catch(ConcurrentModificationException e) {
                 lastCleanup = System.currentTimeMillis() - 110*1000;
             }
         });
     }
 
+    private void remove(Set<String> toRemove) {
+        for(String aucid : toRemove) {
+            auctionMap.remove(aucid);
+        }
+        for(HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
+            for(HashSet<String> aucids : extrasMap.values()) {
+                for(String aucid : toRemove) {
+                    aucids.remove(aucid);
+                }
+            }
+        }
+        for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
+            aucids.removeAll(toRemove);
+        }
+        for(TreeMap<Integer, String> lowestBINs : internalnameToLowestBIN.values()) {
+            lowestBINs.values().removeAll(toRemove);
+        }
+    }
+
     private void updatePageTick() {
-        if(totalPages == 0) {
+        JsonObject disable = Utils.getConstant("disable");
+        if(!fullDownload && (disable == null || !disable.get("auctions").getAsBoolean())) {
+            fullDownload = true;
             getPageFromAPI(0);
-        } else if(doFullUpdate) {
-            doFullUpdate = false;
-            for(int i=0; i<totalPages; i++) {
+            for(int i=1; i<totalPages; i++) {
                 getPageFromAPI(i);
             }
         } else {
-            if(needUpdate.isEmpty()) resetNeedUpdate();
+            manager.hypixelApi.getApiGZIPAsync("http://51.89.22.3/auction.json.gz", jsonObject -> {
+                if(jsonObject.get("success").getAsBoolean()) {
+                    JsonArray new_auctions = jsonObject.get("new_auctions").getAsJsonArray();
+                    for(JsonElement auctionElement : new_auctions) {
+                        JsonObject auction = auctionElement.getAsJsonObject();
+                        processAuction(auction);
+                    }
+                    JsonArray new_bids = jsonObject.get("new_bids").getAsJsonArray();
+                    for(JsonElement newBidElement : new_bids) {
+                        JsonObject newBid = newBidElement.getAsJsonObject();
+                        String newBidUUID = newBid.get("uuid").getAsString();
+                        int newBidAmount = newBid.get("highest_bid_amount").getAsInt();
+                        int end = newBid.get("end").getAsInt();
+                        int bid_count = newBid.get("bid_count").getAsInt();
 
-            int pageToUpdate = needUpdate.pop();
-            while (pageToUpdate >= totalPages && !needUpdate.isEmpty()) {
-                pageToUpdate = needUpdate.pop();
-            }
-
-            getPageFromAPI(pageToUpdate);
+                        Auction auc = auctionMap.get(newBidUUID);
+                        if(auc != null) {
+                            auc.highest_bid_amount = newBidAmount;
+                            auc.end = end;
+                            auc.bid_count = bid_count;
+                        }
+                    }
+                    Set<String> toRemove = new HashSet<>();
+                    JsonArray removed_auctions = jsonObject.get("removed_auctions").getAsJsonArray();
+                    for(JsonElement removedAuctionsElement : removed_auctions) {
+                        String removed = removedAuctionsElement.getAsString();
+                        toRemove.add(removed);
+                    }
+                    remove(toRemove);
+                }
+            }, () -> {
+                System.out.println("error");
+            });
         }
     }
 
@@ -375,6 +334,147 @@ public class APIManager {
     private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
             "XII","XIII","XIV","XV","XVI","XVII","XIX","XX"};
 
+
+    String[] categoryItemType = new String[]{"sword","fishingrod","pickaxe","axe",
+            "shovel","petitem","travelscroll","reforgestone","bow"};
+    String playerUUID = null;
+    private void processAuction(JsonObject auction) {
+        if(playerUUID == null) playerUUID = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replaceAll("-","");
+
+        String auctionUuid = auction.get("uuid").getAsString();
+        String auctioneerUuid = auction.get("auctioneer").getAsString();
+        long end = auction.get("end").getAsLong();
+        int starting_bid = auction.get("starting_bid").getAsInt();
+        int highest_bid_amount = auction.get("highest_bid_amount").getAsInt();
+        int bid_count = auction.get("bids").getAsJsonArray().size();
+        boolean bin = false;
+        if(auction.has("bin")) {
+            bin = auction.get("bin").getAsBoolean();
+        }
+        String sbCategory = auction.get("category").getAsString();
+        String extras = auction.get("extra").getAsString().toLowerCase();
+        String item_name = auction.get("item_name").getAsString();
+        String item_lore = Utils.fixBrokenAPIColour(auction.get("item_lore").getAsString());
+        String item_bytes = auction.get("item_bytes").getAsString();
+        String rarity = auction.get("tier").getAsString();
+        JsonArray bids = auction.get("bids").getAsJsonArray();
+
+        try {
+            NBTTagCompound item_tag;
+            try {
+                item_tag = CompressedStreamTools.readCompressed(
+                        new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
+            } catch(IOException e) { return; }
+
+            NBTTagCompound tag = item_tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
+            String internalname = manager.getInternalnameFromNBT(tag);
+            String displayNormal = "";
+            if(manager.getItemInformation().containsKey(internalname)) {
+                displayNormal = Utils.cleanColour(manager.getItemInformation().get(internalname).get("displayname").getAsString());
+            } else {
+
+            }
+
+            String[] lore = new String[0];
+            NBTTagCompound display = tag.getCompoundTag("display");
+            if(display.hasKey("Lore", 9)) {
+                NBTTagList loreList = new NBTTagList();
+                for(String line : item_lore.split("\n")) {
+                    loreList.appendTag(new NBTTagString(line));
+                }
+                display.setTag("Lore", loreList);
+            }
+            tag.setTag("display", display);
+            item_tag.getTagList("i", 10).getCompoundTagAt(0).setTag("tag", tag);
+
+            if(tag.hasKey("ExtraAttributes", 10)) {
+                NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+                if(ea.hasKey("enchantments", 10)) {
+                    NBTTagCompound enchantments = ea.getCompoundTag("enchantments");
+                    for(String key : enchantments.getKeySet()) {
+                        String enchantname = key.toLowerCase().replace("_", " ");
+                        int enchantlevel = enchantments.getInteger(key);
+                        String enchantLevelStr;
+                        if(enchantlevel >= 1 && enchantlevel <= 20) {
+                            enchantLevelStr = romans[enchantlevel-1];
+                        } else {
+                            enchantLevelStr = String.valueOf(enchantlevel);
+                        }
+                        extras = extras.replace(enchantname, enchantname + " " + enchantLevelStr);
+                    }
+                }
+            }
+
+            int index=0;
+            for(String str : extras.split(" ")) {
+                str = Utils.cleanColour(str).toLowerCase();
+                if(str.length() > 0) {
+                    HashMap<Integer, HashSet<String>> extrasMap = extrasToAucIdMap.computeIfAbsent(str, k -> new HashMap<>());
+                    HashSet<String> aucids = extrasMap.computeIfAbsent(index, k -> new HashSet<>());
+                    aucids.add(auctionUuid);
+                }
+                index++;
+            }
+
+            if(bin) {
+                TreeMap<Integer, String> lowestBINs = internalnameToLowestBIN.computeIfAbsent(internalname, k -> new TreeMap<>());
+                int count = item_tag.getInteger("Count");
+                lowestBINs.put(starting_bid/(count>0?count:1), auctionUuid);
+                if(lowestBINs.size() > 5) {
+                    lowestBINs.keySet().remove(lowestBINs.lastKey());
+                }
+            }
+
+            for(int j=0; j<bids.size(); j++) {
+                JsonObject bid = bids.get(j).getAsJsonObject();
+                if(bid.get("bidder").getAsString().equalsIgnoreCase(playerUUID)) {
+                    playerBids.add(auctionUuid);
+                }
+            }
+
+            if(checkItemType(item_lore, true, "DUNGEON") >= 0) {
+                HashMap<Integer, HashSet<String>> extrasMap = extrasToAucIdMap.computeIfAbsent("dungeon", k -> new HashMap<>());
+                HashSet<String> aucids = extrasMap.computeIfAbsent(0, k -> new HashSet<>());
+                aucids.add(auctionUuid);
+            }
+
+            //Categories
+            String category = sbCategory;
+            int itemType = checkItemType(item_lore, true,"SWORD", "FISHING ROD", "PICKAXE",
+                    "AXE", "SHOVEL", "PET ITEM", "TRAVEL SCROLL", "REFORGE STONE", "BOW");
+            if(itemType >= 0 && itemType < categoryItemType.length) {
+                category = categoryItemType[itemType];
+            }
+            if(internalname.contains("ENCHANTED_BOOK")) category = "ebook";
+            if(extras.endsWith("Potion")) category = "potion";
+            if(extras.contains("Rune")) category = "rune";
+            if(item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";
+            if(item_lore.split("\n")[0].endsWith("Pet") ||
+                    item_lore.split("\n")[0].endsWith("Mount")) category = "pet";
+
+            Auction auction1 = new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
+                    bid_count, bin, category, rarity, item_tag);
+
+            if(tag.hasKey("ench")) {
+                auction1.enchLevel = 1;
+                if(tag.hasKey("ExtraAttributes", 10)) {
+                    NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+                    int hotpotatocount = ea.getInteger("hot_potato_count");
+                    if(hotpotatocount == 10) {
+                        auction1.enchLevel = 2;
+                    }
+                }
+            }
+
+            auction1.lastUpdate = System.currentTimeMillis();
+
+            auctionMap.put(auctionUuid, auction1);
+            internalnameToAucIdMap.computeIfAbsent(internalname, k -> new HashSet<>()).add(auctionUuid);
+        } catch(Exception e) {e.printStackTrace();}
+    }
+
     private void getPageFromAPI(int page) {
         //System.out.println("Trying to update page: " + page);
         HashMap<String, String> args = new HashMap<>();
@@ -387,181 +487,17 @@ public class APIManager {
                     totalPages = jsonObject.get("totalPages").getAsInt();
                     activeAuctions = jsonObject.get("totalAuctions").getAsInt();
 
-                    int lastUpdated = jsonObject.get("lastUpdated").getAsInt();
-
-                    if(lastApiUpdate != lastUpdated) {
-                        if(manager.config.quickAHUpdate.value &&
-                                (Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView())) {
-                            doFullUpdate = true;
-                        }
-                        resetNeedUpdate();
-                    }
-
-                    lastApiUpdate = lastUpdated;
-
-                    String[] lvl4Maxes = {"Experience", "Life Steal", "Scavenger", "Looting"};
-
-                    String[] categoryItemType = new String[]{"sword","fishingrod","pickaxe","axe",
-                            "shovel","petitem","travelscroll","reforgestone","bow"};
-                    String playerUUID = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replaceAll("-","");
-
                     long startProcess = System.currentTimeMillis();
                     JsonArray auctions = jsonObject.get("auctions").getAsJsonArray();
                     for (int i = 0; i < auctions.size(); i++) {
                         JsonObject auction = auctions.get(i).getAsJsonObject();
 
-                        String auctionUuid = auction.get("uuid").getAsString();
-                        String auctioneerUuid = auction.get("auctioneer").getAsString();
-                        long end = auction.get("end").getAsLong();
-                        int starting_bid = auction.get("starting_bid").getAsInt();
-                        int highest_bid_amount = auction.get("highest_bid_amount").getAsInt();
-                        int bid_count = auction.get("bids").getAsJsonArray().size();
-                        boolean bin = false;
-                        if(auction.has("bin")) {
-                            bin = auction.get("bin").getAsBoolean();
-                        }
-                        String sbCategory = auction.get("category").getAsString();
-                        String extras = auction.get("extra").getAsString().toLowerCase();
-                        String item_name = auction.get("item_name").getAsString();
-                        String item_lore = Utils.fixBrokenAPIColour(auction.get("item_lore").getAsString());
-                        String item_bytes = auction.get("item_bytes").getAsString();
-                        String rarity = auction.get("tier").getAsString();
-                        JsonArray bids = auction.get("bids").getAsJsonArray();
-
-                        {
-                            Auction old = auctionMap.get(auctionUuid);
-                            if(old != null && old.highest_bid_amount != highest_bid_amount) {
-                                aucUpdates.put(page, aucUpdates.computeIfAbsent(page, k->0)+1);
-                            }
-                        }
-
-                        try {
-                            NBTTagCompound item_tag;
-                            try {
-                                item_tag = CompressedStreamTools.readCompressed(
-                                        new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
-                            } catch(IOException e) { continue; }
-
-                            NBTTagCompound tag = item_tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
-                            String internalname = manager.getInternalnameFromNBT(tag);
-                            String displayNormal = "";
-                            if(manager.getItemInformation().containsKey(internalname)) {
-                                displayNormal = Utils.cleanColour(manager.getItemInformation().get(internalname).get("displayname").getAsString());
-                            } else {
-
-                            }
-
-                            String[] lore = new String[0];
-                            NBTTagCompound display = tag.getCompoundTag("display");
-                            if(display.hasKey("Lore", 9)) {
-                                NBTTagList loreList = new NBTTagList();
-                                for(String line : item_lore.split("\n")) {
-                                    loreList.appendTag(new NBTTagString(line));
-                                }
-                                display.setTag("Lore", loreList);
-                            }
-                            tag.setTag("display", display);
-                            item_tag.getTagList("i", 10).getCompoundTagAt(0).setTag("tag", tag);
-
-                            if(tag.hasKey("ExtraAttributes", 10)) {
-                                NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
-
-                                if(ea.hasKey("enchantments", 10)) {
-                                    NBTTagCompound enchantments = ea.getCompoundTag("enchantments");
-                                    for(String key : enchantments.getKeySet()) {
-                                        String enchantname = key.toLowerCase().replace("_", " ");
-                                        int enchantlevel = enchantments.getInteger(key);
-                                        String enchantLevelStr;
-                                        if(enchantlevel >= 1 && enchantlevel <= 20) {
-                                            enchantLevelStr = romans[enchantlevel-1];
-                                        } else {
-                                            enchantLevelStr = String.valueOf(enchantlevel);
-                                        }
-                                        extras = extras.replace(enchantname, enchantname + " " + enchantLevelStr);
-                                    }
-                                }
-                            }
-
-                            int index=0;
-                            for(String str : extras.split(" ")) {
-                                str = Utils.cleanColour(str).toLowerCase();
-                                if(str.length() > 0) {
-                                    HashMap<Integer, HashSet<String>> extrasMap = extrasToAucIdMap.computeIfAbsent(str, k -> new HashMap<>());
-                                    HashSet<String> aucids = extrasMap.computeIfAbsent(index, k -> new HashSet<>());
-                                    aucids.add(auctionUuid);
-                                }
-                                index++;
-                            }
-
-                            if(bin) {
-                                TreeMap<Integer, String> lowestBINs = internalnameToLowestBIN.computeIfAbsent(internalname, k -> new TreeMap<>());
-                                int count = item_tag.getInteger("Count");
-                                lowestBINs.put(starting_bid/(count>0?count:1), auctionUuid);
-                                if(lowestBINs.size() > 5) {
-                                    lowestBINs.keySet().remove(lowestBINs.lastKey());
-                                }
-                            }
-
-                            for(int j=0; j<bids.size(); j++) {
-                                JsonObject bid = bids.get(j).getAsJsonObject();
-                                if(bid.get("bidder").getAsString().equalsIgnoreCase(playerUUID)) {
-                                    playerBids.add(auctionUuid);
-                                }
-                            }
-
-                            if(checkItemType(item_lore, true, "DUNGEON") >= 0) {
-                                HashMap<Integer, HashSet<String>> extrasMap = extrasToAucIdMap.computeIfAbsent("dungeon", k -> new HashMap<>());
-                                HashSet<String> aucids = extrasMap.computeIfAbsent(0, k -> new HashSet<>());
-                                aucids.add(auctionUuid);
-                            }
-
-                            //Categories
-                            String category = sbCategory;
-                            int itemType = checkItemType(item_lore, true,"SWORD", "FISHING ROD", "PICKAXE",
-                                    "AXE", "SHOVEL", "PET ITEM", "TRAVEL SCROLL", "REFORGE STONE", "BOW");
-                            if(itemType >= 0 && itemType < categoryItemType.length) {
-                                category = categoryItemType[itemType];
-                            }
-                            if(internalname.contains("ENCHANTED_BOOK")) category = "ebook";
-                            if(extras.endsWith("Potion")) category = "potion";
-                            if(extras.contains("Rune")) category = "rune";
-                            if(item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";
-                            if(item_lore.split("\n")[0].endsWith("Pet") ||
-                                    item_lore.split("\n")[0].endsWith("Mount")) category = "pet";
-
-                            Auction auction1 = new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
-                                    bid_count, bin, category, rarity, item_tag);
-
-                            if(tag.hasKey("ench")) {
-                                auction1.enchLevel = 1;
-                                if(tag.hasKey("ExtraAttributes", 10)) {
-                                    NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
-
-                                    int hotpotatocount = ea.getInteger("hot_potato_count");
-                                    if(hotpotatocount == 10) {
-                                        auction1.enchLevel = 2;
-                                    }
-                                }
-                            }
-
-                            auction1.lastUpdate = System.currentTimeMillis();
-
-                            auctionMap.put(auctionUuid, auction1);
-                            internalnameToAucIdMap.computeIfAbsent(internalname, k -> new HashSet<>()).add(auctionUuid);
-                        } catch(Exception e) {e.printStackTrace();}
+                        processAuction(auction);
                     }
                     processMillis = (int)(System.currentTimeMillis() - startProcess);
                 }
             }
         );
-    }
-
-    private void resetNeedUpdate() {
-        for(Integer page=0; page<totalPages; page++) {
-            if(!needUpdate.contains(page)) {
-                needUpdate.addLast(page);
-            }
-        }
     }
 
     /*ScheduledExecutorService auctionUpdateSES = Executors.newSingleThreadScheduledExecutor();

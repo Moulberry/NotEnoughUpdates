@@ -588,6 +588,7 @@ public class GuiProfileViewer extends GuiScreen {
     private class Level {
         float level;
         float currentLevelRequirement;
+        float maxXP;
     }
 
     public Level getLevel(JsonArray levels, int offset, float exp) {
@@ -596,15 +597,19 @@ public class GuiProfileViewer extends GuiScreen {
         float currentLevelRequirement = 0;
         float remainingToNextLevel = 0;
 
+        boolean addLevel = true;
+
         for(int i=offset; i<offset+99; i++) {
             currentLevelRequirement = levels.get(i).getAsFloat();
             xpTotal += currentLevelRequirement;
 
-            if(xpTotal > exp) {
-                remainingToNextLevel = (xpTotal-currentLevelRequirement+exp)/currentLevelRequirement;
-                break;
-            } else {
-                level += 1;
+            if(addLevel) {
+                if(xpTotal > exp) {
+                    remainingToNextLevel = (exp-(xpTotal-currentLevelRequirement))/currentLevelRequirement;
+                    addLevel = false;
+                } else {
+                    level += 1;
+                }
             }
         }
 
@@ -617,7 +622,38 @@ public class GuiProfileViewer extends GuiScreen {
         Level levelObj = new Level();
         levelObj.level = level;
         levelObj.currentLevelRequirement = currentLevelRequirement;
+        levelObj.maxXP = xpTotal;
         return levelObj;
+    }
+
+    private static final HashMap<String, HashMap<String, Float>> PET_STAT_BOOSTS = new HashMap<>();
+    static {
+        HashMap<String, Float> bigTeeth = new HashMap<>();
+        bigTeeth.put("CRIT_CHANCE", 5f);
+        PET_STAT_BOOSTS.put("PET_ITEM_BIG_TEETH_COMMON", bigTeeth);
+
+        HashMap<String, Float> hardenedScales = new HashMap<>();
+        hardenedScales.put("DEFENCE", 25f);
+        PET_STAT_BOOSTS.put("PET_ITEM_HARDENED_SCALES_UNCOMMON", hardenedScales);
+
+        HashMap<String, Float> luckyClover = new HashMap<>();
+        luckyClover.put("MAGIC_FIND", 7f);
+        PET_STAT_BOOSTS.put("PET_ITEM_LUCKY_CLOVER", luckyClover);
+
+        HashMap<String, Float> sharpenedClaws = new HashMap<>();
+        sharpenedClaws.put("CRIT_DAMAGE", 15f);
+        PET_STAT_BOOSTS.put("PET_ITEM_SHARPENED_CLAWS_UNCOMMON", sharpenedClaws);
+    }
+    private static final HashMap<String, HashMap<String, Float>> PET_STAT_BOOSTS_MULT = new HashMap<>();
+    static {
+        HashMap<String, Float> ironClaws = new HashMap<>();
+        ironClaws.put("CRIT_DAMAGE", 1.4f);
+        ironClaws.put("CRIT_CHANCE", 1.4f);
+        PET_STAT_BOOSTS_MULT.put("PET_ITEM_IRON_CLAWS_COMMON", ironClaws);
+
+        HashMap<String, Float> textbook = new HashMap<>();
+        textbook.put("INTELLIGENCE", 2f);
+        PET_STAT_BOOSTS_MULT.put("PET_ITEM_TEXTBOOK", textbook);
     }
 
     private int selectedPet = -1;
@@ -682,6 +718,8 @@ public class GuiProfileViewer extends GuiScreen {
             for(JsonObject pet : sortedPets) {
                 String petname = pet.get("type").getAsString();
                 String tier = pet.get("tier").getAsString();
+                String heldItem = Utils.getElementAsString(pet.get("heldItem"), null);
+                JsonObject heldItemJson = heldItem==null?null:NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(heldItem);
                 String tierNum = minionRarityToNumMap.get(tier);
                 float exp = pet.get("exp").getAsFloat();
                 if(tierNum == null) continue;
@@ -692,27 +730,85 @@ public class GuiProfileViewer extends GuiScreen {
                 Level levelObj = getLevel(levelsArr, petRarityOffset, exp);
                 float level = levelObj.level;
                 float currentLevelRequirement = levelObj.currentLevelRequirement;
+                float maxXP = levelObj.maxXP;
                 pet.addProperty("level", level);
                 pet.addProperty("currentLevelRequirement", currentLevelRequirement);
+                pet.addProperty("maxXP", maxXP);
 
                 JsonObject petItem = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(petname+";"+tierNum);
+                if(petItem == null) continue;
+
                 ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(petItem, false, false);
                 HashMap<String, String> replacements = NotEnoughUpdates.INSTANCE.manager.getLoreReplacements(petname, tier, (int)Math.floor(level));
+
+                if(heldItem != null) {
+                    HashMap<String, Float> petStatBoots = PET_STAT_BOOSTS.get(heldItem);
+                    HashMap<String, Float> petStatBootsMult = PET_STAT_BOOSTS_MULT.get(heldItem);
+                    if(petStatBoots != null) {
+                        for(Map.Entry<String, Float> entryBoost : petStatBoots.entrySet()) {
+                            try {
+                                float value = Float.parseFloat(replacements.get(entryBoost.getKey()));
+                                replacements.put(entryBoost.getKey(), String.valueOf((int)Math.floor(value+entryBoost.getValue())));
+                            } catch(Exception ignored) {}
+                        }
+
+                    }
+                    if(petStatBootsMult != null) {
+                        for(Map.Entry<String, Float> entryBoost : petStatBootsMult.entrySet()) {
+                            try {
+                                float value = Float.parseFloat(replacements.get(entryBoost.getKey()));
+                                replacements.put(entryBoost.getKey(), String.valueOf((int)Math.floor(value*entryBoost.getValue())));
+                            } catch(Exception ignored) {}
+                        }
+                    }
+                }
 
                 NBTTagCompound tag = stack.getTagCompound()==null?new NBTTagCompound():stack.getTagCompound();
                 if(tag.hasKey("display", 10)) {
                     NBTTagCompound display = tag.getCompoundTag("display");
                     if(display.hasKey("Lore", 9)) {
+                        NBTTagList newNewLore = new NBTTagList();
                         NBTTagList newLore = new NBTTagList();
                         NBTTagList lore = display.getTagList("Lore", 8);
+                        HashMap<Integer, Integer> blankLocations = new HashMap<>();
                         for(int j=0; j<lore.tagCount(); j++) {
                             String line = lore.getStringTagAt(j);
+                            if(line.trim().isEmpty()) {
+                                blankLocations.put(blankLocations.size(), j);
+                            }
                             for(Map.Entry<String, String> replacement : replacements.entrySet()) {
                                 line = line.replace("{"+replacement.getKey()+"}", replacement.getValue());
                             }
                             newLore.appendTag(new NBTTagString(line));
                         }
-                        display.setTag("Lore", newLore);
+                        Integer secondLastBlank = blankLocations.get(blankLocations.size()-2);
+                        if(heldItemJson != null && secondLastBlank != null) {
+                            for(int j=0; j<newLore.tagCount(); j++) {
+                                String line = newLore.getStringTagAt(j);
+
+                                if(j == secondLastBlank.intValue()) {
+                                    newNewLore.appendTag(new NBTTagString(""));
+                                    newNewLore.appendTag(new NBTTagString(EnumChatFormatting.GOLD+"Held Item: "+heldItemJson.get("displayname").getAsString()));
+                                    int blanks = 0;
+                                    JsonArray heldItemLore = heldItemJson.get("lore").getAsJsonArray();
+                                    for(int k=0; k<heldItemLore.size(); k++) {
+                                        String heldItemLine = heldItemLore.get(k).getAsString();
+                                        if(heldItemLine.trim().isEmpty()) {
+                                            blanks++;
+                                        } else if(blanks==2) {
+                                            newNewLore.appendTag(new NBTTagString(heldItemLine));
+                                        } else if(blanks>2) {
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                newNewLore.appendTag(new NBTTagString(line));
+                            }
+                            display.setTag("Lore", newNewLore);
+                        } else {
+                            display.setTag("Lore", newLore);
+                        }
                     }
                     if(display.hasKey("Name", 8)) {
                         String displayName = display.getString("Name");
@@ -836,14 +932,29 @@ public class GuiProfileViewer extends GuiScreen {
 
             float level = pet.get("level").getAsFloat();
             float currentLevelRequirement = pet.get("currentLevelRequirement").getAsFloat();
+            float exp = pet.get("exp").getAsFloat();
+            float maxXP = pet.get("maxXP").getAsFloat();
 
-            Utils.drawStringCenteredScaledMaxWidth(display, Minecraft.getMinecraft().fontRendererObj, guiLeft+368, guiTop+28+4, true, 98, 0);
+            String[] split = display.split("] ");
+            String colouredName = split[split.length-1];
+
+            renderAlignedString(colouredName, EnumChatFormatting.WHITE+"Level "+(int)Math.floor(level), guiLeft+319, guiTop+28, 98);
+
+            //Utils.drawStringCenteredScaledMaxWidth(, Minecraft.getMinecraft().fontRendererObj, guiLeft+368, guiTop+28+4, true, 98, 0);
             //renderAlignedString(display, EnumChatFormatting.YELLOW+"[LVL "+Math.floor(level)+"]", guiLeft+319, guiTop+28, 98);
             renderBar(guiLeft+319, guiTop+38, 98, (float)Math.floor(level)/100f);
 
-            renderAlignedString("To Next LVL", EnumChatFormatting.WHITE.toString()+(int)(level%1*100)+"%", guiLeft+319, guiTop+46, 98);
-
+            renderAlignedString(EnumChatFormatting.YELLOW+"To Next LVL", EnumChatFormatting.WHITE.toString()+(int)(level%1*100)+"%", guiLeft+319, guiTop+46, 98);
             renderBar(guiLeft+319, guiTop+56, 98, level%1);
+
+            renderAlignedString(EnumChatFormatting.YELLOW+"To Max LVL", EnumChatFormatting.WHITE.toString()+Math.min(100, (int)(exp/maxXP*100))+"%", guiLeft+319, guiTop+64, 98);
+            renderBar(guiLeft+319, guiTop+74, 98, exp/maxXP);
+
+            renderAlignedString(EnumChatFormatting.YELLOW+"Total XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(exp, 0), guiLeft+319, guiTop+125, 98);
+            renderAlignedString(EnumChatFormatting.YELLOW+"Current LVL XP",
+                        EnumChatFormatting.WHITE.toString()+shortNumberFormat((level%1)*currentLevelRequirement, 0), guiLeft+319, guiTop+143, 98);
+            renderAlignedString(EnumChatFormatting.YELLOW+"Required LVL XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(currentLevelRequirement, 0), guiLeft+319, guiTop+161, 98);
+
         }
 
     }

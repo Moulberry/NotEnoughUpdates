@@ -77,7 +77,7 @@ import static io.github.moulberry.notenoughupdates.GuiTextures.*;
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "REL-1.0.0";
+    public static final String VERSION = "REL-1.0.1";
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -366,7 +366,7 @@ public class NotEnoughUpdates {
         Minecraft.getMinecraft().thePlayer.addChatMessage(links);
     }
 
-    private boolean displayUpdateMessageIfOutOfDate() {
+    private void displayUpdateMessageIfOutOfDate() {
         File repo = manager.repoLocation;
         if(repo.exists()) {
             File updateJson = new File(repo, "update.json");
@@ -408,12 +408,8 @@ public class NotEnoughUpdates {
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
 
                 }
-
-                return true;
             } catch(Exception ignored) {}
-            return true;
         }
-        return false;
     }
 
     /**
@@ -425,6 +421,8 @@ public class NotEnoughUpdates {
     private long lastLongUpdate = 0;
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if(event.phase != TickEvent.Phase.START) return;
+
         boolean longUpdate = false;
         long currentTime = System.currentTimeMillis();
         if(currentTime - lastLongUpdate > 1000) {
@@ -440,9 +438,8 @@ public class NotEnoughUpdates {
             if(hasSkyblockScoreboard()) {
                 manager.auctionManager.tick();
                 if(!joinedSB && manager.config.showUpdateMsg.value) {
-                    if(displayUpdateMessageIfOutOfDate()) {
-                        joinedSB = false;
-                    }
+                    joinedSB = true;
+                    displayUpdateMessageIfOutOfDate();
                 }
                 SBScoreboardData.getInstance().tick();
                 //GuiQuestLine.questLine.tick();

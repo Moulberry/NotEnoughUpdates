@@ -10,6 +10,7 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
@@ -115,12 +116,10 @@ public class NEUManager {
 
     public void setCurrentProfile(String currentProfile) {
         this.currentProfile = currentProfile;
-        this.auctionManager.incPlayerInfoVersion();
     }
 
     public void setCurrentProfileBackup(String currentProfile) {
         this.currentProfileBackup = currentProfile;
-        this.auctionManager.incPlayerInfoVersion();
     }
 
     public String getCurrentProfile() {
@@ -378,6 +377,21 @@ public class NEUManager {
 
                     if (Display.isActive()) dialog.toFront();
 
+                    String latestCommit = neuio.getLatestCommit();
+                    if(latestCommit == null || latestCommit.isEmpty()) return;
+
+                    JsonObject currentCommitJSON = getJsonFromFile(new File(configLocation, "currentCommit.json"));
+                    if(currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestCommit)) {
+                        JsonObject newCurrentCommitJSON = new JsonObject();
+                        newCurrentCommitJSON.addProperty("sha", latestCommit);
+                        try {
+                            writeJson(newCurrentCommitJSON, new File(configLocation, "currentCommit.json"));
+                        } catch (IOException e) {
+                        }
+                    } else {
+                        return;
+                    }
+
                     HashMap<String, String> oldShas = new HashMap<>();
                     for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
                         if (new File(repoLocation, entry.getKey() + ".json").exists()) {
@@ -385,8 +399,6 @@ public class NEUManager {
                         }
                     }
                     Map<String, String> changedFiles = neuio.getChangedItems(oldShas);
-
-
 
                     if (Display.isActive()) dialog.toFront();
 
@@ -447,7 +459,11 @@ public class NEUManager {
                         } catch (IOException e) {
                             return;
                         }
-                        try (BufferedInputStream inStream = new BufferedInputStream(new URL(dlUrl).openStream());
+                        URL url = new URL(dlUrl);
+                        URLConnection urlConnection = url.openConnection();
+                        urlConnection.setConnectTimeout(3000);
+                        urlConnection.setReadTimeout(3000);
+                        try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
                              FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
                             byte dataBuffer[] = new byte[1024];
                             int bytesRead;
@@ -481,24 +497,30 @@ public class NEUManager {
                 }
             } catch(Exception e) {}
 
-            Set<String> currentlyInstalledItems = new HashSet<>();
-            for(File f : new File(repoLocation, "items").listFiles()) {
-                currentlyInstalledItems.add(f.getName().substring(0, f.getName().length()-5));
-            }
-
-            Set<String> removedItems;
-            if(config.autoupdate.value) {
-                removedItems = neuio.getRemovedItems(currentlyInstalledItems);
-            } else {
-                removedItems = new HashSet<>();
-            }
-            for(File f : new File(repoLocation, "items").listFiles()) {
-                String internalname = f.getName().substring(0, f.getName().length()-5);
-                if(!removedItems.contains(internalname)) {
-                    loadItem(internalname);
+            File items = new File(repoLocation, "items");
+            if(items.exists()) {
+                File[] itemFiles = new File(repoLocation, "items").listFiles();
+                if(itemFiles != null) {
+                    for(File f : itemFiles) {
+                        String internalname = f.getName().substring(0, f.getName().length()-5);
+                        if(!getItemInformation().keySet().contains(internalname)) {
+                            loadItem(internalname);
+                        }
+                    }
                 }
             }
         });
+
+        File items = new File(repoLocation, "items");
+        if(items.exists()) {
+            File[] itemFiles = new File(repoLocation, "items").listFiles();
+            if(itemFiles != null) {
+                for(File f : itemFiles) {
+                    String internalname = f.getName().substring(0, f.getName().length()-5);
+                    loadItem(internalname);
+                }
+            }
+        }
 
         thread.start();
     }
@@ -1510,6 +1532,8 @@ public class NEUManager {
     }
 
     public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {
+        if(json == null) return new ItemStack(Items.painting, 1, 10);
+
         if(useCache && itemstackCache.containsKey(json.get("internalname").getAsString())) {
             return itemstackCache.get(json.get("internalname").getAsString()).copy();
         }

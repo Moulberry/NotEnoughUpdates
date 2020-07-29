@@ -17,13 +17,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
+import java.util.zip.GZIPInputStream;
 
 public class HypixelApi {
-
-    /**
-     * Not currently used as of BETA-1.6.
-     */
-
     private Gson gson = new Gson();
     private ExecutorService es = Executors.newFixedThreadPool(3);
 
@@ -32,25 +28,46 @@ public class HypixelApi {
     }
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer, Runnable error) {
-        getHypixelApiAsync(generateApiUrl(apiKey.trim(), method, args), consumer, error);
+        getApiAsync(generateApiUrl(apiKey.trim(), method, args), consumer, error);
     }
 
-    public void getHypixelApiAsync(String urlS, Consumer<JsonObject> consumer, Runnable error) {
+    public void getApiAsync(String urlS, Consumer<JsonObject> consumer, Runnable error) {
         es.submit(() -> {
             try {
-                consumer.accept(getHypixelApiSync(urlS));
+                consumer.accept(getApiSync(urlS));
             } catch(IOException e) {
                 error.run();
             }
         });
     }
 
-    public JsonObject getHypixelApiSync(String urlS) throws IOException {
+    public void getApiGZIPAsync(String urlS, Consumer<JsonObject> consumer, Runnable error) {
+        es.submit(() -> {
+            try {
+                consumer.accept(getApiGZIPSync(urlS));
+            } catch(IOException e) {
+                error.run();
+            }
+        });
+    }
+
+    public JsonObject getApiSync(String urlS) throws IOException {
         URL url = new URL(urlS);
         URLConnection connection = url.openConnection();
         connection.setConnectTimeout(3000);
 
         String response = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
+
+        JsonObject json = gson.fromJson(response, JsonObject.class);
+        return json;
+    }
+
+    public JsonObject getApiGZIPSync(String urlS) throws IOException {
+        URL url = new URL(urlS);
+        URLConnection connection = url.openConnection();
+        connection.setConnectTimeout(3000);
+
+        String response = IOUtils.toString(new GZIPInputStream(connection.getInputStream()), StandardCharsets.UTF_8);
 
         JsonObject json = gson.fromJson(response, JsonObject.class);
         return json;
