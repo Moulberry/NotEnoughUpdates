@@ -411,6 +411,7 @@ public class NotEnoughUpdates {
 
                 return true;
             } catch(Exception ignored) {}
+            return true;
         }
         return false;
     }

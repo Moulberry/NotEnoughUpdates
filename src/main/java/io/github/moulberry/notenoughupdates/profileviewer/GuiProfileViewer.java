@@ -337,19 +337,17 @@ public class GuiProfileViewer extends GuiScreen {
                 }
                 break;
             case PETS:
-                JsonObject petsInfo = profile.getPetsInfo(profileId);
-                if(petsInfo == null) break;
-                JsonArray pets = petsInfo.get("pets").getAsJsonArray();
-                for(int i=petsPage*20; i<Math.min(petsPage*20+20, pets.size()); i++) {
-                    int xIndex = i % COLLS_XCOUNT;
-                    int yIndex = i / COLLS_XCOUNT;
+                if(sortedPets == null) break;
+                for(int i=petsPage*20; i<Math.min(petsPage*20+20, sortedPets.size()); i++) {
+                    int xIndex = (i%20) % COLLS_XCOUNT;
+                    int yIndex = (i%20) / COLLS_XCOUNT;
 
                     float x = 5 + COLLS_XPADDING + (COLLS_XPADDING + 20) * xIndex;
                     float y = 7 + COLLS_YPADDING + (COLLS_YPADDING + 20) * yIndex;
 
                     if(mouseX > guiLeft+x && mouseX < guiLeft+x+20) {
                         if(mouseY > guiTop+y && mouseY < guiTop+y+20) {
-                            selectedPet = pets.get(i).getAsJsonObject();
+                            selectedPet = i;
                             return;
                         }
                     }
@@ -447,6 +445,9 @@ public class GuiProfileViewer extends GuiScreen {
                 break;
             case COLS:
                 mouseReleasedCols(mouseX, mouseY, mouseButton);
+                break;
+            case PETS:
+                mouseReleasedPets(mouseX, mouseY, mouseButton);
         }
     }
 
@@ -498,6 +499,22 @@ public class GuiProfileViewer extends GuiScreen {
             selectedCollectionCategory = stack;
         }
         Utils.playPressSound();
+    }
+
+    private void mouseReleasedPets(int mouseX, int mouseY, int mouseButton) {
+        if(mouseY > guiTop+6 && mouseY < guiTop+22) {
+            if(mouseX > guiLeft+100-15-12 && mouseX < guiLeft+100-20) {
+                if(petsPage > 0) {
+                    petsPage--;
+                }
+                return;
+            } else if(mouseX > guiLeft+100+15 && mouseX < guiLeft+100+20+12) {
+                if(sortedPets != null && petsPage < Math.ceil(sortedPets.size()/25f)-1) {
+                    petsPage++;
+                }
+                return;
+            }
+        }
     }
 
     private void mouseReleasedInvs(int mouseX, int mouseY, int mouseButton) {
@@ -568,31 +585,45 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
-    public int getLevel(JsonArray levels, int offset, float exp) {
+    private class Level {
+        float level;
+        float currentLevelRequirement;
+    }
+
+    public Level getLevel(JsonArray levels, int offset, float exp) {
         float xpTotal = 0;
-        int level = 1;
+        float level = 1;
+        float currentLevelRequirement = 0;
+        float remainingToNextLevel = 0;
 
         for(int i=offset; i<offset+99; i++) {
-            xpTotal += levels.get(i).getAsFloat();
+            currentLevelRequirement = levels.get(i).getAsFloat();
+            xpTotal += currentLevelRequirement;
 
             if(xpTotal > exp) {
+                remainingToNextLevel = (xpTotal-currentLevelRequirement+exp)/currentLevelRequirement;
                 break;
             } else {
                 level += 1;
             }
         }
 
+        level += remainingToNextLevel;
         if(level <= 0) {
             level = 1;
         } else if(level > 100) {
             level = 100;
         }
-        return level;
+        Level levelObj = new Level();
+        levelObj.level = level;
+        levelObj.currentLevelRequirement = currentLevelRequirement;
+        return levelObj;
     }
 
-    private JsonObject selectedPet = null;
+    private int selectedPet = -1;
     private int petsPage = 0;
     private List<JsonObject> sortedPets = null;
+    private List<ItemStack> sortedPetsStack = null;
     private static HashMap<String, String> minionRarityToNumMap = new HashMap<>();
     static {
         minionRarityToNumMap.put("COMMON", "0");
@@ -624,20 +655,10 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
 
-        Panorama.drawPanorama(-backgroundRotation, guiLeft+212, guiTop+44, 81, 108, -0.37f, 0.6f,
-                getPanoramasForLocation(location==null?"dynamic":location, panoramaIdentifier));
-
-        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_pets);
-        Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
-
-        Utils.drawStringCentered(EnumChatFormatting.DARK_PURPLE+"Pets", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+100, guiTop+14, true, 4210752);
-        GlStateManager.color(1, 1, 1, 1);
-
         JsonArray pets = petsInfo.get("pets").getAsJsonArray();
-
         if(sortedPets == null) {
             sortedPets = new ArrayList<>();
+            sortedPetsStack = new ArrayList<>();
             for(int i=0; i<pets.size(); i++) {
                 sortedPets.add(pets.get(i).getAsJsonObject());
             }
@@ -658,11 +679,7 @@ public class GuiProfileViewer extends GuiScreen {
                     return (int)(exp2 - exp1);
                 }
             });
-        }
-
-        for(int i=petsPage*20; i<Math.min(petsPage*20+20, sortedPets.size()); i++) {
-            JsonObject pet = sortedPets.get(i);
-            if(pet != null) {
+            for(JsonObject pet : sortedPets) {
                 String petname = pet.get("type").getAsString();
                 String tier = pet.get("tier").getAsString();
                 String tierNum = minionRarityToNumMap.get(tier);
@@ -672,11 +689,15 @@ public class GuiProfileViewer extends GuiScreen {
                 int petRarityOffset = petsJson.get("pet_rarity_offset").getAsJsonObject().get(tier).getAsInt();
                 JsonArray levelsArr = petsJson.get("pet_levels").getAsJsonArray();
 
-                int level = getLevel(levelsArr, petRarityOffset, exp);
+                Level levelObj = getLevel(levelsArr, petRarityOffset, exp);
+                float level = levelObj.level;
+                float currentLevelRequirement = levelObj.currentLevelRequirement;
+                pet.addProperty("level", level);
+                pet.addProperty("currentLevelRequirement", currentLevelRequirement);
 
                 JsonObject petItem = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(petname+";"+tierNum);
                 ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(petItem, false, false);
-                HashMap<String, String> replacements = NotEnoughUpdates.INSTANCE.manager.getLoreReplacements(petname, tier, level);
+                HashMap<String, String> replacements = NotEnoughUpdates.INSTANCE.manager.getLoreReplacements(petname, tier, (int)Math.floor(level));
 
                 NBTTagCompound tag = stack.getTagCompound()==null?new NBTTagCompound():stack.getTagCompound();
                 if(tag.hasKey("display", 10)) {
@@ -704,14 +725,65 @@ public class GuiProfileViewer extends GuiScreen {
                 }
                 stack.setTagCompound(tag);
 
-                int xIndex = i % COLLS_XCOUNT;
-                int yIndex = i / COLLS_XCOUNT;
+                sortedPetsStack.add(stack);
+            }
+        }
+
+        Panorama.drawPanorama(-backgroundRotation, guiLeft+212, guiTop+44, 81, 108, -0.37f, 0.6f,
+                getPanoramasForLocation(location==null?"dynamic":location, panoramaIdentifier));
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_pets);
+        Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
+
+        Utils.drawStringCentered(EnumChatFormatting.DARK_PURPLE+"Pets", Minecraft.getMinecraft().fontRendererObj,
+                guiLeft+100, guiTop+14, true, 4210752);
+        GlStateManager.color(1, 1, 1, 1);
+
+        JsonElement activePetElement = petsInfo.get("active_pet");
+        if(selectedPet == -1 && activePetElement != null && activePetElement.isJsonObject()) {
+            JsonObject active = activePetElement.getAsJsonObject();
+            for(int i=0; i<sortedPets.size(); i++) {
+                if(sortedPets.get(i) == active) {
+                    selectedPet = i;
+                    break;
+                }
+            }
+        }
+
+        boolean leftHovered = false;
+        boolean rightHovered = false;
+        if(Mouse.isButtonDown(0)) {
+            if(mouseY > guiTop+6 && mouseY < guiTop+22) {
+                if(mouseX > guiLeft+100-20-12 && mouseX < guiLeft+100-20) {
+                    leftHovered = true;
+                } else if(mouseX > guiLeft+100+20 && mouseX < guiLeft+100+20+12) {
+                    rightHovered = true;
+                }
+            }
+        }
+        Minecraft.getMinecraft().getTextureManager().bindTexture(resource_packs);
+
+        if(petsPage > 0) {
+            Utils.drawTexturedRect(guiLeft+100-15-12, guiTop+6, 12, 16,
+                    29/256f, 53/256f, !leftHovered?0:32/256f, !leftHovered?32/256f:64/256f, GL11.GL_NEAREST);
+        }
+        if(petsPage < Math.ceil(pets.size()/25f)-1) {
+            Utils.drawTexturedRect( guiLeft+100+15, guiTop+6, 12, 16,
+                    5/256f, 29/256f, !rightHovered?0:32/256f, !rightHovered?32/256f:64/256f, GL11.GL_NEAREST);
+        }
+
+        for(int i=petsPage*20; i<Math.min(petsPage*20+20, sortedPets.size()); i++) {
+            JsonObject pet = sortedPets.get(i);
+            ItemStack stack = sortedPetsStack.get(i);
+            if(pet != null) {
+                int xIndex = (i%20) % COLLS_XCOUNT;
+                int yIndex = (i%20) / COLLS_XCOUNT;
 
                 float x = 5 + COLLS_XPADDING + (COLLS_XPADDING + 20) * xIndex;
                 float y = 7 + COLLS_YPADDING + (COLLS_YPADDING + 20) * yIndex;
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
-                if(pet == selectedPet) {
+                if(i == selectedPet) {
                     GlStateManager.color(1, 185/255f, 0, 1);
                     Utils.drawTexturedRect(guiLeft+x, guiTop+y, 20, 20,
                             0, 20/256f, 0, 20/256f, GL11.GL_NEAREST);
@@ -731,15 +803,27 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
 
-        if(selectedPet != null) {
-            String type = selectedPet.get("type").getAsString();
+        if(selectedPet >= 0) {
+            ItemStack petStack = sortedPetsStack.get(selectedPet);
+            String display = petStack.getDisplayName();
+            JsonObject pet = sortedPets.get(selectedPet);
+            String type = pet.get("type").getAsString();
 
             for(int i=0; i<4; i++) {
                 JsonObject item = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(type+";"+i);
                 if(item != null) {
                     int x = guiLeft+280;
                     float y = guiTop+67+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
+
+                    int displayLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(display);
+                    int halfDisplayLen = displayLen/2;
+
                     GlStateManager.translate(x, y, 0);
+
+                    drawRect(-halfDisplayLen-1-28, -1, halfDisplayLen+1-28, 8, new Color(0, 0, 0, 100).getRGB());
+
+                    Minecraft.getMinecraft().fontRendererObj.drawString(display, -halfDisplayLen-28, 0, 0, true);
+
                     ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
                     GlStateManager.scale(-3.5f, 3.5f, 1);
                     GlStateManager.enableDepth();
@@ -749,7 +833,19 @@ public class GuiProfileViewer extends GuiScreen {
                     break;
                 }
             }
+
+            float level = pet.get("level").getAsFloat();
+            float currentLevelRequirement = pet.get("currentLevelRequirement").getAsFloat();
+
+            Utils.drawStringCenteredScaledMaxWidth(display, Minecraft.getMinecraft().fontRendererObj, guiLeft+368, guiTop+28+4, true, 98, 0);
+            //renderAlignedString(display, EnumChatFormatting.YELLOW+"[LVL "+Math.floor(level)+"]", guiLeft+319, guiTop+28, 98);
+            renderBar(guiLeft+319, guiTop+38, 98, (float)Math.floor(level)/100f);
+
+            renderAlignedString("To Next LVL", EnumChatFormatting.WHITE.toString()+(int)(level%1*100)+"%", guiLeft+319, guiTop+46, 98);
+
+            renderBar(guiLeft+319, guiTop+56, 98, level%1);
         }
+
     }
 
     private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",

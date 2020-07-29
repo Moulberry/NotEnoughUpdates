@@ -93,6 +93,11 @@ public class Options {
             "Api Key",
             false,
             "Type /api new to receive key and put it here.");
+    public Option<Boolean> disableAH = new Option(
+            true,
+            "Disable AH",
+            false,
+            "Disables all AH-related features. Reduces network usage and may improve performance");
     public Option<Boolean> autoupdate = new Option(
             true,
             "Automatically Update Items",
@@ -292,6 +297,7 @@ public class Options {
         tryAddOption(tooltipBorderColours, options);
         tryAddOption(hideApiKey, options);
         tryAddOption(streamerMode, options);
+        tryAddOption(disableAH, options);
         tryAddOption(quickAHUpdate, options);
         tryAddOption(autoupdate, options);
         tryAddOption(cacheRenderedItempane, options);

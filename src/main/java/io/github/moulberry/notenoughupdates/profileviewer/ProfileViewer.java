@@ -330,7 +330,10 @@ public class ProfileViewer {
                                     JsonObject member = members.get(uuid).getAsJsonObject();
 
                                     if(member.has("coop_invitation")) {
-                                        continue;
+                                        JsonObject coop_invitation = member.get("coop_invitation").getAsJsonObject();
+                                        if(!coop_invitation.get("confirmed").getAsBoolean()) {
+                                            continue;
+                                        }
                                     }
 
                                     String cute_name = profile.get("cute_name").getAsString();

@@ -34,6 +34,8 @@ import java.awt.datatransfer.StringSelection;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1038,109 +1040,107 @@ public class CustomAH extends Gui {
         return matches;
     }
 
+    private ExecutorService es = Executors.newSingleThreadExecutor();
     public void updateSearch() {
         if(searchField == null || priceField == null) init();
+        long currentTime = System.currentTimeMillis();
 
-        /*if(searchField.getText().length() > 0 && searchField.getText().length() <= 2 &&
-                System.currentTimeMillis() - lastSearchFieldUpdate < 200) {
-            shouldUpdateSearch = true;
-            return;
-        }*/
+        es.submit(() -> {
+            if(currentTime - lastUpdateSearch < 500) {
+                shouldUpdateSearch = true;
+                return;
+            }
 
-        if(System.currentTimeMillis() - lastUpdateSearch < 500) {
-            shouldUpdateSearch = true;
-            return;
-        }
+            lastUpdateSearch = currentTime;
+            shouldUpdateSearch = false;
 
-        lastUpdateSearch = System.currentTimeMillis();
-        shouldUpdateSearch = false;
-
-        scrollAmount = 0;
-        try {
-            auctionIds.clear();
-            if(filterMyAuctions) {
-                for(String aucid : manager.auctionManager.getPlayerBids()) {
-                    APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
-                    if(doesAucMatch(auc)) {
-                        auctionIds.add(aucid);
+            scrollAmount = 0;
+            try {
+                auctionIds.clear();
+                if(filterMyAuctions) {
+                    for(String aucid : manager.auctionManager.getPlayerBids()) {
+                        APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
+                        if(doesAucMatch(auc)) {
+                            auctionIds.add(aucid);
+                        }
                     }
-                }
-            } else if(searchField.getText().length() == 0) {
-                for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
-                    if(doesAucMatch(entry.getValue())) {
-                        auctionIds.add(entry.getKey());
-                    }
-                }
-            } else {
-                String query = searchField.getText();
-                Set<String> dontMatch = new HashSet<>();
-
-                HashSet<String> allMatch = new HashSet<>();
-                if(query.contains("!")) { //only used for inverted queries, so dont need to populate unless ! in query
+                } else if(searchField.getText().length() == 0) {
                     for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
                         if(doesAucMatch(entry.getValue())) {
-                            allMatch.add(entry.getKey());
+                            auctionIds.add(entry.getKey());
+                        }
+                    }
+                } else {
+                    String query = searchField.getText();
+                    Set<String> dontMatch = new HashSet<>();
+
+                    HashSet<String> allMatch = new HashSet<>();
+                    if(query.contains("!")) { //only used for inverted queries, so dont need to populate unless ! in query
+                        for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
+                            if(doesAucMatch(entry.getValue())) {
+                                allMatch.add(entry.getKey());
+                            } else {
+                                dontMatch.add(entry.getKey());
+                            }
+                        }
+                    }
+
+                    boolean invert = false;
+
+                    StringBuilder query2 = new StringBuilder();
+                    char lastOp = '|';
+                    for(char c : query.toCharArray()) {
+                        if(query2.toString().trim().isEmpty() && c == '!') {
+                            invert = true;
+                        } else if(c == '|' || c == '&') {
+                            if(lastOp == '|') {
+                                HashSet<String> result = search(query2.toString(), dontMatch);
+                                if(!invert) {
+                                    auctionIds.addAll(result);
+                                } else {
+                                    HashSet<String> allClone = (HashSet<String>) allMatch.clone();
+                                    allClone.removeAll(result);
+                                    auctionIds.addAll(allClone);
+                                }
+                            } else if(lastOp == '&') {
+                                HashSet<String> result = search(query2.toString(), dontMatch);
+                                if(!invert) {
+                                    auctionIds.retainAll(result);
+                                } else {
+                                    auctionIds.removeAll(result);
+                                }
+                            }
+
+                            query2 = new StringBuilder();
+                            invert = false;
+                            lastOp = c;
                         } else {
-                            dontMatch.add(entry.getKey());
+                            query2.append(c);
+                        }
+                    }
+                    if(lastOp == '|') {
+                        HashSet<String> result = search(query2.toString(), dontMatch);
+                        if(!invert) {
+                            auctionIds.addAll(result);
+                        } else {
+                            HashSet<String> allClone = (HashSet<String>) allMatch.clone();
+                            allClone.removeAll(result);
+                            auctionIds.addAll(allClone);
+                        }
+                    } else if(lastOp == '&') {
+                        HashSet<String> result = search(query2.toString(), dontMatch);
+                        if(!invert) {
+                            auctionIds.retainAll(result);
+                        } else {
+                            auctionIds.removeAll(result);
                         }
                     }
                 }
-
-                boolean invert = false;
-
-                StringBuilder query2 = new StringBuilder();
-                char lastOp = '|';
-                for(char c : query.toCharArray()) {
-                    if(query2.toString().trim().isEmpty() && c == '!') {
-                        invert = true;
-                    } else if(c == '|' || c == '&') {
-                        if(lastOp == '|') {
-                            HashSet<String> result = search(query2.toString(), dontMatch);
-                            if(!invert) {
-                                auctionIds.addAll(result);
-                            } else {
-                                HashSet<String> allClone = (HashSet<String>) allMatch.clone();
-                                allClone.removeAll(result);
-                                auctionIds.addAll(allClone);
-                            }
-                        } else if(lastOp == '&') {
-                            HashSet<String> result = search(query2.toString(), dontMatch);
-                            if(!invert) {
-                                auctionIds.retainAll(result);
-                            } else {
-                                auctionIds.removeAll(result);
-                            }
-                        }
-
-                        query2 = new StringBuilder();
-                        invert = false;
-                        lastOp = c;
-                    } else {
-                        query2.append(c);
-                    }
-                }
-                if(lastOp == '|') {
-                    HashSet<String> result = search(query2.toString(), dontMatch);
-                    if(!invert) {
-                        auctionIds.addAll(result);
-                    } else {
-                        HashSet<String> allClone = (HashSet<String>) allMatch.clone();
-                        allClone.removeAll(result);
-                        auctionIds.addAll(allClone);
-                    }
-                } else if(lastOp == '&') {
-                    HashSet<String> result = search(query2.toString(), dontMatch);
-                    if(!invert) {
-                        auctionIds.retainAll(result);
-                    } else {
-                        auctionIds.removeAll(result);
-                    }
-                }
+                sortItems();
+            } catch(Exception e) {
+                shouldUpdateSearch = true;
             }
-            sortItems();
-        } catch(Exception e) {
-            shouldUpdateSearch = true;
-        }
+        });
     }
 
     public void sortItems() throws ConcurrentModificationException {

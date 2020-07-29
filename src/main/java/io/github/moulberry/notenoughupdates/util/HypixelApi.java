@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.util;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,7 +25,7 @@ public class HypixelApi {
      */
 
     private Gson gson = new Gson();
-    private ExecutorService es = Executors.newCachedThreadPool();
+    private ExecutorService es = Executors.newFixedThreadPool(3);
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {
         getHypixelApiAsync(apiKey, method, args, consumer, () -> {});
@@ -49,17 +50,10 @@ public class HypixelApi {
         URLConnection connection = url.openConnection();
         connection.setConnectTimeout(3000);
 
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-            StringBuilder builder = new StringBuilder();
-            int codePoint;
-            while((codePoint = reader.read()) != -1) {
-                builder.append(((char)codePoint));
-            }
-            String response = builder.toString();
+        String response = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
 
-            JsonObject json = gson.fromJson(response, JsonObject.class);
-            return json;
-        }
+        JsonObject json = gson.fromJson(response, JsonObject.class);
+        return json;
     }
 
     public String generateApiUrl(String apiKey, String method, HashMap<String, String> args) {

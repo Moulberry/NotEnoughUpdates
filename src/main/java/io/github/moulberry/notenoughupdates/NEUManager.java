@@ -21,6 +21,7 @@ import org.lwjgl.opengl.Display;
 import javax.swing.*;
 import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -367,121 +368,139 @@ public class NEUManager {
      * repository.
      */
     public void loadItemInformation() {
-        try {
-            if(config.autoupdate.value) {
-                JOptionPane pane = new JOptionPane("Getting items to download from remote repository.");
-                JDialog dialog = pane.createDialog("NotEnoughUpdates Remote Sync");
-                dialog.setModal(false);
-                //dialog.setVisible(true);
+        Thread thread = new Thread(() -> {
+            try {
+                if(config.autoupdate.value) {
+                    JOptionPane pane = new JOptionPane("Getting items to download from remote repository.");
+                    JDialog dialog = pane.createDialog("NotEnoughUpdates Remote Sync");
+                    dialog.setModal(false);
+                    //dialog.setVisible(true);
 
-                if (Display.isActive()) dialog.toFront();
+                    if (Display.isActive()) dialog.toFront();
 
-                HashMap<String, String> oldShas = new HashMap<>();
-                for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
-                    if (new File(repoLocation, entry.getKey() + ".json").exists()) {
-                        oldShas.put(entry.getKey() + ".json", entry.getValue().getAsString());
+                    HashMap<String, String> oldShas = new HashMap<>();
+                    for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
+                        if (new File(repoLocation, entry.getKey() + ".json").exists()) {
+                            oldShas.put(entry.getKey() + ".json", entry.getValue().getAsString());
+                        }
                     }
-                }
-                Map<String, String> changedFiles = neuio.getChangedItems(oldShas);
+                    Map<String, String> changedFiles = neuio.getChangedItems(oldShas);
 
-                if (changedFiles != null) {
-                    for (Map.Entry<String, String> changedFile : changedFiles.entrySet()) {
-                        itemShaConfig.addProperty(changedFile.getKey().substring(0, changedFile.getKey().length() - 5),
-                                changedFile.getValue());
-                    }
-                    try {
-                        writeJson(itemShaConfig, itemShaLocation);
-                    } catch (IOException e) {
-                    }
-                }
 
-                if (Display.isActive()) dialog.toFront();
 
-                if (changedFiles != null && changedFiles.size() <= 20) {
-                    String startMessage = "NotEnoughUpdates: Syncing with remote repository (";
-                    int downloaded = 0;
+                    if (Display.isActive()) dialog.toFront();
 
-                    String dlUrl = "https://raw.githubusercontent.com/Moulberry/NotEnoughUpdates-REPO/master/";
+                    if (changedFiles != null && changedFiles.size() <= 20) {
+                        String startMessage = "NotEnoughUpdates: Syncing with remote repository (";
+                        int downloaded = 0;
 
-                    for (String name : changedFiles.keySet()) {
-                        pane.setMessage(startMessage + (++downloaded) + "/" + changedFiles.size() + ")\nCurrent: " + name);
-                        dialog.pack();
-                        dialog.setVisible(true);
-                        if (Display.isActive()) dialog.toFront();
+                        String dlUrl = "https://raw.githubusercontent.com/Moulberry/NotEnoughUpdates-REPO/master/";
 
-                        File item = new File(repoLocation, name);
+                        for (String name : changedFiles.keySet()) {
+                            pane.setMessage(startMessage + (++downloaded) + "/" + changedFiles.size() + ")\nCurrent: " + name);
+                            dialog.pack();
+                            //dialog.setVisible(true);
+                            if (Display.isActive()) dialog.toFront();
+
+                            File item = new File(repoLocation, name);
+                            try {
+                                item.getParentFile().mkdirs();
+                                item.createNewFile();
+                            } catch (IOException e) {
+                                continue;
+                            }
+                            URL url = new URL(dlUrl+name);
+                            URLConnection urlConnection = url.openConnection();
+                            urlConnection.setConnectTimeout(3000);
+                            urlConnection.setReadTimeout(3000);
+                            try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
+                                 FileOutputStream fileOutputStream = new FileOutputStream(item)) {
+                                byte dataBuffer[] = new byte[1024];
+                                int bytesRead;
+                                while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
+                                    fileOutputStream.write(dataBuffer, 0, bytesRead);
+                                }
+                                itemShaConfig.addProperty(name.substring(0, name.length() - 5),
+                                        changedFiles.get(name));
+                            } catch (IOException e) {
+                            }
+                        }
                         try {
-                            item.getParentFile().mkdirs();
-                            item.createNewFile();
+                            writeJson(itemShaConfig, itemShaLocation);
                         } catch (IOException e) {
                         }
-                        try (BufferedInputStream inStream = new BufferedInputStream(new URL(dlUrl+name).openStream());
-                             FileOutputStream fileOutputStream = new FileOutputStream(item)) {
+                    } else {
+                        Utils.recursiveDelete(repoLocation);
+                        repoLocation.mkdirs();
+
+                        //TODO: Store hard-coded value somewhere else
+                        String dlUrl = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
+
+                        pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
+                        dialog.pack();
+                        //dialog.setVisible(true);
+                        if (Display.isActive()) dialog.toFront();
+
+                        File itemsZip = new File(repoLocation, "neu-items-master.zip");
+                        try {
+                            itemsZip.createNewFile();
+                        } catch (IOException e) {
+                            return;
+                        }
+                        try (BufferedInputStream inStream = new BufferedInputStream(new URL(dlUrl).openStream());
+                             FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
                             byte dataBuffer[] = new byte[1024];
                             int bytesRead;
                             while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
                                 fileOutputStream.write(dataBuffer, 0, bytesRead);
                             }
                         } catch (IOException e) {
+                            return;
+                        }
+
+                        pane.setMessage("Unzipping NEU Master Archive.");
+                        dialog.pack();
+                        //dialog.setVisible(true);
+                        if (Display.isActive()) dialog.toFront();
+
+                        unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
+
+                        if (changedFiles != null) {
+                            for (Map.Entry<String, String> changedFile : changedFiles.entrySet()) {
+                                itemShaConfig.addProperty(changedFile.getKey().substring(0, changedFile.getKey().length() - 5),
+                                        changedFile.getValue());
+                            }
+                            try {
+                                writeJson(itemShaConfig, itemShaLocation);
+                            } catch (IOException e) {
+                            }
                         }
                     }
-                } else {
-                    Utils.recursiveDelete(repoLocation);
-                    repoLocation.mkdirs();
 
-                    //TODO: Store hard-coded value somewhere else
-                    String dlUrl = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
-
-                    pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
-                    dialog.pack();
-                    dialog.setVisible(true);
-                    if (Display.isActive()) dialog.toFront();
-
-                    File itemsZip = new File(repoLocation, "neu-items-master.zip");
-                    try {
-                        itemsZip.createNewFile();
-                    } catch (IOException e) {
-                    }
-                    try (BufferedInputStream inStream = new BufferedInputStream(new URL(dlUrl).openStream());
-                         FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
-                        byte dataBuffer[] = new byte[1024];
-                        int bytesRead;
-                        while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
-                            fileOutputStream.write(dataBuffer, 0, bytesRead);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    pane.setMessage("Unzipping NEU Master Archive.");
-                    dialog.pack();
-                    dialog.setVisible(true);
-                    if (Display.isActive()) dialog.toFront();
-
-                    unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
+                    dialog.dispose();
                 }
+            } catch(Exception e) {}
 
-                dialog.dispose();
+            Set<String> currentlyInstalledItems = new HashSet<>();
+            for(File f : new File(repoLocation, "items").listFiles()) {
+                currentlyInstalledItems.add(f.getName().substring(0, f.getName().length()-5));
             }
-        } catch(Exception e) {}
 
-        Set<String> currentlyInstalledItems = new HashSet<>();
-        for(File f : new File(repoLocation, "items").listFiles()) {
-            currentlyInstalledItems.add(f.getName().substring(0, f.getName().length()-5));
-        }
-
-        Set<String> removedItems;
-        if(config.autoupdate.value) {
-            removedItems = neuio.getRemovedItems(currentlyInstalledItems);
-        } else {
-            removedItems = new HashSet<>();
-        }
-        for(File f : new File(repoLocation, "items").listFiles()) {
-            String internalname = f.getName().substring(0, f.getName().length()-5);
-            if(!removedItems.contains(internalname)) {
-                loadItem(internalname);
+            Set<String> removedItems;
+            if(config.autoupdate.value) {
+                removedItems = neuio.getRemovedItems(currentlyInstalledItems);
+            } else {
+                removedItems = new HashSet<>();
             }
-        }
+            for(File f : new File(repoLocation, "items").listFiles()) {
+                String internalname = f.getName().substring(0, f.getName().length()-5);
+                if(!removedItems.contains(internalname)) {
+                    loadItem(internalname);
+                }
+            }
+        });
+
+        thread.start();
     }
 
     /**
@@ -1408,7 +1427,7 @@ public class NEUManager {
                         for(Map.Entry<String, JsonElement> entry : max.get("statNums").getAsJsonObject().entrySet()) {
                             int statMax = (int)Math.floor(entry.getValue().getAsFloat());
                             int statMin = (int)Math.floor(min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat());
-                            String statStr = "+"+statMin+"\u27A1"+statMax;
+                            String statStr = (statMin>0?"+":"")+statMin+"\u27A1"+statMax;
                             replacements.put(entry.getKey(), statStr);
                         }
                     } else {
@@ -1426,7 +1445,7 @@ public class NEUManager {
                             float statMax = entry.getValue().getAsFloat();
                             float statMin = min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat();
                             float val = statMin*minMix + statMax*maxMix;
-                            String statStr = "+"+(int)Math.floor(val);
+                            String statStr = (statMin>0?"+":"")+(int)Math.floor(val);
                             replacements.put(entry.getKey(), statStr);
                         }
                     }

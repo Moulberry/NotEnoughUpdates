@@ -19,6 +19,8 @@ import net.minecraft.util.EnumChatFormatting;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class APIManager {
@@ -142,23 +144,25 @@ public class APIManager {
     }
 
     public void tick() {
+        if(manager.config.disableAH.value || manager.config.apiKey.value == null || manager.config.apiKey.value.isEmpty()) return;
+
         customAH.tick();
         long currentTime = System.currentTimeMillis();
         if(currentTime - lastPageUpdate > 5*1000) {
-            lastPageUpdate = System.currentTimeMillis();
+            lastPageUpdate = currentTime;
             updatePageTick();
             ahNotification();
         }
-        if(currentTime - lastProfileUpdate > 10*1000) {
+        /*if(currentTime - lastProfileUpdate > 10*1000) {
             lastProfileUpdate = System.currentTimeMillis();
             updateProfiles(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
-        }
+        }*/
         if(currentTime - lastCleanup > 120*1000) {
-            lastCleanup = System.currentTimeMillis();
+            lastCleanup = currentTime;
             cleanup();
         }
         if(currentTime - lastCustomAHSearch > 60*1000) {
-            lastCustomAHSearch = System.currentTimeMillis();
+            lastCustomAHSearch = currentTime;
             if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView()) {
                 customAH.updateSearch();
                 calculateStats();
@@ -263,38 +267,41 @@ public class APIManager {
         }
     }
 
+    private ExecutorService es = Executors.newSingleThreadExecutor();
     private void cleanup() {
-        try {
-            long currTime = System.currentTimeMillis();
-            Set<String> toRemove = new HashSet<>();
-            for(Map.Entry<String, Auction> entry : auctionMap.entrySet()) {
-                long timeToEnd = entry.getValue().end - currTime;
-                if(timeToEnd < -60) {
-                    toRemove.add(entry.getKey());
-                } else if(currTime - entry.getValue().lastUpdate > 5*60*1000) {
-                    toRemove.add(entry.getKey());
-                }
-            }
-            toRemove.removeAll(playerBids);
-            for(String aucid : toRemove) {
-                auctionMap.remove(aucid);
-            }
-            for(HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
-                for(HashSet<String> aucids : extrasMap.values()) {
-                    for(String aucid : toRemove) {
-                        aucids.remove(aucid);
+        es.submit(() -> {
+            try {
+                long currTime = System.currentTimeMillis();
+                Set<String> toRemove = new HashSet<>();
+                for(Map.Entry<String, Auction> entry : auctionMap.entrySet()) {
+                    long timeToEnd = entry.getValue().end - currTime;
+                    if(timeToEnd < -60) {
+                        toRemove.add(entry.getKey());
+                    } else if(currTime - entry.getValue().lastUpdate > 5*60*1000) {
+                        toRemove.add(entry.getKey());
                     }
                 }
+                toRemove.removeAll(playerBids);
+                for(String aucid : toRemove) {
+                    auctionMap.remove(aucid);
+                }
+                for(HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
+                    for(HashSet<String> aucids : extrasMap.values()) {
+                        for(String aucid : toRemove) {
+                            aucids.remove(aucid);
+                        }
+                    }
+                }
+                for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
+                    aucids.removeAll(toRemove);
+                }
+                for(TreeMap<Integer, String> lowestBINs : internalnameToLowestBIN.values()) {
+                    lowestBINs.values().removeAll(toRemove);
+                }
+            } catch(ConcurrentModificationException e) {
+                lastCleanup = System.currentTimeMillis() - 110*1000;
             }
-            for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
-                aucids.removeAll(toRemove);
-            }
-            for(TreeMap<Integer, String> lowestBINs : internalnameToLowestBIN.values()) {
-                lowestBINs.values().removeAll(toRemove);
-            }
-        } catch(ConcurrentModificationException e) {
-            cleanup();
-        }
+        });
     }
 
     private void updatePageTick() {
