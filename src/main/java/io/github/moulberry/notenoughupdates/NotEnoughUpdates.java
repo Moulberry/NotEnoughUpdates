@@ -141,12 +141,8 @@ public class NotEnoughUpdates {
 
     public static ProfileViewer profileViewer;
 
-    SimpleCommand viewProfileCommand = new SimpleCommand("neuprofile", new SimpleCommand.ProcessCommandRunnable() {
+    SimpleCommand.ProcessCommandRunnable viewProfileRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            /*if(!OpenGlHelper.isFramebufferEnabled()) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                        "This feature requires FBOs to work. Try disabling Optifine's 'Fast Render'."));
-            } else*/
             if (manager.config.apiKey.value == null || manager.config.apiKey.value.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "Can't view profile, apikey is not set. Run /api new and put the result in settings."));
@@ -165,11 +161,30 @@ public class NotEnoughUpdates {
                 });
             }
         }
-    }, new SimpleCommand.TabCompleteRunnable() {
+    };
+
+    SimpleCommand viewProfileCommand = new SimpleCommand("neuprofile", viewProfileRunnable, new SimpleCommand.TabCompleteRunnable() {
         @Override
         public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
             if(args.length != 1) return null;
 
+            String lastArg = args[args.length-1];
+            List<String> playerMatches = new ArrayList<>();
+            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                String playerName = player.getName();
+                if(playerName.toLowerCase().startsWith(lastArg.toLowerCase())) {
+                    playerMatches.add(playerName);
+                }
+            }
+            return playerMatches;
+        }
+    });
+
+    SimpleCommand viewProfileShortCommand = new SimpleCommand("pv", viewProfileRunnable, new SimpleCommand.TabCompleteRunnable() {
+        @Override
+        public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
+            if(args.length != 1) return null;
+            
             String lastArg = args[args.length-1];
             List<String> playerMatches = new ArrayList<>();
             for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
@@ -247,6 +262,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
+        ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);

@@ -4,6 +4,7 @@ import com.google.common.base.Splitter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.properties.Property;
@@ -45,6 +46,8 @@ import net.minecraft.util.*;
 import net.minecraft.world.World;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.luaj.vm2.ast.Str;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -66,6 +69,7 @@ public class GuiProfileViewer extends GuiScreen {
 
     private static final ResourceLocation CHEST_GUI_TEXTURE = new ResourceLocation("textures/gui/container/generic_54.png");
     public static final ResourceLocation pv_basic = new ResourceLocation("notenoughupdates:pv_basic.png");
+    public static final ResourceLocation pv_extra = new ResourceLocation("notenoughupdates:pv_extra.png");
     public static final ResourceLocation pv_invs = new ResourceLocation("notenoughupdates:pv_invs.png");
     public static final ResourceLocation pv_cols = new ResourceLocation("notenoughupdates:pv_cols.png");
     public static final ResourceLocation pv_pets = new ResourceLocation("notenoughupdates:pv_pets.png");
@@ -100,6 +104,7 @@ public class GuiProfileViewer extends GuiScreen {
         LOADING(null),
         INVALID_NAME(null),
         BASIC(new ItemStack(Items.paper)),
+        EXTRA(new ItemStack(Items.book)),
         INVS(new ItemStack(Item.getItemFromBlock(Blocks.ender_chest))),
         COLS(new ItemStack(Items.painting)),
         PETS(new ItemStack(Items.bone));
@@ -208,6 +213,9 @@ public class GuiProfileViewer extends GuiScreen {
         switch (currentPage) {
             case BASIC:
                 drawBasicPage(mouseX, mouseY, partialTicks);
+                break;
+            case EXTRA:
+                drawExtraPage(mouseX, mouseY, partialTicks);
                 break;
             case INVS:
                 drawInvsPage(mouseX, mouseY, partialTicks);
@@ -600,16 +608,18 @@ public class GuiProfileViewer extends GuiScreen {
         boolean addLevel = true;
 
         for(int i=offset; i<offset+99; i++) {
-            currentLevelRequirement = levels.get(i).getAsFloat();
-            xpTotal += currentLevelRequirement;
 
             if(addLevel) {
+                currentLevelRequirement = levels.get(i).getAsFloat();
+                xpTotal += currentLevelRequirement;
                 if(xpTotal > exp) {
                     remainingToNextLevel = (exp-(xpTotal-currentLevelRequirement))/currentLevelRequirement;
                     addLevel = false;
                 } else {
                     level += 1;
                 }
+            } else {
+                xpTotal += levels.get(i).getAsFloat();
             }
         }
 
@@ -954,9 +964,7 @@ public class GuiProfileViewer extends GuiScreen {
             renderAlignedString(EnumChatFormatting.YELLOW+"Current LVL XP",
                         EnumChatFormatting.WHITE.toString()+shortNumberFormat((level%1)*currentLevelRequirement, 0), guiLeft+319, guiTop+143, 98);
             renderAlignedString(EnumChatFormatting.YELLOW+"Required LVL XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(currentLevelRequirement, 0), guiLeft+319, guiTop+161, 98);
-
         }
-
     }
 
     private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
@@ -1638,6 +1646,161 @@ public class GuiProfileViewer extends GuiScreen {
                 }
                 panoramasMap.put(location+identifier, panoramasArray);
                 return panoramasArray;
+            }
+        }
+    }
+
+    private TreeMap<Integer, Set<String>> topKills = null;
+    private TreeMap<Integer, Set<String>> topDeaths = null;
+
+    private void drawExtraPage(int mouseX, int mouseY, float partialTicks) {
+        FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_extra);
+        Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
+
+        JsonObject profileInfo = profile.getProfileInformation(profileId);
+        if(profileInfo == null) return;
+        JsonObject skillInfo = profile.getSkillInfo(profileId);
+
+        float xStart = 22;
+        float xOffset = 103;
+        float yStartTop = 27;
+        float yStartBottom = 109;
+        float yOffset = 10;
+
+        float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), 0);
+        float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
+
+        renderAlignedString(EnumChatFormatting.GOLD+"Bank Balance", EnumChatFormatting.WHITE.toString()+shortNumberFormat(bankBalance, 0),
+                guiLeft+xStart, guiTop+yStartTop, 76);
+        renderAlignedString(EnumChatFormatting.GOLD+"Purse", EnumChatFormatting.WHITE.toString()+shortNumberFormat(purseBalance, 0),
+                guiLeft+xStart, guiTop+yStartTop+yOffset, 76);
+
+
+        float fairySouls = Utils.getElementAsFloat(Utils.getElement(profileInfo, "fairy_souls_collected"), 0);
+        renderAlignedString(EnumChatFormatting.LIGHT_PURPLE+"Fairy Souls", EnumChatFormatting.WHITE.toString()+(int)fairySouls+"/209",
+                guiLeft+xStart, guiTop+yStartBottom, 76);
+        if(skillInfo != null) {
+            float totalSkillLVL = 0;
+            float totalSlayerLVL = 0;
+            float totalSkillCount = 0;
+            float totalSlayerCount = 0;
+
+            for(Map.Entry<String, JsonElement> entry : skillInfo.entrySet()) {
+                if(entry.getKey().startsWith("level_skill")) {
+                    totalSkillLVL += entry.getValue().getAsFloat();
+                    totalSkillCount++;
+                } else if(entry.getKey().startsWith("level_slayer")) {
+                    totalSlayerLVL += entry.getValue().getAsFloat();
+                    totalSlayerCount++;
+                }
+            }
+
+            float avgSkillLVL = totalSkillLVL/totalSkillCount;
+            float avgSlayerLVL = totalSlayerLVL/totalSlayerCount;
+
+            renderAlignedString(EnumChatFormatting.RED+"AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSkillLVL*10)/10,
+                    guiLeft+xStart, guiTop+yStartBottom+yOffset, 76);
+            renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
+                    guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
+        }
+
+
+        float auctions_bids = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_bids"), 0);
+        float auctions_highest_bid = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_highest_bid"), 0);
+        float auctions_won = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_won"), 0);
+        float auctions_created = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_created"), 0);
+        float auctions_gold_spent = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_gold_spent"), 0);
+        float auctions_gold_earned = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_gold_earned"), 0);
+
+        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auction Bids", EnumChatFormatting.WHITE.toString()+(int)auctions_bids,
+                guiLeft+xStart+xOffset, guiTop+yStartTop, 76);
+        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Highest Bid", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_highest_bid, 0),
+                guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset, 76);
+        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auctions Won", EnumChatFormatting.WHITE.toString()+(int)auctions_won,
+                guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*2, 76);
+        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auctions Created", EnumChatFormatting.WHITE.toString()+(int)auctions_created,
+                guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*3, 76);
+        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Spent", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_gold_spent, 0),
+                guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*4, 76);
+        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Earned", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_gold_earned, 0),
+                guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*5, 76);
+
+
+        float zombie_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.boss_kills_tier_2"), 0);
+        float zombie_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.boss_kills_tier_3"), 0);
+        float spider_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.boss_kills_tier_2"), 0);
+        float spider_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.boss_kills_tier_3"), 0);
+        float wolf_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.boss_kills_tier_2"), 0);
+        float wolf_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.boss_kills_tier_3"), 0);
+
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T3", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_2,
+                guiLeft+xStart+xOffset, guiTop+yStartBottom, 76);
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_3,
+                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset, 76);
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T3", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_2,
+                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*2, 76);
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T4", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_3,
+                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*3, 76);
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T3", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_2,
+                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*4, 76);
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T4", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_3,
+                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*5, 76);
+
+        if(topKills == null) {
+            topKills = new TreeMap<>();
+            JsonObject stats = profileInfo.get("stats").getAsJsonObject();
+            for(Map.Entry<String, JsonElement> entry : stats.entrySet()) {
+                if(entry.getKey().startsWith("kills_")) {
+                    if(entry.getValue().isJsonPrimitive()) {
+                        JsonPrimitive prim = (JsonPrimitive) entry.getValue();
+                        if(prim.isNumber()) {
+                            String name = WordUtils.capitalizeFully(entry.getKey().substring("kills_".length()).replace("_", " "));
+                            Set<String> kills = topKills.computeIfAbsent(prim.getAsInt(), k->new HashSet<>());
+                            kills.add(name);
+                        }
+                    }
+                }
+            }
+        }
+        if(topDeaths == null) {
+            topDeaths = new TreeMap<>();
+            JsonObject stats = profileInfo.get("stats").getAsJsonObject();
+            for(Map.Entry<String, JsonElement> entry : stats.entrySet()) {
+                if(entry.getKey().startsWith("deaths_")) {
+                    if(entry.getValue().isJsonPrimitive()) {
+                        JsonPrimitive prim = (JsonPrimitive) entry.getValue();
+                        if(prim.isNumber()) {
+                            String name = WordUtils.capitalizeFully(entry.getKey().substring("deaths_".length()).replace("_", " "));
+                            Set<String> deaths = topDeaths.computeIfAbsent(prim.getAsInt(), k->new HashSet<>());
+                            deaths.add(name);
+                        }
+                    }
+                }
+            }
+        }
+
+        int index = 0;
+        for(int killCount : topKills.descendingKeySet()) {
+            if(index >= 6) break;
+            Set<String> kills = topKills.get(killCount);
+            for(String killType : kills) {
+                if(index >= 6) break;
+                renderAlignedString(EnumChatFormatting.YELLOW+killType+" Kills", EnumChatFormatting.WHITE.toString()+killCount,
+                        guiLeft+xStart+xOffset*3, guiTop+yStartTop+yOffset*index, 76);
+                index++;
+            }
+        }
+        index = 0;
+        for(int deathCount : topDeaths.descendingKeySet()) {
+            if(index >= 6) break;
+            Set<String> deaths = topDeaths.get(deathCount);
+            for(String deathType : deaths) {
+                if(index >= 6) break;
+                renderAlignedString(EnumChatFormatting.YELLOW+"Deaths: "+ deathType, EnumChatFormatting.WHITE.toString()+deathCount,
+                        guiLeft+xStart+xOffset*3, guiTop+yStartBottom+yOffset*index, 76);
+                index++;
             }
         }
     }
