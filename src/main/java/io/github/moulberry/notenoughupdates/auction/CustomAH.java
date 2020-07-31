@@ -870,6 +870,12 @@ public class CustomAH extends Gui {
             case 8:
                 lore.add("");
                 lore.add("Current aucid: " + currentAucId);
+                if(currentAucId != null) {
+                    APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(currentAucId);
+                    if(auc != null) {
+                        lore.add("Current auc category: " + auc.category);
+                    }
+                }
                 lore.add(" --- Processing");
                 lore.add("Page Process Millis: " + manager.auctionManager.processMillis);
                 lore.add(" --- Auction Stats");
@@ -1051,18 +1057,19 @@ public class CustomAH extends Gui {
 
             scrollAmount = 0;
             try {
-                auctionIds.clear();
+                HashSet<String> auctionIdsNew = new HashSet<>();
+                auctionIdsNew.clear();
                 if(filterMyAuctions) {
                     for(String aucid : manager.auctionManager.getPlayerBids()) {
                         APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
                         if(doesAucMatch(auc)) {
-                            auctionIds.add(aucid);
+                            auctionIdsNew.add(aucid);
                         }
                     }
                 } else if(searchField.getText().length() == 0) {
                     for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
                         if(doesAucMatch(entry.getValue())) {
-                            auctionIds.add(entry.getKey());
+                            auctionIdsNew.add(entry.getKey());
                         }
                     }
                 } else {
@@ -1091,18 +1098,18 @@ public class CustomAH extends Gui {
                             if(lastOp == '|') {
                                 HashSet<String> result = search(query2.toString(), dontMatch);
                                 if(!invert) {
-                                    auctionIds.addAll(result);
+                                    auctionIdsNew.addAll(result);
                                 } else {
                                     HashSet<String> allClone = (HashSet<String>) allMatch.clone();
                                     allClone.removeAll(result);
-                                    auctionIds.addAll(allClone);
+                                    auctionIdsNew.addAll(allClone);
                                 }
                             } else if(lastOp == '&') {
                                 HashSet<String> result = search(query2.toString(), dontMatch);
                                 if(!invert) {
-                                    auctionIds.retainAll(result);
+                                    auctionIdsNew.retainAll(result);
                                 } else {
-                                    auctionIds.removeAll(result);
+                                    auctionIdsNew.removeAll(result);
                                 }
                             }
 
@@ -1116,21 +1123,22 @@ public class CustomAH extends Gui {
                     if(lastOp == '|') {
                         HashSet<String> result = search(query2.toString(), dontMatch);
                         if(!invert) {
-                            auctionIds.addAll(result);
+                            auctionIdsNew.addAll(result);
                         } else {
                             HashSet<String> allClone = (HashSet<String>) allMatch.clone();
                             allClone.removeAll(result);
-                            auctionIds.addAll(allClone);
+                            auctionIdsNew.addAll(allClone);
                         }
                     } else if(lastOp == '&') {
                         HashSet<String> result = search(query2.toString(), dontMatch);
                         if(!invert) {
-                            auctionIds.retainAll(result);
+                            auctionIdsNew.retainAll(result);
                         } else {
-                            auctionIds.removeAll(result);
+                            auctionIdsNew.removeAll(result);
                         }
                     }
                 }
+                auctionIds = auctionIdsNew;
                 sortItems();
             } catch(Exception e) {
                 shouldUpdateSearch = true;
@@ -1140,9 +1148,10 @@ public class CustomAH extends Gui {
 
     public void sortItems() throws ConcurrentModificationException {
         try {
-            sortedAuctionIds.clear();
-            sortedAuctionIds.addAll(auctionIds);
-            sortedAuctionIds.sort((o1, o2) -> {
+            List<String> sortedAuctionIdsNew = new ArrayList<>();
+
+            sortedAuctionIdsNew.addAll(auctionIds);
+            sortedAuctionIdsNew.sort((o1, o2) -> {
                 APIManager.Auction auc1 = manager.auctionManager.getAuctionItems().get(o1);
                 APIManager.Auction auc2 = manager.auctionManager.getAuctionItems().get(o2);
 
@@ -1177,6 +1186,8 @@ public class CustomAH extends Gui {
                 }
                 return o1.compareTo(o2);
             });
+
+            sortedAuctionIds = sortedAuctionIdsNew;
         } catch(Exception e) {
             shouldSortItems = true;
         }
@@ -1445,6 +1456,7 @@ public class CustomAH extends Gui {
                     aucid = sortedAuctionIds.get(id);
                 } catch (IndexOutOfBoundsException e) { break out; }
 
+                if(aucid == null) continue;
                 APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
                 if(auc != null) {
                     if(mouseX > itemX && mouseX < itemX+16) {

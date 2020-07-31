@@ -309,8 +309,9 @@ public class NEUOverlay extends Gui {
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
                 if(Mouse.getEventButtonState()) {
-                    displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
-                            "https://moulberry.github.io/files/neu_help.html"));
+                    //displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
+                    //        "https://moulberry.github.io/files/neu_help.html"));
+                    Minecraft.getMinecraft().displayGuiScreen(new HelpGUI());
                     Utils.playPressSound();
                 }
             }

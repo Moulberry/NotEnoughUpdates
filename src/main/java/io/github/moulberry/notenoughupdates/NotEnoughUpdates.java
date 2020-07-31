@@ -220,6 +220,12 @@ public class NotEnoughUpdates {
         }
     });
 
+    SimpleCommand tutorialCommand = new SimpleCommand("neututorial", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            openGui = new HelpGUI();
+        }
+    });
+
     SimpleCommand cosmeticsCommand = new SimpleCommand("neucosmetics", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
@@ -262,6 +268,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
+        ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);
@@ -456,6 +463,19 @@ public class NotEnoughUpdates {
                 if(!joinedSB && manager.config.showUpdateMsg.value) {
                     joinedSB = true;
                     displayUpdateMessageIfOutOfDate();
+                    if(!manager.config.loadedModBefore.value) {
+                        manager.config.loadedModBefore.value = true;
+                        try { manager.saveConfig(); } catch(IOException e) {}
+
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                EnumChatFormatting.BLUE+"It seems this is your first time using NotEnoughUpdates."));
+                        ChatComponentText clickText = new ChatComponentText(
+                                EnumChatFormatting.YELLOW+"Click this message if you would like to view a short tutorial.");
+                        clickText.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/neututorial"));
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(clickText);
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                    }
                 }
                 SBScoreboardData.getInstance().tick();
                 //GuiQuestLine.questLine.tick();
@@ -773,12 +793,23 @@ public class NotEnoughUpdates {
                     npe.printStackTrace();
                     focusInv = !hoverPane;
                 }
-                if(focusInv) {
-                    try {
-                        overlay.render(event.getMouseX(), event.getMouseY(), hoverInv && focusInv);
-                    } catch(ConcurrentModificationException e) {e.printStackTrace();}
-                    GL11.glTranslatef(0, 0, 10);
+            }
+            if(event.gui instanceof GuiItemRecipe) {
+                GuiItemRecipe guiItemRecipe = ((GuiItemRecipe)event.gui);
+                hoverInv = event.getMouseX() > guiItemRecipe.guiLeft && event.getMouseX() < guiItemRecipe.guiLeft + guiItemRecipe.xSize &&
+                        event.getMouseY() > guiItemRecipe.guiTop && event.getMouseY() < guiItemRecipe.guiTop + guiItemRecipe.ySize;
+
+                if(hoverPane) {
+                    if(!hoverInv) focusInv = false;
+                } else {
+                    focusInv = true;
                 }
+            }
+            if(focusInv) {
+                try {
+                    overlay.render(event.getMouseX(), event.getMouseY(), hoverInv && focusInv);
+                } catch(ConcurrentModificationException e) {e.printStackTrace();}
+                GL11.glTranslatef(0, 0, 10);
             }
         }
     }

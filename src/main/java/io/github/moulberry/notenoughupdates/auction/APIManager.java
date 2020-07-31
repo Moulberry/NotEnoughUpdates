@@ -29,8 +29,6 @@ public class APIManager {
     private NEUManager manager;
     public final CustomAH customAH;
 
-    private int totalPages = 0;
-
     private TreeMap<String, Auction> auctionMap = new TreeMap<>();
     public HashMap<String, HashSet<String>> internalnameToAucIdMap = new HashMap<>();
     private HashSet<String> playerBids = new HashSet<>();
@@ -39,14 +37,15 @@ public class APIManager {
 
     private HashMap<String, TreeMap<Integer, String>> internalnameToLowestBIN = new HashMap<>();
 
-    private JsonArray playerInformation = null;
+    private LinkedList<Integer> pagesToDownload = null;
 
     public TreeMap<String, HashMap<Integer, HashSet<String>>> extrasToAucIdMap = new TreeMap<>();
 
-    private boolean fullDownload = false;
     private long lastAuctionUpdate = 0;
+    private long lastShortAuctionUpdate = 0;
     private long lastCustomAHSearch = 0;
     private long lastCleanup = 0;
+    private long lastApiUpdate = 0;
 
     public int activeAuctions = 0;
     public int uniqueItems = 0;
@@ -114,13 +113,18 @@ public class APIManager {
     }
 
     public void tick() {
-        if(manager.config.disableAH.value || manager.config.apiKey.value == null || manager.config.apiKey.value.isEmpty()) return;
+        if(manager.config.apiKey.value == null || manager.config.apiKey.value.isEmpty()) return;
 
         customAH.tick();
         long currentTime = System.currentTimeMillis();
         if(currentTime - lastAuctionUpdate > 60*1000) {
             lastAuctionUpdate = currentTime;
             updatePageTick();
+        }
+
+        if(currentTime - lastShortAuctionUpdate > 10*1000) {
+            lastShortAuctionUpdate = currentTime;
+            updatePageTickShort();
             ahNotification();
         }
         /*if(currentTime - lastProfileUpdate > 10*1000) {
@@ -238,49 +242,61 @@ public class APIManager {
         }
     }
 
+    private void updatePageTickShort() {
+        JsonObject disable = Utils.getConstant("disable");
+        if(disable != null && disable.get("auctions").getAsBoolean()) return;
+
+        if(pagesToDownload == null) {
+            getPageFromAPI(0);
+        } else if(!pagesToDownload.isEmpty()) {
+            int page = pagesToDownload.getFirst();
+            getPageFromAPI(page);
+        }
+    }
+
     private void updatePageTick() {
         JsonObject disable = Utils.getConstant("disable");
-        if(!fullDownload && (disable == null || !disable.get("auctions").getAsBoolean())) {
-            fullDownload = true;
-            getPageFromAPI(0);
-            for(int i=1; i<totalPages; i++) {
-                getPageFromAPI(i);
-            }
-        } else {
-            manager.hypixelApi.getApiGZIPAsync("http://51.89.22.3/auction.json.gz", jsonObject -> {
-                if(jsonObject.get("success").getAsBoolean()) {
-                    JsonArray new_auctions = jsonObject.get("new_auctions").getAsJsonArray();
-                    for(JsonElement auctionElement : new_auctions) {
-                        JsonObject auction = auctionElement.getAsJsonObject();
-                        processAuction(auction);
-                    }
-                    JsonArray new_bids = jsonObject.get("new_bids").getAsJsonArray();
-                    for(JsonElement newBidElement : new_bids) {
-                        JsonObject newBid = newBidElement.getAsJsonObject();
-                        String newBidUUID = newBid.get("uuid").getAsString();
-                        int newBidAmount = newBid.get("highest_bid_amount").getAsInt();
-                        int end = newBid.get("end").getAsInt();
-                        int bid_count = newBid.get("bid_count").getAsInt();
+        if(disable != null && disable.get("auctions").getAsBoolean()) return;
 
-                        Auction auc = auctionMap.get(newBidUUID);
-                        if(auc != null) {
-                            auc.highest_bid_amount = newBidAmount;
-                            auc.end = end;
-                            auc.bid_count = bid_count;
-                        }
-                    }
-                    Set<String> toRemove = new HashSet<>();
-                    JsonArray removed_auctions = jsonObject.get("removed_auctions").getAsJsonArray();
-                    for(JsonElement removedAuctionsElement : removed_auctions) {
-                        String removed = removedAuctionsElement.getAsString();
-                        toRemove.add(removed);
-                    }
-                    remove(toRemove);
+        manager.hypixelApi.getApiGZIPAsync("http://moulberry.codes/auction.json.gz", jsonObject -> {
+            if(jsonObject.get("success").getAsBoolean()) {
+                long apiUpdate = (long)jsonObject.get("time").getAsFloat();
+                if(lastApiUpdate == apiUpdate) {
+                    lastAuctionUpdate -= 30*1000;
                 }
-            }, () -> {
-                System.out.println("error");
-            });
-        }
+                lastApiUpdate = apiUpdate;
+
+                JsonArray new_auctions = jsonObject.get("new_auctions").getAsJsonArray();
+                for(JsonElement auctionElement : new_auctions) {
+                    JsonObject auction = auctionElement.getAsJsonObject();
+                    processAuction(auction);
+                }
+                JsonArray new_bids = jsonObject.get("new_bids").getAsJsonArray();
+                for(JsonElement newBidElement : new_bids) {
+                    JsonObject newBid = newBidElement.getAsJsonObject();
+                    String newBidUUID = newBid.get("uuid").getAsString();
+                    int newBidAmount = newBid.get("highest_bid_amount").getAsInt();
+                    int end = newBid.get("end").getAsInt();
+                    int bid_count = newBid.get("bid_count").getAsInt();
+
+                    Auction auc = auctionMap.get(newBidUUID);
+                    if(auc != null) {
+                        auc.highest_bid_amount = newBidAmount;
+                        auc.end = end;
+                        auc.bid_count = bid_count;
+                    }
+                }
+                Set<String> toRemove = new HashSet<>();
+                JsonArray removed_auctions = jsonObject.get("removed_auctions").getAsJsonArray();
+                for(JsonElement removedAuctionsElement : removed_auctions) {
+                    String removed = removedAuctionsElement.getAsString();
+                    toRemove.add(removed);
+                }
+                remove(toRemove);
+            }
+        }, () -> {
+            System.out.println("Error downloading auction from Moulberry's jank API. :(");
+        });
     }
 
     public void calculateStats() {
@@ -368,12 +384,6 @@ public class APIManager {
 
             NBTTagCompound tag = item_tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
             String internalname = manager.getInternalnameFromNBT(tag);
-            String displayNormal = "";
-            if(manager.getItemInformation().containsKey(internalname)) {
-                displayNormal = Utils.cleanColour(manager.getItemInformation().get(internalname).get("displayname").getAsString());
-            } else {
-
-            }
 
             String[] lore = new String[0];
             NBTTagCompound display = tag.getCompoundTag("display");
@@ -468,14 +478,13 @@ public class APIManager {
                 }
             }
 
-            auction1.lastUpdate = System.currentTimeMillis();
-
             auctionMap.put(auctionUuid, auction1);
             internalnameToAucIdMap.computeIfAbsent(internalname, k -> new HashSet<>()).add(auctionUuid);
         } catch(Exception e) {e.printStackTrace();}
     }
 
     private void getPageFromAPI(int page) {
+        System.out.println("downloading page:"+page);
         //System.out.println("Trying to update page: " + page);
         HashMap<String, String> args = new HashMap<>();
         args.put("page", ""+page);
@@ -484,19 +493,26 @@ public class APIManager {
                     if(jsonObject == null) return;
 
                     if (jsonObject.get("success").getAsBoolean()) {
-                    totalPages = jsonObject.get("totalPages").getAsInt();
-                    activeAuctions = jsonObject.get("totalAuctions").getAsInt();
+                        if(pagesToDownload == null) {
+                            int totalPages = jsonObject.get("totalPages").getAsInt();
+                            pagesToDownload = new LinkedList<>();
+                            for(int i=0; i<totalPages; i++) {
+                                pagesToDownload.add(i);
+                            }
+                        }
+                        pagesToDownload.remove(Integer.valueOf(page));
+                        activeAuctions = jsonObject.get("totalAuctions").getAsInt();
 
-                    long startProcess = System.currentTimeMillis();
-                    JsonArray auctions = jsonObject.get("auctions").getAsJsonArray();
-                    for (int i = 0; i < auctions.size(); i++) {
-                        JsonObject auction = auctions.get(i).getAsJsonObject();
+                        long startProcess = System.currentTimeMillis();
+                        JsonArray auctions = jsonObject.get("auctions").getAsJsonArray();
+                        for (int i = 0; i < auctions.size(); i++) {
+                            JsonObject auction = auctions.get(i).getAsJsonObject();
 
-                        processAuction(auction);
+                            processAuction(auction);
+                        }
+                        processMillis = (int)(System.currentTimeMillis() - startProcess);
                     }
-                    processMillis = (int)(System.currentTimeMillis() - startProcess);
                 }
-            }
         );
     }
 

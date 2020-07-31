@@ -93,11 +93,6 @@ public class Options {
             "Api Key",
             false,
             "Type /api new to receive key and put it here.");
-    public Option<Boolean> disableAH = new Option(
-            true,
-            "Disable AH",
-            false,
-            "Disables all AH-related features. Reduces network usage and may improve performance");
     public Option<Boolean> autoupdate = new Option(
             true,
             "Automatically Update Items",
@@ -172,6 +167,11 @@ public class Options {
             "Show Dev Options",
             true,
             "Dev Feature. Please don't use.");
+    public Option<Boolean> loadedModBefore = new Option(
+            false,
+            "loadedModBefore",
+            true,
+            "loadedModBefore");
     public Option<String> selectedCape = new Option(
             "",
             "Selected Cape",
@@ -219,12 +219,12 @@ public class Options {
             "OverlaySearchBar");
     public Option<List<String>> enchantColours = new Option(
             Utils.createList("[a-zA-Z ]+:\u003e:9:6",
-                                    "[a-zA-Z ]+:\u003e:6:c",
-                                    "[a-zA-Z ]+:\u003e:5:5",
-                                    "Experience:\u003e:3:5",
-                                    "Life Steal:\u003e:3:5",
-                                    "Scavenger:\u003e:3:5",
-                                    "Looting:\u003e:3:5"),
+                    "[a-zA-Z ]+:\u003e:6:c",
+                    "[a-zA-Z ]+:\u003e:5:5",
+                    "Experience:\u003e:3:5",
+                    "Life Steal:\u003e:3:5",
+                    "Scavenger:\u003e:3:5",
+                    "Looting:\u003e:3:5"),
             "enchantColours",
             false,
             "enchantColours");
@@ -255,14 +255,16 @@ public class Options {
     }
 
     private transient List<Button> buttons = new ArrayList<>();
+
     {
         buttons.add(new Button("Open Config Folder", "Opens the config folder. Be careful.", () -> {
-            if(Desktop.isDesktopSupported()) {
+            if (Desktop.isDesktopSupported()) {
                 Desktop desktop = Desktop.getDesktop();
-                if(NotEnoughUpdates.INSTANCE.manager.configFile.getParentFile().exists()) {
+                if (NotEnoughUpdates.INSTANCE.manager.configFile.getParentFile().exists()) {
                     try {
                         desktop.open(NotEnoughUpdates.INSTANCE.manager.configFile.getParentFile());
-                    } catch(IOException ignored) {}
+                    } catch (IOException ignored) {
+                    }
                 }
             }
         }));
@@ -297,7 +299,6 @@ public class Options {
         tryAddOption(tooltipBorderColours, options);
         tryAddOption(hideApiKey, options);
         tryAddOption(streamerMode, options);
-        tryAddOption(disableAH, options);
         tryAddOption(quickAHUpdate, options);
         tryAddOption(autoupdate, options);
         tryAddOption(cacheRenderedItempane, options);
@@ -319,7 +320,7 @@ public class Options {
     }
 
     private void tryAddOption(Option<?> option, List<Option> list) {
-        if(!option.secret) {// || dev.value) {
+        if (!option.secret) {// || dev.value) {
             list.add(option);
         }
     }
@@ -348,19 +349,19 @@ public class Options {
         }
 
         public void setValue(String value) {
-            if(this.value instanceof Boolean) {
+            if (this.value instanceof Boolean) {
                 ((Option<Boolean>) this).value = Boolean.valueOf(value);
-            } else if(this.value instanceof Double) {
-                ((Option<Double>)this).value = Double.valueOf(value);
-            } else if(this.value instanceof String) {
-                ((Option<String>)this).value = value;
+            } else if (this.value instanceof Double) {
+                ((Option<Double>) this).value = Double.valueOf(value);
+            } else if (this.value instanceof String) {
+                ((Option<String>) this).value = value;
             }
         }
     }
 
     public static JsonSerializer<Option<?>> createSerializer() {
         return (src, typeOfSrc, context) -> {
-            if(src.secret && src.defaultValue.equals(src.value)) {
+            if (src.secret && src.defaultValue.equals(src.value)) {
                 return null;
             }
             return context.serialize(src.value);
@@ -371,7 +372,7 @@ public class Options {
         return (json, typeOfT, context) -> {
             try {
                 return new Option(context.deserialize(json, Object.class), "unknown", false, "unknown");
-            } catch(Exception e) {
+            } catch (Exception e) {
                 return null;
             }
         };
@@ -383,21 +384,23 @@ public class Options {
 
         Options oLoad = gson.fromJson(reader, Options.class);
         Options oDefault = new Options();
-        if(oLoad == null) return oDefault;
+        if (oLoad == null) return oDefault;
 
-        for(Field f : Options.class.getDeclaredFields()) {
+        for (Field f : Options.class.getDeclaredFields()) {
             try {
-                if(((Option)f.get(oDefault)).value instanceof List) {
+                if (((Option) f.get(oDefault)).value instanceof List) {
                     //If the default size of the list is greater than the loaded size, use the default value.
                     //if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
                     //    continue;
                     //}
                 }
-                ((Option)f.get(oDefault)).value = ((Option)f.get(oLoad)).value;
-            } catch (Exception e) { }
+                ((Option) f.get(oDefault)).value = ((Option) f.get(oLoad)).value;
+            } catch (Exception e) {
+            }
         }
         return oDefault;
     }
+
 
     public void saveToFile(Gson gson, File file) throws IOException {
         file.createNewFile();
@@ -407,6 +410,4 @@ public class Options {
             writer.write(gson.toJson(this));
         }
     }
-
-
 }

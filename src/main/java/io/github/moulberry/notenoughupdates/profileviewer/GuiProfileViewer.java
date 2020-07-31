@@ -517,7 +517,7 @@ public class GuiProfileViewer extends GuiScreen {
                 }
                 return;
             } else if(mouseX > guiLeft+100+15 && mouseX < guiLeft+100+20+12) {
-                if(sortedPets != null && petsPage < Math.ceil(sortedPets.size()/25f)-1) {
+                if(sortedPets != null && petsPage < Math.ceil(sortedPets.size()/20f)-1) {
                     petsPage++;
                 }
                 return;
@@ -873,7 +873,7 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.drawTexturedRect(guiLeft+100-15-12, guiTop+6, 12, 16,
                     29/256f, 53/256f, !leftHovered?0:32/256f, !leftHovered?32/256f:64/256f, GL11.GL_NEAREST);
         }
-        if(petsPage < Math.ceil(pets.size()/25f)-1) {
+        if(petsPage < Math.ceil(pets.size()/20f)-1) {
             Utils.drawTexturedRect( guiLeft+100+15, guiTop+6, 12, 16,
                     5/256f, 29/256f, !rightHovered?0:32/256f, !rightHovered?32/256f:64/256f, GL11.GL_NEAREST);
         }
@@ -2086,7 +2086,13 @@ public class GuiProfileViewer extends GuiScreen {
                         int x = guiLeft+50;
                         float y = guiTop+82+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
                         GlStateManager.translate(x, y, 0);
-                        ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
+                        ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item, false);
+
+                        //Remove extra attributes so no CIT
+                        NBTTagCompound stackTag = stack.getTagCompound()==null?new NBTTagCompound():stack.getTagCompound();
+                        stackTag.removeTag("ExtraAttributes");
+                        stack.setTagCompound(stackTag);
+
                         GlStateManager.scale(-1.5f, 1.5f, 1);
                         GlStateManager.enableDepth();
                         Utils.drawItemStack(stack, 0, 0);
