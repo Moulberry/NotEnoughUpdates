@@ -4,9 +4,11 @@ import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiElement;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroup;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupFloating;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -26,6 +28,14 @@ public class NEUOverlayPlacements extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawScreen(mouseX, mouseY, partialTicks);
         drawDefaultBackground();
+
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(icons);
+        GlStateManager.enableBlend();
+
+        GlStateManager.tryBlendFuncSeparate(775, 769, 1, 0);
+        GlStateManager.enableAlpha();
+        this.drawTexturedModalRect(width / 2 - 7, height / 2 - 7, 0, 0, 16, 16);
 
         if(mouseX < 300 && mouseY < 300 && clickedElement != null) {
             guiButton.yPosition = height - 5 - guiButton.height;
@@ -73,9 +83,14 @@ public class NEUOverlayPlacements extends GuiScreen {
                             new Color(200, 200, 200, 100).getRGB());
                     break;
                 case BOTMID:
+                case INV_BOTMID:
                     drawRect((int)position.x, (int)(position.y+element.getHeight()*0.9f),
                             (int)position.x+element.getWidth(), (int)position.y+element.getHeight(),
                             new Color(200, 200, 200, 100).getRGB());
+                    if(anchorPoint.anchorPoint == MBAnchorPoint.AnchorPoint.INV_BOTMID) {
+                        Utils.drawStringCentered("Inv-Relative", Minecraft.getMinecraft().fontRendererObj,
+                                position.x+element.getWidth()*0.5f, position.y+element.getHeight()*0.5f, false, 0);
+                    }
                     break;
                 case MIDMID:
                     drawRect((int)(position.x+element.getWidth()*0.45f), (int)(position.y+element.getHeight()*0.45f),
@@ -91,6 +106,7 @@ public class NEUOverlayPlacements extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         MBGuiGroupFloating mainGroup = NotEnoughUpdates.INSTANCE.overlay.guiGroup;
+        int index=0;
         for(MBGuiElement element : mainGroup.getChildren()) {
             MBAnchorPoint anchorPoint = mainGroup.getChildrenMap().get(element);
             Vector2f position = mainGroup.getChildrenPosition().get(element);
@@ -104,22 +120,27 @@ public class NEUOverlayPlacements extends GuiScreen {
                         clickedAnchorX = (int)anchorPoint.offset.x;
                         clickedAnchorY = (int)anchorPoint.offset.y;
                     } else {
-                        float anchorX = (width-element.getWidth()) * anchorPoint.anchorPoint.x + anchorPoint.offset.x;
-                        float anchorY = (height-element.getHeight()) * anchorPoint.anchorPoint.y + anchorPoint.offset.y;
-
                         MBAnchorPoint.AnchorPoint[] vals = MBAnchorPoint.AnchorPoint.values();
                         anchorPoint.anchorPoint = vals[(anchorPoint.anchorPoint.ordinal()+1)%vals.length];
 
-                        float screenX = (width-element.getWidth()) * anchorPoint.anchorPoint.x;
-                        float screenY = (height-element.getHeight()) * anchorPoint.anchorPoint.y;
-                        anchorPoint.offset.x = anchorX - screenX;
-                        anchorPoint.offset.y = anchorY - screenY;
+                        mainGroup.recalculate();
+
+                        anchorPoint.offset.x += position.x - mainGroup.getChildrenPosition().get(element).x;
+                        anchorPoint.offset.y += position.y - mainGroup.getChildrenPosition().get(element).y;
 
                         mainGroup.recalculate();
+
+                        if(index == 0) {
+                            NotEnoughUpdates.INSTANCE.manager.config.overlaySearchBar.value = anchorPoint.toString();
+                        } else if(index == 1) {
+                            NotEnoughUpdates.INSTANCE.manager.config.overlayQuickCommand.value = anchorPoint.toString();
+                        }
+                        try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
                     }
                     return;
                 }
             }
+            index++;
         }
 
         if(guiButton.mousePressed(Minecraft.getMinecraft(), mouseX, mouseY)) {

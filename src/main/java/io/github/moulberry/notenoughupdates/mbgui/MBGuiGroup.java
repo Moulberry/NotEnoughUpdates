@@ -54,8 +54,10 @@ public abstract class MBGuiGroup extends MBGuiElement {
 
     @Override
     public void render(float x, float y) {
+        Map<MBGuiElement, Vector2f> childrenPos = getChildrenPosition();
+
         for(MBGuiElement child : getChildren()) {
-            Vector2f childPos = childrenPosition.get(child);
+            Vector2f childPos = childrenPos.get(child);
             child.render(x+childPos.x, y+childPos.y);
         }
     }

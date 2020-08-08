@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.options;
 
 import com.google.gson.*;
+import io.github.moulberry.notenoughupdates.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
@@ -77,11 +78,6 @@ public class Options {
             "Hide Apikey Setting",
             false,
             "Hides the Apikey setting (please try not to leak Apikey if you're recording)");
-    public Option<Boolean> quickAHUpdate = new Option(
-            false,
-            "NeuAH Quick Update",
-            false,
-            "Will instantly update the whole AH when an api update is detected (aka as fast as possible). Warning: Uses lots of data.");
     public Option<Double> bgBlurFactor = new Option(
             5.0,
             "Background Blur",
@@ -137,6 +133,11 @@ public class Options {
             "Item Background Opacity",
             false,
             "Changes the opacity of item background. Value between 0-255.", 0, 255);
+    public Option<Double> itemHighlightOpacity = new Option(
+            178.0,
+            "Item Highlight Opacity",
+            false,
+            "Changes the opacity of item highlights. Value between 0-255.", 0, 255);
     public Option<Double> panePadding = new Option(
             10.0,
             "Pane Padding",
@@ -161,6 +162,11 @@ public class Options {
             "Show Dev Options",
             true,
             "Dev Feature. Please don't use.");
+    public Option<Boolean> loadedModBefore = new Option(
+            false,
+            "loadedModBefore",
+            true,
+            "loadedModBefore");
     public Option<String> selectedCape = new Option(
             "",
             "Selected Cape",
@@ -206,6 +212,17 @@ public class Options {
             "OverlaySearchBar",
             false,
             "OverlaySearchBar");
+    public Option<List<String>> enchantColours = new Option(
+            Utils.createList("[a-zA-Z ]+:\u003e:9:6",
+                    "[a-zA-Z ]+:\u003e:6:c",
+                    "[a-zA-Z ]+:\u003e:5:5",
+                    "Experience:\u003e:3:5",
+                    "Life Steal:\u003e:3:5",
+                    "Scavenger:\u003e:3:5",
+                    "Looting:\u003e:3:5"),
+            "enchantColours",
+            false,
+            "enchantColours");
 
     private ArrayList<String> createDefaultQuickCommands() {
         ArrayList<String> arr = new ArrayList<>();
@@ -233,20 +250,27 @@ public class Options {
     }
 
     private transient List<Button> buttons = new ArrayList<>();
+
     {
         buttons.add(new Button("Open Config Folder", "Opens the config folder. Be careful.", () -> {
-            if(Desktop.isDesktopSupported()) {
+            if (Desktop.isDesktopSupported()) {
                 Desktop desktop = Desktop.getDesktop();
-                if(NotEnoughUpdates.INSTANCE.manager.configFile.getParentFile().exists()) {
+                if (NotEnoughUpdates.INSTANCE.manager.configFile.getParentFile().exists()) {
                     try {
                         desktop.open(NotEnoughUpdates.INSTANCE.manager.configFile.getParentFile());
-                    } catch(IOException ignored) {}
+                    } catch (IOException ignored) {
+                    }
                 }
             }
         }));
 
         buttons.add(new Button("Edit Gui Positions", "Allows you to change the position of the search bar, etc.", () -> {
             Minecraft.getMinecraft().displayGuiScreen(new NEUOverlayPlacements());
+        }));
+
+
+        buttons.add(new Button("Edit Enchant Colours", "Allows you to change the colour of any enchant at any level.", () -> {
+            Minecraft.getMinecraft().displayGuiScreen(new GuiEnchantColour());
         }));
     }
 
@@ -257,6 +281,8 @@ public class Options {
     public List<Option> getOptions() {
         List<Option> options = new ArrayList<>();
 
+        //Pane width near top so less scuffed
+        tryAddOption(paneWidthMult, options);
         //Buttons
         tryAddOption(enableItemEditing, options);
         tryAddOption(onlyShowOnSkyblock, options);
@@ -268,7 +294,6 @@ public class Options {
         tryAddOption(tooltipBorderColours, options);
         tryAddOption(hideApiKey, options);
         tryAddOption(streamerMode, options);
-        tryAddOption(quickAHUpdate, options);
         tryAddOption(autoupdate, options);
         tryAddOption(cacheRenderedItempane, options);
         tryAddOption(itemStyle, options);
@@ -276,10 +301,10 @@ public class Options {
         tryAddOption(disableItemTabOpen, options);
         //Sliders
         tryAddOption(bgBlurFactor, options);
-        tryAddOption(paneWidthMult, options);
         tryAddOption(ahNotification, options);
         tryAddOption(bgOpacity, options);
         tryAddOption(fgOpacity, options);
+        tryAddOption(itemHighlightOpacity, options);
         tryAddOption(panePadding, options);
         tryAddOption(tooltipBorderOpacity, options);
         //Text
@@ -289,7 +314,7 @@ public class Options {
     }
 
     private void tryAddOption(Option<?> option, List<Option> list) {
-        if(!option.secret) {// || dev.value) {
+        if (!option.secret) {// || dev.value) {
             list.add(option);
         }
     }
@@ -318,19 +343,19 @@ public class Options {
         }
 
         public void setValue(String value) {
-            if(this.value instanceof Boolean) {
+            if (this.value instanceof Boolean) {
                 ((Option<Boolean>) this).value = Boolean.valueOf(value);
-            } else if(this.value instanceof Double) {
-                ((Option<Double>)this).value = Double.valueOf(value);
-            } else if(this.value instanceof String) {
-                ((Option<String>)this).value = value;
+            } else if (this.value instanceof Double) {
+                ((Option<Double>) this).value = Double.valueOf(value);
+            } else if (this.value instanceof String) {
+                ((Option<String>) this).value = value;
             }
         }
     }
 
     public static JsonSerializer<Option<?>> createSerializer() {
         return (src, typeOfSrc, context) -> {
-            if(src.secret && src.defaultValue.equals(src.value)) {
+            if (src.secret && src.defaultValue.equals(src.value)) {
                 return null;
             }
             return context.serialize(src.value);
@@ -341,7 +366,7 @@ public class Options {
         return (json, typeOfT, context) -> {
             try {
                 return new Option(context.deserialize(json, Object.class), "unknown", false, "unknown");
-            } catch(Exception e) {
+            } catch (Exception e) {
                 return null;
             }
         };
@@ -353,21 +378,23 @@ public class Options {
 
         Options oLoad = gson.fromJson(reader, Options.class);
         Options oDefault = new Options();
-        if(oLoad == null) return oDefault;
+        if (oLoad == null) return oDefault;
 
-        for(Field f : Options.class.getDeclaredFields()) {
+        for (Field f : Options.class.getDeclaredFields()) {
             try {
-                if(((Option)f.get(oDefault)).value instanceof List) {
+                if (((Option) f.get(oDefault)).value instanceof List) {
                     //If the default size of the list is greater than the loaded size, use the default value.
-                    if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
-                        continue;
-                    }
+                    //if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
+                    //    continue;
+                    //}
                 }
-                ((Option)f.get(oDefault)).value = ((Option)f.get(oLoad)).value;
-            } catch (Exception e) { }
+                ((Option) f.get(oDefault)).value = ((Option) f.get(oLoad)).value;
+            } catch (Exception e) {
+            }
         }
         return oDefault;
     }
+
 
     public void saveToFile(Gson gson, File file) throws IOException {
         file.createNewFile();
@@ -377,6 +404,4 @@ public class Options {
             writer.write(gson.toJson(this));
         }
     }
-
-
 }
