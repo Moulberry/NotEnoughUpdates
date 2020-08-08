@@ -45,7 +45,9 @@ public class APIManager {
     private long lastShortAuctionUpdate = 0;
     private long lastCustomAHSearch = 0;
     private long lastCleanup = 0;
+
     private long lastApiUpdate = 0;
+    private long firstHypixelApiUpdate = 0;
 
     public int activeAuctions = 0;
     public int uniqueItems = 0;
@@ -110,6 +112,11 @@ public class APIManager {
                 return stack;
             }
         }
+    }
+
+    public void markNeedsUpdate() {
+        firstHypixelApiUpdate = 0;
+        pagesToDownload = null;
     }
 
     public void tick() {
@@ -211,7 +218,7 @@ public class APIManager {
                 Set<String> toRemove = new HashSet<>();
                 for(Map.Entry<String, Auction> entry : auctionMap.entrySet()) {
                     long timeToEnd = entry.getValue().end - currTime;
-                    if(timeToEnd < -60) {
+                    if(timeToEnd < -120*1000) { //2 minutes
                         toRemove.add(entry.getKey());
                     }
                 }
@@ -243,13 +250,15 @@ public class APIManager {
     }
 
     private void updatePageTickShort() {
+        if(pagesToDownload == null || pagesToDownload.isEmpty()) return;
+
+        if(firstHypixelApiUpdate == 0 || (System.currentTimeMillis() - firstHypixelApiUpdate)%(60*1000) > 15*1000) return;
+
         JsonObject disable = Utils.getConstant("disable");
         if(disable != null && disable.get("auctions").getAsBoolean()) return;
 
-        if(pagesToDownload == null) {
-            getPageFromAPI(0);
-        } else if(!pagesToDownload.isEmpty()) {
-            int page = pagesToDownload.getFirst();
+        while(!pagesToDownload.isEmpty()) {
+            int page = pagesToDownload.pop();
             getPageFromAPI(page);
         }
     }
@@ -257,6 +266,10 @@ public class APIManager {
     private void updatePageTick() {
         JsonObject disable = Utils.getConstant("disable");
         if(disable != null && disable.get("auctions").getAsBoolean()) return;
+
+        if(pagesToDownload == null) {
+            getPageFromAPI(0);
+        }
 
         manager.hypixelApi.getApiGZIPAsync("http://moulberry.codes/auction.json.gz", jsonObject -> {
             if(jsonObject.get("success").getAsBoolean()) {
@@ -269,18 +282,21 @@ public class APIManager {
                 JsonArray new_auctions = jsonObject.get("new_auctions").getAsJsonArray();
                 for(JsonElement auctionElement : new_auctions) {
                     JsonObject auction = auctionElement.getAsJsonObject();
+                    //System.out.println("New auction " + auction);
                     processAuction(auction);
                 }
                 JsonArray new_bids = jsonObject.get("new_bids").getAsJsonArray();
                 for(JsonElement newBidElement : new_bids) {
                     JsonObject newBid = newBidElement.getAsJsonObject();
                     String newBidUUID = newBid.get("uuid").getAsString();
+                    //System.out.println("new bid" + newBidUUID);
                     int newBidAmount = newBid.get("highest_bid_amount").getAsInt();
                     int end = newBid.get("end").getAsInt();
                     int bid_count = newBid.get("bid_count").getAsInt();
 
                     Auction auc = auctionMap.get(newBidUUID);
                     if(auc != null) {
+                        //System.out.println("Setting auction " + newBidUUID + " price to " + newBidAmount);
                         auc.highest_bid_amount = newBidAmount;
                         auc.end = end;
                         auc.bid_count = bid_count;
@@ -456,10 +472,10 @@ public class APIManager {
             if(itemType >= 0 && itemType < categoryItemType.length) {
                 category = categoryItemType[itemType];
             }
-            if(internalname.contains("ENCHANTED_BOOK")) category = "ebook";
-            if(extras.endsWith("Potion")) category = "potion";
-            if(extras.contains("Rune")) category = "rune";
-            if(item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";
+            if(category.equals("consumables") && extras.contains("enchanted book")) category = "ebook";
+            if(category.equals("consumables") && extras.endsWith("potion")) category = "potion";
+            if(category.equals("misc") && extras.contains("rune")) category = "rune";
+            if(category.equals("misc") && item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";
             if(item_lore.split("\n")[0].endsWith("Pet") ||
                     item_lore.split("\n")[0].endsWith("Mount")) category = "pet";
 
@@ -500,7 +516,9 @@ public class APIManager {
                                 pagesToDownload.add(i);
                             }
                         }
-                        pagesToDownload.remove(Integer.valueOf(page));
+                        if(firstHypixelApiUpdate == 0) {
+                            firstHypixelApiUpdate = jsonObject.get("lastUpdated").getAsLong();
+                        }
                         activeAuctions = jsonObject.get("totalAuctions").getAsInt();
 
                         long startProcess = System.currentTimeMillis();
@@ -511,7 +529,11 @@ public class APIManager {
                             processAuction(auction);
                         }
                         processMillis = (int)(System.currentTimeMillis() - startProcess);
+                    } else {
+                        pagesToDownload.addLast(page);
                     }
+                }, () -> {
+                    pagesToDownload.addLast(page);
                 }
         );
     }

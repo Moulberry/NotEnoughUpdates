@@ -52,6 +52,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.commons.lang3.StringUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
@@ -77,7 +78,7 @@ import static io.github.moulberry.notenoughupdates.GuiTextures.*;
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "REL-1.0.1";
+    public static final String VERSION = "1.1-REL";
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -180,16 +181,51 @@ public class NotEnoughUpdates {
         }
     });
 
-    SimpleCommand viewProfileShortCommand = new SimpleCommand("pv", viewProfileRunnable, new SimpleCommand.TabCompleteRunnable() {
+    SimpleCommand viewProfileShortCommand = new SimpleCommand("pv", new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(!hasSkyblockScoreboard()) {
+                Minecraft.getMinecraft().thePlayer.sendChatMessage("/pv " + StringUtils.join(args, " "));
+            } else {
+                viewProfileRunnable.processCommand(sender, args);
+            }
+        }
+    }, new SimpleCommand.TabCompleteRunnable() {
         @Override
         public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
-            if(args.length != 1) return null;
-            
-            String lastArg = args[args.length-1];
+            if (args.length != 1) return null;
+
+            String lastArg = args[args.length - 1];
             List<String> playerMatches = new ArrayList<>();
-            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+            for (EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
                 String playerName = player.getName();
-                if(playerName.toLowerCase().startsWith(lastArg.toLowerCase())) {
+                if (playerName.toLowerCase().startsWith(lastArg.toLowerCase())) {
+                    playerMatches.add(playerName);
+                }
+            }
+            return playerMatches;
+        }
+    });
+
+    SimpleCommand viewProfileShort2Command = new SimpleCommand("vp", new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(!hasSkyblockScoreboard()) {
+                Minecraft.getMinecraft().thePlayer.sendChatMessage("/vp " + StringUtils.join(args, " "));
+            } else {
+                viewProfileRunnable.processCommand(sender, args);
+            }
+        }
+    }, new SimpleCommand.TabCompleteRunnable() {
+        @Override
+        public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
+            if (args.length != 1) return null;
+
+            String lastArg = args[args.length - 1];
+            List<String> playerMatches = new ArrayList<>();
+            for (EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                String playerName = player.getName();
+                if (playerName.toLowerCase().startsWith(lastArg.toLowerCase())) {
                     playerMatches.add(playerName);
                 }
             }
@@ -268,8 +304,9 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
-        ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
+        ClientCommandHandler.instance.registerCommand(viewProfileShort2Command);
+        ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
@@ -442,6 +479,7 @@ public class NotEnoughUpdates {
      */
     private HashMap<String, Long> newItemAddMap = new HashMap<>();
     private long lastLongUpdate = 0;
+    private long lastSkyblockScoreboard = 0;
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if(event.phase != TickEvent.Phase.START) return;
@@ -459,7 +497,7 @@ public class NotEnoughUpdates {
         if(longUpdate) {
             updateSkyblockScoreboard();
             if(hasSkyblockScoreboard()) {
-                manager.auctionManager.tick();
+                lastSkyblockScoreboard = currentTime;
                 if(!joinedSB && manager.config.showUpdateMsg.value) {
                     joinedSB = true;
                     displayUpdateMessageIfOutOfDate();
@@ -480,6 +518,11 @@ public class NotEnoughUpdates {
                 SBScoreboardData.getInstance().tick();
                 //GuiQuestLine.questLine.tick();
             }
+            if(currentTime - lastSkyblockScoreboard < 5*60*1000) { //5 minutes
+                manager.auctionManager.tick();
+            } else {
+                manager.auctionManager.markNeedsUpdate();
+            }
             //ItemRarityHalo.resetItemHaloCache();
         }
         if(currChatMessage != null && currentTime - lastChatMessage > CHAT_MSG_COOLDOWN) {
@@ -487,49 +530,61 @@ public class NotEnoughUpdates {
             Minecraft.getMinecraft().thePlayer.sendChatMessage(currChatMessage);
             currChatMessage = null;
         }
-        if(longUpdate && hasSkyblockScoreboard() && manager.getCurrentProfile() != null && manager.getCurrentProfile().length() > 0) {
-            HashSet<String> newItem = new HashSet<>();
-            if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
-                !(Minecraft.getMinecraft().currentScreen instanceof GuiCrafting)) {
-                boolean usableContainer = true;
-                for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
-                    if(stack == null) {
-                        continue;
+        if(longUpdate && hasSkyblockScoreboard()) {
+            if(manager.getCurrentProfile() == null || manager.getCurrentProfile().length() == 0) {
+                ProfileViewer.Profile profile = profileViewer.getProfile(
+                        Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""), (json) -> {});
+                if(profile != null) {
+                    String latest = profile.getLatestProfile();
+                    if(latest != null) {
+                        manager.setCurrentProfileBackup(profile.getLatestProfile());
                     }
-                    if(stack.hasTagCompound()) {
-                        NBTTagCompound tag = stack.getTagCompound();
-                        if(tag.hasKey("ExtraAttributes", 10)) {
+                }
+            }
+            if(manager.getCurrentProfile() != null && manager.getCurrentProfile().length() > 0) {
+                HashSet<String> newItem = new HashSet<>();
+                if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
+                        !(Minecraft.getMinecraft().currentScreen instanceof GuiCrafting)) {
+                    boolean usableContainer = true;
+                    for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
+                        if(stack == null) {
                             continue;
                         }
+                        if(stack.hasTagCompound()) {
+                            NBTTagCompound tag = stack.getTagCompound();
+                            if(tag.hasKey("ExtraAttributes", 10)) {
+                                continue;
+                            }
+                        }
+                        usableContainer = false;
+                        break;
                     }
-                    usableContainer = false;
-                    break;
-                }
-                if(!usableContainer) {
-                    if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
-                        GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
-                        ContainerChest container = (ContainerChest) chest.inventorySlots;
-                        String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
+                    if(!usableContainer) {
+                        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+                            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+                            ContainerChest container = (ContainerChest) chest.inventorySlots;
+                            String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
 
-                        if(containerName.equals("Accessory Bag")) {
-                            usableContainer = true;
+                            if(containerName.equals("Accessory Bag") || containerName.startsWith("Wardrobe")) {
+                                usableContainer = true;
+                            }
                         }
                     }
-                }
-                if(usableContainer) {
-                    for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
-                        processUniqueStack(stack, newItem);
+                    if(usableContainer) {
+                        for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
+                            processUniqueStack(stack, newItem);
+                        }
+                        for(ItemStack stack : Minecraft.getMinecraft().thePlayer.openContainer.getInventory()) {
+                            processUniqueStack(stack, newItem);
+                        }
                     }
+                } else {
                     for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
                         processUniqueStack(stack, newItem);
                     }
                 }
-            } else {
-                for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
-                    processUniqueStack(stack, newItem);
-                }
+                newItemAddMap.keySet().retainAll(newItem);
             }
-            newItemAddMap.keySet().retainAll(newItem);
         }
     }
 
@@ -859,7 +914,6 @@ public class NotEnoughUpdates {
     public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if(!(event.gui instanceof CustomAHGui || manager.auctionManager.customAH.isRenderOverAuctionView())) {
             if(shouldRenderOverlay(event.gui) && isOnSkyblock()) {
-
                 renderDungeonChestOverlay(event.gui);
 
                 if(!focusInv) {
@@ -947,7 +1001,6 @@ public class NotEnoughUpdates {
                             guiTop+14, true, 170, Color.BLACK.getRGB());
                     Utils.drawStringCenteredScaledMaxWidth(plString, Minecraft.getMinecraft().fontRendererObj, guiLeft+xSize+4+90,
                             guiTop+28, true, 170, Color.BLACK.getRGB());
-
                 }
             } catch(Exception e) {
                 e.printStackTrace();

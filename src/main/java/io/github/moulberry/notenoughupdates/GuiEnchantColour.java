@@ -36,6 +36,8 @@ public class GuiEnchantColour extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        drawDefaultBackground();
+
         List<String> enchantColours = getEnchantColours();
 
         ySize = 53+25*enchantColours.size();

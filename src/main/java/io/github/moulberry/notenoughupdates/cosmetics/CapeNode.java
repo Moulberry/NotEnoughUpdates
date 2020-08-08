@@ -110,14 +110,14 @@ public class CapeNode {
             velocity.y -= gravity * (resistance)/(1-resistance);
 
             float actualResistance = resistance;
-            BlockPos pos = new BlockPos(
+            /*BlockPos pos = new BlockPos(
                     MathHelper.floor_double(position.x),
                     MathHelper.floor_double(position.y),
                     MathHelper.floor_double(position.z));
             Block block = Minecraft.getMinecraft().theWorld.getBlockState(pos).getBlock();
             if(block.getMaterial().isLiquid()) {
                 actualResistance = 0.8f;
-            }
+            }*/
 
             velocity.scale(1-actualResistance);
 

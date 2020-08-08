@@ -368,12 +368,13 @@ public class NEUManager {
      */
     public void loadItemInformation() {
         Thread thread = new Thread(() -> {
+            JDialog dialog = null;
             try {
                 if(config.autoupdate.value) {
                     JOptionPane pane = new JOptionPane("Getting items to download from remote repository.");
-                    JDialog dialog = pane.createDialog("NotEnoughUpdates Remote Sync");
+                    dialog = pane.createDialog("NotEnoughUpdates Remote Sync");
                     dialog.setModal(false);
-                    //dialog.setVisible(true);
+                    if(config.dev.value) dialog.setVisible(true);
 
                     if (Display.isActive()) dialog.toFront();
 
@@ -389,6 +390,7 @@ public class NEUManager {
                         } catch (IOException e) {
                         }
                     } else {
+                        dialog.setVisible(false);
                         return;
                     }
 
@@ -411,7 +413,7 @@ public class NEUManager {
                         for (String name : changedFiles.keySet()) {
                             pane.setMessage(startMessage + (++downloaded) + "/" + changedFiles.size() + ")\nCurrent: " + name);
                             dialog.pack();
-                            //dialog.setVisible(true);
+                            if(config.dev.value) dialog.setVisible(true);
                             if (Display.isActive()) dialog.toFront();
 
                             File item = new File(repoLocation, name);
@@ -440,6 +442,7 @@ public class NEUManager {
                         try {
                             writeJson(itemShaConfig, itemShaLocation);
                         } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     } else {
                         Utils.recursiveDelete(repoLocation);
@@ -450,7 +453,7 @@ public class NEUManager {
 
                         pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
                         dialog.pack();
-                        //dialog.setVisible(true);
+                        if(config.dev.value) dialog.setVisible(true);
                         if (Display.isActive()) dialog.toFront();
 
                         File itemsZip = new File(repoLocation, "neu-items-master.zip");
@@ -471,6 +474,7 @@ public class NEUManager {
                                 fileOutputStream.write(dataBuffer, 0, bytesRead);
                             }
                         } catch (IOException e) {
+                            dialog.dispose();
                             return;
                         }
 
@@ -492,10 +496,12 @@ public class NEUManager {
                             }
                         }
                     }
-
-                    dialog.dispose();
                 }
-            } catch(Exception e) {}
+            } catch(Exception e) {
+                e.printStackTrace();
+            } finally {
+                if(dialog != null) dialog.dispose();
+            }
 
             File items = new File(repoLocation, "items");
             if(items.exists()) {

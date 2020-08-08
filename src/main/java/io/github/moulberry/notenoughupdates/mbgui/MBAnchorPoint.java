@@ -9,7 +9,9 @@ public class MBAnchorPoint implements Serializable {
     public enum AnchorPoint {
         TOPLEFT(0, 0), TOPMID(0.5f, 0), TOPRIGHT(1, 0),
         MIDRIGHT(1, 0.5f), BOTRIGHT(1, 1), BOTMID(0.5f, 1),
-        BOTLEFT(0, 1), MIDLEFT(0, 0.5f), MIDMID(0.5f, 0.5f);
+        BOTLEFT(0, 1), MIDLEFT(0, 0.5f), MIDMID(0.5f, 0.5f),
+
+        INV_BOTMID(0.5f, 1f);
 
         public final float x;
         public final float y;

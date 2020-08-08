@@ -78,11 +78,6 @@ public class Options {
             "Hide Apikey Setting",
             false,
             "Hides the Apikey setting (please try not to leak Apikey if you're recording)");
-    public Option<Boolean> quickAHUpdate = new Option(
-            false,
-            "NeuAH Quick Update",
-            false,
-            "Will instantly update the whole AH when an api update is detected (aka as fast as possible). Warning: Uses lots of data.");
     public Option<Double> bgBlurFactor = new Option(
             5.0,
             "Background Blur",
@@ -299,7 +294,6 @@ public class Options {
         tryAddOption(tooltipBorderColours, options);
         tryAddOption(hideApiKey, options);
         tryAddOption(streamerMode, options);
-        tryAddOption(quickAHUpdate, options);
         tryAddOption(autoupdate, options);
         tryAddOption(cacheRenderedItempane, options);
         tryAddOption(itemStyle, options);

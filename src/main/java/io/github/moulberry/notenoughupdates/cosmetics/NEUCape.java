@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.potion.Potion;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
@@ -27,6 +28,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.security.Key;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -44,6 +46,8 @@ public class NEUCape {
     public static final int VERT_NODES = 22;
 
     public static float targetDist = 1/20f;
+
+    private EntityPlayer currentPlayer;
 
     private String shaderName = "cape";
 
@@ -223,6 +227,10 @@ public class NEUCape {
     public void onRenderPlayer(RenderPlayerEvent.Post e) {
         EntityPlayer player = e.entityPlayer;
 
+        if(currentPlayer != null && currentPlayer != player) return;
+
+        if(player.getActivePotionEffect(Potion.invisibility) != null) return;
+
         ensureCapeNodesCreated(player);
 
         Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
@@ -258,9 +266,18 @@ public class NEUCape {
         lastRender = System.currentTimeMillis();
     }
 
+    private boolean notRendering = false;
     public void onTick(TickEvent.ClientTickEvent event, EntityPlayer player) {
-        if(player != null && System.currentTimeMillis() - lastRender < 100) {
-            ensureCapeNodesCreated(Minecraft.getMinecraft().thePlayer);
+        if(player == null) return;
+
+        if(System.currentTimeMillis() - lastRender < 500) {
+            if(currentPlayer == null) {
+                currentPlayer = player;
+            } else if(currentPlayer != player) {
+                return;
+            }
+
+            ensureCapeNodesCreated(player);
 
             for(int y=0; y<nodes.size(); y++) {
                 for(int x=0; x<nodes.get(y).size(); x++) {
@@ -271,6 +288,12 @@ public class NEUCape {
                 }
             }
             updateCape(player);
+
+            notRendering = false;
+        } else {
+            currentPlayer = null;
+
+            notRendering = true;
         }
     }
 
@@ -346,128 +369,129 @@ public class NEUCape {
     private double oldPlayerAngle;
     private int crouchTicks = 0;
     long startTime = 0;
-    long updateMillis = 0;
-    long renderMillis = 0;
     private void updateCape(EntityPlayer player) {
         Vector3f capeTranslation = updateFixedCapeNodes(player);
 
-        if(System.currentTimeMillis() - lastRender > 100) {
+        if(notRendering) {
             for (int y = 0; y < nodes.size(); y++) {
                 for (int x = 0; x < nodes.get(y).size(); x++) {
-                    Vector3f.add(nodes.get(y).get(x).position, capeTranslation, nodes.get(y).get(x).position);
-                    nodes.get(y).get(x).lastPosition.set(nodes.get(y).get(x).position);
-                    nodes.get(y).get(x).renderPosition.set(nodes.get(y).get(x).position);
+                    CapeNode node = nodes.get(y).get(x);
+                    if(!node.fixed) {
+                        Vector3f.add(node.position, capeTranslation, node.position);
+                        node.lastPosition.set(node.position);
+                        node.renderPosition.set(node.position);
+                    }
+                }
+            }
+        }
+
+        double playerAngle = Math.toRadians(player.renderYawOffset);
+        double deltaAngle = playerAngle - oldPlayerAngle;
+        if(deltaAngle > Math.PI) {
+            deltaAngle = 2*Math.PI - deltaAngle;
+        }
+        if(deltaAngle < -Math.PI) {
+            deltaAngle = 2*Math.PI + deltaAngle;
+        }
+        deltaAngleAccum *= 0.5f;
+        deltaAngleAccum += deltaAngle;
+
+        float dX = (float)Math.cos(playerAngle+Math.PI/2f);
+        float dZ = (float)Math.sin(playerAngle+Math.PI/2f);
+
+        float factor = (float)(deltaAngleAccum*deltaAngleAccum);
+
+        tl.handleKeyboardInput();
+
+        float capeTransLength = capeTranslation.length();
+
+        float capeTranslationFactor = 0f;
+        if(capeTransLength > 0.5f) {
+            capeTranslationFactor = (capeTransLength-0.5f)/capeTransLength;
+        }
+        Vector3f lookDir = new Vector3f(dX, 0, dZ);
+        Vector3f lookDirNorm = lookDir.normalise(null);
+        float dot = Vector3f.dot(capeTranslation, lookDirNorm);
+        if(dot < 0) { //Moving backwards
+            for(int y=0; y<nodes.size(); y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    CapeNode node = nodes.get(y).get(x);
+                    if(!node.fixed) {
+                        node.position.x += lookDirNorm.x*dot;
+                        node.position.y += lookDirNorm.y*dot;
+                        node.position.z += lookDirNorm.z*dot;
+                    }
+                }
+            }
+            //Apply small backwards force
+            factor = 0.05f;
+        }
+
+        if(factor > 0) {
+            for(int y=0; y<nodes.size(); y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    nodes.get(y).get(x).applyForce(-dX*factor, 0, -dZ*factor);
+                }
+            }
+        }
+
+        if(capeTranslationFactor > 0f) {
+            float capeDX = capeTranslation.x*capeTranslationFactor;
+            float capeDY = capeTranslation.y*capeTranslationFactor;
+            float capeDZ = capeTranslation.z*capeTranslationFactor;
+
+            for(int y=0; y<nodes.size(); y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    CapeNode node = nodes.get(y).get(x);
+                    if(!node.fixed) {
+                        node.position.x += capeDX;
+                        node.position.y += capeDY;
+                        node.position.z += capeDZ;
+                    }
+                }
+            }
+        }
+
+        //Wind
+        float currTime = (System.currentTimeMillis()-startTime)/1000f;
+        float windRandom = Math.abs((float)(0.5f*Math.sin(0.22f*currTime)+Math.sin(0.44f*currTime)*Math.sin(0.47f*currTime)));
+        double windDir = playerAngle+Math.PI/4f*Math.sin(0.2f*currTime);
+
+        float windDX = (float)Math.cos(windDir+Math.PI/2f);
+        float windDZ = (float)Math.sin(windDir+Math.PI/2f);
+        for(int y=0; y<nodes.size(); y++) {
+            for(int x=0; x<nodes.get(y).size(); x++) {
+                nodes.get(y).get(x).applyForce(-windDX*windRandom*0.01f, 0, -windDZ*windRandom*0.01f);
+            }
+        }
+
+        if(player.isSneaking()) {
+            crouchTicks++;
+            float mult = 0.5f;
+            if(crouchTicks < 5) {
+                mult = 2f;
+            }
+            for(int y=0; y<8; y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    nodes.get(y).get(x).applyForce(-dX*mult, 0, -dZ*mult);
                 }
             }
         } else {
-            double playerAngle = Math.toRadians(player.renderYawOffset);
-            double deltaAngle = playerAngle - oldPlayerAngle;
-            if(deltaAngle > Math.PI) {
-                deltaAngle = 2*Math.PI - deltaAngle;
+            crouchTicks = 0;
+        }
+
+        oldPlayerAngle = playerAngle;
+
+        for(int y=0; y<nodes.size(); y++) {
+            for(int x=0; x<nodes.get(y).size(); x++) {
+                nodes.get(y).get(x).update();
             }
-            if(deltaAngle < -Math.PI) {
-                deltaAngle = 2*Math.PI + deltaAngle;
-            }
-            deltaAngleAccum *= 0.5f;
-            deltaAngleAccum += deltaAngle;
-
-            float dX = (float)Math.cos(playerAngle+Math.PI/2f);
-            float dZ = (float)Math.sin(playerAngle+Math.PI/2f);
-
-            float factor = (float)(deltaAngleAccum*deltaAngleAccum);
-
-            tl.handleKeyboardInput();
-
-            float capeTransLength = capeTranslation.length();
-
-            float capeTranslationFactor = 0f;
-            if(capeTransLength > 0.5f) {
-                capeTranslationFactor = (capeTransLength-0.5f)/capeTransLength;
-            }
-            Vector3f lookDir = new Vector3f(dX, 0, dZ);
-            Vector3f lookDirNorm = lookDir.normalise(null);
-            float dot = Vector3f.dot(capeTranslation, lookDirNorm);
-            if(dot < 0) { //Moving backwards
-                for(int y=0; y<nodes.size(); y++) {
-                    for(int x=0; x<nodes.get(y).size(); x++) {
-                        CapeNode node = nodes.get(y).get(x);
-                        if(!node.fixed) {
-                            node.position.x += lookDirNorm.x*dot;
-                            node.position.y += lookDirNorm.y*dot;
-                            node.position.z += lookDirNorm.z*dot;
-                        }
-                    }
-                }
-                //Apply small backwards force
-                factor = 0.05f;
-            }
-
-            if(factor > 0) {
-                for(int y=0; y<nodes.size(); y++) {
-                    for(int x=0; x<nodes.get(y).size(); x++) {
-                        nodes.get(y).get(x).applyForce(-dX*factor, 0, -dZ*factor);
-                    }
-                }
-            }
-
-            if(capeTranslationFactor > 0f) {
-                float capeDX = capeTranslation.x*capeTranslationFactor;
-                float capeDY = capeTranslation.y*capeTranslationFactor;
-                float capeDZ = capeTranslation.z*capeTranslationFactor;
-
-                for(int y=0; y<nodes.size(); y++) {
-                    for(int x=0; x<nodes.get(y).size(); x++) {
-                        CapeNode node = nodes.get(y).get(x);
-                        if(!node.fixed) {
-                            node.position.x += capeDX;
-                            node.position.y += capeDY;
-                            node.position.z += capeDZ;
-                        }
-                    }
-                }
-            }
-
-            //Wind
-            float currTime = (System.currentTimeMillis()-startTime)/1000f;
-            float windRandom = Math.abs((float)(0.5f*Math.sin(0.22f*currTime)+Math.sin(0.44f*currTime)*Math.sin(0.47f*currTime)));
-            double windDir = playerAngle+Math.PI/4f*Math.sin(0.2f*currTime);
-
-            float windDX = (float)Math.cos(windDir+Math.PI/2f);
-            float windDZ = (float)Math.sin(windDir+Math.PI/2f);
+        }
+        int updates = player == Minecraft.getMinecraft().thePlayer ? 50 : 25;
+        for(int i=0; i<updates; i++) {
             for(int y=0; y<nodes.size(); y++) {
                 for(int x=0; x<nodes.get(y).size(); x++) {
-                    nodes.get(y).get(x).applyForce(-windDX*windRandom*0.01f, 0, -windDZ*windRandom*0.01f);
-                }
-            }
-
-            if(player.isSneaking()) {
-                crouchTicks++;
-                float mult = 0.5f;
-                if(crouchTicks < 5) {
-                    mult = 2f;
-                }
-                for(int y=0; y<8; y++) {
-                    for(int x=0; x<nodes.get(y).size(); x++) {
-                        nodes.get(y).get(x).applyForce(-dX*mult, 0, -dZ*mult);
-                    }
-                }
-            } else {
-                crouchTicks = 0;
-            }
-
-            oldPlayerAngle = playerAngle;
-
-            for(int y=0; y<nodes.size(); y++) {
-                for(int x=0; x<nodes.get(y).size(); x++) {
-                    nodes.get(y).get(x).update();
-                }
-            }
-            int updates = player == Minecraft.getMinecraft().thePlayer ? 50 : 25;
-            for(int i=0; i<updates; i++) {
-                for(int y=0; y<nodes.size(); y++) {
-                    for(int x=0; x<nodes.get(y).size(); x++) {
-                        nodes.get(y).get(x).resolveAll(2+1f*y/nodes.size(), false);
-                    }
+                    nodes.get(y).get(x).resolveAll(2+1f*y/nodes.size(), false);
                 }
             }
         }
@@ -549,7 +573,7 @@ public class NEUCape {
 
     private void renderCape(EntityPlayer player, float partialRenderTick) {
         ensureCapeNodesCreated(player);
-        if(System.currentTimeMillis() - lastRender > 100) {
+        if(System.currentTimeMillis() - lastRender > 500) {
             updateCape(player);
         }
         updateFixedCapeNodesPartial(player, partialRenderTick);

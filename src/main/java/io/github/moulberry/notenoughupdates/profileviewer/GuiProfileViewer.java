@@ -734,6 +734,10 @@ public class GuiProfileViewer extends GuiScreen {
                 float exp = pet.get("exp").getAsFloat();
                 if(tierNum == null) continue;
 
+                if(pet.has("heldItem") && pet.get("heldItem").getAsString().equals("PET_ITEM_TIER_BOOST")) {
+                    tierNum = ""+(Integer.parseInt(tierNum)+1);
+                }
+
                 int petRarityOffset = petsJson.get("pet_rarity_offset").getAsJsonObject().get(tier).getAsInt();
                 JsonArray levelsArr = petsJson.get("pet_levels").getAsJsonArray();
 
@@ -1689,6 +1693,7 @@ public class GuiProfileViewer extends GuiScreen {
 
             for(Map.Entry<String, JsonElement> entry : skillInfo.entrySet()) {
                 if(entry.getKey().startsWith("level_skill")) {
+                    if(entry.getKey().contains("runecrafting")) continue;
                     totalSkillLVL += entry.getValue().getAsFloat();
                     totalSkillCount++;
                 } else if(entry.getKey().startsWith("level_slayer")) {
@@ -1739,14 +1744,33 @@ public class GuiProfileViewer extends GuiScreen {
                 guiLeft+xStart+xOffset, guiTop+yStartBottom, 76);
         renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T3", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_2,
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T3", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_2,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*2, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T4", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_3,
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T4", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*3, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T3", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_2,
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T3", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_2,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*4, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T4", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_3,
+        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T4", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*5, 76);
+
+        float pet_milestone_ores_mined = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.pet_milestone_ores_mined"), 0);
+        float pet_milestone_sea_creatures_killed = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.pet_milestone_sea_creatures_killed"), 0);
+
+        float items_fished = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.items_fished"), 0);
+        float items_fished_treasure = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.items_fished_treasure"), 0);
+        float items_fished_large_treasure = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.items_fished_large_treasure"), 0);
+
+        renderAlignedString(EnumChatFormatting.GREEN+"Ores Mined", EnumChatFormatting.WHITE.toString()+(int)pet_milestone_ores_mined,
+                guiLeft+xStart+xOffset*2, guiTop+yStartTop, 76);
+        renderAlignedString(EnumChatFormatting.GREEN+"Sea Creatures Killed", EnumChatFormatting.WHITE.toString()+(int)pet_milestone_sea_creatures_killed,
+                guiLeft+xStart+xOffset*2, guiTop+yStartTop+yOffset, 76);
+
+        renderAlignedString(EnumChatFormatting.GREEN+"Items Fished", EnumChatFormatting.WHITE.toString()+(int)items_fished,
+                guiLeft+xStart+xOffset*2, guiTop+yStartTop+yOffset*3, 76);
+        renderAlignedString(EnumChatFormatting.GREEN+"Treasures Fished", EnumChatFormatting.WHITE.toString()+(int)items_fished_treasure,
+                guiLeft+xStart+xOffset*2, guiTop+yStartTop+yOffset*4, 76);
+        renderAlignedString(EnumChatFormatting.GREEN+"Large Treasures", EnumChatFormatting.WHITE.toString()+(int)items_fished_large_treasure,
+                guiLeft+xStart+xOffset*2, guiTop+yStartTop+yOffset*5, 76);
 
         if(topKills == null) {
             topKills = new TreeMap<>();
@@ -2336,6 +2360,10 @@ public class GuiProfileViewer extends GuiScreen {
         playerLocationSkin = null;
         playerLocationCape = null;
         skinType = null;
+        petsPage = 0;
+        sortedPets = null;
+        sortedPetsStack = null;
+        selectedPet = -1;
     }
 
     Shader blurShaderHorz = null;

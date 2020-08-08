@@ -20,7 +20,7 @@ public class CapeManager {
     public static final CapeManager INSTANCE = new CapeManager();
 
     private HashMap<String, Pair<NEUCape, String>> capeMap = new HashMap<>();
-    private String[] capes = new String[]{"testcape", "nullzee", "gravy", "fade", "contrib"};
+    private String[] capes = new String[]{"patreon1", "patreon2", "gravy", "fade", "contrib"};
 
     public static CapeManager getInstance() {
         return INSTANCE;

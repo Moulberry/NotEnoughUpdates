@@ -203,11 +203,11 @@ public class ProfileViewer {
         collectionToCollectionDisplayMap.put("LOG:2", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
                 EnumChatFormatting.DARK_GREEN+"Spruce", 2));
         collectionToCollectionDisplayMap.put("LOG_2:1", Utils.createItemStack(Item.getItemFromBlock(Blocks.log2),
-                EnumChatFormatting.DARK_GREEN+"Jungle", 1));
+                EnumChatFormatting.DARK_GREEN+"Dark Oak", 1));
         collectionToCollectionDisplayMap.put("LOG_2", Utils.createItemStack(Item.getItemFromBlock(Blocks.log2),
                 EnumChatFormatting.DARK_GREEN+"Acacia"));
         collectionToCollectionDisplayMap.put("LOG:3", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Dark Oak", 3));
+                EnumChatFormatting.DARK_GREEN+"Jungle", 3));
 
         /** FISHING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("RAW_FISH", Utils.createItemStack(Items.fish,

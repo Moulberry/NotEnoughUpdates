@@ -35,6 +35,11 @@ public class CustomItems {
             "your buried duct tape problems are a thing of the past,",
             "all for the low price of $7.99 or a subscription",
             "to the Ducttapedigger youtube channel!");
+    public static JsonObject SPINAXX = create(
+            "SPINAXX",
+            "emerald",
+            "Spinaxx",
+            "Famous streamer btw :)");
     public static JsonObject RUNE = create("RUNE", "paper", "No.", "I hate runes.");
     public static JsonObject TWOBEETWOTEE = create("2B2T", "bedrock", "Minecraft's oldest anarchy Minecraft server in Minecraft.",
             "This Minecraft anarchy server is the oldest server,",
