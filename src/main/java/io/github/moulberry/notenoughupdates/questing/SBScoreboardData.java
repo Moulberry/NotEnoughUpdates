@@ -6,6 +6,7 @@ import net.minecraft.scoreboard.Score;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.util.EnumChatFormatting;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,6 +26,7 @@ public class SBScoreboardData {
     public String location = "";
     public String date = "";
     public String time = "";
+    public String objective = "";
 
     public Date currentTimeDate = null;
 
@@ -66,6 +68,16 @@ public class SBScoreboardData {
                 if(matcher.find()) {
                     location = Utils.cleanColour(matcher.group()).trim();
                 }
+            }
+            objective = null;
+
+            boolean objTextLast = false;
+            for(String line : lines) {
+                if(objTextLast) {
+                    objective = line;
+                }
+
+                objTextLast = line.equals("Objective");
             }
         } catch(Exception e) {
             e.printStackTrace();

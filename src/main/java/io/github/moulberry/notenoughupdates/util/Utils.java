@@ -619,6 +619,7 @@ public class Utils {
         return new Color(colourInt).darker();
     }
 
+    //private static List<String>
     public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font, boolean coloured) {
         if (!textLines.isEmpty())
         {

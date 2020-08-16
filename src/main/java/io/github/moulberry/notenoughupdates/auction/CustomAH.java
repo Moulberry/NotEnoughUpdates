@@ -85,8 +85,8 @@ public class CustomAH extends Gui {
 
     private float scrollAmount;
 
-    private int guiLeft = 0;
-    private int guiTop = 0;
+    public int guiLeft = 0;
+    public int guiTop = 0;
 
     private Category CATEGORY_SWORD = new Category("sword", "Swords", "diamond_sword");
     private Category CATEGORY_ARMOR = new Category("armor", "Armor", "diamond_chestplate");
@@ -250,11 +250,11 @@ public class CustomAH extends Gui {
         this.renderOverAuctionView = renderOverAuctionView;
     }
 
-    private int getXSize() {
+    public int getXSize() {
         return 195;
     }
 
-    private int getYSize() {
+    public int getYSize() {
         return 136 + ySplitSize*splits;
     }
 

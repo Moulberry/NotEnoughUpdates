@@ -1,5 +1,9 @@
 package io.github.moulberry.notenoughupdates.mbgui;
 
+import io.github.moulberry.notenoughupdates.GuiItemRecipe;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.auction.CustomAH;
+import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -11,7 +15,7 @@ import java.util.*;
 public class MBGuiGroupFloating extends MBGuiGroup {
 
     private LinkedHashMap<MBGuiElement, MBAnchorPoint> children;
-    private GuiContainer lastContainer = null;
+    private GuiScreen lastScreen = null;
     private HashMap<MBGuiElement, Vector2f> childrenPositionOffset = new HashMap<>();
 
     public MBGuiGroupFloating(int width, int height, LinkedHashMap<MBGuiElement, MBAnchorPoint> children) {
@@ -29,10 +33,45 @@ public class MBGuiGroupFloating extends MBGuiGroup {
     public Map<MBGuiElement, Vector2f> getChildrenPosition() {
         GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
 
-        if(currentScreen instanceof GuiContainer) {
-            GuiContainer currentContainer = (GuiContainer) currentScreen;
-            if(lastContainer != currentContainer) {
-                lastContainer = currentContainer;
+        if(currentScreen instanceof GuiContainer || currentScreen instanceof GuiItemRecipe
+            || currentScreen instanceof CustomAHGui || NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+
+            if(lastScreen != currentScreen) {
+                lastScreen = currentScreen;
+
+                int xSize = -1;
+                int ySize = -1;
+                int guiLeft = -1;
+                int guiTop = -1;
+
+                if(currentScreen instanceof GuiContainer) {
+                    GuiContainer currentContainer = (GuiContainer) currentScreen;
+
+                    try {
+                        xSize = (int) Utils.getField(GuiContainer.class, currentContainer, "xSize", "field_146999_f");
+                        ySize = (int) Utils.getField(GuiContainer.class, currentContainer, "ySize", "field_147000_g");
+                        guiLeft = (int) Utils.getField(GuiContainer.class, currentContainer, "guiLeft", "field_147003_i");
+                        guiTop = (int) Utils.getField(GuiContainer.class, currentContainer, "guiTop", "field_147009_r");
+                    } catch(Exception ignored) {
+                    }
+                } else if(currentScreen instanceof GuiItemRecipe) {
+                    xSize = ((GuiItemRecipe)currentScreen).xSize;
+                    ySize = ((GuiItemRecipe)currentScreen).ySize;
+                    guiLeft = ((GuiItemRecipe)currentScreen).guiLeft;
+                    guiTop = ((GuiItemRecipe)currentScreen).guiTop;
+                } else if(currentScreen instanceof CustomAHGui ||
+                        NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+                    xSize = NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.getXSize();
+                    ySize = NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.getYSize();
+                    guiLeft = NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.guiLeft;
+                    guiTop = NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.guiTop;
+                }
+
+                if(xSize <= 0 && ySize <= 0 && guiLeft <= 0 && guiTop <= 0) {
+                    lastScreen = null;
+                    return Collections.unmodifiableMap(childrenPosition);
+                }
+
                 for(Map.Entry<MBGuiElement, MBAnchorPoint> entry : children.entrySet()) {
                     MBGuiElement child = entry.getKey();
                     MBAnchorPoint anchorPoint = entry.getValue();
@@ -44,20 +83,13 @@ public class MBGuiGroupFloating extends MBGuiGroup {
                         childPos = new Vector2f();
                     }
 
+
                     if(anchorPoint.anchorPoint == MBAnchorPoint.AnchorPoint.INV_BOTMID) {
-                        try {
-                            int xSize = (int) Utils.getField(GuiContainer.class, currentContainer, "xSize", "field_146999_f");
-                            int ySize = (int) Utils.getField(GuiContainer.class, currentContainer, "ySize", "field_147000_g");
-                            int guiLeft = (int) Utils.getField(GuiContainer.class, currentContainer, "guiLeft", "field_147003_i");
-                            int guiTop = (int) Utils.getField(GuiContainer.class, currentContainer, "guiTop", "field_147009_r");
+                        int defGuiLeft = (this.width - xSize) / 2;
+                        int defGuiTop = (this.height - ySize) / 2;
 
-                            int defGuiLeft = (this.width - xSize) / 2;
-                            int defGuiTop = (this.height - ySize) / 2;
-
-                            childPos.x += guiLeft-defGuiLeft + (anchorPoint.anchorPoint.x-0.5f)*xSize;
-                            childPos.y += guiTop-defGuiTop + (anchorPoint.anchorPoint.y-0.5f)*ySize;
-                        } catch(Exception ignored) {
-                        }
+                        childPos.x += guiLeft-defGuiLeft + (anchorPoint.anchorPoint.x-0.5f)*xSize;
+                        childPos.y += guiTop-defGuiTop + (anchorPoint.anchorPoint.y-0.5f)*ySize;
                     }
 
                     childrenPositionOffset.put(child, childPos);
@@ -71,7 +103,7 @@ public class MBGuiGroupFloating extends MBGuiGroup {
 
     @Override
     public void recalculate() {
-        lastContainer = null;
+        lastScreen = null;
 
         for(MBGuiElement child : children.keySet()) {
             child.recalculate();

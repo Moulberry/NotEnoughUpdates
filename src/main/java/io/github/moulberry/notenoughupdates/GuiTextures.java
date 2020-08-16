@@ -24,6 +24,12 @@ public class GuiTextures {
     public static final ResourceLocation item_mask = new ResourceLocation("notenoughupdates:item_mask.png");
     public static final ResourceLocation button_tex = new ResourceLocation("notenoughupdates:button.png");
 
+    public static final ResourceLocation gamemodes = new ResourceLocation("notenoughupdates:gamemodes.png");
+    public static final ResourceLocation radial_square_off = new ResourceLocation("notenoughupdates:radial_square_off.png");
+    public static final ResourceLocation radial_square_on = new ResourceLocation("notenoughupdates:radial_square_on.png");
+    public static final ResourceLocation radial_circle_off = new ResourceLocation("notenoughupdates:radial_circle_off.png");
+    public static final ResourceLocation radial_circle_on = new ResourceLocation("notenoughupdates:radial_circle_on.png");
+
     public static final ResourceLocation dungeon_chest_worth = new ResourceLocation("notenoughupdates:dungeon_chest_worth.png");
 
     public static final ResourceLocation auction_view = new ResourceLocation("notenoughupdates:auction_view.png");

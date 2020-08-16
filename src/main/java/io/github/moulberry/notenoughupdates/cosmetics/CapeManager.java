@@ -63,14 +63,16 @@ public class CapeManager {
 
     @SubscribeEvent
     public void onRenderPlayer(RenderPlayerEvent.Post e) {
-        if(e.partialRenderTick == 1.0F) return; //rendering in inventory
-        if(e.entityPlayer == Minecraft.getMinecraft().thePlayer) {
+        //if(e.partialRenderTick == 1.0F) return; //rendering in inventory
+        if(Minecraft.getMinecraft().thePlayer != null &&
+                e.entityPlayer.getName().equals(Minecraft.getMinecraft().thePlayer.getName())) {
             if(NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value != null &&
                     !NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value.isEmpty()) {
                 setCape(Minecraft.getMinecraft().thePlayer.getName(),
                         NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value);
             }
         }
+        if(e.entityPlayer.getName().equals("Moulberry")) setCape(e.entityPlayer.getName(), "fade");
         if(capeMap.containsKey(e.entityPlayer.getName())) {
             capeMap.get(e.entityPlayer.getName()).getLeft().onRenderPlayer(e);
         }

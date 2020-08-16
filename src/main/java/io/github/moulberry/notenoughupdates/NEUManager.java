@@ -24,6 +24,8 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -361,12 +363,51 @@ public class NEUManager {
         } catch(Exception e) { e.printStackTrace(); return null; }
     }
 
+    public void resetRepo() {
+        try { Utils.recursiveDelete(new File(configLocation, "repo")); } catch(Exception e) {}
+        try { new File(configLocation, "currentCommit.json").delete(); } catch(Exception e) {}
+        try { itemShaLocation.delete(); } catch(Exception e) {}
+    }
+
     /**
      * Called when the game is first loaded. Compares the local repository to the github repository and handles
      * the downloading of new/updated files. This then calls the "loadItem" method for every item in the local
      * repository.
      */
     public void loadItemInformation() {
+        /*File repoFile = new File(configLocation, "repo2");
+        repoFile.mkdirs();
+
+        try(Git git = Git.init().setDirectory(repoFile).call()) {
+            StoredConfig config = git.getRepository().getConfig();
+            config.setString("branch", "master", "merge", "refs/heads/master");
+            config.setString("branch", "master", "remote", "origin");
+            config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
+            config.setString("remote", "origin", "url", "https://github.com/Moulberry/NotEnoughUpdates-REPO.git");
+            config.save();
+
+            git.remoteAdd().setName("origin").setUri(new URIish("https://github.com/Moulberry/NotEnoughUpdates-REPO.git")).call();
+            PullResult result = git.pull().setRemote("origin").setTimeout(30000).call();
+            System.out.println("successful pull: " + result.isSuccessful());
+        } catch(Exception e) {
+            e.printStackTrace();
+        }*/
+
+        /*if(repoFile.mkdirs()) {
+            try {
+                Git.cloneRepository()
+                    .setURI("https://github.com/Moulberry/NotEnoughUpdates-REPO.git")
+                    .setDirectory(repoFile)
+                    .call();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+
+        }*/
+
+
+
         Thread thread = new Thread(() -> {
             JDialog dialog = null;
             try {
@@ -378,29 +419,27 @@ public class NEUManager {
 
                     if (Display.isActive()) dialog.toFront();
 
+                    JsonObject currentCommitJSON = getJsonFromFile(new File(configLocation, "currentCommit.json"));
+
                     String latestCommit = neuio.getLatestCommit();
                     if(latestCommit == null || latestCommit.isEmpty()) return;
 
-                    JsonObject currentCommitJSON = getJsonFromFile(new File(configLocation, "currentCommit.json"));
-                    if(currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestCommit)) {
-                        JsonObject newCurrentCommitJSON = new JsonObject();
-                        newCurrentCommitJSON.addProperty("sha", latestCommit);
-                        try {
-                            writeJson(newCurrentCommitJSON, new File(configLocation, "currentCommit.json"));
-                        } catch (IOException e) {
-                        }
-                    } else {
-                        dialog.setVisible(false);
-                        return;
-                    }
+                    Map<String, String> changedFiles = null;
+                    if(new File(configLocation, "repo").exists() && new File(configLocation, "repo/items").exists()) {
 
-                    HashMap<String, String> oldShas = new HashMap<>();
-                    for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
-                        if (new File(repoLocation, entry.getKey() + ".json").exists()) {
-                            oldShas.put(entry.getKey() + ".json", entry.getValue().getAsString());
+                        if(currentCommitJSON != null && currentCommitJSON.get("sha").getAsString().equals(latestCommit)) {
+                            dialog.setVisible(false);
+                            return;
                         }
+
+                        HashMap<String, String> oldShas = new HashMap<>();
+                        for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
+                            if (new File(repoLocation, entry.getKey() + ".json").exists()) {
+                                oldShas.put(entry.getKey() + ".json", entry.getValue().getAsString());
+                            }
+                        }
+                        changedFiles = neuio.getChangedItems(oldShas);
                     }
-                    Map<String, String> changedFiles = neuio.getChangedItems(oldShas);
 
                     if (Display.isActive()) dialog.toFront();
 
@@ -494,6 +533,15 @@ public class NEUManager {
                                 writeJson(itemShaConfig, itemShaLocation);
                             } catch (IOException e) {
                             }
+                        }
+                    }
+
+                    if(currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestCommit)) {
+                        JsonObject newCurrentCommitJSON = new JsonObject();
+                        newCurrentCommitJSON.addProperty("sha", latestCommit);
+                        try {
+                            writeJson(newCurrentCommitJSON, new File(configLocation, "currentCommit.json"));
+                        } catch (IOException e) {
                         }
                     }
                 }

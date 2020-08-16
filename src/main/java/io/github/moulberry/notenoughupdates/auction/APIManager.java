@@ -82,15 +82,14 @@ public class APIManager {
         public boolean bin;
         public String category;
         public String rarity;
-        public NBTTagCompound item_tag;
+        public String item_tag_str;
+        public NBTTagCompound item_tag = null;
         private ItemStack stack;
-
-        public long lastUpdate = 0;
 
         public int enchLevel = 0; //0 = clean, 1 = ench, 2 = ench/hpb
 
         public Auction(String auctioneerUuid, long end, int starting_bid, int highest_bid_amount, int bid_count,
-                       boolean bin, String category, String rarity, NBTTagCompound item_tag) {
+                       boolean bin, String category, String rarity, String item_tag_str) {
             this.auctioneerUuid = auctioneerUuid;
             this.end = end;
             this.starting_bid = starting_bid;
@@ -99,15 +98,49 @@ public class APIManager {
             this.bin = bin;
             this.category = category;
             this.rarity = rarity;
-            this.item_tag = item_tag;
+            this.item_tag_str = item_tag_str;
         }
 
         public ItemStack getStack() {
+            if(item_tag == null && item_tag_str != null) {
+                try {
+                    item_tag = CompressedStreamTools.readCompressed(
+                            new ByteArrayInputStream(Base64.getDecoder().decode(item_tag_str)));
+                    item_tag_str = null;
+                } catch(IOException e) {
+                    return null;
+                }
+            }
             if(stack != null) {
                 return stack;
             } else {
                 JsonObject item = manager.getJsonFromNBT(item_tag);
                 ItemStack stack = manager.jsonToStack(item, false);
+
+                JsonObject itemDefault = manager.getItemInformation().get(item.get("internalname").getAsString());
+
+                if(stack != null && itemDefault != null) {
+                    ItemStack stackDefault = manager.jsonToStack(itemDefault, true);
+                    if(stack.isItemEqual(stackDefault)) {
+                        //Item types are the same, compare lore
+
+                        String[] stackLore = manager.getLoreFromNBT(stack.getTagCompound());
+                        String[] defaultLore = manager.getLoreFromNBT(stackDefault.getTagCompound());
+
+                        boolean loreMatches = stackLore != null && defaultLore != null && stackLore.length == defaultLore.length;
+                        if(loreMatches) {
+                            for(int i=0; i<stackLore.length; i++) {
+                                if(!stackLore[i].equals(defaultLore[i])) {
+                                    loreMatches = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if(loreMatches) {
+                            stack = stackDefault;
+                        }
+                    }
+                }
                 this.stack = stack;
                 return stack;
             }
@@ -117,6 +150,11 @@ public class APIManager {
     public void markNeedsUpdate() {
         firstHypixelApiUpdate = 0;
         pagesToDownload = null;
+
+        auctionMap.clear();
+        internalnameToAucIdMap.clear();
+        internalnameToLowestBIN.clear();
+        extrasToAucIdMap.clear();
     }
 
     public void tick() {
@@ -419,7 +457,7 @@ public class APIManager {
                 if(ea.hasKey("enchantments", 10)) {
                     NBTTagCompound enchantments = ea.getCompoundTag("enchantments");
                     for(String key : enchantments.getKeySet()) {
-                        String enchantname = key.toLowerCase().replace("_", " ");
+                        String enchantname = key.toLowerCase().replace("ultimate_", "").replace("_", " ");
                         int enchantlevel = enchantments.getInteger(key);
                         String enchantLevelStr;
                         if(enchantlevel >= 1 && enchantlevel <= 20) {
@@ -480,7 +518,7 @@ public class APIManager {
                     item_lore.split("\n")[0].endsWith("Mount")) category = "pet";
 
             Auction auction1 = new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
-                    bid_count, bin, category, rarity, item_tag);
+                    bid_count, bin, category, rarity, item_bytes);
 
             if(tag.hasKey("ench")) {
                 auction1.enchLevel = 1;

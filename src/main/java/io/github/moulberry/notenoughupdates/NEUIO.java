@@ -67,6 +67,7 @@ public class NEUIO {
         try {
             GitHub github = new GitHubBuilder().withOAuthToken(accessToken).build();
             GHRepository repo = github.getRepositoryById("247692460");
+            
             for(GHCommit commit : repo.listCommits()) {
                 return commit.getSHA1();
             }

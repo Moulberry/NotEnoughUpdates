@@ -44,6 +44,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.*;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.StringUtils;
@@ -77,8 +79,7 @@ public class GuiProfileViewer extends GuiScreen {
     public static final ResourceLocation pv_bg = new ResourceLocation("notenoughupdates:pv_bg.png");
     public static final ResourceLocation pv_elements = new ResourceLocation("notenoughupdates:pv_elements.png");
     public static final ResourceLocation resource_packs = new ResourceLocation("minecraft:textures/gui/resource_packs.png");
-    private static final ResourceLocation creativeInventoryTabs =
-            new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
+    public static final ResourceLocation icons = new ResourceLocation("textures/gui/icons.png");
 
     private static final NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
 
@@ -734,7 +735,7 @@ public class GuiProfileViewer extends GuiScreen {
                 float exp = pet.get("exp").getAsFloat();
                 if(tierNum == null) continue;
 
-                if(pet.has("heldItem") && pet.get("heldItem").getAsString().equals("PET_ITEM_TIER_BOOST")) {
+                if(pet.has("heldItem") && !pet.get("heldItem").isJsonNull() && pet.get("heldItem").getAsString().equals("PET_ITEM_TIER_BOOST")) {
                     tierNum = ""+(Integer.parseInt(tierNum)+1);
                 }
 
@@ -2226,8 +2227,7 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     private void renderGoldBar(float x, float y, float xSize) {
-
-        Minecraft.getMinecraft().getTextureManager().bindTexture(Gui.icons);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(icons);
         ShaderManager shaderManager = ShaderManager.getInstance();
         shaderManager.loadShader("make_gold");
         shaderManager.loadData("make_gold", "amount", (startTime-System.currentTimeMillis())/10000f);
@@ -2239,7 +2239,7 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     private void renderBar(float x, float y, float xSize, float completed) {
-        Minecraft.getMinecraft().getTextureManager().bindTexture(Gui.icons);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(icons);
 
         completed = Math.round(completed/0.05f)*0.05f;
 

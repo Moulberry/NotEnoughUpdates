@@ -229,7 +229,10 @@ public class NEUCape {
 
         if(currentPlayer != null && currentPlayer != player) return;
 
+        if(e.partialRenderTick == 1) return;
+
         if(player.getActivePotionEffect(Potion.invisibility) != null) return;
+        if(player.isSpectator() || player.isInvisible()) return;
 
         ensureCapeNodesCreated(player);
 
@@ -487,7 +490,7 @@ public class NEUCape {
                 nodes.get(y).get(x).update();
             }
         }
-        int updates = player == Minecraft.getMinecraft().thePlayer ? 50 : 25;
+        int updates = player == Minecraft.getMinecraft().thePlayer ? 50 : 50;
         for(int i=0; i<updates; i++) {
             for(int y=0; y<nodes.size(); y++) {
                 for(int x=0; x<nodes.get(y).size(); x++) {
