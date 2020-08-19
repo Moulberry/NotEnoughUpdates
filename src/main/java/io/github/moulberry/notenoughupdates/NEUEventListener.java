@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
+import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
@@ -33,6 +34,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import javax.swing.*;
@@ -131,6 +133,7 @@ public class NEUEventListener {
         }
         if(longUpdate) {
             neu.updateSkyblockScoreboard();
+            CapeManager.getInstance().tick();
             if(neu.hasSkyblockScoreboard()) {
                 lastSkyblockScoreboard = currentTime;
                 if(!joinedSB) {
@@ -657,6 +660,9 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiScreenMouse(GuiScreenEvent.MouseInputEvent.Pre event) {
+        if(!event.isCanceled()) {
+            Utils.scrollTooltip(Mouse.getEventDWheel());
+        }
         if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
             neu.manager.auctionManager.customAH.handleMouseInput();

@@ -464,8 +464,8 @@ public class NEUManager {
                             }
                             URL url = new URL(dlUrl+name);
                             URLConnection urlConnection = url.openConnection();
-                            urlConnection.setConnectTimeout(3000);
-                            urlConnection.setReadTimeout(3000);
+                            urlConnection.setConnectTimeout(5000);
+                            urlConnection.setReadTimeout(5000);
                             try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
                                  FileOutputStream fileOutputStream = new FileOutputStream(item)) {
                                 byte dataBuffer[] = new byte[1024];
@@ -503,8 +503,8 @@ public class NEUManager {
                         }
                         URL url = new URL(dlUrl);
                         URLConnection urlConnection = url.openConnection();
-                        urlConnection.setConnectTimeout(3000);
-                        urlConnection.setReadTimeout(3000);
+                        urlConnection.setConnectTimeout(15000);
+                        urlConnection.setReadTimeout(20000);
                         try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
                              FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
                             byte dataBuffer[] = new byte[1024];

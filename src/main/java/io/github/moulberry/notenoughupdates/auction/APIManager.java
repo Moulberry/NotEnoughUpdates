@@ -309,7 +309,7 @@ public class APIManager {
             getPageFromAPI(0);
         }
 
-        manager.hypixelApi.getApiGZIPAsync("http://moulberry.codes/auction.json.gz", jsonObject -> {
+        manager.hypixelApi.getMyApiGZIPAsync("auction.json.gz", jsonObject -> {
             if(jsonObject.get("success").getAsBoolean()) {
                 long apiUpdate = (long)jsonObject.get("time").getAsFloat();
                 if(lastApiUpdate == apiUpdate) {

@@ -619,7 +619,12 @@ public class Utils {
         return new Color(colourInt).darker();
     }
 
-    //private static List<String>
+    public static void scrollTooltip(int dY) {
+        scrollY.setTarget(scrollY.getTarget()+dY/10f);
+        scrollY.resetTimer();
+    }
+
+    private static LerpingFloat scrollY = new LerpingFloat(0, 100);
     public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font, boolean coloured) {
         if (!textLines.isEmpty())
         {
@@ -713,9 +718,24 @@ public class Utils {
                 }
             }
 
+            //Scrollable tooltips
+            if(tooltipHeight + 6 > screenHeight) {
+                if(scrollY.getTarget() < 0) {
+                    scrollY.setTarget(0);
+                    scrollY.resetTimer();
+                } else if(screenHeight - tooltipHeight - 12 + (int)scrollY.getTarget() > 0) {
+                    scrollY.setTarget(-screenHeight + tooltipHeight + 12);
+                    scrollY.resetTimer();
+                }
+            } else {
+                scrollY.setValue(0);
+                scrollY.resetTimer();
+            }
+            scrollY.tick();
+
             if (tooltipY + tooltipHeight + 6 > screenHeight)
             {
-                tooltipY = screenHeight - tooltipHeight - 6;
+                tooltipY = screenHeight - tooltipHeight - 6 + (int)scrollY.getValue();
             }
 
             final int zLevel = 300;

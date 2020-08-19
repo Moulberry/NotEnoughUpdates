@@ -231,17 +231,19 @@ public class SBGamemodes {
 
         if(!"Your Island".equals(SBScoreboardData.getInstance().location)) return;
 
-        if(event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
-            if(Math.abs(event.pos.getX()) > 40 || Math.abs(event.pos.getZ()) > 40) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                        EnumChatFormatting.YELLOW+"[NPC] Builder"+
-                                EnumChatFormatting.WHITE+": Sorry, "+Minecraft.getMinecraft().thePlayer.getName()+
-                                ", due to budget cuts your skyblock island is now only 80 blocks wide."));
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                        EnumChatFormatting.AQUA+"(Use "+EnumChatFormatting.YELLOW+"/neugamemodes"+
-                                EnumChatFormatting.AQUA+" if you would like to build further out)"));
+        if((getGamemode().gamemodeModifiers & MODIFIER_SMALLISLAND) != 0) {
+            if(event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
+                if(Math.abs(event.pos.getX()) > 40 || Math.abs(event.pos.getZ()) > 40) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                            EnumChatFormatting.YELLOW+"[NPC] Builder"+
+                                    EnumChatFormatting.WHITE+": Sorry, "+Minecraft.getMinecraft().thePlayer.getName()+
+                                    ", due to budget cuts your skyblock island is now only 80 blocks wide."));
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                            EnumChatFormatting.AQUA+"(Use "+EnumChatFormatting.YELLOW+"/neugamemodes"+
+                                    EnumChatFormatting.AQUA+" if you would like to build further out)"));
 
-                event.setCanceled(true);
+                    event.setCanceled(true);
+                }
             }
         }
     }

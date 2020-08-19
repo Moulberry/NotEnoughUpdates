@@ -58,6 +58,11 @@ public class Options {
             "Coloured Tooltip Borders",
             false,
             "Makes the border of tooltips coloured. (Only NEU Tooltips)");
+    public Option<Boolean> disableAhScroll = new Option(
+            false,
+            "No NeuAH Scroll",
+            false,
+            "Disables Scrolling in NeuAH");
     public Option<Boolean> advancedPriceInfo = new Option(
             false,
             "Adv. Item Price Info",
@@ -292,6 +297,7 @@ public class Options {
         //tryAddOption(advancedPriceInfo, options);
         tryAddOption(showUpdateMsg, options);
         tryAddOption(tooltipBorderColours, options);
+        tryAddOption(disableAhScroll, options);
         tryAddOption(hideApiKey, options);
         tryAddOption(streamerMode, options);
         tryAddOption(autoupdate, options);

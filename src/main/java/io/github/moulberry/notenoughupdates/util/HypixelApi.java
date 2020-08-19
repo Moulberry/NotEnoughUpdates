@@ -23,6 +23,9 @@ public class HypixelApi {
     private Gson gson = new Gson();
     private ExecutorService es = Executors.newFixedThreadPool(3);
 
+    private int myApiErrors = 0;
+    private String[] myApiURLs = {"https://moulberry.codes/", "https://51.89.22.3/", "http://moulberry.codes/", "http://51.89.22.3/"};
+
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {
         getHypixelApiAsync(apiKey, method, args, consumer, () -> {});
     }
@@ -31,11 +34,37 @@ public class HypixelApi {
         getApiAsync(generateApiUrl(apiKey.trim(), method, args), consumer, error);
     }
 
+    private String getMyApiURL() {
+        return myApiURLs[myApiErrors%myApiURLs.length];
+    }
+
     public void getApiAsync(String urlS, Consumer<JsonObject> consumer, Runnable error) {
         es.submit(() -> {
             try {
                 consumer.accept(getApiSync(urlS));
             } catch(IOException e) {
+                error.run();
+            }
+        });
+    }
+
+    public void getMyApiAsync(String urlS, Consumer<JsonObject> consumer, Runnable error) {
+        es.submit(() -> {
+            try {
+                consumer.accept(getApiSync(getMyApiURL()+urlS));
+            } catch(IOException e) {
+                myApiErrors++;
+                error.run();
+            }
+        });
+    }
+
+    public void getMyApiGZIPAsync(String urlS, Consumer<JsonObject> consumer, Runnable error) {
+        es.submit(() -> {
+            try {
+                consumer.accept(getApiGZIPSync(getMyApiURL()+urlS));
+            } catch(IOException e) {
+                myApiErrors++;
                 error.run();
             }
         });

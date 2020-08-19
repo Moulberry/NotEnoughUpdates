@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.auction;
 
 import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -405,18 +406,21 @@ public class CustomAH extends Gui {
         return -1;
     }
 
-    public String findEndsInStr(ItemStack stack) {
+    public String findStrStart(ItemStack stack, String toFind) {
         if(stack.hasTagCompound()) {
             //§7Ends in:
-            String endsIn = EnumChatFormatting.GRAY+"Ends in: ";
             for(String line : manager.getLoreFromNBT(stack.getTagCompound())) {
-                if(line.trim().startsWith(endsIn)) {
-                    return line.substring(endsIn.length());
+                if(line.trim().startsWith(toFind)) {
+                    return line.substring(toFind.length());
                 }
             }
         }
 
         return null;
+    }
+
+    public String findEndsInStr(ItemStack stack) {
+        return findStrStart(stack, EnumChatFormatting.GRAY+"Ends in: ");
     }
 
     public void drawScreen(int mouseX, int mouseY) {
@@ -522,7 +526,11 @@ public class CustomAH extends Gui {
 
                         if(mouseX > auctionViewLeft+31 && mouseX <auctionViewLeft+31+16) {
                             if(mouseY > guiTop+35 && mouseY < guiTop+35+16) {
-                                if(topStack != null) tooltipToRender = topStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                                if(topStack != null) {
+                                    tooltipToRender = topStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                                    tooltipToRender.add("");
+                                    tooltipToRender.add(EnumChatFormatting.YELLOW+"Click to copy seller name!");
+                                }
                             } else if(mouseY > guiTop+100 && mouseY < guiTop+100+16) {
                                 if(leftStack != null) tooltipToRender = leftStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                             } else if(mouseY > guiTop+61 && mouseY < guiTop+61+16) {
@@ -916,11 +924,13 @@ public class CustomAH extends Gui {
             mouseClickMove(mouseX, mouseY, this.eventButton, l);
         }
 
-        int dWheel = Mouse.getEventDWheel();
-        dWheel = Math.max(-1, Math.min(1, dWheel));
+        if(!manager.config.disableAhScroll.value) {
+            int dWheel = Mouse.getEventDWheel();
+            dWheel = Math.max(-1, Math.min(1, dWheel));
 
-        scrollAmount = scrollAmount - dWheel/(float)(auctionIds.size()/9-(5+splits));
-        scrollAmount = Math.max(0, Math.min(1, scrollAmount));
+            scrollAmount = scrollAmount - dWheel/(float)(auctionIds.size()/9-(5+splits));
+            scrollAmount = Math.max(0, Math.min(1, scrollAmount));
+        }
     }
 
     private String niceAucId(String aucId) {
@@ -1362,7 +1372,16 @@ public class CustomAH extends Gui {
             if(containerName.trim().equals("Auction View") || containerName.trim().equals("BIN Auction View")) {
                 if(mouseX > guiLeft+getXSize()+4+31 && mouseX < guiLeft+getXSize()+4+31+16) {
                     boolean leftFiller = isGuiFiller(auctionView.inventorySlots.getSlot(29).getStack());//isBin
-                    if(mouseY > guiTop+100 && mouseY < guiTop+100+16) {
+                    if(mouseY > guiTop+35 && mouseY < guiTop+35+16) {
+                        ItemStack topStack = auctionView.inventorySlots.getSlot(13).getStack();
+                        if(topStack != null) {
+                            String line = findStrStart(topStack, EnumChatFormatting.GRAY+"Seller: ");
+                            String[] split = line.split(" ");
+                            String seller = split[split.length-1];
+                            StringSelection selection = new StringSelection(seller);
+                            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+                        }
+                    } else if(mouseY > guiTop+100 && mouseY < guiTop+100+16) {
                         int slotClick =  leftFiller ? 31 : 29;
                         Minecraft.getMinecraft().playerController.windowClick(auctionView.inventorySlots.windowId,
                                 slotClick, 2, 3, Minecraft.getMinecraft().thePlayer);

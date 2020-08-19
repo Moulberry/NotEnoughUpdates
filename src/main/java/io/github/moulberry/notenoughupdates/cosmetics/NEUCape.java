@@ -62,7 +62,7 @@ public class NEUCape {
             } else {
                 shaderName = "cape";
             }
-            capeTex = new ResourceLocation("notenoughupdates:"+capeName+".png");
+            capeTex = new ResourceLocation("notenoughupdates:capes/"+capeName+".png");
             startTime = System.currentTimeMillis();
         }
     }
@@ -228,8 +228,6 @@ public class NEUCape {
         EntityPlayer player = e.entityPlayer;
 
         if(currentPlayer != null && currentPlayer != player) return;
-
-        if(e.partialRenderTick == 1) return;
 
         if(player.getActivePotionEffect(Potion.invisibility) != null) return;
         if(player.isSpectator() || player.isInvisible()) return;

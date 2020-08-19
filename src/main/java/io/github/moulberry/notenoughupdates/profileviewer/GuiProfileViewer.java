@@ -1695,6 +1695,7 @@ public class GuiProfileViewer extends GuiScreen {
             for(Map.Entry<String, JsonElement> entry : skillInfo.entrySet()) {
                 if(entry.getKey().startsWith("level_skill")) {
                     if(entry.getKey().contains("runecrafting")) continue;
+                    if(entry.getKey().contains("carpentry")) continue;
                     totalSkillLVL += entry.getValue().getAsFloat();
                     totalSkillCount++;
                 } else if(entry.getKey().startsWith("level_slayer")) {

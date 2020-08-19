@@ -9,10 +9,10 @@ import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
+import io.github.moulberry.notenoughupdates.cosmetics.GuiCosmetics;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
-import io.github.moulberry.notenoughupdates.infopanes.CosmeticsInfoPane;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
@@ -40,8 +40,6 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
@@ -125,6 +123,37 @@ public class NotEnoughUpdates {
     SimpleCommand resetRepoCommand = new SimpleCommand("neuresetrepo", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             manager.resetRepo();
+        }
+    });
+
+    SimpleCommand peekCommand = new SimpleCommand("peek", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            profileViewer.getProfileByName(args[0], profile -> {
+                if (profile != null) {
+                    profile.resetCache();
+
+                    float overallScore = 0;
+
+                    JsonObject profileInfo = profile.getProfileInformation(null);
+
+                    JsonObject skill = profile.getSkillInfo(null);
+                }
+            });
+        }
+    }, new SimpleCommand.TabCompleteRunnable() {
+        @Override
+        public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
+            if (args.length != 1) return null;
+
+            String lastArg = args[args.length - 1];
+            List<String> playerMatches = new ArrayList<>();
+            for (EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                String playerName = player.getName();
+                if (playerName.toLowerCase().startsWith(lastArg.toLowerCase())) {
+                    playerMatches.add(playerName);
+                }
+            }
+            return playerMatches;
         }
     });
 
@@ -252,10 +281,7 @@ public class NotEnoughUpdates {
 
     SimpleCommand cosmeticsCommand = new SimpleCommand("neucosmetics", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
-                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
-            }
-            overlay.displayInformationPane(new CosmeticsInfoPane(overlay, manager));
+            openGui = new GuiCosmetics();
         }
     });
 
@@ -288,6 +314,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new NEUEventListener(this));
         MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
         MinecraftForge.EVENT_BUS.register(new SBGamemodes());
+        MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         f.mkdirs();
@@ -425,6 +452,7 @@ public class NotEnoughUpdates {
         long currentTime = System.currentTimeMillis();
 
         if (openGui != null) {
+            Minecraft.getMinecraft().thePlayer.closeScreen();
             Minecraft.getMinecraft().displayGuiScreen(openGui);
             openGui = null;
         }

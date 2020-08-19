@@ -6,6 +6,9 @@
     "MixinItemStack",
     "MixinInventoryEffectRenderer",
     "MixinGuiIngame",
-    "MixinRenderItem"
+    "MixinRenderItem",
+    "MixinEntityRenderer",
+    "MixinRenderGlobal",
+    "MixinNetHandlerPlayClient"
   ]
 }

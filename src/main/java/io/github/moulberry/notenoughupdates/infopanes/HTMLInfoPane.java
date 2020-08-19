@@ -136,6 +136,10 @@ public class HTMLInfoPane extends TextInfoPane {
         return new HTMLInfoPane(overlay, manager, name, filename, html);
     }
 
+    private String spaceEscape(String str) {
+        return str.replace(" ", "\\ ");
+    }
+
     /**
      * Uses the wkhtmltoimage command-line tool to generate an image from the HTML code. This
      * generation is done asynchronously as sometimes it can take up to 10 seconds for more
@@ -190,9 +194,12 @@ public class HTMLInfoPane extends TextInfoPane {
                         EnumChatFormatting.GRAY+"), please wait...";
 
                 Runtime runtime = Runtime.getRuntime();
-                Process p = runtime.exec("\""+wkHtmlToImage.getAbsolutePath() + "\" --width "+
+                Process p = runtime.exec(spaceEscape(wkHtmlToImage.getAbsolutePath()) + " --width "+
+                        IMAGE_WIDTH*ZOOM_FACTOR+" --transparent --zoom "+ZOOM_FACTOR + " " + spaceEscape(input.getAbsolutePath()) +
+                        " " + spaceEscape(output.getAbsolutePath()));
+                /*Process p = runtime.exec("\""+wkHtmlToImage.getAbsolutePath() + "\" --width "+
                         IMAGE_WIDTH*ZOOM_FACTOR+" --transparent --zoom "+ZOOM_FACTOR+" \"" + input.getAbsolutePath() +
-                        "\" \"" + output.getAbsolutePath() + "\"");
+                        "\" \"" + output.getAbsolutePath() + "\"");*/
                 /*Process p2 = runtime.exec("\""+wkHtmlToImage.getAbsolutePath() + "\" --width "+
                         (IMAGE_WIDTH+EXT_WIDTH)*ZOOM_FACTOR+" --transparent --zoom "+ZOOM_FACTOR+" \"" + input.getAbsolutePath() +
                         "\" \"" + outputExt.getAbsolutePath() + "\"");*/
