@@ -37,10 +37,10 @@ public class GuiItemRecipe extends GuiScreen {
     private String title;
     private NEUManager manager;
 
-    private int guiLeft = 0;
-    private int guiTop = 0;
-    private int xSize = 176;
-    private int ySize = 166;
+    public int guiLeft = 0;
+    public int guiTop = 0;
+    public int xSize = 176;
+    public int ySize = 166;
 
     public GuiItemRecipe(String title, List<ItemStack[]> craftMatrices, List<JsonObject> results, NEUManager manager) {
         this.craftMatrices = craftMatrices;
@@ -170,7 +170,7 @@ public class GuiItemRecipe extends GuiScreen {
 
     @Override
     public void handleKeyboardInput() throws IOException {
-        super.handleKeyboardInput(); //TODO: r and u
+        super.handleKeyboardInput();
 
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledResolution.getScaledWidth();

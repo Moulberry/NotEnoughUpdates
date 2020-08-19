@@ -45,6 +45,7 @@ mixin {
 
 jar {
     manifest.attributes(
+		'Main-Class': 'NotSkyblockAddonsInstallerFrame',
 		'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
 		'MixinConfigs': "mixins.${modid}.json",
 		'FMLCorePluginContainsFMLMod': true,

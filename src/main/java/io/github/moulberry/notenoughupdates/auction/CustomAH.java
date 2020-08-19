@@ -34,6 +34,8 @@ import java.awt.datatransfer.StringSelection;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,7 +105,7 @@ public class CustomAH extends Gui {
     private Category CATEGORY_TRAVEL_SCROLLS = new Category("travelscroll", "Travel Scrolls", "map");
 
     private Category CATEGORY_REFORGE_STONES = new Category("reforgestone", "Reforge Stones", "anvil");
-    private Category CATEGORY_RUNES = new Category("rune", "Runes", "end_portal_frame");
+    private Category CATEGORY_RUNES = new Category("rune", "Runes", "magma_cream");
     private Category CATEGORY_FURNITURE = new Category("furniture", "Furniture", "armor_stand");
 
     private Category CATEGORY_COMBAT = new Category("weapon", "Combat", "golden_sword", CATEGORY_SWORD,
@@ -182,10 +184,12 @@ public class CustomAH extends Gui {
     }
 
     public void tick() {
-        if(shouldUpdateSearch) updateSearch();
-        if(shouldSortItems) {
-            sortItems();
-            shouldSortItems = false;
+        if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || renderOverAuctionView) {
+            if(shouldUpdateSearch) updateSearch();
+            if(shouldSortItems) {
+                sortItems();
+                shouldSortItems = false;
+            }
         }
     }
 
@@ -530,8 +534,7 @@ public class CustomAH extends Gui {
                     } catch(NullPointerException e) { //i cant be bothered
                     }
                 }
-            } else if(containerName.trim().equals("Confirm Bid")) {
-
+            } else if(containerName.trim().equals("Confirm Bid") || containerName.trim().equals("Confirm Purchase")) {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(auction_accept);
                 this.drawTexturedModalRect(auctionViewLeft, guiTop, 0, 0, 78, 172);
 
@@ -867,6 +870,12 @@ public class CustomAH extends Gui {
             case 8:
                 lore.add("");
                 lore.add("Current aucid: " + currentAucId);
+                if(currentAucId != null) {
+                    APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(currentAucId);
+                    if(auc != null) {
+                        lore.add("Current auc category: " + auc.category);
+                    }
+                }
                 lore.add(" --- Processing");
                 lore.add("Page Process Millis: " + manager.auctionManager.processMillis);
                 lore.add(" --- Auction Stats");
@@ -1032,116 +1041,117 @@ public class CustomAH extends Gui {
         return matches;
     }
 
+    private ExecutorService es = Executors.newSingleThreadExecutor();
     public void updateSearch() {
         if(searchField == null || priceField == null) init();
+        long currentTime = System.currentTimeMillis();
 
-        /*if(searchField.getText().length() > 0 && searchField.getText().length() <= 2 &&
-                System.currentTimeMillis() - lastSearchFieldUpdate < 200) {
-            shouldUpdateSearch = true;
-            return;
-        }*/
+        es.submit(() -> {
+            if(currentTime - lastUpdateSearch < 500) {
+                shouldUpdateSearch = true;
+                return;
+            }
 
-        if(System.currentTimeMillis() - lastUpdateSearch < 500) {
-            shouldUpdateSearch = true;
-            return;
-        }
+            lastUpdateSearch = currentTime;
+            shouldUpdateSearch = false;
 
-        lastUpdateSearch = System.currentTimeMillis();
-        shouldUpdateSearch = false;
-
-        scrollAmount = 0;
-        try {
-            auctionIds.clear();
-            if(filterMyAuctions) {
-                for(String aucid : manager.auctionManager.getPlayerBids()) {
-                    APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
-                    if(doesAucMatch(auc)) {
-                        auctionIds.add(aucid);
+            scrollAmount = 0;
+            try {
+                HashSet<String> auctionIdsNew = new HashSet<>();
+                auctionIdsNew.clear();
+                if(filterMyAuctions) {
+                    for(String aucid : manager.auctionManager.getPlayerBids()) {
+                        APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
+                        if(doesAucMatch(auc)) {
+                            auctionIdsNew.add(aucid);
+                        }
                     }
-                }
-            } else if(searchField.getText().length() == 0) {
-                for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
-                    if(doesAucMatch(entry.getValue())) {
-                        auctionIds.add(entry.getKey());
-                    }
-                }
-            } else {
-                String query = searchField.getText();
-                Set<String> dontMatch = new HashSet<>();
-
-                HashSet<String> allMatch = new HashSet<>();
-                if(query.contains("!")) { //only used for inverted queries, so dont need to populate unless ! in query
+                } else if(searchField.getText().length() == 0) {
                     for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
                         if(doesAucMatch(entry.getValue())) {
-                            allMatch.add(entry.getKey());
+                            auctionIdsNew.add(entry.getKey());
+                        }
+                    }
+                } else {
+                    String query = searchField.getText();
+                    Set<String> dontMatch = new HashSet<>();
+
+                    HashSet<String> allMatch = new HashSet<>();
+                    if(query.contains("!")) { //only used for inverted queries, so dont need to populate unless ! in query
+                        for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
+                            if(doesAucMatch(entry.getValue())) {
+                                allMatch.add(entry.getKey());
+                            } else {
+                                dontMatch.add(entry.getKey());
+                            }
+                        }
+                    }
+
+                    boolean invert = false;
+
+                    StringBuilder query2 = new StringBuilder();
+                    char lastOp = '|';
+                    for(char c : query.toCharArray()) {
+                        if(query2.toString().trim().isEmpty() && c == '!') {
+                            invert = true;
+                        } else if(c == '|' || c == '&') {
+                            if(lastOp == '|') {
+                                HashSet<String> result = search(query2.toString(), dontMatch);
+                                if(!invert) {
+                                    auctionIdsNew.addAll(result);
+                                } else {
+                                    HashSet<String> allClone = (HashSet<String>) allMatch.clone();
+                                    allClone.removeAll(result);
+                                    auctionIdsNew.addAll(allClone);
+                                }
+                            } else if(lastOp == '&') {
+                                HashSet<String> result = search(query2.toString(), dontMatch);
+                                if(!invert) {
+                                    auctionIdsNew.retainAll(result);
+                                } else {
+                                    auctionIdsNew.removeAll(result);
+                                }
+                            }
+
+                            query2 = new StringBuilder();
+                            invert = false;
+                            lastOp = c;
                         } else {
-                            dontMatch.add(entry.getKey());
+                            query2.append(c);
+                        }
+                    }
+                    if(lastOp == '|') {
+                        HashSet<String> result = search(query2.toString(), dontMatch);
+                        if(!invert) {
+                            auctionIdsNew.addAll(result);
+                        } else {
+                            HashSet<String> allClone = (HashSet<String>) allMatch.clone();
+                            allClone.removeAll(result);
+                            auctionIdsNew.addAll(allClone);
+                        }
+                    } else if(lastOp == '&') {
+                        HashSet<String> result = search(query2.toString(), dontMatch);
+                        if(!invert) {
+                            auctionIdsNew.retainAll(result);
+                        } else {
+                            auctionIdsNew.removeAll(result);
                         }
                     }
                 }
-
-                boolean invert = false;
-
-                StringBuilder query2 = new StringBuilder();
-                char lastOp = '|';
-                for(char c : query.toCharArray()) {
-                    if(query2.toString().trim().isEmpty() && c == '!') {
-                        invert = true;
-                    } else if(c == '|' || c == '&') {
-                        if(lastOp == '|') {
-                            HashSet<String> result = search(query2.toString(), dontMatch);
-                            if(!invert) {
-                                auctionIds.addAll(result);
-                            } else {
-                                HashSet<String> allClone = (HashSet<String>) allMatch.clone();
-                                allClone.removeAll(result);
-                                auctionIds.addAll(allClone);
-                            }
-                        } else if(lastOp == '&') {
-                            HashSet<String> result = search(query2.toString(), dontMatch);
-                            if(!invert) {
-                                auctionIds.retainAll(result);
-                            } else {
-                                auctionIds.removeAll(result);
-                            }
-                        }
-
-                        query2 = new StringBuilder();
-                        invert = false;
-                        lastOp = c;
-                    } else {
-                        query2.append(c);
-                    }
-                }
-                if(lastOp == '|') {
-                    HashSet<String> result = search(query2.toString(), dontMatch);
-                    if(!invert) {
-                        auctionIds.addAll(result);
-                    } else {
-                        HashSet<String> allClone = (HashSet<String>) allMatch.clone();
-                        allClone.removeAll(result);
-                        auctionIds.addAll(allClone);
-                    }
-                } else if(lastOp == '&') {
-                    HashSet<String> result = search(query2.toString(), dontMatch);
-                    if(!invert) {
-                        auctionIds.retainAll(result);
-                    } else {
-                        auctionIds.removeAll(result);
-                    }
-                }
+                auctionIds = auctionIdsNew;
+                sortItems();
+            } catch(Exception e) {
+                shouldUpdateSearch = true;
             }
-            sortItems();
-        } catch(Exception e) {
-            shouldUpdateSearch = true;
-        }
+        });
     }
 
     public void sortItems() throws ConcurrentModificationException {
         try {
-            sortedAuctionIds.clear();
-            sortedAuctionIds.addAll(auctionIds);
-            sortedAuctionIds.sort((o1, o2) -> {
+            List<String> sortedAuctionIdsNew = new ArrayList<>();
+
+            sortedAuctionIdsNew.addAll(auctionIds);
+            sortedAuctionIdsNew.sort((o1, o2) -> {
                 APIManager.Auction auc1 = manager.auctionManager.getAuctionItems().get(o1);
                 APIManager.Auction auc2 = manager.auctionManager.getAuctionItems().get(o2);
 
@@ -1176,6 +1186,8 @@ public class CustomAH extends Gui {
                 }
                 return o1.compareTo(o2);
             });
+
+            sortedAuctionIds = sortedAuctionIdsNew;
         } catch(Exception e) {
             shouldSortItems = true;
         }
@@ -1371,7 +1383,7 @@ public class CustomAH extends Gui {
                         Utils.playPressSound();
                     }
                 }
-            } else if(containerName.trim().equals("Confirm Bid")) {
+            } else if(containerName.trim().equals("Confirm Bid") || containerName.trim().equals("Confirm Purchase")) {
                 if(mouseX > guiLeft+getXSize()+4+31 && mouseX < guiLeft+getXSize()+4+31+16) {
                     if(mouseY > guiTop+31 && mouseY < guiTop+31+16) {
                         if(currentAucId != null) {
@@ -1444,6 +1456,7 @@ public class CustomAH extends Gui {
                     aucid = sortedAuctionIds.get(id);
                 } catch (IndexOutOfBoundsException e) { break out; }
 
+                if(aucid == null) continue;
                 APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
                 if(auc != null) {
                     if(mouseX > itemX && mouseX < itemX+16) {

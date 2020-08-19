@@ -47,13 +47,13 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     private static final int FILTER_ARMOR = 2;
     private static final int FILTER_ACCESSORY = 3;
     private static final int FILTER_PET = 4;
-    private static final int FILTER_TOOL = 5;
+    private static final int FILTER_DUNGEON = 5;
     private static final int FILTER_SLAYER_ZOMBIE = 6;
     private static final int FILTER_SLAYER_WOLF = 7;
     private static final int FILTER_SLAYER_SPIDER = 8;
     private int filterMode = FILTER_ALL;
     private String[] filterPrettyNames = new String[]{"ALL","WEAPON","ARMOR",
-            "ACCESSORY","PET","TOOL","ZOMBIE SLAYER","WOLF SLAYER","SPIDER SLAYER"};
+            "ACCESSORY","PET","DUNGEON","ZOMBIE SLAYER","WOLF SLAYER","SPIDER SLAYER"};
 
     private Framebuffer itemFramebuffer = null;
     private Framebuffer itemBGFramebuffer = null;
@@ -94,8 +94,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                     case FILTER_PET:
                         if(!internalname.matches(petRegex) || !item.get("displayname").getAsString().contains("[")) continue;
                         break;
-                    case FILTER_TOOL:
-                        if(overlay.checkItemType(lore, "AXE", "PICKAXE", "FISHING ROD", "SHOVEL", "HOE") < 0) continue;
+                    case FILTER_DUNGEON:
+                        if(Utils.checkItemType(lore, true, "DUNGEON") < 0) continue;
                         break;
                     case FILTER_SLAYER_ZOMBIE:
                         if(!item.has("slayer_req") || !item.get("slayer_req").getAsString().startsWith("ZOMBIE")) continue;
@@ -241,19 +241,6 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         }
     }
 
-    private Matrix4f createProjectionMatrix(int width, int height) {
-        Matrix4f projMatrix  = new Matrix4f();
-        projMatrix.setIdentity();
-        projMatrix.m00 = 2.0F / (float)width;
-        projMatrix.m11 = 2.0F / (float)(-height);
-        projMatrix.m22 = -0.0020001999F;
-        projMatrix.m33 = 1.0F;
-        projMatrix.m03 = -1.0F;
-        projMatrix.m13 = 1.0F;
-        projMatrix.m23 = -1.0001999F;
-        return projMatrix;
-    }
-
     public int getCurrentAcquiredCount() {
         if(getAcquiredItems() == null) return 0;
         if(!getAcquiredItems().containsKey(manager.getCurrentProfile())) return 0;
@@ -268,7 +255,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
         if(itemFramebuffer != null && grayscaleShader != null &&
                 (itemFramebuffer.framebufferWidth != width || itemFramebuffer.framebufferHeight != height)) {
-            grayscaleShader.setProjectionMatrix(createProjectionMatrix(
+            grayscaleShader.setProjectionMatrix(Utils.createProjectionMatrix(
                     width*scaledresolution.getScaleFactor(), height*scaledresolution.getScaleFactor()));
         }
 
@@ -300,7 +287,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                 grayscaleShader = new Shader(new NEUResourceManager(Minecraft.getMinecraft().getResourceManager()),
                         "grayscale",
                         itemFramebuffer, itemFramebufferGrayscale);
-                grayscaleShader.setProjectionMatrix(createProjectionMatrix(
+                grayscaleShader.setProjectionMatrix(Utils.createProjectionMatrix(
                         width*scaledresolution.getScaleFactor(), height*scaledresolution.getScaleFactor()));
             } catch(Exception e) {
                 return;

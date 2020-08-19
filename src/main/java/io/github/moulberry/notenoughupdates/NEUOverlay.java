@@ -96,7 +96,6 @@ public class NEUOverlay extends Gui {
     private JsonObject[] searchedItemsArr = null;
 
     private boolean itemPaneOpen = false;
-    private boolean hoveringItemPaneToggle = false;
 
     private int page = 0;
 
@@ -310,8 +309,9 @@ public class NEUOverlay extends Gui {
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
                 if(Mouse.getEventButtonState()) {
-                    displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
-                            "https://moulberry.github.io/files/neu_help.html"));
+                    //displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
+                    //        "https://moulberry.github.io/files/neu_help.html"));
+                    Minecraft.getMinecraft().displayGuiScreen(new HelpGUI());
                     Utils.playPressSound();
                 }
             }
@@ -1054,7 +1054,7 @@ public class NEUOverlay extends Gui {
         } else if(getSortMode() == SORT_MODE_MOB) {
             return internalname.matches(mobRegex);
         } else if(getSortMode() == SORT_MODE_PET) {
-            return internalname.matches(petRegex);
+            return internalname.matches(petRegex) && item.get("displayname").getAsString().contains("[");
         } else if(getSortMode() == SORT_MODE_TOOL) {
             return checkItemType(item.get("lore").getAsJsonArray(),
                     "SWORD", "BOW", "AXE", "PICKAXE", "FISHING ROD", "WAND", "SHOVEL", "HOE") >= 0;
@@ -1096,6 +1096,15 @@ public class NEUOverlay extends Gui {
             case "ducttape":
             case "ducttapedigger":
                 searchedItems.add(CustomItems.DUCTTAPE);
+                break;
+            case "thirtyvirus":
+                searchedItems.add(manager.getItemInformation().get("SPIKED_BAIT"));
+                break;
+            case "leocthl":
+                searchedItems.add(CustomItems.LEOCTHL);
+                break;
+            case "spinaxx":
+                searchedItems.add(CustomItems.SPINAXX);
                 break;
         }
     }
@@ -1480,16 +1489,16 @@ public class NEUOverlay extends Gui {
 
         if(blurShaderHorz == null) {
             try {
-                blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                        Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
+                blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(),
+                        "blur", Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
                 blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
                 blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
             } catch(Exception e) { }
         }
         if(blurShaderVert == null) {
             try {
-                blurShaderVert = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                        blurOutputHorz, blurOutputVert);
+                blurShaderVert = new Shader(Minecraft.getMinecraft().getResourceManager(),
+                        "blur", blurOutputHorz, blurOutputVert);
                 blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
                 blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
             } catch(Exception e) { }
@@ -1633,21 +1642,16 @@ public class NEUOverlay extends Gui {
         int rightSide = leftSide+paneWidth-getBoxPadding()-getItemBoxXPadding();
 
         //Tab
-        Minecraft.getMinecraft().getTextureManager().bindTexture(itemPaneTabArrow);
-        GlStateManager.color(1f, 1f, 1f, 0.3f);
-        Utils.drawTexturedRect(width-itemPaneTabOffset.getValue(), height/2 - 50, 20, 100);
-        GlStateManager.bindTexture(0);
+        if(!manager.config.disableItemTabOpen.value) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(itemPaneTabArrow);
+            GlStateManager.color(1f, 1f, 1f, 0.3f);
+            Utils.drawTexturedRect(width-itemPaneTabOffset.getValue(), height/2 - 50, 20, 100);
+            GlStateManager.bindTexture(0);
 
-        if(mouseX > width-itemPaneTabOffset.getValue() && mouseY > height/2 - 50
-                && mouseY < height/2 + 50) {
-            if(!hoveringItemPaneToggle) {
-                if(!manager.config.disableItemTabOpen.value) {
-                    itemPaneOpen = !itemPaneOpen;
-                }
-                hoveringItemPaneToggle = true;
+            if(!itemPaneOpen && mouseX > width-itemPaneTabOffset.getValue() && mouseY > height/2 - 50
+                    && mouseY < height/2 + 50) {
+                itemPaneOpen = true;
             }
-        } else {
-            hoveringItemPaneToggle = false;
         }
 
         //Atomic reference used so that below lambda doesn't complain about non-effectively-final variable
@@ -1803,12 +1807,7 @@ public class NEUOverlay extends Gui {
         //Render tooltip
         JsonObject json = tooltipToDisplay.get();
         if(json != null) {
-            List<String> text = new ArrayList<>();
-            text.add(json.get("displayname").getAsString());
-            JsonArray lore = json.get("lore").getAsJsonArray();
-            for(int i=0; i<lore.size(); i++) {
-                text.add(lore.get(i).getAsString());
-            }
+            List<String> text = manager.jsonToStack(json).getTooltip(Minecraft.getMinecraft().thePlayer, false);
 
             String internalname = json.get("internalname").getAsString();
             JsonObject auctionInfo = manager.getItemAuctionInfo(internalname);
