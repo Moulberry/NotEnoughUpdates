@@ -315,12 +315,18 @@ public class SBGamemodes {
 
     @SubscribeEvent
     public void onChatMessage(ClientChatReceivedEvent event) {
+        if(event.type != 0) return;
+
         /*if(Keyboard.isKeyDown(Keyboard.KEY_K)) {
-            System.out.println("-----START");
+            boolean has = false;
             for(char c : event.message.getFormattedText().toCharArray()) {
-                System.out.println((int)c);
+                if((int)c > 200) {
+                    if(!has) System.out.println("-----START");
+                    has = true;
+                    System.out.println((int)c);
+                }
             }
-            System.out.println("-----END");
+            if(has) System.out.println("-----END");
         }*/
         if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
 

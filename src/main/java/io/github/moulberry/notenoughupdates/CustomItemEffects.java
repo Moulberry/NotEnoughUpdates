@@ -31,28 +31,38 @@ public class CustomItemEffects {
 
     public static final CustomItemEffects INSTANCE = new CustomItemEffects();
 
-    public int aoteUseTicks = 0;
-    public int aoteTeleportationTicks = 0;
-    public Vector3f aoteTeleportationLast = null;
+    public long aoteUseMillis = 0;
+    public int aoteTeleportationMillis = 0;
     public Vector3f aoteTeleportationCurr = null;
-    public boolean teleported = false;
-    public float partialTicks;
+
+    public long lastMillis = 0;
+
+    public Vector3f getCurrentPosition() {
+        if(aoteTeleportationMillis <= 0) return null;
+        return aoteTeleportationCurr;
+    }
 
     @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if(aoteTeleportationTicks > 7) aoteTeleportationTicks = 7;
+    public void onTick(TickEvent.RenderTickEvent event) {
+        //if(aoteTeleportationTicks > 7) aoteTeleportationTicks = 7;
+        long currentTime = System.currentTimeMillis();
+        int delta = (int)(currentTime - lastMillis);
+        lastMillis = currentTime;
 
-        if(aoteUseTicks > 20 && aoteTeleportationCurr != null && !teleported) {
+        if(delta <= 0) return;
+
+        if(aoteTeleportationMillis > 300) aoteTeleportationMillis = 300;
+        if(aoteTeleportationMillis < 0) aoteTeleportationMillis = 0;
+
+        if(currentTime - aoteUseMillis > 1000 && aoteTeleportationMillis <= 0) {
             aoteTeleportationCurr = null;
-            aoteTeleportationTicks = 0;
         }
 
-        if(aoteTeleportationCurr != null && aoteTeleportationTicks > 0) {
-            aoteUseTicks++;
-            if(teleported) {
-                float factor = 1f/aoteTeleportationTicks;
+        if(aoteTeleportationCurr != null) {
+            if(aoteTeleportationMillis > 0) {
+                int deltaMin = Math.min(delta, aoteTeleportationMillis);
 
-                aoteTeleportationLast = new Vector3f(aoteTeleportationCurr);
+                float factor = deltaMin/(float)aoteTeleportationMillis;
 
                 float dX = aoteTeleportationCurr.x - (float)Minecraft.getMinecraft().thePlayer.posX;
                 float dY = aoteTeleportationCurr.y - (float)Minecraft.getMinecraft().thePlayer.posY;
@@ -62,30 +72,45 @@ public class CustomItemEffects {
                 aoteTeleportationCurr.y -= dY*factor;
                 aoteTeleportationCurr.z -= dZ*factor;
 
-                aoteTeleportationTicks--;
+                if(Minecraft.getMinecraft().theWorld.getBlockState(new BlockPos(aoteTeleportationCurr.x,
+                        aoteTeleportationCurr.y, aoteTeleportationCurr.z)).getBlock().getMaterial() != Material.air) {
+                    aoteTeleportationCurr.y = (float)Math.ceil(aoteTeleportationCurr.y);
+                }
+
+                aoteTeleportationMillis -= deltaMin;
             } else {
                 aoteTeleportationCurr.x = (float) Minecraft.getMinecraft().thePlayer.posX;
                 aoteTeleportationCurr.y = (float) Minecraft.getMinecraft().thePlayer.posY;
                 aoteTeleportationCurr.z = (float) Minecraft.getMinecraft().thePlayer.posZ;
-                aoteTeleportationLast = new Vector3f(aoteTeleportationCurr);
             }
         } else {
-            aoteTeleportationCurr = null;
-            aoteUseTicks = 0;
-            teleported = false;
+            aoteUseMillis = 0;
+            aoteTeleportationMillis = 0;
         }
     }
 
-    public Vector3f getCurrentPosition() {
-        if(!teleported || aoteTeleportationLast == null || aoteTeleportationCurr == null) return null;
-        return new Vector3f(aoteTeleportationLast.x + (aoteTeleportationCurr.x - aoteTeleportationLast.x) * partialTicks,
-                            aoteTeleportationLast.y + (aoteTeleportationCurr.y - aoteTeleportationLast.y) * partialTicks,
-                            aoteTeleportationLast.z + (aoteTeleportationCurr.z - aoteTeleportationLast.z) * partialTicks);
+    @SubscribeEvent
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if(event.action == PlayerInteractEvent.Action.RIGHT_CLICK_AIR || event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
+            ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
+            if(held != null) {
+                String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
+                if(internal != null && internal.equals("ASPECT_OF_THE_END")) {
+                    aoteUseMillis = System.currentTimeMillis();
+                    if(aoteTeleportationCurr == null) {
+                        aoteTeleportationCurr = new Vector3f();
+                        aoteTeleportationCurr.x = (float) Minecraft.getMinecraft().thePlayer.posX;
+                        aoteTeleportationCurr.y = (float) Minecraft.getMinecraft().thePlayer.posY;
+                        aoteTeleportationCurr.z = (float) Minecraft.getMinecraft().thePlayer.posZ;
+                    }
+                }
+            }
+        }
     }
 
     @SubscribeEvent
     public void renderBlockOverlay(DrawBlockHighlightEvent event) {
-        if(aoteTeleportationCurr != null && aoteTeleportationTicks > 0 && teleported) {
+        if(aoteTeleportationCurr != null && aoteTeleportationMillis > 0) {
             event.setCanceled(true);
         }
         ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
@@ -99,12 +124,8 @@ public class CustomItemEffects {
                     GlStateManager.enableBlend();
                     GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
                     GlStateManager.color(0.0F, 0.0F, 0.0F, 0.4F);
-                    GL11.glLineWidth(2.0F);
                     GlStateManager.disableTexture2D();
                     GlStateManager.depthMask(false);
-                    float f = 0.002F;
-                    //BlockPos blockpos = ;
-                    //Block block = Minecraft.getMinecraft().theWorld.getBlockState(blockpos).getBlock();
 
                     if(Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos()).getBlock() == Blocks.log ||
                             Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos()).getBlock() == Blocks.log2) {
@@ -152,9 +173,9 @@ public class CustomItemEffects {
                                 }
 
                                 block.setBlockBoundsBasedOnState(Minecraft.getMinecraft().theWorld, candidate);
-                                double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double)partialTicks;
-                                double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)partialTicks;
-                                double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double)partialTicks;
+                                double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double)event.partialTicks;
+                                double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)event.partialTicks;
+                                double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double)event.partialTicks;
 
                                 drawSelectionBoundingBox(block.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, candidate)
                                         .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2),
@@ -218,27 +239,6 @@ public class CustomItemEffects {
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ).endVertex();
         tessellator.draw();
 
-    }
-
-    @SubscribeEvent
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if(event.action == PlayerInteractEvent.Action.RIGHT_CLICK_AIR || event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
-            ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
-            if(held != null) {
-                String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-                if(internal != null && internal.equals("ASPECT_OF_THE_END")) {
-                    aoteTeleportationTicks += 5;
-
-                    if(aoteTeleportationCurr == null) {
-                        aoteTeleportationCurr = new Vector3f();
-                        aoteTeleportationCurr.x = (float) Minecraft.getMinecraft().thePlayer.posX;
-                        aoteTeleportationCurr.y = (float) Minecraft.getMinecraft().thePlayer.posY;
-                        aoteTeleportationCurr.z = (float) Minecraft.getMinecraft().thePlayer.posZ;
-                    }
-
-                }
-            }
-        }
     }
 
 }

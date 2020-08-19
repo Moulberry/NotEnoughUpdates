@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.common.collect.Sets;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.exceptions.AuthenticationException;
@@ -14,6 +15,7 @@ import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
+import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -41,6 +43,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -48,10 +51,12 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.Proxy;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
@@ -126,17 +131,189 @@ public class NotEnoughUpdates {
         }
     });
 
+    private static HashMap<String, String> petRarityToColourMap = new HashMap<>();
+    static {
+        petRarityToColourMap.put("UNKNOWN", EnumChatFormatting.RED.toString());
+
+        petRarityToColourMap.put("COMMON", EnumChatFormatting.WHITE.toString());
+        petRarityToColourMap.put("UNCOMMON", EnumChatFormatting.GREEN.toString());
+        petRarityToColourMap.put("RARE", EnumChatFormatting.BLUE.toString());
+        petRarityToColourMap.put("EPIC", EnumChatFormatting.DARK_PURPLE.toString());
+        petRarityToColourMap.put("LEGENDARY", EnumChatFormatting.GOLD.toString());
+    }
+    ScheduledExecutorService peekCommandExecutorService = null;
     SimpleCommand peekCommand = new SimpleCommand("peek", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
+            int id = new Random().nextInt(Integer.MAX_VALUE/2)+Integer.MAX_VALUE/2;
+
+            Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
+                    EnumChatFormatting.YELLOW+"[PEEK] Getting player information..."), id);
             profileViewer.getProfileByName(args[0], profile -> {
                 if (profile != null) {
                     profile.resetCache();
 
-                    float overallScore = 0;
 
-                    JsonObject profileInfo = profile.getProfileInformation(null);
+                    if(peekCommandExecutorService == null || peekCommandExecutorService.isShutdown()) {
+                        peekCommandExecutorService = Executors.newSingleThreadScheduledExecutor();
+                    } else {
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                EnumChatFormatting.RED+"[PEEK] New peek command run, cancelling old one."));
+                        peekCommandExecutorService.shutdownNow();
+                        peekCommandExecutorService = Executors.newSingleThreadScheduledExecutor();
+                    }
 
-                    JsonObject skill = profile.getSkillInfo(null);
+                    Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
+                            EnumChatFormatting.YELLOW+"[PEEK] Getting player skyblock profiles..."), id);
+
+                    long startTime = System.currentTimeMillis();
+                    peekCommandExecutorService.schedule(new Runnable() {
+                        public void run() {
+                            if(System.currentTimeMillis() - startTime > 10*1000) {
+
+                                Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
+                                        EnumChatFormatting.RED+"[PEEK] Getting profile info took too long, aborting."), id);
+                                return;
+                            }
+
+                            String g = EnumChatFormatting.GRAY.toString();
+
+                            JsonObject profileInfo = profile.getProfileInformation(null);
+                            if(profileInfo != null) {
+                                float overallScore = 0;
+
+                                boolean isMe = args[0].equalsIgnoreCase("moulberry");
+
+                                PlayerStats.Stats stats = profile.getStats(null);
+                                JsonObject skill = profile.getSkillInfo(null);
+
+                                Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(EnumChatFormatting.GREEN+" "+
+                                        EnumChatFormatting.STRIKETHROUGH+"-=-" +EnumChatFormatting.RESET+EnumChatFormatting.GREEN+" "+
+                                        Utils.getElementAsString(profile.getHypixelProfile().get("displayname"), args[0]) + "'s Info " +
+                                        EnumChatFormatting.STRIKETHROUGH+"-=-"), id);
+
+                                if(skill == null) {
+                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW+"Skills api disabled!"));
+                                } else {
+                                    float totalSkillLVL = 0;
+                                    float totalSkillCount = 0;
+
+                                    for(Map.Entry<String, JsonElement> entry : skill.entrySet()) {
+                                        if(entry.getKey().startsWith("level_skill")) {
+                                            if(entry.getKey().contains("runecrafting")) continue;
+                                            if(entry.getKey().contains("carpentry")) continue;
+                                            totalSkillLVL += entry.getValue().getAsFloat();
+                                            totalSkillCount++;
+                                        }
+                                    }
+
+                                    float combat = Utils.getElementAsFloat(skill.get("level_skill_combat"), 0);
+                                    float zombie = Utils.getElementAsFloat(skill.get("level_slayer_zombie"), 0);
+                                    float spider = Utils.getElementAsFloat(skill.get("level_slayer_spider"), 0);
+                                    float wolf = Utils.getElementAsFloat(skill.get("level_slayer_wolf"), 0);
+
+                                    float avgSkillLVL = totalSkillLVL/totalSkillCount;
+
+                                    if(isMe) {
+                                        avgSkillLVL = 6;
+                                        combat = 4;
+                                        zombie = 2;
+                                        spider = 1;
+                                        wolf = 2;
+                                    }
+
+                                    EnumChatFormatting combatPrefix = combat>20?(combat>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting zombiePrefix = zombie>3?(zombie>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting spiderPrefix = spider>3?(spider>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting wolfPrefix = wolf>3?(wolf>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting avgPrefix = avgSkillLVL>20?(avgSkillLVL>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+
+                                    overallScore += combat*combat/2000f;
+                                    overallScore += zombie*zombie/81f;
+                                    overallScore += spider*spider/81f;
+                                    overallScore += wolf*wolf/81f;
+                                    overallScore += avgSkillLVL/20f;
+
+                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                            g+"Combat: "+combatPrefix+(int)Math.floor(combat) +g+" - AVG Skill: " + avgPrefix+(int)Math.floor(avgSkillLVL)));
+                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                            g+"Slayer: "+zombiePrefix+(int)Math.floor(zombie)+g+"-"+
+                                                    spiderPrefix+(int)Math.floor(spider)+g+"-"+wolfPrefix+(int)Math.floor(wolf)));
+                                }
+                                if(stats == null) {
+                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                            EnumChatFormatting.YELLOW+"Skills, collection and/or inventory apis disabled!"));
+                                } else {
+                                    int health = (int)stats.get("health");
+                                    int defence = (int)stats.get("defence");
+                                    int strength = (int)stats.get("strength");
+                                    int intelligence = (int)stats.get("intelligence");
+
+                                    EnumChatFormatting healthPrefix = health>800?(health>1600?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting defencePrefix = defence>200?(defence>600?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting strengthPrefix = strength>100?(strength>300?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting intelligencePrefix = intelligence>300?(intelligence>900?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+
+                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                            g+"Stats  : "+healthPrefix+health+EnumChatFormatting.RED+"\u2764 "+
+                                                    defencePrefix+defence+EnumChatFormatting.GREEN+"\u2748 "+
+                                                    strengthPrefix+strength+EnumChatFormatting.RED+"\u2741 "+
+                                                    intelligencePrefix+intelligence+EnumChatFormatting.AQUA+"\u270e "));
+                                }
+                                float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), -1);
+                                float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
+
+
+                                EnumChatFormatting moneyPrefix = (bankBalance+purseBalance)>10*1000*1000?
+                                        ((bankBalance+purseBalance)>50*1000*1000?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                        g+"Purse : "+moneyPrefix+Utils.shortNumberFormat(purseBalance, 0) + g+" - Bank: " +
+                                                (bankBalance == -1 ? EnumChatFormatting.YELLOW+"Disabled" : moneyPrefix+
+                                                        (isMe?"4.8b":Utils.shortNumberFormat(bankBalance, 0)))));
+
+                                overallScore += Math.min(2, (bankBalance+purseBalance)/(50f*1000*1000));
+
+                                String activePet = Utils.getElementAsString(Utils.getElement(profile.getPetsInfo(null), "active_pet.type"),
+                                        "None Active");
+                                String activePetTier = Utils.getElementAsString(Utils.getElement(profile.getPetsInfo(null), "active_pet.tier"), "UNKNOWN");
+
+                                String col = petRarityToColourMap.get(activePetTier);
+                                if(col == null) col = EnumChatFormatting.LIGHT_PURPLE.toString();
+
+                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(g+"Pet    : " +
+                                        col + WordUtils.capitalizeFully(activePet.replace("_", " "))));
+
+                                String overall = "Skywars Main";
+                                if(isMe) {
+                                    overall = Utils.chromaString("Literally the best player to exist");
+                                } else if(overallScore < 5 && (bankBalance+purseBalance) > 500*1000*1000) {
+                                    overall = EnumChatFormatting.GOLD+"Bill Gates";
+                                } else if(overallScore > 9) {
+                                    overall = Utils.chromaString("Didn't even think this score was possible");
+                                } else if(overallScore > 8) {
+                                    overall = Utils.chromaString("Mentally unstable");
+                                } else if(overallScore > 7) {
+                                    overall = EnumChatFormatting.GOLD+"Why though 0.0";
+                                } else if(overallScore > 5.5) {
+                                    overall = EnumChatFormatting.GOLD+"Bro stop playing";
+                                } else if(overallScore > 4) {
+                                    overall = EnumChatFormatting.GREEN+"Kinda sweaty";
+                                } else if(overallScore > 3) {
+                                    overall = EnumChatFormatting.YELLOW+"Alright I guess";
+                                } else if(overallScore > 2) {
+                                    overall = EnumChatFormatting.YELLOW+"Ender Non";
+                                } else if(overallScore > 1) {
+                                    overall = EnumChatFormatting.RED+"Played Skyblock";
+                                }
+
+                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(g+"Overall score: " +
+                                       overall + g + " (" + Math.round(overallScore*10)/10f + ")"));
+
+                                peekCommandExecutorService.shutdownNow();
+                            } else {
+                                peekCommandExecutorService.schedule(this, 200, TimeUnit.MILLISECONDS);
+                            }
+                        }
+                    }, 200, TimeUnit.MILLISECONDS);
                 }
             });
         }
@@ -326,6 +503,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShort2Command);
+        ClientCommandHandler.instance.registerCommand(peekCommand);
         ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);

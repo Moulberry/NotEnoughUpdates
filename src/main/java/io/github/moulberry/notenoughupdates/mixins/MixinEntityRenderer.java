@@ -42,11 +42,6 @@ public class MixinEntityRenderer {
     }
 
     //renderWorldPass
-    @Inject(method="renderWorldPass", at=@At("HEAD"))
-    public void renderWorldPass(int pass, float partialTicks, long finishTimeNano, CallbackInfo ci) {
-        CustomItemEffects.INSTANCE.partialTicks = partialTicks;
-    }
-
     @ModifyVariable(method="renderWorldPass", at=@At(value="STORE"), ordinal = 0)
     public double renderWorldPass_d0(double d0) {
         Vector3f currentPosition = CustomItemEffects.INSTANCE.getCurrentPosition();
