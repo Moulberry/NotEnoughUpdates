@@ -51,7 +51,9 @@ public class CustomItemEffects {
 
         if(delta <= 0) return;
 
-        if(aoteTeleportationMillis > 300) aoteTeleportationMillis = 300;
+        if(aoteTeleportationMillis > NotEnoughUpdates.INSTANCE.manager.config.smoothAoteMillis.value.intValue()*2) {
+            aoteTeleportationMillis = NotEnoughUpdates.INSTANCE.manager.config.smoothAoteMillis.value.intValue()*2;
+        }
         if(aoteTeleportationMillis < 0) aoteTeleportationMillis = 0;
 
         if(currentTime - aoteUseMillis > 1000 && aoteTeleportationMillis <= 0) {
@@ -91,6 +93,8 @@ public class CustomItemEffects {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if(NotEnoughUpdates.INSTANCE.manager.config.smoothAoteMillis.value <= 0) return;
+
         if(event.action == PlayerInteractEvent.Action.RIGHT_CLICK_AIR || event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
             ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
             if(held != null) {
@@ -113,6 +117,7 @@ public class CustomItemEffects {
         if(aoteTeleportationCurr != null && aoteTeleportationMillis > 0) {
             event.setCanceled(true);
         }
+        if(NotEnoughUpdates.INSTANCE.manager.config.disableTreecapOverlay.value) return;
         ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
         String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
         if(heldInternal != null) {

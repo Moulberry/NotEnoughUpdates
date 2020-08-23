@@ -24,7 +24,7 @@ public class HypixelApi {
     private ExecutorService es = Executors.newFixedThreadPool(3);
 
     private int myApiErrors = 0;
-    private String[] myApiURLs = {"https://moulberry.codes/", "https://51.89.22.3/", "http://moulberry.codes/", "http://51.89.22.3/"};
+    private String[] myApiURLs = {"https://moulberry.codes/", "http://51.89.22.3/", "http://moulberry.codes/", "https://51.89.22.3/"};
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {
         getHypixelApiAsync(apiKey, method, args, consumer, () -> {});

@@ -27,16 +27,28 @@ import org.lwjgl.util.vector.Vector3f;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.security.Key;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class NEUCape {
 
-    public ResourceLocation capeTex = null;
+    private int currentFrame = 0;
+    private int displayFrame = 0;
+    private String capeName;
+    public ResourceLocation[] capeTextures = null;
+
+    private long lastFrameUpdate = 0;
+
+    private static int ANIM_MODE_LOOP = 0;
+    private static int ANIM_MODE_PINGPONG = 1;
+    private int animMode = ANIM_MODE_LOOP;
 
     private List<List<CapeNode>> nodes = null;
+
+    private Random random = new Random();
+
+    private long eventMillis;
+    private float eventLength;
+    private float eventRandom;
 
     private static double vertOffset = 1.4;
     private static double shoulderLength = 0.24;
@@ -56,14 +68,76 @@ public class NEUCape {
     }
 
     public void setCapeTexture(String capeName) {
-        if(capeTex == null || !capeTex.getResourcePath().equals(capeName+".png")) {
-            if(capeName.equalsIgnoreCase("fade")) {
-                shaderName = "fade_cape";
-            } else {
-                shaderName = "cape";
+        if(this.capeName != null && this.capeName.equalsIgnoreCase(capeName)) return;
+        this.capeName = capeName;
+
+        startTime = System.currentTimeMillis();
+
+        if(capeName.equalsIgnoreCase("fade")) {
+            shaderName = "fade_cape";
+        } else if(capeName.equalsIgnoreCase("space")) {
+            shaderName = "space_cape";
+        } else {
+            shaderName = "cape";
+        }
+
+        ResourceLocation staticCapeTex = new ResourceLocation("notenoughupdates:capes/"+capeName+".png");
+        capeTextures = new ResourceLocation[1];
+        capeTextures[0] = staticCapeTex;
+
+        /*if(rlExists(staticCapeTex)) {
+            capeTextures = new ResourceLocation[1];
+            capeTextures[0] = staticCapeTex;
+        } else {
+            List<ResourceLocation> texs = new ArrayList<>();
+            for(int i=0; i<99; i++) {
+                ResourceLocation frame = new ResourceLocation(
+                        "notenoughupdates:capes/"+capeName+"/"+capeName+"_"+String.format("%02d", i)+".png");
+                if(rlExists(frame)) {
+                    texs.add(frame);
+                } else {
+                    break;
+                }
             }
-            capeTex = new ResourceLocation("notenoughupdates:capes/"+capeName+".png");
-            startTime = System.currentTimeMillis();
+            capeTextures = new ResourceLocation[texs.size()];
+            for(int i=0; i<texs.size(); i++) {
+                capeTextures[i] = texs.get(i);
+            }
+        }*/
+    }
+
+    private void bindTexture() {
+        if(capeTextures != null && capeTextures.length>0) {
+            long currentTime = System.currentTimeMillis();
+            if(currentTime - lastFrameUpdate > 100) {
+                lastFrameUpdate = currentTime/100*100;
+                currentFrame++;
+
+                if(animMode == ANIM_MODE_PINGPONG) {
+                    if(capeTextures.length == 1) {
+                        currentFrame = displayFrame = 0;
+                    } else {
+                        int frameCount = 2*capeTextures.length-2;
+                        currentFrame %= frameCount;
+                        displayFrame = currentFrame;
+                        if(currentFrame >= capeTextures.length) {
+                            displayFrame = frameCount - displayFrame;
+                        }
+                    }
+                } else if(animMode == ANIM_MODE_LOOP) {
+                    currentFrame %= capeTextures.length;
+                    displayFrame = currentFrame;
+                }
+            }
+            Minecraft.getMinecraft().getTextureManager().bindTexture(capeTextures[displayFrame]);
+        }
+    }
+
+    public boolean rlExists(ResourceLocation loc) {
+        try {
+            return !Minecraft.getMinecraft().getResourceManager().getAllResources(loc).isEmpty();
+        } catch(Exception e) {
+            return false;
         }
     }
 
@@ -92,7 +166,7 @@ public class NEUCape {
                 float centerMult = 1-Math.abs(j-(HORZ_NODES-1)/2f)/((HORZ_NODES-1)/2f);//0-(horzCapeNodes)  -> 0-1-0
                 float vMax = vMaxSide + (vMaxCenter - vMaxSide) * centerMult;
 
-                CapeNode node = new CapeNode(0, 0, 0);//pX-1, pY+2-i*targetDist, pZ+(j-(horzCapeNodes-1)/2f)*targetDist*2
+                CapeNode node = new CapeNode(pX, pY, pZ);//pX-1, pY+2-i*targetDist, pZ+(j-(horzCapeNodes-1)/2f)*targetDist*2
                 node.texU = uMin + (uMax - uMin) * j/(float)(HORZ_NODES-1);
                 node.texV = vMin + (vMax - vMin) * i/(float)(VERT_NODES-1);
 
@@ -220,6 +294,10 @@ public class NEUCape {
     private void loadShaderUniforms(ShaderManager shaderManager) {
         if(shaderName.equalsIgnoreCase("fade_cape")) {
             shaderManager.loadData(shaderName, "millis", (int)(System.currentTimeMillis()-startTime));
+        } else if(shaderName.equalsIgnoreCase("space_cape")) {
+            shaderManager.loadData(shaderName, "millis", (int)(System.currentTimeMillis()-startTime));
+            shaderManager.loadData(shaderName, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
+            shaderManager.loadData(shaderName, "eventRand", eventRandom);
         }
     }
 
@@ -243,7 +321,7 @@ public class NEUCape {
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA,
                 GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-        Minecraft.getMinecraft().getTextureManager().bindTexture(capeTex);
+        bindTexture();
         GlStateManager.enableTexture2D();
         GlStateManager.disableCull();
 
@@ -372,6 +450,15 @@ public class NEUCape {
     long startTime = 0;
     private void updateCape(EntityPlayer player) {
         Vector3f capeTranslation = updateFixedCapeNodes(player);
+
+        if(shaderName.equals("space_cape")) {
+            long currentTime = System.currentTimeMillis();
+            if(currentTime-startTime > eventMillis-startTime+eventLength) {
+                eventMillis = currentTime;
+                eventLength = random.nextFloat()*2000+4000;
+                eventRandom = random.nextFloat();
+            }
+        }
 
         if(notRendering) {
             for (int y = 0; y < nodes.size(); y++) {

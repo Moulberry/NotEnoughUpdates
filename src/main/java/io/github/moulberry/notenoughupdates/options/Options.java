@@ -78,6 +78,11 @@ public class Options {
             "Streamer Mode",
             false,
             "Hides or randomises some stuff on your screen to prevent sniping.");
+    public Option<Boolean> disableTreecapOverlay = new Option(
+            false,
+            "Disable Treecap Overlay",
+            false,
+            "Disables the treecapitator overlay effect.");
     public Option<Boolean> hideApiKey = new Option(
             false,
             "Hide Apikey Setting",
@@ -123,11 +128,26 @@ public class Options {
             "Hide GUI Filler Tooltips",
             false,
             "Hides the tooltip of glass panes in skyblock GUIs. Contrib: ThatGravyBoat");
+    public Option<Boolean> dungeonProfitLore = new Option(
+            false,
+            "Dungeon Profit in Lore",
+            false,
+            "If true, will show the dungeon profit on the tooltip of the 'reward chest' instead of as a GUI.");
+    public Option<Boolean> auctionPriceInfo = new Option(
+            true,
+            "Price Info in Auction Lore",
+            false,
+            "If true, will show price information about an item inside the auction house item tooltip.");
     public Option<Double> paneWidthMult = new Option(
             1.0,
             "Pane Width",
             false,
             "Changes how wide the item and info panes are. Value between 0.5-1.5.", 0.5, 1.5);
+    public Option<Double> smoothAoteMillis = new Option(
+            175.0,
+            "Smooth AOTE Milliseconds",
+            false,
+            "How long teleporting with the AOTE takes. 0 = disable.", 0, 300);
     public Option<Double> bgOpacity = new Option(
             30.0,
             "Pane Background Opacity",
@@ -294,18 +314,22 @@ public class Options {
         tryAddOption(showQuickCommands, options);
         tryAddOption(hidePotionEffect, options);
         tryAddOption(hideEmptyPanes, options);
-        //tryAddOption(advancedPriceInfo, options);
+        tryAddOption(advancedPriceInfo, options);
         tryAddOption(showUpdateMsg, options);
         tryAddOption(tooltipBorderColours, options);
         tryAddOption(disableAhScroll, options);
         tryAddOption(hideApiKey, options);
         tryAddOption(streamerMode, options);
+        tryAddOption(disableTreecapOverlay, options);
         tryAddOption(autoupdate, options);
         tryAddOption(cacheRenderedItempane, options);
         tryAddOption(itemStyle, options);
         tryAddOption(keepopen, options);
         tryAddOption(disableItemTabOpen, options);
+        tryAddOption(dungeonProfitLore, options);
+        tryAddOption(auctionPriceInfo, options);
         //Sliders
+        tryAddOption(smoothAoteMillis, options);
         tryAddOption(bgBlurFactor, options);
         tryAddOption(ahNotification, options);
         tryAddOption(bgOpacity, options);

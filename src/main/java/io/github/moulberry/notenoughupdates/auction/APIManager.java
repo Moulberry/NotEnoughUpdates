@@ -8,6 +8,7 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -16,6 +17,7 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.ResourceLocation;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,12 +41,18 @@ public class APIManager {
 
     private LinkedList<Integer> pagesToDownload = null;
 
+    private JsonObject bazaarJson = null;
+    private JsonObject auctionPricesJson = null;
+    private HashMap<String, CraftInfo> craftCost = new HashMap<>();
+
     public TreeMap<String, HashMap<Integer, HashSet<String>>> extrasToAucIdMap = new TreeMap<>();
 
     private long lastAuctionUpdate = 0;
     private long lastShortAuctionUpdate = 0;
     private long lastCustomAHSearch = 0;
     private long lastCleanup = 0;
+    private long lastAuctionAvgUpdate = 0;
+    private long lastBazaarUpdate = 0;
 
     private long lastApiUpdate = 0;
     private long firstHypixelApiUpdate = 0;
@@ -172,10 +180,14 @@ public class APIManager {
             updatePageTickShort();
             ahNotification();
         }
-        /*if(currentTime - lastProfileUpdate > 10*1000) {
-            lastProfileUpdate = System.currentTimeMillis();
-            updateProfiles(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
-        }*/
+        if(currentTime - lastAuctionAvgUpdate > 120*60*1000) { //2 hours
+            lastAuctionAvgUpdate = currentTime - 118*60*1000; //Try again in 2 minutes if updateAvgPrices doesn't succeed
+            updateAvgPrices();
+        }
+        if(currentTime - lastBazaarUpdate > 10*60*1000) {
+            lastBazaarUpdate = currentTime;
+            updateBazaar();
+        }
         if(currentTime - lastCleanup > 120*1000) {
             lastCleanup = currentTime;
             cleanup();
@@ -538,7 +550,7 @@ public class APIManager {
     }
 
     private void getPageFromAPI(int page) {
-        System.out.println("downloading page:"+page);
+        //System.out.println("downloading page:"+page);
         //System.out.println("Trying to update page: " + page);
         HashMap<String, String> args = new HashMap<>();
         args.put("page", ""+page);
@@ -574,6 +586,241 @@ public class APIManager {
                     pagesToDownload.addLast(page);
                 }
         );
+    }
+
+    public void updateBazaar() {
+        manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/bazaar", new HashMap<>(), (jsonObject) -> {
+            if(!jsonObject.get("success").getAsBoolean()) return;
+
+            craftCost.clear();
+            bazaarJson = new JsonObject();
+            JsonObject products = jsonObject.get("products").getAsJsonObject();
+            for(Map.Entry<String, JsonElement> entry : products.entrySet()) {
+                if(entry.getValue().isJsonObject()) {
+                    JsonObject productInfo = new JsonObject();
+
+                    JsonObject product = entry.getValue().getAsJsonObject();
+                    JsonObject quickStatus = product.get("quick_status").getAsJsonObject();
+                    productInfo.addProperty("avg_buy", quickStatus.get("buyPrice").getAsFloat());
+                    productInfo.addProperty("avg_sell", quickStatus.get("sellPrice").getAsFloat());
+
+                    for(JsonElement element : product.get("sell_summary").getAsJsonArray()) {
+                        if(element.isJsonObject()) {
+                            JsonObject sellSummaryFirst = element.getAsJsonObject();
+                            productInfo.addProperty("curr_sell", sellSummaryFirst.get("pricePerUnit").getAsFloat());
+                            break;
+                        }
+                    }
+
+                    for(JsonElement element : product.get("buy_summary").getAsJsonArray()) {
+                        if(element.isJsonObject()) {
+                            JsonObject sellSummaryFirst = element.getAsJsonObject();
+                            productInfo.addProperty("curr_buy", sellSummaryFirst.get("pricePerUnit").getAsFloat());
+                            break;
+                        }
+                    }
+
+                    bazaarJson.add(entry.getKey().replace(":", "-"), productInfo);
+                }
+            }
+        });
+    }
+
+    public void updateAvgPrices() {
+        manager.hypixelApi.getMyApiGZIPAsync("auction_averages/3day.json.gz", (jsonObject) -> {
+            craftCost.clear();
+            auctionPricesJson = jsonObject;
+            lastAuctionAvgUpdate = System.currentTimeMillis();
+        }, () -> {});
+    }
+
+    public JsonObject getItemAuctionInfo(String internalname) {
+        if(auctionPricesJson == null) return null;
+        JsonElement e = auctionPricesJson.get(internalname);
+        if(e == null) {
+            return null;
+        }
+        return e.getAsJsonObject();
+    }
+
+    public JsonObject getBazaarInfo(String internalname) {
+        if(bazaarJson == null) return null;
+        JsonElement e = bazaarJson.get(internalname);
+        if(e == null) {
+            return null;
+        }
+        return e.getAsJsonObject();
+    }
+
+    private static final List<String> hardcodedVanillaItems = Utils.createList(
+            "WOOD_AXE", "WOOD_HOE", "WOOD_PICKAXE","WOOD_SPADE", "WOOD_SWORD"
+    );
+    public boolean isVanillaItem(String internalname) {
+        if(hardcodedVanillaItems.contains(internalname)) return true;
+
+        //Removes trailing numbers and underscores, eg. LEAVES_2-3 -> LEAVES
+        String vanillaName = internalname.split("-")[0];
+        int sub = 0;
+        for(int i=vanillaName.length()-1; i>1; i--) {
+            char c = vanillaName.charAt(i);
+            if((int)c >= 48 && (int)c <= 57) { //0-9
+                sub++;
+            } else if(c == '_') {
+                sub++;
+                break;
+            } else {
+                break;
+            }
+        }
+        vanillaName = vanillaName.substring(0, vanillaName.length()-sub).toLowerCase();
+        return Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null;
+    }
+
+    public class CraftInfo {
+        public boolean fromRecipe = false;
+        public boolean vanillaItem = false;
+        public float craftCost = -1;
+    }
+
+    /**
+     * Recursively calculates the cost of crafting an item from raw materials.
+     */
+    public CraftInfo getCraftCost(String internalname) {
+        if(craftCost.containsKey(internalname)) {
+            return craftCost.get(internalname);
+        } else {
+            CraftInfo ci = new CraftInfo();
+
+            ci.vanillaItem = isVanillaItem(internalname);
+
+            JsonObject auctionInfo = getItemAuctionInfo(internalname);
+            JsonObject bazaarInfo = getBazaarInfo(internalname);
+
+            if(bazaarInfo != null) {
+                float bazaarInstantBuyPrice = bazaarInfo.get("curr_buy").getAsFloat();
+                ci.craftCost = bazaarInstantBuyPrice;
+            }
+            //Don't use auction prices for vanilla items cuz people like to transfer money, messing up the cost of vanilla items.
+            if(auctionInfo != null && !ci.vanillaItem) {
+                float auctionPrice = auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat();
+                if(ci.craftCost < 0 || auctionPrice < ci.craftCost) {
+                    ci.craftCost = auctionPrice;
+                }
+            }
+            JsonObject item = manager.getItemInformation().get(internalname);
+            if(item != null && item.has("recipe")) {
+                float craftPrice = 0;
+                JsonObject recipe = item.get("recipe").getAsJsonObject();
+
+                String[] x = {"1","2","3"};
+                String[] y = {"A","B","C"};
+                for(int i=0; i<9; i++) {
+                    String name = y[i/3]+x[i%3];
+                    String itemS = recipe.get(name).getAsString();
+                    if(itemS == null || itemS.length() == 0) continue;
+
+                    int count = 1;
+                    if(itemS.split(":").length == 2) {
+                        count = Integer.parseInt(itemS.split(":")[1]);
+                        itemS = itemS.split(":")[0];
+                    }
+                    float compCost = getCraftCost(itemS).craftCost * count;
+                    if(compCost < 0) {
+                        //If it's a custom item without a cost, return
+                        if(!getCraftCost(itemS).vanillaItem) {
+                            craftCost.put(internalname, ci);
+                            return ci;
+                        }
+                    } else {
+                        craftPrice += compCost;
+                    }
+                }
+
+                if(ci.craftCost < 0 || craftPrice < ci.craftCost) {
+                    ci.craftCost = craftPrice;
+                    ci.fromRecipe = true;
+                }
+            }
+            craftCost.put(internalname, ci);
+            return ci;
+        }
+    }
+
+    /**
+     * Calculates the cost of enchants + other price modifiers such as pet xp, midas price, etc.
+     */
+    public float getCostOfEnchants(String internalname, NBTTagCompound tag) {
+        float costOfEnchants = 0;
+        if(true) return 0;
+
+        JsonObject info = getItemAuctionInfo(internalname);
+        if(info == null || !info.has("price")) {
+            return 0;
+        }
+        if(auctionPricesJson == null || !auctionPricesJson.has("ench_prices") || !auctionPricesJson.has("ench_maximums")) {
+            return 0;
+        }
+        JsonObject ench_prices = auctionPricesJson.getAsJsonObject("ench_prices");
+        JsonObject ench_maximums = auctionPricesJson.getAsJsonObject("ench_maximums");
+        if(!ench_prices.has(internalname) || !ench_maximums.has(internalname)) {
+            return 0;
+        }
+        JsonObject iid_variables = ench_prices.getAsJsonObject(internalname);
+        float ench_maximum = ench_maximums.get(internalname).getAsFloat();
+
+        int enchants = 0;
+        float price = getItemAuctionInfo(internalname).get("price").getAsFloat();
+        if(tag.hasKey("ExtraAttributes")) {
+            NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+            if(ea.hasKey("enchantments")) {
+
+                NBTTagCompound enchs = ea.getCompoundTag("enchantments");
+                for(String ench : enchs.getKeySet()) {
+                    enchants++;
+                    int level = enchs.getInteger(ench);
+
+                    for(Map.Entry<String, JsonElement> entry : iid_variables.entrySet()) {
+                        if(matchEnch(ench, level, entry.getKey())) {
+                            costOfEnchants += entry.getValue().getAsJsonObject().get("A").getAsFloat()*price +
+                                    entry.getValue().getAsJsonObject().get("B").getAsFloat();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return costOfEnchants;
+    }
+
+    /**
+     * Checks whether a certain enchant (ench name + lvl) matches an enchant id
+     * eg. PROTECTION_GE6 will match -> ench_name = PROTECTION, lvl >= 6
+     */
+    private boolean matchEnch(String ench, int level, String id) {
+        if(!id.contains(":")) {
+            return false;
+        }
+
+        String idEnch = id.split(":")[0];
+        String idLevel = id.split(":")[1];
+
+        if(!ench.equalsIgnoreCase(idEnch)) {
+            return false;
+        }
+
+        if(String.valueOf(level).equalsIgnoreCase(idLevel)) {
+            return true;
+        }
+
+        if(idLevel.startsWith("LE")) {
+            int idLevelI = Integer.valueOf(idLevel.substring(2));
+            return level <= idLevelI;
+        } else if(idLevel.startsWith("GE")) {
+            int idLevelI = Integer.valueOf(idLevel.substring(2));
+            return level >= idLevelI;
+        }
+
+        return false;
     }
 
     /*ScheduledExecutorService auctionUpdateSES = Executors.newSingleThreadScheduledExecutor();

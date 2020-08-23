@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
@@ -22,6 +23,7 @@ import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -567,7 +569,7 @@ public class NEUEventListener {
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
-        if(gui instanceof GuiChest && neu.manager.auctionManager.activeAuctions > 0) {
+        if(gui instanceof GuiChest && neu.manager.auctionManager.activeAuctions > 0 && !neu.manager.config.dungeonProfitLore.value) {
             try {
                 int xSize = (int) Utils.getField(GuiContainer.class, gui, "xSize", "field_146999_f");
                 int ySize = (int) Utils.getField(GuiContainer.class, gui, "ySize", "field_147000_g");
@@ -583,7 +585,7 @@ public class NEUEventListener {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(dungeon_chest_worth);
                     GL11.glColor4f(1, 1, 1, 1);
                     GlStateManager.disableLighting();
-                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 45, 0, 180/256f, 0, 45/256f, GL11.GL_NEAREST);
+                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 71, 0, 180/256f, 0, 71/256f, GL11.GL_NEAREST);
 
                     int chestCost = 0;
                     String line6 = Utils.cleanColour(neu.manager.getLoreFromNBT(rewardChest.getTagCompound())[6]);
@@ -599,58 +601,107 @@ public class NEUEventListener {
                     }
 
                     boolean missing = false;
-                    int totalValue = 0;
+                    int totalValueBIN = 0;
+                    int totalValueAUC = 0;
                     for(int i=0; i<5; i++) {
                         ItemStack item = lower.getStackInSlot(11+i);
                         String internal = neu.manager.getInternalNameForItem(item);
                         if(internal != null) {
-                            float worth = neu.manager.auctionManager.getLowestBin(internal);
+                            float worthBIN = neu.manager.auctionManager.getLowestBin(internal);
+                            float worthAUC = -1;
+                            JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
+                            if(aucInfo != null) {
+                                worthAUC = aucInfo.get("price").getAsFloat();
+                            }
 
-                            if(worth == -1) worth = neu.manager.getCraftCost(internal).craftCost;
+                            if(worthAUC == -1) worthAUC = neu.manager.auctionManager.getCraftCost(internal).craftCost;
 
-                            if(worth > 0) {
-                                totalValue += worth;
-                            } else {
+                            if(worthAUC <= 0 && worthBIN <= 0) {
                                 missing = true;
                                 break;
                             }
+
+                            if(worthBIN > 0 && totalValueBIN >= 0) {
+                                totalValueBIN += worthBIN;
+                            } else {
+                                totalValueBIN = -1;
+                            }
+
+                            if(worthAUC > 0 && totalValueAUC >= 0) {
+                                totalValueAUC += worthAUC;
+                            } else {
+                                totalValueAUC = -1;
+                            }
                         }
                     }
-                    int profitLoss = totalValue - chestCost;
-
-                    NumberFormat format = NumberFormat.getInstance(Locale.US);
-                    String valueString;
-                    if(!missing) {
-                        valueString = EnumChatFormatting.BLUE+"Chest value: " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValue) + " coins";
-                    } else {
-                        valueString = EnumChatFormatting.BLUE+"Couldn't find item on AH. Item is very rare!";
+                    if(totalValueAUC <= 0 && totalValueBIN <= 0) {
+                        missing = true;
                     }
-                    String plString;
+
                     if(missing) {
-                        plString = "";
-                    } else if(profitLoss >= 0) {
-                        plString = EnumChatFormatting.BLUE+"Profit/loss: " + EnumChatFormatting.DARK_GREEN
-                                + EnumChatFormatting.BOLD + "+" + format.format(profitLoss) + " coins";
+                        drawStringShadow(EnumChatFormatting.BLUE+"Couldn't find item on AH. Item is very rare!",
+                                guiLeft+xSize+4+90, guiTop+14, 170);
                     } else {
-                        plString = EnumChatFormatting.BLUE+"Profit/loss: " + EnumChatFormatting.RED
-                                + EnumChatFormatting.BOLD + "-" + format.format(-profitLoss) + " coins";
+                        NumberFormat format = NumberFormat.getInstance(Locale.US);
+                        String valueStringBIN = EnumChatFormatting.YELLOW+"Value (BIN): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueBIN) + " coins";
+                        String valueStringAUC = EnumChatFormatting.YELLOW+"Value (AUC): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueAUC) + " coins";
+
+
+                        int profitLossBIN = totalValueBIN - chestCost;
+                        String plStringBIN;
+                        if(profitLossBIN >= 0) {
+                            plStringBIN = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
+                                    + EnumChatFormatting.BOLD + "+" + format.format(profitLossBIN) + " coins";
+                        } else {
+                            plStringBIN = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
+                                    + EnumChatFormatting.BOLD + "-" + format.format(-profitLossBIN) + " coins";
+                        }
+                        
+                        int profitLossAUC = totalValueAUC - chestCost;
+                        String plStringAUC;
+                        if(profitLossAUC >= 0) {
+                            plStringAUC = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
+                                    + EnumChatFormatting.BOLD + "+" + format.format(profitLossAUC) + " coins";
+                        } else {
+                            plStringAUC = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
+                                    + EnumChatFormatting.BOLD + "-" + format.format(-profitLossAUC) + " coins";
+                        }
+
+                        drawStringShadow(valueStringBIN, guiLeft+xSize+4+90,
+                                guiTop+14, 170);
+                        drawStringShadow(plStringBIN, guiLeft+xSize+4+90,
+                                guiTop+26, 170);
+
+                        drawStringShadow(valueStringAUC, guiLeft+xSize+4+90,
+                                guiTop+44, 170);
+                        drawStringShadow(plStringAUC, guiLeft+xSize+4+90,
+                                guiTop+56, 170);
                     }
-
-                    Minecraft.getMinecraft().getTextureManager().bindTexture(dungeon_chest_worth);
-                    GL11.glColor4f(1, 1, 1, 1);
-                    GlStateManager.disableLighting();
-                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 45, 0, 180/256f, 0, 45/256f, GL11.GL_NEAREST);
-
-                    Utils.drawStringCenteredScaledMaxWidth(valueString, Minecraft.getMinecraft().fontRendererObj, guiLeft+xSize+4+90,
-                            guiTop+14, true, 170, Color.BLACK.getRGB());
-                    Utils.drawStringCenteredScaledMaxWidth(plString, Minecraft.getMinecraft().fontRendererObj, guiLeft+xSize+4+90,
-                            guiTop+28, true, 170, Color.BLACK.getRGB());
                 }
             } catch(Exception e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void drawStringShadow(String str, float x, float y, int len) {
+        for(int xOff=-2; xOff<=2; xOff++) {
+            for(int yOff=-2; yOff<=2; yOff++) {
+                if(Math.abs(xOff) != Math.abs(yOff)) {
+                    Utils.drawStringCenteredScaledMaxWidth(Utils.cleanColourNotModifiers(str),
+                            Minecraft.getMinecraft().fontRendererObj,
+                            x+xOff/2f, y+yOff/2f, false, len,
+                            new Color(20, 20, 20, 100/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB());
+                }
+            }
+        }
+
+        Utils.drawStringCenteredScaledMaxWidth(str,
+                Minecraft.getMinecraft().fontRendererObj,
+                x, y, false, len,
+                new Color(64, 64, 64, 255).getRGB());
     }
 
     /**
@@ -669,9 +720,13 @@ public class NEUEventListener {
             neu.overlay.mouseInput();
             return;
         }
-        if(shouldRenderOverlay(event.gui) && !(hoverInv && focusInv) && neu.isOnSkyblock()) {
-            if(neu.overlay.mouseInput()) {
-                event.setCanceled(true);
+        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
+            if(!(hoverInv && focusInv)) {
+                if(neu.overlay.mouseInput()) {
+                    event.setCanceled(true);
+                }
+            } else {
+                neu.overlay.mouseInputInv();
             }
         }
     }
@@ -815,7 +870,7 @@ public class NEUEventListener {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltipLow(ItemTooltipEvent event) {
-        //NotEnoughUpdates.INSTANCE.neu.manager.config.enchantColours.value
+        boolean dungeonProfit = false;
         int index = 0;
         List<String> newTooltip = new ArrayList<>();
         for(String line : event.toolTip) {
@@ -904,7 +959,150 @@ public class NEUEventListener {
                     }
                 }
             }
+
             newTooltip.add(line);
+
+            if(neu.manager.config.auctionPriceInfo.value) {
+                if(line.contains(EnumChatFormatting.GRAY+"Buy it now: ") ||
+                        line.contains(EnumChatFormatting.GRAY+"Bidder: ") ||
+                        line.contains(EnumChatFormatting.GRAY+"Starting bid: ")) {
+                    String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
+                    if(internalname != null) {
+                        newTooltip.add("");
+                        if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+                            newTooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
+                        } else {
+                            JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
+
+                            boolean hasAuctionPrice = auctionInfo != null;
+
+                            int lowestBin = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
+
+                            NumberFormat format = NumberFormat.getInstance(Locale.US);
+                            APIManager.CraftInfo craftCost = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(internalname);
+
+                            if(lowestBin > 0) {
+                                newTooltip.add(EnumChatFormatting.GRAY+"Lowest BIN: "+
+                                        EnumChatFormatting.GOLD+format.format(lowestBin)+" coins");
+                            }
+                            if(hasAuctionPrice) {
+                                int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                newTooltip.add(EnumChatFormatting.GRAY+"AH Price: "+
+                                        EnumChatFormatting.GOLD+format.format(auctionPrice)+" coins");
+                                newTooltip.add(EnumChatFormatting.GRAY+"AH Sales: "+
+                                        EnumChatFormatting.GOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
+                                if(auctionInfo.has("clean_price")) {
+                                    newTooltip.add(EnumChatFormatting.GRAY+"AH Price (Clean): "+
+                                            EnumChatFormatting.GOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
+                                    newTooltip.add(EnumChatFormatting.GRAY+"AH Sales (Clean): "+
+                                            EnumChatFormatting.GOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
+                                }
+
+                            }
+                            if(craftCost.fromRecipe) {
+                                newTooltip.add(EnumChatFormatting.GRAY+"Raw Craft Cost: "+
+                                        EnumChatFormatting.GOLD+format.format((int)craftCost.craftCost)+" coins");
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(neu.manager.config.dungeonProfitLore.value && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+                if(line.contains(EnumChatFormatting.GREEN+"Open Reward Chest")) {
+                    dungeonProfit = true;
+                } else if(index == 7 && dungeonProfit) {
+                    GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+                    ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+                    IInventory lower = cc.getLowerChestInventory();
+
+                    int chestCost = 0;
+                    String line6 = Utils.cleanColour(line);
+                    StringBuilder cost = new StringBuilder();
+                    for(int i=0; i<line6.length(); i++) {
+                        char c = line6.charAt(i);
+                        if("0123456789".indexOf(c) >= 0) {
+                            cost.append(c);
+                        }
+                    }
+                    if(cost.length() > 0) {
+                        chestCost = Integer.parseInt(cost.toString());
+                    }
+
+                    boolean missing = false;
+                    int totalValueBIN = 0;
+                    int totalValueAUC = 0;
+                    for(int i=0; i<5; i++) {
+                        ItemStack item = lower.getStackInSlot(11+i);
+                        String internal = neu.manager.getInternalNameForItem(item);
+                        if(internal != null) {
+                            float worthBIN = neu.manager.auctionManager.getLowestBin(internal);
+                            float worthAUC = neu.manager.auctionManager.getLowestBin(internal);
+
+                            if(worthAUC == -1) worthAUC = neu.manager.auctionManager.getCraftCost(internal).craftCost;
+
+                            if(worthAUC <= 0 && worthBIN <= 0) {
+                                missing = true;
+                                break;
+                            }
+
+                            if(worthBIN > 0 && totalValueBIN >= 0) {
+                                totalValueBIN += worthBIN;
+                            } else {
+                                totalValueBIN = -1;
+                            }
+
+                            if(worthAUC > 0 && totalValueAUC >= 0) {
+                                totalValueAUC += worthAUC;
+                            } else {
+                                totalValueAUC = -1;
+                            }
+                        }
+                    }
+                    if(totalValueAUC <= 0 && totalValueBIN <= 0) {
+                        missing = true;
+                    }
+
+                    String neu = EnumChatFormatting.YELLOW + "[NEU] ";
+                    if(missing) {
+                        newTooltip.add(neu + EnumChatFormatting.BLUE+"Couldn't find item on AH. Item is very rare!");
+                    } else {
+                        NumberFormat format = NumberFormat.getInstance(Locale.US);
+                        String valueStringBIN = EnumChatFormatting.YELLOW+"Value (BIN): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueBIN) + " coins";
+                        String valueStringAUC = EnumChatFormatting.YELLOW+"Value (AUC): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueAUC) + " coins";
+
+
+                        int profitLossBIN = totalValueBIN - chestCost;
+                        String plStringBIN;
+                        if(profitLossBIN >= 0) {
+                            plStringBIN = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
+                                    + EnumChatFormatting.BOLD + "+" + format.format(profitLossBIN) + " coins";
+                        } else {
+                            plStringBIN = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
+                                    + EnumChatFormatting.BOLD + "-" + format.format(-profitLossBIN) + " coins";
+                        }
+
+                        int profitLossAUC = totalValueAUC - chestCost;
+                        String plStringAUC;
+                        if(profitLossAUC >= 0) {
+                            plStringAUC = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
+                                    + EnumChatFormatting.BOLD + "+" + format.format(profitLossAUC) + " coins";
+                        } else {
+                            plStringAUC = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
+                                    + EnumChatFormatting.BOLD + "-" + format.format(-profitLossAUC) + " coins";
+                        }
+
+                        newTooltip.add(neu + valueStringBIN);
+                        newTooltip.add(neu + plStringBIN);
+                        newTooltip.add(neu + valueStringAUC);
+                        newTooltip.add(neu + plStringAUC);
+                    }
+                }
+            }
+
+            index++;
         }
         event.toolTip.clear();
         event.toolTip.addAll(newTooltip);

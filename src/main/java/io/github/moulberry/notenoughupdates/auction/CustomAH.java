@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.auction;
 
+import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -318,6 +319,47 @@ public class CustomAH extends Gui {
             }
         }
 
+        if(manager.config.auctionPriceInfo.value) {
+            String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(auc.getStack());
+            if(internalname != null) {
+                tooltip.add("");
+                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+                    tooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
+                } else {
+                    JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
+
+                    boolean hasAuctionPrice = auctionInfo != null;
+
+                    int lowestBin = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
+
+                    APIManager.CraftInfo craftCost = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(internalname);
+
+                    if(lowestBin > 0) {
+                        tooltip.add(EnumChatFormatting.GRAY+"Lowest BIN: "+
+                                EnumChatFormatting.GOLD+format.format(lowestBin)+" coins");
+                    }
+                    if(hasAuctionPrice) {
+                        int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                        tooltip.add(EnumChatFormatting.GRAY+"AH Price: "+
+                                EnumChatFormatting.GOLD+format.format(auctionPrice)+" coins");
+                        tooltip.add(EnumChatFormatting.GRAY+"AH Sales: "+
+                                EnumChatFormatting.GOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
+                        if(auctionInfo.has("clean_price")) {
+                            tooltip.add(EnumChatFormatting.GRAY+"AH Price (Clean): "+
+                                    EnumChatFormatting.GOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
+                            tooltip.add(EnumChatFormatting.GRAY+"AH Sales (Clean): "+
+                                    EnumChatFormatting.GOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
+                        }
+
+                    }
+                    if(craftCost.fromRecipe) {
+                        tooltip.add(EnumChatFormatting.GRAY+"Raw Craft Cost: "+
+                                EnumChatFormatting.GOLD+format.format((int)craftCost.craftCost)+" coins");
+                    }
+                }
+            }
+        }
+
         tooltip.add("");
         tooltip.add(EnumChatFormatting.GRAY+"Ends in: "+endsIn);
         tooltip.add("");
@@ -534,7 +576,63 @@ public class CustomAH extends Gui {
                             } else if(mouseY > guiTop+100 && mouseY < guiTop+100+16) {
                                 if(leftStack != null) tooltipToRender = leftStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                             } else if(mouseY > guiTop+61 && mouseY < guiTop+61+16) {
-                                if(rightStack != null) tooltipToRender = rightStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                                tooltipToRender = new ArrayList<>();
+                                APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(currentAucId);
+                                if(auc != null) {
+                                    tooltipToRender.add(EnumChatFormatting.WHITE+"Price Info");
+
+                                    String internalname = manager.getInternalNameForItem(auc.getStack());
+                                    JsonObject auctionInfo = manager.auctionManager.getItemAuctionInfo(internalname);
+                                    JsonObject bazaarInfo = manager.auctionManager.getBazaarInfo(internalname);
+
+                                    boolean hasAuctionPrice = auctionInfo != null;
+                                    boolean hasBazaarPrice = bazaarInfo != null;
+
+                                    int lowestBin = manager.auctionManager.getLowestBin(internalname);
+
+                                    NumberFormat format = NumberFormat.getInstance(Locale.US);
+
+                                    APIManager.CraftInfo craftCost = manager.auctionManager.getCraftCost(internalname);
+
+                                    if(lowestBin > 0) {
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+                                    }
+                                    if(hasBazaarPrice) {
+                                        int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat();
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
+                                        int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat();
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
+                                        int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat();
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
+                                        int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat();
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
+                                    }
+                                    if(hasAuctionPrice) {
+                                        int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
+                                        if(auctionInfo.has("clean_price")) {
+                                            tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price (Clean): "+
+                                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
+                                            tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales (Clean): "+
+                                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
+                                        }
+
+                                    }
+                                    if(craftCost.fromRecipe) {
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
+                                    }
+                                    tooltipToRender.add("");
+                                }
+                                if(rightStack != null) tooltipToRender.addAll(rightStack.getTooltip(Minecraft.getMinecraft().thePlayer, false));
                             } else if(mouseY > guiTop+126 && mouseY < guiTop+126+16) {
                                 if(middleStack != null) tooltipToRender = middleStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                             }

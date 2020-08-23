@@ -19,7 +19,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-version = "1.1.4-REL"
+version = "1.2.1-BETA"
 group= "io.github.moulberry"
 archivesBaseName = "NotEnoughUpdates"
 String modid = "notenoughupdates"
@@ -38,7 +38,7 @@ repositories {
 
 dependencies {
     compile('org.spongepowered:mixin:0.7.11-SNAPSHOT')
-	compile('org.kohsuke:github-api:1.108')
+	//compile('org.kohsuke:github-api:1.108')
     //compile('org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r')
 	compile('com.fasterxml.jackson.core:jackson-core:2.10.2')
     compile('info.bliki.wiki:bliki-core:3.1.0')
@@ -60,7 +60,7 @@ jar {
 
 shadowJar {
 	dependencies {
-        include(dependency('org.kohsuke:github-api:1.108'))
+        //include(dependency('org.kohsuke:github-api:1.108'))
         //include(dependency('org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r'))
 		include(dependency('org.spongepowered:mixin:0.7.11-SNAPSHOT'))
 		

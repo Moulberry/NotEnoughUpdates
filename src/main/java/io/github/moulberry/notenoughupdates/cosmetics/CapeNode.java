@@ -45,8 +45,8 @@ public class CapeNode {
     public float vertSideTexU = 0;
     public float vertSideTexVTop = 0;
 
-    public static final float gravity = 0.1f;
-    public static final float resistance = 0.5f;
+    public final float gravity = 0.1f;
+    public final float resistance = 0.5f;
 
     public static final int FLOAT_NUM = 20;
 

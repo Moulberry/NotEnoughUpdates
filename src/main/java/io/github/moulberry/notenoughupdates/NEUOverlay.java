@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.infopanes.*;
 import io.github.moulberry.notenoughupdates.itemeditor.NEUItemEditor;
 import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
@@ -570,6 +571,22 @@ public class NEUOverlay extends Gui {
         }
     }
 
+    public void mouseInputInv() {
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
+            if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
+                Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
+                if(slot != null) {
+                    ItemStack hover = slot.getStack();
+                    if(hover != null) {
+                        textField.setText("id:"+manager.getInternalNameForItem(hover));
+                        itemPaneOpen = true;
+                        updateSearch();
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Handles the mouse input, cancelling the forge event if a NEU gui element is clicked.
      */
@@ -619,7 +636,7 @@ public class NEUOverlay extends Gui {
                                     manager.showRecipe(item);
                                 } else if(Mouse.getEventButton() == 1) {
                                     showInfo(item);
-                                } else if(Mouse.getEventButton() == 2) {
+                                } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
                                     textField.setText("id:"+item.get("internalname").getAsString());
                                     updateSearch();
                                     searchMode = true;
@@ -693,21 +710,6 @@ public class NEUOverlay extends Gui {
                 }
             }
             return true;
-        }
-
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
-            if(Mouse.getEventButton() == 2) {
-                Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
-                if(slot != null) {
-                    ItemStack hover = slot.getStack();
-                    if(hover != null) {
-                        textField.setText("id:"+manager.getInternalNameForItem(hover));
-                        updateSearch();
-                        searchMode = true;
-                        return true;
-                    }
-                }
-            }
         }
 
         //Clicking on "close info pane" button
@@ -988,8 +990,8 @@ public class NEUOverlay extends Gui {
                 float cost1 = manager.auctionManager.getLowestBin(o1.get("internalname").getAsString());
                 float cost2 = manager.auctionManager.getLowestBin(o2.get("internalname").getAsString());
 
-                if(cost1 == -1) cost1 = manager.getCraftCost(o1.get("internalname").getAsString()).craftCost;
-                if(cost2 == -1) cost2 = manager.getCraftCost(o2.get("internalname").getAsString()).craftCost;
+                if(cost1 == -1) cost1 = manager.auctionManager.getCraftCost(o1.get("internalname").getAsString()).craftCost;
+                if(cost2 == -1) cost2 = manager.auctionManager.getCraftCost(o2.get("internalname").getAsString()).craftCost;
 
                 if(cost1 < cost2) return mult;
                 if(cost1 > cost2) return -mult;
@@ -1589,8 +1591,6 @@ public class NEUOverlay extends Gui {
         yaw++;
         yaw %= 360;
 
-        manager.updatePrices();
-
         int opacity = Math.min(255, Math.max(0, manager.config.bgOpacity.value.intValue()));
         bg = new Color((bg.getRGB() & 0x00ffffff) | opacity << 24, true);
 
@@ -1645,11 +1645,11 @@ public class NEUOverlay extends Gui {
         if(!manager.config.disableItemTabOpen.value) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(itemPaneTabArrow);
             GlStateManager.color(1f, 1f, 1f, 0.3f);
-            Utils.drawTexturedRect(width-itemPaneTabOffset.getValue(), height/2 - 50, 20, 100);
+            Utils.drawTexturedRect(width-itemPaneTabOffset.getValue()*64/20f, height/2f - 32, 64, 64);
             GlStateManager.bindTexture(0);
 
-            if(!itemPaneOpen && mouseX > width-itemPaneTabOffset.getValue() && mouseY > height/2 - 50
-                    && mouseY < height/2 + 50) {
+            if(!itemPaneOpen && mouseX > width-itemPaneTabOffset.getValue() && mouseY > height/2 - 32
+                    && mouseY < height/2 + 32) {
                 itemPaneOpen = true;
             }
         }
@@ -1810,8 +1810,8 @@ public class NEUOverlay extends Gui {
             List<String> text = manager.jsonToStack(json).getTooltip(Minecraft.getMinecraft().thePlayer, false);
 
             String internalname = json.get("internalname").getAsString();
-            JsonObject auctionInfo = manager.getItemAuctionInfo(internalname);
-            JsonObject bazaarInfo = manager.getBazaarInfo(internalname);
+            JsonObject auctionInfo = manager.auctionManager.getItemAuctionInfo(internalname);
+            JsonObject bazaarInfo = manager.auctionManager.getBazaarInfo(internalname);
 
             boolean hasAuctionPrice = auctionInfo != null;
             boolean hasBazaarPrice = bazaarInfo != null;
@@ -1820,7 +1820,7 @@ public class NEUOverlay extends Gui {
 
             NumberFormat format = NumberFormat.getInstance(Locale.US);
 
-            NEUManager.CraftInfo craftCost = manager.getCraftCost(json.get("internalname").getAsString());
+            APIManager.CraftInfo craftCost = manager.auctionManager.getCraftCost(json.get("internalname").getAsString());
 
             if(hasAuctionPrice || hasBazaarPrice || craftCost.fromRecipe || lowestBin > 0) text.add("");
             if(lowestBin > 0) {
@@ -1847,6 +1847,19 @@ public class NEUOverlay extends Gui {
                 int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
                 text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
                         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
+                if(manager.config.advancedPriceInfo.value) {
+                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales: "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
+                }
+                if(auctionInfo.has("clean_price")) {
+                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price (Clean): "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
+                    if(manager.config.advancedPriceInfo.value) {
+                        text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales (Clean): "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
+                    }
+                }
+
             }
             if(craftCost.fromRecipe) {
                 text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+

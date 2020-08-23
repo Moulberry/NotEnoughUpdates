@@ -194,9 +194,13 @@ public class HTMLInfoPane extends TextInfoPane {
                         EnumChatFormatting.GRAY+"), please wait...";
 
                 Runtime runtime = Runtime.getRuntime();
-                Process p = runtime.exec(spaceEscape(wkHtmlToImage.getAbsolutePath()) + " --width "+
+
+                String[] wkCommand = new String[]{ wkHtmlToImage.getAbsolutePath(), "--width", ""+IMAGE_WIDTH*ZOOM_FACTOR,
+                        "--transparent", "--zoom", ""+ZOOM_FACTOR, input.getAbsolutePath(), output.getAbsolutePath()};
+                Process p = runtime.exec(wkCommand);
+                /*Process p = runtime.exec(spaceEscape(wkHtmlToImage.getAbsolutePath()) + " --width "+
                         IMAGE_WIDTH*ZOOM_FACTOR+" --transparent --zoom "+ZOOM_FACTOR + " " + spaceEscape(input.getAbsolutePath()) +
-                        " " + spaceEscape(output.getAbsolutePath()));
+                        " " + spaceEscape(output.getAbsolutePath()));*/
                 /*Process p = runtime.exec("\""+wkHtmlToImage.getAbsolutePath() + "\" --width "+
                         IMAGE_WIDTH*ZOOM_FACTOR+" --transparent --zoom "+ZOOM_FACTOR+" \"" + input.getAbsolutePath() +
                         "\" \"" + output.getAbsolutePath() + "\"");*/

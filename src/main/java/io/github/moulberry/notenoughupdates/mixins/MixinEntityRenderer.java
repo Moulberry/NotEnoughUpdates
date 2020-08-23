@@ -60,7 +60,7 @@ public class MixinEntityRenderer {
         return d1;
     }
 
-    @ModifyVariable(method="renderWorldPass", at=@At(value="STORE"), ordinal = 2, print = true)
+    @ModifyVariable(method="renderWorldPass", at=@At(value="STORE"), ordinal = 2)
     public double renderWorldPass_d2(double d2) {
         Vector3f currentPosition = CustomItemEffects.INSTANCE.getCurrentPosition();
         if(currentPosition != null) {

@@ -36,7 +36,6 @@ import java.util.zip.ZipInputStream;
 public class NEUManager {
 
     private final NotEnoughUpdates neu;
-    public final NEUIO neuio;
     public final Gson gson;
     public final APIManager auctionManager;
 
@@ -51,7 +50,9 @@ public class NEUManager {
     public final KeyBinding keybindViewRecipe = new KeyBinding("Show recipe for item", Keyboard.KEY_R, "NotEnoughUpdates");
     public final KeyBinding keybindToggleDisplay = new KeyBinding("Toggle NEU overlay", 0, "NotEnoughUpdates");
     public final KeyBinding keybindClosePanes = new KeyBinding("Close NEU panes", 0, "NotEnoughUpdates");
-    public final KeyBinding[] keybinds = new KeyBinding[]{keybindGive, keybindFavourite, keybindViewUsages, keybindViewRecipe, keybindToggleDisplay, keybindClosePanes};
+    public final KeyBinding keybindItemSelect = new KeyBinding("Select Item", -98 /*middle*/, "NotEnoughUpdates");
+    public final KeyBinding[] keybinds = new KeyBinding[]{ keybindGive, keybindFavourite, keybindViewUsages, keybindViewRecipe,
+            keybindToggleDisplay, keybindClosePanes, keybindItemSelect};
 
     public String viewItemAttemptID = null;
     public long viewItemAttemptTime = 0;
@@ -63,24 +64,21 @@ public class NEUManager {
     private ResourceLocation wkZip = new ResourceLocation("notenoughupdates:wkhtmltox.zip");
     private Map<String, ItemStack> itemstackCache = new HashMap<>();
 
-    private static final String AUCTIONS_PRICE_URL = "https://moulberry.github.io/files/auc_avg_jsons/average_3day.json.gz";
-    private JsonObject auctionPricesJson = null;
-    private long auctionLastUpdate = 0;
+    //private static final String AUCTIONS_PRICE_URL = "https://moulberry.github.io/files/auc_avg_jsons/average_3day.json.gz";
+    private static final String GIT_COMMITS_URL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
 
-    private HashMap<String, CraftInfo> craftCost = new HashMap<>();
     private HashMap<String, Set<String>> usagesMap = new HashMap<>();
 
     public File configLocation;
     public File repoLocation;
-    private File itemShaLocation;
-    private JsonObject itemShaConfig;
     public File configFile;
+    public File itemRenameFile;
+    public JsonObject itemRenameJson;
     public Options config;
 
-    public NEUManager(NotEnoughUpdates neu, NEUIO neuio, File configLocation) {
+    public NEUManager(NotEnoughUpdates neu, File configLocation) {
         this.neu = neu;
         this.configLocation = configLocation;
-        this.neuio = neuio;
         this.auctionManager = new APIManager(this);
 
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
@@ -93,12 +91,11 @@ public class NEUManager {
         this.repoLocation = new File(configLocation, "repo");
         repoLocation.mkdir();
 
-        this.itemShaLocation = new File(configLocation, "itemSha.json");
-        try {
-            itemShaLocation.createNewFile();
-            itemShaConfig = getJsonFromFile(itemShaLocation);
-            if(itemShaConfig == null) itemShaConfig = new JsonObject();
-        } catch(IOException e) { }
+        this.itemRenameFile = new File(configLocation, "itemRename.json");
+        try { itemRenameJson = getJsonFromFile(itemRenameFile); } catch(IOException ignored) {}
+        if(itemRenameJson == null) {
+            itemRenameJson = new JsonObject();
+        }
 
         File wkShell = new File(configLocation, "wkhtmltox/bin/wkhtmltoimage");
         if(!wkShell.exists()) {
@@ -108,12 +105,6 @@ public class NEUManager {
             } catch (IOException e) {
             }
         }
-    }
-
-    public class CraftInfo {
-        public boolean fromRecipe = false;
-        public boolean vanillaItem = false;
-        public float craftCost = -1;
     }
 
     public void setCurrentProfile(String currentProfile) {
@@ -132,85 +123,8 @@ public class NEUManager {
         }
     }
 
-    public boolean isVanillaItem(String internalname) {
-        //Removes trailing numbers and underscores, eg. LEAVES_2-3 -> LEAVES
-        String vanillaName = internalname.split("-")[0];
-        int sub = 0;
-        for(int i=vanillaName.length()-1; i>1; i--) {
-            char c = vanillaName.charAt(i);
-            if((int)c >= 48 && (int)c <= 57) { //0-9
-                sub++;
-            } else if(c == '_') {
-                sub++;
-                break;
-            } else {
-                break;
-            }
-        }
-        vanillaName = vanillaName.substring(0, vanillaName.length()-sub).toLowerCase();
-        return Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null;
-    }
-
-    /**
-     * Recursively calculates the cost of crafting an item from raw materials.
-     */
-    public CraftInfo getCraftCost(String internalname) {
-        if(craftCost.containsKey(internalname)) {
-            return craftCost.get(internalname);
-        } else {
-            CraftInfo ci = new CraftInfo();
-
-            ci.vanillaItem = isVanillaItem(internalname);
-
-            JsonObject auctionInfo = getItemAuctionInfo(internalname);
-            JsonObject bazaarInfo = getBazaarInfo(internalname);
-
-            if(bazaarInfo != null) {
-                float bazaarInstantBuyPrice = bazaarInfo.get("curr_buy").getAsFloat();
-                ci.craftCost = bazaarInstantBuyPrice;
-            }
-            if(auctionInfo != null && !ci.vanillaItem) { //Don't use auction prices for vanilla items cuz people like to transfer money, messing up the cost of vanilla items.
-                float auctionPrice = auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat();
-                if(ci.craftCost < 0 || auctionPrice < ci.craftCost) {
-                    ci.craftCost = auctionPrice;
-                }
-            }
-            JsonObject item = getItemInformation().get(internalname);
-            if(item != null && item.has("recipe")) {
-                float craftPrice = 0;
-                JsonObject recipe = item.get("recipe").getAsJsonObject();
-
-                String[] x = {"1","2","3"};
-                String[] y = {"A","B","C"};
-                for(int i=0; i<9; i++) {
-                    String name = y[i/3]+x[i%3];
-                    String itemS = recipe.get(name).getAsString();
-                    if(itemS.length() == 0) continue;
-
-                    int count = 1;
-                    if(itemS != null && itemS.split(":").length == 2) {
-                        count = Integer.valueOf(itemS.split(":")[1]);
-                        itemS = itemS.split(":")[0];
-                    }
-                    float compCost = getCraftCost(itemS).craftCost * count;
-                    if(compCost < 0) {
-                        if(!getCraftCost(itemS).vanillaItem) { //If it's a vanilla item without a cost attached to it, let compCost = 0.
-                            craftCost.put(internalname, ci);
-                            return ci;
-                        }
-                    } else {
-                        craftPrice += compCost;
-                    }
-                }
-
-                if(ci.craftCost < 0 || craftPrice < ci.craftCost) {
-                    ci.craftCost = craftPrice;
-                    ci.fromRecipe = true;
-                }
-            }
-            craftCost.put(internalname, ci);
-            return ci;
-        }
+    public void saveItemRenameConfig() {
+        try { writeJson(itemRenameJson, itemRenameFile); } catch(IOException ignored) {}
     }
 
     public void saveConfig() throws IOException {
@@ -228,130 +142,6 @@ public class NEUManager {
     }
 
     /**
-     * Downloads and sets auctionPricesJson from the URL specified by AUCTIONS_PRICE_URL.
-     */
-    private ExecutorService es = Executors.newCachedThreadPool();
-    public void updatePrices() {
-        if(System.currentTimeMillis() - auctionLastUpdate > 1000*60*120) { //2 hours
-            craftCost.clear();
-            System.out.println("[NEU] UPDATING PRICE INFORMATION");
-            auctionLastUpdate = System.currentTimeMillis();
-            es.submit(() -> {
-                try(Reader inReader = new InputStreamReader(new GZIPInputStream(new URL(AUCTIONS_PRICE_URL).openStream()))) {
-                    auctionPricesJson = gson.fromJson(inReader, JsonObject.class);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-    }
-
-    public boolean hasAuctionInfo(String internalname) {
-        if(auctionPricesJson == null) return false;
-        return auctionPricesJson.has("item_data") && auctionPricesJson.get("item_data").getAsJsonObject().has(internalname);
-    }
-
-    public boolean hasBazaarInfo(String internalname) {
-        if(auctionPricesJson == null) return false;
-        return auctionPricesJson.has("bazaar") && auctionPricesJson.get("bazaar").getAsJsonObject().has(internalname);
-    }
-
-    public JsonObject getItemAuctionInfo(String internalname) {
-        if(!hasAuctionInfo(internalname)) return null;
-        JsonElement e = auctionPricesJson.get("item_data").getAsJsonObject().get(internalname);
-        if(e == null) {
-            return null;
-        }
-        return e.getAsJsonObject();
-    }
-
-    public JsonObject getBazaarInfo(String internalname) {
-        if(!hasBazaarInfo(internalname)) return null;
-        JsonElement e = auctionPricesJson.get("bazaar").getAsJsonObject().get(internalname);
-        if(e == null) {
-            return null;
-        }
-        return e.getAsJsonObject();
-    }
-
-    /**
-     * Calculates the cost of enchants + other price modifiers such as pet xp, midas price, etc.
-     */
-    public float getCostOfEnchants(String internalname, NBTTagCompound tag) {
-        float costOfEnchants = 0;
-        if(true) return 0;
-
-        JsonObject info = getItemAuctionInfo(internalname);
-        if(info == null || !info.has("price")) {
-            return 0;
-        }
-        if(auctionPricesJson == null || !auctionPricesJson.has("ench_prices") || !auctionPricesJson.has("ench_maximums")) {
-            return 0;
-        }
-        JsonObject ench_prices = auctionPricesJson.getAsJsonObject("ench_prices");
-        JsonObject ench_maximums = auctionPricesJson.getAsJsonObject("ench_maximums");
-        if(!ench_prices.has(internalname) || !ench_maximums.has(internalname)) {
-            return 0;
-        }
-        JsonObject iid_variables = ench_prices.getAsJsonObject(internalname);
-        float ench_maximum = ench_maximums.get(internalname).getAsFloat();
-
-        int enchants = 0;
-        float price = getItemAuctionInfo(internalname).get("price").getAsFloat();
-        if(tag.hasKey("ExtraAttributes")) {
-            NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
-            if(ea.hasKey("enchantments")) {
-
-                NBTTagCompound enchs = ea.getCompoundTag("enchantments");
-                for(String ench : enchs.getKeySet()) {
-                    enchants++;
-                    int level = enchs.getInteger(ench);
-
-                    for(Map.Entry<String, JsonElement> entry : iid_variables.entrySet()) {
-                        if(matchEnch(ench, level, entry.getKey())) {
-                            costOfEnchants += entry.getValue().getAsJsonObject().get("A").getAsFloat()*price +
-                                    entry.getValue().getAsJsonObject().get("B").getAsFloat();
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        return costOfEnchants;
-    }
-
-    /**
-     * Checks whether a certain enchant (ench name + lvl) matches an enchant id
-     * eg. PROTECTION_GE6 will match -> ench_name = PROTECTION, lvl >= 6
-     */
-    private boolean matchEnch(String ench, int level, String id) {
-        if(!id.contains(":")) {
-            return false;
-        }
-
-        String idEnch = id.split(":")[0];
-        String idLevel = id.split(":")[1];
-
-        if(!ench.equalsIgnoreCase(idEnch)) {
-            return false;
-        }
-
-        if(String.valueOf(level).equalsIgnoreCase(idLevel)) {
-            return true;
-        }
-
-        if(idLevel.startsWith("LE")) {
-            int idLevelI = Integer.valueOf(idLevel.substring(2));
-            return level <= idLevelI;
-        } else if(idLevel.startsWith("GE")) {
-            int idLevelI = Integer.valueOf(idLevel.substring(2));
-            return level >= idLevelI;
-        }
-
-        return false;
-    }
-
-    /**
      * Parses a file in to a JsonObject.
      */
     public JsonObject getJsonFromFile(File file) throws IOException {
@@ -366,7 +156,6 @@ public class NEUManager {
     public void resetRepo() {
         try { Utils.recursiveDelete(new File(configLocation, "repo")); } catch(Exception e) {}
         try { new File(configLocation, "currentCommit.json").delete(); } catch(Exception e) {}
-        try { itemShaLocation.delete(); } catch(Exception e) {}
     }
 
     /**
@@ -421,10 +210,15 @@ public class NEUManager {
 
                     JsonObject currentCommitJSON = getJsonFromFile(new File(configLocation, "currentCommit.json"));
 
-                    String latestCommit = neuio.getLatestCommit();
+                    String latestCommit = null;
+                    try(Reader inReader = new InputStreamReader(new URL(GIT_COMMITS_URL).openStream())) {
+                        JsonObject commits = gson.fromJson(inReader, JsonObject.class);
+                        latestCommit = commits.get("sha").getAsString();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     if(latestCommit == null || latestCommit.isEmpty()) return;
 
-                    Map<String, String> changedFiles = null;
                     if(new File(configLocation, "repo").exists() && new File(configLocation, "repo/items").exists()) {
 
                         if(currentCommitJSON != null && currentCommitJSON.get("sha").getAsString().equals(latestCommit)) {
@@ -432,19 +226,19 @@ public class NEUManager {
                             return;
                         }
 
-                        HashMap<String, String> oldShas = new HashMap<>();
+                        /*HashMap<String, String> oldShas = new HashMap<>();
                         for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
                             if (new File(repoLocation, entry.getKey() + ".json").exists()) {
                                 oldShas.put(entry.getKey() + ".json", entry.getValue().getAsString());
                             }
                         }
-                        changedFiles = neuio.getChangedItems(oldShas);
+                        changedFiles = neuio.getChangedItems(oldShas);*/
                     }
 
                     if (Display.isActive()) dialog.toFront();
 
-                    if (changedFiles != null && changedFiles.size() <= 20) {
-                        String startMessage = "NotEnoughUpdates: Syncing with remote repository (";
+                    if (false) {//changedFiles != null && changedFiles.size() <= 20) {
+                        /*String startMessage = "NotEnoughUpdates: Syncing with remote repository (";
                         int downloaded = 0;
 
                         String dlUrl = "https://raw.githubusercontent.com/Moulberry/NotEnoughUpdates-REPO/master/";
@@ -482,7 +276,7 @@ public class NEUManager {
                             writeJson(itemShaConfig, itemShaLocation);
                         } catch (IOException e) {
                             e.printStackTrace();
-                        }
+                        }*/
                     } else {
                         Utils.recursiveDelete(repoLocation);
                         repoLocation.mkdirs();
@@ -524,7 +318,7 @@ public class NEUManager {
 
                         unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
 
-                        if (changedFiles != null) {
+                        /*if (changedFiles != null) {
                             for (Map.Entry<String, String> changedFile : changedFiles.entrySet()) {
                                 itemShaConfig.addProperty(changedFile.getKey().substring(0, changedFile.getKey().length() - 5),
                                         changedFile.getValue());
@@ -533,7 +327,7 @@ public class NEUManager {
                                 writeJson(itemShaConfig, itemShaLocation);
                             } catch (IOException e) {
                             }
-                        }
+                        }*/
                     }
 
                     if(currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestCommit)) {
@@ -921,6 +715,18 @@ public class NEUManager {
         }
     }
 
+    public String getUUIDFromNBT(NBTTagCompound tag) {
+        String uuid = null;
+        if (tag != null && tag.hasKey("ExtraAttributes", 10)) {
+            NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+            if (ea.hasKey("uuid", 8)) {
+                uuid = ea.getString("uuid");
+            }
+        }
+        return uuid;
+    }
+
     public String getInternalnameFromNBT(NBTTagCompound tag) {
         String internalname = null;
         if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
@@ -1123,6 +929,12 @@ public class NEUManager {
         if(stack == null) return null;
         NBTTagCompound tag = stack.getTagCompound();
         return getInternalnameFromNBT(tag);
+    }
+
+    public String getUUIDForItem(ItemStack stack) {
+        if(stack == null) return null;
+        NBTTagCompound tag = stack.getTagCompound();
+        return getUUIDFromNBT(tag);
     }
 
     public void writeItemToFile(ItemStack stack) {
@@ -1429,9 +1241,9 @@ public class NEUManager {
         String prTitle = internalname + "-" + username;
         String prBody = "Internal name: " + internalname + "\nSubmitted by: " + username;
         String file = "items/"+internalname+".json";
-        if(!neuio.createNewRequest(newBranchName, prTitle, prBody, file, gson.toJson(json))) {
+        /*if(!neuio.createNewRequest(newBranchName, prTitle, prBody, file, gson.toJson(json))) {
             return false;
-        }
+        }*/
 
         try {
             writeJsonDefaultDir(json, internalname+".json");

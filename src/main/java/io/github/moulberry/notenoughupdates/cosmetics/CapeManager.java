@@ -28,11 +28,12 @@ public class CapeManager {
     public Pair<NEUCape, String> localCape = null;
     private HashMap<String, Pair<NEUCape, String>> capeMap = new HashMap<>();
 
+    private int permSyncTries = 5;
     private boolean allAvailable = false;
     private HashSet<String> availableCapes = new HashSet<>();
 
-    private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee", "gravy" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true };
+    private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee", "gravy", "space" };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false };
 
     public static CapeManager getInstance() {
         return INSTANCE;
@@ -47,7 +48,7 @@ public class CapeManager {
     }
 
     private void updateCapes() {
-        NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/getactivecape.py", (jsonObject) -> {
+        NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("activecapes.json", (jsonObject) -> {
             if(jsonObject.get("success").getAsBoolean()) {
                 lastCapeSynced = System.currentTimeMillis();
                 for(JsonElement active : jsonObject.get("active").getAsJsonArray()) {
@@ -60,18 +61,30 @@ public class CapeManager {
         }, () -> {
             System.out.println("[MBAPI] Update capes errored");
         });
-        if(Minecraft.getMinecraft().thePlayer != null) {
-            NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/getpermscape.py?uuid="+
-                    Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""), (jsonObject) -> {
+
+        if(Minecraft.getMinecraft().thePlayer != null && permSyncTries > 0) {
+            String uuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
+            permSyncTries--;
+            NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("permscapes.json", (jsonObject) -> {
                 if(jsonObject.get("success").getAsBoolean()) {
+                    permSyncTries = 0;
+
                     availableCapes.clear();
-                    for(JsonElement perm : jsonObject.get("perms").getAsJsonObject().get("perms").getAsJsonArray()) {
-                        if(perm.isJsonPrimitive()) {
-                            String cape = perm.getAsString();
-                            if(cape.equals("*")) {
-                                allAvailable = true;
-                            } else {
-                                availableCapes.add(cape);
+                    for(JsonElement permPlayer : jsonObject.get("perms").getAsJsonArray()) {
+                        if(permPlayer.isJsonObject()) {
+                            String playerUuid = permPlayer.getAsJsonObject().get("_id").getAsString();
+                            if(playerUuid != null && playerUuid.equals(uuid)) {
+                                for(JsonElement perm : permPlayer.getAsJsonObject().get("perms").getAsJsonArray()) {
+                                    if(perm.isJsonPrimitive()) {
+                                        String cape = perm.getAsString();
+                                        if(cape.equals("*")) {
+                                            allAvailable = true;
+                                        } else {
+                                            availableCapes.add(cape);
+                                        }
+                                    }
+                                }
+                                return;
                             }
                         }
                     }
@@ -83,7 +96,7 @@ public class CapeManager {
     }
 
     public HashSet<String> getAvailableCapes() {
-        return allAvailable ? availableCapes : availableCapes;
+        return allAvailable ? null : availableCapes;
     }
 
     public void setCape(String playerUUID, String capename, boolean updateConfig) {

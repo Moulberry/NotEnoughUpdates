@@ -28,12 +28,10 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.Session;
+import net.minecraft.util.*;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -42,16 +40,21 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.lang3.text.translate.UnicodeUnescaper;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -61,13 +64,12 @@ import java.util.concurrent.atomic.AtomicLong;
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "1.1-REL";
+    public static final String VERSION = "1.2-REL";
 
     public static NotEnoughUpdates INSTANCE = null;
 
     public NEUManager manager;
     public NEUOverlay overlay;
-    private NEUIO neuio;
 
     private static final long CHAT_MSG_COOLDOWN = 200;
     private long lastChatMessage = 0;
@@ -77,30 +79,103 @@ public class NotEnoughUpdates {
     //Stolen from Biscut and used for detecting whether in skyblock
     private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK","\u7A7A\u5C9B\u751F\u5B58");
 
-    //Github Access Token, may change. Value hard-coded.
-    //Token is obfuscated so that github doesn't delete it whenever I upload the jar.
-    String[] token = new String[]{"b292496d2c","9146a","9f55d0868a545305a8","96344bf"};
-    private String getAccessToken() {
-        String s = "";
-        for(String str : token) {
-            s += str;
-        }
-        return s;
-    }
-
     private GuiScreen openGui = null;
 
     SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!OpenGlHelper.isFramebufferEnabled()) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "This feature requires FBOs to work. Try disabling Optifine's 'Fast Render'."));
             } else {
                 if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
                     openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
                 }
-                manager.updatePrices();
                 overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
+            }
+        }
+    });
+
+    SimpleCommand itemRenameCommand = new SimpleCommand("neurename", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(args.length == 0) {
+                args = new String[]{"help"};
+            }
+            String heldUUID = manager.getUUIDForItem(Minecraft.getMinecraft().thePlayer.getHeldItem());
+            switch(args[0].toLowerCase()) {
+                case "clearall":
+                    manager.itemRenameJson = new JsonObject();
+                    manager.saveItemRenameConfig();
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[NEU] Cleared custom name for all items"));
+                    break;
+                case "clear":
+                    if(heldUUID == null) {
+                        sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Can't clear rename - no UUID"));
+                        return;
+                    }
+                    manager.itemRenameJson.remove(heldUUID);
+                    manager.saveItemRenameConfig();
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[NEU] Cleared custom name for held item"));
+                    break;
+                case "copyuuid":
+                    if(heldUUID == null) {
+                        sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Can't clear rename - no UUID"));
+                        return;
+                    }
+                    StringSelection selection = new StringSelection(heldUUID);
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[NEU] UUID copied to clipboard"));
+                    break;
+                case "uuid":
+                    if(heldUUID == null) {
+                        sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Can't get UUID - no UUID"));
+                        return;
+                    }
+                    ChatStyle style = new ChatStyle();
+                    style.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                            new ChatComponentText(EnumChatFormatting.GRAY+"Click to copy to clipboard")));
+                    style.setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "neurename copyuuid"));
+
+                    ChatComponentText text = new ChatComponentText(EnumChatFormatting.YELLOW+"[NEU] The UUID of your currently held item is: " +
+                            EnumChatFormatting.GREEN + heldUUID);
+                    text.setChatStyle(style);
+                    sender.addChatMessage(text);
+                    break;
+                case "set":
+                    if(heldUUID == null) {
+                        sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Can't rename item - no UUID"));
+                        return;
+                    }
+                    if(args.length == 1) {
+                        sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Usage: /neurename set [name...]"));
+                        return;
+                    }
+                    StringBuilder sb = new StringBuilder();
+                    for(int i=1; i<args.length; i++) {
+                        sb.append(args[i]);
+                        if(i<args.length-1) sb.append(" ");
+                    }
+                    String name = sb.toString()
+                            .replace("\\&", "{amp}")
+                            .replace("&", "\u00a7")
+                            .replace("{amp}", "&");
+                    name = new UnicodeUnescaper().translate(name);
+                    manager.itemRenameJson.addProperty(heldUUID, name);
+                    manager.saveItemRenameConfig();
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[NEU] Set custom name for held item"));
+                    break;
+                default:
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Unknown subcommand \""+args[0]+"\""));
+                case "help":
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "[NEU] Available commands:"));
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "help: Print this message"));
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "clearall: Clears all custom names "
+                            + EnumChatFormatting.BOLD + "(Cannot be undone)"));
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "clear: Clears held item name "
+                            + EnumChatFormatting.BOLD + "(Cannot be undone)"));
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "uuid: Returns the UUID of the currently held item"));
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "set: Sets the custom name of the currently held item"));
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "Usage: /neurename set [name...]"));
+
             }
         }
     });
@@ -144,14 +219,21 @@ public class NotEnoughUpdates {
     ScheduledExecutorService peekCommandExecutorService = null;
     SimpleCommand peekCommand = new SimpleCommand("peek", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
+            if(args.length == 0) {
+                sender.addChatMessage(new ChatComponentText(
+                        EnumChatFormatting.RED+"[PEEK] Usage: /peek (username)"));
+                return;
+            }
             int id = new Random().nextInt(Integer.MAX_VALUE/2)+Integer.MAX_VALUE/2;
 
             Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
                     EnumChatFormatting.YELLOW+"[PEEK] Getting player information..."), id);
             profileViewer.getProfileByName(args[0], profile -> {
-                if (profile != null) {
+                if (profile == null) {
+                    Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
+                            EnumChatFormatting.RED+"[PEEK] Unknown player or api is down."), id);
+                } else {
                     profile.resetCache();
-
 
                     if(peekCommandExecutorService == null || peekCommandExecutorService.isShutdown()) {
                         peekCommandExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -338,13 +420,33 @@ public class NotEnoughUpdates {
 
     SimpleCommand.ProcessCommandRunnable viewProfileRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
+            if(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
+                try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+
+                    String line;
+                    while((line = reader.readLine()) != null) {
+                        if(line.contains("ofFastRender:true")) {
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                                    "This feature is incompatible with OF Fast Render. Go to Video > Performance to disable it."));
+                            return;
+                        }
+                    }
+                } catch(Exception e) {
+                }
+            }
             if (manager.config.apiKey.value == null || manager.config.apiKey.value.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "Can't view profile, apikey is not set. Run /api new and put the result in settings."));
             } else if (args.length == 0) {
                 profileViewer.getProfileByName(Minecraft.getMinecraft().thePlayer.getName(), profile -> {
-                    if (profile != null) profile.resetCache();
-                    openGui = new GuiProfileViewer(profile);
+                    if(profile == null) {
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                                "Invalid player name/api key. Maybe api is down? Try /api new."));
+                    } else {
+                        profile.resetCache();
+                        openGui = new GuiProfileViewer(profile);
+                    }
                 });
             } else if (args.length > 1) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
@@ -500,6 +602,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(linksCommand);
         ClientCommandHandler.instance.registerCommand(gamemodesCommand);
         ClientCommandHandler.instance.registerCommand(resetRepoCommand);
+        ClientCommandHandler.instance.registerCommand(itemRenameCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShort2Command);
@@ -509,8 +612,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
 
-        neuio = new NEUIO(getAccessToken());
-        manager = new NEUManager(this, neuio, f);
+        manager = new NEUManager(this, f);
         manager.loadItemInformation();
         overlay = new NEUOverlay(manager);
         profileViewer = new ProfileViewer(manager);
@@ -630,7 +732,9 @@ public class NotEnoughUpdates {
         long currentTime = System.currentTimeMillis();
 
         if (openGui != null) {
-            Minecraft.getMinecraft().thePlayer.closeScreen();
+            if(Minecraft.getMinecraft().thePlayer.openContainer != null) {
+                Minecraft.getMinecraft().thePlayer.closeScreen();
+            }
             Minecraft.getMinecraft().displayGuiScreen(openGui);
             openGui = null;
         }

@@ -227,7 +227,7 @@ public class SBGamemodes {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
+        if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
 
         if(!"Your Island".equals(SBScoreboardData.getInstance().location)) return;
 
@@ -250,7 +250,7 @@ public class SBGamemodes {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
+        if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
 
         if("Your Island".equals(SBScoreboardData.getInstance().location) &&
                 (EnumChatFormatting.YELLOW+"Break a log").equals(SBScoreboardData.getInstance().objective)) {
@@ -328,7 +328,7 @@ public class SBGamemodes {
             }
             if(has) System.out.println("-----END");
         }*/
-        if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
+        if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
 
         String message = event.message.getFormattedText();
         if(message.contains("\u2620")) { //Death symbol ( ☠ )

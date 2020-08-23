@@ -78,7 +78,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     private void refreshItems() {
         items.clear();
         for(String internalname : manager.getItemInformation().keySet()) {
-            if(!manager.isVanillaItem(internalname) && !internalname.matches(mobRegex)) {
+            if(!manager.auctionManager.isVanillaItem(internalname) && !internalname.matches(mobRegex)) {
                 JsonObject item = manager.getItemInformation().get(internalname);
                 JsonArray lore = manager.getItemInformation().get(internalname).get("lore").getAsJsonArray();
                 switch(filterMode) {
@@ -121,8 +121,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
             float cost1 = manager.auctionManager.getLowestBin(o1);
             float cost2 = manager.auctionManager.getLowestBin(o2);
 
-            if(cost1 == -1) cost1 = manager.getCraftCost(o1).craftCost;
-            if(cost2 == -1) cost2 = manager.getCraftCost(o2).craftCost;
+            if(cost1 == -1) cost1 = manager.auctionManager.getCraftCost(o1).craftCost;
+            if(cost2 == -1) cost2 = manager.auctionManager.getCraftCost(o2).craftCost;
 
             if(cost1 < cost2) return 1;
             if(cost1 > cost2) return -1;
