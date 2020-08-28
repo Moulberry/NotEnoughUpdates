@@ -303,7 +303,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
         itemFramebufferGrayscale.bindFramebufferTexture();
 
-        AtomicReference<JsonObject> tooltipToDisplay = new AtomicReference<>(null);
+        AtomicReference<ItemStack> tooltipToDisplay = new AtomicReference<>(null);
 
         AtomicBoolean isTop = new AtomicBoolean(false);
         AtomicInteger lowestY = new AtomicInteger(-1);
@@ -326,7 +326,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
                     if(mouseX > leftI && mouseX < rightI) {
                         if(mouseY > topI && mouseY < bottomI) {
-                            tooltipToDisplay.set(manager.getItemInformation().get(internalname));
+                            tooltipToDisplay.set(manager.jsonToStack(manager.getItemInformation().get(internalname), true));
                         }
                     }
 
@@ -360,16 +360,9 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
         itemFramebufferGrayscale.unbindFramebufferTexture();
 
-        JsonObject json = tooltipToDisplay.get();
-        if(json != null) {
-            List<String> text = new ArrayList<>();
-            text.add(json.get("displayname").getAsString());
-            JsonArray lore = json.get("lore").getAsJsonArray();
-
-            for(int i=0; i<lore.size(); i++) {
-                text.add(lore.get(i).getAsString());
-            }
-
+        ItemStack displayStack = tooltipToDisplay.get();
+        if(displayStack != null) {
+            List<String> text = displayStack.getTooltip(Minecraft.getMinecraft().thePlayer, true);
             Utils.drawHoveringText(text, mouseX, mouseY, width, height, -1, Minecraft.getMinecraft().fontRendererObj);
         }
     }

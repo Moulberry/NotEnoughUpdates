@@ -36,6 +36,16 @@ public class ProfileViewer {
         this.manager = manager;
     }
 
+
+    private static HashMap<String, String> petRarityToNumMap = new HashMap<>();
+    static {
+        petRarityToNumMap.put("COMMON", "0");
+        petRarityToNumMap.put("UNCOMMON", "1");
+        petRarityToNumMap.put("RARE", "2");
+        petRarityToNumMap.put("EPIC", "3");
+        petRarityToNumMap.put("LEGENDARY", "4");
+    }
+
     private static final LinkedHashMap<String, ItemStack> skillToSkillDisplayMap = new LinkedHashMap<>();
     static {
         skillToSkillDisplayMap.put("skill_taming", Utils.createItemStack(Items.spawn_egg, EnumChatFormatting.LIGHT_PURPLE+"Taming"));
@@ -265,6 +275,7 @@ public class ProfileViewer {
         private JsonObject playerStatus = null;
         private HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
         private HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
+        private long networth = -1;
 
         public Profile(String uuid) {
             this.uuid = uuid;
@@ -293,6 +304,100 @@ public class ProfileViewer {
             );
 
             return null;
+        }
+
+        public long getNetWorth(String profileId) {
+            if(networth != -1) return networth;
+            if(getProfileInformation(profileId) == null) return -1;
+            if(getInventoryInfo(profileId) == null) return -1;
+
+            JsonObject inventoryInfo = getInventoryInfo(profileId);
+            JsonObject profileInfo = getProfileInformation(profileId);
+
+            long networth = 0;
+            for(Map.Entry<String, JsonElement> entry : inventoryInfo.entrySet()) {
+                if(entry.getValue().isJsonArray()) {
+                    for(JsonElement element : entry.getValue().getAsJsonArray()) {
+                        if(element != null && element.isJsonObject()) {
+                            JsonObject item = element.getAsJsonObject();
+                            String internalname = item.get("internalname").getAsString();
+
+                            if(manager.auctionManager.isVanillaItem(internalname)) continue;
+
+                            JsonObject info = manager.auctionManager.getItemAuctionInfo(internalname);
+                            if(info == null || !info.has("price") || !info.has("count")) continue;
+
+                            int auctionPrice = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
+
+                            try {
+                                if(item.has("item_contents")) {
+                                    JsonArray bytesArr = item.get("item_contents").getAsJsonArray();
+                                    byte[] bytes = new byte[bytesArr.size()];
+                                    for (int bytesArrI = 0; bytesArrI < bytesArr.size(); bytesArrI++) {
+                                        bytes[bytesArrI] = bytesArr.get(bytesArrI).getAsByte();
+                                    }
+                                    NBTTagCompound contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(bytes));
+                                    NBTTagList items = contents_nbt.getTagList("i", 10);
+                                    for(int j=0; j<items.tagCount(); j++) {
+                                        if(items.getCompoundTagAt(j).getKeySet().size() > 0) {
+                                            NBTTagCompound nbt = items.getCompoundTagAt(j).getCompoundTag("tag");
+                                            String internalname2 = manager.getInternalnameFromNBT(nbt);
+                                            if(internalname2 != null) {
+                                                JsonObject info2 = manager.auctionManager.getItemAuctionInfo(internalname2);
+                                                if(info2 == null || !info2.has("price") || !info2.has("count")) continue;
+                                                int auctionPrice2 = (int)(info2.get("price").getAsFloat() / info2.get("count").getAsFloat());
+
+                                                int count2 = items.getCompoundTagAt(j).getByte("Count");
+                                                networth += auctionPrice2 * count2;
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch(IOException ignored) {}
+
+                            int count = 1;
+                            if(element.getAsJsonObject().has("count")) {
+                                count = element.getAsJsonObject().get("count").getAsInt();
+                            }
+
+                            networth += auctionPrice * count;
+                        }
+                    }
+                }
+            }
+            if(networth == 0) return -1;
+
+            JsonObject petsInfo = getPetsInfo(profileId);
+            if(petsInfo != null && petsInfo.has("pets")) {
+                if(petsInfo.get("pets").isJsonArray()) {
+                    JsonArray pets = petsInfo.get("pets").getAsJsonArray();
+                    for(JsonElement element : pets) {
+                        if(element.isJsonObject()) {
+                            JsonObject pet = element.getAsJsonObject();
+
+                            String petname = pet.get("type").getAsString();
+                            String tier = pet.get("tier").getAsString();
+                            String tierNum = petRarityToNumMap.get(tier);
+                            if(tierNum != null) {
+                                String internalname2 = petname+";"+tierNum;
+                                JsonObject info2 = manager.auctionManager.getItemAuctionInfo(internalname2);
+                                if(info2 == null || !info2.has("price") || !info2.has("count")) continue;
+                                int auctionPrice2 = (int)(info2.get("price").getAsFloat() / info2.get("count").getAsFloat());
+
+                                networth += auctionPrice2;
+                            }
+                        }
+                    }
+                }
+            }
+
+            float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), 0);
+            float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
+
+            networth += bankBalance+purseBalance;
+
+            this.networth = networth;
+            return networth;
         }
 
         public String getLatestProfile() {
@@ -436,6 +541,7 @@ public class ProfileViewer {
             skillInfoMap.clear();
             inventoryInfoMap.clear();
             collectionInfoMap.clear();
+            networth = -1;
         }
 
         private class Level {
@@ -618,6 +724,8 @@ public class ProfileViewer {
                     inventoryInfo.add(inv_names[i], new JsonArray());
                 }
             }
+
+            inventoryInfoMap.put(profileId, inventoryInfo);
 
             return inventoryInfo;
         }

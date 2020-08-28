@@ -37,7 +37,7 @@ public class APIManager {
     private HashSet<String> playerBidsNotified = new HashSet<>();
     private HashSet<String> playerBidsFinishedNotified = new HashSet<>();
 
-    private HashMap<String, TreeMap<Integer, String>> internalnameToLowestBIN = new HashMap<>();
+    private HashMap<String, TreeMap<Integer, Set<String>>> internalnameToLowestBIN = new HashMap<>();
 
     private LinkedList<Integer> pagesToDownload = null;
 
@@ -218,7 +218,7 @@ public class APIManager {
     }
 
     public int getLowestBin(String internalname) {
-        TreeMap<Integer, String> lowestBIN = internalnameToLowestBIN.get(internalname);
+        TreeMap<Integer, Set<String>> lowestBIN = internalnameToLowestBIN.get(internalname);
         if(lowestBIN == null || lowestBIN.isEmpty()) return -1;
         return lowestBIN.firstKey();
     }
@@ -294,8 +294,13 @@ public class APIManager {
         for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
             aucids.removeAll(toRemove);
         }
-        for(TreeMap<Integer, String> lowestBINs : internalnameToLowestBIN.values()) {
-            lowestBINs.values().removeAll(toRemove);
+        for(TreeMap<Integer, Set<String>> lowestBINs : internalnameToLowestBIN.values()) {
+            Set<Integer> toRemoveSet = new HashSet<>();
+            for(Map.Entry<Integer, Set<String>> entry : lowestBINs.entrySet()) {
+                entry.getValue().removeAll(toRemove);
+                if(entry.getValue().isEmpty()) toRemoveSet.add(entry.getKey());
+            }
+            lowestBINs.keySet().removeAll(toRemoveSet);
         }
     }
 
@@ -494,10 +499,11 @@ public class APIManager {
             }
 
             if(bin) {
-                TreeMap<Integer, String> lowestBINs = internalnameToLowestBIN.computeIfAbsent(internalname, k -> new TreeMap<>());
+                TreeMap<Integer, Set<String>> lowestBINs = internalnameToLowestBIN.computeIfAbsent(internalname, k -> new TreeMap<>());
                 int count = item_tag.getInteger("Count");
-                lowestBINs.put(starting_bid/(count>0?count:1), auctionUuid);
-                if(lowestBINs.size() > 5) {
+                int price = starting_bid/(count>0?count:1);
+                lowestBINs.computeIfAbsent(price, k -> new HashSet<>()).add(auctionUuid);
+                if(lowestBINs.size() > 10) {
                     lowestBINs.keySet().remove(lowestBINs.lastKey());
                 }
             }
@@ -696,7 +702,7 @@ public class APIManager {
             JsonObject auctionInfo = getItemAuctionInfo(internalname);
             JsonObject bazaarInfo = getBazaarInfo(internalname);
 
-            if(bazaarInfo != null) {
+            if(bazaarInfo != null && bazaarInfo.get("curr_buy") != null) {
                 float bazaarInstantBuyPrice = bazaarInfo.get("curr_buy").getAsFloat();
                 ci.craftCost = bazaarInstantBuyPrice;
             }

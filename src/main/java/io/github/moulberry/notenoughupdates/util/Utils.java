@@ -97,7 +97,7 @@ public class Utils {
     }
 
     public static void drawItemStack(ItemStack stack, int x, int y) {
-        if(stack == null)return;
+        if(stack == null) return;
 
         drawItemStackWithText(stack, x, y, null);
     }
@@ -361,7 +361,8 @@ public class Utils {
 
     public static void drawStringF(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
         GL11.glTranslatef(x, y, 0);
-        fr.drawString(str, x, y, colour, shadow);
+        fr.drawString(str, 0, 0, colour, shadow);
+        GL11.glTranslatef(-x, -y, 0);
     }
 
     public static void drawStringScaledMaxWidth(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {

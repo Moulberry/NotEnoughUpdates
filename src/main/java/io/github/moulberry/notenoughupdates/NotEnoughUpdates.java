@@ -35,6 +35,7 @@ import net.minecraft.util.*;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -344,7 +345,6 @@ public class NotEnoughUpdates {
                                 float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), -1);
                                 float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
 
-
                                 EnumChatFormatting moneyPrefix = (bankBalance+purseBalance)>10*1000*1000?
                                         ((bankBalance+purseBalance)>50*1000*1000?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
@@ -352,7 +352,16 @@ public class NotEnoughUpdates {
                                                 (bankBalance == -1 ? EnumChatFormatting.YELLOW+"Disabled" : moneyPrefix+
                                                         (isMe?"4.8b":Utils.shortNumberFormat(bankBalance, 0)))));
 
-                                overallScore += Math.min(2, (bankBalance+purseBalance)/(50f*1000*1000));
+                                long networth = profile.getNetWorth(null);
+                                if(networth > 0) {
+                                    EnumChatFormatting moneyPrefix2 = networth>50*1000*1000?
+                                            (networth>200*1000*1000?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                            g+"Networth : "+moneyPrefix2+Utils.shortNumberFormat(networth, 0)));
+                                }
+                                if(networth == -1) networth = (long)(bankBalance+purseBalance);
+
+                                overallScore += Math.min(2, networth/(100f*1000*1000));
 
                                 String activePet = Utils.getElementAsString(Utils.getElement(profile.getPetsInfo(null), "active_pet.type"),
                                         "None Active");
@@ -420,7 +429,8 @@ public class NotEnoughUpdates {
 
     SimpleCommand.ProcessCommandRunnable viewProfileRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
+            if(Loader.isModLoaded("optifine") &&
+                    new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
                 try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
@@ -453,8 +463,13 @@ public class NotEnoughUpdates {
                         "Too many arguments. Usage: /neuprofile [name]"));
             } else {
                 profileViewer.getProfileByName(args[0], profile -> {
-                    if (profile != null) profile.resetCache();
-                    openGui = new GuiProfileViewer(profile);
+                    if(profile == null) {
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                                "Invalid player name/api key. Maybe api is down? Try /api new."));
+                    } else {
+                        profile.resetCache();
+                        openGui = new GuiProfileViewer(profile);
+                    }
                 });
             }
         }
@@ -480,7 +495,7 @@ public class NotEnoughUpdates {
     SimpleCommand viewProfileShortCommand = new SimpleCommand("pv", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!hasSkyblockScoreboard()) {
+            if(!isOnSkyblock()) {
                 Minecraft.getMinecraft().thePlayer.sendChatMessage("/pv " + StringUtils.join(args, " "));
             } else {
                 viewProfileRunnable.processCommand(sender, args);
@@ -506,7 +521,7 @@ public class NotEnoughUpdates {
     SimpleCommand viewProfileShort2Command = new SimpleCommand("vp", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!hasSkyblockScoreboard()) {
+            if(!isOnSkyblock()) {
                 Minecraft.getMinecraft().thePlayer.sendChatMessage("/vp " + StringUtils.join(args, " "));
             } else {
                 viewProfileRunnable.processCommand(sender, args);

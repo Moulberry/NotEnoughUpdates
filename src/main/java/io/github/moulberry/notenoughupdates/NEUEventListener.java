@@ -516,7 +516,8 @@ public class NEUEventListener {
 
     @SubscribeEvent
     public void onGuiScreenDrawPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
-        if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+        if(TradeWindow.tradeWindowActive() ||
+                event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
 
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
@@ -527,11 +528,19 @@ public class NEUEventListener {
             Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
 
             if(event.mouseX < width*neu.overlay.getWidthMult()/3 || event.mouseX > width-width*neu.overlay.getWidthMult()/3) {
-                neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
+                if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+                    neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
+                } else {
+                    TradeWindow.render(event.mouseX, event.mouseY);
+                }
                 neu.overlay.render(event.mouseX, event.mouseY, false);
             } else {
                 neu.overlay.render(event.mouseX, event.mouseY, false);
-                neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
+                if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+                    neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
+                } else {
+                    TradeWindow.render(event.mouseX, event.mouseY);
+                }
             }
         }
     }
@@ -556,7 +565,8 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
-        if(!(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView())) {
+        if(!(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
+                neu.manager.auctionManager.customAH.isRenderOverAuctionView())) {
             if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
                 if(!focusInv) {
                     GL11.glTranslatef(0, 0, 300);
@@ -607,14 +617,25 @@ public class NEUEventListener {
                         ItemStack item = lower.getStackInSlot(11+i);
                         String internal = neu.manager.getInternalNameForItem(item);
                         if(internal != null) {
-                            float worthBIN = neu.manager.auctionManager.getLowestBin(internal);
-                            float worthAUC = -1;
-                            JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                            if(aucInfo != null) {
-                                worthAUC = aucInfo.get("price").getAsFloat();
+                            float bazaarPrice = -1;
+                            JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internal);
+                            if(bazaarInfo != null && bazaarInfo.has("avg_sell")) {
+                                bazaarPrice = bazaarInfo.get("avg_sell").getAsFloat();
                             }
 
-                            if(worthAUC == -1) worthAUC = neu.manager.auctionManager.getCraftCost(internal).craftCost;
+                            float worthBIN = -1;
+                            float worthAUC = -1;
+
+                            if(bazaarPrice > 0) {
+                                worthBIN = bazaarPrice;
+                                worthAUC = bazaarPrice;
+                            } else {
+                                worthBIN = neu.manager.auctionManager.getLowestBin(internal);
+                                JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
+                                if(aucInfo != null) {
+                                    worthAUC = aucInfo.get("price").getAsFloat();
+                                }
+                            }
 
                             if(worthAUC <= 0 && worthBIN <= 0) {
                                 missing = true;
@@ -714,9 +735,15 @@ public class NEUEventListener {
         if(!event.isCanceled()) {
             Utils.scrollTooltip(Mouse.getEventDWheel());
         }
-        if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+        if(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
+                neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
-            neu.manager.auctionManager.customAH.handleMouseInput();
+            if(event.gui instanceof CustomAHGui ||
+                    neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+                neu.manager.auctionManager.customAH.handleMouseInput();
+            } else {
+                TradeWindow.handleMouseInput();
+            }
             neu.overlay.mouseInput();
             return;
         }
@@ -739,12 +766,23 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-        if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
-            if(neu.manager.auctionManager.customAH.keyboardInput()) {
-                event.setCanceled(true);
-                Minecraft.getMinecraft().dispatchKeypresses();
-            } else if(neu.overlay.keyboardInput(focusInv)) {
-                event.setCanceled(true);
+        if(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
+                neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+            if(event.gui instanceof CustomAHGui ||
+                    neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+                if(neu.manager.auctionManager.customAH.keyboardInput()) {
+                    event.setCanceled(true);
+                    Minecraft.getMinecraft().dispatchKeypresses();
+                } else if(neu.overlay.keyboardInput(focusInv)) {
+                    event.setCanceled(true);
+                }
+            } else {
+                if(TradeWindow.keyboardInput()) {
+                    event.setCanceled(true);
+                    Minecraft.getMinecraft().dispatchKeypresses();
+                } else if(neu.overlay.keyboardInput(focusInv)) {
+                    event.setCanceled(true);
+                }
             }
             return;
         }

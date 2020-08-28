@@ -77,6 +77,8 @@ public class NEUCape {
             shaderName = "fade_cape";
         } else if(capeName.equalsIgnoreCase("space")) {
             shaderName = "space_cape";
+        } else if(capeName.equalsIgnoreCase("mcworld")) {
+            shaderName = "mcworld_cape";
         } else {
             shaderName = "cape";
         }
@@ -298,6 +300,8 @@ public class NEUCape {
             shaderManager.loadData(shaderName, "millis", (int)(System.currentTimeMillis()-startTime));
             shaderManager.loadData(shaderName, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
             shaderManager.loadData(shaderName, "eventRand", eventRandom);
+        } else if(shaderName.equalsIgnoreCase("mcworld_cape")) {
+            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
         }
     }
 
@@ -322,8 +326,17 @@ public class NEUCape {
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA,
                 GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
         bindTexture();
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, 0x8191, GL11.GL_TRUE);
         GlStateManager.enableTexture2D();
         GlStateManager.disableCull();
+
+        if(shaderName.equals("mcworld_cape")) {
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+        } else {
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+        }
 
         GL11.glTranslatef(-(float)viewerX, -(float)viewerY, -(float)viewerZ);
 

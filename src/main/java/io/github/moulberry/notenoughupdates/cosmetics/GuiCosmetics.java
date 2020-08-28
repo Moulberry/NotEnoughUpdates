@@ -64,8 +64,6 @@ public class GuiCosmetics extends GuiScreen {
     public static final ResourceLocation cosmetics_fg = new ResourceLocation("notenoughupdates:cosmetics_fg.png");
     public static final ResourceLocation pv_elements = new ResourceLocation("notenoughupdates:pv_elements.png");
 
-    private static final NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
-
     private CosmeticsPage currentPage = CosmeticsPage.CAPES;
     private int sizeX;
     private int sizeY;
@@ -152,14 +150,22 @@ public class GuiCosmetics extends GuiScreen {
         Minecraft.getMinecraft().fontRendererObj.drawString(EnumChatFormatting.AQUA+statusMsg.toString(),
                 guiLeft+sizeX-Minecraft.getMinecraft().fontRendererObj.getStringWidth(statusMsg.toString()), guiTop-12, 0, true);
 
-        if(currentPage == CosmeticsPage.CAPES && wantToEquipCape != null) {
+        if(currentPage == CosmeticsPage.CAPES) {
             GlStateManager.color(1, 1, 1, 1);
             Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
             Utils.drawTexturedRect(guiLeft+sizeX/2f-50, guiTop+sizeY+5, 100, 20, 0, 100/200f, 0, 20/185f, GL11.GL_NEAREST);
 
-            String equipMsg = EnumChatFormatting.GREEN + "Equip Cape";
-            if(System.currentTimeMillis() - lastCapeEquip < 20*1000) {
-                equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip)/1000) + "s";
+            String equipMsg;
+            if(wantToEquipCape != null) {
+                equipMsg = EnumChatFormatting.GREEN + "Equip Cape";
+                if(System.currentTimeMillis() - lastCapeEquip < 20*1000) {
+                    equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip)/1000) + "s";
+                }
+            } else {
+                equipMsg = EnumChatFormatting.GREEN + "Unequip";
+                if(System.currentTimeMillis() - lastCapeEquip < 20*1000) {
+                    equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip)/1000) + "s";
+                }
             }
 
             Utils.drawStringCenteredScaledMaxWidth(equipMsg, Minecraft.getMinecraft().fontRendererObj,
@@ -280,7 +286,11 @@ public class GuiCosmetics extends GuiScreen {
 
                     return;
                 } else if(equipable && mouseY > guiTop + 149 && mouseY < guiTop + 149 + 20) {
-                    wantToEquipCape = cape;
+                    if(cape.equals(wantToEquipCape)) {
+                        wantToEquipCape = null;
+                    } else {
+                        wantToEquipCape = cape;
+                    }
                     return;
                 }
             }
@@ -288,16 +298,24 @@ public class GuiCosmetics extends GuiScreen {
             displayIndex++;
         }
 
-        if(currentPage == CosmeticsPage.CAPES && wantToEquipCape != null) {
+        if(currentPage == CosmeticsPage.CAPES) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
             Utils.drawTexturedRect(guiLeft+sizeX/2f-50, guiTop+sizeY+5, 100, 20, 0, 100/200f, 0, 20/185f, GL11.GL_NEAREST);
 
             if(mouseX > guiLeft+sizeX/2f-50 && mouseX < guiLeft+sizeX/2f+50) {
                 if(mouseY > guiTop+sizeY+5 && mouseY < guiTop+sizeY+25) {
                     if(System.currentTimeMillis() - lastCapeEquip > 20*1000) {
+                        CapeManager.INSTANCE.setCape(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
+                                null, true);
+
                         lastCapeEquip = System.currentTimeMillis();
-                        NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType="+wantToEquipCape+"&accessToken="+
-                                Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> {}, () -> {});
+                        if(wantToEquipCape == null) {
+                            NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType=null&accessToken="+
+                                    Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> {}, () -> {});
+                        } else {
+                            NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType="+wantToEquipCape+"&accessToken="+
+                                    Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> {}, () -> {});
+                        }
                     }
                 }
             }
