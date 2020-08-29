@@ -777,11 +777,11 @@ public class NEUEventListener {
                     event.setCanceled(true);
                 }
             } else {
-                if(TradeWindow.keyboardInput()) {
+                TradeWindow.keyboardInput();
+                if(Keyboard.getEventKey() != Keyboard.KEY_ESCAPE) {
                     event.setCanceled(true);
                     Minecraft.getMinecraft().dispatchKeypresses();
-                } else if(neu.overlay.keyboardInput(focusInv)) {
-                    event.setCanceled(true);
+                    neu.overlay.keyboardInput(focusInv);
                 }
             }
             return;

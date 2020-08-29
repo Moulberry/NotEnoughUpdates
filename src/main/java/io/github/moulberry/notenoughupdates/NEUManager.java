@@ -812,8 +812,6 @@ public class NEUManager {
         String[] info = new String[0];
         String clickcommand = "";
 
-
-
         JsonObject item = new JsonObject();
         item.addProperty("internalname", internalname);
         item.addProperty("itemid", itemid);

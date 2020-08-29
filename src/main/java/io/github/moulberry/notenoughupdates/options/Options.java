@@ -47,7 +47,7 @@ public class Options {
             true,
             "Quick Commands",
             false,
-            "Shows QuickCommands™ above search bar.");
+            "Shows QuickCommands\u2122 above search bar.");
     public Option<Boolean> showUpdateMsg = new Option(
             true,
             "Show Update Notifs",
@@ -138,6 +138,11 @@ public class Options {
             "Price Info in Auction Lore",
             false,
             "If true, will show price information about an item inside the auction house item tooltip.");
+    public Option<Boolean> useCustomTrade = new Option(
+            true,
+            "Custom Trade",
+            false,
+            "If true, uses the custom trade window for skyblock trades.");
     public Option<Double> paneWidthMult = new Option(
             1.0,
             "Pane Width",
@@ -192,6 +197,16 @@ public class Options {
             "loadedModBefore",
             true,
             "loadedModBefore");
+    public Option<Boolean> customTradePrices = new Option(
+            true,
+            "Trade Item Values",
+            true,
+            "If true, shows a window with the total item value of either side");
+    public Option<Boolean> customTradePriceStyle = new Option(
+            true,
+            "Trade Prices Style",
+            true,
+            "Changes the style of the top item prices");
     public Option<String> selectedCape = new Option(
             "",
             "Selected Cape",
@@ -328,6 +343,9 @@ public class Options {
         tryAddOption(disableItemTabOpen, options);
         tryAddOption(dungeonProfitLore, options);
         tryAddOption(auctionPriceInfo, options);
+        tryAddOption(useCustomTrade, options);
+        tryAddOption(customTradePrices, options);
+        tryAddOption(customTradePriceStyle, options);
         //Sliders
         tryAddOption(smoothAoteMillis, options);
         tryAddOption(bgBlurFactor, options);

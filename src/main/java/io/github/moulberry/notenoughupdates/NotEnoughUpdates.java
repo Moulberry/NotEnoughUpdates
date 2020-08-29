@@ -220,16 +220,17 @@ public class NotEnoughUpdates {
     ScheduledExecutorService peekCommandExecutorService = null;
     SimpleCommand peekCommand = new SimpleCommand("peek", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
+            String name;
             if(args.length == 0) {
-                sender.addChatMessage(new ChatComponentText(
-                        EnumChatFormatting.RED+"[PEEK] Usage: /peek (username)"));
-                return;
+                name = Minecraft.getMinecraft().thePlayer.getName();
+            } else {
+                name = args[0];
             }
             int id = new Random().nextInt(Integer.MAX_VALUE/2)+Integer.MAX_VALUE/2;
 
             Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
                     EnumChatFormatting.YELLOW+"[PEEK] Getting player information..."), id);
-            profileViewer.getProfileByName(args[0], profile -> {
+            profileViewer.getProfileByName(name, profile -> {
                 if (profile == null) {
                     Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
                             EnumChatFormatting.RED+"[PEEK] Unknown player or api is down."), id);
@@ -264,14 +265,14 @@ public class NotEnoughUpdates {
                             if(profileInfo != null) {
                                 float overallScore = 0;
 
-                                boolean isMe = args[0].equalsIgnoreCase("moulberry");
+                                boolean isMe = name.equalsIgnoreCase("moulberry");
 
                                 PlayerStats.Stats stats = profile.getStats(null);
                                 JsonObject skill = profile.getSkillInfo(null);
 
                                 Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(EnumChatFormatting.GREEN+" "+
                                         EnumChatFormatting.STRIKETHROUGH+"-=-" +EnumChatFormatting.RESET+EnumChatFormatting.GREEN+" "+
-                                        Utils.getElementAsString(profile.getHypixelProfile().get("displayname"), args[0]) + "'s Info " +
+                                        Utils.getElementAsString(profile.getHypixelProfile().get("displayname"), name) + "'s Info " +
                                         EnumChatFormatting.STRIKETHROUGH+"-=-"), id);
 
                                 if(skill == null) {

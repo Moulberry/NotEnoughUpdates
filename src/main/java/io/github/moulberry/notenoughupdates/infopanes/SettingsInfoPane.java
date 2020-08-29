@@ -330,7 +330,7 @@ public class SettingsInfoPane extends InfoPane {
                 if(option == null) return;
 
                 if(!textConfigMap.containsKey(option)) {
-                    textConfigMap.put(option, new GuiElementTextField(String.valueOf(option.value), 0));
+                    return;
                 }
                 GuiElementTextField tf = textConfigMap.get(option);
 

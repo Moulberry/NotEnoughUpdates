@@ -93,7 +93,8 @@ public class CustomItemEffects {
 
     @SubscribeEvent
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(NotEnoughUpdates.INSTANCE.manager.config.smoothAoteMillis.value <= 0) return;
+        if(NotEnoughUpdates.INSTANCE.manager.config.smoothAoteMillis.value <= 0
+            || Minecraft.getMinecraft().gameSettings.thirdPersonView != 0) return;
 
         if(event.action == PlayerInteractEvent.Action.RIGHT_CLICK_AIR || event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
             ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();

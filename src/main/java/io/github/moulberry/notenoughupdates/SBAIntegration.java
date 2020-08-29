@@ -182,13 +182,17 @@ public class SBAIntegration {
             int width = scaledResolution.getScaledWidth();
             int height = scaledResolution.getScaledHeight();
 
-            GuiContainer container = new GuiContainer(null) {
-                protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-                }
-            };
-            container.setWorldAndResolution(Minecraft.getMinecraft(), width, height);
+            if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
+                guiContainerHook_drawBackpacks.invoke(null, Minecraft.getMinecraft().currentScreen, mouseX, mouseY, fontRendererObj);
+            } else {
+                GuiContainer container = new GuiContainer(null) {
+                    protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+                    }
+                };
+                container.setWorldAndResolution(Minecraft.getMinecraft(), width, height);
 
-            guiContainerHook_drawBackpacks.invoke(null, container, mouseX, mouseY, fontRendererObj);
+                guiContainerHook_drawBackpacks.invoke(null, container, mouseX, mouseY, fontRendererObj);
+            }
         } catch(Exception e) { return false; }
         return true;
     }
