@@ -1108,6 +1108,10 @@ public class NEUOverlay extends Gui {
             case "spinaxx":
                 searchedItems.add(CustomItems.SPINAXX);
                 break;
+            case "gremlin":
+            case "gremlins":
+                searchedItems.add(CustomItems.GREMLINS);
+                break;
         }
     }
 

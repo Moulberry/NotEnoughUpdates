@@ -61,6 +61,11 @@ public class CustomItems {
                   "39 legendary phoenix pets",
                   "",
                   "get flexed");
+    public static JsonObject GREMLINS = create("GREMLINS", "grass", "Gremlins.",
+            "A gremlin is a folkloric mischievous creature that causes malfunctions in aircraft or other machinery.",
+                "Depictions of these creatures vary. Often they are described or depicted as animals with spiky backs,",
+                "large strange eyes, and small clawed frames that feature sharp teeth.",
+                "They also like to ask dumb questions.");
 
     /**
      * SHAAAAAAAAAAAAAAAAAAME
