@@ -834,6 +834,9 @@ public class NEUManager {
                 }
                 item.add("item_contents", bytesArr);
             }
+            if(ea.hasKey("dungeon_item_level")) {
+                item.addProperty("dungeon_item_level", ea.getInteger("dungeon_item_level"));
+            }
         }
 
         if(lore != null && lore.length > 0) {

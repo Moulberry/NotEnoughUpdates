@@ -13,6 +13,7 @@ import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -98,6 +99,137 @@ public class TradeWindow {
                 new Color(64, 64, 64, 255).getRGB());
     }
 
+    private static int processTopItems(ItemStack stack, Map<Integer, Set<String>> topItems,
+                                       Map<String, ItemStack> topItemsStack, Map<String, Integer> topItemsCount) {
+        String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
+        if(internalname == null) {
+            if(stack.getDisplayName().endsWith(" coins")) {
+                String clean = Utils.cleanColour(stack.getDisplayName());
+
+                int mult = 1;
+                StringBuilder sb = new StringBuilder();
+                for(int index = 0; index < clean.length(); index++) {
+                    char c = clean.charAt(index);
+                    if("0123456789".indexOf(c) >= 0) {
+                        sb.append(c);
+                    } else {
+                        switch(c) {
+                            case 'k':
+                                mult = 1000; break;
+                            case 'm':
+                                mult = 1000000; break;
+                            case 'b':
+                                mult = 1000000000; break;
+                            default:
+                                break;
+                        }
+                        break;
+                    }
+                }
+                try {
+                    int coins = Integer.parseInt(sb.toString())*mult;
+
+                    topItemsStack.putIfAbsent("TRADE_COINS", stack);
+
+                    int existingPrice = coins;
+                    Set<Integer> toRemove = new HashSet<>();
+                    for(Map.Entry<Integer, Set<String>> entry : topItems.entrySet()) {
+                        if(entry.getValue().contains("TRADE_COINS")) {
+                            entry.getValue().remove("TRADE_COINS");
+                            existingPrice += entry.getKey();
+                        }
+                        if(entry.getValue().isEmpty()) toRemove.add(entry.getKey());
+                    }
+                    topItems.keySet().removeAll(toRemove);
+
+                    Set<String> items = topItems.computeIfAbsent(existingPrice, k->new HashSet<>());
+                    items.add("TRADE_COINS");
+
+                    return coins;
+
+                } catch(Exception ignored) {}
+            }
+        } else {
+            JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
+            int pricePer = -1;
+            if(info != null && !NotEnoughUpdates.INSTANCE.manager.auctionManager.isVanillaItem(internalname) &&
+                     info.has("price") && info.has("count")) {
+                int auctionPricePer = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
+
+                pricePer = auctionPricePer;
+            } else {
+                JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
+                if(bazaarInfo != null && bazaarInfo.has("avg_buy")) {
+                    pricePer = (int)bazaarInfo.get("avg_buy").getAsFloat();
+                }
+            }
+            if(pricePer > 0) {
+                topItemsStack.putIfAbsent(internalname, stack);
+
+                int price = pricePer * stack.stackSize;
+                int priceInclBackpack = price;
+
+                NBTTagCompound tag = stack.getTagCompound();
+                if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+                    NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+
+                    byte[] bytes = null;
+                    for (String key : ea.getKeySet()) {
+                        if (key.endsWith("backpack_data") || key.equals("new_year_cake_bag_data")) {
+                            bytes = ea.getByteArray(key);
+                            break;
+                        }
+                    }
+                    if(bytes != null) {
+                        try {
+                            NBTTagCompound contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(bytes));
+                            NBTTagList items = contents_nbt.getTagList("i", 10);
+                            for(int k=0; k<items.tagCount(); k++) {
+                                if(items.getCompoundTagAt(k).getKeySet().size() > 0) {
+                                    NBTTagCompound nbt = items.getCompoundTagAt(k).getCompoundTag("tag");
+
+                                    int id2 = items.getCompoundTagAt(k).getShort("id");
+                                    int count2 = items.getCompoundTagAt(k).getByte("Count");
+                                    int damage2 = items.getCompoundTagAt(k).getShort("Damage");
+
+                                    if(id2 == 141) id2 = 391; //for some reason hypixel thinks carrots have id 141
+
+                                    Item mcItem = Item.getItemById(id2);
+                                    if(mcItem == null) continue;
+
+                                    ItemStack stack2 = new ItemStack(mcItem, count2, damage2);
+                                    stack2.setTagCompound(nbt);
+
+                                    priceInclBackpack += processTopItems(stack2, topItems, topItemsStack, topItemsCount);
+                                }
+                            }
+                        } catch(Exception e) { }
+                    }
+                }
+
+                int existingPrice = price;
+                Set<Integer> toRemove = new HashSet<>();
+                for(Map.Entry<Integer, Set<String>> entry : topItems.entrySet()) {
+                    if(entry.getValue().contains(internalname)) {
+                        entry.getValue().remove(internalname);
+                        existingPrice += entry.getKey();
+                    }
+                    if(entry.getValue().isEmpty()) toRemove.add(entry.getKey());
+                }
+                topItems.keySet().removeAll(toRemove);
+
+                Set<String> items = topItems.computeIfAbsent(existingPrice, k->new HashSet<>());
+                items.add(internalname);
+
+                int count = topItemsCount.computeIfAbsent(internalname, l->0);
+                topItemsCount.put(internalname, count+stack.stackSize);
+
+                return priceInclBackpack;
+            }
+        }
+        return 0;
+    }
+
     private static int getBackpackValue(ItemStack stack) {
         int price = 0;
 
@@ -136,7 +268,6 @@ public class TradeWindow {
                                 }
                                 if(pricePer2 > 0) {
                                     int count2 = items.getCompoundTagAt(k).getByte("Count");
-                                    System.out.println("adding" + pricePer2*count2);
                                     price += pricePer2 * count2;
                                 }
                             }
@@ -180,8 +311,43 @@ public class TradeWindow {
 
             String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
             if(internalname == null) {
-                List<Integer> list = ourTradeMap.computeIfAbsent(-1, k -> new ArrayList<>());
-                list.add(containerIndex);
+                if(stack.getDisplayName().endsWith(" coins")) {
+                    String clean = Utils.cleanColour(stack.getDisplayName());
+
+                    int mult = 1;
+                    StringBuilder sb = new StringBuilder();
+                    for(int index = 0; index < clean.length(); index++) {
+                        char c = clean.charAt(index);
+                        if("0123456789".indexOf(c) >= 0) {
+                            sb.append(c);
+                        } else {
+                            switch(c) {
+                                case 'k':
+                                    mult = 1000; break;
+                                case 'm':
+                                    mult = 1000000; break;
+                                case 'b':
+                                    mult = 1000000000; break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        }
+                    }
+                    try {
+                        int coins = Integer.parseInt(sb.toString())*mult;
+
+                        List<Integer> list = ourTradeMap.computeIfAbsent(coins, k -> new ArrayList<>());
+                        list.add(containerIndex);
+
+                    } catch(Exception ignored) {
+                        List<Integer> list = ourTradeMap.computeIfAbsent(-1, k -> new ArrayList<>());
+                        list.add(containerIndex);
+                    }
+                } else {
+                    List<Integer> list = ourTradeMap.computeIfAbsent(-1, k -> new ArrayList<>());
+                    list.add(containerIndex);
+                }
             } else {
                 JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
                 int price = -1;
@@ -205,6 +371,7 @@ public class TradeWindow {
         long currentTime = System.currentTimeMillis();
         List<String> theirTradeCurrent = new ArrayList<>();
         TreeMap<Integer, List<Integer>> theirTradeMap = new TreeMap<>();
+        HashMap<String, Integer> displayCountMap = new HashMap<>();
         for(int i=0; i<16; i++) {
             theirTradeIndexes[i] = -1;
             if(theirTradeChangesMillis[i] == null || currentTime - theirTradeChangesMillis[i] > CHANGE_EXCLAM_MILLIS) {
@@ -226,17 +393,56 @@ public class TradeWindow {
                 if (ea.hasKey("uuid", 8)) {
                     uuid = ea.getString("uuid");
                 } else {
-                    uuid = stack.getDisplayName();
+                    int displayCount = displayCountMap.computeIfAbsent(stack.getDisplayName(), k->0);
+                    uuid = stack.getDisplayName() + ":" + displayCount;
+                    displayCountMap.put(stack.getDisplayName(), displayCount+1);
                 }
             } else {
-                uuid = stack.getDisplayName();
+                int displayCount = displayCountMap.computeIfAbsent(stack.getDisplayName(), k->0);
+                uuid = stack.getDisplayName() + ":" + displayCount;
+                displayCountMap.put(stack.getDisplayName(), displayCount+1);
             }
             if(uuid != null) theirTradeCurrent.add(uuid);
 
             String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
             if(internalname == null) {
-                List<Integer> list = theirTradeMap.computeIfAbsent(-1, k -> new ArrayList<>());
-                list.add(containerIndex);
+                if(stack.getDisplayName().endsWith(" coins")) {
+                    String clean = Utils.cleanColour(stack.getDisplayName());
+
+                    int mult = 1;
+                    StringBuilder sb = new StringBuilder();
+                    for(int index = 0; index < clean.length(); index++) {
+                        char c = clean.charAt(index);
+                        if("0123456789".indexOf(c) >= 0) {
+                            sb.append(c);
+                        } else {
+                            switch(c) {
+                                case 'k':
+                                    mult = 1000; break;
+                                case 'm':
+                                    mult = 1000000; break;
+                                case 'b':
+                                    mult = 1000000000; break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        }
+                    }
+                    try {
+                        int coins = Integer.parseInt(sb.toString())*mult;
+
+                        List<Integer> list = theirTradeMap.computeIfAbsent(coins, k -> new ArrayList<>());
+                        list.add(containerIndex);
+
+                    } catch(Exception ignored) {
+                        List<Integer> list = theirTradeMap.computeIfAbsent(-1, k -> new ArrayList<>());
+                        list.add(containerIndex);
+                    }
+                } else {
+                    List<Integer> list = theirTradeMap.computeIfAbsent(-1, k -> new ArrayList<>());
+                    list.add(containerIndex);
+                }
             } else {
                 JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
                 int price = -1;
@@ -282,6 +488,7 @@ public class TradeWindow {
             theirTradeOld[i] = null;
         }
         int theirTradeIndex = 0;
+        displayCountMap.clear();
         j=0;
         for(Map.Entry<Integer, List<Integer>> entry : theirTradeMap.descendingMap().entrySet()) {
             for(Integer index : entry.getValue()) {
@@ -301,12 +508,16 @@ public class TradeWindow {
                     if (ea.hasKey("uuid", 8)) {
                         uuid = ea.getString("uuid");
                     } else {
-                        uuid = stack.getDisplayName();
+                        int displayCount = displayCountMap.computeIfAbsent(stack.getDisplayName(), k->0);
+                        uuid = stack.getDisplayName() + ":" + displayCount;
+                        displayCountMap.put(stack.getDisplayName(), displayCount+1);
                     }
                 } else {
-                    uuid = stack.getDisplayName();
+                    int displayCount = displayCountMap.computeIfAbsent(stack.getDisplayName(), k->0);
+                    uuid = stack.getDisplayName() + ":" + displayCount;
+                    displayCountMap.put(stack.getDisplayName(), displayCount+1);
                 }
-                if(uuid != null) theirTradeCurrent.add(uuid);
+                //System.out.println(uuid);
                 theirTradeOld[theirTradeIndex] = uuid;
 
                 j++;
@@ -511,8 +722,9 @@ public class TradeWindow {
         }
 
         if(NotEnoughUpdates.INSTANCE.manager.config.customTradePrices.value) {
-            int ourTopItemsCount = 0;
-            TreeMap<Integer, Set<Integer>> ourTopItems = new TreeMap<>();
+            TreeMap<Integer, Set<String>> ourTopItems = new TreeMap<>();
+            TreeMap<String, ItemStack> ourTopItemsStack = new TreeMap<>();
+            TreeMap<String, Integer> ourTopItemsCount = new TreeMap<>();
             int ourPrice = 0;
             for(int i=0; i<16; i++) {
                 int x = i % 4;
@@ -522,37 +734,11 @@ public class TradeWindow {
                 ItemStack stack = chest.inventorySlots.getInventory().get(containerIndex);
                 if(stack == null) continue;
 
-                String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
-                if(internalname != null) {
-                    if(NotEnoughUpdates.INSTANCE.manager.auctionManager.isVanillaItem(internalname)) continue;
-
-                    JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
-                    int pricePer = -1;
-                    if(info != null && info.has("price") && info.has("count")) {
-                        int auctionPricePer = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
-
-                        pricePer = auctionPricePer * stack.stackSize;
-                    } else {
-                        JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
-                        if(bazaarInfo != null && bazaarInfo.has("avg_buy")) {
-                            pricePer = (int)bazaarInfo.get("avg_buy").getAsFloat();
-                        }
-                    }
-                    if(pricePer > 0) {
-                        int price = pricePer * stack.stackSize;
-
-                        price += getBackpackValue(stack);
-
-                        Set<Integer> items = ourTopItems.computeIfAbsent(price, k->new HashSet<>());
-                        items.add(containerIndex);
-
-                        ourTopItemsCount++;
-                        ourPrice += price;
-                    }
-                }
+                ourPrice += processTopItems(stack, ourTopItems, ourTopItemsStack, ourTopItemsCount);
             }
-            int theirTopItemsCount = 0;
-            TreeMap<Integer, Set<Integer>> theirTopItems = new TreeMap<>();
+            TreeMap<Integer, Set<String>> theirTopItems = new TreeMap<>();
+            TreeMap<String, ItemStack> theirTopItemsStack = new TreeMap<>();
+            TreeMap<String, Integer> theirTopItemsCount = new TreeMap<>();
             int theirPrice = 0;
             for(int i=0; i<16; i++) {
                 int x = i % 4;
@@ -562,34 +748,7 @@ public class TradeWindow {
                 ItemStack stack = chest.inventorySlots.getInventory().get(containerIndex);
                 if(stack == null) continue;
 
-                String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
-                if(internalname != null) {
-                    if(NotEnoughUpdates.INSTANCE.manager.auctionManager.isVanillaItem(internalname)) continue;
-
-                    JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
-                    int pricePer = -1;
-                    if(info != null && info.has("price") && info.has("count")) {
-                        int auctionPricePer = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
-
-                        pricePer = auctionPricePer;
-                    } else {
-                        JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
-                        if(bazaarInfo != null && bazaarInfo.has("avg_buy")) {
-                            pricePer = (int)bazaarInfo.get("avg_buy").getAsFloat();
-                        }
-                    }
-                    if(pricePer > 0) {
-                        int price = pricePer * stack.stackSize;
-
-                        price += getBackpackValue(stack);
-
-                        Set<Integer> items = theirTopItems.computeIfAbsent(price, k->new HashSet<>());
-                        items.add(containerIndex);
-
-                        theirTopItemsCount++;
-                        theirPrice += price;
-                    }
-                }
+                theirPrice += processTopItems(stack, theirTopItems, theirTopItemsStack, theirTopItemsCount);
             }
 
             NumberFormat format = NumberFormat.getInstance(Locale.US);
@@ -604,15 +763,28 @@ public class TradeWindow {
             drawStringShadow(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+format.format(ourPrice),
                     guiLeft-40-3, guiTop+21, 72);
 
-            int ourTopIndex = Math.max(0, 3-ourTopItemsCount);
+            int ourTopIndex = Math.max(0, 3-ourTopItemsStack.size());
             out:
-            for(Map.Entry<Integer, Set<Integer>> entry : ourTopItems.descendingMap().entrySet()) {
-                for(int ourTopItem : entry.getValue()) {
-                    ItemStack stack = chest.inventorySlots.getInventory().get(ourTopItem);
+            for(Map.Entry<Integer, Set<String>> entry : ourTopItems.descendingMap().entrySet()) {
+                for(String ourTopItemInternal : entry.getValue()) {
+                    ItemStack stack = ourTopItemsStack.get(ourTopItemInternal);
                     if(stack == null) continue;
 
                     if(NotEnoughUpdates.INSTANCE.manager.config.customTradePriceStyle.value) {
-                        Utils.drawItemStack(stack, guiLeft-75-3, guiTop+49+18*ourTopIndex);
+                        String countS = "";
+                        if(ourTopItemsCount.containsKey(ourTopItemInternal)) {
+                            int count = ourTopItemsCount.get(ourTopItemInternal);
+                            if(count > 999999) {
+                                countS = Math.floor(count/10000f)/100f+"m";
+                            } else if(count > 999) {
+                                countS = Math.floor(count/10f)/100f+"k";
+                            } else {
+                                countS = ""+count;
+                            }
+                        }
+
+                        Utils.drawItemStackWithText(stack, guiLeft-75-3, guiTop+49+18*ourTopIndex, countS);
+
                         GlStateManager.disableLighting();
                         GlStateManager.disableBlend();
                         GlStateManager.color(1, 1, 1, 1);
@@ -620,7 +792,7 @@ public class TradeWindow {
                                 guiLeft-29-3, guiTop+57+18*ourTopIndex, 52);
                         GlStateManager.enableBlend();
                     } else {
-                        drawStringShadow(stack.getDisplayName(),
+                        drawStringShadow(stack.getDisplayName() + EnumChatFormatting.GRAY+"x"+ourTopItemsCount.get(ourTopItemInternal),
                                 guiLeft-40-3, guiTop+46+20*ourTopIndex, 72);
                         drawStringShadow(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+format.format(entry.getKey()),
                                 guiLeft-40-3, guiTop+56+20*ourTopIndex, 72);
@@ -639,15 +811,28 @@ public class TradeWindow {
             drawStringShadow(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+format.format(theirPrice),
                     guiLeft+xSize+3+40, guiTop+21, 72);
 
-            int theirTopIndex = Math.max(0, 3-theirTopItemsCount);
+            int theirTopIndex = Math.max(0, 3-theirTopItemsStack.size());
             out:
-            for(Map.Entry<Integer, Set<Integer>> entry : theirTopItems.descendingMap().entrySet()) {
-                for(int theirTopItem : entry.getValue()) {
-                    ItemStack stack = chest.inventorySlots.getInventory().get(theirTopItem);
+            for(Map.Entry<Integer, Set<String>> entry : theirTopItems.descendingMap().entrySet()) {
+                for(String theirTopItemInternal : entry.getValue()) {
+                    ItemStack stack = theirTopItemsStack.get(theirTopItemInternal);
                     if(stack == null) continue;
 
                     if(NotEnoughUpdates.INSTANCE.manager.config.customTradePriceStyle.value) {
-                        Utils.drawItemStack(stack, guiLeft+xSize+3+5, guiTop+49+18*theirTopIndex);
+                        String countS = "";
+                        if(theirTopItemsCount.containsKey(theirTopItemInternal)) {
+                            int count = theirTopItemsCount.get(theirTopItemInternal);
+                            if(count > 999999) {
+                                countS = Math.floor(count/10000f)/100f+"m";
+                            } else if(count > 999) {
+                                countS = Math.floor(count/10f)/100f+"k";
+                            } else {
+                                countS = ""+count;
+                            }
+                        }
+
+                        Utils.drawItemStackWithText(stack, guiLeft+xSize+25+3-16, guiTop+49+18*theirTopIndex, countS);
+
                         GlStateManager.disableLighting();
                         GlStateManager.disableBlend();
                         GlStateManager.color(1, 1, 1, 1);
@@ -843,7 +1028,5 @@ public class TradeWindow {
     public static boolean keyboardInput() {
         return Keyboard.getEventKey() != Keyboard.KEY_ESCAPE;
     }
-
-
 
 }

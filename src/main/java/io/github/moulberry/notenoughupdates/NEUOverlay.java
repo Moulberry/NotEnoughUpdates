@@ -1570,6 +1570,7 @@ public class NEUOverlay extends Gui {
             return;
         }
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+
         scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledresolution.getScaledWidth();
         int height = scaledresolution.getScaledHeight();

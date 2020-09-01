@@ -1406,6 +1406,30 @@ public class GuiProfileViewer extends GuiScreen {
 
         inventoryTextField.render(guiLeft+19, guiTop+sizeY-26-20);
 
+        if(armorItems == null) {
+            armorItems = new ItemStack[4];
+            JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
+            for(int i=0; i<armor.size(); i++) {
+                if(armor.get(i) == null || !armor.get(i).isJsonObject()) continue;
+                armorItems[i] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(armor.get(i).getAsJsonObject(), false);
+            }
+        }
+
+        for(int i=0; i<armorItems.length; i++) {
+            ItemStack stack = armorItems[i];
+            if(stack != null) {
+                Utils.drawItemStack(stack, guiLeft+173, guiTop+67-18*i);
+                if(stack != fillerStack) {
+                    if(mouseX >= guiLeft+173-1 && mouseX <= guiLeft+173+16+1) {
+                        if(mouseY >= guiTop+67-18*i-1 && mouseY <= guiTop+67-18*i+16+1) {
+                            tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer,
+                                    Minecraft.getMinecraft().gameSettings.advancedItemTooltips);
+                        }
+                    }
+                }
+            }
+        }
+
         ItemStack[][][] inventories = getItemsForInventory(inventoryInfo, collectionInfo, selectedInventory);
         if(currentInventoryIndex >= inventories.length) currentInventoryIndex = inventories.length-1;
         if(currentInventoryIndex < 0) currentInventoryIndex = 0;
@@ -1444,29 +1468,6 @@ public class GuiProfileViewer extends GuiScreen {
             if(mouseX >= guiLeft+143-1 && mouseX <= guiLeft+143+16+1) {
                 if(mouseY >= guiTop+137+18*i-1 && mouseY <= guiTop+137+18*i+16+1) {
                     tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-                }
-            }
-        }
-
-        if(armorItems == null) {
-            armorItems = new ItemStack[4];
-            JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
-            for(int i=0; i<armor.size(); i++) {
-                if(armor.get(i) == null || !armor.get(i).isJsonObject()) continue;
-                armorItems[i] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(armor.get(i).getAsJsonObject(), false);
-            }
-        }
-
-        for(int i=0; i<armorItems.length; i++) {
-            ItemStack stack = armorItems[i];
-            if(stack != null) {
-                Utils.drawItemStack(stack, guiLeft+173, guiTop+67-18*i);
-                if(stack != fillerStack) {
-                    if(mouseX >= guiLeft+173-1 && mouseX <= guiLeft+173+16+1) {
-                        if(mouseY >= guiTop+67-18*i-1 && mouseY <= guiTop+67-18*i+16+1) {
-                            tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-                        }
-                    }
                 }
             }
         }
@@ -2002,6 +2003,11 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
 
+        long networth = profile.getNetWorth(profileId);
+        if(networth > 0) {
+            Utils.drawStringCentered(EnumChatFormatting.GREEN+"Net Worth: "+EnumChatFormatting.GOLD+numberFormat.format(networth), fr, guiLeft+63, guiTop+38, true, 0);
+        }
+
         if(status != null) {
             JsonElement onlineElement = Utils.getElement(status, "online");
             boolean online = onlineElement != null && onlineElement.isJsonPrimitive() && onlineElement.getAsBoolean();
@@ -2170,6 +2176,39 @@ public class GuiProfileViewer extends GuiScreen {
                     guiLeft+172, guiTop+101, true, 0);
             Utils.drawStringCentered(EnumChatFormatting.RED+"enabled!", Minecraft.getMinecraft().fontRendererObj,
                     guiLeft+172, guiTop+101+10, true, 0);
+        }
+
+        int cata = profile.getDungeonCatacombsLevel(profileId);
+
+        if(cata > 0) {
+            int yPosition = 3;
+            int xPosition = 1;
+
+            int x = guiLeft+237+86*xPosition;
+            int y = guiTop+31+21*yPosition;
+
+            renderAlignedString(EnumChatFormatting.GRAY+"Catacombs", EnumChatFormatting.WHITE.toString()+cata, x+14, y-4, 60);
+
+            renderBar(x, y+6, 80, cata/50f);
+
+            if(mouseX > x && mouseX < x+80) {
+                if(mouseY > y-4 && mouseY < y+13) {
+                    String levelStr;
+                    if(cata == 50) {
+                        levelStr = EnumChatFormatting.GOLD+"MAXED!";
+                    } else {
+                        levelStr = EnumChatFormatting.DARK_PURPLE.toString() + cata + "/50";
+                    }
+
+                    tooltipToDisplay = Utils.createList(levelStr);
+                }
+            }
+
+            GL11.glTranslatef((x), (y-6f), 0);
+            GL11.glScalef(0.7f, 0.7f, 1);
+            Utils.drawItemStackLinear(new ItemStack(Item.getItemFromBlock(Blocks.deadbush)), 0, 0);
+            GL11.glScalef(1/0.7f, 1/0.7f, 1);
+            GL11.glTranslatef(-(x), -(y-6f), 0);
         }
 
         if(skillInfo != null) {

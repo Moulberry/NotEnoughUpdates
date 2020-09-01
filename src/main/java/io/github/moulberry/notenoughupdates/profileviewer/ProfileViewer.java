@@ -276,6 +276,7 @@ public class ProfileViewer {
         private HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
         private HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
         private long networth = -1;
+        private int dungeonCatacombsLevel = -1;
 
         public Profile(String uuid) {
             this.uuid = uuid;
@@ -304,6 +305,110 @@ public class ProfileViewer {
             );
 
             return null;
+        }
+
+        public int getDungeonCatacombsLevel(String profileId) {
+            if (dungeonCatacombsLevel != -1) return dungeonCatacombsLevel;
+            if (getInventoryInfo(profileId) == null) return -1;
+
+            JsonObject inventoryInfo = getInventoryInfo(profileId);
+
+            Pattern pattern = Pattern.compile("\\u00A77[A-Za-z ]+: \\u00A7[a-f0-9]\\+(\\d+).+\\u00A78\\(\\+?([0-9\\.]+)(%| HP)?\\)");
+
+            List<Float> nums = new ArrayList<>();
+
+            try {
+                for(Map.Entry<String, JsonElement> entry : inventoryInfo.entrySet()) {
+                    if(entry.getValue().isJsonArray()) {
+                        for(JsonElement element : entry.getValue().getAsJsonArray()) {
+                            if(element != null && element.isJsonObject()) {
+                                JsonObject item = element.getAsJsonObject();
+                                String internalname = item.get("internalname").getAsString();
+
+                                //TODO: Make sure item is a catacombs level (using internalname)
+
+                                int dungeon_item_level = 0;
+                                if(item.has("dungeon_item_level")) {
+                                    dungeon_item_level = item.get("dungeon_item_level").getAsInt();
+                                }
+
+                                if(item.has("lore") && item.get("lore").isJsonArray()) {
+                                    for(JsonElement lineElement : item.get("lore").getAsJsonArray()) {
+                                        if(lineElement.isJsonPrimitive()) {
+                                            String line = lineElement.getAsString();
+                                            Matcher matcher = pattern.matcher(line);
+                                            if(matcher.matches()) {
+                                                String num1S = matcher.group(1);
+                                                String num2S = matcher.group(2);
+
+                                                int num1 = Integer.parseInt(num1S);
+                                                float num2 = Float.parseFloat(num2S);
+
+                                                float bonus = num2/num1 - dungeon_item_level*0.1f;
+
+                                                if(bonus > 1) nums.add(bonus);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                try {
+                                    if(item.has("item_contents")) {
+                                        JsonArray bytesArr = item.get("item_contents").getAsJsonArray();
+                                        byte[] bytes = new byte[bytesArr.size()];
+                                        for (int bytesArrI = 0; bytesArrI < bytesArr.size(); bytesArrI++) {
+                                            bytes[bytesArrI] = bytesArr.get(bytesArrI).getAsByte();
+                                        }
+                                        NBTTagCompound contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(bytes));
+                                        NBTTagList items = contents_nbt.getTagList("i", 10);
+                                        for(int j=0; j<items.tagCount(); j++) {
+                                            if(items.getCompoundTagAt(j).getKeySet().size() > 0) {
+                                                JsonObject item2 = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
+
+                                                int dungeon_item_level2 = 0;
+                                                if(item2.has("dungeon_item_level")) {
+                                                    dungeon_item_level2 = item2.get("dungeon_item_level").getAsInt();
+                                                }
+
+                                                if(item2.has("lore") && item2.get("lore").isJsonArray()) {
+                                                    for(JsonElement lineElement : item2.get("lore").getAsJsonArray()) {
+                                                        if(lineElement.isJsonPrimitive()) {
+                                                            String line = lineElement.getAsString();
+                                                            Matcher matcher = pattern.matcher(line);
+                                                            if(matcher.matches()) {
+                                                                String num1S = matcher.group(1);
+                                                                String num2S = matcher.group(2);
+
+                                                                int num1 = Integer.parseInt(num1S);
+                                                                float num2 = Float.parseFloat(num2S);
+
+                                                                float bonus = num2/num1 - dungeon_item_level2*0.1f;
+
+                                                                if(bonus > 1) nums.add(bonus);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch(IOException ignored) {}
+                            }
+                        }
+                    }
+                }
+            } catch(Exception ignored) {}
+
+            if(nums.size() > 0) {
+                nums.sort(Comparator.naturalOrder());
+                int bonus = -100+Math.round(100*nums.get(nums.size()/2));
+                dungeonCatacombsLevel = 0;
+                while(bonus > 0) {
+                    dungeonCatacombsLevel++;
+                    bonus -= 3+Math.ceil(dungeonCatacombsLevel/5f);
+                }
+            }
+            return dungeonCatacombsLevel;
         }
 
         public long getNetWorth(String profileId) {
@@ -542,6 +647,7 @@ public class ProfileViewer {
             inventoryInfoMap.clear();
             collectionInfoMap.clear();
             networth = -1;
+            dungeonCatacombsLevel = -1;
         }
 
         private class Level {

@@ -317,8 +317,14 @@ public class NotEnoughUpdates {
                                     overallScore += wolf*wolf/81f;
                                     overallScore += avgSkillLVL/20f;
 
+
+                                    int cata = profile.getDungeonCatacombsLevel(null);
+                                    EnumChatFormatting cataPrefix = cata>15?(cata>25?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                            g+"Combat: "+combatPrefix+(int)Math.floor(combat) +g+" - AVG Skill: " + avgPrefix+(int)Math.floor(avgSkillLVL)));
+                                            g+"Combat: "+combatPrefix+(int)Math.floor(combat) +
+                                                    (cata > 0 ? g+" - Cata: "+cataPrefix+cata : "")+
+                                                    g+" - AVG: " + avgPrefix+(int)Math.floor(avgSkillLVL)));
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                                             g+"Slayer: "+zombiePrefix+(int)Math.floor(zombie)+g+"-"+
                                                     spiderPrefix+(int)Math.floor(spider)+g+"-"+wolfPrefix+(int)Math.floor(wolf)));
@@ -346,23 +352,17 @@ public class NotEnoughUpdates {
                                 float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), -1);
                                 float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
 
-                                EnumChatFormatting moneyPrefix = (bankBalance+purseBalance)>10*1000*1000?
-                                        ((bankBalance+purseBalance)>50*1000*1000?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                        g+"Purse : "+moneyPrefix+Utils.shortNumberFormat(purseBalance, 0) + g+" - Bank: " +
-                                                (bankBalance == -1 ? EnumChatFormatting.YELLOW+"Disabled" : moneyPrefix+
-                                                        (isMe?"4.8b":Utils.shortNumberFormat(bankBalance, 0)))));
-
                                 long networth = profile.getNetWorth(null);
-                                if(networth > 0) {
-                                    EnumChatFormatting moneyPrefix2 = networth>50*1000*1000?
-                                            (networth>200*1000*1000?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                            g+"Networth : "+moneyPrefix2+Utils.shortNumberFormat(networth, 0)));
-                                }
-                                if(networth == -1) networth = (long)(bankBalance+purseBalance);
+                                float money = Math.max(bankBalance+purseBalance, networth);
+                                EnumChatFormatting moneyPrefix = money>50*1000*1000?
+                                        (money>200*1000*1000?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                        g+"Purse: "+moneyPrefix+Utils.shortNumberFormat(purseBalance, 0) + g+" - Bank: " +
+                                                (bankBalance == -1 ? EnumChatFormatting.YELLOW+"N/A" : moneyPrefix+
+                                                        (isMe?"4.8b":Utils.shortNumberFormat(bankBalance, 0))) +
+                                                (networth > 0 ? g+" - Net: "+moneyPrefix+Utils.shortNumberFormat(networth, 0) : "")));
 
-                                overallScore += Math.min(2, networth/(100f*1000*1000));
+                                overallScore += Math.min(2, money/(100f*1000*1000));
 
                                 String activePet = Utils.getElementAsString(Utils.getElement(profile.getPetsInfo(null), "active_pet.type"),
                                         "None Active");
