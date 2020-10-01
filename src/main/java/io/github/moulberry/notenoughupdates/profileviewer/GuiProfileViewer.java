@@ -2012,13 +2012,15 @@ public class GuiProfileViewer extends GuiScreen {
             if(mouseX > guiLeft+8 && mouseX < guiLeft+8+fontRendererObj.getStringWidth("Net Worth: " + numberFormat.format(networth))) {
                 if(mouseY > guiTop+32 && mouseY < guiTop+32+fontRendererObj.FONT_HEIGHT) {
                     tooltipToDisplay = new ArrayList<>();
-                    tooltipToDisplay.add(EnumChatFormatting.GREEN+"Networth in IRL money: "+EnumChatFormatting.DARK_GREEN+"$" +EnumChatFormatting.GOLD+networthIRLMoney);
+                    tooltipToDisplay.add(EnumChatFormatting.GREEN+"Net worth in IRL money: "+EnumChatFormatting.DARK_GREEN+"$" +EnumChatFormatting.GOLD+networthIRLMoney);
                     tooltipToDisplay.add("");
                     tooltipToDisplay.add(EnumChatFormatting.RED+"This is calculated using the current");
                     tooltipToDisplay.add(EnumChatFormatting.RED+"price of booster cookies on bazaar and the price");
-                    tooltipToDisplay.add(EnumChatFormatting.RED+"for cookies using gems and then the price of gems");
-                    tooltipToDisplay.add(EnumChatFormatting.RED+"is where we get the amount of IRl money you" );
-                    tooltipToDisplay.add(EnumChatFormatting.RED+"theoretically have on skyblock in networth.");
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"for cookies using gems, then the price of gems");
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"is where we get the amount of IRL money you" );
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"theoretically have on skyblock in net worth.");
+                    tooltipToDisplay.add("");
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"THIS IS IN NO WAY ENDORSING IRL TRADING!");
                 }
             }
         }
