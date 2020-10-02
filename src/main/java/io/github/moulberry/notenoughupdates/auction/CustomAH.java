@@ -87,8 +87,8 @@ public class CustomAH extends Gui {
 
     private float scrollAmount;
 
-    public int guiLeft = 0;
-    public int guiTop = 0;
+    public int guiLeft = -1;
+    public int guiTop = -1;
 
     private Category CATEGORY_SWORD = new Category("sword", "Swords", "diamond_sword");
     private Category CATEGORY_ARMOR = new Category("armor", "Armor", "diamond_chestplate");

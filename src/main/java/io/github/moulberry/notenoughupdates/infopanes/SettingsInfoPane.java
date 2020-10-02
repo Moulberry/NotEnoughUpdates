@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.infopanes;
 
+import io.github.moulberry.notenoughupdates.BetterContainers;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -175,6 +176,7 @@ public class SettingsInfoPane extends InfoPane {
             tf.setCustomBorderColour(-1);
             option.setValue(tf.getText());
             overlay.redrawItems();
+            BetterContainers.reset();
         } catch(Exception e) {
             tf.setCustomBorderColour(Color.RED.getRGB());
         }

@@ -32,6 +32,7 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -136,7 +137,15 @@ public class NEUEventListener {
         if(longUpdate) {
             neu.updateSkyblockScoreboard();
             CapeManager.getInstance().tick();
+
+            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
+                AccessoryBagOverlay.resetCache();
+            }
+
             if(neu.hasSkyblockScoreboard()) {
+                if(Loader.isModLoaded("morus")) {
+                    MorusIntegration.getInstance().tick();
+                }
                 lastSkyblockScoreboard = currentTime;
                 if(!joinedSB) {
                     joinedSB = true;
@@ -173,8 +182,8 @@ public class NEUEventListener {
         }
         if(longUpdate && neu.hasSkyblockScoreboard()) {
             if(neu.manager.getCurrentProfile() == null || neu.manager.getCurrentProfile().length() == 0) {
-                ProfileViewer.Profile profile = neu.profileViewer.getProfile(
-                        Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""), (json) -> {});
+                ProfileViewer.Profile profile = neu.profileViewer.getProfile(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
+                        callback->{});
                 if(profile != null) {
                     String latest = profile.getLatestProfile();
                     if(latest != null) {
@@ -276,6 +285,7 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
         neu.manager.auctionManager.customAH.lastGuiScreenSwitch = System.currentTimeMillis();
+        BetterContainers.reset();
 
         if(event.gui == null && neu.manager.auctionManager.customAH.isRenderOverAuctionView() &&
                 !(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)) {
@@ -511,6 +521,7 @@ public class NEUEventListener {
 
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
             renderDungeonChestOverlay(event.gui);
+            AccessoryBagOverlay.renderOverlay();
         }
     }
 
@@ -748,12 +759,16 @@ public class NEUEventListener {
             return;
         }
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            if(!(hoverInv && focusInv)) {
-                if(neu.overlay.mouseInput()) {
-                    event.setCanceled(true);
-                }
+            if(AccessoryBagOverlay.mouseClick()) {
+                event.setCanceled(true);
             } else {
-                neu.overlay.mouseInputInv();
+                if(!(hoverInv && focusInv)) {
+                    if(neu.overlay.mouseInput()) {
+                        event.setCanceled(true);
+                    }
+                } else {
+                    neu.overlay.mouseInputInv();
+                }
             }
         }
     }

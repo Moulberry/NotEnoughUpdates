@@ -41,31 +41,31 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.text.translate.UnicodeUnescaper;
 
+import javax.net.ssl.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.Proxy;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "1.2-REL";
+    public static final String VERSION = "1.3-REL";
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -311,15 +311,15 @@ public class NotEnoughUpdates {
                                     EnumChatFormatting wolfPrefix = wolf>3?(wolf>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                     EnumChatFormatting avgPrefix = avgSkillLVL>20?(avgSkillLVL>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
 
-                                    overallScore += combat*combat/2000f;
                                     overallScore += zombie*zombie/81f;
                                     overallScore += spider*spider/81f;
                                     overallScore += wolf*wolf/81f;
                                     overallScore += avgSkillLVL/20f;
 
-
-                                    int cata = profile.getDungeonCatacombsLevel(null);
+                                    int cata = (int)Utils.getElementAsFloat(skill.get("level_skill_catacombs"), 0);
                                     EnumChatFormatting cataPrefix = cata>15?(cata>25?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+
+                                    overallScore += cata*cata/2000f;
 
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                                             g+"Combat: "+combatPrefix+(int)Math.floor(combat) +
@@ -610,6 +610,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
         MinecraftForge.EVENT_BUS.register(new SBGamemodes());
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
+        //MinecraftForge.EVENT_BUS.register(new BetterPortals());
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         f.mkdirs();
@@ -723,7 +724,6 @@ public class NotEnoughUpdates {
         release.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, update_link));
         ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"GitHub"+EnumChatFormatting.GRAY+"]");
         github.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, github_link));
-
 
         links.appendSibling(separator);
         links.appendSibling(discord);

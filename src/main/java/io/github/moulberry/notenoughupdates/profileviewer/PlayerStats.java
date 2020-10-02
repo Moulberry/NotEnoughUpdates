@@ -137,17 +137,20 @@ public class PlayerStats {
         for(Map.Entry<String, JsonElement> entry : skillInfo.entrySet()) {
             if(entry.getKey().startsWith("level_")) {
                 String skill = entry.getKey().substring("level_".length());
-                JsonObject skillStatMap = Utils.getElement(bonuses, "bonus_stats."+skill).getAsJsonObject();
+                JsonElement element = Utils.getElement(bonuses, "bonus_stats."+skill);
+                if(element != null && element.isJsonObject()) {
+                    JsonObject skillStatMap = element.getAsJsonObject();
 
-                Stats currentBonus = new Stats();
-                for(int i=1; i<=entry.getValue().getAsFloat(); i++) {
-                    if(skillStatMap.has(""+i)) {
-                        currentBonus = new Stats();
-                        for(Map.Entry<String, JsonElement> entry2 : skillStatMap.get(""+i).getAsJsonObject().entrySet()) {
-                            currentBonus.addStat(entry2.getKey(), entry2.getValue().getAsFloat());
+                    Stats currentBonus = new Stats();
+                    for(int i=1; i<=entry.getValue().getAsFloat(); i++) {
+                        if(skillStatMap.has(""+i)) {
+                            currentBonus = new Stats();
+                            for(Map.Entry<String, JsonElement> entry2 : skillStatMap.get(""+i).getAsJsonObject().entrySet()) {
+                                currentBonus.addStat(entry2.getKey(), entry2.getValue().getAsFloat());
+                            }
                         }
+                        skillBonus.add(currentBonus);
                     }
-                    skillBonus.add(currentBonus);
                 }
             }
         }

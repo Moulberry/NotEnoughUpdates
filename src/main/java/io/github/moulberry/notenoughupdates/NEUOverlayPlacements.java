@@ -1,14 +1,12 @@
 package io.github.moulberry.notenoughupdates;
 
-import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
-import io.github.moulberry.notenoughupdates.mbgui.MBGuiElement;
-import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroup;
-import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupFloating;
+import io.github.moulberry.notenoughupdates.mbgui.*;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -24,18 +22,20 @@ public class NEUOverlayPlacements extends GuiScreen {
     private MBGuiElement clickedElement;
     private GuiButton guiButton = new GuiButton(0, 5, 5, "Reset to Default");
 
+    private boolean dropdownMenuShown = false;
+
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawScreen(mouseX, mouseY, partialTicks);
         drawDefaultBackground();
 
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        /*GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         Minecraft.getMinecraft().getTextureManager().bindTexture(icons);
         GlStateManager.enableBlend();
 
         GlStateManager.tryBlendFuncSeparate(775, 769, 1, 0);
         GlStateManager.enableAlpha();
-        this.drawTexturedModalRect(width / 2 - 7, height / 2 - 7, 0, 0, 16, 16);
+        this.drawTexturedModalRect(width / 2 - 7, height / 2 - 7, 0, 0, 16, 16);*/
 
         if(mouseX < 300 && mouseY < 300 && clickedElement != null) {
             guiButton.yPosition = height - 5 - guiButton.height;
@@ -43,18 +43,25 @@ public class NEUOverlayPlacements extends GuiScreen {
             guiButton.yPosition = 5;
         }
 
+        EnumChatFormatting GOLD = EnumChatFormatting.GOLD;
+
         guiButton.drawButton(Minecraft.getMinecraft(), mouseX, mouseY);
 
         NotEnoughUpdates.INSTANCE.overlay.updateGuiGroupSize();
 
+        drawRect((width-176)/2, (height-166)/2,
+                (width+176)/2, (height+166)/2, new Color(100, 100, 100, 200).getRGB());
+        Utils.drawStringCentered(GOLD+"Inventory", Minecraft.getMinecraft().fontRendererObj, width/2f, height/2f, false, 0);
+
         MBGuiGroupFloating mainGroup = NotEnoughUpdates.INSTANCE.overlay.guiGroup;
+        mainGroup.render(0, 0);
+        GlStateManager.translate(0, 0, 500);
         for(MBGuiElement element : mainGroup.getChildren()) {
             MBAnchorPoint anchorPoint = mainGroup.getChildrenMap().get(element);
             Vector2f position = mainGroup.getChildrenPosition().get(element);
 
             drawRect((int)position.x, (int)position.y,
                     (int)position.x+element.getWidth(), (int)position.y+element.getHeight(), new Color(100, 100, 100, 200).getRGB());
-
 
             switch(anchorPoint.anchorPoint) {
                 case TOPLEFT:
@@ -83,14 +90,9 @@ public class NEUOverlayPlacements extends GuiScreen {
                             new Color(200, 200, 200, 100).getRGB());
                     break;
                 case BOTMID:
-                case INV_BOTMID:
                     drawRect((int)position.x, (int)(position.y+element.getHeight()*0.9f),
                             (int)position.x+element.getWidth(), (int)position.y+element.getHeight(),
                             new Color(200, 200, 200, 100).getRGB());
-                    if(anchorPoint.anchorPoint == MBAnchorPoint.AnchorPoint.INV_BOTMID) {
-                        Utils.drawStringCentered("Inv-Relative", Minecraft.getMinecraft().fontRendererObj,
-                                position.x+element.getWidth()*0.5f, position.y+element.getHeight()*0.5f, false, 0);
-                    }
                     break;
                 case MIDMID:
                     drawRect((int)(position.x+element.getWidth()*0.45f), (int)(position.y+element.getHeight()*0.45f),
@@ -99,12 +101,21 @@ public class NEUOverlayPlacements extends GuiScreen {
                     break;
 
             }
+
+            if(anchorPoint.inventoryRelative) {
+                Utils.drawStringCentered(GOLD+"Inv-Relative", Minecraft.getMinecraft().fontRendererObj,
+                        position.x+element.getWidth()*0.5f, position.y+element.getHeight()*0.5f, false, 0);
+            }
         }
+        GlStateManager.translate(0, 0, -500);
     }
 
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
+
+        if(mouseButton != 0 && mouseButton != 1) return;
+
         MBGuiGroupFloating mainGroup = NotEnoughUpdates.INSTANCE.overlay.guiGroup;
         int index=0;
         for(MBGuiElement element : mainGroup.getChildren()) {
@@ -120,22 +131,26 @@ public class NEUOverlayPlacements extends GuiScreen {
                         clickedAnchorX = (int)anchorPoint.offset.x;
                         clickedAnchorY = (int)anchorPoint.offset.y;
                     } else {
-                        MBAnchorPoint.AnchorPoint[] vals = MBAnchorPoint.AnchorPoint.values();
-                        anchorPoint.anchorPoint = vals[(anchorPoint.anchorPoint.ordinal()+1)%vals.length];
+                        if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)) {
+                            anchorPoint.inventoryRelative = !anchorPoint.inventoryRelative;
+                        } else {
+                            MBAnchorPoint.AnchorPoint[] vals = MBAnchorPoint.AnchorPoint.values();
+                            anchorPoint.anchorPoint = vals[(anchorPoint.anchorPoint.ordinal()+1)%vals.length];
 
-                        mainGroup.recalculate();
+                            mainGroup.recalculate();
 
-                        anchorPoint.offset.x += position.x - mainGroup.getChildrenPosition().get(element).x;
-                        anchorPoint.offset.y += position.y - mainGroup.getChildrenPosition().get(element).y;
+                            anchorPoint.offset.x += position.x - mainGroup.getChildrenPosition().get(element).x;
+                            anchorPoint.offset.y += position.y - mainGroup.getChildrenPosition().get(element).y;
 
-                        mainGroup.recalculate();
+                            mainGroup.recalculate();
 
-                        if(index == 0) {
-                            NotEnoughUpdates.INSTANCE.manager.config.overlaySearchBar.value = anchorPoint.toString();
-                        } else if(index == 1) {
-                            NotEnoughUpdates.INSTANCE.manager.config.overlayQuickCommand.value = anchorPoint.toString();
+                            if(index == 0) {
+                                NotEnoughUpdates.INSTANCE.manager.config.overlaySearchBar.value = anchorPoint.toString();
+                            } else if(index == 1) {
+                                NotEnoughUpdates.INSTANCE.manager.config.overlayQuickCommand.value = anchorPoint.toString();
+                            }
+                            try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
                         }
-                        try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
                     }
                     return;
                 }
@@ -194,7 +209,7 @@ public class NEUOverlayPlacements extends GuiScreen {
                 }
                 index++;
             }
-
+            try { MBDeserializer.serializeAndSave(mainGroup, "overlay"); } catch(Exception e) {}
             mainGroup.recalculate();
         }
     }

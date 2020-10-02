@@ -23,7 +23,7 @@ void main() {
             }
         }
     } else if(eventRand < 0.45f) {
-        vec2 extraPos = vec2(-30.0f+eventMillis/2000f*370.0f, 50.0f+(eventRand-0.4f)/0.05f*300.0f)/1024.0f;
+        vec2 extraPos = vec2(-30.0f+eventMillis/2000.0f*370.0f, 50.0f+(eventRand-0.4f)/0.05f*300.0f)/1024.0f;
         vec2 extraTexCoord = vec2(gl_TexCoord[0].s-extraPos.x+248.0f/1024.0f, gl_TexCoord[0].t-extraPos.y+894.0f/1024.0f);
         if(extraTexCoord.x > 200.0f/1024.0f && extraTexCoord.x < 300.0f/1024.0f) {
             if(extraTexCoord.y > 843.0f/1024.0f && extraTexCoord.y < 943.0f/1024.0f) {
@@ -31,7 +31,7 @@ void main() {
             }
         }
     } else if(eventRand < 0.47f) {
-        vec2 extraPos = vec2(-30.0f+eventMillis/2000f*370.0f, 50.0f+(eventRand-0.45f)/0.02f*300.0f)/1024.0f;
+        vec2 extraPos = vec2(-30.0f+eventMillis/2000.0f*370.0f, 50.0f+(eventRand-0.45f)/0.02f*300.0f)/1024.0f;
         vec2 extraTexCoord = vec2(gl_TexCoord[0].s-extraPos.x+348.0f/1024.0f, gl_TexCoord[0].t-extraPos.y+894.0f/1024.0f);
         if(extraTexCoord.x > 300.0f/1024.0f && extraTexCoord.x < 400.0f/1024.0f) {
             if(extraTexCoord.y > 843.0f/1024.0f && extraTexCoord.y < 943.0f/1024.0f) {
@@ -39,7 +39,7 @@ void main() {
             }
         }
     } else if(eventRand < 0.48f) {
-        vec2 extraPos = vec2(-30.0f+eventMillis/2000f*370.0f, 50.0f+(eventRand-0.47f)/0.01f*300.0f)/1024.0f;
+        vec2 extraPos = vec2(-30.0f+eventMillis/2000.0f*370.0f, 50.0f+(eventRand-0.47f)/0.01f*300.0f)/1024.0f;
         vec2 extraTexCoord = vec2(gl_TexCoord[0].s-extraPos.x+448.0f/1024.0f, gl_TexCoord[0].t-extraPos.y+894.0f/1024.0f);
         if(extraTexCoord.x > 400.0f/1024.0f && extraTexCoord.x < 500.0f/1024.0f) {
             if(extraTexCoord.y > 843.0f/1024.0f && extraTexCoord.y < 943.0f/1024.0f) {

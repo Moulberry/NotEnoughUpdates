@@ -183,6 +183,16 @@ public class Options {
             "Coloured Tooltip Border Opacity",
             false,
             "Coloured tooltips only apply to tooltips in my GUIs. Value between 0-255.", 0, 255);
+    public Option<Double> dynamicMenuBackgroundStyle = new Option(
+            1.0,
+            "SBMenu Background Style",
+            false,
+            "Style of the background used for the skyblock menu.", 0, 10);
+    public Option<Double> dynamicMenuButtonStyle = new Option(
+            1.0,
+            "SBMenu Button Style",
+            false,
+            "Style of the buttons used for the skyblock menu.", 0, 10);
 
     /**
      * OPTIONS THAT DON'T SHOW IN GUI
@@ -355,6 +365,8 @@ public class Options {
         tryAddOption(itemHighlightOpacity, options);
         tryAddOption(panePadding, options);
         tryAddOption(tooltipBorderOpacity, options);
+        tryAddOption(dynamicMenuBackgroundStyle, options);
+        tryAddOption(dynamicMenuButtonStyle, options);
         //Text
         tryAddOption(apiKey, options);
 

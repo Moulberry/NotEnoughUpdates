@@ -9,4 +9,6 @@ public abstract class MBGuiElement {
     public abstract void mouseClickOutside();
     public abstract void render(float x, float y);
 
+    //public abstract JsonObject serialize();
+
 }

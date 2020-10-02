@@ -38,13 +38,13 @@ public class SBAIntegration {
                 skyblockAddons_getUtils = skyblockAddonsClass.getDeclaredMethod("getUtils");
             }
             if(backpackManagerClass == null) {
-                backpackManagerClass = Class.forName("codes.biscuit.skyblockaddons.utils.BackpackManager");
+                backpackManagerClass = Class.forName("codes.biscuit.skyblockaddons.features.backpacks.BackpackManager");
             }
             if(backpackManager_getFromItem == null) {
                 backpackManager_getFromItem = backpackManagerClass.getDeclaredMethod("getFromItem", ItemStack.class);
             }
             if(backpackClass == null) {
-                backpackClass = Class.forName("codes.biscuit.skyblockaddons.utils.Backpack");
+                backpackClass = Class.forName("codes.biscuit.skyblockaddons.features.backpacks.Backpack");
             }
             if(backpackClass_setX == null) {
                 backpackClass_setX = backpackClass.getDeclaredMethod("setX", int.class);
@@ -74,7 +74,10 @@ public class SBAIntegration {
                 backpackClass_setY.invoke(backpack, mouseY);
                 utils_setBackpackToPreview.invoke(utils, backpack);
             }
-        } catch(Exception e) { return false; }
+        } catch(Exception e) {
+            e.printStackTrace();
+            return false;
+        }
         return true;
     }
 
@@ -97,6 +100,7 @@ public class SBAIntegration {
         try {
             return (boolean) guiContainerHook_freezeBackpack.get(null);
         } catch(Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -120,6 +124,7 @@ public class SBAIntegration {
             guiContainerHook_freezeBackpack.set(null, freezeBackpack);
             return true;
         } catch(Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -156,7 +161,10 @@ public class SBAIntegration {
             } else {
                 guiContainerHook_keyTyped.invoke(null, keyCode);
             }
-        } catch(Exception e) { return false; }
+        } catch(Exception e) {
+            e.printStackTrace();
+            return false;
+        }
         return true;
     }
 
@@ -193,7 +201,10 @@ public class SBAIntegration {
 
                 guiContainerHook_drawBackpacks.invoke(null, container, mouseX, mouseY, fontRendererObj);
             }
-        } catch(Exception e) { return false; }
+        } catch(Exception e) {
+            e.printStackTrace();
+            return false;
+        }
         return true;
     }
 

@@ -7,35 +7,24 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
-import com.mojang.authlib.properties.Property;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.SBAIntegration;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.questing.SBScoreboardData;
-import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.texture.TextureUtil;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraft.client.resources.SkinManager;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.EnumPlayerModelParts;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -43,14 +32,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.*;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.Charsets;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
-import org.luaj.vm2.ast.Str;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -58,9 +40,7 @@ import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 
 import java.awt.*;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
@@ -174,7 +154,7 @@ public class GuiProfileViewer extends GuiScreen {
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bg);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
 
-        if(!(currentPage == ProfileViewerPage.LOADING)) {
+        if(!(currentPage == ProfileViewerPage.LOADING) && profileId != null) {
             playerNameTextField.render(guiLeft+sizeX-100, guiTop+sizeY+5);
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
@@ -200,7 +180,7 @@ public class GuiProfileViewer extends GuiScreen {
                     Utils.drawTexturedRect(guiLeft, guiTop+sizeY+23, 100, sizeYDropdown-4,
                             100/200f, 1, (181-sizeYDropdown)/185f, 181/185f, GL11.GL_NEAREST);
 
-                    for(int yIndex=0; yIndex<profile.getProfileIds().size(); yIndex++) {
+                    for(int yIndex = 0; yIndex<profile.getProfileIds().size(); yIndex++) {
                         String otherProfileId = profile.getProfileIds().get(yIndex);
                         Utils.drawStringCenteredScaledMaxWidth(otherProfileId, Minecraft.getMinecraft().fontRendererObj, guiLeft+50,
                                 guiTop+sizeY+23+dropdownOptionSize/2f+dropdownOptionSize*yIndex, true, 90, new Color(33, 112, 104, 255).getRGB());
@@ -376,7 +356,7 @@ public class GuiProfileViewer extends GuiScreen {
                 if(scaledResolution.getScaleFactor() == 4) {
                     profileDropdownSelected = false;
                     int profileNum = 0;
-                    for(int index=0; index<profile.getProfileIds().size(); index++) {
+                    for(int index = 0; index<profile.getProfileIds().size(); index++) {
                         if(profile.getProfileIds().get(index).equals(profileId)) {
                             profileNum = index;
                             break;
@@ -1940,12 +1920,10 @@ public class GuiProfileViewer extends GuiScreen {
             if(profile.getHypixelProfile().has("prefix")) {
                 playerName = Utils.getElementAsString(profile.getHypixelProfile().get("prefix"), "") + " " + entityPlayer.getName();
             } else {
-                String rank;
+                String rank = Utils.getElementAsString(profile.getHypixelProfile().get("rank"),
+                        Utils.getElementAsString(profile.getHypixelProfile().get("newPackageRank"), "NONE"));;
                 String monthlyPackageRank = Utils.getElementAsString(profile.getHypixelProfile().get("monthlyPackageRank"), "NONE");
-                if(monthlyPackageRank.equals("NONE")) {
-                    rank = Utils.getElementAsString(profile.getHypixelProfile().get("rank"),
-                            Utils.getElementAsString(profile.getHypixelProfile().get("newPackageRank"), "NONE"));
-                } else {
+                if(!rank.equals("YOUTUBER") && !monthlyPackageRank.equals("NONE")) {
                     rank = monthlyPackageRank;
                 }
                 EnumChatFormatting rankPlusColorECF = EnumChatFormatting.getValueByName(Utils.getElementAsString(profile.getHypixelProfile().get("rankPlusColor"), "WHITE"));
@@ -2176,39 +2154,6 @@ public class GuiProfileViewer extends GuiScreen {
                     guiLeft+172, guiTop+101, true, 0);
             Utils.drawStringCentered(EnumChatFormatting.RED+"enabled!", Minecraft.getMinecraft().fontRendererObj,
                     guiLeft+172, guiTop+101+10, true, 0);
-        }
-
-        int cata = profile.getDungeonCatacombsLevel(profileId);
-
-        if(cata > 0) {
-            int yPosition = 3;
-            int xPosition = 1;
-
-            int x = guiLeft+237+86*xPosition;
-            int y = guiTop+31+21*yPosition;
-
-            renderAlignedString(EnumChatFormatting.GRAY+"Catacombs", EnumChatFormatting.WHITE.toString()+cata, x+14, y-4, 60);
-
-            renderBar(x, y+6, 80, cata/50f);
-
-            if(mouseX > x && mouseX < x+80) {
-                if(mouseY > y-4 && mouseY < y+13) {
-                    String levelStr;
-                    if(cata == 50) {
-                        levelStr = EnumChatFormatting.GOLD+"MAXED!";
-                    } else {
-                        levelStr = EnumChatFormatting.DARK_PURPLE.toString() + cata + "/50";
-                    }
-
-                    tooltipToDisplay = Utils.createList(levelStr);
-                }
-            }
-
-            GL11.glTranslatef((x), (y-6f), 0);
-            GL11.glScalef(0.7f, 0.7f, 1);
-            Utils.drawItemStackLinear(new ItemStack(Item.getItemFromBlock(Blocks.deadbush)), 0, 0);
-            GL11.glScalef(1/0.7f, 1/0.7f, 1);
-            GL11.glTranslatef(-(x), -(y-6f), 0);
         }
 
         if(skillInfo != null) {

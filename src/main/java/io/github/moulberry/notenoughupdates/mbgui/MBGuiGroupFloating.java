@@ -2,11 +2,11 @@ package io.github.moulberry.notenoughupdates.mbgui;
 
 import io.github.moulberry.notenoughupdates.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.auction.CustomAH;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -14,9 +14,11 @@ import java.util.*;
 
 public class MBGuiGroupFloating extends MBGuiGroup {
 
-    private LinkedHashMap<MBGuiElement, MBAnchorPoint> children;
     private GuiScreen lastScreen = null;
     private HashMap<MBGuiElement, Vector2f> childrenPositionOffset = new HashMap<>();
+
+    //Serialized
+    private LinkedHashMap<MBGuiElement, MBAnchorPoint> children;
 
     public MBGuiGroupFloating(int width, int height, LinkedHashMap<MBGuiElement, MBAnchorPoint> children) {
         this.width = width;
@@ -38,6 +40,10 @@ public class MBGuiGroupFloating extends MBGuiGroup {
 
             if(lastScreen != currentScreen) {
                 lastScreen = currentScreen;
+
+                ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+                int screenWidth = scaledResolution.getScaledWidth();
+                int screenHeight = scaledResolution.getScaledHeight();
 
                 int xSize = -1;
                 int ySize = -1;
@@ -83,13 +89,12 @@ public class MBGuiGroupFloating extends MBGuiGroup {
                         childPos = new Vector2f();
                     }
 
+                    if(anchorPoint.inventoryRelative) {
+                        int defGuiLeft = (screenWidth - xSize) / 2;
+                        int defGuiTop = (screenHeight - ySize) / 2;
 
-                    if(anchorPoint.anchorPoint == MBAnchorPoint.AnchorPoint.INV_BOTMID) {
-                        int defGuiLeft = (this.width - xSize) / 2;
-                        int defGuiTop = (this.height - ySize) / 2;
-
-                        childPos.x += guiLeft-defGuiLeft + (anchorPoint.anchorPoint.x-0.5f)*xSize;
-                        childPos.y += guiTop-defGuiTop + (anchorPoint.anchorPoint.y-0.5f)*ySize;
+                        childPos.x += guiLeft-defGuiLeft + (0.5f-anchorPoint.anchorPoint.x)*xSize;
+                        childPos.y += guiTop-defGuiTop + (0.5f-anchorPoint.anchorPoint.y)*ySize;
                     }
 
                     childrenPositionOffset.put(child, childPos);
@@ -115,7 +120,7 @@ public class MBGuiGroupFloating extends MBGuiGroup {
             float x = anchorPoint.anchorPoint.x * width - anchorPoint.anchorPoint.x * child.getWidth() + anchorPoint.offset.x;
             float y = anchorPoint.anchorPoint.y * height - anchorPoint.anchorPoint.y * child.getHeight() + anchorPoint.offset.y;
 
-            if(anchorPoint.anchorPoint == MBAnchorPoint.AnchorPoint.INV_BOTMID) {
+            if(anchorPoint.inventoryRelative) {
                 x = width*0.5f + anchorPoint.offset.x;
                 y = height*0.5f + anchorPoint.offset.y;
             }

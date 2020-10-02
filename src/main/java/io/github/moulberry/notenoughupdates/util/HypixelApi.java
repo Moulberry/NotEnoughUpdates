@@ -84,6 +84,7 @@ public class HypixelApi {
         URL url = new URL(urlS);
         URLConnection connection = url.openConnection();
         connection.setConnectTimeout(3000);
+        connection.setReadTimeout(10000);
 
         String response = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
 
@@ -95,6 +96,7 @@ public class HypixelApi {
         URL url = new URL(urlS);
         URLConnection connection = url.openConnection();
         connection.setConnectTimeout(3000);
+        connection.setReadTimeout(10000);
 
         String response = IOUtils.toString(new GZIPInputStream(connection.getInputStream()), StandardCharsets.UTF_8);
 

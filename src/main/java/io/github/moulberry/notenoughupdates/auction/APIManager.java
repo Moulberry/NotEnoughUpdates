@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 public class APIManager {
 
@@ -188,7 +189,7 @@ public class APIManager {
             lastBazaarUpdate = currentTime;
             updateBazaar();
         }
-        if(currentTime - lastCleanup > 120*1000) {
+        if(currentTime - lastCleanup > 60*1000) {
             lastCleanup = currentTime;
             cleanup();
         }
@@ -326,14 +327,8 @@ public class APIManager {
             getPageFromAPI(0);
         }
 
-        manager.hypixelApi.getMyApiGZIPAsync("auction.json.gz", jsonObject -> {
+        Consumer<JsonObject> process = jsonObject -> {
             if(jsonObject.get("success").getAsBoolean()) {
-                long apiUpdate = (long)jsonObject.get("time").getAsFloat();
-                if(lastApiUpdate == apiUpdate) {
-                    lastAuctionUpdate -= 30*1000;
-                }
-                lastApiUpdate = apiUpdate;
-
                 JsonArray new_auctions = jsonObject.get("new_auctions").getAsJsonArray();
                 for(JsonElement auctionElement : new_auctions) {
                     JsonObject auction = auctionElement.getAsJsonObject();
@@ -365,9 +360,26 @@ public class APIManager {
                 }
                 remove(toRemove);
             }
-        }, () -> {
+        };
+
+        manager.hypixelApi.getMyApiGZIPAsync("auctionLast.json.gz", process, () -> {
             System.out.println("Error downloading auction from Moulberry's jank API. :(");
         });
+
+        manager.hypixelApi.getMyApiGZIPAsync("auction.json.gz", jsonObject -> {
+                if(jsonObject.get("success").getAsBoolean()) {
+                    long apiUpdate = (long) jsonObject.get("time").getAsFloat();
+                    if (lastApiUpdate == apiUpdate) {
+                        lastAuctionUpdate -= 30 * 1000;
+                    }
+                    lastApiUpdate = apiUpdate;
+
+                    process.accept(jsonObject);
+                }
+            }, () -> {
+            System.out.println("Error downloading auction from Moulberry's jank API. :(");
+        });
+
     }
 
     public void calculateStats() {
@@ -503,7 +515,7 @@ public class APIManager {
                 int count = item_tag.getInteger("Count");
                 int price = starting_bid/(count>0?count:1);
                 lowestBINs.computeIfAbsent(price, k -> new HashSet<>()).add(auctionUuid);
-                if(lowestBINs.size() > 10) {
+                if(lowestBINs.size() > 50) {
                     lowestBINs.keySet().remove(lowestBINs.lastKey());
                 }
             }
@@ -640,6 +652,15 @@ public class APIManager {
         }, () -> {});
     }
 
+    public Set<String> getItemAuctionInfoKeySet() {
+        if(auctionPricesJson == null) return new HashSet<>();
+        HashSet<String> keys = new HashSet<>();
+        for(Map.Entry<String, JsonElement> entry : auctionPricesJson.entrySet()) {
+            keys.add(entry.getKey());
+        }
+        return keys;
+    }
+
     public JsonObject getItemAuctionInfo(String internalname) {
         if(auctionPricesJson == null) return null;
         JsonElement e = auctionPricesJson.get(internalname);
@@ -660,26 +681,18 @@ public class APIManager {
 
     private static final List<String> hardcodedVanillaItems = Utils.createList(
             "WOOD_AXE", "WOOD_HOE", "WOOD_PICKAXE","WOOD_SPADE", "WOOD_SWORD",
-            "GOLD_AXE", "GOLD_HOE", "GOLD_PICKAXE", "GOLD_SPADE", "GOLD_SWORD"
+            "GOLD_AXE", "GOLD_HOE", "GOLD_PICKAXE", "GOLD_SPADE", "GOLD_SWORD",
+            "ROOKIE_HOE"
     );
     public boolean isVanillaItem(String internalname) {
         if(hardcodedVanillaItems.contains(internalname)) return true;
 
         //Removes trailing numbers and underscores, eg. LEAVES_2-3 -> LEAVES
         String vanillaName = internalname.split("-")[0];
-        int sub = 0;
-        for(int i=vanillaName.length()-1; i>1; i--) {
-            char c = vanillaName.charAt(i);
-            if((int)c >= 48 && (int)c <= 57) { //0-9
-                sub++;
-            } else if(c == '_') {
-                sub++;
-                break;
-            } else {
-                break;
-            }
+        if(manager.getItemInformation().containsKey(vanillaName)) {
+            JsonObject json = manager.getItemInformation().get(vanillaName);
+            if(json != null && json.has("vanilla") && json.get("vanilla").getAsBoolean()) return true;
         }
-        vanillaName = vanillaName.substring(0, vanillaName.length()-sub).toLowerCase();
         return Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null;
     }
 
@@ -689,10 +702,14 @@ public class APIManager {
         public float craftCost = -1;
     }
 
+    public CraftInfo getCraftCost(String internalname) {
+        return getCraftCost(internalname, 0);
+    }
+
     /**
      * Recursively calculates the cost of crafting an item from raw materials.
      */
-    public CraftInfo getCraftCost(String internalname) {
+    public CraftInfo getCraftCost(String internalname, int depth) {
         if(craftCost.containsKey(internalname)) {
             return craftCost.get(internalname);
         } else {
@@ -714,6 +731,12 @@ public class APIManager {
                     ci.craftCost = auctionPrice;
                 }
             }
+
+            if(depth > 16) {
+                craftCost.put(internalname, ci);
+                return ci;
+            }
+
             JsonObject item = manager.getItemInformation().get(internalname);
             if(item != null && item.has("recipe")) {
                 float craftPrice = 0;
@@ -731,7 +754,12 @@ public class APIManager {
                         count = Integer.parseInt(itemS.split(":")[1]);
                         itemS = itemS.split(":")[0];
                     }
-                    float compCost = getCraftCost(itemS).craftCost * count;
+                    if(itemS.equals(internalname)) { //if item is used a crafting component in its own recipe, return
+                        craftCost.put(internalname, ci);
+                        return ci;
+                    }
+
+                    float compCost = getCraftCost(itemS, depth+1).craftCost * count;
                     if(compCost < 0) {
                         //If it's a custom item without a cost, return
                         if(!getCraftCost(itemS).vanillaItem) {

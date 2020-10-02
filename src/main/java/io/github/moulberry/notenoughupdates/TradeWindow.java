@@ -58,6 +58,7 @@ public class TradeWindow {
     private static int lastBackpackY;
 
     public static boolean tradeWindowActive() {
+        if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return false;
         if(!NotEnoughUpdates.INSTANCE.manager.config.useCustomTrade.value) return false;
 
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
@@ -110,14 +111,17 @@ public class TradeWindow {
                 StringBuilder sb = new StringBuilder();
                 for(int index = 0; index < clean.length(); index++) {
                     char c = clean.charAt(index);
-                    if("0123456789".indexOf(c) >= 0) {
+                    if("0123456789.".indexOf(c) >= 0) {
                         sb.append(c);
                     } else {
                         switch(c) {
+                            case 'K':
                             case 'k':
                                 mult = 1000; break;
+                            case 'M':
                             case 'm':
                                 mult = 1000000; break;
+                            case 'B':
                             case 'b':
                                 mult = 1000000000; break;
                             default:
@@ -127,7 +131,7 @@ public class TradeWindow {
                     }
                 }
                 try {
-                    int coins = Integer.parseInt(sb.toString())*mult;
+                    int coins = (int)(Float.parseFloat(sb.toString())*mult);
 
                     topItemsStack.putIfAbsent("TRADE_COINS", stack);
 
@@ -318,14 +322,17 @@ public class TradeWindow {
                     StringBuilder sb = new StringBuilder();
                     for(int index = 0; index < clean.length(); index++) {
                         char c = clean.charAt(index);
-                        if("0123456789".indexOf(c) >= 0) {
+                        if("0123456789.".indexOf(c) >= 0) {
                             sb.append(c);
                         } else {
                             switch(c) {
+                                case 'K':
                                 case 'k':
                                     mult = 1000; break;
+                                case 'M':
                                 case 'm':
                                     mult = 1000000; break;
+                                case 'B':
                                 case 'b':
                                     mult = 1000000000; break;
                                 default:
@@ -335,7 +342,7 @@ public class TradeWindow {
                         }
                     }
                     try {
-                        int coins = Integer.parseInt(sb.toString())*mult;
+                        int coins = (int)(Float.parseFloat(sb.toString())*mult);
 
                         List<Integer> list = ourTradeMap.computeIfAbsent(coins, k -> new ArrayList<>());
                         list.add(containerIndex);
@@ -413,14 +420,17 @@ public class TradeWindow {
                     StringBuilder sb = new StringBuilder();
                     for(int index = 0; index < clean.length(); index++) {
                         char c = clean.charAt(index);
-                        if("0123456789".indexOf(c) >= 0) {
+                        if("0123456789.".indexOf(c) >= 0) {
                             sb.append(c);
                         } else {
                             switch(c) {
+                                case 'K':
                                 case 'k':
                                     mult = 1000; break;
+                                case 'M':
                                 case 'm':
                                     mult = 1000000; break;
+                                case 'B':
                                 case 'b':
                                     mult = 1000000000; break;
                                 default:
@@ -430,7 +440,7 @@ public class TradeWindow {
                         }
                     }
                     try {
-                        int coins = Integer.parseInt(sb.toString())*mult;
+                        int coins = (int)(Float.parseFloat(sb.toString())*mult);
 
                         List<Integer> list = theirTradeMap.computeIfAbsent(coins, k -> new ArrayList<>());
                         list.add(containerIndex);

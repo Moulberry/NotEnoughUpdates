@@ -58,7 +58,7 @@ public class ProfileViewer {
         skillToSkillDisplayMap.put("skill_fishing", Utils.createItemStack(Items.fishing_rod, EnumChatFormatting.AQUA+"Fishing"));
         skillToSkillDisplayMap.put("skill_alchemy", Utils.createItemStack(Items.brewing_stand, EnumChatFormatting.BLUE+"Alchemy"));
         skillToSkillDisplayMap.put("skill_runecrafting", Utils.createItemStack(Items.magma_cream, EnumChatFormatting.DARK_PURPLE+"Runecrafting"));
-        skillToSkillDisplayMap.put(null, null);
+        skillToSkillDisplayMap.put("skill_catacombs", Utils.createItemStack(Item.getItemFromBlock(Blocks.deadbush), EnumChatFormatting.GOLD+"Catacombs"));
         skillToSkillDisplayMap.put("slayer_zombie", Utils.createItemStack(Items.rotten_flesh, EnumChatFormatting.GOLD+"Rev Slayer"));
         skillToSkillDisplayMap.put("slayer_spider", Utils.createItemStack(Items.spider_eye, EnumChatFormatting.GOLD+"Tara Slayer"));
         skillToSkillDisplayMap.put("slayer_wolf", Utils.createItemStack(Items.bone, EnumChatFormatting.GOLD+"Sven Slayer"));
@@ -127,7 +127,7 @@ public class ProfileViewer {
                 EnumChatFormatting.YELLOW+"Seeds"));
         collectionToCollectionDisplayMap.put("MUSHROOM_COLLECTION",
                 Utils.createItemStack(Item.getItemFromBlock(Blocks.red_mushroom)
-                , EnumChatFormatting.YELLOW+"Mushroom"));
+                        , EnumChatFormatting.YELLOW+"Mushroom"));
         collectionToCollectionDisplayMap.put("INK_SACK:3", Utils.createItemStack(Items.dye,
                 EnumChatFormatting.YELLOW+"Cocoa Beans", 3));
         collectionToCollectionDisplayMap.put("CACTUS", Utils.createItemStack(Item.getItemFromBlock(Blocks.cactus),
@@ -163,7 +163,7 @@ public class ProfileViewer {
         collectionToCollectionDisplayMap.put("INK_SACK:4", Utils.createItemStack(Items.dye,
                 EnumChatFormatting.GRAY+"Lapis Lazuli", 4));
         collectionToCollectionDisplayMap.put("EMERALD", Utils.createItemStack(Items.emerald,
-                        EnumChatFormatting.GRAY+"Emerald"));
+                EnumChatFormatting.GRAY+"Emerald"));
         collectionToCollectionDisplayMap.put("REDSTONE", Utils.createItemStack(Items.redstone,
                 EnumChatFormatting.GRAY+"Redstone"));
         collectionToCollectionDisplayMap.put("QUARTZ", Utils.createItemStack(Items.quartz,
@@ -276,7 +276,6 @@ public class ProfileViewer {
         private HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
         private HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
         private long networth = -1;
-        private int dungeonCatacombsLevel = -1;
 
         public Profile(String uuid) {
             this.uuid = uuid;
@@ -294,121 +293,17 @@ public class ProfileViewer {
             HashMap<String, String> args = new HashMap<>();
             args.put("uuid", ""+uuid);
             manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "status",
-                args, jsonObject -> {
-                    if(jsonObject == null) return;
+                    args, jsonObject -> {
+                        if(jsonObject == null) return;
 
-                    updatingPlayerStatusState.set(false);
-                    if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
-                        playerStatus = jsonObject.get("session").getAsJsonObject();
-                    }
-                }, () -> updatingPlayerStatusState.set(false)
+                        updatingPlayerStatusState.set(false);
+                        if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
+                            playerStatus = jsonObject.get("session").getAsJsonObject();
+                        }
+                    }, () -> updatingPlayerStatusState.set(false)
             );
 
             return null;
-        }
-
-        public int getDungeonCatacombsLevel(String profileId) {
-            if (dungeonCatacombsLevel != -1) return dungeonCatacombsLevel;
-            if (getInventoryInfo(profileId) == null) return -1;
-
-            JsonObject inventoryInfo = getInventoryInfo(profileId);
-
-            Pattern pattern = Pattern.compile("\\u00A77[A-Za-z ]+: \\u00A7[a-f0-9]\\+(\\d+).+\\u00A78\\(\\+?([0-9\\.]+)(%| HP)?\\)");
-
-            List<Float> nums = new ArrayList<>();
-
-            try {
-                for(Map.Entry<String, JsonElement> entry : inventoryInfo.entrySet()) {
-                    if(entry.getValue().isJsonArray()) {
-                        for(JsonElement element : entry.getValue().getAsJsonArray()) {
-                            if(element != null && element.isJsonObject()) {
-                                JsonObject item = element.getAsJsonObject();
-                                String internalname = item.get("internalname").getAsString();
-
-                                //TODO: Make sure item is a catacombs level (using internalname)
-
-                                int dungeon_item_level = 0;
-                                if(item.has("dungeon_item_level")) {
-                                    dungeon_item_level = item.get("dungeon_item_level").getAsInt();
-                                }
-
-                                if(item.has("lore") && item.get("lore").isJsonArray()) {
-                                    for(JsonElement lineElement : item.get("lore").getAsJsonArray()) {
-                                        if(lineElement.isJsonPrimitive()) {
-                                            String line = lineElement.getAsString();
-                                            Matcher matcher = pattern.matcher(line);
-                                            if(matcher.matches()) {
-                                                String num1S = matcher.group(1);
-                                                String num2S = matcher.group(2);
-
-                                                int num1 = Integer.parseInt(num1S);
-                                                float num2 = Float.parseFloat(num2S);
-
-                                                float bonus = num2/num1 - dungeon_item_level*0.1f;
-
-                                                if(bonus > 1) nums.add(bonus);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                try {
-                                    if(item.has("item_contents")) {
-                                        JsonArray bytesArr = item.get("item_contents").getAsJsonArray();
-                                        byte[] bytes = new byte[bytesArr.size()];
-                                        for (int bytesArrI = 0; bytesArrI < bytesArr.size(); bytesArrI++) {
-                                            bytes[bytesArrI] = bytesArr.get(bytesArrI).getAsByte();
-                                        }
-                                        NBTTagCompound contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(bytes));
-                                        NBTTagList items = contents_nbt.getTagList("i", 10);
-                                        for(int j=0; j<items.tagCount(); j++) {
-                                            if(items.getCompoundTagAt(j).getKeySet().size() > 0) {
-                                                JsonObject item2 = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
-
-                                                int dungeon_item_level2 = 0;
-                                                if(item2.has("dungeon_item_level")) {
-                                                    dungeon_item_level2 = item2.get("dungeon_item_level").getAsInt();
-                                                }
-
-                                                if(item2.has("lore") && item2.get("lore").isJsonArray()) {
-                                                    for(JsonElement lineElement : item2.get("lore").getAsJsonArray()) {
-                                                        if(lineElement.isJsonPrimitive()) {
-                                                            String line = lineElement.getAsString();
-                                                            Matcher matcher = pattern.matcher(line);
-                                                            if(matcher.matches()) {
-                                                                String num1S = matcher.group(1);
-                                                                String num2S = matcher.group(2);
-
-                                                                int num1 = Integer.parseInt(num1S);
-                                                                float num2 = Float.parseFloat(num2S);
-
-                                                                float bonus = num2/num1 - dungeon_item_level2*0.1f;
-
-                                                                if(bonus > 1) nums.add(bonus);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                } catch(IOException ignored) {}
-                            }
-                        }
-                    }
-                }
-            } catch(Exception ignored) {}
-
-            if(nums.size() > 0) {
-                nums.sort(Comparator.naturalOrder());
-                int bonus = -100+Math.round(100*nums.get(nums.size()/2));
-                dungeonCatacombsLevel = 0;
-                while(bonus > 0) {
-                    dungeonCatacombsLevel++;
-                    bonus -= 3+Math.ceil(dungeonCatacombsLevel/5f);
-                }
-            }
-            return dungeonCatacombsLevel;
         }
 
         public long getNetWorth(String profileId) {
@@ -448,6 +343,8 @@ public class ProfileViewer {
                                             NBTTagCompound nbt = items.getCompoundTagAt(j).getCompoundTag("tag");
                                             String internalname2 = manager.getInternalnameFromNBT(nbt);
                                             if(internalname2 != null) {
+                                                if(manager.auctionManager.isVanillaItem(internalname2)) continue;
+
                                                 JsonObject info2 = manager.auctionManager.getItemAuctionInfo(internalname2);
                                                 if(info2 == null || !info2.has("price") || !info2.has("count")) continue;
                                                 int auctionPrice2 = (int)(info2.get("price").getAsFloat() / info2.get("count").getAsFloat());
@@ -647,7 +544,6 @@ public class ProfileViewer {
             inventoryInfoMap.clear();
             collectionInfoMap.clear();
             networth = -1;
-            dungeonCatacombsLevel = -1;
         }
 
         private class Level {
@@ -699,6 +595,9 @@ public class ProfileViewer {
             float experience_skill_alchemy = Utils.getElementAsFloat(Utils.getElement(profileInfo, "experience_skill_alchemy"), 0);
             float experience_skill_runecrafting = Utils.getElementAsFloat(Utils.getElement(profileInfo, "experience_skill_runecrafting"), 0);
 
+            float experience_skill_catacombs = Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.catacombs.experience"), 0);
+            if(uuid.equals("d14403fd77664905929ee1a6e365e623")) experience_skill_catacombs = 569809640; //lvl 50
+
             float experience_slayer_zombie = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.xp"), 0);
             float experience_slayer_spider = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.xp"), 0);
             float experience_slayer_wolf = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.xp"), 0);
@@ -706,6 +605,7 @@ public class ProfileViewer {
             float totalSkillXP = experience_skill_taming + experience_skill_mining + experience_skill_foraging
                     + experience_skill_enchanting + experience_skill_carpentry + experience_skill_farming
                     + experience_skill_combat + experience_skill_fishing + experience_skill_alchemy
+                    + experience_skill_catacombs
                     + experience_skill_runecrafting;
 
             if(totalSkillXP <= 0) {
@@ -725,6 +625,8 @@ public class ProfileViewer {
             skillInfo.addProperty("experience_skill_alchemy", experience_skill_alchemy);
             skillInfo.addProperty("experience_skill_runecrafting", experience_skill_runecrafting);
 
+            skillInfo.addProperty("experience_skill_catacombs", experience_skill_catacombs);
+
             skillInfo.addProperty("experience_slayer_zombie", experience_slayer_zombie);
             skillInfo.addProperty("experience_slayer_spider", experience_slayer_spider);
             skillInfo.addProperty("experience_slayer_wolf", experience_slayer_wolf);
@@ -739,6 +641,8 @@ public class ProfileViewer {
             Level level_skill_fishing = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_fishing, false);
             Level level_skill_alchemy = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_alchemy, false);
             Level level_skill_runecrafting = getLevel(Utils.getElement(leveling, "runecrafting_xp").getAsJsonArray(), experience_skill_runecrafting, false);
+
+            Level level_skill_catacombs = getLevel(Utils.getElement(leveling, "catacombs").getAsJsonArray(), experience_skill_catacombs, false);
 
             Level level_slayer_zombie = getLevel(Utils.getElement(leveling, "slayer_xp.zombie").getAsJsonArray(), experience_slayer_zombie, true);
             Level level_slayer_spider = getLevel(Utils.getElement(leveling, "slayer_xp.spider").getAsJsonArray(), experience_slayer_spider, true);
@@ -755,6 +659,8 @@ public class ProfileViewer {
             skillInfo.addProperty("level_skill_alchemy", level_skill_alchemy.level);
             skillInfo.addProperty("level_skill_runecrafting", level_skill_runecrafting.level);
 
+            skillInfo.addProperty("level_skill_catacombs", level_skill_catacombs.level);
+
             skillInfo.addProperty("level_slayer_zombie", level_slayer_zombie.level);
             skillInfo.addProperty("level_slayer_spider", level_slayer_spider.level);
             skillInfo.addProperty("level_slayer_wolf", level_slayer_wolf.level);
@@ -770,6 +676,8 @@ public class ProfileViewer {
             skillInfo.addProperty("maxed_skill_alchemy", level_skill_alchemy.maxed);
             skillInfo.addProperty("maxed_skill_runecrafting", level_skill_runecrafting.maxed);
 
+            skillInfo.addProperty("maxed_skill_catacombs", level_skill_catacombs.maxed);
+
             skillInfo.addProperty("maxed_slayer_zombie", level_slayer_zombie.maxed);
             skillInfo.addProperty("maxed_slayer_spider", level_slayer_spider.maxed);
             skillInfo.addProperty("maxed_slayer_wolf", level_slayer_wolf.maxed);
@@ -784,6 +692,8 @@ public class ProfileViewer {
             skillInfo.addProperty("maxxp_skill_fishing", level_skill_fishing.maxXpForLevel);
             skillInfo.addProperty("maxxp_skill_alchemy", level_skill_alchemy.maxXpForLevel);
             skillInfo.addProperty("maxxp_skill_runecrafting", level_skill_runecrafting.maxXpForLevel);
+
+            skillInfo.addProperty("maxxp_skill_catacombs", level_skill_catacombs.maxXpForLevel);
 
             skillInfo.addProperty("maxxp_slayer_zombie", level_slayer_zombie.maxXpForLevel);
             skillInfo.addProperty("maxxp_slayer_spider", level_slayer_spider.maxXpForLevel);
@@ -1030,17 +940,17 @@ public class ProfileViewer {
         HashMap<String, String> args = new HashMap<>();
         args.put("name", ""+name);
         manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "player",
-            args, jsonObject -> {
-                if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()
-                        && jsonObject.get("player").isJsonObject()) {
-                    nameToHypixelProfile.put(name, jsonObject.get("player").getAsJsonObject());
-                    uuidToHypixelProfile.put(jsonObject.get("player").getAsJsonObject().get("uuid").getAsString(), jsonObject.get("player").getAsJsonObject());
-                    if(callback != null) callback.accept(jsonObject);
-                } else {
-                    if(callback != null) callback.accept(null);
-                    return;
+                args, jsonObject -> {
+                    if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()
+                            && jsonObject.get("player").isJsonObject()) {
+                        nameToHypixelProfile.put(name, jsonObject.get("player").getAsJsonObject());
+                        uuidToHypixelProfile.put(jsonObject.get("player").getAsJsonObject().get("uuid").getAsString(), jsonObject.get("player").getAsJsonObject());
+                        if(callback != null) callback.accept(jsonObject);
+                    } else {
+                        if(callback != null) callback.accept(null);
+                        return;
+                    }
                 }
-            }
         );
     }
 

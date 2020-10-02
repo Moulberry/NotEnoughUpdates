@@ -22,7 +22,12 @@ public class GuiTextures {
     public static final ResourceLocation slider_button = new ResourceLocation("notenoughupdates:slider_button.png");
 
     public static final ResourceLocation item_mask = new ResourceLocation("notenoughupdates:item_mask.png");
+    public static final ResourceLocation item_haschild = new ResourceLocation("notenoughupdates:item_haschild.png");
     public static final ResourceLocation button_tex = new ResourceLocation("notenoughupdates:button.png");
+
+    public static final ResourceLocation accessory_bag_overlay = new ResourceLocation("notenoughupdates:accessory_bag_overlay.png");
+
+    public static final ResourceLocation quickcommand_background = new ResourceLocation("notenoughupdates:quickcommand_background.png");
 
     public static final ResourceLocation gamemodes = new ResourceLocation("notenoughupdates:gamemodes.png");
     public static final ResourceLocation radial_square_off = new ResourceLocation("notenoughupdates:radial_square_off.png");

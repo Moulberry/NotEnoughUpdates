@@ -9,6 +9,8 @@
     "MixinRenderItem",
     "MixinEntityRenderer",
     "MixinRenderGlobal",
-    "MixinNetHandlerPlayClient"
+    "MixinNetHandlerPlayClient",
+    "MixinGuiChest",
+    "MixinGuiContainer"
   ]
 }
