@@ -1984,6 +1984,23 @@ public class GuiProfileViewer extends GuiScreen {
         long networth = profile.getNetWorth(profileId);
         if(networth > 0) {
             Utils.drawStringCentered(EnumChatFormatting.GREEN+"Net Worth: "+EnumChatFormatting.GOLD+numberFormat.format(networth), fr, guiLeft+63, guiTop+38, true, 0);
+            double networthInCookies = (networth / NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo("BOOSTER_COOKIE").get("avg_buy").getAsDouble());
+            String networthIRLMoney = Long.toString(Math.round(((networthInCookies * 325) / 675) * 4.99));
+
+            if(mouseX > guiLeft+8 && mouseX < guiLeft+8+fontRendererObj.getStringWidth("Net Worth: " + numberFormat.format(networth))) {
+                if(mouseY > guiTop+32 && mouseY < guiTop+32+fontRendererObj.FONT_HEIGHT) {
+                    tooltipToDisplay = new ArrayList<>();
+                    tooltipToDisplay.add(EnumChatFormatting.GREEN+"Net worth in IRL money: "+EnumChatFormatting.DARK_GREEN+"$" +EnumChatFormatting.GOLD+networthIRLMoney);
+                    tooltipToDisplay.add("");
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"This is calculated using the current");
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"price of booster cookies on bazaar and the price");
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"for cookies using gems, then the price of gems");
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"is where we get the amount of IRL money you" );
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"theoretically have on skyblock in net worth.");
+                    tooltipToDisplay.add("");
+                    tooltipToDisplay.add(EnumChatFormatting.RED+"THIS IS IN NO WAY ENDORSING IRL TRADING!");
+                }
+            }
         }
 
         if(status != null) {
