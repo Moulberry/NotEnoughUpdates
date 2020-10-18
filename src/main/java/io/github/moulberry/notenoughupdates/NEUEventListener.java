@@ -7,7 +7,7 @@ import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
-import io.github.moulberry.notenoughupdates.questing.SBScoreboardData;
+import io.github.moulberry.notenoughupdates.questing.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -23,7 +23,6 @@ import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -123,22 +122,39 @@ public class NEUEventListener {
      */
     private HashMap<String, Long> newItemAddMap = new HashMap<>();
     private long lastLongUpdate = 0;
+    private long lastVeryLongUpdate = 0;
     private long lastSkyblockScoreboard = 0;
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if(event.phase != TickEvent.Phase.START) return;
 
         boolean longUpdate = false;
+        boolean veryLongUpdate = false;
         long currentTime = System.currentTimeMillis();
         if(currentTime - lastLongUpdate > 1000) {
             longUpdate = true;
             lastLongUpdate = currentTime;
         }
+        if(currentTime - lastVeryLongUpdate > 10000) {
+            veryLongUpdate = true;
+            lastVeryLongUpdate = currentTime;
+        }
+        if(veryLongUpdate) {
+            DungeonBlocks.reset();
+        }
         if(longUpdate) {
+            DungeonBlocks.tick();
             neu.updateSkyblockScoreboard();
             CapeManager.getInstance().tick();
 
-            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
+            if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+                GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+                ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+                String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+                if(!containerName.trim().startsWith("Accessory Bag")) {
+                    AccessoryBagOverlay.resetCache();
+                }
+            } else {
                 AccessoryBagOverlay.resetCache();
             }
 
@@ -170,7 +186,7 @@ public class NEUEventListener {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                     }
                 }
-                SBScoreboardData.getInstance().tick();
+                SBInfo.getInstance().tick();
                 //GuiQuestLine.questLine.tick();
             }
             if(currentTime - lastSkyblockScoreboard < 5*60*1000) { //5 minutes
@@ -442,6 +458,14 @@ public class NEUEventListener {
         } else if(e.message.getFormattedText().startsWith(EnumChatFormatting.RESET.toString()+
                 EnumChatFormatting.RED+"Invalid recipe ")) {
             r = "";
+        }
+        if(e.message.getFormattedText().contains(EnumChatFormatting.YELLOW+"Visit the Auction House to collect your item!")) {
+            if(NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBid != null &&
+                    System.currentTimeMillis() - NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBidMillis < 5000) {
+                NotEnoughUpdates.INSTANCE.sendChatMessage("/viewauction " +
+                        NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.niceAucId(
+                                NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBid));
+            }
         }
         if(r != null) {
             if(neu.manager.failViewItem(r)) {
@@ -923,91 +947,95 @@ public class NEUEventListener {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltipLow(ItemTooltipEvent event) {
+        if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
+
         boolean dungeonProfit = false;
         int index = 0;
         List<String> newTooltip = new ArrayList<>();
         for(String line : event.toolTip) {
-            for(String op : neu.manager.config.enchantColours.value) {
-                List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
-                String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
-                String comparator = GuiEnchantColour.getColourOpIndex(colourOps, 1);
-                String comparison = GuiEnchantColour.getColourOpIndex(colourOps, 2);
-                String colourCode = GuiEnchantColour.getColourOpIndex(colourOps, 3);
+            if(event.itemStack.isItemEnchanted()) {
+                for(String op : neu.manager.config.enchantColours.value) {
+                    List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
+                    String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
+                    String comparator = GuiEnchantColour.getColourOpIndex(colourOps, 1);
+                    String comparison = GuiEnchantColour.getColourOpIndex(colourOps, 2);
+                    String colourCode = GuiEnchantColour.getColourOpIndex(colourOps, 3);
 
-                if(enchantName.length() == 0) continue;
-                if(comparator.length() == 0) continue;
-                if(comparison.length() == 0) continue;
-                if(colourCode.length() == 0) continue;
+                    if(enchantName.length() == 0) continue;
+                    if(comparator.length() == 0) continue;
+                    if(comparison.length() == 0) continue;
+                    if(colourCode.length() == 0) continue;
 
-                if(enchantName.contains("(") || enchantName.contains(")")) continue;
+                    if(enchantName.contains("(") || enchantName.contains(")")) continue;
 
-                int comparatorI = ">=<".indexOf(comparator.charAt(0));
+                    int comparatorI = ">=<".indexOf(comparator.charAt(0));
 
-                int levelToFind = -1;
-                try {
-                    levelToFind = Integer.parseInt(comparison);
-                } catch(Exception e) { continue; }
-
-                if(comparatorI < 0) continue;
-                if("0123456789abcdefz".indexOf(colourCode.charAt(0)) < 0) continue;
-
-                //item_lore = item_lore.replaceAll("\\u00A79("+lvl4Max+" IV)", EnumChatFormatting.DARK_PURPLE+"$1");
-                //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
-                Pattern pattern;
-                try {
-                    String prefix = "\u00A79";
-                    if(enchantName.startsWith("ULT_")) prefix = "\u00A7l\u00A7d";
-                    pattern = Pattern.compile(prefix+"("+enchantName+") ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)");
-                } catch(Exception e) {continue;} //malformed regex
-                Matcher matcher = pattern.matcher(line);
-                int matchCount = 0;
-                while(matcher.find() && matchCount < 5) {
-                    matchCount++;
-                    int level = -1;
-                    String levelStr = matcher.group(2);
-                    if(levelStr == null) continue;
+                    int levelToFind = -1;
                     try {
-                        level = Integer.parseInt(levelStr);
-                    } catch(Exception e) {
-                        switch(levelStr) {
-                            case "I":
-                                level = 1; break;
-                            case "II":
-                                level = 2; break;
-                            case "III":
-                                level = 3; break;
-                            case "IV":
-                                level = 4; break;
-                            case "V":
-                                level = 5; break;
-                            case "VI":
-                                level = 6; break;
-                            case "VII":
-                                level = 7; break;
-                            case "VIII":
-                                level = 8; break;
-                            case "IX":
-                                level = 9; break;
-                            case "X":
-                                level = 10; break;
+                        levelToFind = Integer.parseInt(comparison);
+                    } catch(Exception e) { continue; }
+
+                    if(comparatorI < 0) continue;
+                    if("0123456789abcdefz".indexOf(colourCode.charAt(0)) < 0) continue;
+
+                    //item_lore = item_lore.replaceAll("\\u00A79("+lvl4Max+" IV)", EnumChatFormatting.DARK_PURPLE+"$1");
+                    //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
+                    Pattern pattern;
+                    try {
+                        String prefix = "\u00A79";
+                        if(enchantName.startsWith("ULT_")) prefix = "\u00A7l\u00A7d";
+                        pattern = Pattern.compile(prefix+"("+enchantName+") ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)");
+                    } catch(Exception e) {continue;} //malformed regex
+                    Matcher matcher = pattern.matcher(line);
+                    int matchCount = 0;
+                    while(matcher.find() && matchCount < 5) {
+                        matchCount++;
+                        int level = -1;
+                        String levelStr = matcher.group(2);
+                        if(levelStr == null) continue;
+                        try {
+                            level = Integer.parseInt(levelStr);
+                        } catch(Exception e) {
+                            switch(levelStr) {
+                                case "I":
+                                    level = 1; break;
+                                case "II":
+                                    level = 2; break;
+                                case "III":
+                                    level = 3; break;
+                                case "IV":
+                                    level = 4; break;
+                                case "V":
+                                    level = 5; break;
+                                case "VI":
+                                    level = 6; break;
+                                case "VII":
+                                    level = 7; break;
+                                case "VIII":
+                                    level = 8; break;
+                                case "IX":
+                                    level = 9; break;
+                                case "X":
+                                    level = 10; break;
+                            }
                         }
-                    }
-                    boolean matches = false;
-                    if(level > 0) {
-                        switch(comparator) {
-                            case ">":
-                                matches = level > levelToFind; break;
-                            case "=":
-                                matches = level == levelToFind; break;
-                            case "<":
-                                matches = level < levelToFind; break;
+                        boolean matches = false;
+                        if(level > 0) {
+                            switch(comparator) {
+                                case ">":
+                                    matches = level > levelToFind; break;
+                                case "=":
+                                    matches = level == levelToFind; break;
+                                case "<":
+                                    matches = level < levelToFind; break;
+                            }
                         }
-                    }
-                    if(matches) {
-                        if(!colourCode.equals("z")) {
-                            line = line.replaceAll("\\u00A79"+matcher.group(1), "\u00A7"+colourCode+matcher.group(1));
-                        } else {
-                            line = line.replaceAll("\\u00A79"+matcher.group(1), Utils.chromaString(matcher.group(1)));
+                        if(matches) {
+                            if(!colourCode.equals("z")) {
+                                line = line.replaceAll("\\u00A79"+matcher.group(1), "\u00A7"+colourCode+matcher.group(1));
+                            } else {
+                                line = line.replaceAll("\\u00A79"+matcher.group(1), Utils.chromaString(matcher.group(1)));
+                            }
                         }
                     }
                 }
@@ -1157,8 +1185,88 @@ public class NEUEventListener {
 
             index++;
         }
+
         event.toolTip.clear();
         event.toolTip.addAll(newTooltip);
+
+        if(neu.manager.config.invAuctionPrice.value || neu.manager.config.invBazaarPrice.value) {
+            String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
+
+            if(internalname != null) {
+                JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internalname);
+                JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internalname);
+
+                boolean hasAuctionPrice = neu.manager.config.invAuctionPrice.value && auctionInfo != null;
+                boolean hasBazaarPrice = neu.manager.config.invBazaarPrice.value && bazaarInfo != null;
+
+                int lowestBin = neu.manager.auctionManager.getLowestBin(internalname);
+
+                NumberFormat format = NumberFormat.getInstance(Locale.US);
+
+                APIManager.CraftInfo craftCost = neu.manager.auctionManager.getCraftCost(internalname);
+
+                if(hasAuctionPrice || hasBazaarPrice || craftCost.fromRecipe) event.toolTip.add("");
+                if(hasAuctionPrice) {
+                    if(lowestBin > 0) {
+                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+                    }
+                    int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                    event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
+                    if(neu.manager.config.advancedPriceInfo.value) {
+                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales: "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
+                    }
+                    if(auctionInfo.has("clean_price")) {
+                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price (Clean): "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
+                        if(neu.manager.config.advancedPriceInfo.value) {
+                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales (Clean): "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
+                        }
+                    }
+
+                } else if(hasBazaarPrice) {
+                    if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                        int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*64;
+                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy (Stack): "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
+                        int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*64;
+                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell (Stack): "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
+                        if(neu.manager.config.advancedPriceInfo.value) {
+                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*64;
+                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy (Stack): "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
+                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*64;
+                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell (Stack): "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
+                        }
+                    } else {
+                        event.toolTip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show stack]");
+                        int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat();
+                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
+                        int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat();
+                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
+                        if(neu.manager.config.advancedPriceInfo.value) {
+                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat();
+                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
+                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat();
+                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
+                        }
+                    }
+                }
+                if((hasAuctionPrice || hasBazaarPrice) && craftCost.fromRecipe) {
+                    event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
+                }
+            }
+        }
     }
 
     /**

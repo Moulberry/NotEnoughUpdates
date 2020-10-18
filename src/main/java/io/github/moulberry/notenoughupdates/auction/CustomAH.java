@@ -80,10 +80,13 @@ public class CustomAH extends Gui {
     public long lastOpen;
     public long lastGuiScreenSwitch;
 
-    private int splits = 2;
+    private final int splits = 2;
 
-    private int ySplit = 35;
-    private int ySplitSize = 18;
+    public String latestBid;
+    public long latestBidMillis;
+
+    private final int ySplit = 35;
+    private final int ySplitSize = 18;
 
     private float scrollAmount;
 
@@ -129,11 +132,11 @@ public class CustomAH extends Gui {
     private static final int SORT_MODE_SOON = 2;
 
     private static final String[] rarities = { "COMMON", "UNCOMMON", "RARE", "EPIC",
-            "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL" };
+            "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME" };
     private static final String[] rarityColours = { ""+EnumChatFormatting.WHITE,
             ""+EnumChatFormatting.GREEN, ""+EnumChatFormatting.BLUE, ""+EnumChatFormatting.DARK_PURPLE,
             ""+EnumChatFormatting.GOLD, ""+EnumChatFormatting.LIGHT_PURPLE, ""+EnumChatFormatting.RED,
-            ""+EnumChatFormatting.RED };
+            ""+EnumChatFormatting.RED, ""+EnumChatFormatting.DARK_RED };
 
     private static final int BIN_FILTER_ALL = 0;
     private static final int BIN_FILTER_BIN = 1;
@@ -144,12 +147,23 @@ public class CustomAH extends Gui {
     private static final int ENCH_FILTER_ENCH = 2;
     private static final int ENCH_FILTER_ENCHHPB = 3;
 
+    private static final int DUNGEON_FILTER_ALL = 0;
+    private static final int DUNGEON_FILTER_DUNGEON = 1;
+    private static final int DUNGEON_FILTER_1 = 2;
+    private static final int DUNGEON_FILTER_2 = 3;
+    private static final int DUNGEON_FILTER_3 = 4;
+    private static final int DUNGEON_FILTER_4 = 5;
+    private static final int DUNGEON_FILTER_5 = 6;
+
+    private int dungeonFilter = DUNGEON_FILTER_ALL;
     private int sortMode = SORT_MODE_HIGH;
     private int rarityFilter = -1;
     private boolean filterMyAuctions = false;
     private int binFilter = BIN_FILTER_ALL;
     private int enchFilter = ENCH_FILTER_ALL;
 
+    private static ItemStack DUNGEON_SORT = Utils.createItemStack(Item.getItemFromBlock(Blocks.deadbush),
+            EnumChatFormatting.GREEN+"Dungeon Sorting");
     private static ItemStack CONTROL_SORT = Utils.createItemStack(Item.getItemFromBlock(Blocks.hopper),
             EnumChatFormatting.GREEN+"Sort");
     private static ItemStack CONTROL_TIER = Utils.createItemStack(Items.ender_eye,
@@ -162,7 +176,7 @@ public class CustomAH extends Gui {
             EnumChatFormatting.GREEN+"Enchant Filter");
     private static ItemStack CONTROL_STATS = Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block),
             EnumChatFormatting.GREEN+"Stats for nerds");
-    private ItemStack[] controls = {null,CONTROL_SORT,CONTROL_TIER,null,CONTROL_MYAUC,null,CONTROL_BIN,CONTROL_ENCH,CONTROL_STATS};
+    private ItemStack[] controls = {DUNGEON_SORT,CONTROL_SORT,CONTROL_TIER,null,CONTROL_MYAUC,null,CONTROL_BIN,CONTROL_ENCH,CONTROL_STATS};
 
     private NEUManager manager;
 
@@ -179,6 +193,7 @@ public class CustomAH extends Gui {
         filterMyAuctions = false;
         //binFilter = BIN_FILTER_ALL;
         enchFilter = ENCH_FILTER_ALL;
+        dungeonFilter = DUNGEON_FILTER_ALL;
 
         searchField.setText("");
         searchField.setFocused(true);
@@ -859,7 +874,6 @@ public class CustomAH extends Gui {
                         }
                     }
                 } catch(Exception e) {
-                    break out;
                 }
             }
         }
@@ -903,7 +917,30 @@ public class CustomAH extends Gui {
         String selPrefix = EnumChatFormatting.DARK_AQUA + selPrefixNC;
         String unselPrefix = EnumChatFormatting.GRAY.toString();
         switch(index) {
-            case 0: break;
+            case 0:
+                lore.add("");
+                String gold = EnumChatFormatting.GOLD.toString();
+                String gray = EnumChatFormatting.GRAY.toString();
+                char s = 0x272A;
+                String[] linesDung = {"Show All","Any Dungeon",
+                        gold+s+gray+s+s+s+s,
+                        gold+s+s+gray+s+s+s,
+                        gold+s+s+s+gray+s+s,
+                        gold+s+s+s+s+gray+s,
+                        gold+s+s+s+s+s};
+                for(int i=0; i<linesDung.length; i++) {
+                    String line = linesDung[i];
+                    if(i == dungeonFilter) {
+                        line = selPrefix + line.replace(gray, EnumChatFormatting.DARK_AQUA.toString());
+                    } else {
+                        line = unselPrefix + line;
+                    }
+                    lore.add(line);
+                }
+                lore.add("");
+                lore.add(EnumChatFormatting.AQUA + "Right-Click to go backwards!");
+                lore.add(EnumChatFormatting.YELLOW + "Click to switch sort!");
+                return lore;
             case 1:
                 lore.add("");
                 String[] linesSort = {"Highest Bid","Lowest Bid","Ending soon"};
@@ -1031,7 +1068,7 @@ public class CustomAH extends Gui {
         }
     }
 
-    private String niceAucId(String aucId) {
+    public String niceAucId(String aucId) {
         if(aucId.length()!=32) return aucId;
 
         StringBuilder niceAucId = new StringBuilder();
@@ -1090,6 +1127,14 @@ public class CustomAH extends Gui {
                     match &= auc.enchLevel >= 1; break;
                 case ENCH_FILTER_ENCHHPB:
                     match &= auc.enchLevel == 2; break;
+            }
+        }
+
+        if(dungeonFilter > DUNGEON_FILTER_ALL) {
+            if(dungeonFilter == DUNGEON_FILTER_DUNGEON && auc.dungeonTier < 0) {
+                match = false;
+            } else {
+                match &= dungeonFilter == auc.dungeonTier+1;
             }
         }
 
@@ -1155,7 +1200,7 @@ public class CustomAH extends Gui {
         long currentTime = System.currentTimeMillis();
 
         es.submit(() -> {
-            if(currentTime - lastUpdateSearch < 500) {
+            if(currentTime - lastUpdateSearch < 100) {
                 shouldUpdateSearch = true;
                 return;
             }
@@ -1405,7 +1450,15 @@ public class CustomAH extends Gui {
                 int index = offset/18;
                 boolean rightClicked = Mouse.getEventButton() == 1;
                 switch(index) {
-                    case 0: break;
+                    case 0:
+                        if(rightClicked) {
+                            dungeonFilter--;
+                            if(dungeonFilter < DUNGEON_FILTER_ALL) dungeonFilter = DUNGEON_FILTER_5;
+                        } else {
+                            dungeonFilter++;
+                            if(dungeonFilter > DUNGEON_FILTER_5) dungeonFilter = DUNGEON_FILTER_ALL;
+                        }
+                        break;
                     case 1:
                         if(rightClicked) {
                             sortMode--;
@@ -1505,6 +1558,8 @@ public class CustomAH extends Gui {
                     if(mouseY > guiTop+31 && mouseY < guiTop+31+16) {
                         if(currentAucId != null) {
                             manager.auctionManager.getPlayerBids().add(currentAucId);
+                            latestBid = currentAucId;
+                            latestBidMillis = System.currentTimeMillis();
                             //reset timer to 2m if below
                             if(manager.auctionManager.getAuctionItems().get(currentAucId).end -
                                     System.currentTimeMillis() < 2*60*1000) {

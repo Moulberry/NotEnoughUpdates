@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates;
 
 import com.google.common.base.Splitter;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
+import io.github.moulberry.notenoughupdates.util.LerpingInteger;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -9,6 +10,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
@@ -34,6 +36,8 @@ public class GuiEnchantColour extends GuiScreen {
     private HashMap<Integer, String> comparators = new HashMap<>();
     private List<GuiElementTextField[]> guiElementTextFields = new ArrayList<>();
 
+    private LerpingInteger scroll = new LerpingInteger(0, 100);
+
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
@@ -42,7 +46,21 @@ public class GuiEnchantColour extends GuiScreen {
 
         ySize = 53+25*enchantColours.size();
         guiLeft = (width-xSize)/2;
-        guiTop = (height-ySize)/2;
+
+        if(ySize > height) {
+            if(scroll.getTarget() > 0) {
+                scroll.setTarget(0);
+            } else if(scroll.getTarget() < height-ySize) {
+                scroll.setTarget(height-ySize);
+            }
+            scroll.tick();
+            guiTop = scroll.getValue();
+        } else {
+            guiTop = (height-ySize)/2;
+            scroll.setValue(0);
+            scroll.resetTimer();
+        }
+
 
         NotEnoughUpdates.INSTANCE.manager.loadConfig();
 
@@ -148,6 +166,21 @@ public class GuiEnchantColour extends GuiScreen {
         enchantOp.append(":");
         enchantOp.append(tfs[2].getText());
         return enchantOp.toString();
+    }
+
+    @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+
+        int dWheel = Mouse.getEventDWheel();
+
+        if(dWheel < 0) {
+            scroll.setTarget(scroll.getTarget()-50);
+            scroll.resetTimer();
+        } else if(dWheel > 0) {
+            scroll.setTarget(scroll.getTarget()+50);
+            scroll.resetTimer();
+        }
     }
 
     @Override

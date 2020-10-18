@@ -10,9 +10,7 @@ import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiElement;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupAligned;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupFloating;
-import io.github.moulberry.notenoughupdates.util.LerpingFloat;
-import io.github.moulberry.notenoughupdates.util.LerpingInteger;
-import io.github.moulberry.notenoughupdates.util.Utils;
+import io.github.moulberry.notenoughupdates.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -57,6 +55,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.github.moulberry.notenoughupdates.GuiTextures.*;
 
 public class NEUOverlay extends Gui {
+
+    private static final ResourceLocation SUPERGEHEIMNISVERMOGEN = new ResourceLocation("notenoughupdates:supersecretassets/bald.png");
 
     private NEUManager manager;
 
@@ -540,6 +540,7 @@ public class NEUOverlay extends Gui {
             itemPaneOffsetFactor.setValue(1);
             itemPaneTabOffset.setValue(20);
         }
+        if(activeInfoPane != null) activeInfoPane.reset();
     }
 
     /**
@@ -1072,6 +1073,10 @@ public class NEUOverlay extends Gui {
      * Checks whether an item matches the current sort mode.
      */
     public boolean checkMatchesSort(String internalname, JsonObject item) {
+        if(!manager.config.showVanillaItems.value && item.has("vanilla") && item.get("vanilla").getAsBoolean()) {
+            return false;
+        }
+
         if(getSortMode() == SORT_MODE_ALL) {
             return !internalname.matches(mobRegex);
         } else if(getSortMode() == SORT_MODE_MOB) {
@@ -1120,7 +1125,6 @@ public class NEUOverlay extends Gui {
             }
             for(String itemname : entry.getValue()) {
                 JsonObject item = manager.getItemInformation().get(itemname);
-                System.out.println("searching "+itemname);
                 if(item != null) searchedItems.add(item);
             }
         }
@@ -1600,6 +1604,7 @@ public class NEUOverlay extends Gui {
     }
 
     int guiScaleLast = 0;
+    private boolean showVanillaLast = false;
 
     /**
      * Renders the search bar, quick commands, item selection (right) and item info (left) gui elements.
@@ -1613,6 +1618,18 @@ public class NEUOverlay extends Gui {
         scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledresolution.getScaledWidth();
         int height = scaledresolution.getScaledHeight();
+        
+        if(showVanillaLast != manager.config.showVanillaItems.value) {
+            showVanillaLast = manager.config.showVanillaItems.value;
+            updateSearch();
+        }
+
+        if(textField.getText().toLowerCase().contains("bald")) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(SUPERGEHEIMNISVERMOGEN);
+            GlStateManager.color(1, 1, 1, 1);
+            Utils.drawTexturedRect((width-64)/2f, (height-64)/2f-114, 64, 64, GL11.GL_LINEAR);
+            GlStateManager.bindTexture(0);
+        }
 
         updateGuiGroupSize();
 
@@ -1631,13 +1648,13 @@ public class NEUOverlay extends Gui {
         yaw++;
         yaw %= 360;
 
-        int opacity = Math.min(255, Math.max(0, manager.config.bgOpacity.value.intValue()));
-        bg = new Color((bg.getRGB() & 0x00ffffff) | opacity << 24, true);
+        bg = new Color(SpecialColour.specialToChromaRGB(manager.config.paneBackgroundColour.value), true);
+        fg = new Color(SpecialColour.specialToChromaRGB(manager.config.itemBackgroundColour.value));
+        Color fgCustomOpacity = new Color(SpecialColour.specialToChromaRGB(manager.config.itemBackgroundColour.value), true);
 
-        opacity = Math.min(255, Math.max(0, manager.config.fgOpacity.value.intValue()));
-        Color fgCustomOpacity = new Color((fg.getRGB() & 0x00ffffff) | opacity << 24, true);
-        Color fgFavourite = new Color(limCol(fg.getRed()+20), limCol(fg.getGreen()+10), limCol(fg.getBlue()-10), opacity);
-        Color fgFavourite2 = new Color(limCol(fg.getRed()+100), limCol(fg.getGreen()+50), limCol(fg.getBlue()-50), opacity);
+        Color fgFavourite2 = new Color(SpecialColour.specialToChromaRGB(manager.config.itemFavouriteColour.value), true);
+        Color fgFavourite = new Color((int)(fgFavourite2.getRed()*0.8f), (int)(fgFavourite2.getGreen()*0.8f),
+                (int)(fgFavourite2.getBlue()*0.8f), fgFavourite2.getAlpha());
 
         if(itemPaneOpen) {
             if(itemPaneTabOffset.getValue() == 0) {
@@ -1915,8 +1932,8 @@ public class NEUOverlay extends Gui {
             JsonObject auctionInfo = manager.auctionManager.getItemAuctionInfo(internalname);
             JsonObject bazaarInfo = manager.auctionManager.getBazaarInfo(internalname);
 
-            boolean hasAuctionPrice = auctionInfo != null;
-            boolean hasBazaarPrice = bazaarInfo != null;
+            boolean hasAuctionPrice = !manager.config.invAuctionPrice.value && auctionInfo != null;
+            boolean hasBazaarPrice = !manager.config.invBazaarPrice.value && bazaarInfo != null;
 
             int lowestBin = manager.auctionManager.getLowestBin(internalname);
 
@@ -1924,28 +1941,12 @@ public class NEUOverlay extends Gui {
 
             APIManager.CraftInfo craftCost = manager.auctionManager.getCraftCost(json.get("internalname").getAsString());
 
-            if(hasAuctionPrice || hasBazaarPrice || craftCost.fromRecipe || lowestBin > 0) text.add("");
-            if(lowestBin > 0) {
-                text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
-                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
-            }
-            if(hasBazaarPrice) {
-                int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat();
-                text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
-                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
-                int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat();
-                text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
-                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
-                if(manager.config.advancedPriceInfo.value) {
-                    int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat();
-                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
-                    int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat();
-                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
-                }
-            }
+            if(hasAuctionPrice || hasBazaarPrice || craftCost.fromRecipe) text.add("");
             if(hasAuctionPrice) {
+                if(lowestBin > 0) {
+                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+                }
                 int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
                 text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
                         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
@@ -1962,8 +1963,41 @@ public class NEUOverlay extends Gui {
                     }
                 }
 
+            } else if(hasBazaarPrice) {
+                if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                    int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*64;
+                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy (Stack): "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
+                    int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*64;
+                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell (Stack): "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
+                    if(manager.config.advancedPriceInfo.value) {
+                        int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*64;
+                        text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy (Stack): "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
+                        int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*64;
+                        text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell (Stack): "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
+                    }
+                } else {
+                    text.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show stack]");
+                    int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat();
+                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
+                    int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat();
+                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
+                    if(manager.config.advancedPriceInfo.value) {
+                        int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat();
+                        text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
+                        int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat();
+                        text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
+                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
+                    }
+                }
             }
-            if(craftCost.fromRecipe) {
+            if((hasAuctionPrice || hasBazaarPrice) && craftCost.fromRecipe) {
                 text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
                         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
             }

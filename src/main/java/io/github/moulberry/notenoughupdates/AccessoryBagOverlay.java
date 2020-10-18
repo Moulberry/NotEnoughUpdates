@@ -1,11 +1,13 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -41,6 +43,7 @@ public class AccessoryBagOverlay {
     private static final int TAB_BONUS = 2;
     private static final int TAB_DUP = 3;
     private static final int TAB_MISSING = 4;
+    private static final int TAB_OPTIMIZER = 5;
 
     private static final ItemStack[] TAB_STACKS = new ItemStack[] {
             Utils.createItemStack(Items.dye, EnumChatFormatting.DARK_AQUA+"Basic Information",
@@ -52,6 +55,8 @@ public class AccessoryBagOverlay {
             Utils.createItemStack(Items.dye, EnumChatFormatting.DARK_AQUA+"Duplicates",
                     8),
             Utils.createItemStack(Item.getItemFromBlock(Blocks.barrier), EnumChatFormatting.DARK_AQUA+"Missing",
+                    0),
+            Utils.createItemStack(Item.getItemFromBlock(Blocks.redstone_block), EnumChatFormatting.DARK_AQUA+"Optimizer",
                     0),
     };
 
@@ -82,6 +87,36 @@ public class AccessoryBagOverlay {
                 if(currentTab > TAB_MISSING) currentTab = TAB_MISSING;
             }
 
+            if(currentTab == TAB_OPTIMIZER) {
+                int x = guiLeft+xSize+3;
+                int y = guiTop;
+
+                if(mouseY > y+92 && mouseY < y+103) {
+                    if(mouseX > x+5 && mouseX < x+75) {
+                        mainWeapon = (int)Math.floor((mouseX-x-5)/70f*9);
+                        if(mainWeapon < 1) {
+                            mainWeapon = 1;
+                        } else if(mainWeapon > 9) {
+                            mainWeapon = 9;
+                        }
+                    }
+                }
+
+                if(mouseX > x+5 && mouseX < x+35 || mouseX > x+45 && mouseX < x+75) {
+                    boolean set = mouseX > x+5 && mouseX < x+35;
+
+                    if(mouseY > y+32 && mouseY < y+43) {
+                        forceCC = set;
+                    } else if(mouseY > y+52 && mouseY < y+63) {
+                        forceAS = set;
+                    } else if(mouseY > y+72 && mouseY < y+83) {
+                        useGodPot = set;
+                    } else if(mouseY > y+92 && mouseY < y+103) {
+                        allowShaded = set;
+                    }
+                }
+            }
+
             return true;
         } catch(Exception e) {
             return false;
@@ -94,6 +129,8 @@ public class AccessoryBagOverlay {
         talismanCountRarity = null;
         totalStats = null;
         reforgeStats = null;
+        duplicates = null;
+        missing = null;
     }
 
     private static Set<ItemStack> accessoryStacks = new HashSet<>();
@@ -116,7 +153,7 @@ public class AccessoryBagOverlay {
             }
         }
 
-        Utils.drawStringCenteredScaledMaxWidth("# By Rarity", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, true, 70,
+        Utils.drawStringCenteredScaledMaxWidth("# By Rarity", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
                 new Color(80, 80, 80).getRGB());
 
         int yIndex = 0;
@@ -137,7 +174,7 @@ public class AccessoryBagOverlay {
             }
         }
 
-        Utils.drawStringCenteredScaledMaxWidth("Total Stats", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, true, 70,
+        Utils.drawStringCenteredScaledMaxWidth("Total Stats", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
                 new Color(80, 80, 80).getRGB());
         int yIndex = 0;
         for(int i=0; i<PlayerStats.defaultStatNames.length; i++) {
@@ -166,7 +203,7 @@ public class AccessoryBagOverlay {
             }
         }
 
-        Utils.drawStringCenteredScaledMaxWidth("Reforge Stats", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, true, 70,
+        Utils.drawStringCenteredScaledMaxWidth("Reforge Stats", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
                 new Color(80, 80, 80).getRGB());
         int yIndex = 0;
         for(int i=0; i<PlayerStats.defaultStatNames.length; i++) {
@@ -186,13 +223,241 @@ public class AccessoryBagOverlay {
         }
     }
 
-    private static Set<ItemStack> duplicates = new HashSet<>();
+    private static Set<ItemStack> duplicates = null;
     public static void renderDuplicatesOverlay(int x, int y) {
-        Utils.drawStringCenteredScaledMaxWidth("Duplicates", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, true, 70,
-                new Color(80, 80, 80).getRGB());
+        if(duplicates == null) {
+            JsonObject misc = Utils.getConstant("misc");
+            if(misc == null) {
+                Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                        new Color(80, 80, 80).getRGB());
+                return;
+            }
+            JsonElement talisman_upgrades_element = misc.get("talisman_upgrades");
+            if(talisman_upgrades_element == null) {
+                Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                        new Color(80, 80, 80).getRGB());
+                return;
+            }
+            JsonObject talisman_upgrades = talisman_upgrades_element.getAsJsonObject();
+
+            duplicates = new HashSet<>();
+
+            Set<String> prevInternalnames = new HashSet<>();
+            for(ItemStack stack : accessoryStacks) {
+                String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
+
+                if(prevInternalnames.contains(internalname)) {
+                    duplicates.add(stack);
+                    continue;
+                }
+                prevInternalnames.add(internalname);
+
+                if(talisman_upgrades.has(internalname)) {
+                    JsonArray upgrades = talisman_upgrades.get(internalname).getAsJsonArray();
+                    for(ItemStack stack2 : accessoryStacks) {
+                        if(stack != stack2) {
+                            String internalname2 = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack2);
+                            for(int j=0; j<upgrades.size(); j++) {
+                                String upgrade = upgrades.get(j).getAsString();
+                                if(internalname2.equals(upgrade)) {
+                                    duplicates.add(stack);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(duplicates.isEmpty()) {
+            Utils.drawStringCenteredScaledMaxWidth("No Duplicates", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                    new Color(80, 80, 80).getRGB());
+        } else {
+            Utils.drawStringCenteredScaledMaxWidth("Duplicates: " + duplicates.size(), Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                    new Color(80, 80, 80).getRGB());
+
+            int yIndex = 0;
+            for(ItemStack duplicate : duplicates) {
+                renderAlignedString(duplicate.getDisplayName(), "", x+5, y+20+11*yIndex, 70);
+                if(duplicates.size() > 11) {
+                    if(++yIndex >= 10) break;
+                } else {
+                    if(++yIndex >= 11) break;
+                }
+            }
+            
+            if(duplicates.size() > 11) {
+                Utils.drawStringCenteredScaledMaxWidth("+" + (duplicates.size()-10) + " More",
+                        Minecraft.getMinecraft().fontRendererObj, x+40, y+16+121, false, 70,
+                        new Color(80, 80, 80).getRGB());
+            }
+        }
     }
 
+    private static List<ItemStack> missing = null;
     public static void renderMissingOverlay(int x, int y) {
+        if(missing == null) {
+            JsonObject misc = Utils.getConstant("misc");
+            if(misc == null) {
+                Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                        new Color(80, 80, 80).getRGB());
+                return;
+            }
+            JsonElement talisman_upgrades_element = misc.get("talisman_upgrades");
+            if(talisman_upgrades_element == null) {
+                Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                        new Color(80, 80, 80).getRGB());
+                return;
+            }
+            JsonObject talisman_upgrades = talisman_upgrades_element.getAsJsonObject();
+
+            missing = new ArrayList<>();
+
+            List<String> missingInternal = new ArrayList<>();
+            for(Map.Entry<String, JsonObject> entry : NotEnoughUpdates.INSTANCE.manager.getItemInformation().entrySet()) {
+                if(entry.getValue().has("lore")) {
+                    if(checkItemType(entry.getValue().get("lore").getAsJsonArray(), "ACCESSORY", "HATCCESSORY") >= 0) {
+                        missingInternal.add(entry.getKey());
+                    }
+                }
+            }
+
+            for(ItemStack stack : accessoryStacks) {
+                String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
+                missingInternal.remove(internalname);
+
+                for(Map.Entry<String, JsonElement> talisman_upgrade_element : talisman_upgrades.entrySet()) {
+                    JsonArray upgrades = talisman_upgrade_element.getValue().getAsJsonArray();
+                    for(int j=0; j<upgrades.size(); j++) {
+                        String upgrade = upgrades.get(j).getAsString();
+                        if(internalname.equals(upgrade)) {
+                            missingInternal.remove(talisman_upgrade_element.getKey());
+                            break;
+                        }
+                    }
+                }
+            }
+
+            missingInternal.sort(getItemComparator());
+
+            for(String internal : missingInternal) {
+                missing.add(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(internal)));
+            }
+        }
+        if(missing.isEmpty()) {
+            Utils.drawStringCenteredScaledMaxWidth("No Missing", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                    new Color(80, 80, 80).getRGB());
+        } else {
+            Utils.drawStringCenteredScaledMaxWidth("Missing: " + missing.size(), Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                    new Color(80, 80, 80).getRGB());
+
+            int yIndex = 0;
+            for(ItemStack missingStack : missing) {
+                renderAlignedString(missingStack.getDisplayName(), "", x+5, y+20+11*yIndex, 70);
+                if(missing.size() > 11) {
+                    if(++yIndex >= 10) break;
+                } else {
+                    if(++yIndex >= 11) break;
+                }
+            }
+
+            if(missing.size() > 11) {
+                Utils.drawStringCenteredScaledMaxWidth("+" + (missing.size()-10) + " More",
+                        Minecraft.getMinecraft().fontRendererObj, x+40, y+16+121, false, 70,
+                        new Color(80, 80, 80).getRGB());
+            }
+        }
+    }
+
+    private static boolean forceCC = false;
+    private static boolean forceAS = false;
+    private static boolean useGodPot = true;
+    private static boolean allowShaded = true;
+    private static int mainWeapon = 1;
+
+    public static void renderOptimizerOverlay(int x, int y) {
+        Utils.drawStringCenteredScaledMaxWidth("Optimizer", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
+                new Color(80, 80, 80).getRGB());
+
+        int light = new Color(220, 220, 220).getRGB();
+        int dark = new Color(170, 170, 170).getRGB();
+
+        Gui.drawRect(x+5, y+32, x+35, y+43, forceCC?dark:light);
+        Gui.drawRect(x+45, y+32, x+75, y+43, forceCC?light:dark);
+
+        Gui.drawRect(x+5, y+52, x+35, y+63, forceAS?dark:light);
+        Gui.drawRect(x+45, y+52, x+75, y+63, forceAS?light:dark);
+
+        Gui.drawRect(x+5, y+72, x+35, y+83, useGodPot?dark:light);
+        Gui.drawRect(x+45, y+72, x+75, y+83, useGodPot?light:dark);
+
+        Gui.drawRect(x+5, y+92, x+35, y+103, allowShaded?dark:light);
+        Gui.drawRect(x+45, y+92, x+75, y+103, allowShaded?light:dark);
+
+        Gui.drawRect(x+5, y+102, x+75, y+113, light);
+        Gui.drawRect(x+5+(int)((mainWeapon-1)/9f*70), y+102, x+5+(int)(mainWeapon/9f*70), y+113, dark);
+
+        Utils.drawStringCenteredScaledMaxWidth("Force 100% CC", Minecraft.getMinecraft().fontRendererObj, x+40, y+27, false, 70,
+                new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaledMaxWidth((forceCC?EnumChatFormatting.GREEN:EnumChatFormatting.GRAY)+"YES",
+                Minecraft.getMinecraft().fontRendererObj, x+20, y+37,
+                true, 30, new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaledMaxWidth((forceCC?EnumChatFormatting.GRAY:EnumChatFormatting.RED)+"NO", Minecraft.getMinecraft().fontRendererObj, x+60, y+37,
+                true, 30, new Color(80, 80, 80).getRGB());
+
+        Utils.drawStringCenteredScaledMaxWidth("Force 100% ATKSPEED", Minecraft.getMinecraft().fontRendererObj, x+40, y+47, false, 70,
+                new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaledMaxWidth((forceAS?EnumChatFormatting.GREEN:EnumChatFormatting.GRAY)+"YES", Minecraft.getMinecraft().fontRendererObj, x+20, y+57,
+                true, 30, new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaledMaxWidth((forceAS?EnumChatFormatting.GRAY:EnumChatFormatting.RED)+"NO", Minecraft.getMinecraft().fontRendererObj, x+60, y+57,
+                true, 30, new Color(80, 80, 80).getRGB());
+
+        Utils.drawStringCenteredScaledMaxWidth("Use God Potion", Minecraft.getMinecraft().fontRendererObj, x+40, y+67, false, 70,
+                new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaledMaxWidth((useGodPot?EnumChatFormatting.GREEN:EnumChatFormatting.GRAY)+"YES", Minecraft.getMinecraft().fontRendererObj, x+20, y+77,
+                true, 30, new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaledMaxWidth((useGodPot?EnumChatFormatting.GRAY:EnumChatFormatting.RED)+"NO", Minecraft.getMinecraft().fontRendererObj, x+60, y+77,
+                true, 30, new Color(80, 80, 80).getRGB());
+
+        Utils.drawStringCenteredScaledMaxWidth("Use God Potion", Minecraft.getMinecraft().fontRendererObj, x+40, y+87, false, 70,
+                new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaledMaxWidth((allowShaded?EnumChatFormatting.GREEN:EnumChatFormatting.GRAY)+"YES",
+                Minecraft.getMinecraft().fontRendererObj, x+20, y+97,
+                true, 30, new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaledMaxWidth((allowShaded?EnumChatFormatting.GRAY:EnumChatFormatting.RED)+"NO",
+                Minecraft.getMinecraft().fontRendererObj, x+60, y+97,
+                true, 30, new Color(80, 80, 80).getRGB());
+        
+        Utils.drawStringCenteredScaledMaxWidth("Main Weapon", Minecraft.getMinecraft().fontRendererObj, x+40, y+107, false, 70,
+                new Color(80, 80, 80).getRGB());
+        Utils.drawStringCenteredScaled("1 2 3 4 5 6 7 8 9",
+                Minecraft.getMinecraft().fontRendererObj, x+40, y+117,
+                true, 70, new Color(80, 80, 80).getRGB());
+    }
+
+    private static Comparator<String> getItemComparator() {
+        return (o1, o2) -> {
+            float cost1;
+            JsonObject o1Auc = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(o1);
+            if(o1Auc != null && o1Auc.has("price")) {
+                cost1 = o1Auc.get("price").getAsFloat();
+            } else {
+                cost1 = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(o1).craftCost;
+            }
+            float cost2;
+            JsonObject o2Auc = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(o2);
+            if(o2Auc != null && o2Auc.has("price")) {
+                cost2 = o2Auc.get("price").getAsFloat();
+            } else {
+                cost2 = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(o2).craftCost;
+            }
+
+
+            if(cost1 < cost2) return -1;
+            if(cost1 > cost2) return 1;
+
+            return o1.compareTo(o2);
+        };
     }
 
     public static void renderOverlay() {
@@ -276,6 +541,11 @@ public class AccessoryBagOverlay {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(accessory_bag_overlay);
                     Utils.drawTexturedRect(guiLeft+xSize+3, guiTop, 80, 149, 0, 80/256f, 0, 149/256f, GL11.GL_NEAREST);
 
+                    if(pagesVisited.size() < 1) {
+                        renderVisitOverlay(guiLeft+xSize+3, guiTop);
+                        return;
+                    }
+
                     Minecraft.getMinecraft().getTextureManager().bindTexture(accessory_bag_overlay);
                     Utils.drawTexturedRect(guiLeft+xSize+80, guiTop+20*currentTab, 28, 22,
                             80/256f, 108/256f, 22/256f, 44/256f, GL11.GL_NEAREST);
@@ -292,6 +562,8 @@ public class AccessoryBagOverlay {
                             renderDuplicatesOverlay(guiLeft+xSize+3, guiTop); return;
                         case TAB_MISSING:
                             renderMissingOverlay(guiLeft+xSize+3, guiTop); return;
+                        case TAB_OPTIMIZER:
+                            renderOptimizerOverlay(guiLeft+xSize+3, guiTop); return;
                     }
                 } catch(Exception e) {
                     e.printStackTrace();
@@ -500,6 +772,20 @@ public class AccessoryBagOverlay {
         }
         return -1;
     }
+    private static int checkItemType(JsonArray lore, String... typeMatches) {
+        for(int i=lore.size()-1; i>=0; i--) {
+            String line = lore.get(i).getAsString();
+
+            for(String rarity : rarityArr) {
+                for(int j=0; j<typeMatches.length; j++) {
+                    if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
+                        return j;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
     
     public static boolean isAccessory(ItemStack stack) {
         return checkItemType(stack, false, "ACCESSORY", "HATCCESSORY") >= 0;
@@ -523,5 +809,4 @@ public class AccessoryBagOverlay {
         }
         return -1;
     }
-
 }

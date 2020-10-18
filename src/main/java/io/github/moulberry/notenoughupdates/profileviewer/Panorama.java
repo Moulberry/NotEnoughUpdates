@@ -1,9 +1,11 @@
 package io.github.moulberry.notenoughupdates.profileviewer;
 
 import io.github.moulberry.notenoughupdates.util.TexLoc;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -24,6 +26,15 @@ public class Panorama {
     private static int lastHeight = 0;
 
     public static void drawPanorama(float angle, int x, int y, int width, int height, float yOffset, float zOffset, ResourceLocation[] panoramas) {
+        if(!OpenGlHelper.isFramebufferEnabled()) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(panoramas[0]);
+
+            float aspect = width/(float)height;
+            Utils.drawTexturedRect(x, y, width, height, 0.5f-aspect/2, 0.5f+aspect/2, 0, 1);
+
+            return;
+        }
+
         Minecraft.getMinecraft().getFramebuffer().unbindFramebuffer();
 
         ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());

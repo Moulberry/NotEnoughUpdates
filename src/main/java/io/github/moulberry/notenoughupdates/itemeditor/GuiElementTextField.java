@@ -32,6 +32,8 @@ public class GuiElementTextField extends GuiElement {
     private int x;
     private int y;
 
+    private String prependText = "";
+
     private GuiTextField textField = new GuiTextField(0, Minecraft.getMinecraft().fontRendererObj,
             0 , 0, 0, 0);
 
@@ -51,6 +53,10 @@ public class GuiElementTextField extends GuiElement {
 
     public String getText() {
         return textField.getText();
+    }
+
+    public void setPrependText(String text) {
+        this.prependText = text;
     }
 
     public void setText(String text) {
@@ -115,16 +121,20 @@ public class GuiElementTextField extends GuiElement {
 
         int extraSize = (searchBarYSize-8)/2+8;
 
+        String renderText = prependText + textField.getText();
+
         int lineNum = Math.round(((yComp - (searchBarYSize-8)/2))/extraSize);
 
         Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6])(?!\\u00B6)");
-        String text = textField.getText();
-        String textNoColour = textField.getText();
-        while(true) {
-            Matcher matcher = patternControlCode.matcher(text);
-            if(!matcher.find() || matcher.groupCount() < 1) break;
-            String code = matcher.group(1);
-            text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+        String text = renderText;
+        String textNoColour = renderText;
+        if((options & COLOUR) != 0) {
+            while(true) {
+                Matcher matcher = patternControlCode.matcher(text);
+                if(!matcher.find() || matcher.groupCount() < 1) break;
+                String code = matcher.group(1);
+                text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+            }
         }
         while(true) {
             Matcher matcher = patternControlCode.matcher(textNoColour);
@@ -141,20 +151,31 @@ public class GuiElementTextField extends GuiElement {
                 currentLine++;
             }
         }
+
+
         String textNC = textNoColour.substring(0, cursorIndex);
         int colorCodes = StringUtils.countMatches(textNC, "\u00B6");
-        String line = text.substring(cursorIndex+colorCodes*2).split("\n")[0];
-        String trimmed = Minecraft.getMinecraft().fontRendererObj.trimStringToWidth(line, xComp-5);
+        String line = text.substring(cursorIndex+(((options & COLOUR) != 0)?colorCodes*2:0)).split("\n")[0];
+        int padding = Math.min(5, searchBarXSize-strLenNoColor(line))/2;
+        String trimmed = Minecraft.getMinecraft().fontRendererObj.trimStringToWidth(line, xComp-padding);
         int linePos = strLenNoColor(trimmed);
         if(linePos != strLenNoColor(line)) {
             char after = line.charAt(linePos);
             int trimmedWidth = Minecraft.getMinecraft().fontRendererObj.getStringWidth(trimmed);
             int charWidth = Minecraft.getMinecraft().fontRendererObj.getCharWidth(after);
-            if(trimmedWidth + charWidth/2 < xComp-5) {
+            if(trimmedWidth + charWidth/2 < xComp-padding) {
                 linePos++;
             }
         }
         cursorIndex += linePos;
+
+        int pre = Utils.cleanColour(prependText).length();
+        if(cursorIndex < pre) {
+            cursorIndex = 0;
+        } else {
+            cursorIndex -= pre;
+        }
+
         return cursorIndex;
     }
 
@@ -319,7 +340,6 @@ public class GuiElementTextField extends GuiElement {
                             textField.setCursorPosition(pos+1);
                         }
                     }
-
                 }
             }
 
@@ -336,6 +356,7 @@ public class GuiElementTextField extends GuiElement {
     private void drawTextbox(int x, int y, int searchBarXSize, int searchBarYSize, int searchBarPadding,
                              GuiTextField textField, boolean focus) {
         ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+        String renderText = prependText + textField.getText();
 
         GlStateManager.disableLighting();
 
@@ -345,7 +366,7 @@ public class GuiElementTextField extends GuiElement {
         int paddingUnscaled = searchBarPadding/scaledresolution.getScaleFactor();
         if(paddingUnscaled < 1) paddingUnscaled = 1;
 
-        int numLines = StringUtils.countMatches(textField.getText(), "\n")+1;
+        int numLines = StringUtils.countMatches(renderText, "\n")+1;
         int extraSize = (searchBarYSize-8)/2+8;
         int bottomTextBox = y + searchBarYSize + extraSize*(numLines-1);
 
@@ -366,13 +387,15 @@ public class GuiElementTextField extends GuiElement {
         //bar text
         Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6\n])(?!\\u00B6)");
 
-        String text = textField.getText();
-        String textNoColor = textField.getText();
-        while(true) {
-            Matcher matcher = patternControlCode.matcher(text);
-            if(!matcher.find() || matcher.groupCount() < 1) break;
-            String code = matcher.group(1);
-            text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+        String text = renderText;
+        String textNoColor = renderText;
+        if((options & COLOUR) != 0) {
+            while(true) {
+                Matcher matcher = patternControlCode.matcher(text);
+                if(!matcher.find() || matcher.groupCount() < 1) break;
+                String code = matcher.group(1);
+                text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+            }
         }
         while(true) {
             Matcher matcher = patternControlCode.matcher(textNoColor);
@@ -403,9 +426,9 @@ public class GuiElementTextField extends GuiElement {
         }
 
         if(focus && System.currentTimeMillis()%1000>500) {
-            String textNCBeforeCursor = textNoColor.substring(0, textField.getCursorPosition());
+            String textNCBeforeCursor = textNoColor.substring(0, textField.getCursorPosition()+prependText.length());
             int colorCodes = StringUtils.countMatches(textNCBeforeCursor, "\u00B6");
-            String textBeforeCursor = text.substring(0, textField.getCursorPosition()+colorCodes*2);
+            String textBeforeCursor = text.substring(0, textField.getCursorPosition()+prependText.length()+(((options & COLOUR) != 0) ? colorCodes*2 : 0));
 
             int numLinesBeforeCursor = StringUtils.countMatches(textBeforeCursor, "\n");
             int yOff = numLinesBeforeCursor*extraSize;
@@ -425,8 +448,8 @@ public class GuiElementTextField extends GuiElement {
 
         String selectedText = textField.getSelectedText();
         if(!selectedText.isEmpty()) {
-            int leftIndex = Math.min(textField.getCursorPosition(), textField.getSelectionEnd());
-            int rightIndex = Math.max(textField.getCursorPosition(), textField.getSelectionEnd());
+            int leftIndex = Math.min(textField.getCursorPosition()+prependText.length(), textField.getSelectionEnd()+prependText.length());
+            int rightIndex = Math.max(textField.getCursorPosition()+prependText.length(), textField.getSelectionEnd()+prependText.length());
 
             float texX = 0;
             int texY = 0;

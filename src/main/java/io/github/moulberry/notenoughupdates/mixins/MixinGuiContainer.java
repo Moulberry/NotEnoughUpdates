@@ -22,7 +22,7 @@ public abstract class MixinGuiContainer {
 
     @Inject(method="drawSlot", at=@At("HEAD"), cancellable = true)
     public void drawSlot(Slot slot, CallbackInfo ci) {
-        if(slot != null && BetterContainers.isOverriding() && BetterContainers.isBlankStack(slot.getStack())) {
+        if(slot != null && BetterContainers.isOverriding() && !BetterContainers.shouldRenderStack(slot.getStack())) {
             ci.cancel();
         }
     }
@@ -43,9 +43,11 @@ public abstract class MixinGuiContainer {
             BetterContainers.clickSlot(slotIn.getSlotIndex());
             Utils.playPressSound();
 
-            GuiContainer $this = (GuiContainer)(Object)this;
-            $this.mc.playerController.windowClick($this.inventorySlots.windowId, slotId, 2, clickType, $this.mc.thePlayer);
-            ci.cancel();
+            /*if(!BetterContainers.isAh()) {
+                GuiContainer $this = (GuiContainer)(Object)this;
+                $this.mc.playerController.windowClick($this.inventorySlots.windowId, slotId, 2, clickType, $this.mc.thePlayer);
+                ci.cancel();
+            }*/
         }
     }
 

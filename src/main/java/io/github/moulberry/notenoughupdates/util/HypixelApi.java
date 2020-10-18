@@ -24,7 +24,7 @@ public class HypixelApi {
     private ExecutorService es = Executors.newFixedThreadPool(3);
 
     private int myApiErrors = 0;
-    private String[] myApiURLs = {"https://moulberry.codes/", "http://51.89.22.3/", "http://moulberry.codes/", "https://51.89.22.3/"};
+    private String[] myApiURLs = {"https://moulberry.codes/", "http://51.75.78.252/", "http://moulberry.codes/" };
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {
         getHypixelApiAsync(apiKey, method, args, consumer, () -> {});
@@ -42,7 +42,7 @@ public class HypixelApi {
         es.submit(() -> {
             try {
                 consumer.accept(getApiSync(urlS));
-            } catch(IOException e) {
+            } catch(Exception e) {
                 error.run();
             }
         });
@@ -52,7 +52,7 @@ public class HypixelApi {
         es.submit(() -> {
             try {
                 consumer.accept(getApiSync(getMyApiURL()+urlS));
-            } catch(IOException e) {
+            } catch(Exception e) {
                 myApiErrors++;
                 error.run();
             }
@@ -63,7 +63,7 @@ public class HypixelApi {
         es.submit(() -> {
             try {
                 consumer.accept(getApiGZIPSync(getMyApiURL()+urlS));
-            } catch(IOException e) {
+            } catch(Exception e) {
                 myApiErrors++;
                 error.run();
             }
@@ -74,7 +74,7 @@ public class HypixelApi {
         es.submit(() -> {
             try {
                 consumer.accept(getApiGZIPSync(urlS));
-            } catch(IOException e) {
+            } catch(Exception e) {
                 error.run();
             }
         });
@@ -83,7 +83,7 @@ public class HypixelApi {
     public JsonObject getApiSync(String urlS) throws IOException {
         URL url = new URL(urlS);
         URLConnection connection = url.openConnection();
-        connection.setConnectTimeout(3000);
+        connection.setConnectTimeout(10000);
         connection.setReadTimeout(10000);
 
         String response = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
@@ -95,7 +95,7 @@ public class HypixelApi {
     public JsonObject getApiGZIPSync(String urlS) throws IOException {
         URL url = new URL(urlS);
         URLConnection connection = url.openConnection();
-        connection.setConnectTimeout(3000);
+        connection.setConnectTimeout(10000);
         connection.setReadTimeout(10000);
 
         String response = IOUtils.toString(new GZIPInputStream(connection.getInputStream()), StandardCharsets.UTF_8);

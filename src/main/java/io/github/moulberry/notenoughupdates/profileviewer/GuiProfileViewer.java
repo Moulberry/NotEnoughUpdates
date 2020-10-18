@@ -11,7 +11,7 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.SBAIntegration;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
-import io.github.moulberry.notenoughupdates.questing.SBScoreboardData;
+import io.github.moulberry.notenoughupdates.questing.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
@@ -675,9 +675,9 @@ public class GuiProfileViewer extends GuiScreen {
         backgroundRotation %= 360;
 
         String panoramaIdentifier = "day";
-        if(SBScoreboardData.getInstance().currentTimeDate != null) {
-            if(SBScoreboardData.getInstance().currentTimeDate.getHours() <= 6 ||
-                    SBScoreboardData.getInstance().currentTimeDate.getHours() >= 20) {
+        if(SBInfo.getInstance().currentTimeDate != null) {
+            if(SBInfo.getInstance().currentTimeDate.getHours() <= 6 ||
+                    SBInfo.getInstance().currentTimeDate.getHours() >= 20) {
                 panoramaIdentifier = "night";
             }
         }
@@ -1902,9 +1902,9 @@ public class GuiProfileViewer extends GuiScreen {
         backgroundRotation %= 360;
 
         String panoramaIdentifier = "day";
-        if(SBScoreboardData.getInstance().currentTimeDate != null) {
-            if(SBScoreboardData.getInstance().currentTimeDate.getHours() <= 6 ||
-                SBScoreboardData.getInstance().currentTimeDate.getHours() >= 20) {
+        if(SBInfo.getInstance().currentTimeDate != null) {
+            if(SBInfo.getInstance().currentTimeDate.getHours() <= 6 ||
+                SBInfo.getInstance().currentTimeDate.getHours() >= 20) {
                 panoramaIdentifier = "night";
             }
         }
@@ -1984,6 +1984,30 @@ public class GuiProfileViewer extends GuiScreen {
         long networth = profile.getNetWorth(profileId);
         if(networth > 0) {
             Utils.drawStringCentered(EnumChatFormatting.GREEN+"Net Worth: "+EnumChatFormatting.GOLD+numberFormat.format(networth), fr, guiLeft+63, guiTop+38, true, 0);
+            try {
+                double networthInCookies = (networth / NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo("BOOSTER_COOKIE").get("avg_buy").getAsDouble());
+                String networthIRLMoney = Long.toString(Math.round(((networthInCookies * 325) / 675) * 4.99));
+
+                if(mouseX > guiLeft+8 && mouseX < guiLeft+8+fontRendererObj.getStringWidth("Net Worth: " + numberFormat.format(networth))) {
+                    if(mouseY > guiTop+32 && mouseY < guiTop+32+fontRendererObj.FONT_HEIGHT) {
+                        tooltipToDisplay = new ArrayList<>();
+                        tooltipToDisplay.add(EnumChatFormatting.GREEN+"Net worth in IRL money: "+EnumChatFormatting.DARK_GREEN+"$" +EnumChatFormatting.GOLD+networthIRLMoney);
+                        tooltipToDisplay.add("");
+                        if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                            tooltipToDisplay.add(EnumChatFormatting.RED+"This is calculated using the current");
+                            tooltipToDisplay.add(EnumChatFormatting.RED+"price of booster cookies on bazaar and the price");
+                            tooltipToDisplay.add(EnumChatFormatting.RED+"for cookies using gems, then the price of gems");
+                            tooltipToDisplay.add(EnumChatFormatting.RED+"is where we get the amount of IRL money you" );
+                            tooltipToDisplay.add(EnumChatFormatting.RED+"theoretically have on skyblock in net worth.");
+                        } else {
+                            tooltipToDisplay.add(EnumChatFormatting.GRAY+"[SHIFT for Info]");
+                        }
+                        tooltipToDisplay.add("");
+                        tooltipToDisplay.add(EnumChatFormatting.RED+"THIS IS IN NO WAY ENDORSING IRL TRADING!");
+
+                    }
+                }
+            } catch(Exception e){}
         }
 
         if(status != null) {
@@ -2212,6 +2236,11 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     private void renderGoldBar(float x, float y, float xSize) {
+        if(!OpenGlHelper.areShadersSupported()) {
+            renderBar(x, y, xSize, 1);
+            return;
+        }
+
         Minecraft.getMinecraft().getTextureManager().bindTexture(icons);
         ShaderManager shaderManager = ShaderManager.getInstance();
         shaderManager.loadShader("make_gold");
@@ -2384,6 +2413,8 @@ public class GuiProfileViewer extends GuiScreen {
      */
     private double lastBgBlurFactor = -1;
     private void blurBackground() {
+        if(!OpenGlHelper.isFramebufferEnabled()) return;
+
         int width = Minecraft.getMinecraft().displayWidth;
         int height = Minecraft.getMinecraft().displayHeight;
 
@@ -2443,6 +2474,8 @@ public class GuiProfileViewer extends GuiScreen {
      * Essentially, this method will "blur" the background inside the bounds specified by [x->x+blurWidth, y->y+blurHeight]
      */
     public void renderBlurredBackground(int width, int height, int x, int y, int blurWidth, int blurHeight) {
+        if(!OpenGlHelper.isFramebufferEnabled()) return;
+
         float uMin = x/(float)width;
         float uMax = (x+blurWidth)/(float)width;
         float vMin = (height-y)/(float)height;

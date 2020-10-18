@@ -3,25 +3,19 @@ package io.github.moulberry.notenoughupdates.gamemodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.options.Options;
-import io.github.moulberry.notenoughupdates.questing.SBScoreboardData;
+import io.github.moulberry.notenoughupdates.questing.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiChest;
-import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.input.Keyboard;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -229,7 +223,7 @@ public class SBGamemodes {
     public void onPlayerInteract(PlayerInteractEvent event) {
         if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
 
-        if(!"Your Island".equals(SBScoreboardData.getInstance().location)) return;
+        if(!"Your Island".equals(SBInfo.getInstance().location)) return;
 
         if((getGamemode().gamemodeModifiers & MODIFIER_SMALLISLAND) != 0) {
             if(event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
@@ -252,8 +246,8 @@ public class SBGamemodes {
     public void onTick(TickEvent.ClientTickEvent event) {
         if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
 
-        if("Your Island".equals(SBScoreboardData.getInstance().location) &&
-                (EnumChatFormatting.YELLOW+"Break a log").equals(SBScoreboardData.getInstance().objective)) {
+        if("Your Island".equals(SBInfo.getInstance().location) &&
+                (EnumChatFormatting.YELLOW+"Break a log").equals(SBInfo.getInstance().objective)) {
             getGamemode().locked = false;
         } else {
             getGamemode().locked = true;

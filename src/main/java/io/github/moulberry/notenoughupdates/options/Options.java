@@ -5,6 +5,7 @@ import io.github.moulberry.notenoughupdates.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
+import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Util;
@@ -28,6 +29,8 @@ public class Options {
      * variables with defaults values/etc. It works. I'm happy.
      */
 
+    public static final transient int FLAG_COLOUR = 0b1;
+
     public Option<Boolean> enableItemEditing = new Option(
             false,
             "Enable Item Editing",
@@ -38,6 +41,11 @@ public class Options {
             "Only Show On Skyblock",
             false,
             "NEU Overlay only appears when you are playing Skyblock.");
+    public Option<Boolean> showVanillaItems = new Option(
+            true,
+            "Show Vanilla Items",
+            false,
+            "Shows vanilla items in the itemlist.");
     public Option<Boolean> hidePotionEffect = new Option(
             true,
             "Hide Potion Effects",
@@ -143,6 +151,21 @@ public class Options {
             "Custom Trade",
             false,
             "If true, uses the custom trade window for skyblock trades.");
+    public Option<Boolean> invBazaarPrice = new Option(
+            false,
+            "Show Bazaar Price In Inventory",
+            false,
+            "If true, shows the bazaar price for the item you hover in your inventory.");
+    public Option<Boolean> invAuctionPrice = new Option(
+            false,
+            "Show Auction Price In Inventory",
+            false,
+            "If true, shows the auction price for the item you hover in your inventory.");
+    public Option<Boolean> dungeonBlocksEverywhere = new Option(
+            false,
+            "Show Dungeon Block Overlay Everywhere",
+            false,
+            "If true, will show the overlay for cracked bricks, etc. even when not in dungeons.");
     public Option<Double> paneWidthMult = new Option(
             1.0,
             "Pane Width",
@@ -153,16 +176,6 @@ public class Options {
             "Smooth AOTE Milliseconds",
             false,
             "How long teleporting with the AOTE takes. 0 = disable.", 0, 300);
-    public Option<Double> bgOpacity = new Option(
-            30.0,
-            "Pane Background Opacity",
-            false,
-            "Changes the background colour opacity of item and info panes. Value between 0-255.", 0, 255);
-    public Option<Double> fgOpacity = new Option(
-            255.0,
-            "Item Background Opacity",
-            false,
-            "Changes the opacity of item background. Value between 0-255.", 0, 255);
     public Option<Double> itemHighlightOpacity = new Option(
             178.0,
             "Item Highlight Opacity",
@@ -193,6 +206,68 @@ public class Options {
             "SBMenu Button Style",
             false,
             "Style of the buttons used for the skyblock menu.", 0, 10);
+
+    public Option<String> itemBackgroundColour = new Option(
+            "00:255:100:100:100",
+            "Item BG Colour",
+            false,
+            "Treecapitator Overlay Colour",
+            FLAG_COLOUR);
+    public Option<String> itemFavouriteColour = new Option(
+            "00:255:200:150:50",
+            "Item BG Favourite Colour",
+            false,
+            "Item BG Favourite Colour",
+            FLAG_COLOUR);
+    public Option<String> paneBackgroundColour = new Option(
+            "15:6:0:0:255",
+            "Pane Background Colour",
+            false,
+            "Pane Background Colour",
+            FLAG_COLOUR);
+    public Option<String> treecapOverlayColour = new Option(
+            "00:50:64:224:208",
+            "Treecapitator Overlay Colour",
+            false,
+            "Treecapitator Overlay Colour",
+            FLAG_COLOUR);
+
+    public Option<String> dungCrackedColour = new Option(
+            "0:252:7:255:217",
+            "Dungeon Cracked Brick Colour",
+            false,
+            "Dungeon Cracked Brick Colour",
+            FLAG_COLOUR);
+    public Option<String> dungDispenserColour = new Option(
+            "0:255:255:76:0",
+            "Dungeon Dispenser Colour",
+            false,
+            "Dungeon Dispenser Colour",
+            FLAG_COLOUR);
+    public Option<String> dungLeverColour = new Option(
+            "0:252:24:249:255",
+            "Dungeon Lever Colour",
+            false,
+            "Dungeon Lever Colour",
+            FLAG_COLOUR);
+    public Option<String> dungTripWireColour = new Option(
+            "0:255:255:0:0",
+            "Dungeon Trip Wire Colour",
+            false,
+            "Dungeon Trip Wire Colour",
+            FLAG_COLOUR);
+    public Option<String> dungChestColour = new Option(
+            "0:255:0:163:36",
+            "Dungeon Chest Colour",
+            false,
+            "Dungeon Chest Colour",
+            FLAG_COLOUR);
+    public Option<String> dungBatColour = new Option(
+            "0:255:12:255:0",
+            "Dungeon Bat Colour",
+            false,
+            "Dungeon Bat Colour",
+            FLAG_COLOUR);
 
     /**
      * OPTIONS THAT DON'T SHOW IN GUI
@@ -336,6 +411,7 @@ public class Options {
         //Buttons
         tryAddOption(enableItemEditing, options);
         tryAddOption(onlyShowOnSkyblock, options);
+        tryAddOption(showVanillaItems, options);
         tryAddOption(showQuickCommands, options);
         tryAddOption(hidePotionEffect, options);
         tryAddOption(hideEmptyPanes, options);
@@ -356,12 +432,13 @@ public class Options {
         tryAddOption(useCustomTrade, options);
         tryAddOption(customTradePrices, options);
         tryAddOption(customTradePriceStyle, options);
+        tryAddOption(invBazaarPrice, options);
+        tryAddOption(invAuctionPrice, options);
+        tryAddOption(dungeonBlocksEverywhere, options);
         //Sliders
         tryAddOption(smoothAoteMillis, options);
         tryAddOption(bgBlurFactor, options);
         tryAddOption(ahNotification, options);
-        tryAddOption(bgOpacity, options);
-        tryAddOption(fgOpacity, options);
         tryAddOption(itemHighlightOpacity, options);
         tryAddOption(panePadding, options);
         tryAddOption(tooltipBorderOpacity, options);
@@ -369,6 +446,18 @@ public class Options {
         tryAddOption(dynamicMenuButtonStyle, options);
         //Text
         tryAddOption(apiKey, options);
+        //Colour
+        tryAddOption(paneBackgroundColour, options);
+        tryAddOption(itemBackgroundColour, options);
+        tryAddOption(itemFavouriteColour, options);
+        tryAddOption(treecapOverlayColour, options);
+
+        tryAddOption(dungCrackedColour, options);
+        tryAddOption(dungDispenserColour, options);
+        tryAddOption(dungLeverColour, options);
+        tryAddOption(dungTripWireColour, options);
+        tryAddOption(dungChestColour, options);
+        tryAddOption(dungBatColour, options);
 
         return options;
     }
@@ -385,19 +474,29 @@ public class Options {
         public final transient String displayName;
         public final transient boolean secret;
         public final transient String desc;
+        public final transient int flags;
         public final transient double minValue;
         public final transient double maxValue;
 
         public Option(T defaultValue, String displayName, boolean secret, String desc) {
-            this(defaultValue, displayName, secret, desc, 0, 100);
+            this(defaultValue, displayName, secret, desc, 0, 0, 100);
+        }
+
+        public Option(T defaultValue, String displayName, boolean secret, String desc, int flags) {
+            this(defaultValue, displayName, secret, desc, flags, 0, 100);
         }
 
         public Option(T defaultValue, String displayName, boolean secret, String desc, double minValue, double maxValue) {
+            this(defaultValue, displayName, secret, desc, 0, minValue, maxValue);
+        }
+
+        public Option(T defaultValue, String displayName, boolean secret, String desc, int flags, double minValue, double maxValue) {
             this.value = defaultValue;
             this.defaultValue = defaultValue;
             this.displayName = displayName;
             this.secret = secret;
             this.desc = desc;
+            this.flags = flags;
             this.minValue = minValue;
             this.maxValue = maxValue;
         }

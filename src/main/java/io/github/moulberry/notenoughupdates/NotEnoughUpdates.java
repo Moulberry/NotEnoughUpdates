@@ -18,38 +18,57 @@ import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
+import io.github.moulberry.notenoughupdates.questing.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.block.material.MapColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.resources.IReloadableResourceManager;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
+import net.minecraft.item.ItemMap;
+import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.*;
+import net.minecraft.world.storage.MapData;
 import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.text.translate.UnicodeUnescaper;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.Display;
+import org.lwjgl.opengl.GL11;
 
+import javax.imageio.ImageIO;
 import javax.net.ssl.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.*;
@@ -65,7 +84,7 @@ import java.util.concurrent.TimeUnit;
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "1.3-REL";
+    public static final String VERSION = "1.4-REL";
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -204,6 +223,21 @@ public class NotEnoughUpdates {
     SimpleCommand resetRepoCommand = new SimpleCommand("neuresetrepo", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             manager.resetRepo();
+        }
+    });
+
+    SimpleCommand reloadRepoCommand = new SimpleCommand("neureloadrepo", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            File items = new File(manager.repoLocation, "items");
+            if(items.exists()) {
+                File[] itemFiles = new File(manager.repoLocation, "items").listFiles();
+                if(itemFiles != null) {
+                    for(File f : itemFiles) {
+                        String internalname = f.getName().substring(0, f.getName().length()-5);
+                        manager.loadItem(internalname);
+                    }
+                }
+            }
         }
     });
 
@@ -426,6 +460,80 @@ public class NotEnoughUpdates {
         }
     });
 
+
+    SimpleCommand pcStatsCommand = new SimpleCommand("neustats", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            Minecraft mc = Minecraft.getMinecraft();
+            StringBuilder builder = new StringBuilder();
+
+            if (args.length > 0 && args[0].toLowerCase().equals("modlist")){
+                builder.append("```md\n");
+                builder.append("# Mods Loaded").append("\n");
+                for (ModContainer modContainer : Loader.instance().getActiveModList()) {
+                    builder.append("[").append(modContainer.getName()).append("]")
+                            .append("[").append(modContainer.getSource().getName()).append("]\n");
+                }
+                builder.append("```");
+            } else {
+                long memorySize = -1;
+                try {
+                    memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
+                } catch(Exception e){}
+                long maxMemory = Runtime.getRuntime().maxMemory();
+                long totalMemory = Runtime.getRuntime().totalMemory();
+                long freeMemory = Runtime.getRuntime().freeMemory();
+                long currentMemory = totalMemory - freeMemory;
+                int modCount = Loader.instance().getModList().size();
+                int activeModCount = Loader.instance().getActiveModList().size();
+
+                builder.append("```md\n");
+                builder.append("# System Stats").append("\n");
+                builder.append("[OS]").append("[").append(System.getProperty("os.name")).append("]").append("\n");
+                builder.append("[CPU]").append("[").append(OpenGlHelper.getCpu()).append("]").append("\n");
+                builder.append("[Display]").append("[").append(String.format("%dx%d (%s)", Display.getWidth(), Display.getHeight(), GL11.glGetString(GL11.GL_VENDOR))).append("]").append("\n");
+                builder.append("[GPU]").append("[").append(GL11.glGetString(GL11.GL_RENDERER)).append("]").append("\n");
+                builder.append("[GPU Driver]").append("[").append(GL11.glGetString(GL11.GL_VERSION)).append("]").append("\n");
+                if(memorySize > 0) {
+                    builder.append("[Maximum Memory]").append("[").append(memorySize / 1024L / 1024L).append("MB]").append("\n");
+                }
+                builder.append("[Shaders]").append("[").append((""+OpenGlHelper.areShadersSupported()).toUpperCase()).append("]").append("\n");
+                builder.append("[Framebuffers]").append("[").append((""+OpenGlHelper.isFramebufferEnabled()).toUpperCase()).append("]").append("\n");
+                builder.append("# Java Stats").append("\n");
+                builder.append("[Java]").append("[").append(String.format("%s %dbit", System.getProperty("java.version"), mc.isJava64bit() ? 64 : 32)).append("]").append("\n");
+                builder.append("[Memory]").append("[").append(String.format("% 2d%% %03d/%03dMB", currentMemory * 100L / maxMemory, currentMemory / 1024L / 1024L, maxMemory / 1024L / 1024L)).append("]").append("\n");
+                builder.append("[Memory Allocated]").append("[").append(String.format("% 2d%% %03dMB", totalMemory * 100L / maxMemory, totalMemory / 1024L / 1024L)).append("]").append("\n");
+                builder.append("# Game Stats").append("\n");
+                builder.append("[Current FPS]").append("[").append(Minecraft.getDebugFPS()).append("]").append("\n");
+                builder.append("[Loaded Mods]").append("[").append(activeModCount).append("/").append(modCount).append("]").append("\n");
+                builder.append("[Forge]").append("[").append(ForgeVersion.getVersion()).append("]").append("\n");
+                builder.append("# Neu Settings").append("\n");
+                builder.append("[API Key]").append("[").append(!INSTANCE.manager.config.apiKey.value.isEmpty()).append("]").append("\n");
+                builder.append("[On Skyblock]").append("[").append(hasSkyblockScoreboard).append("]").append("\n");
+                builder.append("[Mod Version]").append("[").append(Loader.instance().getIndexedModList().get(MODID).getSource().getName()).append("]").append("\n");
+                builder.append("# Repo Stats").append("\n");
+                builder.append("[Last Commit]").append("[").append(manager.latestRepoCommit).append("]").append("\n");
+                builder.append("[Loaded Items]").append("[").append(manager.getItemInformation().size()).append("]").append("\n");
+                if (activeModCount <= 15) {
+                    builder.append("# Mods Loaded").append("\n");
+                    for (ModContainer modContainer : Loader.instance().getActiveModList()) {
+                        builder.append("[").append(modContainer.getName()).append("]")
+                                .append("[").append(modContainer.getSource().getName()).append("]\n");
+                    }
+                    builder.append("```");
+                } else {
+                    builder.append("```");
+                }
+            }
+            try {
+                StringSelection clipboard = new StringSelection(builder.toString());
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(clipboard, clipboard);
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + "[" + EnumChatFormatting.RED + "NotEnoughUpdates" + EnumChatFormatting.GOLD + "]: " + EnumChatFormatting.GREEN + "Dev info copied to clipboard."));
+            } catch (Exception ignored) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + "[" + EnumChatFormatting.RED + "NotEnoughUpdates" + EnumChatFormatting.GOLD + "]: " + EnumChatFormatting.DARK_RED + "Could not copy to clipboard."));
+            }
+        }
+    });
+
     public static ProfileViewer profileViewer;
 
     SimpleCommand.ProcessCommandRunnable viewProfileRunnable = new SimpleCommand.ProcessCommandRunnable() {
@@ -439,8 +547,8 @@ public class NotEnoughUpdates {
                     while((line = reader.readLine()) != null) {
                         if(line.contains("ofFastRender:true")) {
                             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                                    "This feature is incompatible with OF Fast Render. Go to Video > Performance to disable it."));
-                            return;
+                                    "Some parts of the profile viewer do not work with OF Fast Render. Go to Video > Performance to disable it."));
+                            break;
                         }
                     }
                 } catch(Exception e) {
@@ -574,6 +682,75 @@ public class NotEnoughUpdates {
         }
     });
 
+    public Color[][] colourMap = null;
+    SimpleCommand neumapCommand = new SimpleCommand("neumap", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(args.length == 1 && args[0] == "reset") {
+                colourMap = null;
+                return;
+            }
+
+            if(args.length != 2) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+                        "Dev feature if you don't know how to use then don't use it 4Head."));
+                return;
+            }
+
+            if(args[0].equals("save")) {
+                ItemStack stack = Minecraft.getMinecraft().thePlayer.getHeldItem();
+                if(stack != null && stack.getItem() instanceof ItemMap) {
+                    ItemMap map = (ItemMap) stack.getItem();
+                    MapData mapData = map.getMapData(stack, Minecraft.getMinecraft().theWorld);
+
+                    if (mapData == null) return;
+
+                    JsonObject json = new JsonObject();
+                    for (int i = 0; i < 16384; ++i) {
+                        int x = i % 128;
+                        int y = i / 128;
+
+                        int j = mapData.colors[i] & 255;
+
+                        Color c;
+                        if (j / 4 == 0) {
+                            c = new Color((i + i / 128 & 1) * 8 + 16 << 24, true);
+                        } else {
+                            c = new Color(MapColor.mapColorArray[j / 4].func_151643_b(j & 3), true);
+                        }
+
+                        json.addProperty(x+":"+y, c.getRGB());
+                    }
+
+                    try {
+                        new File(manager.configLocation, "maps").mkdirs();
+                        manager.writeJson(json, new File(manager.configLocation, "maps/"+args[1]+".json"));
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+
+                            "Saved to file."));
+                }
+            }
+
+            if(args[0].equals("load")) {
+                JsonObject json = manager.getJsonFromFile(new File(manager.configLocation, "maps/"+args[1]+".json"));
+                colourMap = new Color[128][128];
+                for(int x=0; x<128; x++) {
+                    for(int y=0; y<128; y++) {
+                        colourMap[x][y] = new Color(0, 0, 0, 0);
+                    }
+                }
+                for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                    int x = Integer.parseInt(entry.getKey().split(":")[0]);
+                    int y = Integer.parseInt(entry.getKey().split(":")[1]);
+
+                    colourMap[x][y] = new Color(entry.getValue().getAsInt(), true);
+                }
+            }
+        }
+    });
+
     SimpleCommand cosmeticsCommand = new SimpleCommand("neucosmetics", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             openGui = new GuiCosmetics();
@@ -609,8 +786,15 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new NEUEventListener(this));
         MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
         MinecraftForge.EVENT_BUS.register(new SBGamemodes());
+        MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(new DungeonMap());
         //MinecraftForge.EVENT_BUS.register(new BetterPortals());
+
+        IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();
+        if(resourceManager instanceof IReloadableResourceManager) {
+            ((IReloadableResourceManager)resourceManager).registerReloadListener(new DungeonBlocks());
+        }
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         f.mkdirs();
@@ -619,6 +803,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(linksCommand);
         ClientCommandHandler.instance.registerCommand(gamemodesCommand);
         ClientCommandHandler.instance.registerCommand(resetRepoCommand);
+        ClientCommandHandler.instance.registerCommand(reloadRepoCommand);
         ClientCommandHandler.instance.registerCommand(itemRenameCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
@@ -628,6 +813,8 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
+        ClientCommandHandler.instance.registerCommand(pcStatsCommand);
+        ClientCommandHandler.instance.registerCommand(neumapCommand);
 
         manager = new NEUManager(this, f);
         manager.loadItemInformation();

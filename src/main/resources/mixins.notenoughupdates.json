@@ -11,6 +11,11 @@
     "MixinRenderGlobal",
     "MixinNetHandlerPlayClient",
     "MixinGuiChest",
-    "MixinGuiContainer"
+    "MixinGuiContainer",
+    "MixinVboRenderList",
+    "MixinRenderList",
+    "MixinEntityPlayer",
+    "MixinTileEntitySpecialRenderer",
+    "MixinRenderBat"
   ]
 }

@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NEUResourceManager;
+import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -395,9 +396,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     }
 
     private void renderItemBackgrounds(Color fg, int left, int right, int top, int bottom) {
-        int opacity = Math.min(255, Math.max(0, manager.config.fgOpacity.value.intValue()));
-        Color fgGold = new Color(limCol(fg.getRed()+100), limCol(fg.getGreen()+50), limCol(fg.getBlue()-50), opacity);
-        Color fgCustomOpacity = new Color((fg.getRGB() & 0x00ffffff) | opacity << 24, true);
+        Color fgCustomOpacity = new Color(SpecialColour.specialToChromaRGB(manager.config.itemBackgroundColour.value), true);
+        Color fgGold = new Color(SpecialColour.specialToChromaRGB(manager.config.itemFavouriteColour.value), true);
 
         String[] items = getItemList();
         iterateItemSlots(new ItemSlotConsumer() {

@@ -91,6 +91,7 @@ public class APIManager {
         public boolean bin;
         public String category;
         public String rarity;
+        public int dungeonTier;
         public String item_tag_str;
         public NBTTagCompound item_tag = null;
         private ItemStack stack;
@@ -98,7 +99,7 @@ public class APIManager {
         public int enchLevel = 0; //0 = clean, 1 = ench, 2 = ench/hpb
 
         public Auction(String auctioneerUuid, long end, int starting_bid, int highest_bid_amount, int bid_count,
-                       boolean bin, String category, String rarity, String item_tag_str) {
+                       boolean bin, String category, String rarity, int dungeonTier, String item_tag_str) {
             this.auctioneerUuid = auctioneerUuid;
             this.end = end;
             this.starting_bid = starting_bid;
@@ -106,6 +107,7 @@ public class APIManager {
             this.bid_count = bid_count;
             this.bin = bin;
             this.category = category;
+            this.dungeonTier = dungeonTier;
             this.rarity = rarity;
             this.item_tag_str = item_tag_str;
         }
@@ -468,7 +470,6 @@ public class APIManager {
             NBTTagCompound tag = item_tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
             String internalname = manager.getInternalnameFromNBT(tag);
 
-            String[] lore = new String[0];
             NBTTagCompound display = tag.getCompoundTag("display");
             if(display.hasKey("Lore", 9)) {
                 NBTTagList loreList = new NBTTagList();
@@ -527,10 +528,15 @@ public class APIManager {
                 }
             }
 
+            int dungeonTier = -1;
             if(checkItemType(item_lore, true, "DUNGEON") >= 0) {
-                HashMap<Integer, HashSet<String>> extrasMap = extrasToAucIdMap.computeIfAbsent("dungeon", k -> new HashMap<>());
-                HashSet<String> aucids = extrasMap.computeIfAbsent(0, k -> new HashSet<>());
-                aucids.add(auctionUuid);
+                dungeonTier = 0;
+                for(int i=0; i<item_name.length(); i++) {
+                    char c = item_name.charAt(i);
+                    if(c == 0x272A) {
+                        dungeonTier++;
+                    }
+                }
             }
 
             //Categories
@@ -548,7 +554,7 @@ public class APIManager {
                     item_lore.split("\n")[0].endsWith("Mount")) category = "pet";
 
             Auction auction1 = new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
-                    bid_count, bin, category, rarity, item_bytes);
+                    bid_count, bin, category, rarity, dungeonTier, item_bytes);
 
             if(tag.hasKey("ench")) {
                 auction1.enchLevel = 1;
@@ -580,7 +586,7 @@ public class APIManager {
                         if(pagesToDownload == null) {
                             int totalPages = jsonObject.get("totalPages").getAsInt();
                             pagesToDownload = new LinkedList<>();
-                            for(int i=0; i<totalPages; i++) {
+                            for(int i=0; i<totalPages+2; i++) {
                                 pagesToDownload.add(i);
                             }
                         }

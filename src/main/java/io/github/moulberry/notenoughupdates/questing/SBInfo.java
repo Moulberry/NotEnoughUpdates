@@ -1,12 +1,16 @@
 package io.github.moulberry.notenoughupdates.questing;
 
+import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.scoreboard.Score;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.util.EnumChatFormatting;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -16,11 +20,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SBScoreboardData {
+public class SBInfo {
 
-    private static final SBScoreboardData INSTANCE = new SBScoreboardData();
+    private static final SBInfo INSTANCE = new SBInfo();
 
-    private static final Pattern locationPattern = Pattern.compile("(\\u00a7)(?!.*\\u00a7).+");
     private static final Pattern timePattern = Pattern.compile(".+(am|pm)");
 
     public String location = "";
@@ -28,13 +31,51 @@ public class SBScoreboardData {
     public String time = "";
     public String objective = "";
 
+    public String mode = "";
+
     public Date currentTimeDate = null;
 
-    public static SBScoreboardData getInstance() {
+    public static SBInfo getInstance() {
         return INSTANCE;
     }
 
+    private long lastLocRaw = -1;
+    private JsonObject locraw = null;
+
+    @SubscribeEvent
+    public void onWorldChange(WorldEvent.Load event) {
+        lastLocRaw = -1;
+        locraw = null;
+    }
+
+    @SubscribeEvent
+    public void onChatMessage(ClientChatReceivedEvent event) {
+        if(event.message.getUnformattedText().startsWith("{")) {
+            try {
+                JsonObject obj = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(event.message.getUnformattedText(), JsonObject.class);
+                if(obj.has("server") && obj.has("gametype") && obj.has("mode") && obj.has("map")) {
+                    locraw = obj;
+                    event.setCanceled(true);
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public String getLocation() {
+        if(locraw == null) {
+            return null;
+        }
+        return locraw.get("mode").getAsString();
+    }
+
     public void tick() {
+        if(locraw == null && (System.currentTimeMillis() - lastLocRaw) > 20000) {
+            lastLocRaw = System.currentTimeMillis();
+            NotEnoughUpdates.INSTANCE.sendChatMessage("/locraw");
+        }
+
         try {
             Scoreboard scoreboard = Minecraft.getMinecraft().thePlayer.getWorldScoreboard();
 
@@ -53,9 +94,9 @@ public class SBScoreboardData {
                 lines.add(line);
             }
             if(lines.size() >= 5) {
-                date = Utils.cleanColour(lines.get(2)).trim();
+                date = Utils.cleanColour(lines.get(1)).trim();
                 //§74:40am
-                Matcher matcher = timePattern.matcher(lines.get(3));
+                Matcher matcher = timePattern.matcher(lines.get(2));
                 if(matcher.find()) {
                     time = Utils.cleanColour(matcher.group()).trim();
                     try {
@@ -64,10 +105,7 @@ public class SBScoreboardData {
                         currentTimeDate = parseFormat.parse(timeSpace);
                     } catch (ParseException e) {}
                 }
-                matcher = locationPattern.matcher(lines.get(4));
-                if(matcher.find()) {
-                    location = Utils.cleanColour(matcher.group()).trim();
-                }
+                location = Utils.cleanColour(lines.get(3)).replaceAll("[^A-Za-z0-9() ]", "").trim();
             }
             objective = null;
 
@@ -82,7 +120,6 @@ public class SBScoreboardData {
         } catch(Exception e) {
             e.printStackTrace();
         }
-        //System.out.println(date + ":" + time + ":" + location);
     }
 
 }

@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates;
 
+import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
@@ -24,6 +25,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector3f;
 
+import java.awt.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 
@@ -185,7 +187,7 @@ public class CustomItemEffects {
 
                                 drawSelectionBoundingBox(block.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, candidate)
                                         .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2),
-                                        random ? 0.1f : 0.2f);
+                                        random ? 0.5f : 1f);
                             }
                         }
                     }
@@ -199,7 +201,8 @@ public class CustomItemEffects {
     }
 
     public static void drawSelectionBoundingBox(AxisAlignedBB p_181561_0_, float alpha) {
-        GlStateManager.color(64/255f, 224/255f, 208/255f, alpha);
+        Color c = new Color(SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.manager.config.treecapOverlayColour.value), true);
+        GlStateManager.color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha);
 
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();

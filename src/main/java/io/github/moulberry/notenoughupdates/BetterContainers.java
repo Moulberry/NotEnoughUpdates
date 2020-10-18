@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates;
 
+import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -14,15 +15,22 @@ import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 public class BetterContainers {
+
+    private static final ResourceLocation TOGGLE_OFF = new ResourceLocation("notenoughupdates:dynamic_54/toggle_off.png");
+    private static final ResourceLocation TOGGLE_ON = new ResourceLocation("notenoughupdates:dynamic_54/toggle_on.png");
 
     private static final ResourceLocation DYNAMIC_54_BASE = new ResourceLocation("notenoughupdates:dynamic_54/style1/dynamic_54.png");
     private static final ResourceLocation DYNAMIC_54_SLOT = new ResourceLocation("notenoughupdates:dynamic_54/style1/dynamic_54_slot_ctm.png");
@@ -30,6 +38,7 @@ public class BetterContainers {
     private static final ResourceLocation rl = new ResourceLocation("notenoughupdates:dynamic_chest_inventory.png");
     private static boolean loaded = false;
     private static DynamicTexture texture = null;
+    private static int textColour = 4210752;
 
     private static int lastClickedSlot = 0;
     private static int clickedSlot = 0;
@@ -62,6 +71,15 @@ public class BetterContainers {
         textureManager.bindTexture(location);
     }
 
+    public static boolean isAh() {
+        if(!isChestOpen()) return false;
+
+        GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+        ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+        String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        return containerName.trim().startsWith("Auctions Browser") || containerName.trim().startsWith("Wardrobe");
+    }
+
     public static boolean isOverriding() {
         return isChestOpen() && loaded && texture != null && !Keyboard.isKeyDown(Keyboard.KEY_B);
     }
@@ -71,21 +89,66 @@ public class BetterContainers {
                 stack.getDisplayName() != null && stack.getDisplayName().trim().isEmpty();
     }
 
+    public static boolean shouldRenderStack(ItemStack stack) {
+        return !isBlankStack(stack) && !isToggleOff(stack) && !isToggleOn(stack);
+    }
+
     public static boolean isButtonStack(ItemStack stack) {
         return stack != null && stack.getItem() != Item.getItemFromBlock(Blocks.stained_glass_pane)
-                && NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack) == null;
+                && NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack) == null && !isToggleOn(stack) && !isToggleOff(stack);
+    }
+
+    public static int getTextColour() {
+        return textColour;
+    }
+
+    public static boolean isToggleOn(ItemStack stack) {
+        if(stack != null && stack.getTagCompound() != null && stack.getTagCompound().hasKey("display", 10) &&
+                stack.getTagCompound().getCompoundTag("display").hasKey("Lore", 9)) {
+            NBTTagList lore = stack.getTagCompound().getCompoundTag("display").getTagList("Lore", 8);
+            if(lore.tagCount() == 1 && lore.getStringTagAt(0).equalsIgnoreCase(EnumChatFormatting.GRAY+"click to disable!")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isToggleOff(ItemStack stack) {
+        if(stack != null && stack.getTagCompound() != null && stack.getTagCompound().hasKey("display", 10) &&
+                stack.getTagCompound().getCompoundTag("display").hasKey("Lore", 9)) {
+            NBTTagList lore = stack.getTagCompound().getCompoundTag("display").getTagList("Lore", 8);
+            if(lore.tagCount() == 1 && lore.getStringTagAt(0).equalsIgnoreCase(EnumChatFormatting.GRAY+"click to enable!")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void generateTex(ResourceLocation location) {
         if(!hasItem()) return;
         loaded = true;
         Container container = ((GuiChest)Minecraft.getMinecraft().currentScreen).inventorySlots;
+
+        int backgroundStyle = NotEnoughUpdates.INSTANCE.manager.config.dynamicMenuBackgroundStyle.value.intValue();
+        backgroundStyle = Math.max(1, Math.min(10, backgroundStyle));
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
+                    new ResourceLocation("notenoughupdates:dynamic_54/style"+ backgroundStyle+"/dynamic_config.json")).getInputStream(), StandardCharsets.UTF_8));
+            JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
+            String textColourS = json.get("text-colour").getAsString();
+            textColour = (int)Long.parseLong(textColourS, 16);
+        } catch(Exception e) {
+            textColour = 4210752;
+            e.printStackTrace();
+        }
+
         if(hasNullPane() && container instanceof ContainerChest) {
             try {
+                BufferedImage bufferedImageOn = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(TOGGLE_ON).getInputStream());
+                BufferedImage bufferedImageOff = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(TOGGLE_OFF).getInputStream());
+
                 BufferedImage bufferedImageBase = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(DYNAMIC_54_BASE).getInputStream());
                 try {
-                    int backgroundStyle = NotEnoughUpdates.INSTANCE.manager.config.dynamicMenuBackgroundStyle.value.intValue();
-                    backgroundStyle = Math.max(1, Math.min(10, backgroundStyle));
                     bufferedImageBase = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(
                             new ResourceLocation("notenoughupdates:dynamic_54/style"+ backgroundStyle+"/dynamic_54.png")).getInputStream());
                 } catch(Exception e) {}
@@ -117,8 +180,7 @@ public class BetterContainers {
                 boolean[][] buttons = new boolean[9][size/9];
                 for (int index = 0; index < size; index++) {
                     ItemStack stack = lower.getStackInSlot(index);
-                    buttons[index%9][index/9] = stack != null && stack.getItem() != Item.getItemFromBlock(Blocks.stained_glass_pane)
-                            && NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack) == null;
+                    buttons[index%9][index/9] = isButtonStack(stack);
 
                     if(buttons[index%9][index/9] && getClickedSlot() == index) {
                         buttons[index%9][index/9] = false;
@@ -128,11 +190,29 @@ public class BetterContainers {
                     }
                 }
                 for (int index = 0; index < size; index++) {
+                    ItemStack stack = lower.getStackInSlot(index);
                     int xi = index%9;
                     int yi = index/9;
                     if(slots[xi][yi] || buttons[xi][yi]) {
                         int x = 7*horzTexMult + xi*18*horzTexMult;
                         int y = 17*vertTexMult + yi*18*vertTexMult;
+
+                        boolean on = isToggleOn(stack);
+                        boolean off = isToggleOff(stack);
+
+                        if(on || off) {
+                            for(int x2=0; x2<18; x2++) {
+                                for(int y2=0; y2<18; y2++) {
+                                    BufferedImage toggle = on ? bufferedImageOn : bufferedImageOff;
+                                    Color c = new Color(toggle.getRGB(x2, y2), true);
+                                    if(c.getAlpha() < 10) {
+                                        continue;
+                                    }
+                                    bufferedImageNew.setRGB(x+x2, y+y2, c.getRGB());
+                                }
+                            }
+                            continue;
+                        }
 
                         if(buttons[xi][yi]) {
                             boolean up = yi > 0 && buttons[xi][yi-1];
@@ -149,6 +229,7 @@ public class BetterContainers {
                             int[] rgbs = bufferedImageButton.getRGB((ctmIndex%12)*19*horzTexMult, (ctmIndex/12)*19*vertTexMult,
                                     18*horzTexMult, 18*vertTexMult, null, 0, 18*vertTexMult);
                             bufferedImageNew.setRGB(x, y, 18*horzTexMult, 18*vertTexMult, rgbs, 0, 18*vertTexMult);
+
                         } else {
                             boolean up = yi > 0 && slots[xi][yi-1];
                             boolean right = xi < slots.length-1 && slots[xi+1][yi];
@@ -179,6 +260,7 @@ public class BetterContainers {
         loaded = false;
         clickedSlot = -1;
         clickedSlotMillis = 0;
+        textColour = 4210752;
     }
 
     private static boolean isChestOpen() {

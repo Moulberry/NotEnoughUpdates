@@ -17,6 +17,8 @@ public abstract class InfoPane extends Gui  {
         this.manager = manager;
     }
 
+    public void reset() {}
+
     public void tick() {}
 
     public abstract void render(int width, int height, Color bg, Color fg, ScaledResolution scaledresolution, int mouseX,

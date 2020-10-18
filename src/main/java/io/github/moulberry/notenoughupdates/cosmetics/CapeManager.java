@@ -32,8 +32,8 @@ public class CapeManager {
     private boolean allAvailable = false;
     private HashSet<String> availableCapes = new HashSet<>();
 
-    private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee", "gravy", "space", "mcworld" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false };
+    private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee", "gravy", "space", "mcworld", "lava", "packshq", "mbstaff" };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, true, true, true };
 
     public static CapeManager getInstance() {
         return INSTANCE;
@@ -51,6 +51,7 @@ public class CapeManager {
         NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("activecapes.json", (jsonObject) -> {
             if(jsonObject.get("success").getAsBoolean()) {
                 lastCapeSynced = System.currentTimeMillis();
+                capeMap.clear();
                 for(JsonElement active : jsonObject.get("active").getAsJsonArray()) {
                     if(active.isJsonObject()) {
                         JsonObject activeObj = (JsonObject) active;
@@ -176,21 +177,24 @@ public class CapeManager {
         }
 
         Set<String> toRemove = new HashSet<>();
-        for(String playerUUID : capeMap.keySet()) {
-            EntityPlayer player = getPlayerForUUID(playerUUID);
-            if(player != null) {
-                String capeName = capeMap.get(playerUUID).getRight();
-                if(capeName != null && !capeName.equals("null")) {
-                    if(playerUUID.equals(clientUuid) && localCape != null && localCape.getRight() != null && !localCape.getRight().equals("null")) {
-                        continue;
+        try {
+            for(String playerUUID : capeMap.keySet()) {
+                EntityPlayer player = getPlayerForUUID(playerUUID);
+                if(player != null) {
+                    String capeName = capeMap.get(playerUUID).getRight();
+                    if(capeName != null && !capeName.equals("null")) {
+                        if(playerUUID.equals(clientUuid) && localCape != null && localCape.getRight() != null && !localCape.getRight().equals("null")) {
+                            continue;
+                        }
+                        capeMap.get(playerUUID).getLeft().setCapeTexture(capeName);
+                        capeMap.get(playerUUID).getLeft().onTick(event, player);
+                    } else {
+                        toRemove.add(playerUUID);
                     }
-                    capeMap.get(playerUUID).getLeft().setCapeTexture(capeName);
-                    capeMap.get(playerUUID).getLeft().onTick(event, player);
-                } else {
-                    toRemove.add(playerUUID);
                 }
             }
-        }
+        } catch(Exception e) {}
+
         if(localCape != null) {
             localCape.getLeft().setCapeTexture(localCape.getValue());
             localCape.getLeft().onTick(event, Minecraft.getMinecraft().thePlayer);

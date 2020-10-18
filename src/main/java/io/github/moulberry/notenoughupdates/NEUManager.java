@@ -69,6 +69,8 @@ public class NEUManager {
 
     private HashMap<String, Set<String>> usagesMap = new HashMap<>();
 
+    public String latestRepoCommit = null;
+
     public File configLocation;
     public File repoLocation;
     public File configFile;
@@ -92,7 +94,7 @@ public class NEUManager {
         repoLocation.mkdir();
 
         this.itemRenameFile = new File(configLocation, "itemRename.json");
-        try { itemRenameJson = getJsonFromFile(itemRenameFile); } catch(IOException ignored) {}
+        itemRenameJson = getJsonFromFile(itemRenameFile);
         if(itemRenameJson == null) {
             itemRenameJson = new JsonObject();
         }
@@ -144,13 +146,13 @@ public class NEUManager {
     /**
      * Parses a file in to a JsonObject.
      */
-    public JsonObject getJsonFromFile(File file) throws IOException {
+    public JsonObject getJsonFromFile(File file) {
         try {
             InputStream in = new FileInputStream(file);
             BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             JsonObject json = gson.fromJson(reader, JsonObject.class);
             return json;
-        } catch(Exception e) { e.printStackTrace(); return null; }
+        } catch(Exception e) { return null; }
     }
 
     public void resetRepo() {
@@ -210,18 +212,18 @@ public class NEUManager {
 
                     JsonObject currentCommitJSON = getJsonFromFile(new File(configLocation, "currentCommit.json"));
 
-                    String latestCommit = null;
+                    latestRepoCommit = null;
                     try(Reader inReader = new InputStreamReader(new URL(GIT_COMMITS_URL).openStream())) {
                         JsonObject commits = gson.fromJson(inReader, JsonObject.class);
-                        latestCommit = commits.get("sha").getAsString();
+                        latestRepoCommit = commits.get("sha").getAsString();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    if(latestCommit == null || latestCommit.isEmpty()) return;
+                    if(latestRepoCommit == null || latestRepoCommit.isEmpty()) return;
 
                     if(new File(configLocation, "repo").exists() && new File(configLocation, "repo/items").exists()) {
 
-                        if(currentCommitJSON != null && currentCommitJSON.get("sha").getAsString().equals(latestCommit)) {
+                        if(currentCommitJSON != null && currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
                             dialog.setVisible(false);
                             return;
                         }
@@ -330,9 +332,9 @@ public class NEUManager {
                         }*/
                     }
 
-                    if(currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestCommit)) {
+                    if(currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
                         JsonObject newCurrentCommitJSON = new JsonObject();
-                        newCurrentCommitJSON.addProperty("sha", latestCommit);
+                        newCurrentCommitJSON.addProperty("sha", latestRepoCommit);
                         try {
                             writeJson(newCurrentCommitJSON, new File(configLocation, "currentCommit.json"));
                         } catch (IOException e) {
@@ -447,7 +449,7 @@ public class NEUManager {
                     }
                 }
             }
-        } catch(IOException e) {
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }

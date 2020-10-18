@@ -1,61 +1,23 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
-import com.google.common.base.Splitter;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.SBAIntegration;
-import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
-import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
-import io.github.moulberry.notenoughupdates.profileviewer.Panorama;
-import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
-import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
-import io.github.moulberry.notenoughupdates.questing.SBScoreboardData;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityOtherPlayerMP;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.client.resources.SkinManager;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EnumPlayerModelParts;
-import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagByteArray;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Matrix4f;
 import net.minecraft.util.ResourceLocation;
-import org.apache.commons.lang3.text.WordUtils;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
-import org.lwjgl.opengl.GL20;
 
 import java.awt.*;
-import java.io.IOException;
-import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class GuiCosmetics extends GuiScreen {
 
@@ -311,10 +273,14 @@ public class GuiCosmetics extends GuiScreen {
                         lastCapeEquip = System.currentTimeMillis();
                         if(wantToEquipCape == null) {
                             NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType=null&accessToken="+
-                                    Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> {}, () -> {});
+                                    Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> { System.out.println(jsonObject); }, () -> {
+                                System.out.println("change cape error");
+                            });
                         } else {
                             NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType="+wantToEquipCape+"&accessToken="+
-                                    Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> {}, () -> {});
+                                    Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> { System.out.println(jsonObject); }, () -> {
+                                System.out.println("change cape error");
+                            });
                         }
                     }
                 }
