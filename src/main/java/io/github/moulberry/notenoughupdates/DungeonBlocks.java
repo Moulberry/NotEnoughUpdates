@@ -39,13 +39,13 @@ public class DungeonBlocks implements IResourceManagerReloadListener {
     }
 
     public static boolean isInDungeons() {
-        return NotEnoughUpdates.INSTANCE.manager.config.dungeonBlocksEverywhere.value ||
-                (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon"));
+        return !NotEnoughUpdates.INSTANCE.manager.config.disableDungeonBlocks.value &&
+                (NotEnoughUpdates.INSTANCE.manager.config.dungeonBlocksEverywhere.value ||
+                (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon")));
     }
 
     public static void reset() {
         textureId = -1;
-        intbuffer = null;
         for(int tex : modified.values()) {
             GlStateManager.deleteTexture(tex);
         }
@@ -53,6 +53,14 @@ public class DungeonBlocks implements IResourceManagerReloadListener {
     }
 
     public static int getModifiedTexture(ResourceLocation location, int colour) {
+        if(!isInDungeons()) {
+            return -1;
+        }
+
+        if(((colour >> 24) & 0xFF) < 50) {
+            return -1;
+        }
+
         String id = location.getResourceDomain()+":"+location.getResourcePath();
         if(modified.containsKey(id)) {
             return modified.get(id);
@@ -125,6 +133,10 @@ public class DungeonBlocks implements IResourceManagerReloadListener {
     }
 
     public static void tick() {
+        if(!isInDungeons()) {
+            return;
+        }
+
         if(textureId == -1) {
             int locationBlocksId = Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.locationBlocksTexture).getGlTextureId();
 
@@ -173,16 +185,18 @@ public class DungeonBlocks implements IResourceManagerReloadListener {
                 GL11.glGetTexImage(GL11.GL_TEXTURE_2D, level, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, intbuffer);
 
                 for(Map.Entry<TextureAtlasSprite, Integer> entry : spriteMap.entrySet()) {
+                    if(((entry.getValue() >> 24) & 0xFF) < 50) continue;
+
                     TextureAtlasSprite tas = entry.getKey();
                     for(int x=(int)(w2*tas.getMinU()); x<w2*tas.getMaxU(); x++) {
                         for(int y=(int)(h2*tas.getMinV()); y<h2*tas.getMaxV(); y++) {
                             int index = x+y*w2;
 
                             int newCol = entry.getValue();
-                            float newAlpha = ((newCol >> 24) & 0xFF)/255f;
+                            /*float newAlpha = ((newCol >> 24) & 0xFF)/255f;
                             float newRed = ((newCol >> 16) & 0xFF)/255f;
                             float newGreen = ((newCol >> 8) & 0xFF)/255f;
-                            float newBlue = (newCol & 0xFF)/255f;
+                            float newBlue = (newCol & 0xFF)/255f;*/
 
                             /*int oldCol = intbuffer.get(index);
                             int oldAlpha = (oldCol >> 24) & 0xFF;

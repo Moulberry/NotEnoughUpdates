@@ -166,6 +166,11 @@ public class Options {
             "Show Dungeon Block Overlay Everywhere",
             false,
             "If true, will show the overlay for cracked bricks, etc. even when not in dungeons.");
+    public Option<Boolean> disableDungeonBlocks = new Option(
+            false,
+            "Disables the dungeon blocks feature",
+            false,
+            "If true, the dungeon block overlay will be disabled.");
     public Option<Double> paneWidthMult = new Option(
             1.0,
             "Pane Width",
@@ -435,6 +440,7 @@ public class Options {
         tryAddOption(invBazaarPrice, options);
         tryAddOption(invAuctionPrice, options);
         tryAddOption(dungeonBlocksEverywhere, options);
+        tryAddOption(disableDungeonBlocks, options);
         //Sliders
         tryAddOption(smoothAoteMillis, options);
         tryAddOption(bgBlurFactor, options);

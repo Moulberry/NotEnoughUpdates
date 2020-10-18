@@ -135,7 +135,7 @@ public class NEUEventListener {
             longUpdate = true;
             lastLongUpdate = currentTime;
         }
-        if(currentTime - lastVeryLongUpdate > 10000) {
+        if(longUpdate && currentTime - lastVeryLongUpdate > 10000) {
             veryLongUpdate = true;
             lastVeryLongUpdate = currentTime;
         }

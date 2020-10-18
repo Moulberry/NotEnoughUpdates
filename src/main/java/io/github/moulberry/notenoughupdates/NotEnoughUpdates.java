@@ -685,7 +685,7 @@ public class NotEnoughUpdates {
     public Color[][] colourMap = null;
     SimpleCommand neumapCommand = new SimpleCommand("neumap", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(args.length == 1 && args[0] == "reset") {
+            if(args.length == 1 && args[0].equals("reset")) {
                 colourMap = null;
                 return;
             }
@@ -788,7 +788,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new SBGamemodes());
         MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
-        MinecraftForge.EVENT_BUS.register(new DungeonMap());
+        //MinecraftForge.EVENT_BUS.register(new DungeonMap());
         //MinecraftForge.EVENT_BUS.register(new BetterPortals());
 
         IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();

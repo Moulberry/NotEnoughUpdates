@@ -53,10 +53,13 @@ public class SBInfo {
         if(event.message.getUnformattedText().startsWith("{")) {
             try {
                 JsonObject obj = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(event.message.getUnformattedText(), JsonObject.class);
-                if(obj.has("server") && obj.has("gametype") && obj.has("mode") && obj.has("map")) {
-                    locraw = obj;
+                if(obj.has("server")) {
                     event.setCanceled(true);
+                    if(obj.has("gametype") && obj.has("mode") && obj.has("map")) {
+                        locraw = obj;
+                    }
                 }
+
             } catch(Exception e) {
                 e.printStackTrace();
             }

@@ -22,12 +22,15 @@ public abstract class MixinTileEntitySpecialRenderer {
     @Inject(method="bindTexture", at=@At("HEAD"), cancellable = true)
     public void bindTexture(ResourceLocation location, CallbackInfo info) {
         if(DungeonBlocks.isInDungeons() && location.getResourcePath().equals("textures/entity/chest/normal.png")) {
-            info.cancel();
+            int tex = DungeonBlocks.getModifiedTexture(location,
+                    SpecialColour.specialToSimpleRGB(NotEnoughUpdates.INSTANCE.manager.config.dungChestColour.value));
 
-            GlStateManager.bindTexture(DungeonBlocks.getModifiedTexture(location,
-                    SpecialColour.specialToSimpleRGB(NotEnoughUpdates.INSTANCE.manager.config.dungChestColour.value)));
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST_MIPMAP_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+            if(tex >= 0) {
+                info.cancel();
+                GlStateManager.bindTexture(tex);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST_MIPMAP_LINEAR);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+            }
         }
     }
 }

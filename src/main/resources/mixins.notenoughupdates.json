@@ -16,6 +16,6 @@
     "MixinRenderList",
     "MixinEntityPlayer",
     "MixinTileEntitySpecialRenderer",
-    "MixinRenderBat"
+    "MixinRender"
   ]
 }
