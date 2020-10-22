@@ -877,20 +877,33 @@ public class NEUOverlay extends Gui {
                     }
                 } else if(!hoverInv) {
                     int height = scaledresolution.getScaledHeight();
+                    int width = scaledresolution.getScaledWidth();
 
                     int mouseX = Mouse.getX() / scaledresolution.getScaleFactor();
                     int mouseY = height - Mouse.getY() / scaledresolution.getScaleFactor();
 
-                    iterateItemSlots(new ItemSlotConsumer() {
-                        public void consume(int x, int y, int id) {
-                            if (mouseX >= x - 1 && mouseX <= x + ITEM_SIZE + 1) {
-                                if (mouseY >= y - 1 && mouseY <= y + ITEM_SIZE + 1) {
-                                    JsonObject json = getSearchedItemPage(id);
-                                    if (json != null) internalname.set(json.get("internalname").getAsString());
+                    if (selectedItemGroup != null) {
+                        int selectedX = Math.min(selectedItemGroupX, width - getBoxPadding() - 18 * selectedItemGroup.size());
+
+                        if (mouseY > selectedItemGroupY + 17 && mouseY < selectedItemGroupY + 35) {
+                            for (int i = 0; i < selectedItemGroup.size(); i++) {
+                                if (mouseX >= selectedX - 1 + 18 * i && mouseX <= selectedX + 17 + 18 * i) {
+                                    internalname.set(selectedItemGroup.get(i).get("internalname").getAsString());
                                 }
                             }
                         }
-                    });
+                    }else {
+                        iterateItemSlots(new ItemSlotConsumer() {
+                            public void consume(int x, int y, int id) {
+                                if (mouseX >= x - 1 && mouseX <= x + ITEM_SIZE + 1) {
+                                    if (mouseY >= y - 1 && mouseY <= y + ITEM_SIZE + 1) {
+                                        JsonObject json = getSearchedItemPage(id);
+                                        if (json != null) internalname.set(json.get("internalname").getAsString());
+                                    }
+                                }
+                            }
+                        });
+                    }
                 }
                 if(internalname.get() != null) {
                     if(itemstack.get() != null) {
