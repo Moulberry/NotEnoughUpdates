@@ -48,6 +48,10 @@ public class CustomItems {
                 "incursions on the server, some of which I, a player on this Minecraft",
                 "anarchy server in Minecraft, have participated in. One of this server's",
                 "most infamous Minecraft players on the oldest Minecraft");
+      public static JsonObject Lisreal2401 = create(
+            "Lisreal",
+            "stone_bricks",
+            "L is real 2401.");
 
     /**
      * SHAAAAAAAAAAAAAAAAAAME
