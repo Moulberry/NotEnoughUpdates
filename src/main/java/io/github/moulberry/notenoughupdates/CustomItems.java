@@ -35,6 +35,11 @@ public class CustomItems {
             "your buried duct tape problems are a thing of the past,",
             "all for the low price of $7.99 or a subscription",
             "to the Ducttapedigger youtube channel!");
+    public static JsonObject SPINAXX = create(
+            "SPINAXX",
+            "emerald",
+            "Spinaxx",
+            "Famous streamer btw :)");
     public static JsonObject RUNE = create("RUNE", "paper", "No.", "I hate runes.");
     public static JsonObject TWOBEETWOTEE = create("2B2T", "bedrock", "Minecraft's oldest anarchy Minecraft server in Minecraft.",
             "This Minecraft anarchy server is the oldest server,",
@@ -48,10 +53,21 @@ public class CustomItems {
                 "incursions on the server, some of which I, a player on this Minecraft",
                 "anarchy server in Minecraft, have participated in. One of this server's",
                 "most infamous Minecraft players on the oldest Minecraft");
+
       public static JsonObject Lisreal2401 = create(
             "Lisreal",
             "stone_bricks",
             "L is real 2401.");
+
+    public static JsonObject LEOCTHL = create("LEOCTHL", "dragon_egg", "--- Stats below may not be entirely accurate ---",
+            "17 legendary dragon pets",
+                  "24 epic dragon pets",
+                  "18 epic golem pets",
+                  "12 legendary golem pets",
+                  "39 legendary phoenix pets",
+                  "",
+                  "get flexed");
+
 
     /**
      * SHAAAAAAAAAAAAAAAAAAME
