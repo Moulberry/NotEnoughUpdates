@@ -1,6 +1,8 @@
 package io.github.moulberry.notenoughupdates.auction;
 
+import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -34,6 +36,8 @@ import java.awt.datatransfer.StringSelection;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,15 +80,18 @@ public class CustomAH extends Gui {
     public long lastOpen;
     public long lastGuiScreenSwitch;
 
-    private int splits = 2;
+    private final int splits = 2;
 
-    private int ySplit = 35;
-    private int ySplitSize = 18;
+    public String latestBid;
+    public long latestBidMillis;
+
+    private final int ySplit = 35;
+    private final int ySplitSize = 18;
 
     private float scrollAmount;
 
-    private int guiLeft = 0;
-    private int guiTop = 0;
+    public int guiLeft = -1;
+    public int guiTop = -1;
 
     private Category CATEGORY_SWORD = new Category("sword", "Swords", "diamond_sword");
     private Category CATEGORY_ARMOR = new Category("armor", "Armor", "diamond_chestplate");
@@ -103,7 +110,7 @@ public class CustomAH extends Gui {
     private Category CATEGORY_TRAVEL_SCROLLS = new Category("travelscroll", "Travel Scrolls", "map");
 
     private Category CATEGORY_REFORGE_STONES = new Category("reforgestone", "Reforge Stones", "anvil");
-    private Category CATEGORY_RUNES = new Category("rune", "Runes", "end_portal_frame");
+    private Category CATEGORY_RUNES = new Category("rune", "Runes", "magma_cream");
     private Category CATEGORY_FURNITURE = new Category("furniture", "Furniture", "armor_stand");
 
     private Category CATEGORY_COMBAT = new Category("weapon", "Combat", "golden_sword", CATEGORY_SWORD,
@@ -125,11 +132,11 @@ public class CustomAH extends Gui {
     private static final int SORT_MODE_SOON = 2;
 
     private static final String[] rarities = { "COMMON", "UNCOMMON", "RARE", "EPIC",
-            "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL" };
+            "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME" };
     private static final String[] rarityColours = { ""+EnumChatFormatting.WHITE,
             ""+EnumChatFormatting.GREEN, ""+EnumChatFormatting.BLUE, ""+EnumChatFormatting.DARK_PURPLE,
             ""+EnumChatFormatting.GOLD, ""+EnumChatFormatting.LIGHT_PURPLE, ""+EnumChatFormatting.RED,
-            ""+EnumChatFormatting.RED };
+            ""+EnumChatFormatting.RED, ""+EnumChatFormatting.DARK_RED };
 
     private static final int BIN_FILTER_ALL = 0;
     private static final int BIN_FILTER_BIN = 1;
@@ -140,12 +147,23 @@ public class CustomAH extends Gui {
     private static final int ENCH_FILTER_ENCH = 2;
     private static final int ENCH_FILTER_ENCHHPB = 3;
 
+    private static final int DUNGEON_FILTER_ALL = 0;
+    private static final int DUNGEON_FILTER_DUNGEON = 1;
+    private static final int DUNGEON_FILTER_1 = 2;
+    private static final int DUNGEON_FILTER_2 = 3;
+    private static final int DUNGEON_FILTER_3 = 4;
+    private static final int DUNGEON_FILTER_4 = 5;
+    private static final int DUNGEON_FILTER_5 = 6;
+
+    private int dungeonFilter = DUNGEON_FILTER_ALL;
     private int sortMode = SORT_MODE_HIGH;
     private int rarityFilter = -1;
     private boolean filterMyAuctions = false;
     private int binFilter = BIN_FILTER_ALL;
     private int enchFilter = ENCH_FILTER_ALL;
 
+    private static ItemStack DUNGEON_SORT = Utils.createItemStack(Item.getItemFromBlock(Blocks.deadbush),
+            EnumChatFormatting.GREEN+"Dungeon Sorting");
     private static ItemStack CONTROL_SORT = Utils.createItemStack(Item.getItemFromBlock(Blocks.hopper),
             EnumChatFormatting.GREEN+"Sort");
     private static ItemStack CONTROL_TIER = Utils.createItemStack(Items.ender_eye,
@@ -158,7 +176,7 @@ public class CustomAH extends Gui {
             EnumChatFormatting.GREEN+"Enchant Filter");
     private static ItemStack CONTROL_STATS = Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block),
             EnumChatFormatting.GREEN+"Stats for nerds");
-    private ItemStack[] controls = {null,CONTROL_SORT,CONTROL_TIER,null,CONTROL_MYAUC,null,CONTROL_BIN,CONTROL_ENCH,CONTROL_STATS};
+    private ItemStack[] controls = {DUNGEON_SORT,CONTROL_SORT,CONTROL_TIER,null,CONTROL_MYAUC,null,CONTROL_BIN,CONTROL_ENCH,CONTROL_STATS};
 
     private NEUManager manager;
 
@@ -175,6 +193,7 @@ public class CustomAH extends Gui {
         filterMyAuctions = false;
         //binFilter = BIN_FILTER_ALL;
         enchFilter = ENCH_FILTER_ALL;
+        dungeonFilter = DUNGEON_FILTER_ALL;
 
         searchField.setText("");
         searchField.setFocused(true);
@@ -182,10 +201,12 @@ public class CustomAH extends Gui {
     }
 
     public void tick() {
-        if(shouldUpdateSearch) updateSearch();
-        if(shouldSortItems) {
-            sortItems();
-            shouldSortItems = false;
+        if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || renderOverAuctionView) {
+            if(shouldUpdateSearch) updateSearch();
+            if(shouldSortItems) {
+                sortItems();
+                shouldSortItems = false;
+            }
         }
     }
 
@@ -246,11 +267,11 @@ public class CustomAH extends Gui {
         this.renderOverAuctionView = renderOverAuctionView;
     }
 
-    private int getXSize() {
+    public int getXSize() {
         return 195;
     }
 
-    private int getYSize() {
+    public int getYSize() {
         return 136 + ySplitSize*splits;
     }
 
@@ -310,6 +331,47 @@ public class CustomAH extends Gui {
             } else {
                 tooltip.add(EnumChatFormatting.GRAY+"Starting bid: "+
                         EnumChatFormatting.GOLD+format.format(auc.starting_bid));
+            }
+        }
+
+        if(manager.config.auctionPriceInfo.value) {
+            String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(auc.getStack());
+            if(internalname != null) {
+                tooltip.add("");
+                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+                    tooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
+                } else {
+                    JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
+
+                    boolean hasAuctionPrice = auctionInfo != null;
+
+                    int lowestBin = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
+
+                    APIManager.CraftInfo craftCost = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(internalname);
+
+                    if(lowestBin > 0) {
+                        tooltip.add(EnumChatFormatting.GRAY+"Lowest BIN: "+
+                                EnumChatFormatting.GOLD+format.format(lowestBin)+" coins");
+                    }
+                    if(hasAuctionPrice) {
+                        int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                        tooltip.add(EnumChatFormatting.GRAY+"AH Price: "+
+                                EnumChatFormatting.GOLD+format.format(auctionPrice)+" coins");
+                        tooltip.add(EnumChatFormatting.GRAY+"AH Sales: "+
+                                EnumChatFormatting.GOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
+                        if(auctionInfo.has("clean_price")) {
+                            tooltip.add(EnumChatFormatting.GRAY+"AH Price (Clean): "+
+                                    EnumChatFormatting.GOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
+                            tooltip.add(EnumChatFormatting.GRAY+"AH Sales (Clean): "+
+                                    EnumChatFormatting.GOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
+                        }
+
+                    }
+                    if(craftCost.fromRecipe) {
+                        tooltip.add(EnumChatFormatting.GRAY+"Raw Craft Cost: "+
+                                EnumChatFormatting.GOLD+format.format((int)craftCost.craftCost)+" coins");
+                    }
+                }
             }
         }
 
@@ -401,18 +463,21 @@ public class CustomAH extends Gui {
         return -1;
     }
 
-    public String findEndsInStr(ItemStack stack) {
+    public String findStrStart(ItemStack stack, String toFind) {
         if(stack.hasTagCompound()) {
             //§7Ends in:
-            String endsIn = EnumChatFormatting.GRAY+"Ends in: ";
             for(String line : manager.getLoreFromNBT(stack.getTagCompound())) {
-                if(line.trim().startsWith(endsIn)) {
-                    return line.substring(endsIn.length());
+                if(line.trim().startsWith(toFind)) {
+                    return line.substring(toFind.length());
                 }
             }
         }
 
         return null;
+    }
+
+    public String findEndsInStr(ItemStack stack) {
+        return findStrStart(stack, EnumChatFormatting.GRAY+"Ends in: ");
     }
 
     public void drawScreen(int mouseX, int mouseY) {
@@ -518,11 +583,71 @@ public class CustomAH extends Gui {
 
                         if(mouseX > auctionViewLeft+31 && mouseX <auctionViewLeft+31+16) {
                             if(mouseY > guiTop+35 && mouseY < guiTop+35+16) {
-                                if(topStack != null) tooltipToRender = topStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                                if(topStack != null) {
+                                    tooltipToRender = topStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                                    tooltipToRender.add("");
+                                    tooltipToRender.add(EnumChatFormatting.YELLOW+"Click to copy seller name!");
+                                }
                             } else if(mouseY > guiTop+100 && mouseY < guiTop+100+16) {
                                 if(leftStack != null) tooltipToRender = leftStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                             } else if(mouseY > guiTop+61 && mouseY < guiTop+61+16) {
-                                if(rightStack != null) tooltipToRender = rightStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                                tooltipToRender = new ArrayList<>();
+                                APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(currentAucId);
+                                if(auc != null) {
+                                    tooltipToRender.add(EnumChatFormatting.WHITE+"Price Info");
+
+                                    String internalname = manager.getInternalNameForItem(auc.getStack());
+                                    JsonObject auctionInfo = manager.auctionManager.getItemAuctionInfo(internalname);
+                                    JsonObject bazaarInfo = manager.auctionManager.getBazaarInfo(internalname);
+
+                                    boolean hasAuctionPrice = auctionInfo != null;
+                                    boolean hasBazaarPrice = bazaarInfo != null;
+
+                                    int lowestBin = manager.auctionManager.getLowestBin(internalname);
+
+                                    NumberFormat format = NumberFormat.getInstance(Locale.US);
+
+                                    APIManager.CraftInfo craftCost = manager.auctionManager.getCraftCost(internalname);
+
+                                    if(lowestBin > 0) {
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+                                    }
+                                    if(hasBazaarPrice) {
+                                        int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat();
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
+                                        int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat();
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
+                                        int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat();
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
+                                        int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat();
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
+                                    }
+                                    if(hasAuctionPrice) {
+                                        int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
+                                        if(auctionInfo.has("clean_price")) {
+                                            tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price (Clean): "+
+                                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
+                                            tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales (Clean): "+
+                                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
+                                        }
+
+                                    }
+                                    if(craftCost.fromRecipe) {
+                                        tooltipToRender.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
+                                    }
+                                    tooltipToRender.add("");
+                                }
+                                if(rightStack != null) tooltipToRender.addAll(rightStack.getTooltip(Minecraft.getMinecraft().thePlayer, false));
                             } else if(mouseY > guiTop+126 && mouseY < guiTop+126+16) {
                                 if(middleStack != null) tooltipToRender = middleStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                             }
@@ -530,8 +655,7 @@ public class CustomAH extends Gui {
                     } catch(NullPointerException e) { //i cant be bothered
                     }
                 }
-            } else if(containerName.trim().equals("Confirm Bid")) {
-
+            } else if(containerName.trim().equals("Confirm Bid") || containerName.trim().equals("Confirm Purchase")) {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(auction_accept);
                 this.drawTexturedModalRect(auctionViewLeft, guiTop, 0, 0, 78, 172);
 
@@ -750,7 +874,6 @@ public class CustomAH extends Gui {
                         }
                     }
                 } catch(Exception e) {
-                    break out;
                 }
             }
         }
@@ -794,7 +917,30 @@ public class CustomAH extends Gui {
         String selPrefix = EnumChatFormatting.DARK_AQUA + selPrefixNC;
         String unselPrefix = EnumChatFormatting.GRAY.toString();
         switch(index) {
-            case 0: break;
+            case 0:
+                lore.add("");
+                String gold = EnumChatFormatting.GOLD.toString();
+                String gray = EnumChatFormatting.GRAY.toString();
+                char s = 0x272A;
+                String[] linesDung = {"Show All","Any Dungeon",
+                        gold+s+gray+s+s+s+s,
+                        gold+s+s+gray+s+s+s,
+                        gold+s+s+s+gray+s+s,
+                        gold+s+s+s+s+gray+s,
+                        gold+s+s+s+s+s};
+                for(int i=0; i<linesDung.length; i++) {
+                    String line = linesDung[i];
+                    if(i == dungeonFilter) {
+                        line = selPrefix + line.replace(gray, EnumChatFormatting.DARK_AQUA.toString());
+                    } else {
+                        line = unselPrefix + line;
+                    }
+                    lore.add(line);
+                }
+                lore.add("");
+                lore.add(EnumChatFormatting.AQUA + "Right-Click to go backwards!");
+                lore.add(EnumChatFormatting.YELLOW + "Click to switch sort!");
+                return lore;
             case 1:
                 lore.add("");
                 String[] linesSort = {"Highest Bid","Lowest Bid","Ending soon"};
@@ -867,6 +1013,12 @@ public class CustomAH extends Gui {
             case 8:
                 lore.add("");
                 lore.add("Current aucid: " + currentAucId);
+                if(currentAucId != null) {
+                    APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(currentAucId);
+                    if(auc != null) {
+                        lore.add("Current auc category: " + auc.category);
+                    }
+                }
                 lore.add(" --- Processing");
                 lore.add("Page Process Millis: " + manager.auctionManager.processMillis);
                 lore.add(" --- Auction Stats");
@@ -907,14 +1059,16 @@ public class CustomAH extends Gui {
             mouseClickMove(mouseX, mouseY, this.eventButton, l);
         }
 
-        int dWheel = Mouse.getEventDWheel();
-        dWheel = Math.max(-1, Math.min(1, dWheel));
+        if(!manager.config.disableAhScroll.value) {
+            int dWheel = Mouse.getEventDWheel();
+            dWheel = Math.max(-1, Math.min(1, dWheel));
 
-        scrollAmount = scrollAmount - dWheel/(float)(auctionIds.size()/9-(5+splits));
-        scrollAmount = Math.max(0, Math.min(1, scrollAmount));
+            scrollAmount = scrollAmount - dWheel/(float)(auctionIds.size()/9-(5+splits));
+            scrollAmount = Math.max(0, Math.min(1, scrollAmount));
+        }
     }
 
-    private String niceAucId(String aucId) {
+    public String niceAucId(String aucId) {
         if(aucId.length()!=32) return aucId;
 
         StringBuilder niceAucId = new StringBuilder();
@@ -976,6 +1130,14 @@ public class CustomAH extends Gui {
             }
         }
 
+        if(dungeonFilter > DUNGEON_FILTER_ALL) {
+            if(dungeonFilter == DUNGEON_FILTER_DUNGEON && auc.dungeonTier < 0) {
+                match = false;
+            } else {
+                match &= dungeonFilter == auc.dungeonTier+1;
+            }
+        }
+
         return match;
     }
 
@@ -1032,116 +1194,117 @@ public class CustomAH extends Gui {
         return matches;
     }
 
+    private ExecutorService es = Executors.newSingleThreadExecutor();
     public void updateSearch() {
         if(searchField == null || priceField == null) init();
+        long currentTime = System.currentTimeMillis();
 
-        /*if(searchField.getText().length() > 0 && searchField.getText().length() <= 2 &&
-                System.currentTimeMillis() - lastSearchFieldUpdate < 200) {
-            shouldUpdateSearch = true;
-            return;
-        }*/
+        es.submit(() -> {
+            if(currentTime - lastUpdateSearch < 100) {
+                shouldUpdateSearch = true;
+                return;
+            }
 
-        if(System.currentTimeMillis() - lastUpdateSearch < 500) {
-            shouldUpdateSearch = true;
-            return;
-        }
+            lastUpdateSearch = currentTime;
+            shouldUpdateSearch = false;
 
-        lastUpdateSearch = System.currentTimeMillis();
-        shouldUpdateSearch = false;
-
-        scrollAmount = 0;
-        try {
-            auctionIds.clear();
-            if(filterMyAuctions) {
-                for(String aucid : manager.auctionManager.getPlayerBids()) {
-                    APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
-                    if(doesAucMatch(auc)) {
-                        auctionIds.add(aucid);
+            scrollAmount = 0;
+            try {
+                HashSet<String> auctionIdsNew = new HashSet<>();
+                auctionIdsNew.clear();
+                if(filterMyAuctions) {
+                    for(String aucid : manager.auctionManager.getPlayerBids()) {
+                        APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
+                        if(doesAucMatch(auc)) {
+                            auctionIdsNew.add(aucid);
+                        }
                     }
-                }
-            } else if(searchField.getText().length() == 0) {
-                for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
-                    if(doesAucMatch(entry.getValue())) {
-                        auctionIds.add(entry.getKey());
-                    }
-                }
-            } else {
-                String query = searchField.getText();
-                Set<String> dontMatch = new HashSet<>();
-
-                HashSet<String> allMatch = new HashSet<>();
-                if(query.contains("!")) { //only used for inverted queries, so dont need to populate unless ! in query
+                } else if(searchField.getText().length() == 0) {
                     for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
                         if(doesAucMatch(entry.getValue())) {
-                            allMatch.add(entry.getKey());
+                            auctionIdsNew.add(entry.getKey());
+                        }
+                    }
+                } else {
+                    String query = searchField.getText();
+                    Set<String> dontMatch = new HashSet<>();
+
+                    HashSet<String> allMatch = new HashSet<>();
+                    if(query.contains("!")) { //only used for inverted queries, so dont need to populate unless ! in query
+                        for(Map.Entry<String, APIManager.Auction> entry : manager.auctionManager.getAuctionItems().entrySet()) {
+                            if(doesAucMatch(entry.getValue())) {
+                                allMatch.add(entry.getKey());
+                            } else {
+                                dontMatch.add(entry.getKey());
+                            }
+                        }
+                    }
+
+                    boolean invert = false;
+
+                    StringBuilder query2 = new StringBuilder();
+                    char lastOp = '|';
+                    for(char c : query.toCharArray()) {
+                        if(query2.toString().trim().isEmpty() && c == '!') {
+                            invert = true;
+                        } else if(c == '|' || c == '&') {
+                            if(lastOp == '|') {
+                                HashSet<String> result = search(query2.toString(), dontMatch);
+                                if(!invert) {
+                                    auctionIdsNew.addAll(result);
+                                } else {
+                                    HashSet<String> allClone = (HashSet<String>) allMatch.clone();
+                                    allClone.removeAll(result);
+                                    auctionIdsNew.addAll(allClone);
+                                }
+                            } else if(lastOp == '&') {
+                                HashSet<String> result = search(query2.toString(), dontMatch);
+                                if(!invert) {
+                                    auctionIdsNew.retainAll(result);
+                                } else {
+                                    auctionIdsNew.removeAll(result);
+                                }
+                            }
+
+                            query2 = new StringBuilder();
+                            invert = false;
+                            lastOp = c;
                         } else {
-                            dontMatch.add(entry.getKey());
+                            query2.append(c);
+                        }
+                    }
+                    if(lastOp == '|') {
+                        HashSet<String> result = search(query2.toString(), dontMatch);
+                        if(!invert) {
+                            auctionIdsNew.addAll(result);
+                        } else {
+                            HashSet<String> allClone = (HashSet<String>) allMatch.clone();
+                            allClone.removeAll(result);
+                            auctionIdsNew.addAll(allClone);
+                        }
+                    } else if(lastOp == '&') {
+                        HashSet<String> result = search(query2.toString(), dontMatch);
+                        if(!invert) {
+                            auctionIdsNew.retainAll(result);
+                        } else {
+                            auctionIdsNew.removeAll(result);
                         }
                     }
                 }
-
-                boolean invert = false;
-
-                StringBuilder query2 = new StringBuilder();
-                char lastOp = '|';
-                for(char c : query.toCharArray()) {
-                    if(query2.toString().trim().isEmpty() && c == '!') {
-                        invert = true;
-                    } else if(c == '|' || c == '&') {
-                        if(lastOp == '|') {
-                            HashSet<String> result = search(query2.toString(), dontMatch);
-                            if(!invert) {
-                                auctionIds.addAll(result);
-                            } else {
-                                HashSet<String> allClone = (HashSet<String>) allMatch.clone();
-                                allClone.removeAll(result);
-                                auctionIds.addAll(allClone);
-                            }
-                        } else if(lastOp == '&') {
-                            HashSet<String> result = search(query2.toString(), dontMatch);
-                            if(!invert) {
-                                auctionIds.retainAll(result);
-                            } else {
-                                auctionIds.removeAll(result);
-                            }
-                        }
-
-                        query2 = new StringBuilder();
-                        invert = false;
-                        lastOp = c;
-                    } else {
-                        query2.append(c);
-                    }
-                }
-                if(lastOp == '|') {
-                    HashSet<String> result = search(query2.toString(), dontMatch);
-                    if(!invert) {
-                        auctionIds.addAll(result);
-                    } else {
-                        HashSet<String> allClone = (HashSet<String>) allMatch.clone();
-                        allClone.removeAll(result);
-                        auctionIds.addAll(allClone);
-                    }
-                } else if(lastOp == '&') {
-                    HashSet<String> result = search(query2.toString(), dontMatch);
-                    if(!invert) {
-                        auctionIds.retainAll(result);
-                    } else {
-                        auctionIds.removeAll(result);
-                    }
-                }
+                auctionIds = auctionIdsNew;
+                sortItems();
+            } catch(Exception e) {
+                shouldUpdateSearch = true;
             }
-            sortItems();
-        } catch(Exception e) {
-            shouldUpdateSearch = true;
-        }
+        });
     }
 
     public void sortItems() throws ConcurrentModificationException {
         try {
-            sortedAuctionIds.clear();
-            sortedAuctionIds.addAll(auctionIds);
-            sortedAuctionIds.sort((o1, o2) -> {
+            List<String> sortedAuctionIdsNew = new ArrayList<>();
+
+            sortedAuctionIdsNew.addAll(auctionIds);
+            sortedAuctionIdsNew.sort((o1, o2) -> {
                 APIManager.Auction auc1 = manager.auctionManager.getAuctionItems().get(o1);
                 APIManager.Auction auc2 = manager.auctionManager.getAuctionItems().get(o2);
 
@@ -1176,6 +1339,8 @@ public class CustomAH extends Gui {
                 }
                 return o1.compareTo(o2);
             });
+
+            sortedAuctionIds = sortedAuctionIdsNew;
         } catch(Exception e) {
             shouldSortItems = true;
         }
@@ -1285,7 +1450,15 @@ public class CustomAH extends Gui {
                 int index = offset/18;
                 boolean rightClicked = Mouse.getEventButton() == 1;
                 switch(index) {
-                    case 0: break;
+                    case 0:
+                        if(rightClicked) {
+                            dungeonFilter--;
+                            if(dungeonFilter < DUNGEON_FILTER_ALL) dungeonFilter = DUNGEON_FILTER_5;
+                        } else {
+                            dungeonFilter++;
+                            if(dungeonFilter > DUNGEON_FILTER_5) dungeonFilter = DUNGEON_FILTER_ALL;
+                        }
+                        break;
                     case 1:
                         if(rightClicked) {
                             sortMode--;
@@ -1350,7 +1523,16 @@ public class CustomAH extends Gui {
             if(containerName.trim().equals("Auction View") || containerName.trim().equals("BIN Auction View")) {
                 if(mouseX > guiLeft+getXSize()+4+31 && mouseX < guiLeft+getXSize()+4+31+16) {
                     boolean leftFiller = isGuiFiller(auctionView.inventorySlots.getSlot(29).getStack());//isBin
-                    if(mouseY > guiTop+100 && mouseY < guiTop+100+16) {
+                    if(mouseY > guiTop+35 && mouseY < guiTop+35+16) {
+                        ItemStack topStack = auctionView.inventorySlots.getSlot(13).getStack();
+                        if(topStack != null) {
+                            String line = findStrStart(topStack, EnumChatFormatting.GRAY+"Seller: ");
+                            String[] split = line.split(" ");
+                            String seller = split[split.length-1];
+                            StringSelection selection = new StringSelection(seller);
+                            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+                        }
+                    } else if(mouseY > guiTop+100 && mouseY < guiTop+100+16) {
                         int slotClick =  leftFiller ? 31 : 29;
                         Minecraft.getMinecraft().playerController.windowClick(auctionView.inventorySlots.windowId,
                                 slotClick, 2, 3, Minecraft.getMinecraft().thePlayer);
@@ -1371,11 +1553,13 @@ public class CustomAH extends Gui {
                         Utils.playPressSound();
                     }
                 }
-            } else if(containerName.trim().equals("Confirm Bid")) {
+            } else if(containerName.trim().equals("Confirm Bid") || containerName.trim().equals("Confirm Purchase")) {
                 if(mouseX > guiLeft+getXSize()+4+31 && mouseX < guiLeft+getXSize()+4+31+16) {
                     if(mouseY > guiTop+31 && mouseY < guiTop+31+16) {
                         if(currentAucId != null) {
                             manager.auctionManager.getPlayerBids().add(currentAucId);
+                            latestBid = currentAucId;
+                            latestBidMillis = System.currentTimeMillis();
                             //reset timer to 2m if below
                             if(manager.auctionManager.getAuctionItems().get(currentAucId).end -
                                     System.currentTimeMillis() < 2*60*1000) {
@@ -1444,6 +1628,7 @@ public class CustomAH extends Gui {
                     aucid = sortedAuctionIds.get(id);
                 } catch (IndexOutOfBoundsException e) { break out; }
 
+                if(aucid == null) continue;
                 APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
                 if(auc != null) {
                     if(mouseX > itemX && mouseX < itemX+16) {

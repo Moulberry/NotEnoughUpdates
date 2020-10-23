@@ -1,6 +1,6 @@
 package io.github.moulberry.notenoughupdates.questing.requirements;
 
-import io.github.moulberry.notenoughupdates.questing.NEUQuesting;
+import io.github.moulberry.notenoughupdates.questing.SBInfo;
 
 public class RequirementIslandType extends Requirement {
 
@@ -14,6 +14,6 @@ public class RequirementIslandType extends Requirement {
 
     @Override
     public void updateRequirement() {
-        completed = islandType.equalsIgnoreCase(NEUQuesting.getInstance().location);
+        completed = islandType.equalsIgnoreCase(SBInfo.getInstance().location);
     }
 }

@@ -3,10 +3,8 @@ package io.github.moulberry.notenoughupdates.questing.requirements;
 import com.google.common.base.Splitter;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.questing.NEUQuesting;
 
 import java.util.List;
-import java.util.Map;
 
 public class RequirementApi extends Requirement {
 
@@ -40,7 +38,6 @@ public class RequirementApi extends Requirement {
     private static JsonElement getElement(JsonElement element, String path) {
         List<String> path_split = PATH_SPLITTER.splitToList(path);
         if(element instanceof JsonObject) {
-            System.out.println(path_split.get(0));
             JsonElement e = element.getAsJsonObject().get(path_split.get(0));
             if(path_split.size() > 1) {
                 return getElement(e, path_split.get(1));
@@ -100,12 +97,12 @@ public class RequirementApi extends Requirement {
     @Override
     public void updateRequirement() {
         if(valid) {
-            JsonObject profile = NotEnoughUpdates.INSTANCE.manager.auctionManager.getPlayerInformation();
+            /*JsonObject profile = NotEnoughUpdates.INSTANCE.manager.auctionManager.getPlayerInformation();
             if(profile != null) {
                 System.out.println("-----------");
                 JsonElement element = getElement(profile, requirementLeft);
                 completed = checkElementSatisfiesComparison(element, op, requirementRight);
-            }
+            }*/
         }
     }
 }
