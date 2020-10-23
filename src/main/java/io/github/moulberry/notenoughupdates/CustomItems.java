@@ -53,12 +53,6 @@ public class CustomItems {
                 "incursions on the server, some of which I, a player on this Minecraft",
                 "anarchy server in Minecraft, have participated in. One of this server's",
                 "most infamous Minecraft players on the oldest Minecraft");
-
-      public static JsonObject Lisreal2401 = create(
-            "Lisreal",
-            "stone_bricks",
-            "L is real 2401.");
-
     public static JsonObject LEOCTHL = create("LEOCTHL", "dragon_egg", "--- Stats below may not be entirely accurate ---",
             "17 legendary dragon pets",
                   "24 epic dragon pets",
@@ -67,8 +61,7 @@ public class CustomItems {
                   "39 legendary phoenix pets",
                   "",
                   "get flexed");
-
-
+public static JsonObject LISREAL2401 = create("L is real 2401", "stone_brick", "L is real 2401.", "Soon, he will arise.");
     /**
      * SHAAAAAAAAAAAAAAAAAAME
      */
