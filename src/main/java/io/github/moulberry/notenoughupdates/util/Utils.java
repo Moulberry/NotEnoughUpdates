@@ -122,7 +122,14 @@ public class Utils {
                 GlStateManager.matrixMode(GL11.GL_MODELVIEW);
                 GL11.glLoadMatrix(modelviewMatrixOld);
             } else {
-                Minecraft.getMinecraft().entityRenderer.setupOverlayRendering();
+                GlStateManager.matrixMode(GL11.GL_PROJECTION);
+                GlStateManager.loadIdentity();
+                GlStateManager.ortho(0.0D,
+                        scaledresolution.getScaledWidth_double(),
+                        scaledresolution.getScaledHeight_double(), 0.0D, 1000.0D, 3000.0D);
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+                GlStateManager.loadIdentity();
+                GlStateManager.translate(0.0F, 0.0F, -2000.0F);
             }
         }
 
