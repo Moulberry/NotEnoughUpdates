@@ -84,7 +84,7 @@ public class DungeonBlocks implements IResourceManagerReloadListener {
         }
 
         for (int i = 0; i <= mipmapLevels; ++i) {
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, i, GL11.GL_RGBA, w >> i, h >> i, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (IntBuffer)((IntBuffer)null));
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, i, GL11.GL_RGBA, w >> i, h >> i, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, ((IntBuffer)null));
         }
 
         GlStateManager.bindTexture(textureId);
@@ -159,7 +159,7 @@ public class DungeonBlocks implements IResourceManagerReloadListener {
                 }
 
                 for (int i = 0; i <= mipmapLevels; ++i) {
-                    GL11.glTexImage2D(GL11.GL_TEXTURE_2D, i, GL11.GL_RGBA, w >> i, h >> i, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, (IntBuffer)((IntBuffer)null));
+                    GL11.glTexImage2D(GL11.GL_TEXTURE_2D, i, GL11.GL_RGBA, w >> i, h >> i, 0, GL12.GL_BGRA, GL12.GL_UNSIGNED_INT_8_8_8_8_REV, ((IntBuffer)null));
                 }
             }
             GlStateManager.bindTexture(textureId);
@@ -193,20 +193,6 @@ public class DungeonBlocks implements IResourceManagerReloadListener {
                             int index = x+y*w2;
 
                             int newCol = entry.getValue();
-                            /*float newAlpha = ((newCol >> 24) & 0xFF)/255f;
-                            float newRed = ((newCol >> 16) & 0xFF)/255f;
-                            float newGreen = ((newCol >> 8) & 0xFF)/255f;
-                            float newBlue = (newCol & 0xFF)/255f;*/
-
-                            /*int oldCol = intbuffer.get(index);
-                            int oldAlpha = (oldCol >> 24) & 0xFF;
-                            float oldRed = ((oldCol >> 16) & 0xFF)/255f;
-                            float oldGreen = ((oldCol >> 8) & 0xFF)/255f;
-                            float oldBlue = (oldCol & 0xFF)/255f;
-
-                            int r = (int)((newRed*newAlpha + oldRed*(1-newAlpha))*255);
-                            int g = (int)((newGreen*newAlpha + oldGreen*(1-newAlpha))*255);
-                            int b = (int)((newBlue*newAlpha + oldBlue*(1-newAlpha))*255);*/
 
                             intbuffer.put(index, newCol);
                         }

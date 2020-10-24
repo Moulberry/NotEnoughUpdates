@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -226,7 +227,7 @@ public class AccessoryBagOverlay {
     private static Set<ItemStack> duplicates = null;
     public static void renderDuplicatesOverlay(int x, int y) {
         if(duplicates == null) {
-            JsonObject misc = Utils.getConstant("misc");
+            JsonObject misc = Constants.MISC;
             if(misc == null) {
                 Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
                         new Color(80, 80, 80).getRGB());
@@ -297,7 +298,7 @@ public class AccessoryBagOverlay {
     private static List<ItemStack> missing = null;
     public static void renderMissingOverlay(int x, int y) {
         if(missing == null) {
-            JsonObject misc = Utils.getConstant("misc");
+            JsonObject misc = Constants.MISC;
             if(misc == null) {
                 Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR", Minecraft.getMinecraft().fontRendererObj, x+40, y+12, false, 70,
                         new Color(80, 80, 80).getRGB());
@@ -788,7 +789,7 @@ public class AccessoryBagOverlay {
     }
     
     public static boolean isAccessory(ItemStack stack) {
-        return checkItemType(stack, false, "ACCESSORY", "HATCCESSORY") >= 0;
+        return checkItemType(stack, true, "ACCESSORY", "HATCCESSORY") >= 0;
     }
 
     public static int getRarity(ItemStack stack) {
@@ -800,7 +801,7 @@ public class AccessoryBagOverlay {
                 for (int i = list.tagCount(); i >= 0; i--) {
                     String line = list.getStringTagAt(i);
                     for(int j=0; j<rarityArrC.length; j++) {
-                        if(line.startsWith(rarityArrC[j])) {
+                        if(line.contains(rarityArrC[j])) {
                             return j;
                         }
                     }

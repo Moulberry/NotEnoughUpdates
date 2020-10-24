@@ -12,6 +12,7 @@ import io.github.moulberry.notenoughupdates.SBAIntegration;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.questing.SBInfo;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
@@ -662,7 +663,7 @@ public class GuiProfileViewer extends GuiScreen {
     private void drawPetsPage(int mouseX, int mouseY, float partialTicks) {
         JsonObject petsInfo = profile.getPetsInfo(profileId);
         if(petsInfo == null) return;
-        JsonObject petsJson = Utils.getConstant("pets");
+        JsonObject petsJson = Constants.PETS;
         if(petsJson == null) return;
 
         String location = null;
@@ -1227,7 +1228,7 @@ public class GuiProfileViewer extends GuiScreen {
 
     private int getAvailableSlotsForInventory(JsonObject inventoryInfo, JsonObject collectionInfo, String invName) {
         if(collectionInfo == null) return -1;
-        JsonObject misc = Utils.getConstant("misc");
+        JsonObject misc = Constants.MISC;
         if(misc == null) return -1;
         JsonElement sizesElement = Utils.getElement(misc, "bag_size."+invName+".sizes");
         JsonElement collectionElement = Utils.getElement(misc, "bag_size."+invName+".collection");
@@ -1932,7 +1933,7 @@ public class GuiProfileViewer extends GuiScreen {
                     rankPlusColor = rankPlusColorECF.toString();
                 }
 
-                JsonObject misc = Utils.getConstant("misc");
+                JsonObject misc = Constants.MISC;
                 if(misc != null) {
                     if(misc.has("ranks")) {
                         String rankName = Utils.getElementAsString(Utils.getElement(misc, "ranks."+rank+".tag"), null);
@@ -2019,7 +2020,7 @@ public class GuiProfileViewer extends GuiScreen {
                 locationStr = "Ignoring DMs";
             } else {
                 if(location != null) {
-                    JsonObject misc = Utils.getConstant("misc");
+                    JsonObject misc = Constants.MISC;
                     if(misc != null) {
                         locationStr = Utils.getElementAsString(Utils.getElement(misc, "area_names."+location), "Unknown");
                     }

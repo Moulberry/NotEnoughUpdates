@@ -30,249 +30,287 @@ public class Options {
      */
 
     public static final transient int FLAG_COLOUR = 0b1;
+    public static final transient int FLAG_INT = 0b10;
+
+    public static final int CAT_ALL = 0;
+    public static final int CAT_MISC = 1;
+    public static final int CAT_FEATURES = 2;
+    public static final int CAT_SLIDERS = 3;
+    public static final int CAT_COLOURS = 4;
 
     public Option<Boolean> enableItemEditing = new Option(
             false,
             "Enable Item Editing",
             true,
-            "Dev Feature.");
+            "Dev Feature.", CAT_ALL);
     public Option<Boolean> onlyShowOnSkyblock = new Option(
             true,
             "Only Show On Skyblock",
             false,
-            "NEU Overlay only appears when you are playing Skyblock.");
+            "NEU Overlay only appears when you are playing Skyblock.", CAT_MISC);
     public Option<Boolean> showVanillaItems = new Option(
             true,
             "Show Vanilla Items",
             false,
-            "Shows vanilla items in the itemlist.");
+            "Shows vanilla items in the itemlist.", CAT_MISC);
     public Option<Boolean> hidePotionEffect = new Option(
             true,
             "Hide Potion Effects",
             false,
-            "Potion effects are hidden in the inventory GUI. Contrib: All the gamers that play on GUI AUTO");
+            "Potion effects are hidden in the inventory GUI. Contrib: All the gamers that play on GUI AUTO", CAT_MISC);
     public Option<Boolean> showQuickCommands = new Option(
             true,
             "Quick Commands",
             false,
-            "Shows QuickCommands\u2122 above search bar.");
+            "Shows QuickCommands\u2122 above search bar.", CAT_FEATURES);
     public Option<Boolean> showUpdateMsg = new Option(
             true,
             "Show Update Notifs",
             false,
-            "Shows update messages if NEU is out-of-date.");
+            "Shows update messages if NEU is out-of-date.", CAT_MISC);
     public Option<Boolean> tooltipBorderColours = new Option(
             true,
             "Coloured Tooltip Borders",
             false,
-            "Makes the border of tooltips coloured. (Only NEU Tooltips)");
+            "Makes the border of tooltips coloured. (Only NEU Tooltips)", CAT_MISC);
     public Option<Boolean> disableAhScroll = new Option(
             false,
             "No NeuAH Scroll",
             false,
-            "Disables Scrolling in NeuAH");
+            "Disables Scrolling in NeuAH", CAT_MISC);
     public Option<Boolean> advancedPriceInfo = new Option(
             false,
             "Adv. Item Price Info",
             false,
-            "Shows some extra information about item prices.");
+            "Shows some extra information about item prices.", CAT_MISC);
     public Option<Boolean> cacheRenderedItempane = new Option(
             true,
             "Cache Itempane",
             false,
-            "Caches the drawn itempane, drastically improving performance. Animated textures will not work.");
+            "Caches the drawn itempane, drastically improving performance. Animated textures will not work.", CAT_MISC);
     public Option<Boolean> streamerMode = new Option(
             false,
             "Streamer Mode",
             false,
-            "Hides or randomises some stuff on your screen to prevent sniping.");
+            "Hides or randomises some stuff on your screen to prevent sniping", CAT_MISC);
     public Option<Boolean> disableTreecapOverlay = new Option(
             false,
             "Disable Treecap Overlay",
             false,
-            "Disables the treecapitator overlay effect.");
+            "Disables the treecapitator overlay effect", CAT_FEATURES);
+    public Option<Boolean> disableWandOverlay = new Option(
+            false,
+            "Disable Builder's Wand Overlay",
+            false,
+            "Disables the builder's wand overlay effect", CAT_FEATURES);
+    public Option<Boolean> wandBlockCount = new Option(
+            true,
+            "Builder's Wand Block Count",
+            false,
+            "If true, will show how many blocks you have remaining when holding a builder's wand.", CAT_MISC);
     public Option<Boolean> hideApiKey = new Option(
             false,
             "Hide Apikey Setting",
             false,
-            "Hides the Apikey setting (please try not to leak Apikey if you're recording)");
+            "Hides the Apikey setting (please try not to leak Apikey if you're recording)", CAT_MISC);
     public Option<Double> bgBlurFactor = new Option(
             5.0,
             "Background Blur",
             false,
-            "Changes the strength of pane background blur. 0-50.", 0, 50);
+            "Changes the strength of pane background blur. 0-50.", 0, 50, CAT_SLIDERS);
     public Option<String> apiKey = new Option(
             "",
             "Api Key",
             false,
-            "Type /api new to receive key and put it here.");
+            "Type /api new to receive key and put it here.", CAT_MISC);
     public Option<Boolean> autoupdate = new Option(
             true,
             "Automatically Update Items",
             false,
-            "If true, updated items will automatically download from the remote repository when you start the game. \nHIGHLY RECOMMENDED.");
+            "If true, updated items will automatically download from the remote repository when you start the game. \nHIGHLY RECOMMENDED.", CAT_MISC);
     public Option<Boolean> quickcommandMousePress = new Option(
             false,
             "QuickCommand on Mouse Press",
             false,
-            "If true, quickcommands will trigger on mouse down instead of mouse up.");
+            "If true, quickcommands will trigger on mouse down instead of mouse up.", CAT_MISC);
     public Option<Boolean> disableItemTabOpen = new Option(
             false,
             "No Tab Open",
             false,
-            "If True, moving your mouse to the item tab on the right side won't open the itempane.");
+            "If True, moving your mouse to the item tab on the right side won't open the itempane.", CAT_MISC);
     public Option<Boolean> keepopen = new Option(
             false,
             "Keep Itempane Open",
             false,
-            "If true, the itempane will stay open after the gui is closed.");
+            "If true, the itempane will stay open after the gui is closed.", CAT_MISC);
     public Option<Boolean> itemStyle = new Option(
             true,
             "Circular Item Style",
             false,
-            "Uses the circular item background style instead of the square style. Contrib: Calyps0");
+            "Uses the circular item background style instead of the square style. Contrib: Calyps0", CAT_MISC);
     public Option<Boolean> hideEmptyPanes = new Option(
             true,
             "Hide GUI Filler Tooltips",
             false,
-            "Hides the tooltip of glass panes in skyblock GUIs. Contrib: ThatGravyBoat");
+            "Hides the tooltip of glass panes in skyblock GUIs. Contrib: ThatGravyBoat", CAT_MISC);
     public Option<Boolean> dungeonProfitLore = new Option(
             false,
             "Dungeon Profit in Lore",
             false,
-            "If true, will show the dungeon profit on the tooltip of the 'reward chest' instead of as a GUI.");
+            "If true, will show the dungeon profit on the tooltip of the 'reward chest' instead of as a GUI.", CAT_MISC);
     public Option<Boolean> auctionPriceInfo = new Option(
             true,
             "Price Info in Auction Lore",
             false,
-            "If true, will show price information about an item inside the auction house item tooltip.");
+            "If true, will show price information about an item inside the auction house item tooltip.", CAT_MISC);
     public Option<Boolean> useCustomTrade = new Option(
             true,
             "Custom Trade",
             false,
-            "If true, uses the custom trade window for skyblock trades.");
+            "If true, uses the custom trade window for skyblock trades.", CAT_FEATURES);
     public Option<Boolean> invBazaarPrice = new Option(
             false,
             "Show Bazaar Price In Inventory",
             false,
-            "If true, shows the bazaar price for the item you hover in your inventory.");
+            "If true, shows the bazaar price for the item you hover in your inventory.", CAT_MISC);
     public Option<Boolean> invAuctionPrice = new Option(
             false,
             "Show Auction Price In Inventory",
             false,
-            "If true, shows the auction price for the item you hover in your inventory.");
+            "If true, shows the auction price for the item you hover in your inventory.", CAT_MISC);
     public Option<Boolean> dungeonBlocksEverywhere = new Option(
             false,
             "Show Dungeon Block Overlay Everywhere",
             false,
-            "If true, will show the overlay for cracked bricks, etc. even when not in dungeons.");
+            "If true, will show the overlay for cracked bricks, etc. even when not in dungeons.", CAT_MISC);
     public Option<Boolean> disableDungeonBlocks = new Option(
             false,
             "Disables the dungeon blocks feature",
             false,
-            "If true, the dungeon block overlay will be disabled.");
+            "If true, the dungeon block overlay will be disabled.", CAT_FEATURES);
+    public Option<Boolean> missingEnchantList = new Option(
+            true,
+            "Missing Enchant List",
+            false,
+            "If true, will show enchants that are missing on an enchanted item when LSHIFT is pressed.", CAT_FEATURES);
+    public Option<Boolean> accessoryBagOverlay = new Option(
+            true,
+            "Accessory Bag Overlay",
+            false,
+            "If true, will an overlay with useful information in your accessory bag.", CAT_FEATURES);
+    public Option<Double> paneGuiScale = new Option(
+            0.0,
+            "Pane GUI Scale",
+            false,
+            "Changes the GUI scale of the item pane. 0 = use game default. 1-4 = scale", FLAG_INT, 0, 4, CAT_SLIDERS);
     public Option<Double> paneWidthMult = new Option(
             1.0,
             "Pane Width",
             false,
-            "Changes how wide the item and info panes are. Value between 0.5-1.5.", 0.5, 1.5);
+            "Changes how wide the item and info panes are. Value between 0.5-1.5.", 0.5, 1.5, CAT_SLIDERS);
     public Option<Double> smoothAoteMillis = new Option(
             175.0,
             "Smooth AOTE Milliseconds",
             false,
-            "How long teleporting with the AOTE takes. 0 = disable.", 0, 300);
+            "How long teleporting with the AOTE takes. 0 = disable.", 0, 300, CAT_SLIDERS);
     public Option<Double> itemHighlightOpacity = new Option(
             178.0,
             "Item Highlight Opacity",
             false,
-            "Changes the opacity of item highlights. Value between 0-255.", 0, 255);
+            "Changes the opacity of item highlights. Value between 0-255.", 0, 255, CAT_SLIDERS);
     public Option<Double> panePadding = new Option(
             10.0,
             "Pane Padding",
             false,
-            "Changes the padding of the panes. Value between 0-20.", 0, 20);
+            "Changes the padding of the panes. Value between 0-20.", 0, 20, CAT_SLIDERS);
     public Option<Double> ahNotification = new Option(
             2.0,
             "AH Notification (Mins, 0 = off)",
             false,
-            "Minutes before AH ends to notify. 0-10.", 0, 10);
+            "Minutes before AH ends to notify. 0-10.", 0, 10, CAT_SLIDERS);
     public Option<Double> tooltipBorderOpacity = new Option(
             200.0,
             "Coloured Tooltip Border Opacity",
             false,
-            "Coloured tooltips only apply to tooltips in my GUIs. Value between 0-255.", 0, 255);
+            "Coloured tooltips only apply to tooltips in my GUIs. Value between 0-255.", 0, 255, CAT_SLIDERS);
     public Option<Double> dynamicMenuBackgroundStyle = new Option(
             1.0,
             "SBMenu Background Style",
             false,
-            "Style of the background used for the skyblock menu.", 0, 10);
+            "Style of the background used for the skyblock menu.", 0, 10, CAT_FEATURES);
     public Option<Double> dynamicMenuButtonStyle = new Option(
             1.0,
             "SBMenu Button Style",
             false,
-            "Style of the buttons used for the skyblock menu.", 0, 10);
+            "Style of the buttons used for the skyblock menu.", 0, 10, CAT_FEATURES);
 
     public Option<String> itemBackgroundColour = new Option(
             "00:255:100:100:100",
             "Item BG Colour",
             false,
-            "Treecapitator Overlay Colour",
-            FLAG_COLOUR);
+            "Item BG Colour",
+            FLAG_COLOUR, CAT_COLOURS);
     public Option<String> itemFavouriteColour = new Option(
             "00:255:200:150:50",
             "Item BG Favourite Colour",
             false,
             "Item BG Favourite Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
     public Option<String> paneBackgroundColour = new Option(
             "15:6:0:0:255",
             "Pane Background Colour",
             false,
             "Pane Background Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
     public Option<String> treecapOverlayColour = new Option(
             "00:50:64:224:208",
             "Treecapitator Overlay Colour",
             false,
             "Treecapitator Overlay Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
+    public Option<String> wandOverlayColour = new Option(
+            "00:50:64:224:208",
+            "Builder's Wand Overlay Colour",
+            false,
+            "Builder's Wand Overlay Colour",
+            FLAG_COLOUR, CAT_COLOURS);
 
     public Option<String> dungCrackedColour = new Option(
             "0:252:7:255:217",
             "Dungeon Cracked Brick Colour",
             false,
             "Dungeon Cracked Brick Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
     public Option<String> dungDispenserColour = new Option(
             "0:255:255:76:0",
             "Dungeon Dispenser Colour",
             false,
             "Dungeon Dispenser Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
     public Option<String> dungLeverColour = new Option(
             "0:252:24:249:255",
             "Dungeon Lever Colour",
             false,
             "Dungeon Lever Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
     public Option<String> dungTripWireColour = new Option(
             "0:255:255:0:0",
             "Dungeon Trip Wire Colour",
             false,
             "Dungeon Trip Wire Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
     public Option<String> dungChestColour = new Option(
             "0:255:0:163:36",
             "Dungeon Chest Colour",
             false,
             "Dungeon Chest Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
     public Option<String> dungBatColour = new Option(
             "0:255:12:255:0",
             "Dungeon Bat Colour",
             false,
             "Dungeon Bat Colour",
-            FLAG_COLOUR);
+            FLAG_COLOUR, CAT_COLOURS);
 
     /**
      * OPTIONS THAT DON'T SHOW IN GUI
@@ -281,78 +319,78 @@ public class Options {
             false,
             "Show Dev Options",
             true,
-            "Dev Feature. Please don't use.");
+            "Dev Feature. Please don't use.", CAT_ALL);
     public Option<Boolean> loadedModBefore = new Option(
             false,
             "loadedModBefore",
             true,
-            "loadedModBefore");
+            "loadedModBefore", CAT_ALL);
     public Option<Boolean> customTradePrices = new Option(
             true,
             "Trade Item Values",
             true,
-            "If true, shows a window with the total item value of either side");
+            "If true, shows a window with the total item value of either side", CAT_ALL);
     public Option<Boolean> customTradePriceStyle = new Option(
             true,
             "Trade Prices Style",
             true,
-            "Changes the style of the top item prices");
+            "Changes the style of the top item prices", CAT_ALL);
     public Option<String> selectedCape = new Option(
             "",
             "Selected Cape",
             true,
-            "Selected Cape");
+            "Selected Cape", CAT_ALL);
     public Option<Double> compareMode = new Option(
             0.0,
             "Compare Mode",
             false,
-            "Compare Mode");
+            "Compare Mode", CAT_ALL);
     public Option<Double> sortMode = new Option(
             0.0,
             "Sort Mode",
             false,
-            "Sort Mode");
+            "Sort Mode", CAT_ALL);
     public Option<ArrayList<Boolean>> compareAscending = new Option(
             Utils.createList(true, true, true),
             "Compare Ascending",
             false,
-            "Compare Ascending");
+            "Compare Ascending", CAT_ALL);
     public Option<ArrayList<String>> favourites = new Option(
             new ArrayList<String>(),
             "Favourites",
             false,
-            "Favourites");
+            "Favourites", CAT_ALL);
     public Option<Map<String, ArrayList<String>>> collectionLog = new Option(
             new HashMap<String, ArrayList<String>>(),
             "CollectionLog",
             false,
-            "CollectionLog");
+            "CollectionLog", CAT_ALL);
     public Option<ArrayList<String>> quickCommands = new Option(
             createDefaultQuickCommands(),
             "Quick Commands",
             false,
-            "Quick Commands");
+            "Quick Commands", CAT_ALL);
     public Option<String> overlaySearchBar = new Option(
             "",
             "OverlaySearchBar",
             false,
-            "OverlaySearchBar");
+            "OverlaySearchBar", CAT_ALL);
     public Option<String> overlayQuickCommand = new Option(
             "",
             "OverlaySearchBar",
             false,
-            "OverlaySearchBar");
+            "OverlaySearchBar", CAT_ALL);
     public Option<List<String>> enchantColours = new Option(
-            Utils.createList("[a-zA-Z ]+:\u003e:9:6",
-                    "[a-zA-Z ]+:\u003e:6:c",
-                    "[a-zA-Z ]+:\u003e:5:5",
+            Utils.createList("[a-zA-Z\\- ]+:\u003e:9:6",
+                    "[a-zA-Z\\- ]+:\u003e:6:c",
+                    "[a-zA-Z\\- ]+:\u003e:5:5",
                     "Experience:\u003e:3:5",
                     "Life Steal:\u003e:3:5",
                     "Scavenger:\u003e:3:5",
                     "Looting:\u003e:3:5"),
             "enchantColours",
             false,
-            "enchantColours");
+            "enchantColours", CAT_ALL);
 
     private ArrayList<String> createDefaultQuickCommands() {
         ArrayList<String> arr = new ArrayList<>();
@@ -427,6 +465,8 @@ public class Options {
         tryAddOption(hideApiKey, options);
         tryAddOption(streamerMode, options);
         tryAddOption(disableTreecapOverlay, options);
+        tryAddOption(disableWandOverlay, options);
+        tryAddOption(wandBlockCount, options);
         tryAddOption(autoupdate, options);
         tryAddOption(cacheRenderedItempane, options);
         tryAddOption(itemStyle, options);
@@ -441,7 +481,10 @@ public class Options {
         tryAddOption(invAuctionPrice, options);
         tryAddOption(dungeonBlocksEverywhere, options);
         tryAddOption(disableDungeonBlocks, options);
+        tryAddOption(missingEnchantList, options);
+        tryAddOption(accessoryBagOverlay, options);
         //Sliders
+        tryAddOption(paneGuiScale, options);
         tryAddOption(smoothAoteMillis, options);
         tryAddOption(bgBlurFactor, options);
         tryAddOption(ahNotification, options);
@@ -457,6 +500,7 @@ public class Options {
         tryAddOption(itemBackgroundColour, options);
         tryAddOption(itemFavouriteColour, options);
         tryAddOption(treecapOverlayColour, options);
+        tryAddOption(wandOverlayColour, options);
 
         tryAddOption(dungCrackedColour, options);
         tryAddOption(dungDispenserColour, options);
@@ -483,20 +527,22 @@ public class Options {
         public final transient int flags;
         public final transient double minValue;
         public final transient double maxValue;
+        public final transient int category;
+        public final transient ArrayList<String> tags;
 
-        public Option(T defaultValue, String displayName, boolean secret, String desc) {
-            this(defaultValue, displayName, secret, desc, 0, 0, 100);
+        public Option(T defaultValue, String displayName, boolean secret, String desc, int category) {
+            this(defaultValue, displayName, secret, desc, 0, 0, 100, category);
         }
 
-        public Option(T defaultValue, String displayName, boolean secret, String desc, int flags) {
-            this(defaultValue, displayName, secret, desc, flags, 0, 100);
+        public Option(T defaultValue, String displayName, boolean secret, String desc, int flags, int category) {
+            this(defaultValue, displayName, secret, desc, flags, 0, 100, category);
         }
 
-        public Option(T defaultValue, String displayName, boolean secret, String desc, double minValue, double maxValue) {
-            this(defaultValue, displayName, secret, desc, 0, minValue, maxValue);
+        public Option(T defaultValue, String displayName, boolean secret, String desc, double minValue, double maxValue, int category) {
+            this(defaultValue, displayName, secret, desc, 0, minValue, maxValue, category);
         }
 
-        public Option(T defaultValue, String displayName, boolean secret, String desc, int flags, double minValue, double maxValue) {
+        public Option(T defaultValue, String displayName, boolean secret, String desc, int flags, double minValue, double maxValue, int category) {
             this.value = defaultValue;
             this.defaultValue = defaultValue;
             this.displayName = displayName;
@@ -505,6 +551,21 @@ public class Options {
             this.flags = flags;
             this.minValue = minValue;
             this.maxValue = maxValue;
+            this.category = category;
+
+            this.tags = new ArrayList<>();
+            for(String s : displayName.split(" ")) {
+                s = s.replaceAll("[^A-Za-z]", "").toLowerCase();
+                if(s.length() > 0) {
+                    tags.add(s);
+                }
+            }
+            for(String s : desc.split(" ")) {
+                s = s.replaceAll("[^A-Za-z]", "").toLowerCase();
+                if(s.length() >= 4) {
+                    tags.add(s);
+                }
+            }
         }
 
         public void setValue(String value) {
@@ -530,7 +591,7 @@ public class Options {
     public static JsonDeserializer<Option<?>> createDeserializer() {
         return (json, typeOfT, context) -> {
             try {
-                return new Option(context.deserialize(json, Object.class), "unknown", false, "unknown");
+                return new Option(context.deserialize(json, Object.class), "unknown", false, "unknown", CAT_ALL);
             } catch (Exception e) {
                 return null;
             }

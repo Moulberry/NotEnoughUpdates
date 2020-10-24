@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.profileviewer;
 
 import com.google.gson.*;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.nbt.*;
 import net.minecraft.util.EnumChatFormatting;
@@ -104,7 +105,7 @@ public class PlayerStats {
     }
 
     public static Stats getBaseStats() {
-        JsonObject misc = Utils.getConstant("misc");
+        JsonObject misc = Constants.MISC;
         if(misc == null) return null;
 
         Stats stats = new Stats();
@@ -129,7 +130,7 @@ public class PlayerStats {
     }
 
     private static Stats getSkillBonus(JsonObject skillInfo) {
-        JsonObject bonuses = Utils.getConstant("bonuses");
+        JsonObject bonuses = Constants.BONUSES;
         if(bonuses == null) return null;
 
         Stats skillBonus = new Stats();
@@ -159,7 +160,7 @@ public class PlayerStats {
     }
 
     private static Stats getPetBonus(JsonObject profile) {
-        JsonObject bonuses = Utils.getConstant("bonuses");
+        JsonObject bonuses = Constants.BONUSES;
         if(bonuses == null) return null;
 
         JsonElement petsElement = Utils.getElement(profile, "pets");
@@ -386,7 +387,7 @@ public class PlayerStats {
         return stats;
     }
     private static Stats getItemBonuses(boolean talismanOnly, JsonArray... inventories) {
-        JsonObject misc = Utils.getConstant("misc");
+        JsonObject misc = Constants.MISC;
         if(misc == null) return null;
         JsonElement talisman_upgrades_element = misc.get("talisman_upgrades");
         if(talisman_upgrades_element == null) return null;

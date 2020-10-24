@@ -231,7 +231,7 @@ public class GuiEnchantColour extends GuiScreen {
         }
         if(mouseX >= guiLeft+42 && mouseX <= guiLeft+42+88) {
             if(mouseY >= guiTop+ySize-30 && mouseY <= guiTop+ySize-10) {
-                NotEnoughUpdates.INSTANCE.manager.config.enchantColours.value.add("[a-zA-Z ]+:>:5:9");
+                NotEnoughUpdates.INSTANCE.manager.config.enchantColours.value.add("[a-zA-Z\\- ]+:>:5:9");
                 NotEnoughUpdates.INSTANCE.manager.saveConfig();
             }
         }
@@ -243,7 +243,7 @@ public class GuiEnchantColour extends GuiScreen {
         } else {
             switch(index) {
                 case 0:
-                    return "[a-zA-Z ]+";
+                    return "[a-zA-Z\\- ]+";
                 case 1:
                     return ">";
                 case 2:

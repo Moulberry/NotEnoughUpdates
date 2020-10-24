@@ -16,10 +16,7 @@ import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -36,6 +33,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
+import net.minecraftforge.fml.common.Loader;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -48,21 +47,87 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Proxy;
+import java.nio.FloatBuffer;
 import java.nio.file.Files;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Utils {
 
     private static boolean hasEffectOverride = false;
+    private static LinkedList<Integer> guiScales = new LinkedList<>();
+    private static ScaledResolution lastScale = new ScaledResolution(Minecraft.getMinecraft());
+    //Labymod compatibility
+    private static FloatBuffer projectionMatrixOld = BufferUtils.createFloatBuffer(16);
+    private static FloatBuffer modelviewMatrixOld = BufferUtils.createFloatBuffer(16);
 
     public static <T> ArrayList<T> createList(T... values) {
         ArrayList<T> list = new ArrayList<>();
         for(T value : values)list.add(value);
         return list;
+    }
+
+    public static void resetGuiScale() {
+        guiScales.clear();
+    }
+
+    public static ScaledResolution peekGuiScale() {
+        return lastScale;
+    }
+
+    public static ScaledResolution pushGuiScale(int scale) {
+        if(guiScales.size() == 0) {
+            if(Loader.isModLoaded("labymod")) {
+                GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixOld);
+                GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelviewMatrixOld);
+            }
+        }
+
+        if(scale < 0) {
+            if(guiScales.size() > 0) {
+                guiScales.pop();
+            }
+        } else {
+            if(scale == 0) {
+                guiScales.push(Minecraft.getMinecraft().gameSettings.guiScale);
+            } else {
+                guiScales.push(scale);
+            }
+        }
+
+        int newScale = guiScales.size() > 0 ? Math.max(1, Math.min(4, guiScales.peek())) : Minecraft.getMinecraft().gameSettings.guiScale;
+        if(newScale == 0) newScale = Minecraft.getMinecraft().gameSettings.guiScale;
+
+        int oldScale = Minecraft.getMinecraft().gameSettings.guiScale;
+        Minecraft.getMinecraft().gameSettings.guiScale = newScale;
+        ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+        Minecraft.getMinecraft().gameSettings.guiScale = oldScale;
+
+        if(guiScales.size() > 0) {
+            GlStateManager.viewport(0, 0, Minecraft.getMinecraft().displayWidth, Minecraft.getMinecraft().displayHeight);
+            GlStateManager.matrixMode(GL11.GL_PROJECTION);
+            GlStateManager.loadIdentity();
+            GlStateManager.ortho(0.0D,
+                    scaledresolution.getScaledWidth_double(),
+                    scaledresolution.getScaledHeight_double(), 0.0D, 1000.0D, 3000.0D);
+            GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+            GlStateManager.loadIdentity();
+            GlStateManager.translate(0.0F, 0.0F, -2000.0F);
+        } else {
+            if(Loader.isModLoaded("labymod") && projectionMatrixOld.limit() > 0 && modelviewMatrixOld.limit() > 0) {
+                GlStateManager.matrixMode(GL11.GL_PROJECTION);
+                GL11.glLoadMatrix(projectionMatrixOld);
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+                GL11.glLoadMatrix(modelviewMatrixOld);
+            } else {
+                Minecraft.getMinecraft().entityRenderer.setupOverlayRendering();
+            }
+        }
+
+        lastScale = scaledresolution;
+        return scaledresolution;
     }
 
     public static boolean getHasEffectOverride() {
@@ -113,14 +178,28 @@ public class Utils {
     };
 
     public static String chromaString(String str) {
+        return chromaString(str, 0, false);
+    }
+
+    private static long startTime = 0;
+    public static String chromaString(String str, float offset, boolean bold) {
+        str = cleanColour(str);
+
         long currentTimeMillis = System.currentTimeMillis();
+        if(startTime == 0) startTime = currentTimeMillis;
 
         StringBuilder rainbowText = new StringBuilder();
+        int len = 0;
         for(int i=0; i<str.length(); i++) {
             char c = str.charAt(i);
-            int index = (int)(i-currentTimeMillis/100)%rainbow.length;
+            int index = ((int)(offset+len/12f-(currentTimeMillis-startTime)/100))%rainbow.length;
+            len += Minecraft.getMinecraft().fontRendererObj.getCharWidth(c);
+            if(bold) len++;
+
             if(index < 0) index += rainbow.length;
-            rainbowText.append(rainbow[index]).append(c);
+            rainbowText.append(rainbow[index]);
+            if(bold) rainbowText.append(EnumChatFormatting.BOLD);
+            rainbowText.append(c);
         }
         return rainbowText.toString();
     }

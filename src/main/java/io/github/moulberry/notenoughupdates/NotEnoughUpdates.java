@@ -14,6 +14,7 @@ import io.github.moulberry.notenoughupdates.cosmetics.GuiCosmetics;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
+import io.github.moulberry.notenoughupdates.infopanes.SettingsInfoPane;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
@@ -80,6 +81,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
@@ -97,7 +100,7 @@ public class NotEnoughUpdates {
     private String currChatMessage = null;
 
     //Stolen from Biscut and used for detecting whether in skyblock
-    private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK","\u7A7A\u5C9B\u751F\u5B58");
+    private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK","\u7A7A\u5C9B\u751F\u5B58", "\u7A7A\u5CF6\u751F\u5B58");
 
     private GuiScreen openGui = null;
 
@@ -757,6 +760,24 @@ public class NotEnoughUpdates {
         }
     });
 
+    SimpleCommand settingsCommand = new SimpleCommand("neusettings", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            overlay.displayInformationPane(new SettingsInfoPane(overlay, manager));
+            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
+                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
+            }
+        }
+    });
+
+    SimpleCommand settingsCommand2 = new SimpleCommand("neuconfig", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            overlay.displayInformationPane(new SettingsInfoPane(overlay, manager));
+            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
+                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
+            }
+        }
+    });
+
     SimpleCommand neuAhCommand = new SimpleCommand("neuah", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!hasSkyblockScoreboard()) {
@@ -770,6 +791,8 @@ public class NotEnoughUpdates {
                 manager.auctionManager.customAH.lastOpen = System.currentTimeMillis();
                 manager.auctionManager.customAH.clearSearch();
                 manager.auctionManager.customAH.updateSearch();
+
+                if(args.length > 0) manager.auctionManager.customAH.setSearch(StringUtils.join(args, " "));
             }
         }
     });
@@ -815,6 +838,8 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
         ClientCommandHandler.instance.registerCommand(pcStatsCommand);
         ClientCommandHandler.instance.registerCommand(neumapCommand);
+        ClientCommandHandler.instance.registerCommand(settingsCommand);
+        ClientCommandHandler.instance.registerCommand(settingsCommand2);
 
         manager = new NEUManager(this, f);
         manager.loadItemInformation();
@@ -961,9 +986,30 @@ public class NotEnoughUpdates {
 
     //Stolen from Biscut's SkyblockAddons
     public void updateSkyblockScoreboard() {
+        final Pattern SERVER_BRAND_PATTERN = Pattern.compile("(.+) <- (?:.+)");
+        final String HYPIXEL_SERVER_BRAND = "BungeeCord (Hypixel)";
+
         Minecraft mc = Minecraft.getMinecraft();
 
-        if (mc != null && mc.theWorld != null) {
+        if (mc != null && mc.theWorld != null && mc.thePlayer != null) {
+            if (!mc.isSingleplayer() && mc.thePlayer.getClientBrand() != null) {
+                Matcher matcher = SERVER_BRAND_PATTERN.matcher(mc.thePlayer.getClientBrand());
+
+                if (matcher.find()) {
+                    // Group 1 is the server brand.
+                    if(!matcher.group(1).equals(HYPIXEL_SERVER_BRAND)) {
+                        hasSkyblockScoreboard = false;
+                        return;
+                    }
+                } else {
+                    hasSkyblockScoreboard = false;
+                    return;
+                }
+            } else {
+                hasSkyblockScoreboard = false;
+                return;
+            }
+
             Scoreboard scoreboard = mc.theWorld.getScoreboard();
             ScoreObjective sidebarObjective = scoreboard.getObjectiveInDisplaySlot(1);
             if (sidebarObjective != null) {

@@ -25,6 +25,8 @@ public class GuiTextures {
     public static final ResourceLocation item_haschild = new ResourceLocation("notenoughupdates:item_haschild.png");
     public static final ResourceLocation button_tex = new ResourceLocation("notenoughupdates:button.png");
 
+    public static final ResourceLocation setting_border = new ResourceLocation("notenoughupdates:setting_border.png");
+
     public static final ResourceLocation button_white = new ResourceLocation("notenoughupdates:button_white.png");
     public static final ResourceLocation colour_selector_dot = new ResourceLocation("notenoughupdates:colour_selector_dot.png");
     public static final ResourceLocation colour_selector_bar = new ResourceLocation("notenoughupdates:colour_selector_bar.png");

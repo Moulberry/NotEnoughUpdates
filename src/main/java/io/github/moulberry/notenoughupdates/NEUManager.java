@@ -5,6 +5,7 @@ import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.options.Options;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -1286,7 +1287,7 @@ public class NEUManager {
     public HashMap<String, String> getLoreReplacements(String petname, String tier, int level) {
         JsonObject petnums = null;
         if(petname != null && tier != null) {
-            petnums = Utils.getConstant("petnums");
+            petnums = Constants.PETNUMS;
         }
 
         HashMap<String, String> replacements = new HashMap<>();

@@ -47,6 +47,10 @@ public class GuiElementTextField extends GuiElement {
         this.options = options;
     }
 
+    public void setMaxStringLength(int len) {
+        textField.setMaxStringLength(len);
+    }
+
     public void setCustomBorderColour(int colour) {
         this.customBorderColour = colour;
     }

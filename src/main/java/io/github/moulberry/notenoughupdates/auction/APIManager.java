@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.event.ClickEvent;
@@ -183,8 +184,8 @@ public class APIManager {
             updatePageTickShort();
             ahNotification();
         }
-        if(currentTime - lastAuctionAvgUpdate > 120*60*1000) { //2 hours
-            lastAuctionAvgUpdate = currentTime - 118*60*1000; //Try again in 2 minutes if updateAvgPrices doesn't succeed
+        if(currentTime - lastAuctionAvgUpdate > 30*60*1000) { //30 minutes
+            lastAuctionAvgUpdate = currentTime - 28*60*1000; //Try again in 2 minutes if updateAvgPrices doesn't succeed
             updateAvgPrices();
         }
         if(currentTime - lastBazaarUpdate > 10*60*1000) {
@@ -312,7 +313,7 @@ public class APIManager {
 
         if(firstHypixelApiUpdate == 0 || (System.currentTimeMillis() - firstHypixelApiUpdate)%(60*1000) > 15*1000) return;
 
-        JsonObject disable = Utils.getConstant("disable");
+        JsonObject disable = Constants.DISABLE;
         if(disable != null && disable.get("auctions").getAsBoolean()) return;
 
         while(!pagesToDownload.isEmpty()) {
@@ -322,7 +323,7 @@ public class APIManager {
     }
 
     private void updatePageTick() {
-        JsonObject disable = Utils.getConstant("disable");
+        JsonObject disable = Constants.DISABLE;
         if(disable != null && disable.get("auctions").getAsBoolean()) return;
 
         if(pagesToDownload == null) {

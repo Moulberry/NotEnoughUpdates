@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates;
 
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.block.material.MapColor;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.MapItemRenderer;
@@ -10,30 +11,57 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemStack;
+import net.minecraft.scoreboard.ScorePlayerTeam;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec4b;
 import net.minecraft.world.storage.MapData;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
+import java.util.List;
 
 public class DungeonMap {
 
-    private int[] mapTextureData = null;
-    private DynamicTexture dynamicTexture = new DynamicTexture(128, 128);
-    private ResourceLocation dynamicRL = new ResourceLocation("notenoughupdates:dynamic_dungeonmap.png");
+    private static final ResourceLocation GREEN_CHECK = new ResourceLocation("notenoughupdates:dungeon_map/green_check.png");
+    private static final ResourceLocation WHITE_CHECK = new ResourceLocation("notenoughupdates:dungeon_map/white_check.png");
+    private static final ResourceLocation QUESTION = new ResourceLocation("notenoughupdates:dungeon_map/question.png");
 
-    private void setMapRGB(int x, int y, int rgb) {
-        if(mapTextureData != null) {
-            mapTextureData[x+y*128] = rgb;
-        }
-    }
+    private static final ResourceLocation ROOM_RED = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/red_room.png");
+    private static final ResourceLocation ROOM_BROWN = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/brown_room.png");
+    private static final ResourceLocation ROOM_GRAY = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/gray_room.png");
+    private static final ResourceLocation ROOM_GREEN = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/green_room.png");
+    private static final ResourceLocation ROOM_PINK = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/pink_room.png");
+    private static final ResourceLocation ROOM_PURPLE = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/purple_room.png");
+    private static final ResourceLocation ROOM_YELLOW = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/yellow_room.png");
+
+    private static final int RENDER_ROOM_SIZE = 16;
+    private static final int RENDER_CONN_SIZE = 4;
+
+    private final HashMap<RoomOffset, Room> roomMap = new HashMap<>();
+    private Color[][] colourMap = new Color[128][128];
+    private int startRoomX = -1;
+    private int startRoomY = -1;
+    private int connectorSize = 5;
+    private int roomSize = 0;
+    
+    private int roomSizeBlocks = 7;
+
+    private final List<MapDecoration> decorations = new ArrayList<>();
+    private final List<MapDecoration> lastDecorations = new ArrayList<>();
+    private long lastDecorationsMillis = -1;
+    private long lastLastDecorationsMillis = -1;
+
+    private Map<EntityPlayer, MapPosition> playerMapPositions = new HashMap<>();
     
     private class RoomOffset {
         int x;
@@ -117,7 +145,30 @@ public class DungeonMap {
         RoomConnection down = new RoomConnection(RoomConnectionType.NONE, new Color(0, true));
 
         public void render(int roomSize, int connectorSize) {
-            Gui.drawRect(0, 0, roomSize, roomSize, colour.getRGB());
+            ResourceLocation roomTex = null;
+            if(colour.getRed() == 114 && colour.getGreen() == 67 && colour.getBlue() == 27) {
+                roomTex = ROOM_BROWN;
+            } else if(colour.getRed() == 65 && colour.getGreen() == 65 && colour.getBlue() == 65) {
+                roomTex = ROOM_GRAY;
+            } else if(colour.getRed() == 0 && colour.getGreen() == 124 && colour.getBlue() == 0) {
+                roomTex = ROOM_GREEN;
+            } else if(colour.getRed() == 242 && colour.getGreen() == 127 && colour.getBlue() == 165) {
+                roomTex = ROOM_PINK;
+            } else if(colour.getRed() == 178 && colour.getGreen() == 76 && colour.getBlue() == 216) {
+                roomTex = ROOM_PURPLE;
+            } else if(colour.getRed() == 255 && colour.getGreen() == 0 && colour.getBlue() == 0) {
+                roomTex = ROOM_RED;
+            } else if(colour.getRed() == 229 && colour.getGreen() == 229 && colour.getBlue() == 51) {
+                roomTex = ROOM_YELLOW;
+            }
+
+            if(roomTex != null) {
+                Minecraft.getMinecraft().getTextureManager().bindTexture(roomTex);
+                GlStateManager.color(1, 1, 1, 1);
+                Utils.drawTexturedRect(0, 0, roomSize, roomSize, GL11.GL_LINEAR);
+            }
+
+            //Gui.drawRect(0, 0, roomSize, roomSize, colour.getRGB());
             if(tickColour != 0) {
                 Gui.drawRect(roomSize/2-4, roomSize/2-4, roomSize/2+4, roomSize/2+4, tickColour);
             }
@@ -181,13 +232,6 @@ public class DungeonMap {
             }
         }
     }
-    
-    public void render(int[] renderTo, int x, int y, int rgb) {
-        int i = x+y*128;
-        if(i >= 0 && i < renderTo.length) {
-            renderTo[i] = rgb;
-        }
-    }
 
     private static final ResourceLocation mapIcons = new ResourceLocation("textures/map/map_icons.png");
 
@@ -203,23 +247,42 @@ public class DungeonMap {
             maxRoomY = Math.max(offset.y, maxRoomY);
         }
 
-        int roomSize = 16;
-        int connSize = 4;
+        /*Set<Color> uniques = new HashSet<>();
+        for(Color[] cs : colourMap) {
+            for(Color c : cs) {
+                uniques.add(c);
+            }
+        }
+        System.out.println("Unique colours:");
+        for(Color c : uniques) {
+            System.out.println(c + "" + c.getAlpha());
+        }*/
 
-        Gui.drawRect(8, 8, 8+(maxRoomX-minRoomX+1)*(roomSize+connSize), 8+(maxRoomY-minRoomY+1)*(roomSize+connSize),
+        int centerX = 80;
+        int centerY = 80;
+        int rotation = (int)Minecraft.getMinecraft().thePlayer.rotationYawHead;
+
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(centerX, centerY, 0);
+        GlStateManager.rotate(-rotation+180, 0, 0, 1);
+        GlStateManager.translate(-(maxRoomX-minRoomX+1)*(RENDER_ROOM_SIZE+RENDER_CONN_SIZE)/2f,
+                -(maxRoomY-minRoomY+1)*(RENDER_ROOM_SIZE+RENDER_CONN_SIZE)/2f, 0);
+
+        Gui.drawRect(-10, -10, (maxRoomX-minRoomX)*(RENDER_ROOM_SIZE+RENDER_CONN_SIZE)+RENDER_ROOM_SIZE+10,
+                (maxRoomY-minRoomY)*(RENDER_ROOM_SIZE+RENDER_CONN_SIZE)+RENDER_ROOM_SIZE+10,
                 new Color(200, 200, 200).getRGB());
 
         for(Map.Entry<RoomOffset, Room> entry : roomMap.entrySet()) {
             RoomOffset roomOffset = entry.getKey();
             Room room = entry.getValue();
 
-            int x = (roomOffset.x-minRoomX)*(roomSize+connSize);
-            int y = (roomOffset.y-minRoomY)*(roomSize+connSize);
+            int x = (roomOffset.x-minRoomX)*(RENDER_ROOM_SIZE+RENDER_CONN_SIZE);
+            int y = (roomOffset.y-minRoomY)*(RENDER_ROOM_SIZE+RENDER_CONN_SIZE);
 
             GlStateManager.pushMatrix();
-            GlStateManager.translate(x+10, y+10, 0);
-            room.render(roomSize, connSize);
-            GlStateManager.translate(-(x+10), -(y+10), 0);
+            GlStateManager.translate(x, y, 0);
+            room.render(RENDER_ROOM_SIZE, RENDER_CONN_SIZE);
+            GlStateManager.translate(-x, -y, 0);
             GlStateManager.popMatrix();
         }
 
@@ -228,39 +291,89 @@ public class DungeonMap {
         GlStateManager.color(1, 1, 1, 1);
         Minecraft.getMinecraft().getTextureManager().bindTexture(mapIcons);
         int k = 0;
-        for(MapDecoration decoration : decorations) {
-            float x = (decoration.roomsOffsetX+decoration.roomInPercentX)*roomSize +
-                    (decoration.connOffsetX+decoration.connInPercentX)*connectorSize;
-            float y = (decoration.roomsOffsetY+decoration.roomInPercentY)*roomSize +
-                    (decoration.connOffsetY+decoration.connInPercentY)*connectorSize;
+        for(int i=0; i<decorations.size(); i++) {
+            MapDecoration decoration = decorations.get(i);
+            float minU = (float)(decoration.id % 4) / 4.0F;
+            float minV = (float)(decoration.id / 4) / 4.0F;
 
-            x -= minRoomX*(roomSize+connSize);
-            y -= minRoomY*(roomSize+connSize);
+            float x = decoration.position.getRenderX();
+            float y = decoration.position.getRenderY();
+            float angle = decoration.angle;
 
-            //System.out.println(decoration.angle);
+            if(decoration.id == 1) {
+                angle = Minecraft.getMinecraft().thePlayer.rotationYawHead;
+            } else {
+                if(false && i < lastDecorations.size()) {
+                    MapDecoration last = lastDecorations.get(i);
+                    float xLast = last.position.getRenderX();
+                    float yLast = last.position.getRenderY();
+
+                    float distSq = (x-xLast)*(x-xLast)+(y-yLast)*(y-yLast);
+                    if(distSq < RENDER_ROOM_SIZE*RENDER_ROOM_SIZE) {
+                        float angleLast = last.angle;
+                        if(angle > 180 && angleLast < 180) angleLast += 360;
+                        if(angleLast > 180 && angle < 180) angle += 360;
+
+                        float interpFactor = Math.round((System.currentTimeMillis() - lastDecorationsMillis)*100f)/100f/(lastDecorationsMillis - lastLastDecorationsMillis);
+                        interpFactor = Math.max(0, Math.min(1, interpFactor));
+
+                        x = xLast+(x - xLast)*interpFactor;
+                        y = yLast+(y - yLast)*interpFactor;
+                        angle = angleLast+(angle - angleLast)*interpFactor;
+                        angle %= 360;
+                    }
+                }
+            }
+
+            if(decoration.id == 3 || decoration.id == 1) {
+                float closestDistSq = RENDER_ROOM_SIZE*RENDER_ROOM_SIZE;
+                EntityPlayer closestPlayer = null;
+                for(Map.Entry<EntityPlayer, MapPosition> entry : playerMapPositions.entrySet()) {
+                    if(Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase(entry.getKey().getName()) != (decoration.id == 1)) {
+                        continue;
+                    }
+
+                    float playerX = entry.getValue().getRenderX();
+                    float playerY = entry.getValue().getRenderY();
+
+                    float distSq = (playerX-x)*(playerX-x) + (playerY-y)*(playerY-y);
+
+                    if(distSq < closestDistSq) {
+                        closestDistSq = distSq;
+                        closestPlayer = entry.getKey();
+                    }
+                }
+
+                if(closestPlayer != null) {
+                    x = playerMapPositions.get(closestPlayer).getRenderX();
+                    y = playerMapPositions.get(closestPlayer).getRenderY();
+                    angle = closestPlayer.rotationYawHead;
+                }
+            }
+
+            x -= minRoomX*(RENDER_ROOM_SIZE+RENDER_CONN_SIZE);
+            y -= minRoomY*(RENDER_ROOM_SIZE+RENDER_CONN_SIZE);
 
             GlStateManager.pushMatrix();
-            GlStateManager.translate(x+10, y+10, -0.02F);
-            GlStateManager.rotate(decoration.angle, 0.0F, 0.0F, 1.0F);
+            GlStateManager.translate(x, y, -0.02F);
+            GlStateManager.rotate(angle, 0.0F, 0.0F, 1.0F);
             GlStateManager.scale(4.0F, 4.0F, 3.0F);
             GlStateManager.translate(-0.125F, 0.125F, 0.0F);
             worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
-            worldrenderer.pos(-1.0D, 1.0D, 10+((float)k * -0.001F)).tex(decoration.minU, decoration.minV).endVertex();
-            worldrenderer.pos(1.0D, 1.0D, 10+((float)k * -0.001F)).tex(decoration.minU+1/4f, decoration.minV).endVertex();
-            worldrenderer.pos(1.0D, -1.0D, 10+((float)k * -0.001F)).tex(decoration.minU+1/4f, decoration.minV+1/4f).endVertex();
-            worldrenderer.pos(-1.0D, -1.0D, 10+((float)k * -0.001F)).tex(decoration.minU, decoration.minV+1/4f).endVertex();
+            worldrenderer.pos(-1.0D, 1.0D, 10+((float)k * -0.001F)).tex(minU, minV).endVertex();
+            worldrenderer.pos(1.0D, 1.0D, 10+((float)k * -0.001F)).tex(minU+1/4f, minV).endVertex();
+            worldrenderer.pos(1.0D, -1.0D, 10+((float)k * -0.001F)).tex(minU+1/4f, minV+1/4f).endVertex();
+            worldrenderer.pos(-1.0D, -1.0D, 10+((float)k * -0.001F)).tex(minU, minV+1/4f).endVertex();
             tessellator.draw();
             GlStateManager.popMatrix();
             k--;
         }
+
+        GlStateManager.rotate(rotation-180, 0, 0, 1);
+        GlStateManager.translate(-centerX, -centerY, 0);
+        GlStateManager.popMatrix();
     }
 
-    private HashMap<RoomOffset, Room> roomMap = new HashMap<>();
-    private Color[][] colourMap = new Color[128][128];
-    private int startRoomX = -1;
-    private int startRoomY = -1;
-    private int connectorSize = 5;
-    private int roomSize = 0;
 
     public void updateRoomConnections(RoomOffset roomOffset) {
         if(roomMap.containsKey(roomOffset)) {
@@ -273,7 +386,7 @@ public class DungeonMap {
                     int x = startRoomX + roomOffset.x*(roomSize+connectorSize) + xOff;
                     int y = startRoomY + roomOffset.y*(roomSize+connectorSize) + yOff;
 
-                    if(x < colourMap.length && y < colourMap[x].length) {
+                    if(x > 0 && y > 0 && x < colourMap.length && y < colourMap[x].length) {
                         Color c = colourMap[x][y];
                         if(!c.equals(room.colour)) {
                             if(otherPixelColour == c.getRGB()) {
@@ -317,7 +430,7 @@ public class DungeonMap {
                             y += i;
                         }
 
-                        if(x < colourMap.length && y < colourMap[x].length) {
+                        if(x > 0 && y > 0 && x < colourMap.length && y < colourMap[x].length) {
                             if(colourMap[x][y].equals(room.colour)) {
                                 totalFilled++;
                             }
@@ -343,6 +456,7 @@ public class DungeonMap {
                 }
             }
 
+            room.fillCorner = false;
             if(room.left.type == RoomConnectionType.ROOM_DIVIDER && room.up.type == RoomConnectionType.ROOM_DIVIDER) {
                 RoomOffset upleft = new RoomOffset(roomOffset.x-1, roomOffset.y-1);
                 if(roomMap.containsKey(upleft)) {
@@ -365,8 +479,10 @@ public class DungeonMap {
                 int y = startRoomY + neighbor.y*(roomSize+connectorSize);
 
                 if(x > 0 && y > 0 && x+roomSize < colourMap.length && y+roomSize < colourMap[x].length) {
-                    roomMap.put(neighbor, new Room());
-                    loadNeighbors(neighbor);
+                    if(colourMap[x][y].getAlpha() > 100) {
+                        roomMap.put(neighbor, new Room());
+                        loadNeighbors(neighbor);
+                    }
                 }
             }
         }
@@ -383,48 +499,77 @@ public class DungeonMap {
         }
     }
 
-    private Set<MapDecoration> decorations = new HashSet<>();
     class MapDecoration {
-        float roomInPercentX;
-        float connInPercentX;
-        float roomsOffsetX;
-        float connOffsetX;
-        float roomInPercentY;
-        float connInPercentY;
-        float roomsOffsetY;
-        float connOffsetY;
-
-        float minU;
-        float minV;
-
+        MapPosition position;
+        int id;
         float angle;
 
-        public MapDecoration(float roomInPercentX, float connInPercentX, float roomsOffsetX, float connOffsetX,
-                             float roomInPercentY, float connInPercentY, float roomsOffsetY, float connOffsetY, float minU, float minV, float angle) {
-            this.roomInPercentX = roomInPercentX;
-            this.connInPercentX = connInPercentX;
-            this.roomsOffsetX = roomsOffsetX;
-            this.connOffsetX = connOffsetX;
-            this.roomInPercentY = roomInPercentY;
-            this.connInPercentY = connInPercentY;
-            this.roomsOffsetY = roomsOffsetY;
-            this.connOffsetY = connOffsetY;
-            this.minU = minU;
-            this.minV = minV;
+        public MapDecoration(MapPosition position, int id, float angle) {
+            this.position = position;
+            this.id = id;
             this.angle = angle;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MapDecoration that = (MapDecoration) o;
+            return id == that.id &&
+                    Float.compare(that.angle, angle) == 0 &&
+                    Objects.equals(position, that.position);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(position, id, angle);
+        }
+    }
+
+    private class MapPosition {
+        public float roomOffsetX;
+        public float connOffsetX;
+
+        public float roomOffsetY;
+        public float connOffsetY;
+
+        public MapPosition(float roomOffsetX, float connOffsetX, float roomOffsetY, float connOffsetY) {
+            this.roomOffsetX = roomOffsetX;
+            this.connOffsetX = connOffsetX;
+            this.roomOffsetY = roomOffsetY;
+            this.connOffsetY = connOffsetY;
+        }
+
+        public float getRenderX() {
+            return roomOffsetX*RENDER_ROOM_SIZE + connOffsetX*RENDER_CONN_SIZE;
+        }
+
+        public float getRenderY() {
+            return roomOffsetY*RENDER_ROOM_SIZE + connOffsetY*RENDER_CONN_SIZE;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MapPosition that = (MapPosition) o;
+            return Float.compare(that.roomOffsetX, roomOffsetX) == 0 &&
+                    Float.compare(that.connOffsetX, connOffsetX) == 0 &&
+                    Float.compare(that.roomOffsetY, roomOffsetY) == 0 &&
+                    Float.compare(that.connOffsetY, connOffsetY) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(roomOffsetX, connOffsetX, roomOffsetY, connOffsetY);
         }
     }
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent event) {
-        //System.out.println("render overlayw");
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
             ItemStack stack = Minecraft.getMinecraft().thePlayer.inventory.mainInventory[8];
-            if(NotEnoughUpdates.INSTANCE.colourMap != null || stack != null && stack.getItem() instanceof ItemMap) {
-                if(mapTextureData == null) {
-                    mapTextureData = dynamicTexture.getTextureData();
-                }
-
+            if(NotEnoughUpdates.INSTANCE.colourMap != null || (stack != null && stack.getItem() instanceof ItemMap)) {
                 if(NotEnoughUpdates.INSTANCE.colourMap != null) {
                     colourMap = NotEnoughUpdates.INSTANCE.colourMap;
                 } else {
@@ -451,6 +596,12 @@ public class DungeonMap {
 
                     //mapData.
                 }
+
+                roomMap.clear();
+                startRoomX = -1;
+                startRoomY = -1;
+                connectorSize = 5;
+                roomSize = 0;
 
                 for(int x=0; x<colourMap.length; x++) {
                     for(int y=0; y<colourMap[x].length; y++) {
@@ -503,7 +654,7 @@ public class DungeonMap {
                                 y = startRoomY+i;
                             }
 
-                            if(x < colourMap.length && y < colourMap[x].length) {
+                            if(x > 0 && y > 0 && x < colourMap.length && y < colourMap[x].length) {
                                 if(colourMap[x][y].getAlpha() > 80) {
                                     if(j == 1) {
                                         break;
@@ -512,6 +663,92 @@ public class DungeonMap {
                                 }
                             }
                         }
+                    }
+                }
+
+                List<Integer> dists = new ArrayList<>();
+                int currentBlockCount = 0;
+                for(int i=0; i<300; i++) {
+                    IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(new BlockPos(0, 99, i));
+                    if(state == null || state.getBlock() == Blocks.air) {
+                        if(currentBlockCount > 0) dists.add(currentBlockCount);
+                        currentBlockCount = 0;
+                    } else {
+                        currentBlockCount++;
+                    }
+                }
+                //roomSizeBlocks = 7;
+                currentBlockCount = 0;
+                for(int i=0; i<300; i++) {
+                    IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(new BlockPos(i, 99, 0));
+                    if(state == null || state.getBlock() == Blocks.air) {
+                        if(currentBlockCount > 0) dists.add(currentBlockCount);
+                        currentBlockCount = 0;
+                    } else {
+                        currentBlockCount++;
+                    }
+                }
+                int count = 0;
+                int mostCommonDist = -1;
+                for(int dist : dists) {
+                    if(dist == mostCommonDist) {
+                        count++;
+                    } else {
+                        if(--count < 0) {
+                            count = 1;
+                            mostCommonDist = dist;
+                        }
+                    }
+                }
+                if(mostCommonDist != -1) roomSizeBlocks = Math.max(31, mostCommonDist);
+                if(Keyboard.isKeyDown(Keyboard.KEY_N)) System.out.println(roomSizeBlocks + ":" + dists.size());
+
+                Set<String> actualPlayers = new HashSet<>();
+                for(ScorePlayerTeam team : Minecraft.getMinecraft().thePlayer.getWorldScoreboard().getTeams()) {
+                    if(team.getTeamName().startsWith("a")) {
+                        for(String player : team.getMembershipCollection()) {
+                            actualPlayers.add(player.toLowerCase());
+                        }
+                    }
+                }
+
+                playerMapPositions.clear();
+                for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                    if(actualPlayers.isEmpty() || actualPlayers.contains(player.getName().toLowerCase())) {
+                        float roomX = (float)player.posX / (roomSizeBlocks+1);
+                        float roomY = (float)player.posZ / (roomSizeBlocks+1);
+
+                        float playerRoomOffsetX = (float) Math.floor(roomX);
+                        float playerConnOffsetX = (float) Math.floor(roomX);
+                        float playerRoomOffsetY = (float) Math.floor(roomY);
+                        float playerConnOffsetY = (float) Math.floor(roomY);
+
+                        float roomXInBlocks = (float)player.posX % (roomSizeBlocks+1);
+                        if(roomXInBlocks < 2) { //0,1
+                            playerConnOffsetX -= roomXInBlocks/5f;
+                        } else if(roomXInBlocks > roomSizeBlocks-3) { //31,30,29
+                            playerRoomOffsetX++;
+                            playerConnOffsetX += (roomXInBlocks - (roomSizeBlocks-3))/5f;
+                        } else {
+                            playerRoomOffsetX += (roomXInBlocks-2) / (roomSizeBlocks-5);
+                        }
+
+                        float roomYInBlocks = (float)player.posZ % (roomSizeBlocks+1);
+                        if(roomYInBlocks < 2) { //0,1
+                            playerConnOffsetY -= roomYInBlocks/5f;
+                        } else if(roomYInBlocks > roomSizeBlocks-3) { //31,30,29
+                            playerRoomOffsetY++;
+                            playerConnOffsetY += (roomYInBlocks - (roomSizeBlocks-3))/5f;
+                        } else {
+                            playerRoomOffsetY += (roomYInBlocks-2) / (roomSizeBlocks-5);
+                        }
+
+                        playerRoomOffsetX -= startRoomX/(roomSize+connectorSize);
+                        playerRoomOffsetY -= startRoomY/(roomSize+connectorSize);
+                        playerConnOffsetX -= startRoomX/(roomSize+connectorSize);
+                        playerConnOffsetY -= startRoomY/(roomSize+connectorSize);
+
+                        playerMapPositions.put(player, new MapPosition(playerRoomOffsetX, playerConnOffsetX, playerRoomOffsetY, playerConnOffsetY));
                     }
                 }
 
@@ -526,85 +763,97 @@ public class DungeonMap {
                     MapData mapData = map.getMapData(stack, Minecraft.getMinecraft().theWorld);
 
                     if(mapData.mapDecorations.size() > 0) {
-                        decorations.clear();
-                    }
-                    for (Vec4b vec4b : mapData.mapDecorations.values()) {
-                        byte b0 = vec4b.func_176110_a();
+                        boolean different = mapData.mapDecorations.size() != decorations.size();
 
-                        float x = (float)vec4b.func_176112_b() / 2.0F + 64.0F;
-                        float y = (float)vec4b.func_176113_c() / 2.0F + 64.0F;
-                        float minU = (float)(b0 % 4 + 0) / 4.0F;
-                        float minV = (float)(b0 / 4 + 0) / 4.0F;
+                        List<MapDecoration> decorationsNew = new ArrayList<>();
 
-                        float deltaX = x - startRoomX;
-                        float deltaY = y - startRoomY;
+                        for (Vec4b vec4b : mapData.mapDecorations.values()) {
+                            byte b0 = vec4b.func_176110_a();
 
-                        float roomInPercentX = 0;
-                        float connInPercentX = 0;
-                        float roomsOffsetX = (int)Math.floor(deltaX / (roomSize+connectorSize));
-                        float connOffsetX = (int)Math.floor(deltaX / (roomSize+connectorSize));
-                        float xRemainder = deltaX % (roomSize+connectorSize);
-                        if(xRemainder > roomSize) {
-                            roomsOffsetX++;
-                            connInPercentX = (xRemainder-roomSize)/connectorSize;
-                        } else {
-                            roomInPercentX = xRemainder/roomSize;
+                            float x = (float)vec4b.func_176112_b() / 2.0F + 64.0F;
+                            float y = (float)vec4b.func_176113_c() / 2.0F + 64.0F;
+
+                            float deltaX = x - startRoomX;
+                            float deltaY = y - startRoomY;
+
+                            float roomsOffsetX = (int)Math.floor(deltaX / (roomSize+connectorSize));
+                            float connOffsetX = (int)Math.floor(deltaX / (roomSize+connectorSize));
+                            float xRemainder = deltaX % (roomSize+connectorSize);
+                            if(Math.abs(xRemainder) > roomSize) {
+                                roomsOffsetX++;
+                                connOffsetX += (xRemainder-roomSize)/connectorSize;
+                            } else {
+                                roomsOffsetX += xRemainder/roomSize;
+                            }
+                            if(deltaX < 0) {
+                                roomsOffsetX++;
+                                connOffsetX++;
+                            }
+                            float roomsOffsetY = (int)Math.floor(deltaY / (roomSize+connectorSize));
+                            float connOffsetY = (int)Math.floor(deltaY / (roomSize+connectorSize));
+                            float yRemainder = deltaY % (roomSize+connectorSize);
+                            if(Math.abs(yRemainder) > roomSize) {
+                                roomsOffsetY++;
+                                connOffsetY += Math.abs(yRemainder-roomSize)/connectorSize;
+                            } else {
+                                roomsOffsetY += yRemainder/roomSize;
+                            }
+                            if(deltaY < 0) {
+                                roomsOffsetY++;
+                                connOffsetY++;
+                            }
+
+                            float angle = (float)(vec4b.func_176111_d() * 360) / 16.0F;
+
+                            MapDecoration decoration = new MapDecoration(new MapPosition(roomsOffsetX, connOffsetX, roomsOffsetY, connOffsetY), (int)b0, angle);
+                            if(!different && !decorations.contains(decoration)) {
+                                different = true;
+                            }
+                            decorationsNew.add(decoration);
                         }
-                        float roomInPercentY = 0;
-                        float connInPercentY = 0;
-                        float roomsOffsetY = (int)Math.floor(deltaY / (roomSize+connectorSize));
-                        float connOffsetY = (int)Math.floor(deltaY / (roomSize+connectorSize));
-                        float yRemainder = deltaY % (roomSize+connectorSize);
-                        if(yRemainder > roomSize) {
-                            roomsOffsetY++;
-                            connInPercentY = (yRemainder-roomSize)/connectorSize;
-                        } else {
-                            roomInPercentY = yRemainder/roomSize;
+
+                        if(different) {
+                            lastDecorations.clear();
+
+                            for(int i=0; i<decorations.size() && i<decorationsNew.size(); i++) {
+                                MapDecoration match = decorationsNew.get(i);
+
+                                float lowestDistSq = 999;
+                                MapDecoration closest = null;
+
+                                for(int j=0; j<decorations.size(); j++) {
+                                    MapDecoration old = decorations.get(j);
+
+                                    if(old.id != match.id) continue;
+
+                                    float xOff = (old.position.roomOffsetX*RENDER_ROOM_SIZE+old.position.connOffsetX*RENDER_CONN_SIZE) -
+                                            (match.position.roomOffsetX*RENDER_ROOM_SIZE+match.position.connOffsetX*RENDER_CONN_SIZE);
+                                    float yOff = (old.position.roomOffsetY*RENDER_ROOM_SIZE+old.position.connOffsetY*RENDER_CONN_SIZE) -
+                                            (match.position.roomOffsetY*RENDER_ROOM_SIZE+match.position.connOffsetY*RENDER_CONN_SIZE);
+                                    float distSq = xOff*xOff + yOff*yOff;
+                                    if(distSq < lowestDistSq) {
+                                        lowestDistSq = distSq;
+                                        closest = old;
+                                    }
+                                }
+
+                                if(closest != null) {
+                                    lastDecorations.add(closest);
+                                }
+                            }
+
+                            decorations.clear();
+                            decorations.addAll(decorationsNew);
+
+                            lastLastDecorationsMillis = lastDecorationsMillis;
+                            lastDecorationsMillis = System.currentTimeMillis();
                         }
-
-                        float angle = (float)(vec4b.func_176111_d() * 360) / 16.0F;
-
-                        //System.out.println((float)(vec4b.func_176111_d() * 360) / 16.0F);
-                        decorations.add(new MapDecoration(roomInPercentX, connInPercentX, roomsOffsetX, connOffsetX, roomInPercentY, connInPercentY,
-                                roomsOffsetY, connOffsetY, minU, minV, angle));
                     }
 
-                }
-
-
-                //System.out.println("room x: " + startRoomX + "room y: " + startRoomY + " size: " + roomSize + " connector: " + connectorSize);
-
-                //rendering
-                for (int i = 0; i < 16384; ++i) {
-                    mapTextureData[i] = 0;
                 }
 
                 if(!roomMap.isEmpty()) {
-                    int minRoomX = 999;
-                    int minRoomY = 999;
-                    int maxRoomX = -999;
-                    int maxRoomY = -999;
-                    for(RoomOffset offset : roomMap.keySet()) {
-                        minRoomX = Math.min(offset.x, minRoomX);
-                        minRoomY = Math.min(offset.y, minRoomY);
-                        maxRoomX = Math.max(offset.x, maxRoomX);
-                        maxRoomY = Math.max(offset.y, maxRoomY);
-                    }
-
-                    for(RoomOffset offset : roomMap.keySet()) {
-                        //render(offset, mapTextureData, minRoomX, minRoomY);
-                    }
-
                     render();
-
-                    //process
-
-                    dynamicTexture.updateDynamicTexture();
-                    Minecraft.getMinecraft().getTextureManager().loadTexture(dynamicRL, dynamicTexture);
-
-                    GlStateManager.color(1, 1, 1, 1);
-                    Minecraft.getMinecraft().getTextureManager().bindTexture(dynamicRL);
-                    Utils.drawTexturedRect(0, 0, 128, 128, GL11.GL_NEAREST);
                 }
             }
         }

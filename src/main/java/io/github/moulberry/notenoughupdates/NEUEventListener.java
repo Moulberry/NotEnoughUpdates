@@ -1,5 +1,7 @@
 package io.github.moulberry.notenoughupdates;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
@@ -8,6 +10,7 @@ import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.questing.SBInfo;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -35,6 +38,8 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -537,7 +542,7 @@ public class NEUEventListener {
             }
             if(focusInv) {
                 try {
-                    neu.overlay.render(event.getMouseX(), event.getMouseY(), hoverInv && focusInv);
+                    neu.overlay.render(hoverInv && focusInv);
                 } catch(ConcurrentModificationException e) {e.printStackTrace();}
                 GL11.glTranslatef(0, 0, 10);
             }
@@ -545,7 +550,9 @@ public class NEUEventListener {
 
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
             renderDungeonChestOverlay(event.gui);
-            AccessoryBagOverlay.renderOverlay();
+            if(neu.manager.config.accessoryBagOverlay.value) {
+                AccessoryBagOverlay.renderOverlay();
+            }
         }
     }
 
@@ -568,9 +575,9 @@ public class NEUEventListener {
                 } else {
                     TradeWindow.render(event.mouseX, event.mouseY);
                 }
-                neu.overlay.render(event.mouseX, event.mouseY, false);
+                neu.overlay.render(false);
             } else {
-                neu.overlay.render(event.mouseX, event.mouseY, false);
+                neu.overlay.render(false);
                 if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
                     neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
                 } else {
@@ -605,10 +612,10 @@ public class NEUEventListener {
             if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
                 if(!focusInv) {
                     GL11.glTranslatef(0, 0, 300);
-                    neu.overlay.render(event.mouseX, event.mouseY, hoverInv && focusInv);
+                    neu.overlay.render(hoverInv && focusInv);
                     GL11.glTranslatef(0, 0, -300);
                 }
-                neu.overlay.renderOverlay(event.mouseX, event.mouseY);
+                neu.overlay.renderOverlay();
             }
         }
     }
@@ -783,7 +790,7 @@ public class NEUEventListener {
             return;
         }
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            if(AccessoryBagOverlay.mouseClick()) {
+            if(neu.manager.config.accessoryBagOverlay.value && AccessoryBagOverlay.mouseClick()) {
                 event.setCanceled(true);
             } else {
                 if(!(hoverInv && focusInv)) {
@@ -945,15 +952,124 @@ public class NEUEventListener {
         }*/
     }
 
+    private static String[] rarityArrC = new String[] {
+            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
+            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
+            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
+            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
+            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
+            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
+            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
+            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
+    };
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltipLow(ItemTooltipEvent event) {
         if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
+
+        boolean hasEnchantments = event.itemStack.hasTagCompound() && event.itemStack.getTagCompound().hasKey("ExtraAttributes", 10) &&
+                event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").hasKey("enchantments", 10);
+        Set<String> enchantIds = new HashSet<>();
+        if(hasEnchantments) enchantIds = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").getCompoundTag("enchantments").getKeySet();
+
+        JsonObject enchantsConst = Constants.ENCHANTS;
+        JsonArray allItemEnchs = null;
+        Set<String> ignoreFromPool = new HashSet<>();
+        if(enchantsConst != null && hasEnchantments && NotEnoughUpdates.INSTANCE.manager.config.missingEnchantList.value) {
+            try {
+                JsonArray enchantPools = enchantsConst.get("enchant_pools").getAsJsonArray();
+                for(JsonElement element : enchantPools) {
+                    Set<String> currentPool = new HashSet<>();
+                    for(JsonElement poolElement : element.getAsJsonArray()) {
+                        String poolS = poolElement.getAsString();
+                        currentPool.add(poolS);
+                    }
+                    for(JsonElement poolElement : element.getAsJsonArray()) {
+                        String poolS = poolElement.getAsString();
+                        if(enchantIds.contains(poolS)) {
+                            ignoreFromPool.addAll(currentPool);
+                            break;
+                        }
+                    }
+                }
+
+                JsonObject enchantsObj = enchantsConst.get("enchants").getAsJsonObject();
+                NBTTagCompound tag = event.itemStack.getTagCompound();
+                if(tag != null) {
+                    NBTTagCompound display = tag.getCompoundTag("display");
+                    if (display.hasKey("Lore", 9)) {
+                        NBTTagList list = display.getTagList("Lore", 8);
+                        out:
+                        for (int i = list.tagCount(); i >= 0; i--) {
+                            String line = list.getStringTagAt(i);
+                            for(int j=0; j<rarityArrC.length; j++) {
+                                for(Map.Entry<String, JsonElement> entry : enchantsObj.entrySet()) {
+                                    if(line.contains(rarityArrC[j] + " " + entry.getKey()) || line.contains(rarityArrC[j] + " DUNGEON " + entry.getKey())) {
+                                        allItemEnchs = entry.getValue().getAsJsonArray();
+                                        break out;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch(Exception e) {}
+        }
+
+        boolean gotToEnchants = false;
+        boolean passedEnchants = false;
 
         boolean dungeonProfit = false;
         int index = 0;
         List<String> newTooltip = new ArrayList<>();
         for(String line : event.toolTip) {
-            if(event.itemStack.isItemEnchanted()) {
+            if(line.contains("\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune")) {
+                line = line.replace("\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune",
+                        Utils.chromaString("Rainbow Rune", index, false)+EnumChatFormatting.BLUE);
+            } else if(hasEnchantments) {
+                if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && NotEnoughUpdates.INSTANCE.manager.config.missingEnchantList.value) {
+                    boolean lineHasEnch = false;
+                    for(String s : enchantIds) {
+                        String enchantName = WordUtils.capitalizeFully(s.replace("_", " "));
+                        if(line.contains(enchantName)) {
+                            lineHasEnch = true;
+                            break;
+                        }
+                    }
+                    if(lineHasEnch) {
+                        gotToEnchants = true;
+                    } else {
+                        if(gotToEnchants && !passedEnchants && Utils.cleanColour(line).trim().length() == 0) {
+                            if(enchantsConst != null && allItemEnchs != null) {
+                                List<String> missing = new ArrayList<>();
+                                for(JsonElement enchIdElement : allItemEnchs) {
+                                    String enchId = enchIdElement.getAsString();
+                                    if(!enchId.startsWith("ultimate_") && !ignoreFromPool.contains(enchId) && !enchantIds.contains(enchId)) {
+                                        missing.add(enchId);
+                                    }
+                                }
+                                newTooltip.add("");
+                                StringBuilder currentLine = new StringBuilder(EnumChatFormatting.RED+"Missing: "+EnumChatFormatting.GRAY);
+                                for(int i=0; i<missing.size(); i++) {
+                                    String enchName = WordUtils.capitalizeFully(missing.get(i).replace("_", " "));
+                                    if(currentLine.length() != 0 && (Utils.cleanColour(currentLine.toString()).length() + enchName.length()) > 40) {
+                                        newTooltip.add(currentLine.toString());
+                                        currentLine = new StringBuilder();
+                                    }
+                                    if(currentLine.length() != 0 && i != 0) {
+                                        currentLine.append(", ").append(enchName);
+                                    } else {
+                                        currentLine.append(EnumChatFormatting.GRAY).append(enchName);
+                                    }
+                                }
+                                if(currentLine.length() != 0) {
+                                    newTooltip.add(currentLine.toString());
+                                }
+                            }
+                            passedEnchants = true;
+                        }
+                    }
+                }
                 for(String op : neu.manager.config.enchantColours.value) {
                     List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
                     String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
@@ -965,8 +1081,6 @@ public class NEUEventListener {
                     if(comparator.length() == 0) continue;
                     if(comparison.length() == 0) continue;
                     if(colourCode.length() == 0) continue;
-
-                    if(enchantName.contains("(") || enchantName.contains(")")) continue;
 
                     int comparatorI = ">=<".indexOf(comparator.charAt(0));
 
@@ -982,16 +1096,17 @@ public class NEUEventListener {
                     //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
                     Pattern pattern;
                     try {
-                        String prefix = "\u00A79";
-                        if(enchantName.startsWith("ULT_")) prefix = "\u00A7l\u00A7d";
-                        pattern = Pattern.compile(prefix+"("+enchantName+") ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)");
+                        pattern = Pattern.compile("(\\u00A79|\\u00A79\\u00A7d\\u00A7l)("+enchantName+") " +
+                                "([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))(,|$)");
                     } catch(Exception e) {continue;} //malformed regex
                     Matcher matcher = pattern.matcher(line);
                     int matchCount = 0;
                     while(matcher.find() && matchCount < 5) {
+                        if(Utils.cleanColour(matcher.group(2)).startsWith(" ")) continue;
+
                         matchCount++;
                         int level = -1;
-                        String levelStr = matcher.group(2);
+                        String levelStr = matcher.group(matcher.groupCount()-2);
                         if(levelStr == null) continue;
                         try {
                             level = Integer.parseInt(levelStr);
@@ -1017,6 +1132,26 @@ public class NEUEventListener {
                                     level = 9; break;
                                 case "X":
                                     level = 10; break;
+                                case "XI":
+                                    level = 11; break;
+                                case "XII":
+                                    level = 12; break;
+                                case "XIII":
+                                    level = 13; break;
+                                case "XIV":
+                                    level = 14; break;
+                                case "XV":
+                                    level = 15; break;
+                                case "XVI":
+                                    level = 16; break;
+                                case "XVII":
+                                    level = 17; break;
+                                case "XVIII":
+                                    level = 18; break;
+                                case "XIX":
+                                    level = 19; break;
+                                case "XX":
+                                    level = 20; break;
                             }
                         }
                         boolean matches = false;
@@ -1032,9 +1167,18 @@ public class NEUEventListener {
                         }
                         if(matches) {
                             if(!colourCode.equals("z")) {
-                                line = line.replaceAll("\\u00A79"+matcher.group(1), "\u00A7"+colourCode+matcher.group(1));
+                                line = line.replace("\u00A79"+matcher.group(2), "\u00A7"+colourCode+matcher.group(2));
+                                line = line.replace("\u00A79\u00A7d\u00A7l"+matcher.group(2), "\u00A7"+colourCode+
+                                        EnumChatFormatting.BOLD+matcher.group(2));
                             } else {
-                                line = line.replaceAll("\\u00A79"+matcher.group(1), Utils.chromaString(matcher.group(1)));
+                                int offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
+                                        "\\u00A79"+matcher.group(2)+".*", ""));
+                                line = line.replace("\u00A79"+matcher.group(2), Utils.chromaString(matcher.group(2), offset/12f+index, false));
+
+                                offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
+                                        "\\u00A79\\u00A7d\\u00A7l"+matcher.group(2)+".*", ""));
+                                line = line.replace("\u00A79\u00A7d\u00A7l"+matcher.group(2), Utils.chromaString(matcher.group(2),
+                                        offset/12f+index, true));
                             }
                         }
                     }

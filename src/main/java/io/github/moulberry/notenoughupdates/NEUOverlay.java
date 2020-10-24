@@ -135,8 +135,6 @@ public class NEUOverlay extends Gui {
     private static final int SORT_MODE_ARMOR = 4;
     private static final int SORT_MODE_ACCESSORY = 5;
 
-    private ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-
     private boolean disabled = false;
 
     private int lastScreenWidth;
@@ -431,8 +429,8 @@ public class NEUOverlay extends Gui {
                     Utils.drawTexturedRect(x, y,
                             bigItemSize + paddingUnscaled*2, bigItemSize + paddingUnscaled*2, GL11.GL_NEAREST);
 
-                    int mouseX = Mouse.getX() * scaledresolution.getScaledWidth() / Minecraft.getMinecraft().displayWidth;
-                    int mouseY = scaledresolution.getScaledHeight() - Mouse.getY() * scaledresolution.getScaledHeight() / Minecraft.getMinecraft().displayHeight - 1;
+                    int mouseX = Mouse.getX() * Utils.peekGuiScale().getScaledWidth() / Minecraft.getMinecraft().displayWidth;
+                    int mouseY = Utils.peekGuiScale().getScaledHeight() - Mouse.getY() * Utils.peekGuiScale().getScaledHeight() / Minecraft.getMinecraft().displayHeight - 1;
 
                     if(mouseX > x && mouseX < x+bigItemSize) {
                         if(mouseY > y && mouseY < y+bigItemSize) {
@@ -489,7 +487,7 @@ public class NEUOverlay extends Gui {
         map.put(createSearchBarGroup(), searchBarAnchor);
         map.put(createQuickCommandGroup(), quickCommandAnchor);
 
-        return new MBGuiGroupFloating(scaledresolution.getScaledWidth(), scaledresolution.getScaledHeight(), map);
+        return new MBGuiGroupFloating(Utils.peekGuiScale().getScaledWidth(), Utils.peekGuiScale().getScaledHeight(), map);
     }
 
     public void resetAnchors(boolean onlyIfNull) {
@@ -594,11 +592,12 @@ public class NEUOverlay extends Gui {
             return false;
         }
 
-        int width = scaledresolution.getScaledWidth();
-        int height = scaledresolution.getScaledHeight();
+        Utils.pushGuiScale(manager.config.paneGuiScale.value.intValue());
 
-        int mouseX = Mouse.getX() / scaledresolution.getScaleFactor();
-        int mouseY = height - Mouse.getY() / scaledresolution.getScaleFactor();
+        int width = Utils.peekGuiScale().getScaledWidth();
+        int height = Utils.peekGuiScale().getScaledHeight();
+        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
         //if(lastMouseX != mouseX || lastMouseY != mouseY) {
         //    millisLastMouseMove = System.currentTimeMillis();
@@ -635,6 +634,7 @@ public class NEUOverlay extends Gui {
                                 searchMode = true;
                             }
                         }
+                        Utils.pushGuiScale(-1);
                         return true;
                     }
                 }
@@ -643,7 +643,10 @@ public class NEUOverlay extends Gui {
 
         //Item selection (right) gui
         if(mouseX > width*getItemPaneOffsetFactor()) {
-            if(!Mouse.getEventButtonState()) return true; //End early if the mouse isn't pressed, but still cancel event.
+            if(!Mouse.getEventButtonState()) {
+                Utils.pushGuiScale(-1);
+                return true; //End early if the mouse isn't pressed, but still cancel event.
+            }
 
             AtomicBoolean clickedItem = new AtomicBoolean(false);
             iterateItemSlots(new ItemSlotConsumer() {
@@ -676,7 +679,7 @@ public class NEUOverlay extends Gui {
 
                 FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
                 int maxPages = getMaxPages();
-                String name = scaledresolution.getScaleFactor()<4?"Page: ":"";
+                String name = Utils.peekGuiScale().getScaleFactor()<4?"Page: ":"";
                 float maxStrLen = fr.getStringWidth(EnumChatFormatting.BOLD+name + maxPages + "/" + maxPages);
                 float maxButtonXSize = (rightSide-leftSide+2 - maxStrLen*0.5f - 10)/2f;
                 int buttonXSize = (int)Math.min(maxButtonXSize, getSearchBarYSize()*480/160f);
@@ -731,32 +734,60 @@ public class NEUOverlay extends Gui {
                     }
                 }
             }
+            Utils.pushGuiScale(-1);
             return true;
         }
 
         //Clicking on "close info pane" button
-        if(mouseX > width*getInfoPaneOffsetFactor()-getBoxPadding()-8 && mouseX < width*getInfoPaneOffsetFactor()-getBoxPadding()+8) {
-            if(mouseY > getBoxPadding()-8 && mouseY < getBoxPadding()+8) {
-                if(Mouse.getEventButtonState() && Mouse.getEventButton() < 2) { //Left or right click up
-                    displayInformationPane(null);
-                    return true;
+        if(activeInfoPane instanceof SettingsInfoPane) {
+            Utils.pushGuiScale(2);
+
+            int widthN = Utils.peekGuiScale().getScaledWidth();
+            int heightN = Utils.peekGuiScale().getScaledHeight();
+            int mouseXN = Mouse.getX() * widthN / Minecraft.getMinecraft().displayWidth;
+            int mouseYN = heightN - Mouse.getY() * heightN / Minecraft.getMinecraft().displayHeight - 1;
+
+            if(mouseXN > widthN*getInfoPaneOffsetFactor()-getBoxPadding()-8 && mouseXN < widthN*getInfoPaneOffsetFactor()-getBoxPadding()+8) {
+                if(mouseYN > getBoxPadding()-8 && mouseYN < getBoxPadding()+8) {
+                    if(Mouse.getEventButtonState() && Mouse.getEventButton() < 2) { //Left or right click up
+                        displayInformationPane(null);
+
+                        Utils.pushGuiScale(-1);
+                        Utils.pushGuiScale(-1);
+                        return true;
+                    }
+                }
+            }
+
+            Utils.pushGuiScale(-1);
+        } else {
+            if(mouseX > width*getInfoPaneOffsetFactor()-getBoxPadding()-8 && mouseX < width*getInfoPaneOffsetFactor()-getBoxPadding()+8) {
+                if(mouseY > getBoxPadding()-8 && mouseY < getBoxPadding()+8) {
+                    if(Mouse.getEventButtonState() && Mouse.getEventButton() < 2) { //Left or right click up
+                        displayInformationPane(null);
+                        Utils.pushGuiScale(-1);
+                        return true;
+                    }
                 }
             }
         }
+
         if(activeInfoPane != null) {
             if(mouseX < width*getInfoPaneOffsetFactor()) {
                 activeInfoPane.mouseInput(width, height, mouseX, mouseY, mouseDown);
+                Utils.pushGuiScale(-1);
                 return true;
             } else if(Mouse.getEventButton() <= 1 && Mouse.getEventButtonState()) { //Left or right click
                 activeInfoPane.mouseInputOutside();
             }
         }
 
+        Utils.pushGuiScale(-1);
         return false;
     }
 
     public int getPaddingUnscaled() {
-        int paddingUnscaled = searchBarPadding/scaledresolution.getScaleFactor();
+        int paddingUnscaled = searchBarPadding/Utils.peekGuiScale().getScaleFactor();
         if(paddingUnscaled < 1) paddingUnscaled = 1;
 
         return paddingUnscaled;
@@ -766,7 +797,7 @@ public class NEUOverlay extends Gui {
      * Returns searchBarXSize, scaled by 0.8 if gui scale == AUTO.
      */
     public int getSearchBarXSize() {
-        if(scaledresolution.getScaleFactor()==4) return (int)(searchBarXSize*0.8);
+        if(Utils.peekGuiScale().getScaleFactor()==4) return (int)(searchBarXSize*0.8);
         return (int)(searchBarXSize);
     }
 
@@ -791,8 +822,8 @@ public class NEUOverlay extends Gui {
      * Finds the index of the character inside the search bar that was clicked, used to set the caret.
      */
     public int getClickedIndex(int mouseX, int mouseY) {
-        int width = scaledresolution.getScaledWidth();
-        int height = scaledresolution.getScaledHeight();
+        int width = Utils.peekGuiScale().getScaledWidth();
+        int height = Utils.peekGuiScale().getScaledHeight();
 
         int xComp = mouseX - (width/2 - getSearchBarXSize()/2 + 5);
 
@@ -833,7 +864,7 @@ public class NEUOverlay extends Gui {
         }
 
         if(Keyboard.isKeyDown(Keyboard.KEY_Y) && manager.config.dev.value) {
-            displayInformationPane(new DevInfoPane(this, manager));
+            //displayInformationPane(new DevInfoPane(this, manager));
             //displayInformationPane(new QOLInfoPane(this, manager));
         }
 
@@ -876,10 +907,12 @@ public class NEUOverlay extends Gui {
                         itemstack.set(hover);
                     }
                 } else if(!hoverInv) {
-                    int height = scaledresolution.getScaledHeight();
+                    Utils.pushGuiScale(manager.config.paneGuiScale.value.intValue());
 
-                    int mouseX = Mouse.getX() / scaledresolution.getScaleFactor();
-                    int mouseY = height - Mouse.getY() / scaledresolution.getScaleFactor();
+                    int width = Utils.peekGuiScale().getScaledWidth();
+                    int height = Utils.peekGuiScale().getScaledHeight();
+                    int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+                    int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
                     iterateItemSlots(new ItemSlotConsumer() {
                         public void consume(int x, int y, int id) {
@@ -891,6 +924,8 @@ public class NEUOverlay extends Gui {
                             }
                         }
                     });
+
+                    Utils.pushGuiScale(-1);
                 }
                 if(internalname.get() != null) {
                     if(itemstack.get() != null) {
@@ -1191,13 +1226,13 @@ public class NEUOverlay extends Gui {
     }
 
     public int getItemBoxXPadding() {
-        int width = scaledresolution.getScaledWidth();
+        int width = Utils.peekGuiScale().getScaledWidth();
         return (((int)(width/3*getWidthMult())-2*getBoxPadding())%(ITEM_SIZE+ITEM_PADDING)+ITEM_PADDING)/2;
     }
 
     public int getBoxPadding() {
         double panePadding = Math.max(0, Math.min(20, manager.config.panePadding.value));
-        return (int)(panePadding*2/scaledresolution.getScaleFactor()+5);
+        return (int)(panePadding*2/Utils.peekGuiScale().getScaleFactor()+5);
     }
 
     private abstract class ItemSlotConsumer {
@@ -1205,7 +1240,7 @@ public class NEUOverlay extends Gui {
     }
 
     public void iterateItemSlots(ItemSlotConsumer itemSlotConsumer) {
-        int width = scaledresolution.getScaledWidth();
+        int width = Utils.peekGuiScale().getScaledWidth();
         int itemBoxXPadding = getItemBoxXPadding();
         iterateItemSlots(itemSlotConsumer, (int)(width*getItemPaneOffsetFactor())+getBoxPadding()+itemBoxXPadding);
     }
@@ -1216,8 +1251,8 @@ public class NEUOverlay extends Gui {
      * code duplication issues.
      */
     public void iterateItemSlots(ItemSlotConsumer itemSlotConsumer, int xStart) {
-        int width = scaledresolution.getScaledWidth();
-        int height = scaledresolution.getScaledHeight();
+        int width = Utils.peekGuiScale().getScaledWidth();
+        int height = Utils.peekGuiScale().getScaledHeight();
 
         int paneWidth = (int)(width/3*getWidthMult());
         int itemBoxYPadding = ((height-getSearchBarYSize()-2*getBoxPadding()-ITEM_SIZE-2)%(ITEM_SIZE+ITEM_PADDING)+ITEM_PADDING)/2;
@@ -1238,7 +1273,7 @@ public class NEUOverlay extends Gui {
 
     public float getWidthMult() {
         float scaleFMult = 1;
-        if(scaledresolution.getScaleFactor()==4) scaleFMult *= 0.9f;
+        if(Utils.peekGuiScale().getScaleFactor()==4) scaleFMult *= 0.9f;
         if(manager.auctionManager.customAH.isRenderOverAuctionView()) scaleFMult *= 0.8f;
         return (float)Math.max(0.5, Math.min(1.5, manager.config.paneWidthMult.value.floatValue()))*scaleFMult;
     }
@@ -1247,7 +1282,7 @@ public class NEUOverlay extends Gui {
      * Calculates the number of horizontal item slots.
      */
     public int getSlotsXSize() {
-        int width = scaledresolution.getScaledWidth();
+        int width = Utils.peekGuiScale().getScaledWidth();
 
         int paneWidth = (int)(width/3*getWidthMult());
         int itemBoxXPadding = (((int)(width-width*getItemPaneOffsetFactor())-2*getBoxPadding())%(ITEM_SIZE+ITEM_PADDING)+ITEM_PADDING)/2;
@@ -1261,7 +1296,7 @@ public class NEUOverlay extends Gui {
      * Calculates the number of vertical item slots.
      */
     public int getSlotsYSize() {
-        int height = scaledresolution.getScaledHeight();
+        int height = Utils.peekGuiScale().getScaledHeight();
 
         int itemBoxYPadding = ((height-getSearchBarYSize()-2*getBoxPadding()-ITEM_SIZE-2)%(ITEM_SIZE+ITEM_PADDING)+ITEM_PADDING)/2;
         int yStart = getBoxPadding()+getSearchBarYSize()+itemBoxYPadding;
@@ -1276,7 +1311,7 @@ public class NEUOverlay extends Gui {
     }
 
     public int getSearchBarYSize() {
-        return Math.max(searchBarYSize/scaledresolution.getScaleFactor(), ITEM_SIZE);
+        return Math.max(searchBarYSize/Utils.peekGuiScale().getScaleFactor(), ITEM_SIZE);
     }
 
     /**
@@ -1299,10 +1334,11 @@ public class NEUOverlay extends Gui {
         int rightPressed = 0;
 
         if(Mouse.isButtonDown(0) || Mouse.isButtonDown(1)) {
-            int height = scaledresolution.getScaledHeight();
+            int width = Utils.peekGuiScale().getScaledWidth();
+            int height = Utils.peekGuiScale().getScaledHeight();
 
-            int mouseX = Mouse.getX() / scaledresolution.getScaleFactor();
-            int mouseY = height - Mouse.getY() / scaledresolution.getScaleFactor();
+            int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+            int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
             if(mouseY >= top && mouseY <= top+ySize) {
                 int leftPrev = leftSide-1;
@@ -1442,7 +1478,12 @@ public class NEUOverlay extends Gui {
      * Renders black squares over the inventory to indicate items that do not match a specific search. (When searchMode
      * is enabled)
      */
-    public void renderOverlay(int mouseX, int mouseY) {
+    public void renderOverlay() {
+        int width = Utils.peekGuiScale().getScaledWidth();
+        int height = Utils.peekGuiScale().getScaledHeight();
+        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
+
         if(searchMode && textField.getText().length() > 0) {
             if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
                 GuiContainer inv = (GuiContainer) Minecraft.getMinecraft().currentScreen;
@@ -1571,7 +1612,6 @@ public class NEUOverlay extends Gui {
     public void renderBlurredBackground(int width, int height, int x, int y, int blurWidth, int blurHeight) {
         if(manager.config.bgBlurFactor.value <= 0 || !OpenGlHelper.isFramebufferEnabled()) return;
 
-        int f = scaledresolution.getScaleFactor();
         float uMin = x/(float)width;
         float uMax = (x+blurWidth)/(float)width;
         float vMin = y/(float)height;
@@ -1586,11 +1626,11 @@ public class NEUOverlay extends Gui {
     }
 
     public void updateGuiGroupSize() {
-        ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-        int width = scaledresolution.getScaledWidth();
-        int height = scaledresolution.getScaledHeight();
+        Utils.pushGuiScale(manager.config.paneGuiScale.value.intValue());
+        int width = Utils.peekGuiScale().getScaledWidth();
+        int height = Utils.peekGuiScale().getScaledHeight();
 
-        if(lastScreenWidth != width || lastScreenHeight != height || scaledresolution.getScaleFactor() != lastScale) {
+        if(lastScreenWidth != width || lastScreenHeight != height || Utils.peekGuiScale().getScaleFactor() != lastScale) {
             guiGroup.width = width;
             guiGroup.height = height;
 
@@ -1599,8 +1639,10 @@ public class NEUOverlay extends Gui {
 
             lastScreenWidth = width;
             lastScreenHeight = height;
-            lastScale = scaledresolution.getScaleFactor();
+            lastScale = Utils.peekGuiScale().getScaleFactor();
         }
+
+        Utils.pushGuiScale(-1);
     }
 
     int guiScaleLast = 0;
@@ -1609,16 +1651,20 @@ public class NEUOverlay extends Gui {
     /**
      * Renders the search bar, quick commands, item selection (right) and item info (left) gui elements.
      */
-    public void render(int mouseX, int mouseY, boolean hoverInv) {
+    public void render(boolean hoverInv) {
         if(disabled) {
             return;
         }
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
-        scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-        int width = scaledresolution.getScaledWidth();
-        int height = scaledresolution.getScaledHeight();
-        
+        Utils.resetGuiScale();
+        Utils.pushGuiScale(manager.config.paneGuiScale.value.intValue());
+
+        int width = Utils.peekGuiScale().getScaledWidth();
+        int height = Utils.peekGuiScale().getScaledHeight();
+        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
+
         if(showVanillaLast != manager.config.showVanillaItems.value) {
             showVanillaLast = manager.config.showVanillaItems.value;
             updateSearch();
@@ -1633,8 +1679,8 @@ public class NEUOverlay extends Gui {
 
         updateGuiGroupSize();
 
-        if(guiScaleLast != scaledresolution.getScaleFactor()) {
-            guiScaleLast = scaledresolution.getScaleFactor();
+        if(guiScaleLast != Utils.peekGuiScale().getScaleFactor()) {
+            guiScaleLast = Utils.peekGuiScale().getScaleFactor();
             redrawItems = true;
         }
 
@@ -1722,7 +1768,7 @@ public class NEUOverlay extends Gui {
                     leftSide+paneWidth-getBoxPadding()+5, height-getBoxPadding()+5, bg.getRGB());
 
             renderNavElement(leftSide+getBoxPadding()+getItemBoxXPadding(), rightSide, getMaxPages(), page+1,
-                    scaledresolution.getScaleFactor()<4?"Page: ":"");
+                    Utils.peekGuiScale().getScaleFactor()<4?"Page: ":"");
 
             //Sort bar
             drawRect(leftSide+getBoxPadding()+getItemBoxXPadding()-1,
@@ -1915,11 +1961,21 @@ public class NEUOverlay extends Gui {
 
         if(activeInfoPane != null) {
             activeInfoPane.tick();
-            activeInfoPane.render(width, height, bg, fg, scaledresolution, mouseX, mouseY);
+            activeInfoPane.render(width, height, bg, fg, Utils.peekGuiScale(), mouseX, mouseY);
 
             GlStateManager.color(1f, 1f, 1f, 1f);
             Minecraft.getMinecraft().getTextureManager().bindTexture(close);
-            Utils.drawTexturedRect(rightSide-getBoxPadding()-8, getBoxPadding()-8, 16, 16);
+            if(activeInfoPane instanceof SettingsInfoPane) {
+                Utils.pushGuiScale(2);
+
+                int widthN = Utils.peekGuiScale().getScaledWidth();
+                int rightSideN = (int)(widthN*getInfoPaneOffsetFactor());
+                Utils.drawTexturedRect(rightSideN-getBoxPadding()-8, getBoxPadding()-8, 16, 16);
+
+                Utils.pushGuiScale(-1);
+            } else {
+                Utils.drawTexturedRect(rightSide-getBoxPadding()-8, getBoxPadding()-8, 16, 16);
+            }
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
         }
 
@@ -2027,6 +2083,8 @@ public class NEUOverlay extends Gui {
         GlStateManager.enableAlpha();
         GlStateManager.alphaFunc(516, 0.1F);
         GlStateManager.disableLighting();
+
+        Utils.pushGuiScale(-1);
     }
 
     /**
@@ -2052,8 +2110,8 @@ public class NEUOverlay extends Gui {
      * itemPane should be redrawn.
      */
     private void checkFramebufferSizes(int width, int height) {
-        int sw = width*scaledresolution.getScaleFactor();
-        int sh = height*scaledresolution.getScaleFactor();
+        int sw = width*Utils.peekGuiScale().getScaleFactor();
+        int sh = height*Utils.peekGuiScale().getScaleFactor();
         for(int i=0; i<itemFramebuffers.length; i++) {
             if(itemFramebuffers[i] == null || itemFramebuffers[i].framebufferWidth != sw || itemFramebuffers[i].framebufferHeight != sh) {
                 if(itemFramebuffers[i] == null) {
@@ -2084,8 +2142,8 @@ public class NEUOverlay extends Gui {
      */
     private void renderItemsToImage(int width, int height, Color fgFavourite2,
                                     Color fgFavourite, Color fgCustomOpacity, boolean items, boolean entities) {
-        int sw = width*scaledresolution.getScaleFactor();
-        int sh = height*scaledresolution.getScaleFactor();
+        int sw = width*Utils.peekGuiScale().getScaleFactor();
+        int sh = height*Utils.peekGuiScale().getScaleFactor();
 
         GL11.glPushMatrix();
         prepareFramebuffer(itemFramebuffers[0], sw, sh);

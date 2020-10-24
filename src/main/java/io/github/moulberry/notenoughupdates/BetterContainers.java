@@ -25,6 +25,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Random;
 
 public class BetterContainers {
@@ -43,14 +44,19 @@ public class BetterContainers {
     private static int lastClickedSlot = 0;
     private static int clickedSlot = 0;
     private static long clickedSlotMillis = 0;
+    public static long lastRenderMillis = 0;
+
+    public static HashMap<Integer, ItemStack> itemCache = new HashMap<>();
+    public static boolean lastUsingCached = false;
+    public static boolean usingCached = false;
 
     public static void clickSlot(int slot) {
-        clickedSlot = slot;
         clickedSlotMillis = System.currentTimeMillis();
+        clickedSlot = slot;
     }
 
     public static int getClickedSlot() {
-        if(clickedSlotMillis - System.currentTimeMillis() < 200) {
+        if(System.currentTimeMillis() - clickedSlotMillis < 500) {
             return clickedSlot;
         }
         return -1;
@@ -58,17 +64,42 @@ public class BetterContainers {
 
     public static void bindHook(TextureManager textureManager, ResourceLocation location) {
         if(isChestOpen()) {
-            if(lastClickedSlot != getClickedSlot() || (texture == null && !loaded)) {
+            Container container = ((GuiChest)Minecraft.getMinecraft().currentScreen).inventorySlots;
+            if(container instanceof ContainerChest) {
+                usingCached = true;
+                IInventory lower = ((ContainerChest)container).getLowerChestInventory();
+                int size = lower.getSizeInventory();
+                for(int index=0; index<size; index++) {
+                    if(lower.getStackInSlot(index) != null) {
+                        for(int index2=0; index2<size; index2++) {
+                            itemCache.put(index2, lower.getStackInSlot(index2));
+                        }
+                        usingCached = false;
+                        break;
+                    }
+                }
+            }
+
+            if((texture != null && loaded && lastClickedSlot != getClickedSlot()) ||
+                    lastUsingCached != getUsingCache() ||
+                    (texture == null && !loaded)) {
+                lastUsingCached = getUsingCache();
                 lastClickedSlot = getClickedSlot();
                 generateTex(location);
             }
-            if(isOverriding()) {
+            if(texture != null && loaded) {
+                if(!usingCached) lastRenderMillis = System.currentTimeMillis();
+                lastRenderMillis = System.currentTimeMillis();
                 textureManager.loadTexture(rl, texture);
                 textureManager.bindTexture(rl);
                 return;
             }
         }
         textureManager.bindTexture(location);
+    }
+
+    public static boolean getUsingCache() {
+        return usingCached && System.currentTimeMillis() - lastRenderMillis < 300;
     }
 
     public static boolean isAh() {
@@ -81,7 +112,7 @@ public class BetterContainers {
     }
 
     public static boolean isOverriding() {
-        return isChestOpen() && loaded && texture != null && !Keyboard.isKeyDown(Keyboard.KEY_B);
+        return isChestOpen() && ((loaded && texture != null));
     }
 
     public static boolean isBlankStack(ItemStack stack) {
@@ -126,23 +157,24 @@ public class BetterContainers {
 
     private static void generateTex(ResourceLocation location) {
         if(!hasItem()) return;
+        texture = null;
         loaded = true;
         Container container = ((GuiChest)Minecraft.getMinecraft().currentScreen).inventorySlots;
 
-        int backgroundStyle = NotEnoughUpdates.INSTANCE.manager.config.dynamicMenuBackgroundStyle.value.intValue();
-        backgroundStyle = Math.max(1, Math.min(10, backgroundStyle));
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
-                    new ResourceLocation("notenoughupdates:dynamic_54/style"+ backgroundStyle+"/dynamic_config.json")).getInputStream(), StandardCharsets.UTF_8));
-            JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
-            String textColourS = json.get("text-colour").getAsString();
-            textColour = (int)Long.parseLong(textColourS, 16);
-        } catch(Exception e) {
-            textColour = 4210752;
-            e.printStackTrace();
-        }
-
         if(hasNullPane() && container instanceof ContainerChest) {
+            int backgroundStyle = NotEnoughUpdates.INSTANCE.manager.config.dynamicMenuBackgroundStyle.value.intValue();
+            backgroundStyle = Math.max(1, Math.min(10, backgroundStyle));
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
+                        new ResourceLocation("notenoughupdates:dynamic_54/style"+ backgroundStyle+"/dynamic_config.json")).getInputStream(), StandardCharsets.UTF_8));
+                JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
+                String textColourS = json.get("text-colour").getAsString();
+                textColour = (int)Long.parseLong(textColourS, 16);
+            } catch(Exception e) {
+                textColour = 4210752;
+                e.printStackTrace();
+            }
+
             try {
                 BufferedImage bufferedImageOn = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(TOGGLE_ON).getInputStream());
                 BufferedImage bufferedImageOff = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(TOGGLE_OFF).getInputStream());
@@ -179,10 +211,10 @@ public class BetterContainers {
                 boolean[][] slots = new boolean[9][size/9];
                 boolean[][] buttons = new boolean[9][size/9];
                 for (int index = 0; index < size; index++) {
-                    ItemStack stack = lower.getStackInSlot(index);
+                    ItemStack stack = getStackCached(lower, index);
                     buttons[index%9][index/9] = isButtonStack(stack);
 
-                    if(buttons[index%9][index/9] && getClickedSlot() == index) {
+                    if(buttons[index%9][index/9] && lastClickedSlot == index) {
                         buttons[index%9][index/9] = false;
                         slots[index%9][index/9] = true;
                     } else {
@@ -190,7 +222,7 @@ public class BetterContainers {
                     }
                 }
                 for (int index = 0; index < size; index++) {
-                    ItemStack stack = lower.getStackInSlot(index);
+                    ItemStack stack = getStackCached(lower, index);
                     int xi = index%9;
                     int yi = index/9;
                     if(slots[xi][yi] || buttons[xi][yi]) {
@@ -277,10 +309,18 @@ public class BetterContainers {
             IInventory lower = ((ContainerChest)container).getLowerChestInventory();
             int size = lower.getSizeInventory();
             for(int index=0; index<size; index++) {
-                if(lower.getStackInSlot(index) != null) return true;
+                if(getStackCached(lower, index) != null) return true;
             }
         }
         return false;
+    }
+
+    private static ItemStack getStackCached(IInventory lower, int index) {
+        if(getUsingCache()) {
+            return itemCache.get(index);
+        } else {
+            return lower.getStackInSlot(index);
+        }
     }
 
     private static boolean hasNullPane() {
@@ -290,7 +330,7 @@ public class BetterContainers {
             IInventory lower = ((ContainerChest)container).getLowerChestInventory();
             int size = lower.getSizeInventory();
             for(int index=0; index<size; index++) {
-                if(isBlankStack(lower.getStackInSlot(index))) return true;
+                if(isBlankStack(getStackCached(lower, index))) return true;
             }
         }
         return false;

@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
@@ -581,7 +582,7 @@ public class ProfileViewer {
             if(profileInfo == null) return null;
             if(profileId == null) profileId = latestProfile;
             if(skillInfoMap.containsKey(profileId)) return skillInfoMap.get(profileId);
-            JsonObject leveling = Utils.getConstant("leveling");
+            JsonObject leveling = Constants.LEVELING;
             if(leveling == null)  return null;
 
             float experience_skill_taming = Utils.getElementAsFloat(Utils.getElement(profileInfo, "experience_skill_taming"), 0);

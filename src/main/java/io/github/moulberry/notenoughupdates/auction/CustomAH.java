@@ -200,6 +200,11 @@ public class CustomAH extends Gui {
         priceField.setText("");
     }
 
+    public void setSearch(String search) {
+        searchField.setText(search);
+        updateSearch();
+    }
+
     public void tick() {
         if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || renderOverAuctionView) {
             if(shouldUpdateSearch) updateSearch();
@@ -1401,7 +1406,11 @@ public class CustomAH extends Gui {
     }
 
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        boolean wasFocused = searchField.isFocused();
         searchField.mouseClicked(mouseX, mouseY, mouseButton);
+        if(mouseButton == 1 && !wasFocused && searchField.isFocused()) {
+            searchField.setText("");
+        }
         priceField.mouseClicked(mouseX, mouseY, mouseButton);
 
         int totalItems = auctionIds.size();
