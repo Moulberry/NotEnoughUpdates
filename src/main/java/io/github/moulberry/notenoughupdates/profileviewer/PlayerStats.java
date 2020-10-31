@@ -213,7 +213,10 @@ public class PlayerStats {
         Stats skillBonus = getSkillBonus(skillInfo);
         Stats petBonus = getPetBonus(profile);
 
-        if(fairyBonus == null || skillBonus == null || petBonus == null) return null;
+        if(fairyBonus == null || skillBonus == null || petBonus == null) {
+            System.out.println(petBonus);
+            return null;
+        }
 
         passiveBonuses.add(fairyBonus);
         passiveBonuses.add(skillBonus);
@@ -493,7 +496,9 @@ public class PlayerStats {
         Stats armorBonuses = getItemBonuses(false, armor);
         Stats talismanBonuses = getItemBonuses(true, inventory, talisman_bag);
 
-        if(passiveBonuses == null || armorBonuses == null || talismanBonuses == null) return null;
+        if(passiveBonuses == null || armorBonuses == null || talismanBonuses == null) {
+            return null;
+        }
 
         Stats stats = getBaseStats().add(passiveBonuses).add(armorBonuses).add(talismanBonuses);
 

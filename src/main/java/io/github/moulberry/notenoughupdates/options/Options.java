@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.options;
 
 import com.google.gson.*;
+import io.github.moulberry.notenoughupdates.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
@@ -392,6 +393,93 @@ public class Options {
             false,
             "enchantColours", CAT_ALL);
 
+    //Dungeon Map Options
+    public Option<Double> dmBorderSize = new Option(
+            1.0,
+            "dmBorderSize",
+            false,
+            "", CAT_ALL);
+    public Option<Double> dmRoomSize = new Option(
+            1.0,
+            "dmRoomSize",
+            false,
+            "", CAT_ALL);
+    public Option<Double> dmBorderStyle = new Option(
+            0.0,
+            "dmBorderStyle",
+            false,
+            "", CAT_ALL);
+    public Option<Boolean> dmEnable = new Option(
+            true,
+            "dmEnable",
+            false,
+            "", CAT_ALL);
+    public Option<Boolean> dmCenterPlayer = new Option(
+            false,
+            "dmCenterPlayer",
+            false,
+            "", CAT_ALL);
+    public Option<Boolean> dmRotatePlayer = new Option(
+            true,
+            "dmCenterPlayer",
+            false,
+            "", CAT_ALL);
+    public Option<Boolean> dmOrientCheck = new Option(
+            true,
+            "dmOrientCheck",
+            false,
+            "", CAT_ALL);
+    public Option<Boolean> dmCenterCheck = new Option(
+            false,
+            "dmOrientCheck",
+            false,
+            "", CAT_ALL);
+    public Option<Double> dmPlayerHeads = new Option(
+            0.0,
+            "dmPlayerHeads",
+            false,
+            "", CAT_ALL);
+    public Option<Boolean> dmPlayerInterp = new Option(
+            true,
+            "dmPlayerInterp",
+            false,
+            "", CAT_ALL);
+    public Option<Double> dmCompat = new Option(
+            0.0,
+            "dmCompat",
+            false,
+            "", CAT_ALL);
+    public Option<String> dmBackgroundColour = new Option(
+            "00:170:75:75:75",
+            "dmBackgroundColour",
+            false,
+            "", FLAG_COLOUR, CAT_ALL);
+    public Option<String> dmBorderColour = new Option(
+            "00:0:0:0:0",
+            "dmBorderColour",
+            false,
+            "", FLAG_COLOUR, CAT_ALL);
+    public Option<Boolean> dmChromaBorder = new Option(
+            false,
+            "dmChromaBorder",
+            false,
+            "", CAT_ALL);
+    public Option<Double> dmBackgroundBlur = new Option(
+            3.0,
+            "dmBackgroundBlur",
+            false,
+            "", CAT_ALL);
+    public Option<Double> dmCenterX = new Option(
+            8.5,
+            "dmCenterX",
+            false,
+            "", CAT_ALL);
+    public Option<Double> dmCenterY = new Option(
+            15.0,
+            "dmCenterY",
+            false,
+            "", CAT_ALL);
+
     private ArrayList<String> createDefaultQuickCommands() {
         ArrayList<String> arr = new ArrayList<>();
         arr.add("/warp home:Warp Home:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzljODg4MWU0MjkxNWE5ZDI5YmI2MWExNmZiMjZkMDU5OTEzMjA0ZDI2NWRmNWI0MzliM2Q3OTJhY2Q1NiJ9fX0=");
@@ -436,9 +524,13 @@ public class Options {
             Minecraft.getMinecraft().displayGuiScreen(new NEUOverlayPlacements());
         }));
 
-
         buttons.add(new Button("Edit Enchant Colours", "Allows you to change the colour of any enchant at any level.", () -> {
             Minecraft.getMinecraft().displayGuiScreen(new GuiEnchantColour());
+        }));
+
+
+        buttons.add(new Button("Edit Dungeon Map", "Allows you to configure the NEU dungeon map.", () -> {
+            Minecraft.getMinecraft().displayGuiScreen(new GuiDungeonMapEditor());
         }));
     }
 
@@ -608,13 +700,15 @@ public class Options {
 
         for (Field f : Options.class.getDeclaredFields()) {
             try {
-                if (((Option) f.get(oDefault)).value instanceof List) {
+                if (((Option<?>) f.get(oDefault)).value instanceof List) {
                     //If the default size of the list is greater than the loaded size, use the default value.
                     //if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
                     //    continue;
                     //}
                 }
-                ((Option) f.get(oDefault)).value = ((Option) f.get(oLoad)).value;
+                if(((Option<?>) f.get(oDefault)).value.getClass().isAssignableFrom(((Option<?>) f.get(oLoad)).value.getClass())) {
+                    ((Option) f.get(oDefault)).value = ((Option) f.get(oLoad)).value;
+                }
             } catch (Exception e) {
             }
         }

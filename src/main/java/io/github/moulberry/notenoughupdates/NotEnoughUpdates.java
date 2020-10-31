@@ -688,14 +688,39 @@ public class NotEnoughUpdates {
     public Color[][] colourMap = null;
     SimpleCommand neumapCommand = new SimpleCommand("neumap", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
+            if(colourMap == null) {
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
+                            new ResourceLocation("notenoughupdates:maps/F1Full.json")).getInputStream(), StandardCharsets.UTF_8));
+                    JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
+
+                    colourMap = new Color[128][128];
+                    for(int x=0; x<128; x++) {
+                        for(int y=0; y<128; y++) {
+                            colourMap[x][y] = new Color(0, 0, 0, 0);
+                        }
+                    }
+                    for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                        int x = Integer.parseInt(entry.getKey().split(":")[0]);
+                        int y = Integer.parseInt(entry.getKey().split(":")[1]);
+
+                        colourMap[x][y] = new Color(entry.getValue().getAsInt(), true);
+                    }
+                } catch(Exception ignored) { }
+            }
+
+            if(!manager.config.dev.value) {
+                openGui = new GuiDungeonMapEditor();
+                return;
+            }
+
             if(args.length == 1 && args[0].equals("reset")) {
                 colourMap = null;
                 return;
             }
 
             if(args.length != 2) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
-                        "Dev feature if you don't know how to use then don't use it 4Head."));
+                openGui = new GuiDungeonMapEditor();
                 return;
             }
 
@@ -734,10 +759,13 @@ public class NotEnoughUpdates {
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+
                             "Saved to file."));
                 }
+
+                return;
             }
 
             if(args[0].equals("load")) {
                 JsonObject json = manager.getJsonFromFile(new File(manager.configLocation, "maps/"+args[1]+".json"));
+
                 colourMap = new Color[128][128];
                 for(int x=0; x<128; x++) {
                     for(int y=0; y<128; y++) {
@@ -750,7 +778,11 @@ public class NotEnoughUpdates {
 
                     colourMap[x][y] = new Color(entry.getValue().getAsInt(), true);
                 }
+
+                return;
             }
+
+            openGui = new GuiDungeonMapEditor();
         }
     });
 
@@ -811,7 +843,8 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new SBGamemodes());
         MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
-        //MinecraftForge.EVENT_BUS.register(new DungeonMap());
+        MinecraftForge.EVENT_BUS.register(new DungeonMap());
+        MinecraftForge.EVENT_BUS.register(new DumymMod());
         //MinecraftForge.EVENT_BUS.register(new BetterPortals());
 
         IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();

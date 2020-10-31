@@ -317,8 +317,10 @@ public class APIManager {
         if(disable != null && disable.get("auctions").getAsBoolean()) return;
 
         while(!pagesToDownload.isEmpty()) {
-            int page = pagesToDownload.pop();
-            getPageFromAPI(page);
+            try {
+                int page = pagesToDownload.pop();
+                getPageFromAPI(page);
+            } catch(NoSuchElementException ignored) {} //Weird race condition?
         }
     }
 

@@ -77,5 +77,19 @@ public class SpecialColour {
         return (a & 0xFF) << 24 | (Color.HSBtoRGB(hsv[0], hsv[1], hsv[2]) & 0x00FFFFFF);
     }
 
+    public static int rotateHue(int argb, int degrees) {
+        int a = (argb >> 24) & 0xFF;
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = (argb) & 0xFF;
+
+        float[] hsv = Color.RGBtoHSB(r, g, b, null);
+
+        hsv[0] += degrees/360f;
+        hsv[0] %= 1;
+
+        return (a & 0xFF) << 24 | (Color.HSBtoRGB(hsv[0], hsv[1], hsv[2]) & 0x00FFFFFF);
+    }
+
 
 }

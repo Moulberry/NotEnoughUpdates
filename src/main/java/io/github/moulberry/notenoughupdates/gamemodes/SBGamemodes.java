@@ -246,6 +246,8 @@ public class SBGamemodes {
     public void onTick(TickEvent.ClientTickEvent event) {
         if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
 
+        boolean inDungeons = SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon");
+
         if("Your Island".equals(SBInfo.getInstance().location) &&
                 (EnumChatFormatting.YELLOW+"Break a log").equals(SBInfo.getInstance().objective)) {
             getGamemode().locked = false;
@@ -291,7 +293,7 @@ public class SBGamemodes {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                         EnumChatFormatting.AQUA+"(Use "+EnumChatFormatting.YELLOW+"/neugamemodes"+
                                 EnumChatFormatting.AQUA+" if you would like to use fairy souls)"));
-            } else if(ironmanMode.isBanned(containerName)) {
+            } else if(!inDungeons && ironmanMode.isBanned(containerName)) {
                 Minecraft.getMinecraft().thePlayer.closeScreen();
 
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
