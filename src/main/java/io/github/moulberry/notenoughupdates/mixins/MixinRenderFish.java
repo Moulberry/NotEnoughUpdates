@@ -30,7 +30,7 @@ public class MixinRenderFish {
     @Redirect(method="doRender", at=@At(value="INVOKE", target=TARGET))
     public WorldRenderer worldrenderColor_DoRender(WorldRenderer renderer, int r, int b, int g, int a){
         Minecraft mc = Minecraft.getMinecraft();
-        if (fishHook != null && fishHook.angler != null && fishHook.angler.getHeldItem().getItem().equals(Items.fishing_rod)){
+        if (NotEnoughUpdates.INSTANCE.isOnSkyblock() && fishHook != null && fishHook.angler != null && fishHook.angler.getHeldItem().getItem().equals(Items.fishing_rod)){
             String internalName = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(fishHook.angler.getHeldItem());
             if (internalName != null && !internalName.equals("GRAPPLING_HOOK") && !internalName.endsWith("_WHIP")) {
                 if (fishHook.angler.getUniqueID().equals(mc.thePlayer.getUniqueID())) {
