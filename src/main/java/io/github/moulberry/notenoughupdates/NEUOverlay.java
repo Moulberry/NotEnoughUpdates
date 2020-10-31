@@ -914,16 +914,28 @@ public class NEUOverlay extends Gui {
                     int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
                     int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-                    iterateItemSlots(new ItemSlotConsumer() {
-                        public void consume(int x, int y, int id) {
-                            if (mouseX >= x - 1 && mouseX <= x + ITEM_SIZE + 1) {
-                                if (mouseY >= y - 1 && mouseY <= y + ITEM_SIZE + 1) {
-                                    JsonObject json = getSearchedItemPage(id);
-                                    if (json != null) internalname.set(json.get("internalname").getAsString());
+                    if (selectedItemGroup != null) {
+                        int selectedX = Math.min(selectedItemGroupX, width - getBoxPadding() - 18 * selectedItemGroup.size());
+
+                        if (mouseY > selectedItemGroupY + 17 && mouseY < selectedItemGroupY + 35) {
+                            for (int i = 0; i < selectedItemGroup.size(); i++) {
+                                if (mouseX >= selectedX - 1 + 18 * i && mouseX <= selectedX + 17 + 18 * i) {
+                                    internalname.set(selectedItemGroup.get(i).get("internalname").getAsString());
                                 }
                             }
                         }
-                    });
+                    }else {
+                        iterateItemSlots(new ItemSlotConsumer() {
+                            public void consume(int x, int y, int id) {
+                                if (mouseX >= x - 1 && mouseX <= x + ITEM_SIZE + 1) {
+                                    if (mouseY >= y - 1 && mouseY <= y + ITEM_SIZE + 1) {
+                                        JsonObject json = getSearchedItemPage(id);
+                                        if (json != null) internalname.set(json.get("internalname").getAsString());
+                                    }
+                                }
+                            }
+                        });
+                    }
 
                     Utils.pushGuiScale(-1);
                 }
