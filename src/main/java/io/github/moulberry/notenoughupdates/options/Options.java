@@ -313,6 +313,20 @@ public class Options {
             "Dungeon Bat Colour",
             FLAG_COLOUR, CAT_COLOURS);
 
+    public Option<String> selfRodLineColour = new Option(
+            "0:252:2:255:154",
+            "Your rods line colour.",
+            false,
+            "Changes the colour of your rods fishing line. \n Contrib: ThatGravyBoat",
+            FLAG_COLOUR, CAT_COLOURS);
+
+    public Option<String> otherRodLineColour = new Option(
+            "0:252:159:7:12",
+            "Other player rod line colour.",
+            false,
+            "Changes the colour of other players rods fishing line. \n Contrib: ThatGravyBoat",
+            FLAG_COLOUR, CAT_COLOURS);
+
     /**
      * OPTIONS THAT DON'T SHOW IN GUI
      */
@@ -593,6 +607,8 @@ public class Options {
         tryAddOption(itemFavouriteColour, options);
         tryAddOption(treecapOverlayColour, options);
         tryAddOption(wandOverlayColour, options);
+        tryAddOption(otherRodLineColour, options);
+        tryAddOption(selfRodLineColour, options);
 
         tryAddOption(dungCrackedColour, options);
         tryAddOption(dungDispenserColour, options);

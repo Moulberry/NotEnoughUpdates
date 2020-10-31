@@ -16,6 +16,7 @@
     "MixinRenderList",
     "MixinEntityPlayer",
     "MixinTileEntitySpecialRenderer",
-    "MixinRender"
+    "MixinRender",
+    "MixinRenderFish"
   ]
 }
