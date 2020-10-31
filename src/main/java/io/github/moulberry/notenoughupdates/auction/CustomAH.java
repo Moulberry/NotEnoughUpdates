@@ -857,28 +857,30 @@ public class CustomAH extends Gui {
         int maxItemScroll = Math.max(0, totalItems - (5+splits)*9);
         itemsScroll = Math.min(itemsScroll, maxItemScroll);
 
-        out:
-        for(int i=0; i<5+splits; i++) {
-            int itemY = guiTop + i*18 + 18;
-            for(int j=0; j<9; j++) {
-                int itemX = guiLeft + j*18 + 9;
-                int id = itemsScroll + i*9 + j;
-                if(auctionIds.size() <= id) break out;
+        if(manager.config.neuAuctionHouse.value) {
+            out:
+            for(int i=0; i<5+splits; i++) {
+                int itemY = guiTop + i*18 + 18;
+                for(int j=0; j<9; j++) {
+                    int itemX = guiLeft + j*18 + 9;
+                    int id = itemsScroll + i*9 + j;
+                    if(auctionIds.size() <= id) break out;
 
-                try {
-                    String aucid = sortedAuctionIds.get(id);
+                    try {
+                        String aucid = sortedAuctionIds.get(id);
 
-                    GL11.glTranslatef(0,0,100);
-                    ItemStack stack = manager.auctionManager.getAuctionItems().get(aucid).getStack();
-                    Utils.drawItemStack(stack, itemX, itemY);
-                    GL11.glTranslatef(0,0,-100);
+                        GL11.glTranslatef(0,0,100);
+                        ItemStack stack = manager.auctionManager.getAuctionItems().get(aucid).getStack();
+                        Utils.drawItemStack(stack, itemX, itemY);
+                        GL11.glTranslatef(0,0,-100);
 
-                    if(mouseX > itemX && mouseX < itemX+16) {
-                        if(mouseY > itemY && mouseY < itemY+16) {
-                            tooltipToRender = getTooltipForAucId(aucid);
+                        if(mouseX > itemX && mouseX < itemX+16) {
+                            if(mouseY > itemY && mouseY < itemY+16) {
+                                tooltipToRender = getTooltipForAucId(aucid);
+                            }
                         }
+                    } catch(Exception e) {
                     }
-                } catch(Exception e) {
                 }
             }
         }
@@ -900,6 +902,11 @@ public class CustomAH extends Gui {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         this.drawTexturedModalRect(guiLeft+175, guiTop+18+(int)((95+ySplitSize*2)*scrollAmount),
                 256-(scrollClicked?12:24), 0, 12, 15);
+
+        if(!manager.config.neuAuctionHouse.value) {
+            Utils.drawStringCentered(EnumChatFormatting.RED+"NEUAH is DISABLED! Enable in /neusettings.",
+                    Minecraft.getMinecraft().fontRendererObj, guiLeft+getXSize()/2, guiTop+getYSize()/2-5, true, 0);
+        }
 
         if(tooltipToRender != null) {
             List<String> tooltipGray = new ArrayList<>();
@@ -1044,6 +1051,10 @@ public class CustomAH extends Gui {
     }
 
     public void handleMouseInput() {
+        if(!manager.config.neuAuctionHouse.value) {
+            return;
+        }
+
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledResolution.getScaledWidth();
         int height = scaledResolution.getScaledHeight();
@@ -1201,6 +1212,10 @@ public class CustomAH extends Gui {
 
     private ExecutorService es = Executors.newSingleThreadExecutor();
     public void updateSearch() {
+        if(!manager.config.neuAuctionHouse.value) {
+            return;
+        }
+
         if(searchField == null || priceField == null) init();
         long currentTime = System.currentTimeMillis();
 
@@ -1305,6 +1320,10 @@ public class CustomAH extends Gui {
     }
 
     public void sortItems() throws ConcurrentModificationException {
+        if(!manager.config.neuAuctionHouse.value) {
+            return;
+        }
+
         try {
             List<String> sortedAuctionIdsNew = new ArrayList<>();
 
@@ -1352,6 +1371,10 @@ public class CustomAH extends Gui {
     }
 
     public boolean keyboardInput() {
+        if(!manager.config.neuAuctionHouse.value) {
+            return false;
+        }
+
         Keyboard.enableRepeatEvents(true);
         if(isEditingPrice() && Keyboard.getEventKey() == Keyboard.KEY_RETURN) {
             Minecraft.getMinecraft().displayGuiScreen(null);

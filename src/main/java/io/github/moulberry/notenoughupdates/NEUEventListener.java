@@ -621,7 +621,7 @@ public class NEUEventListener {
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
-        if(gui instanceof GuiChest && neu.manager.auctionManager.activeAuctions > 0 && !neu.manager.config.dungeonProfitLore.value) {
+        if(gui instanceof GuiChest && !neu.manager.config.dungeonProfitLore.value) {
             try {
                 int xSize = (int) Utils.getField(GuiContainer.class, gui, "xSize", "field_146999_f");
                 int ySize = (int) Utils.getField(GuiContainer.class, gui, "ySize", "field_147000_g");
@@ -790,9 +790,7 @@ public class NEUEventListener {
             return;
         }
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            if(neu.manager.config.accessoryBagOverlay.value && AccessoryBagOverlay.mouseClick()) {
-                event.setCanceled(true);
-            } else {
+            if(!neu.manager.config.accessoryBagOverlay.value || !AccessoryBagOverlay.mouseClick()) {
                 if(!(hoverInv && focusInv)) {
                     if(neu.overlay.mouseInput()) {
                         event.setCanceled(true);
@@ -1340,21 +1338,21 @@ public class NEUEventListener {
                 JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internalname);
                 JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internalname);
 
+                int lowestBin = neu.manager.auctionManager.getLowestBin(internalname);
+                APIManager.CraftInfo craftCost = neu.manager.auctionManager.getCraftCost(internalname);
+
                 boolean hasAuctionPrice = neu.manager.config.invAuctionPrice.value && auctionInfo != null;
                 boolean hasBazaarPrice = neu.manager.config.invBazaarPrice.value && bazaarInfo != null;
-
-                int lowestBin = neu.manager.auctionManager.getLowestBin(internalname);
+                boolean hasLowestBinPrice = neu.manager.config.invAuctionPrice.value && lowestBin > 0;
 
                 NumberFormat format = NumberFormat.getInstance(Locale.US);
 
-                APIManager.CraftInfo craftCost = neu.manager.auctionManager.getCraftCost(internalname);
-
-                if(hasAuctionPrice || hasBazaarPrice || craftCost.fromRecipe) event.toolTip.add("");
+                if(hasAuctionPrice || hasBazaarPrice || hasLowestBinPrice) event.toolTip.add("");
+                if(hasLowestBinPrice) {
+                    event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+                }
                 if(hasAuctionPrice) {
-                    if(lowestBin > 0) {
-                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
-                    }
                     int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
                     event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
                             EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");

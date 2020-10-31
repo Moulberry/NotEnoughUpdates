@@ -864,7 +864,7 @@ public class NEUOverlay extends Gui {
         }
 
         if(Keyboard.isKeyDown(Keyboard.KEY_Y) && manager.config.dev.value) {
-            //displayInformationPane(new DevInfoPane(this, manager));
+            displayInformationPane(new DevInfoPane(this, manager));
             //displayInformationPane(new QOLInfoPane(this, manager));
         }
 
@@ -914,16 +914,29 @@ public class NEUOverlay extends Gui {
                     int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
                     int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-                    iterateItemSlots(new ItemSlotConsumer() {
-                        public void consume(int x, int y, int id) {
-                            if (mouseX >= x - 1 && mouseX <= x + ITEM_SIZE + 1) {
-                                if (mouseY >= y - 1 && mouseY <= y + ITEM_SIZE + 1) {
-                                    JsonObject json = getSearchedItemPage(id);
-                                    if (json != null) internalname.set(json.get("internalname").getAsString());
+                    if (selectedItemGroup != null) {
+                        int selectedX = Math.min(selectedItemGroupX, width - getBoxPadding() - 18 * selectedItemGroup.size());
+
+                        if (mouseY > selectedItemGroupY + 17 && mouseY < selectedItemGroupY + 35) {
+                            for (int i = 0; i < selectedItemGroup.size(); i++) {
+                                if (mouseX >= selectedX - 1 + 18 * i && mouseX <= selectedX + 17 + 18 * i) {
+                                    internalname.set(selectedItemGroup.get(i).get("internalname").getAsString());
                                 }
                             }
                         }
-                    });
+                    } else {
+                        iterateItemSlots(new ItemSlotConsumer() {
+                            public void consume(int x, int y, int id) {
+                                if (mouseX >= x - 1 && mouseX <= x + ITEM_SIZE + 1) {
+                                    if (mouseY >= y - 1 && mouseY <= y + ITEM_SIZE + 1) {
+                                        JsonObject json = getSearchedItemPage(id);
+                                        if (json != null) internalname.set(json.get("internalname").getAsString());
+                                    }
+                                }
+                            }
+                        });
+                    }
+
 
                     Utils.pushGuiScale(-1);
                 }
@@ -1988,21 +2001,21 @@ public class NEUOverlay extends Gui {
             JsonObject auctionInfo = manager.auctionManager.getItemAuctionInfo(internalname);
             JsonObject bazaarInfo = manager.auctionManager.getBazaarInfo(internalname);
 
+            int lowestBin = manager.auctionManager.getLowestBin(internalname);
+            APIManager.CraftInfo craftCost = manager.auctionManager.getCraftCost(json.get("internalname").getAsString());
+
             boolean hasAuctionPrice = !manager.config.invAuctionPrice.value && auctionInfo != null;
             boolean hasBazaarPrice = !manager.config.invBazaarPrice.value && bazaarInfo != null;
-
-            int lowestBin = manager.auctionManager.getLowestBin(internalname);
+            boolean hasLowestBinPrice = !manager.config.invAuctionPrice.value && lowestBin > 0;
 
             NumberFormat format = NumberFormat.getInstance(Locale.US);
 
-            APIManager.CraftInfo craftCost = manager.auctionManager.getCraftCost(json.get("internalname").getAsString());
-
-            if(hasAuctionPrice || hasBazaarPrice || craftCost.fromRecipe) text.add("");
+            if(hasAuctionPrice || hasBazaarPrice || hasLowestBinPrice) text.add("");
+            if(hasLowestBinPrice) {
+                text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
+                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+            }
             if(hasAuctionPrice) {
-                if(lowestBin > 0) {
-                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
-                }
                 int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
                 text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
                         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");

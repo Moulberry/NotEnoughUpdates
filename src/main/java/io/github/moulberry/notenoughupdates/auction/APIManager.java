@@ -39,7 +39,7 @@ public class APIManager {
     private HashSet<String> playerBidsNotified = new HashSet<>();
     private HashSet<String> playerBidsFinishedNotified = new HashSet<>();
 
-    private HashMap<String, TreeMap<Integer, Set<String>>> internalnameToLowestBIN = new HashMap<>();
+    private JsonObject lowestBins = null;
 
     private LinkedList<Integer> pagesToDownload = null;
 
@@ -55,6 +55,7 @@ public class APIManager {
     private long lastCleanup = 0;
     private long lastAuctionAvgUpdate = 0;
     private long lastBazaarUpdate = 0;
+    private long lastLowestBinUpdate = 0;
 
     private long lastApiUpdate = 0;
     private long firstHypixelApiUpdate = 0;
@@ -165,7 +166,6 @@ public class APIManager {
 
         auctionMap.clear();
         internalnameToAucIdMap.clear();
-        internalnameToLowestBIN.clear();
         extrasToAucIdMap.clear();
     }
 
@@ -174,15 +174,28 @@ public class APIManager {
 
         customAH.tick();
         long currentTime = System.currentTimeMillis();
-        if(currentTime - lastAuctionUpdate > 60*1000) {
-            lastAuctionUpdate = currentTime;
-            updatePageTick();
-        }
+        if(manager.config.neuAuctionHouse.value) {
+            if(currentTime - lastAuctionUpdate > 60*1000) {
+                lastAuctionUpdate = currentTime;
+                updatePageTick();
+            }
 
-        if(currentTime - lastShortAuctionUpdate > 10*1000) {
-            lastShortAuctionUpdate = currentTime;
-            updatePageTickShort();
-            ahNotification();
+            if(currentTime - lastShortAuctionUpdate > 10*1000) {
+                lastShortAuctionUpdate = currentTime;
+                updatePageTickShort();
+                ahNotification();
+            }
+            if(currentTime - lastCleanup > 60*1000) {
+                lastCleanup = currentTime;
+                cleanup();
+            }
+            if(currentTime - lastCustomAHSearch > 60*1000) {
+                lastCustomAHSearch = currentTime;
+                if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView()) {
+                    customAH.updateSearch();
+                    calculateStats();
+                }
+            }
         }
         if(currentTime - lastAuctionAvgUpdate > 30*60*1000) { //30 minutes
             lastAuctionAvgUpdate = currentTime - 28*60*1000; //Try again in 2 minutes if updateAvgPrices doesn't succeed
@@ -192,16 +205,9 @@ public class APIManager {
             lastBazaarUpdate = currentTime;
             updateBazaar();
         }
-        if(currentTime - lastCleanup > 60*1000) {
-            lastCleanup = currentTime;
-            cleanup();
-        }
-        if(currentTime - lastCustomAHSearch > 60*1000) {
-            lastCustomAHSearch = currentTime;
-            if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView()) {
-                customAH.updateSearch();
-                calculateStats();
-            }
+        if(currentTime - lastLowestBinUpdate > 2*60*1000) {
+            lastLowestBinUpdate = currentTime;
+            updateLowestBin();
         }
     }
 
@@ -222,9 +228,25 @@ public class APIManager {
     }
 
     public int getLowestBin(String internalname) {
-        TreeMap<Integer, Set<String>> lowestBIN = internalnameToLowestBIN.get(internalname);
-        if(lowestBIN == null || lowestBIN.isEmpty()) return -1;
-        return lowestBIN.firstKey();
+        if(internalname.contains("AUGER")) {
+            System.out.println("Tried to get auger!");
+        }
+        if(lowestBins != null && lowestBins.has(internalname)) {
+            JsonElement e = lowestBins.get(internalname);
+            if(e.isJsonPrimitive() && e.getAsJsonPrimitive().isNumber()) {
+                if(internalname.contains("AUGER")) {
+                    System.out.println("s:"+e.getAsInt());
+                }
+                return e.getAsInt();
+            }
+        }
+        return -1;
+    }
+
+    public void updateLowestBin() {
+        manager.hypixelApi.getMyApiGZIPAsync("lowestbin.json.gz", (jsonObject) -> {
+            lowestBins = jsonObject;
+        }, () -> {});
     }
 
     private void ahNotification() {
@@ -298,14 +320,6 @@ public class APIManager {
         for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
             aucids.removeAll(toRemove);
         }
-        for(TreeMap<Integer, Set<String>> lowestBINs : internalnameToLowestBIN.values()) {
-            Set<Integer> toRemoveSet = new HashSet<>();
-            for(Map.Entry<Integer, Set<String>> entry : lowestBINs.entrySet()) {
-                entry.getValue().removeAll(toRemove);
-                if(entry.getValue().isEmpty()) toRemoveSet.add(entry.getKey());
-            }
-            lowestBINs.keySet().removeAll(toRemoveSet);
-        }
     }
 
     private void updatePageTickShort() {
@@ -314,7 +328,7 @@ public class APIManager {
         if(firstHypixelApiUpdate == 0 || (System.currentTimeMillis() - firstHypixelApiUpdate)%(60*1000) > 15*1000) return;
 
         JsonObject disable = Constants.DISABLE;
-        if(disable != null && disable.get("auctions").getAsBoolean()) return;
+        if(disable != null && disable.has("auctions_new") && disable.get("auctions_new").getAsBoolean()) return;
 
         while(!pagesToDownload.isEmpty()) {
             try {
@@ -326,7 +340,7 @@ public class APIManager {
 
     private void updatePageTick() {
         JsonObject disable = Constants.DISABLE;
-        if(disable != null && disable.get("auctions").getAsBoolean()) return;
+        if(disable != null && disable.has("auctions_new") && disable.get("auctions_new").getAsBoolean()) return;
 
         if(pagesToDownload == null) {
             getPageFromAPI(0);
@@ -512,16 +526,6 @@ public class APIManager {
                     aucids.add(auctionUuid);
                 }
                 index++;
-            }
-
-            if(bin) {
-                TreeMap<Integer, Set<String>> lowestBINs = internalnameToLowestBIN.computeIfAbsent(internalname, k -> new TreeMap<>());
-                int count = item_tag.getInteger("Count");
-                int price = starting_bid/(count>0?count:1);
-                lowestBINs.computeIfAbsent(price, k -> new HashSet<>()).add(auctionUuid);
-                if(lowestBINs.size() > 50) {
-                    lowestBINs.keySet().remove(lowestBINs.lastKey());
-                }
             }
 
             for(int j=0; j<bids.size(); j++) {

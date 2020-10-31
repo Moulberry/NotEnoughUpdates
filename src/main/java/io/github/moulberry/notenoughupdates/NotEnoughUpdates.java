@@ -87,7 +87,7 @@ import java.util.regex.Pattern;
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "1.4-REL";
+    public static final String VERSION = "1.5-REL";
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -844,7 +844,6 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
         MinecraftForge.EVENT_BUS.register(new DungeonMap());
-        MinecraftForge.EVENT_BUS.register(new DumymMod());
         //MinecraftForge.EVENT_BUS.register(new BetterPortals());
 
         IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();

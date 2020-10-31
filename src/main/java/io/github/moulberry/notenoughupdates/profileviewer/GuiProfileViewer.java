@@ -1670,6 +1670,7 @@ public class GuiProfileViewer extends GuiScreen {
                 guiLeft+xStart, guiTop+yStartBottom, 76);
         if(skillInfo != null) {
             float totalSkillLVL = 0;
+            float totalTrueSkillLVL = 0;
             float totalSlayerLVL = 0;
             float totalSkillCount = 0;
             float totalSlayerCount = 0;
@@ -1678,7 +1679,10 @@ public class GuiProfileViewer extends GuiScreen {
                 if(entry.getKey().startsWith("level_skill")) {
                     if(entry.getKey().contains("runecrafting")) continue;
                     if(entry.getKey().contains("carpentry")) continue;
+                    if(entry.getKey().contains("catacombs")) continue;
+
                     totalSkillLVL += entry.getValue().getAsFloat();
+                    totalTrueSkillLVL += Math.floor(entry.getValue().getAsFloat());
                     totalSkillCount++;
                 } else if(entry.getKey().startsWith("level_slayer")) {
                     totalSlayerLVL += entry.getValue().getAsFloat();
@@ -1687,12 +1691,15 @@ public class GuiProfileViewer extends GuiScreen {
             }
 
             float avgSkillLVL = totalSkillLVL/totalSkillCount;
+            float avgTrueSkillLVL = totalTrueSkillLVL/totalSkillCount;
             float avgSlayerLVL = totalSlayerLVL/totalSlayerCount;
 
             renderAlignedString(EnumChatFormatting.RED+"AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSkillLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset, 76);
             renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
+            renderAlignedString(EnumChatFormatting.RED+"True AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgTrueSkillLVL*10)/10,
+                    guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
         }
 
 

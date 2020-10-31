@@ -53,6 +53,7 @@ public class DungeonMap {
     private static final ResourceLocation GREEN_CHECK = new ResourceLocation("notenoughupdates:dungeon_map/green_check.png");
     private static final ResourceLocation WHITE_CHECK = new ResourceLocation("notenoughupdates:dungeon_map/white_check.png");
     private static final ResourceLocation QUESTION = new ResourceLocation("notenoughupdates:dungeon_map/question.png");
+    private static final ResourceLocation CROSS = new ResourceLocation("notenoughupdates:dungeon_map/cross.png");
 
     private static final ResourceLocation ROOM_RED = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/red_room.png");
     private static final ResourceLocation ROOM_BROWN = new ResourceLocation("notenoughupdates:dungeon_map/rooms_default/brown_room.png");
@@ -187,6 +188,8 @@ public class DungeonMap {
                     indicatorTex = GREEN_CHECK;
                 } else if(tick.getRed() == 13 && tick.getGreen() == 13 && tick.getBlue() == 13) {
                     indicatorTex = QUESTION;
+                } else if(tick.getRed() == 255 && tick.getGreen() == 0 && tick.getBlue() == 0) {
+                    indicatorTex = CROSS;
                 }
                 if(indicatorTex != null) {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(indicatorTex);
@@ -353,12 +356,14 @@ public class DungeonMap {
 
     public int getRenderRoomSize() {
         int roomSizeOption = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize.value.intValue();
-        return roomSizeOption == 0 ? 12 : roomSizeOption == 2 ? 20 : 16;
+        if(roomSizeOption <= 0) return 12;
+        return 12 + roomSizeOption*4;
     }
 
     public int getRenderConnSize() {
         int roomSizeOption = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize.value.intValue();
-        return roomSizeOption == 0 ? 3 : roomSizeOption == 2 ? 5 : 4;
+        if(roomSizeOption <= 0) return 3;
+        return 3 + roomSizeOption;
     }
 
     private HashMap<Integer, Float> borderRadiusCache = new HashMap<>();
@@ -429,8 +434,8 @@ public class DungeonMap {
             rotation = (int)playerPos.rotation;
         }
 
-        int mapSizeX = borderSizeOption == 0 ? 90 : borderSizeOption == 2 ? 160 : 120;
-        int mapSizeY = borderSizeOption == 0 ? 90 : borderSizeOption == 2 ? 160 : 120;
+        int mapSizeX = borderSizeOption == 0 ? 90 : borderSizeOption == 2 ? 160 : borderSizeOption == 3 ? 240 : 120;
+        int mapSizeY = borderSizeOption == 0 ? 90 : borderSizeOption == 2 ? 160 : borderSizeOption == 3 ? 240 : 120;
         int roomsSizeX = (maxRoomX-minRoomX)*(renderRoomSize+renderConnSize)+renderRoomSize;
         int roomsSizeY = (maxRoomY-minRoomY)*(renderRoomSize+renderConnSize)+renderRoomSize;
         int mapCenterX = mapSizeX/2;
@@ -588,7 +593,7 @@ public class DungeonMap {
                         float deltaX = entityPos.getRenderX() - pos.getRenderX();
                         float deltaY = entityPos.getRenderY() - pos.getRenderY();
 
-                        /*if(deltaX > (renderRoomSize + renderConnSize)/2) {
+                        if(deltaX > (renderRoomSize + renderConnSize)/2) {
                             deltaX -= (renderRoomSize + renderConnSize);
                         } else if(deltaX < -(renderRoomSize + renderConnSize)/2) {
                             deltaX += (renderRoomSize + renderConnSize);
@@ -597,7 +602,7 @@ public class DungeonMap {
                             deltaY -= (renderRoomSize + renderConnSize);
                         } else if(deltaY < -(renderRoomSize + renderConnSize)/2) {
                             deltaY += (renderRoomSize + renderConnSize);
-                        }*/
+                        }
 
                         x += deltaX;
                         y += deltaY;
@@ -636,13 +641,18 @@ public class DungeonMap {
                         }
                     }
 
+                    boolean headLayer = false;
                     int pixelWidth = 8;
                     int pixelHeight = 8;
+                    if(renderRoomSize >= 24) {
+                        pixelWidth = pixelHeight = 12;
+                    }
                     GlStateManager.color(1, 1, 1, 1);
                     if(NotEnoughUpdates.INSTANCE.manager.config.dmPlayerHeads.value >= 1 &&
                             playerSkinMap.containsKey(entry.getKey())) {
                         Minecraft.getMinecraft().getTextureManager().bindTexture(playerSkinMap.get(entry.getKey()));
 
+                        headLayer = true;
                         if(NotEnoughUpdates.INSTANCE.manager.config.dmPlayerHeads.value >= 3) {
                             minU = 9/64f;
                             minV = 9/64f;
@@ -656,8 +666,8 @@ public class DungeonMap {
                         }
 
                         if(NotEnoughUpdates.INSTANCE.manager.config.dmPlayerHeads.value >= 2) {
-                            pixelWidth = 6;
-                            pixelHeight = 6;
+                            pixelWidth = pixelWidth*6/8;
+                            pixelHeight = pixelHeight*6/8;
                         }
                     } else {
                         Minecraft.getMinecraft().getTextureManager().bindTexture(mapIcons);
@@ -682,6 +692,14 @@ public class DungeonMap {
                     worldrenderer.pos(-pixelWidth/2f, -pixelHeight/2f, 30+((float)k * -0.005F)).tex(minU, maxV).endVertex();
                     tessellator.draw();
 
+                    if(headLayer) {
+                        worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
+                        worldrenderer.pos(-pixelWidth/2f, pixelHeight/2f, 30+((float)k * -0.005F)+0.001f).tex(minU+0.5f, minV).endVertex();
+                        worldrenderer.pos(pixelWidth/2f, pixelHeight/2f, 30+((float)k * -0.005F)+0.001f).tex(maxU+0.5f, minV).endVertex();
+                        worldrenderer.pos(pixelWidth/2f, -pixelHeight/2f, 30+((float)k * -0.005F)+0.001f).tex(maxU+0.5f, maxV).endVertex();
+                        worldrenderer.pos(-pixelWidth/2f, -pixelHeight/2f, 30+((float)k * -0.005F)+0.001f).tex(minU+0.5f, maxV).endVertex();
+                        tessellator.draw();
+                    }
                     GlStateManager.popMatrix();
                     k--;
                 }
@@ -775,7 +793,7 @@ public class DungeonMap {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(rl);
                 GlStateManager.color(1, 1, 1, 1);
 
-                int size = borderSizeOption == 0 ? 165 : borderSizeOption == 2 ? 300 : 220;
+                int size = borderSizeOption == 0 ? 165 : borderSizeOption == 2 ? 300 : borderSizeOption == 3 ? 440 : 220;
                 Utils.drawTexturedRect(-size/2, -size/2, size, size, GL11.GL_NEAREST);
             }
 
@@ -1306,6 +1324,12 @@ public class DungeonMap {
     public void onRenderOverlay(RenderGameOverlayEvent event) {
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
             if(SBInfo.getInstance().getLocation() == null || !SBInfo.getInstance().getLocation().equals("dungeon")) {
+                return;
+            }
+            if(Minecraft.getMinecraft().gameSettings.showDebugInfo ||
+                    (Minecraft.getMinecraft().gameSettings.keyBindPlayerList.isKeyDown() &&
+                            (!Minecraft.getMinecraft().isIntegratedServerRunning() ||
+                                    Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap().size() > 1))) {
                 return;
             }
             

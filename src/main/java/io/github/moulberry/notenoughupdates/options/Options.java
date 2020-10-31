@@ -185,20 +185,32 @@ public class Options {
             false,
             "If true, will show the overlay for cracked bricks, etc. even when not in dungeons.", CAT_MISC);
     public Option<Boolean> disableDungeonBlocks = new Option(
-            false,
+            true,
             "Disables the dungeon blocks feature",
             false,
-            "If true, the dungeon block overlay will be disabled.", CAT_FEATURES);
+            "If true, the dungeon block overlay will be disabled. WARNING: May cause memory/fps issues on some machines", CAT_FEATURES);
     public Option<Boolean> missingEnchantList = new Option(
             true,
             "Missing Enchant List",
             false,
             "If true, will show enchants that are missing on an enchanted item when LSHIFT is pressed.", CAT_FEATURES);
+    public Option<Boolean> neuAuctionHouse = new Option(
+            false,
+            "NEU Auction House",
+            false,
+            "Enables the auction house which can be found using /neuah.\n" +
+                    "Don't enable this option unless you use /neuah\n" +
+                    "You *may* need to restart after enabling this for the auctions to download properly", CAT_FEATURES);
     public Option<Boolean> accessoryBagOverlay = new Option(
             true,
             "Accessory Bag Overlay",
             false,
             "If true, will an overlay with useful information in your accessory bag.", CAT_FEATURES);
+    public Option<Boolean> rodColours = new Option(
+            true,
+            "Custom Rod Line Colours",
+            false,
+            "If true, will use custom colours for fishing line rods in skyblock.", CAT_FEATURES);
     public Option<Double> paneGuiScale = new Option(
             0.0,
             "Pane GUI Scale",
@@ -312,6 +324,18 @@ public class Options {
             false,
             "Dungeon Bat Colour",
             FLAG_COLOUR, CAT_COLOURS);
+    public Option<String> selfRodLineColour = new Option(
+            "0:255:0:0:0",
+            "Your Rod Line Colour",
+            false,
+            "Changes the colour of your rod's fishing line.\nContrib: ThatGravyBoat",
+            FLAG_COLOUR, CAT_COLOURS);
+    public Option<String> otherRodLineColour = new Option(
+            "0:255:0:0:0",
+            "Other Rod Line Colour",
+            false,
+            "Changes the colour of other players' rod's fishing line.\nContrib: ThatGravyBoat",
+            FLAG_COLOUR, CAT_COLOURS);
 
     /**
      * OPTIONS THAT DON'T SHOW IN GUI
@@ -396,89 +420,89 @@ public class Options {
     //Dungeon Map Options
     public Option<Double> dmBorderSize = new Option(
             1.0,
-            "dmBorderSize",
+            "Border Size",
             false,
-            "", CAT_ALL);
+            "Changes the size of the map border, without changing the size of the contents\nSmall = 90x\nMedium = 120x\nLarge = 160x", CAT_ALL);
     public Option<Double> dmRoomSize = new Option(
             1.0,
-            "dmRoomSize",
+            "Room Size",
             false,
-            "", CAT_ALL);
+            "Changes the size of rooms. Useful for higher dungeons with larger maps\nSmall = 12x\nMedium = 16x\nLarge = 20x\nXLarge = 24x", CAT_ALL);
     public Option<Double> dmBorderStyle = new Option(
             0.0,
-            "dmBorderStyle",
+            "Border Style",
             false,
-            "", CAT_ALL);
+            "Various custom borders from various talented artists.\nUse 'custom' if your texture pack has a custom border", CAT_ALL);
     public Option<Boolean> dmEnable = new Option(
             true,
-            "dmEnable",
+            "Show Dungeon Map",
             false,
-            "", CAT_ALL);
+            "Show/hide the NEU dungeon map", CAT_ALL);
     public Option<Boolean> dmCenterPlayer = new Option(
             false,
-            "dmCenterPlayer",
+            "Map Center",
             false,
-            "", CAT_ALL);
+            "Center on rooms, or center on your player", CAT_ALL);
     public Option<Boolean> dmRotatePlayer = new Option(
             true,
-            "dmCenterPlayer",
+            "Rotate with Player",
             false,
-            "", CAT_ALL);
+            "Rotate the map to face the same direction as your player", CAT_ALL);
     public Option<Boolean> dmOrientCheck = new Option(
             true,
-            "dmOrientCheck",
+            "Orient Checkmarks",
             false,
-            "", CAT_ALL);
+            "Checkmarks will always show vertically, regardless of rotation", CAT_ALL);
     public Option<Boolean> dmCenterCheck = new Option(
             false,
-            "dmOrientCheck",
+            "Center Checkmarks",
             false,
-            "", CAT_ALL);
+            "Checkmarks will show closer to the center of rooms", CAT_ALL);
     public Option<Double> dmPlayerHeads = new Option(
             0.0,
-            "dmPlayerHeads",
+            "Player Icon Style",
             false,
-            "", CAT_ALL);
+            "Various player icon styles", CAT_ALL);
     public Option<Boolean> dmPlayerInterp = new Option(
             true,
-            "dmPlayerInterp",
+            "Interpolate Far Players",
             false,
-            "", CAT_ALL);
+            "Will make players far away move smoothly", CAT_ALL);
     public Option<Double> dmCompat = new Option(
             0.0,
-            "dmCompat",
+            "OpenGL Compatibility",
             false,
-            "", CAT_ALL);
+            "Compatiblity options for people with bad computers. ONLY use this if you know what you are doing, otherwise the map will look worse", CAT_ALL);
     public Option<String> dmBackgroundColour = new Option(
             "00:170:75:75:75",
-            "dmBackgroundColour",
+            "Background Colour",
             false,
-            "", FLAG_COLOUR, CAT_ALL);
+            "Colour of the map background. Supports opacity & chroma", FLAG_COLOUR, CAT_ALL);
     public Option<String> dmBorderColour = new Option(
             "00:0:0:0:0",
-            "dmBorderColour",
+            "Border Colour",
             false,
-            "", FLAG_COLOUR, CAT_ALL);
+            "Colour of the map border. Supports opacity & chroma. Turn off custom borders to see", FLAG_COLOUR, CAT_ALL);
     public Option<Boolean> dmChromaBorder = new Option(
             false,
-            "dmChromaBorder",
+            "Chroma Border Mode",
             false,
-            "", CAT_ALL);
+            "Applies a hue offset around the map border", CAT_ALL);
     public Option<Double> dmBackgroundBlur = new Option(
             3.0,
-            "dmBackgroundBlur",
+            "Background Blur Factor",
             false,
-            "", CAT_ALL);
+            "Changes the blur factor behind the map. Set to 0 to disable blur", CAT_ALL);
     public Option<Double> dmCenterX = new Option(
             8.5,
-            "dmCenterX",
+            "Center X (%)",
             false,
-            "", CAT_ALL);
+            "The horizontal position of the map", CAT_ALL);
     public Option<Double> dmCenterY = new Option(
             15.0,
-            "dmCenterY",
+            "Center Y (%)",
             false,
-            "", CAT_ALL);
+            "The vertical position of the map", CAT_ALL);
 
     private ArrayList<String> createDefaultQuickCommands() {
         ArrayList<String> arr = new ArrayList<>();
@@ -575,12 +599,13 @@ public class Options {
         tryAddOption(disableDungeonBlocks, options);
         tryAddOption(missingEnchantList, options);
         tryAddOption(accessoryBagOverlay, options);
+        tryAddOption(rodColours, options);
+        tryAddOption(neuAuctionHouse, options);
         //Sliders
         tryAddOption(paneGuiScale, options);
         tryAddOption(smoothAoteMillis, options);
         tryAddOption(bgBlurFactor, options);
         tryAddOption(ahNotification, options);
-        tryAddOption(itemHighlightOpacity, options);
         tryAddOption(panePadding, options);
         tryAddOption(tooltipBorderOpacity, options);
         tryAddOption(dynamicMenuBackgroundStyle, options);
@@ -593,6 +618,8 @@ public class Options {
         tryAddOption(itemFavouriteColour, options);
         tryAddOption(treecapOverlayColour, options);
         tryAddOption(wandOverlayColour, options);
+        tryAddOption(selfRodLineColour, options);
+        tryAddOption(otherRodLineColour, options);
 
         tryAddOption(dungCrackedColour, options);
         tryAddOption(dungDispenserColour, options);

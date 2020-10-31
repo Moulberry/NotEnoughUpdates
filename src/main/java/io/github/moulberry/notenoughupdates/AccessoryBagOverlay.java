@@ -64,6 +64,17 @@ public class AccessoryBagOverlay {
     private static int currentTab = TAB_BASIC;
 
     public static boolean mouseClick() {
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+            String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if(!containerName.trim().startsWith("Accessory Bag")) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
         if(!Mouse.getEventButtonState()) return false;
         try {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());

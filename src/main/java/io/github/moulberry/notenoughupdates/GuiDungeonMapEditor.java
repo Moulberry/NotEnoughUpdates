@@ -78,12 +78,31 @@ public class GuiDungeonMapEditor extends GuiScreen {
         private int y;
         private String text;
         private Color colour = new Color(-1, true);
+        private Options.Option<?> option;
 
         public Button(int id, int x, int y, String text) {
+            this(id, x, y, text, null);
+        }
+
+        public Button(int id, int x, int y, String text, Options.Option<?> option) {
             this.id = id;
             this.x = x;
             this.y = y;
             this.text = text;
+            this.option = option;
+        }
+
+        public List<String> getTooltip() {
+            if(option == null) {
+                return null;
+            }
+
+            List<String> tooltip = new ArrayList<>();
+            tooltip.add(EnumChatFormatting.YELLOW+option.displayName);
+            for(String line : option.desc.split("\n")) {
+                tooltip.add(EnumChatFormatting.AQUA+line);
+            }
+            return tooltip;
         }
 
         public void render() {
@@ -107,54 +126,58 @@ public class GuiDungeonMapEditor extends GuiScreen {
     }
 
     public GuiDungeonMapEditor() {
+        Options options = NotEnoughUpdates.INSTANCE.manager.config;
         //Map Border Size
-        buttons.add(new Button(0, 6, 37, "Small"));
-        buttons.add(new Button(1, 52, 37, "Medium"));
-        buttons.add(new Button(2, 98, 37, "Large"));
+        buttons.add(new Button(0, 6, 37, "Small", options.dmBorderSize));
+        buttons.add(new Button(1, 52, 37, "Medium", options.dmBorderSize));
+        buttons.add(new Button(2, 98, 37, "Large", options.dmBorderSize));
 
         //Map Rooms Size
-        buttons.add(new Button(3, 6, 67, "Small"));
-        buttons.add(new Button(4, 52, 67, "Medium"));
-        buttons.add(new Button(5, 98, 67, "Large"));
+        buttons.add(new Button(3, 6, 67+19, "Small", options.dmRoomSize));
+        buttons.add(new Button(4, 52, 67+19, "Medium", options.dmRoomSize));
+        buttons.add(new Button(5, 98, 67+19, "Large", options.dmRoomSize));
 
         //Map Border Styles
-        buttons.add(new Button(6, 6, 97, "Default"));
-        buttons.add(new Button(7, 52, 97, "Custom"));
-        buttons.add(new Button(8, 98, 97, "Stone"));
-        buttons.add(new Button(9, 6, 116, "Wood"));
-        buttons.add(new Button(10, 52, 116, "Rustic(S)"));
-        buttons.add(new Button(11, 98, 116, "Rustic(C)"));
-        buttons.add(new Button(12, 6, 135, "Fade"));
-        buttons.add(new Button(13, 52, 135, "Ribbons"));
-        buttons.add(new Button(14, 98, 135, "Paper"));
-        buttons.add(new Button(15, 6, 154, "Crimson"));
-        buttons.add(new Button(16, 52, 154, "Ornate"));
-        buttons.add(new Button(17, 98, 154, "Dragon"));
+        buttons.add(new Button(6, 6, 97+38, "None"));
+        buttons.add(new Button(7, 52, 97+38, "Custom"));
+        buttons.add(new Button(8, 98, 97+38, "Stone"));
+        buttons.add(new Button(9, 6, 116+38, "Wood"));
+        buttons.add(new Button(10, 52, 116+38, "Rustic(S)"));
+        buttons.add(new Button(11, 98, 116+38, "Rustic(C)"));
+        buttons.add(new Button(12, 6, 135+38, "Fade"));
+        buttons.add(new Button(13, 52, 135+38, "Ribbons"));
+        buttons.add(new Button(14, 98, 135+38, "Paper"));
+        buttons.add(new Button(15, 6, 154+38, "Crimson"));
+        buttons.add(new Button(16, 52, 154+38, "Ornate"));
+        buttons.add(new Button(17, 98, 154+38, "Dragon"));
 
         //Dungeon Map
-        buttons.add(new Button(18, 20+139, 36, "Yes/No"));
+        buttons.add(new Button(18, 20+139, 36, "Yes/No", options.dmEnable));
         //Center
-        buttons.add(new Button(19, 84+139, 36, "Player/Map"));
+        buttons.add(new Button(19, 84+139, 36, "Player/Map", options.dmCenterPlayer));
         //Rotate
-        buttons.add(new Button(20, 20+139, 65, "Player/No Rotate"));
+        buttons.add(new Button(20, 20+139, 65, "Player/No Rotate", options.dmRotatePlayer));
         //Icon Style
-        buttons.add(new Button(21, 84+139, 65, "Default/Heads"));
+        buttons.add(new Button(21, 84+139, 65, "Default/Heads", options.dmPlayerHeads));
         //Check Orient
-        buttons.add(new Button(22, 20+139, 94, "Normal/Reorient"));
+        buttons.add(new Button(22, 20+139, 94, "Normal/Reorient", options.dmOrientCheck));
         //Check Center
-        buttons.add(new Button(23, 84+139, 94, "Yes/No"));
+        buttons.add(new Button(23, 84+139, 94, "Yes/No", options.dmCenterCheck));
         //Interpolation
-        buttons.add(new Button(24, 20+139, 123, "Yes/No"));
+        buttons.add(new Button(24, 20+139, 123, "Yes/No", options.dmPlayerInterp));
         //Compatibility
-        buttons.add(new Button(25, 84+139, 123, "Normal/No SHD/No FB/SHD"));
+        buttons.add(new Button(25, 84+139, 123, "Normal/No SHD/No FB/SHD", options.dmCompat));
 
         //Background
-        buttons.add(new Button(26, 20+139, 152, ""));
+        buttons.add(new Button(26, 20+139, 152, "", options.dmBackgroundColour));
         //Border
-        buttons.add(new Button(27, 84+139, 152, ""));
+        buttons.add(new Button(27, 84+139, 152, "", options.dmBorderColour));
 
-        //Compatibility
-        buttons.add(new Button(28, 84+139, 181, "Normal/Scroll"));
+        //Chroma Mode
+        buttons.add(new Button(28, 84+139, 181, "Normal/Scroll", options.dmChromaBorder));
+
+        buttons.add(new Button(29, 52, 86+19, "XLarge", options.dmRoomSize));
+        buttons.add(new Button(30, 52, 56, "XLarge", options.dmBorderSize));
 
         xField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.manager.config.dmCenterX.value));
         yField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.manager.config.dmCenterY.value));
@@ -171,6 +194,58 @@ public class GuiDungeonMapEditor extends GuiScreen {
         ScaledResolution scaledResolution = Utils.pushGuiScale(2);
         this.width = scaledResolution.getScaledWidth();
         this.height = scaledResolution.getScaledHeight();
+
+        mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
+        mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+
+        List<String> tooltipToDisplay = null;
+        for(Button button : buttons) {
+            if(mouseX >= guiLeft+button.x && mouseX <= guiLeft+button.x+48 &&
+                    mouseY >= guiTop+button.y-13 && mouseY <= guiTop+button.y+16) {
+                if(button.id >= 6 && button.id <= 17) {
+                    String mapDesc = null;
+                    String mapCredit = null;
+                    int id = button.id;
+                    switch(id) {
+                        case 6:
+                            mapDesc = "No Border"; break;
+                        case 7:
+                            mapDesc = "Used by custom Resource Packs"; break;
+                        case 8:
+                            mapDesc = "Simple gray border"; mapCredit = "TomEngMaster"; break;
+                        case 9:
+                            mapDesc = "Viney wood border"; mapCredit = "iDevil4Hell"; break;
+                        case 10:
+                            mapDesc = "Steampunk-inspired square border"; mapCredit = "ThatGravyBoat"; break;
+                        case 11:
+                            mapDesc = "Steampunk-inspired circular border"; mapCredit = "ThatGravyBoat"; break;
+                        case 12:
+                            mapDesc = "Light fade border"; mapCredit = "Qwiken"; break;
+                        case 13:
+                            mapDesc = "Simple gray border with red ribbons"; mapCredit = "Sai"; break;
+                        case 14:
+                            mapDesc = "Paper border"; mapCredit = "KingJames02st"; break;
+                        case 15:
+                            mapDesc = "Nether-inspired border"; break;
+                        case 16:
+                            mapDesc = "Golden ornate border"; mapCredit = "iDevil4Hell"; break;
+                        case 17:
+                            mapDesc = "Stone dragon border"; mapCredit = "ImperiaL"; break;
+                    }
+
+                    ArrayList<String> tooltip = new ArrayList<>();
+                    tooltip.add(EnumChatFormatting.YELLOW+"Border Style");
+                    tooltip.add(EnumChatFormatting.AQUA+"Customize the look of the dungeon border");
+                    tooltip.add("");
+                    if(mapDesc != null) tooltip.add(EnumChatFormatting.YELLOW+"Set to: "+EnumChatFormatting.AQUA+mapDesc);
+                    if(mapCredit != null) tooltip.add(EnumChatFormatting.YELLOW+"Artist: "+EnumChatFormatting.GOLD+mapCredit);
+                    tooltipToDisplay = tooltip;
+                } else {
+                    tooltipToDisplay = button.getTooltip();
+                }
+                break;
+            }
+        }
 
         this.sizeX = 431;
         this.sizeY = 237;
@@ -192,9 +267,9 @@ public class GuiDungeonMapEditor extends GuiScreen {
         Utils.drawStringCenteredScaledMaxWidth("Map Border Size", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+76, guiTop+30, false, 137, 0xFFB4B4B4);
         Utils.drawStringCenteredScaledMaxWidth("Map Rooms Size", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+76, guiTop+60, false, 137, 0xFFB4B4B4);
+                guiLeft+76, guiTop+60+19, false, 137, 0xFFB4B4B4);
         Utils.drawStringCenteredScaledMaxWidth("Map Border Style", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+76, guiTop+90, false, 137, 0xFFB4B4B4);
+                guiLeft+76, guiTop+90+38, false, 137, 0xFFB4B4B4);
 
         Utils.drawStringCenteredScaledMaxWidth("Dungeon Map", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+44+139, guiTop+30, false, 60, 0xFFB4B4B4);
@@ -234,11 +309,11 @@ public class GuiDungeonMapEditor extends GuiScreen {
         Options options = NotEnoughUpdates.INSTANCE.manager.config;
         buttons.get(18).text = options.dmEnable.value ? "Enabled" : "Disabled";
         buttons.get(19).text = options.dmCenterPlayer.value ? "Player" : "Map";
-        buttons.get(20).text = options.dmRotatePlayer.value ? "Player" : "No Rotate";
+        buttons.get(20).text = options.dmRotatePlayer.value ? "Player" : "Vertical";
         buttons.get(21).text = options.dmPlayerHeads.value <= 0 ? "Default" : options.dmPlayerHeads.value >= 3 ? "SmallHeads" :
                 options.dmPlayerHeads.value == 1 ? "Heads" : "ScaledHeads";
-        buttons.get(22).text = options.dmOrientCheck.value ? "Orient" : "Default";
-        buttons.get(23).text = options.dmCenterCheck.value ? "Center" : "Default";
+        buttons.get(22).text = options.dmOrientCheck.value ? "Orient" : "Off";
+        buttons.get(23).text = options.dmCenterCheck.value ? "Center" : "Off";
         buttons.get(24).text = options.dmPlayerInterp.value ? "Interp" : "No Interp";
         buttons.get(25).text = options.dmCompat.value <= 0 ? "Normal" : options.dmCompat.value >= 2 ? "No FB/SHD" : "No SHD";
 
@@ -267,6 +342,11 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
         for(Button button : buttons) {
             button.render();
+        }
+
+        //List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font
+        if(tooltipToDisplay != null) {
+            Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, 200, Minecraft.getMinecraft().fontRendererObj);
         }
 
         if(activeColourEditor != null) {
@@ -596,12 +676,16 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 options.dmBorderSize.value = 1.0; break;
             case 2:
                 options.dmBorderSize.value = 2.0; break;
+            case 30:
+                options.dmBorderSize.value = 3.0; break;
             case 3:
                 options.dmRoomSize.value = 0.0; break;
             case 4:
                 options.dmRoomSize.value = 1.0; break;
             case 5:
                 options.dmRoomSize.value = 2.0; break;
+            case 29:
+                options.dmRoomSize.value = 3.0; break;
             case 18:
                 options.dmEnable.value = !options.dmEnable.value; break;
             case 19:
@@ -638,12 +722,17 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
     private boolean isButtonPressed(int id) {
         Options options = NotEnoughUpdates.INSTANCE.manager.config;
+
         if(id >= 0 && id <= 2) {
             return options.dmBorderSize.value == id;
         } else if(id >= 3 && id <= 5) {
             return options.dmRoomSize.value == id-3;
         } else if(id >= 6 && id <= 17) {
             return options.dmBorderStyle.value == id-6;
+        } else if(id == 29) {
+            return options.dmRoomSize.value == 3;
+        } else if(id == 30) {
+            return options.dmBorderSize.value == 3;
         }
         return false;
     }

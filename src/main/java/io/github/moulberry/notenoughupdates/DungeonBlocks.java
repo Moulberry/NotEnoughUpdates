@@ -39,7 +39,7 @@ public class DungeonBlocks implements IResourceManagerReloadListener {
     }
 
     public static boolean isInDungeons() {
-        return false && !NotEnoughUpdates.INSTANCE.manager.config.disableDungeonBlocks.value &&
+        return !NotEnoughUpdates.INSTANCE.manager.config.disableDungeonBlocks.value &&
                 (NotEnoughUpdates.INSTANCE.manager.config.dungeonBlocksEverywhere.value ||
                 (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon")));
     }

@@ -102,10 +102,12 @@ public abstract class MixinGuiContainer {
     public void handleMouseClick(Slot slotIn, int slotId, int clickedButton, int clickType, CallbackInfo ci) {
         if(slotIn != null && BetterContainers.isOverriding() && (BetterContainers.isBlankStack(slotIn.getStack()) ||
                 BetterContainers.isButtonStack(slotIn.getStack()))) {
+            System.out.println("handling click");
             BetterContainers.clickSlot(slotIn.getSlotIndex());
             Utils.playPressSound();
 
             if(BetterContainers.isBlankStack(slotIn.getStack())) {
+                System.out.println("cancelling click");
                 GuiContainer $this = (GuiContainer)(Object)this;
                 $this.mc.playerController.windowClick($this.inventorySlots.windowId, slotId, 2, clickType, $this.mc.thePlayer);
                 ci.cancel();
