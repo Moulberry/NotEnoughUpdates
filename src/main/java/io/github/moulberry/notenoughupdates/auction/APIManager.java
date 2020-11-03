@@ -228,15 +228,9 @@ public class APIManager {
     }
 
     public int getLowestBin(String internalname) {
-        if(internalname.contains("AUGER")) {
-            System.out.println("Tried to get auger!");
-        }
         if(lowestBins != null && lowestBins.has(internalname)) {
             JsonElement e = lowestBins.get(internalname);
             if(e.isJsonPrimitive() && e.getAsJsonPrimitive().isNumber()) {
-                if(internalname.contains("AUGER")) {
-                    System.out.println("s:"+e.getAsInt());
-                }
                 return e.getAsInt();
             }
         }
@@ -245,7 +239,12 @@ public class APIManager {
 
     public void updateLowestBin() {
         manager.hypixelApi.getMyApiGZIPAsync("lowestbin.json.gz", (jsonObject) -> {
-            lowestBins = jsonObject;
+            if(lowestBins == null) {
+                lowestBins = new JsonObject();
+            }
+            for(Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
+                lowestBins.add(entry.getKey(), entry.getValue());
+            }
         }, () -> {});
     }
 

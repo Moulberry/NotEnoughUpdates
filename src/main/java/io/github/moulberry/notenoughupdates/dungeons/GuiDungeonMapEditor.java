@@ -1,9 +1,8 @@
-package io.github.moulberry.notenoughupdates;
+package io.github.moulberry.notenoughupdates.dungeons;
 
-import io.github.moulberry.notenoughupdates.infopanes.SettingsInfoPane;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.options.Options;
-import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -226,7 +225,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
                         case 14:
                             mapDesc = "Paper border"; mapCredit = "KingJames02st"; break;
                         case 15:
-                            mapDesc = "Nether-inspired border"; break;
+                            mapDesc = "Nether-inspired border"; mapCredit = "DTRW191"; break;
                         case 16:
                             mapDesc = "Golden ornate border"; mapCredit = "iDevil4Hell"; break;
                         case 17:
@@ -598,7 +597,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
                         }
                     }
 
-                    Utils.pushGuiScale(-1);
+                    try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
                     return;
                 }
             }
@@ -643,6 +642,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
             try {
                 xField.setCustomBorderColour(-1);
                 NotEnoughUpdates.INSTANCE.manager.config.dmCenterX.setValue(xField.getText());
+                try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
             } catch(Exception e) {
                 xField.setCustomBorderColour(Color.RED.getRGB());
             }
@@ -652,6 +652,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
             try {
                 yField.setCustomBorderColour(-1);
                 NotEnoughUpdates.INSTANCE.manager.config.dmCenterY.setValue(yField.getText());
+                try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
             } catch(Exception e) {
                 yField.setCustomBorderColour(Color.RED.getRGB());
             }
@@ -661,6 +662,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
             try {
                 blurField.setCustomBorderColour(-1);
                 NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.setValue(blurField.getText());
+                try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
             } catch(Exception e) {
                 blurField.setCustomBorderColour(Color.RED.getRGB());
             }

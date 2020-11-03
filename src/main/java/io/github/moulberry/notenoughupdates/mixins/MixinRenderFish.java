@@ -60,75 +60,80 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
                 GlStateManager.disableRescaleNormal();
                 GlStateManager.popMatrix();
 
-                if (entity.angler != null) {
+                double playerVecX;
+                double playerVecY;
+                double playerVecZ;
+                double startY;
+                if(this.renderManager.options.thirdPersonView == 0 && entity.angler == Minecraft.getMinecraft().thePlayer) {
                     float f7 = entity.angler.getSwingProgress(partialTicks);
-                    float f8 = MathHelper.sin(MathHelper.sqrt_float(f7) * (float)Math.PI);
+                    float sqrtSinSwing = MathHelper.sin(MathHelper.sqrt_float(f7) * (float)Math.PI);
 
-                    double d0;
-                    double d1;
-                    double d2;
-                    double d3;
-                    if(this.renderManager.options.thirdPersonView == 0 && entity.angler == Minecraft.getMinecraft().thePlayer) {
-                        double fov = this.renderManager.options.fovSetting;
-                        fov = fov / 90.0;
-                        double xFactor = 0.5 + 0.55*((fov-0.333)/0.889);
-                        Vec3 vec3 = new Vec3(-xFactor * fov, -0.045D * fov, 0.4D);
-                        vec3 = vec3.rotatePitch(-(entity.angler.prevRotationPitch + (entity.angler.rotationPitch - entity.angler.prevRotationPitch) * partialTicks) * (float)Math.PI / 180.0F);
-                        vec3 = vec3.rotateYaw(-(entity.angler.prevRotationYaw + (entity.angler.rotationYaw - entity.angler.prevRotationYaw) * partialTicks) * (float)Math.PI / 180.0F);
-                        vec3 = vec3.rotateYaw(f8 * 0.5F);
-                        vec3 = vec3.rotatePitch(-f8 * 0.7F);
-                        d0 = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * (double)partialTicks + vec3.xCoord;
-                        d1 = entity.angler.prevPosY + (entity.angler.posY - entity.angler.prevPosY) * (double)partialTicks + vec3.yCoord;
-                        d2 = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * (double)partialTicks + vec3.zCoord;
-                        d3 = entity.angler.getEyeHeight();
-                    } else {
-                        float f9 = (entity.angler.prevRenderYawOffset + (entity.angler.renderYawOffset - entity.angler.prevRenderYawOffset) * partialTicks) * (float)Math.PI / 180.0F;
-                        double d4 = MathHelper.sin(f9);
-                        double d6 = MathHelper.cos(f9);
-                        d0 = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * (double)partialTicks - d6 * 0.35D - d4 * 0.8D;
-                        d1 = entity.angler.prevPosY + entity.angler.getEyeHeight() + (entity.angler.posY - entity.angler.prevPosY) * (double)partialTicks - 0.45D;
-                        d2 = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * (double)partialTicks - d4 * 0.35D + d6 * 0.8D;
-                        d3 = entity.angler.isSneaking() ? -0.1875D : 0.0D;
-                    }
+                    double decimalFov = (this.renderManager.options.fovSetting / 110.0D);
+                    Vec3 fppOffset = new Vec3((-decimalFov + (decimalFov / 2.5) - (decimalFov / 8)) + 0.025, -0.045D * (this.renderManager.options.fovSetting / 100.0D), 0.4D);
+                    fppOffset = fppOffset.rotatePitch(-mathLerp(partialTicks, entity.angler.prevRotationPitch, entity.angler.rotationPitch) * ((float)Math.PI / 180.0F));
+                    fppOffset = fppOffset.rotateYaw(-mathLerp(partialTicks, entity.angler.prevRotationYaw, entity.angler.rotationYaw) * ((float)Math.PI / 180.0F));
+                    fppOffset = fppOffset.rotateYaw(sqrtSinSwing * 0.5F);
+                    fppOffset = fppOffset.rotatePitch(-sqrtSinSwing * 0.7F);
 
-                    double d13 = entity.prevPosX + (entity.posX - entity.prevPosX) * (double)partialTicks;
-                    double d5 = entity.prevPosY + (entity.posY - entity.prevPosY) * (double)partialTicks + 0.25D;
-                    double d7 = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * (double)partialTicks;
-                    double d9 = (double)((float)(d0 - d13));
-                    double d11 = (double)((float)(d1 - d5)) + d3;
-                    double d12 = (double)((float)(d2 - d7));
-                    GlStateManager.disableTexture2D();
-                    GlStateManager.disableLighting();
-                    GlStateManager.enableBlend();
-                    GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
-                    worldrenderer.begin(3, DefaultVertexFormats.POSITION_COLOR);
-
-                    String specialColour;
-                    if (entity.angler.getUniqueID().equals(Minecraft.getMinecraft().thePlayer.getUniqueID())) {
-                        specialColour = NotEnoughUpdates.INSTANCE.manager.config.selfRodLineColour.value;
-                    } else {
-                        specialColour = NotEnoughUpdates.INSTANCE.manager.config.otherRodLineColour.value;
-                    }
-                    int colourI = SpecialColour.specialToChromaRGB(specialColour);
-
-                    for (int l = 0; l <= 16; ++l) {
-                        if(SpecialColour.getSpeed(specialColour) > 0) { //has chroma
-                            colourI = SpecialColour.rotateHue(colourI, 10);
-                        }
-                        Color colour = new Color(colourI, true);
-
-                        float f10 = (float)l / 16.0F;
-                        worldrenderer.pos(x + d9 * (double)f10, y + d11 * (double)(f10 * f10 + f10) * 0.5D + 0.25D, z + d12 * (double)f10)
-                                     .color(colour.getRed(), colour.getGreen(), colour.getBlue(), colour.getAlpha()).endVertex();
-                    }
-
-                    tessellator.draw();
-                    GlStateManager.disableBlend();
-                    GlStateManager.enableLighting();
-                    GlStateManager.enableTexture2D();
+                    playerVecX = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * (double)partialTicks + fppOffset.xCoord;
+                    playerVecY = entity.angler.prevPosY + (entity.angler.posY - entity.angler.prevPosY) * (double)partialTicks + fppOffset.yCoord;
+                    playerVecZ = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * (double)partialTicks + fppOffset.zCoord;
+                    startY = entity.angler.getEyeHeight();
+                } else {
+                    float angle = (entity.angler.prevRenderYawOffset + (entity.angler.renderYawOffset - entity.angler.prevRenderYawOffset) * partialTicks) * (float)Math.PI / 180.0F;
+                    double d4 = MathHelper.sin(angle);
+                    double d6 = MathHelper.cos(angle);
+                    playerVecX = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * (double)partialTicks - d6 * 0.35D - d4 * 0.8D;
+                    playerVecY = entity.angler.prevPosY + entity.angler.getEyeHeight() + (entity.angler.posY - entity.angler.prevPosY) * (double)partialTicks - 0.45D;
+                    playerVecZ = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * (double)partialTicks - d4 * 0.35D + d6 * 0.8D;
+                    startY = entity.angler.isSneaking() ? -0.1875D : 0.0D;
                 }
+
+                double d13 = entity.prevPosX + (entity.posX - entity.prevPosX) * (double)partialTicks;
+                double d5 = entity.prevPosY + (entity.posY - entity.prevPosY) * (double)partialTicks + 0.25D;
+                double d7 = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * (double)partialTicks;
+                double d9 = (double)((float)(playerVecX - d13));
+                double d11 = (double)((float)(playerVecY - d5)) + startY;
+                double d12 = (double)((float)(playerVecZ - d7));
+                GlStateManager.disableTexture2D();
+                GlStateManager.disableLighting();
+                GlStateManager.enableBlend();
+                GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                worldrenderer.begin(3, DefaultVertexFormats.POSITION_COLOR);
+
+                String specialColour;
+                if (entity.angler.getUniqueID().equals(Minecraft.getMinecraft().thePlayer.getUniqueID())) {
+                    specialColour = NotEnoughUpdates.INSTANCE.manager.config.selfRodLineColour.value;
+                } else {
+                    specialColour = NotEnoughUpdates.INSTANCE.manager.config.otherRodLineColour.value;
+                }
+                int colourI = SpecialColour.specialToChromaRGB(specialColour);
+
+                for (int l = 0; l <= 16; ++l) {
+                    if(SpecialColour.getSpeed(specialColour) > 0) { //has chroma
+                        colourI = SpecialColour.rotateHue(colourI, 10);
+                    }
+                    Color colour = new Color(colourI, true);
+
+                    float f10 = (float)l / 16.0F;
+                    worldrenderer.pos(x + d9 * (double)f10, y + d11 * (double)(f10 * f10 + f10) * 0.5D + 0.25D, z + d12 * (double)f10)
+                            .color(colour.getRed(), colour.getGreen(), colour.getBlue(), colour.getAlpha()).endVertex();
+                }
+
+                tessellator.draw();
+                GlStateManager.disableBlend();
+                GlStateManager.enableLighting();
+                GlStateManager.enableTexture2D();
             }
         }
+    }
+
+    private static float mathLerp(float var1, float var2, float var3) {
+        return var2 + var1 * (var3 - var2);
+    }
+
+    private static double mathLerp(double var1, double var2, double var3) {
+        return var2 + var1 * (var3 - var2);
     }
 
 }

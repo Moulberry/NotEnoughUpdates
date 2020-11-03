@@ -1,7 +1,9 @@
-package io.github.moulberry.notenoughupdates;
+package io.github.moulberry.notenoughupdates.dungeons;
 
 import com.google.common.math.BigIntegerMath;
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.NEUResourceManager;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.questing.SBInfo;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -76,8 +78,6 @@ public class DungeonMap {
     private static final ResourceLocation DIVIDER_BROWN = new ResourceLocation("notenoughupdates:dungeon_map/dividers_default/brown_divider.png");
 
     private static final ResourceLocation CORNER_BROWN = new ResourceLocation("notenoughupdates:dungeon_map/corners_default/brown_corner.png");
-
-    private static final ResourceLocation BORDER_STEAMPUNK = new ResourceLocation("notenoughupdates:dungeon_map/borders/steampunk.png");
 
     private final HashMap<RoomOffset, Room> roomMap = new HashMap<>();
     private Color[][] colourMap = new Color[128][128];
@@ -391,8 +391,6 @@ public class DungeonMap {
     }
 
     public void render(int centerX, int centerY) {
-        ScaledResolution scaledResolution = Utils.pushGuiScale(2);
-
         boolean useFb = NotEnoughUpdates.INSTANCE.manager.config.dmCompat.value <= 1;
         boolean useShd = NotEnoughUpdates.INSTANCE.manager.config.dmCompat.value <= 0;
 
@@ -405,6 +403,8 @@ public class DungeonMap {
                     Minecraft.getMinecraft().fontRendererObj, centerX, centerY+10, true, 0);
             return;
         }
+
+        ScaledResolution scaledResolution = Utils.pushGuiScale(2);
 
         int minRoomX = 999;
         int minRoomY = 999;
@@ -1311,10 +1311,10 @@ public class DungeonMap {
 
     @SubscribeEvent(priority=EventPriority.HIGH)
     public void onRenderOverlayPre(RenderGameOverlayEvent.Pre event) {
-        if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
-            if(NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.value > 0.1) {
-                blurBackground();
-            }
+        if(event.type == RenderGameOverlayEvent.ElementType.ALL &&
+                NotEnoughUpdates.INSTANCE.manager.config.dmEnable.value &&
+                NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.value > 0.1) {
+            blurBackground();
             GlStateManager.enableBlend();
             GlStateManager.enableTexture2D();
         }
@@ -1323,6 +1323,8 @@ public class DungeonMap {
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent event) {
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
+            if(!NotEnoughUpdates.INSTANCE.manager.config.dmEnable.value) return;
+
             if(SBInfo.getInstance().getLocation() == null || !SBInfo.getInstance().getLocation().equals("dungeon")) {
                 return;
             }
@@ -1520,9 +1522,10 @@ public class DungeonMap {
         }
         if(blurShaderHorz != null && blurShaderVert != null) {
             float blur = NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.value.floatValue();
+            blur = Math.max(0, Math.min(50, blur));
             if(blur != lastBgBlurFactor) {
-                blurShaderHorz.getShaderManager().getShaderUniform("Radius").set((float)blur);
-                blurShaderVert.getShaderManager().getShaderUniform("Radius").set((float)blur);
+                blurShaderHorz.getShaderManager().getShaderUniform("Radius").set(blur);
+                blurShaderVert.getShaderManager().getShaderUniform("Radius").set(blur);
                 lastBgBlurFactor = blur;
             }
             GL11.glPushMatrix();
@@ -1530,7 +1533,6 @@ public class DungeonMap {
             blurShaderVert.loadShader(0);
             GlStateManager.enableDepth();
             GL11.glPopMatrix();
-
             Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
         }
     }

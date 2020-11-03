@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
+import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
+import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
@@ -38,7 +40,6 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -120,6 +121,9 @@ public class NEUEventListener {
         }
     }
 
+    private long notificationDisplayMillis = 0;
+    private List<String> notificationLines = null;
+
     /**
      * 1)Will send the cached message from #sendChatMessage when at least 200ms has passed since the last message.
      * This is used in order to prevent the mod spamming messages.
@@ -134,21 +138,20 @@ public class NEUEventListener {
         if(event.phase != TickEvent.Phase.START) return;
 
         boolean longUpdate = false;
-        boolean veryLongUpdate = false;
         long currentTime = System.currentTimeMillis();
         if(currentTime - lastLongUpdate > 1000) {
             longUpdate = true;
             lastLongUpdate = currentTime;
         }
-        if(longUpdate && currentTime - lastVeryLongUpdate > 10000) {
-            veryLongUpdate = true;
-            lastVeryLongUpdate = currentTime;
-        }
-        if(veryLongUpdate) {
-            DungeonBlocks.reset();
-        }
-        if(longUpdate) {
+        if(!NotEnoughUpdates.INSTANCE.manager.config.slowDungeonBlocks.value) {
             DungeonBlocks.tick();
+        }
+        DungeonWin.tick();
+        if(longUpdate) {
+            if(NotEnoughUpdates.INSTANCE.manager.config.slowDungeonBlocks.value) {
+                DungeonBlocks.tick();
+            }
+
             neu.updateSkyblockScoreboard();
             CapeManager.getInstance().tick();
 
@@ -177,6 +180,18 @@ public class NEUEventListener {
                         displayUpdateMessageIfOutOfDate();
                     }
 
+                    long maxMemoryMB = Runtime.getRuntime().maxMemory()/1024L/1024L;
+                    if(maxMemoryMB > 4100) {
+                        notificationDisplayMillis = System.currentTimeMillis();
+                        notificationLines = new ArrayList<>();
+                        notificationLines.add(EnumChatFormatting.DARK_RED+"Too much memory allocated!");
+                        notificationLines.add(String.format(EnumChatFormatting.DARK_GRAY+"NEU has detected %03dMB of memory allocated to Minecraft!", maxMemoryMB));
+                        notificationLines.add(EnumChatFormatting.DARK_GRAY+"It is recommended to allocated between 2-4GB of memory");
+                        notificationLines.add(EnumChatFormatting.DARK_GRAY+"More than 4GB WILL cause FPS issues, EVEN if you have 16GB+ available");
+                        notificationLines.add("");
+                        notificationLines.add(EnumChatFormatting.DARK_GRAY+"For more information, visit #ram-info in discord.gg/spr6ESn");
+                    }
+
                     if(!neu.manager.config.loadedModBefore.value) {
                         neu.manager.config.loadedModBefore.value = true;
                         try { neu.manager.saveConfig(); } catch(IOException e) {}
@@ -203,7 +218,7 @@ public class NEUEventListener {
         }
         if(longUpdate && neu.hasSkyblockScoreboard()) {
             if(neu.manager.getCurrentProfile() == null || neu.manager.getCurrentProfile().length() == 0) {
-                ProfileViewer.Profile profile = neu.profileViewer.getProfile(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
+                ProfileViewer.Profile profile = NotEnoughUpdates.profileViewer.getProfile(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
                         callback->{});
                 if(profile != null) {
                     String latest = profile.getLatestProfile();
@@ -294,6 +309,44 @@ public class NEUEventListener {
         if(event.type != null && event.type.equals(RenderGameOverlayEvent.ElementType.BOSSHEALTH) &&
                 Minecraft.getMinecraft().currentScreen instanceof GuiContainer && neu.overlay.isUsingMobsFilter()) {
             event.setCanceled(true);
+        }
+        long timeRemaining = 15000 - (System.currentTimeMillis() - notificationDisplayMillis);
+        if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
+            DungeonWin.render(event.partialTicks);
+        }
+        if(event.type == RenderGameOverlayEvent.ElementType.ALL &&
+                timeRemaining > 0 && notificationLines != null && notificationLines.size() > 0) {
+            int width = 0;
+            int height = notificationLines.size()*10+10;
+            
+            for(String line : notificationLines) {
+                int len = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line) + 8;
+                if(len > width) {
+                    width = len;
+                }
+            }
+
+            ScaledResolution sr = Utils.pushGuiScale(2);
+
+            int midX = sr.getScaledWidth()/2;
+            int topY = sr.getScaledHeight()*3/4-height/2;
+            Gui.drawRect(midX-width/2, sr.getScaledHeight()*3/4-height/2,
+                    midX+width/2, sr.getScaledHeight()*3/4+height/2, 0xFF3C3C3C);
+            Gui.drawRect(midX-width/2+2, sr.getScaledHeight()*3/4-height/2+2,
+                    midX+width/2-2, sr.getScaledHeight()*3/4+height/2-2, 0xFFC8C8C8);
+
+            Minecraft.getMinecraft().fontRendererObj.drawString((timeRemaining/1000)+"s", midX-width/2+3,
+                    topY+3, 0xFF000000, false);
+
+            Utils.drawStringCentered(notificationLines.get(0), Minecraft.getMinecraft().fontRendererObj,
+                    midX, topY+4+5, false, -1);
+            for(int i=1; i<notificationLines.size(); i++) {
+                String line = notificationLines.get(i);
+                Utils.drawStringCentered(line, Minecraft.getMinecraft().fontRendererObj,
+                        midX, topY+4+5+2+i*10, false, -1);
+            }
+
+            Utils.pushGuiScale(-1);
         }
     }
 
@@ -447,6 +500,8 @@ public class NEUEventListener {
      */
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onGuiChat(ClientChatReceivedEvent e) {
+        DungeonWin.onChatMessage(e);
+
         String r = null;
         String unformatted = Utils.cleanColour(e.message.getUnformattedText());
         if(unformatted.startsWith("You are playing on profile: ")) {
@@ -1368,36 +1423,32 @@ public class NEUEventListener {
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
                         }
                     }
-
                 } else if(hasBazaarPrice) {
+                    int stackMultiplier = 1;
+                    int shiftStackMultiplier = event.itemStack.stackSize > 1 ? event.itemStack.stackSize : 64;
                     if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-                        int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*64;
-                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy (Stack): "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
-                        int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*64;
-                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell (Stack): "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
-                        if(neu.manager.config.advancedPriceInfo.value) {
-                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*64;
-                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy (Stack): "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
-                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*64;
-                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell (Stack): "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
-                        }
+                        stackMultiplier = shiftStackMultiplier;
                     } else {
-                        event.toolTip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show stack]");
-                        int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat();
+                        event.toolTip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                    }
+                    if(bazaarInfo.has("avg_buy")) {
+                        int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*stackMultiplier;
                         event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
                                 EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
-                        int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat();
+                    }
+                    if(bazaarInfo.has("avg_sell")) {
+                        int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*stackMultiplier;
                         event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
                                 EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
-                        if(neu.manager.config.advancedPriceInfo.value) {
-                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat();
+                    }
+                    if(neu.manager.config.advancedPriceInfo.value) {
+                        if(bazaarInfo.has("curr_buy")) {
+                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*stackMultiplier;
                             event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
-                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat();
+                        }
+                        if(bazaarInfo.has("curr_sell")) {
+                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*stackMultiplier;
                             event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
                         }

@@ -11,6 +11,9 @@ import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.cosmetics.GuiCosmetics;
+import io.github.moulberry.notenoughupdates.dungeons.DungeonMap;
+import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
+import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
@@ -27,12 +30,6 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.resources.IReloadableResourceManager;
-import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -58,24 +55,18 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.text.translate.UnicodeUnescaper;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
-import javax.imageio.ImageIO;
-import javax.net.ssl.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -226,6 +217,16 @@ public class NotEnoughUpdates {
     SimpleCommand resetRepoCommand = new SimpleCommand("neuresetrepo", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             manager.resetRepo();
+        }
+    });
+
+    SimpleCommand dungeonWinTest = new SimpleCommand("neudungeonwintest", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(args.length > 0) {
+                DungeonWin.TEAM_SCORE = new ResourceLocation("notenoughupdates:dungeon_win/"+args[0].toLowerCase()+".png");
+            }
+
+            DungeonWin.displayWin();
         }
     });
 
@@ -846,11 +847,6 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new DungeonMap());
         //MinecraftForge.EVENT_BUS.register(new BetterPortals());
 
-        IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();
-        if(resourceManager instanceof IReloadableResourceManager) {
-            ((IReloadableResourceManager)resourceManager).registerReloadListener(new DungeonBlocks());
-        }
-
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         f.mkdirs();
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
@@ -872,6 +868,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(neumapCommand);
         ClientCommandHandler.instance.registerCommand(settingsCommand);
         ClientCommandHandler.instance.registerCommand(settingsCommand2);
+        ClientCommandHandler.instance.registerCommand(dungeonWinTest);
 
         manager = new NEUManager(this, f);
         manager.loadItemInformation();

@@ -2033,34 +2033,31 @@ public class NEUOverlay extends Gui {
                 }
 
             } else if(hasBazaarPrice) {
+                int stackMultiplier = 1;
+                int shiftStackMultiplier = 64;
                 if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-                    int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*64;
-                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy (Stack): "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
-                    int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*64;
-                    text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell (Stack): "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
-                    if(manager.config.advancedPriceInfo.value) {
-                        int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*64;
-                        text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy (Stack): "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
-                        int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*64;
-                        text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell (Stack): "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
-                    }
+                    stackMultiplier = shiftStackMultiplier;
                 } else {
-                    text.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show stack]");
-                    int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat();
+                    text.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                }
+                if(bazaarInfo.has("avg_buy")) {
+                    int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*stackMultiplier;
                     text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
                             EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
-                    int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat();
+                }
+                if(bazaarInfo.has("avg_sell")) {
+                    int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*stackMultiplier;
                     text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
                             EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
-                    if(manager.config.advancedPriceInfo.value) {
-                        int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat();
+                }
+                if(manager.config.advancedPriceInfo.value) {
+                    if(bazaarInfo.has("curr_buy")) {
+                        int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*stackMultiplier;
                         text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
                                 EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
-                        int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat();
+                    }
+                    if(bazaarInfo.has("curr_sell")) {
+                        int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*stackMultiplier;
                         text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
                                 EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
                     }

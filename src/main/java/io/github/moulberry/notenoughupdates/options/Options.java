@@ -1,18 +1,12 @@
 package io.github.moulberry.notenoughupdates.options;
 
 import com.google.gson.*;
-import io.github.moulberry.notenoughupdates.GuiDungeonMapEditor;
+import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
-import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.Util;
-import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.client.ForgeHooksClient;
-import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.io.*;
@@ -186,9 +180,16 @@ public class Options {
             "If true, will show the overlay for cracked bricks, etc. even when not in dungeons.", CAT_MISC);
     public Option<Boolean> disableDungeonBlocks = new Option(
             true,
-            "Disables the dungeon blocks feature",
+            "Disable the dungeon blocks feature",
             false,
             "If true, the dungeon block overlay will be disabled. WARNING: May cause memory/fps issues on some machines", CAT_FEATURES);
+    public Option<Boolean> slowDungeonBlocks = new Option(
+            false,
+            "Slowly Update Dungeon Block Textures",
+            false,
+            "If true, dungeon blocks will only update once every second.\n" +
+                    "Use this option if you are having performance\n" +
+                    "issues relating to the dungeon blocks.", CAT_MISC);
     public Option<Boolean> missingEnchantList = new Option(
             true,
             "Missing Enchant List",
@@ -256,6 +257,11 @@ public class Options {
             "SBMenu Button Style",
             false,
             "Style of the buttons used for the skyblock menu.", 0, 10, CAT_FEATURES);
+    public Option<Double> dungeonWinMillis = new Option(
+            5000.0,
+            "Dungeon Victory Screen Millis",
+            false,
+            "Changes how long the victory screen at the end of dungeons appears for. 0 = off", FLAG_INT, 0, 15000, CAT_SLIDERS);
 
     public Option<String> itemBackgroundColour = new Option(
             "00:255:100:100:100",
@@ -317,6 +323,12 @@ public class Options {
             "Dungeon Chest Colour",
             false,
             "Dungeon Chest Colour",
+            FLAG_COLOUR, CAT_COLOURS);
+    public Option<String> dungTrappedChestColour = new Option(
+            "0:255:0:163:36",
+            "Dungeon Trapped Chest Colour",
+            false,
+            "Dungeon Trapped Chest Colour",
             FLAG_COLOUR, CAT_COLOURS);
     public Option<String> dungBatColour = new Option(
             "0:255:12:255:0",
@@ -597,6 +609,7 @@ public class Options {
         tryAddOption(invAuctionPrice, options);
         tryAddOption(dungeonBlocksEverywhere, options);
         tryAddOption(disableDungeonBlocks, options);
+        tryAddOption(slowDungeonBlocks, options);
         tryAddOption(missingEnchantList, options);
         tryAddOption(accessoryBagOverlay, options);
         tryAddOption(rodColours, options);
@@ -610,6 +623,7 @@ public class Options {
         tryAddOption(tooltipBorderOpacity, options);
         tryAddOption(dynamicMenuBackgroundStyle, options);
         tryAddOption(dynamicMenuButtonStyle, options);
+        tryAddOption(dungeonWinMillis, options);
         //Text
         tryAddOption(apiKey, options);
         //Colour
@@ -626,6 +640,7 @@ public class Options {
         tryAddOption(dungLeverColour, options);
         tryAddOption(dungTripWireColour, options);
         tryAddOption(dungChestColour, options);
+        tryAddOption(dungTrappedChestColour, options);
         tryAddOption(dungBatColour, options);
 
         return options;

@@ -31,6 +31,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.potion.Potion;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
 import net.minecraftforge.fml.common.Loader;
@@ -57,6 +58,7 @@ import java.util.regex.Pattern;
 public class Utils {
 
     private static boolean hasEffectOverride = false;
+    public static boolean disableCustomDungColours = false;
     private static LinkedList<Integer> guiScales = new LinkedList<>();
     private static ScaledResolution lastScale = new ScaledResolution(Minecraft.getMinecraft());
     //Labymod compatibility
@@ -144,6 +146,7 @@ public class Utils {
     public static void drawItemStackWithoutGlint(ItemStack stack, int x, int y) {
         RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
 
+        disableCustomDungColours = true;
         RenderHelper.enableGUIStandardItemLighting();
         itemRender.zLevel = -145; //Negates the z-offset of the below method.
         hasEffectOverride = true;
@@ -153,6 +156,7 @@ public class Utils {
         hasEffectOverride = false;
         itemRender.zLevel = 0;
         RenderHelper.disableStandardItemLighting();
+        disableCustomDungColours = false;
     }
 
     public static void drawItemStackWithText(ItemStack stack, int x, int y, String text) {
@@ -160,12 +164,14 @@ public class Utils {
 
         RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
 
+        disableCustomDungColours = true;
         RenderHelper.enableGUIStandardItemLighting();
         itemRender.zLevel = -145; //Negates the z-offset of the below method.
         itemRender.renderItemAndEffectIntoGUI(stack, x, y);
         itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRendererObj, stack, x, y, text);
         itemRender.zLevel = 0;
         RenderHelper.disableStandardItemLighting();
+        disableCustomDungColours = false;
     }
 
     public static void drawItemStack(ItemStack stack, int x, int y) {

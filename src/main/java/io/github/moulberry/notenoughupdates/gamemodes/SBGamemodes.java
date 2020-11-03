@@ -111,7 +111,7 @@ public class SBGamemodes {
 
         public boolean isBanned(String inventoryName) {
             for(String banned : bannedInventories) {
-                if(inventoryName.contains(banned)) return true;
+                if(inventoryName.contains(banned + " ") || inventoryName.endsWith(banned)) return true;
             }
             return false;
         }
