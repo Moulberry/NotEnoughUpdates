@@ -135,10 +135,7 @@ public class SBGamemodes {
             return;
         }
 
-        try {
-            InputStream in = new FileInputStream(gamemodeFile);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(gamemodeFile), StandardCharsets.UTF_8))) {
             String line = reader.readLine();
             String decoded = decrypt(line);
             currentGamemode = gson.fromJson(decoded, GamemodeWrapper.class).currentGamemode;

@@ -148,9 +148,7 @@ public class NEUManager {
      * Parses a file in to a JsonObject.
      */
     public JsonObject getJsonFromFile(File file) {
-        try {
-            InputStream in = new FileInputStream(file);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             JsonObject json = gson.fromJson(reader, JsonObject.class);
             return json;
         } catch(Exception e) { return null; }

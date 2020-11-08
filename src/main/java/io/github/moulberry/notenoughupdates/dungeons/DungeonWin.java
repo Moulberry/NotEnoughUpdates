@@ -144,9 +144,6 @@ public class DungeonWin {
         long currentTime = System.currentTimeMillis();
         String unformatted = Utils.cleanColour(e.message.getUnformattedText());
         if(e.message.getFormattedText().startsWith(EnumChatFormatting.RESET+"   ")) {
-            if(unformatted.contains("\u25AC")) {
-                System.out.println("CONTAINS BREAK!");
-            }
             if(currentTime - lastDungeonFinish > 10000) {
                 Matcher matcher = TEAM_SCORE_REGEX.matcher(unformatted);
                 if(matcher.find()) {

@@ -164,9 +164,8 @@ public class BetterContainers {
         if(hasNullPane() && container instanceof ContainerChest) {
             int backgroundStyle = NotEnoughUpdates.INSTANCE.manager.config.dynamicMenuBackgroundStyle.value.intValue();
             backgroundStyle = Math.max(1, Math.min(10, backgroundStyle));
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
-                        new ResourceLocation("notenoughupdates:dynamic_54/style"+ backgroundStyle+"/dynamic_config.json")).getInputStream(), StandardCharsets.UTF_8));
+            try(BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
+                    new ResourceLocation("notenoughupdates:dynamic_54/style"+ backgroundStyle+"/dynamic_config.json")).getInputStream(), StandardCharsets.UTF_8))) {
                 JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
                 String textColourS = json.get("text-colour").getAsString();
                 textColour = (int)Long.parseLong(textColourS, 16);

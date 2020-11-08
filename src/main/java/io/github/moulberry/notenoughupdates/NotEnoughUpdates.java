@@ -690,9 +690,8 @@ public class NotEnoughUpdates {
     SimpleCommand neumapCommand = new SimpleCommand("neumap", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(colourMap == null) {
-                try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
-                            new ResourceLocation("notenoughupdates:maps/F1Full.json")).getInputStream(), StandardCharsets.UTF_8));
+                try(BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
+                        new ResourceLocation("notenoughupdates:maps/F1Full.json")).getInputStream(), StandardCharsets.UTF_8))) {
                     JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
 
                     colourMap = new Color[128][128];

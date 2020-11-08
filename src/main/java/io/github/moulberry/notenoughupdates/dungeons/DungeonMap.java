@@ -376,9 +376,8 @@ public class DungeonMap {
             return borderRadiusCache.get(style);
         }
 
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
-                    new ResourceLocation("notenoughupdates:dungeon_map/borders/"+sizeId+"/"+style+".json")).getInputStream(), StandardCharsets.UTF_8));
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
+                new ResourceLocation("notenoughupdates:dungeon_map/borders/"+sizeId+"/"+style+".json")).getInputStream(), StandardCharsets.UTF_8))) {
             JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
             float radiusSq = json.get("radiusSq").getAsFloat();
 

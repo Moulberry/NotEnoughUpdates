@@ -733,28 +733,27 @@ public class Options {
     }
 
     public static Options loadFromFile(Gson gson, File file) throws IOException {
-        InputStream in = new FileInputStream(file);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            Options oLoad = gson.fromJson(reader, Options.class);
+            Options oDefault = new Options();
+            if (oLoad == null) return oDefault;
 
-        Options oLoad = gson.fromJson(reader, Options.class);
-        Options oDefault = new Options();
-        if (oLoad == null) return oDefault;
-
-        for (Field f : Options.class.getDeclaredFields()) {
-            try {
-                if (((Option<?>) f.get(oDefault)).value instanceof List) {
-                    //If the default size of the list is greater than the loaded size, use the default value.
-                    //if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
-                    //    continue;
-                    //}
+            for (Field f : Options.class.getDeclaredFields()) {
+                try {
+                    if (((Option<?>) f.get(oDefault)).value instanceof List) {
+                        //If the default size of the list is greater than the loaded size, use the default value.
+                        //if(((List<?>)((Option)f.get(oDefault)).value).size() > ((List<?>)((Option)f.get(oLoad)).value).size()) {
+                        //    continue;
+                        //}
+                    }
+                    if(((Option<?>) f.get(oDefault)).value.getClass().isAssignableFrom(((Option<?>) f.get(oLoad)).value.getClass())) {
+                        ((Option) f.get(oDefault)).value = ((Option) f.get(oLoad)).value;
+                    }
+                } catch (Exception e) {
                 }
-                if(((Option<?>) f.get(oDefault)).value.getClass().isAssignableFrom(((Option<?>) f.get(oLoad)).value.getClass())) {
-                    ((Option) f.get(oDefault)).value = ((Option) f.get(oLoad)).value;
-                }
-            } catch (Exception e) {
             }
+            return oDefault;
         }
-        return oDefault;
     }
 
 

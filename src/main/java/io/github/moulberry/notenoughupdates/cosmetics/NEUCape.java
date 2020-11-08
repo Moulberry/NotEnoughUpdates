@@ -81,6 +81,8 @@ public class NEUCape {
             shaderName = "mcworld_cape";
         } else if(capeName.equalsIgnoreCase("lava")) {
             shaderName = "lava_cape";
+        } else if(capeName.equalsIgnoreCase("lightning")) {
+            shaderName = "lightning_cape";
         } else {
             shaderName = "cape";
         }
@@ -305,6 +307,8 @@ public class NEUCape {
         } else if(shaderName.equalsIgnoreCase("mcworld_cape")) {
             shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
         } else if(shaderName.equalsIgnoreCase("lava_cape")) {
+            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
+        } else if(shaderName.equalsIgnoreCase("lightning_cape")) {
             shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
         }
     }
