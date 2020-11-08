@@ -1,5 +1,10 @@
 package io.github.moulberry.notenoughupdates.util;
 
+import com.google.common.base.Splitter;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
@@ -9,13 +14,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
 import net.minecraft.inventory.Slot;
@@ -24,11 +31,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.potion.Potion;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
+import net.minecraftforge.fml.common.Loader;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import org.lwjgl.util.glu.Project;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,21 +48,95 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Proxy;
+import java.nio.FloatBuffer;
 import java.nio.file.Files;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Utils {
 
     private static boolean hasEffectOverride = false;
+    public static boolean disableCustomDungColours = false;
+    private static LinkedList<Integer> guiScales = new LinkedList<>();
+    private static ScaledResolution lastScale = new ScaledResolution(Minecraft.getMinecraft());
+    //Labymod compatibility
+    private static FloatBuffer projectionMatrixOld = BufferUtils.createFloatBuffer(16);
+    private static FloatBuffer modelviewMatrixOld = BufferUtils.createFloatBuffer(16);
 
     public static <T> ArrayList<T> createList(T... values) {
         ArrayList<T> list = new ArrayList<>();
         for(T value : values)list.add(value);
         return list;
+    }
+
+    public static void resetGuiScale() {
+        guiScales.clear();
+    }
+
+    public static ScaledResolution peekGuiScale() {
+        return lastScale;
+    }
+
+    public static ScaledResolution pushGuiScale(int scale) {
+        if(guiScales.size() == 0) {
+            if(Loader.isModLoaded("labymod")) {
+                GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixOld);
+                GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelviewMatrixOld);
+            }
+        }
+
+        if(scale < 0) {
+            if(guiScales.size() > 0) {
+                guiScales.pop();
+            }
+        } else {
+            if(scale == 0) {
+                guiScales.push(Minecraft.getMinecraft().gameSettings.guiScale);
+            } else {
+                guiScales.push(scale);
+            }
+        }
+
+        int newScale = guiScales.size() > 0 ? Math.max(1, Math.min(4, guiScales.peek())) : Minecraft.getMinecraft().gameSettings.guiScale;
+        if(newScale == 0) newScale = Minecraft.getMinecraft().gameSettings.guiScale;
+
+        int oldScale = Minecraft.getMinecraft().gameSettings.guiScale;
+        Minecraft.getMinecraft().gameSettings.guiScale = newScale;
+        ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+        Minecraft.getMinecraft().gameSettings.guiScale = oldScale;
+
+        if(guiScales.size() > 0) {
+            GlStateManager.viewport(0, 0, Minecraft.getMinecraft().displayWidth, Minecraft.getMinecraft().displayHeight);
+            GlStateManager.matrixMode(GL11.GL_PROJECTION);
+            GlStateManager.loadIdentity();
+            GlStateManager.ortho(0.0D,
+                    scaledresolution.getScaledWidth_double(),
+                    scaledresolution.getScaledHeight_double(), 0.0D, 1000.0D, 3000.0D);
+            GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+            GlStateManager.loadIdentity();
+            GlStateManager.translate(0.0F, 0.0F, -2000.0F);
+        } else {
+            if(Loader.isModLoaded("labymod") && projectionMatrixOld.limit() > 0 && modelviewMatrixOld.limit() > 0) {
+                GlStateManager.matrixMode(GL11.GL_PROJECTION);
+                GL11.glLoadMatrix(projectionMatrixOld);
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+                GL11.glLoadMatrix(modelviewMatrixOld);
+            } else {
+                GlStateManager.matrixMode(GL11.GL_PROJECTION);
+                GlStateManager.loadIdentity();
+                GlStateManager.ortho(0.0D,
+                        scaledresolution.getScaledWidth_double(),
+                        scaledresolution.getScaledHeight_double(), 0.0D, 1000.0D, 3000.0D);
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+                GlStateManager.loadIdentity();
+                GlStateManager.translate(0.0F, 0.0F, -2000.0F);
+            }
+        }
+
+        lastScale = scaledresolution;
+        return scaledresolution;
     }
 
     public static boolean getHasEffectOverride() {
@@ -61,6 +146,7 @@ public class Utils {
     public static void drawItemStackWithoutGlint(ItemStack stack, int x, int y) {
         RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
 
+        disableCustomDungColours = true;
         RenderHelper.enableGUIStandardItemLighting();
         itemRender.zLevel = -145; //Negates the z-offset of the below method.
         hasEffectOverride = true;
@@ -70,19 +156,127 @@ public class Utils {
         hasEffectOverride = false;
         itemRender.zLevel = 0;
         RenderHelper.disableStandardItemLighting();
+        disableCustomDungColours = false;
+    }
+
+    public static void drawItemStackWithText(ItemStack stack, int x, int y, String text) {
+        if(stack == null)return;
+
+        RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
+
+        disableCustomDungColours = true;
+        RenderHelper.enableGUIStandardItemLighting();
+        itemRender.zLevel = -145; //Negates the z-offset of the below method.
+        itemRender.renderItemAndEffectIntoGUI(stack, x, y);
+        itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRendererObj, stack, x, y, text);
+        itemRender.zLevel = 0;
+        RenderHelper.disableStandardItemLighting();
+        disableCustomDungColours = false;
     }
 
     public static void drawItemStack(ItemStack stack, int x, int y) {
+        if(stack == null) return;
+
+        drawItemStackWithText(stack, x, y, null);
+    }
+
+    private static final EnumChatFormatting[] rainbow = new EnumChatFormatting[]{
+            EnumChatFormatting.RED,
+            EnumChatFormatting.GOLD,
+            EnumChatFormatting.YELLOW,
+            EnumChatFormatting.GREEN,
+            EnumChatFormatting.AQUA,
+            EnumChatFormatting.LIGHT_PURPLE,
+            EnumChatFormatting.DARK_PURPLE
+    };
+
+    public static String chromaString(String str) {
+        return chromaString(str, 0, false);
+    }
+
+    private static long startTime = 0;
+    public static String chromaString(String str, float offset, boolean bold) {
+        str = cleanColour(str);
+
+        long currentTimeMillis = System.currentTimeMillis();
+        if(startTime == 0) startTime = currentTimeMillis;
+
+        StringBuilder rainbowText = new StringBuilder();
+        int len = 0;
+        for(int i=0; i<str.length(); i++) {
+            char c = str.charAt(i);
+            int index = ((int)(offset+len/12f-(currentTimeMillis-startTime)/100))%rainbow.length;
+            len += Minecraft.getMinecraft().fontRendererObj.getCharWidth(c);
+            if(bold) len++;
+
+            if(index < 0) index += rainbow.length;
+            rainbowText.append(rainbow[index]);
+            if(bold) rainbowText.append(EnumChatFormatting.BOLD);
+            rainbowText.append(c);
+        }
+        return rainbowText.toString();
+    }
+
+    private static char[] c = new char[]{'k', 'm', 'b', 't'};
+    public static String shortNumberFormat(double n, int iteration) {
+        double d = ((long) n / 100) / 10.0;
+        boolean isRound = (d * 10) %10 == 0;
+        return (d < 1000?
+                ((d > 99.9 || isRound || (!isRound && d > 9.99)?
+                        (int) d * 10 / 10 : d + ""
+                ) + "" + c[iteration])
+                : shortNumberFormat(d, iteration+1));
+    }
+
+    public static void drawItemStackLinear(ItemStack stack, int x, int y) {
         if(stack == null)return;
 
         RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
 
         RenderHelper.enableGUIStandardItemLighting();
         itemRender.zLevel = -145; //Negates the z-offset of the below method.
-        itemRender.renderItemAndEffectIntoGUI(stack, x, y);
+
+        IBakedModel ibakedmodel = itemRender.getItemModelMesher().getItemModel(stack);
+        GlStateManager.pushMatrix();
+        Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
+        Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.locationBlocksTexture).setBlurMipmap(true, true);
+        GlStateManager.enableRescaleNormal();
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(770, 771);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        setupGuiTransform(x, y, ibakedmodel.isGui3d());
+        ibakedmodel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ItemCameraTransforms.TransformType.GUI);
+        itemRender.renderItem(stack, ibakedmodel);
+        GlStateManager.disableAlpha();
+        GlStateManager.disableRescaleNormal();
+        GlStateManager.disableLighting();
+        GlStateManager.popMatrix();
+        Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
+        Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.locationBlocksTexture).restoreLastBlurMipmap();
+
         itemRender.renderItemOverlays(Minecraft.getMinecraft().fontRendererObj, stack, x, y);
         itemRender.zLevel = 0;
         RenderHelper.disableStandardItemLighting();
+    }
+
+    private static void setupGuiTransform(int xPosition, int yPosition, boolean isGui3d) {
+        GlStateManager.translate((float)xPosition, (float)yPosition, 5);
+        GlStateManager.translate(8.0F, 8.0F, 0.0F);
+        GlStateManager.scale(1.0F, 1.0F, -1.0F);
+        GlStateManager.scale(0.5F, 0.5F, 0.5F);
+
+        if (isGui3d) {
+            GlStateManager.scale(40.0F, 40.0F, 40.0F);
+            GlStateManager.rotate(210.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.enableLighting();
+        } else {
+            GlStateManager.scale(64.0F, 64.0F, 64.0F);
+            GlStateManager.rotate(180.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.disableLighting();
+        }
     }
 
     public static Method getMethod(Class<?> clazz, Class<?>[] params, String... methodNames) {
@@ -142,6 +336,33 @@ public class Utils {
 
     public static String prettyCase(String str) {
         return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+    }
+
+    private static String[] rarityArr = new String[] {
+            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
+    };
+    public static int checkItemType(JsonArray lore, boolean contains, String... typeMatches) {
+        for(int i=lore.size()-1; i>=0; i--) {
+            String line = lore.get(i).getAsString();
+            for(String rarity : rarityArr) {
+                for(int j=0; j<typeMatches.length; j++) {
+                    if(contains) {
+                        if(line.trim().contains(rarity + " " + typeMatches[j])) {
+                            return j;
+                        } else if(line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
+                            return j;
+                        }
+                    } else {
+                        if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
+                            return j;
+                        } else if(line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
+                            return j;
+                        }
+                    }
+                }
+            }
+        }
+        return -1;
     }
 
     public static void playPressSound() {
@@ -205,8 +426,39 @@ public class Utils {
         GlStateManager.disableBlend();
     }
 
+    public static void drawTexturedRectNoBlend(float x, float y, float width, float height, float uMin, float uMax, float vMin, float vMax, int filter) {
+        GlStateManager.enableTexture2D();
+
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, filter);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, filter);
+
+        Tessellator tessellator = Tessellator.getInstance();
+        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+        worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
+        worldrenderer
+                .pos(x, y+height, 0.0D)
+                .tex(uMin, vMax).endVertex();
+        worldrenderer
+                .pos(x+width, y+height, 0.0D)
+                .tex(uMax, vMax).endVertex();
+        worldrenderer
+                .pos(x+width, y, 0.0D)
+                .tex(uMax, vMin).endVertex();
+        worldrenderer
+                .pos(x, y, 0.0D)
+                .tex(uMin, vMin).endVertex();
+        tessellator.draw();
+
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+    }
+
     public static ItemStack createItemStack(Item item, String displayname, String... lore) {
-        ItemStack stack = new ItemStack(item);
+        return createItemStack(item, displayname, 0, lore);
+    }
+
+    public static ItemStack createItemStack(Item item, String displayname, int damage, String... lore) {
+        ItemStack stack = new ItemStack(item, 1, damage);
         NBTTagCompound tag = new NBTTagCompound();
         NBTTagCompound display = new NBTTagCompound();
         NBTTagList Lore = new NBTTagList();
@@ -219,10 +471,17 @@ public class Utils {
         display.setTag("Lore", Lore);
 
         tag.setTag("display", display);
+        tag.setInteger("HideFlags", 254);
 
         stack.setTagCompound(tag);
 
         return stack;
+    }
+
+    public static void drawStringF(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
+        GL11.glTranslatef(x, y, 0);
+        fr.drawString(str, 0, 0, colour, shadow);
+        GL11.glTranslatef(-x, -y, 0);
     }
 
     public static void drawStringScaledMaxWidth(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
@@ -261,6 +520,19 @@ public class Utils {
         drawStringScaled(str, fr, x-newLen/2, y-fontHeight/2, shadow, colour, factor);
     }
 
+    public static Matrix4f createProjectionMatrix(int width, int height) {
+        Matrix4f projMatrix  = new Matrix4f();
+        projMatrix.setIdentity();
+        projMatrix.m00 = 2.0F / (float)width;
+        projMatrix.m11 = 2.0F / (float)(-height);
+        projMatrix.m22 = -0.0020001999F;
+        projMatrix.m33 = 1.0F;
+        projMatrix.m03 = -1.0F;
+        projMatrix.m13 = 1.0F;
+        projMatrix.m23 = -1.0001999F;
+        return projMatrix;
+    }
+
     public static void drawStringCenteredScaled(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
         int strLen = fr.getStringWidth(str);
         float factor = len/(float)strLen;
@@ -272,6 +544,15 @@ public class Utils {
     public static void drawStringCenteredYScaled(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
         int strLen = fr.getStringWidth(str);
         float factor = len/(float)strLen;
+        float fontHeight = 8*factor;
+
+        drawStringScaled(str, fr, x, y-fontHeight/2, shadow, colour, factor);
+    }
+
+    public static void drawStringCenteredYScaledMaxWidth(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {
+        int strLen = fr.getStringWidth(str);
+        float factor = len/(float)strLen;
+        factor = Math.min(1, factor);
         float fontHeight = 8*factor;
 
         drawStringScaled(str, fr, x, y-fontHeight/2, shadow, colour, factor);
@@ -372,8 +653,80 @@ public class Utils {
         GlStateManager.enableTexture2D();
     }
 
+    public static void drawGradientRectHorz(int left, int top, int right, int bottom, int startColor, int endColor) {
+        float f = (float)(startColor >> 24 & 255) / 255.0F;
+        float f1 = (float)(startColor >> 16 & 255) / 255.0F;
+        float f2 = (float)(startColor >> 8 & 255) / 255.0F;
+        float f3 = (float)(startColor & 255) / 255.0F;
+        float f4 = (float)(endColor >> 24 & 255) / 255.0F;
+        float f5 = (float)(endColor >> 16 & 255) / 255.0F;
+        float f6 = (float)(endColor >> 8 & 255) / 255.0F;
+        float f7 = (float)(endColor & 255) / 255.0F;
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+        GlStateManager.shadeModel(7425);
+        Tessellator tessellator = Tessellator.getInstance();
+        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+        worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        worldrenderer.pos((double)right, (double)top, 0).color(f5, f6, f7, f4).endVertex();
+        worldrenderer.pos((double)left, (double)top, 0).color(f1, f2, f3, f).endVertex();
+        worldrenderer.pos((double)left, (double)bottom, 0).color(f1, f2, f3, f).endVertex();
+        worldrenderer.pos((double)right, (double)bottom, 0).color(f5, f6, f7, f4).endVertex();
+        tessellator.draw();
+        GlStateManager.shadeModel(7424);
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
+        GlStateManager.enableTexture2D();
+    }
+
     public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font) {
         drawHoveringText(textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font, true);
+    }
+
+    public static JsonObject getConstant(String constant) {
+        File repo = NotEnoughUpdates.INSTANCE.manager.repoLocation;
+        if(repo.exists()) {
+            File jsonFile = new File(repo, "constants/"+constant+".json");
+            try {
+                return NotEnoughUpdates.INSTANCE.manager.getJsonFromFile(jsonFile);
+            } catch (Exception ignored) {
+            }
+        }
+        System.out.println(constant + " = null");
+        return null;
+    }
+
+    public static float getElementAsFloat(JsonElement element, float def) {
+        if(element == null) return def;
+        if(!element.isJsonPrimitive()) return def;
+        JsonPrimitive prim = element.getAsJsonPrimitive();
+        if(!prim.isNumber()) return def;
+        return prim.getAsFloat();
+    }
+
+    public static String getElementAsString(JsonElement element, String def) {
+        if(element == null) return def;
+        if(!element.isJsonPrimitive()) return def;
+        JsonPrimitive prim = element.getAsJsonPrimitive();
+        if(!prim.isString()) return def;
+        return prim.getAsString();
+    }
+
+    public static Splitter PATH_SPLITTER = Splitter.on(".").omitEmptyStrings().limit(2);
+    public static JsonElement getElement(JsonElement element, String path) {
+        List<String> path_split = PATH_SPLITTER.splitToList(path);
+        if(element instanceof JsonObject) {
+            JsonElement e = element.getAsJsonObject().get(path_split.get(0));
+            if(path_split.size() > 1) {
+                return getElement(e, path_split.get(1));
+            } else {
+                return e;
+            }
+        } else {
+            return element;
+        }
     }
 
     public static ChatStyle createClickStyle(ClickEvent.Action action, String value) {
@@ -392,6 +745,45 @@ public class Utils {
         file.delete();
     }
 
+    public static Color getPrimaryColour(String displayname) {
+        int lastColourCode = -99;
+        int currentColour = 0;
+        int[] mostCommon = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        for(int i=0; i<displayname.length(); i++) {
+            char c = displayname.charAt(i);
+            if(c == '\u00A7') {
+                lastColourCode = i;
+            } else if(lastColourCode == i-1) {
+                int colIndex = "0123456789abcdef".indexOf(c);
+                if(colIndex >= 0) {
+                    currentColour = colIndex;
+                } else {
+                    currentColour = 0;
+                }
+            } else if("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0){
+                if(currentColour > 0) {
+                    mostCommon[currentColour]++;
+                }
+            }
+        }
+        int mostCommonCount = 0;
+        for(int index=0; index<mostCommon.length; index++) {
+            if(mostCommon[index] > mostCommonCount) {
+                mostCommonCount = mostCommon[index];
+                currentColour = index;
+            }
+        }
+
+        int colourInt = Minecraft.getMinecraft().fontRendererObj.getColorCode("0123456789abcdef".charAt(currentColour));
+        return new Color(colourInt).darker();
+    }
+
+    public static void scrollTooltip(int dY) {
+        scrollY.setTarget(scrollY.getTarget()+dY/10f);
+        scrollY.resetTimer();
+    }
+
+    private static LerpingFloat scrollY = new LerpingFloat(0, 100);
     public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font, boolean coloured) {
         if (!textLines.isEmpty())
         {
@@ -485,9 +877,24 @@ public class Utils {
                 }
             }
 
+            //Scrollable tooltips
+            if(tooltipHeight + 6 > screenHeight) {
+                if(scrollY.getTarget() < 0) {
+                    scrollY.setTarget(0);
+                    scrollY.resetTimer();
+                } else if(screenHeight - tooltipHeight - 12 + (int)scrollY.getTarget() > 0) {
+                    scrollY.setTarget(-screenHeight + tooltipHeight + 12);
+                    scrollY.resetTimer();
+                }
+            } else {
+                scrollY.setValue(0);
+                scrollY.resetTimer();
+            }
+            scrollY.tick();
+
             if (tooltipY + tooltipHeight + 6 > screenHeight)
             {
-                tooltipY = screenHeight - tooltipHeight - 6;
+                tooltipY = screenHeight - tooltipHeight - 6 + (int)scrollY.getValue();
             }
 
             final int zLevel = 300;
@@ -502,36 +909,7 @@ public class Utils {
             if(NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderColours.value && coloured) {
                 if(textLines.size() > 0) {
                     String first = textLines.get(0);
-                    int lastColourCode = -99;
-                    int currentColour = 0;
-                    int[] mostCommon = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-                    for(int i=0; i<first.length(); i++) {
-                        char c = first.charAt(i);
-                        if(c == '\u00A7') {
-                            lastColourCode = i;
-                        } else if(lastColourCode == i-1) {
-                            int colIndex = "0123456789abcdef".indexOf(c);
-                            if(colIndex >= 0) {
-                                currentColour = colIndex;
-                            } else {
-                                currentColour = 0;
-                            }
-                        } else if("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0){
-                            if(currentColour > 0) {
-                                mostCommon[currentColour]++;
-                            }
-                        }
-                    }
-                    int mostCommonCount = 0;
-                    for(int index=0; index<mostCommon.length; index++) {
-                        if(mostCommon[index] > mostCommonCount) {
-                            mostCommonCount = mostCommon[index];
-                            currentColour = index;
-                        }
-                    }
-
-                    int colourInt = font.getColorCode("0123456789abcdef".charAt(currentColour));
-                    borderColorStart = new Color(colourInt).darker().getRGB() & 0x00FFFFFF |
+                    borderColorStart = getPrimaryColour(first).getRGB() & 0x00FFFFFF |
                             ((NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderOpacity.value.intValue()) << 24);
                 }
             }
@@ -590,6 +968,36 @@ public class Utils {
         GlStateManager.shadeModel(7424);
         GlStateManager.disableBlend();
         GlStateManager.enableAlpha();
+        GlStateManager.enableTexture2D();
+    }
+
+    public static void drawRectNoBlend(int left, int top, int right, int bottom, int color) {
+        if (left < right) {
+            int i = left;
+            left = right;
+            right = i;
+        }
+
+        if (top < bottom) {
+            int j = top;
+            top = bottom;
+            bottom = j;
+        }
+
+        float f3 = (float)(color >> 24 & 255) / 255.0F;
+        float f = (float)(color >> 16 & 255) / 255.0F;
+        float f1 = (float)(color >> 8 & 255) / 255.0F;
+        float f2 = (float)(color & 255) / 255.0F;
+        Tessellator tessellator = Tessellator.getInstance();
+        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+        GlStateManager.disableTexture2D();
+        GlStateManager.color(f, f1, f2, f3);
+        worldrenderer.begin(7, DefaultVertexFormats.POSITION);
+        worldrenderer.pos((double)left, (double)bottom, 0.0D).endVertex();
+        worldrenderer.pos((double)right, (double)bottom, 0.0D).endVertex();
+        worldrenderer.pos((double)right, (double)top, 0.0D).endVertex();
+        worldrenderer.pos((double)left, (double)top, 0.0D).endVertex();
+        tessellator.draw();
         GlStateManager.enableTexture2D();
     }
 

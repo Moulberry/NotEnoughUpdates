@@ -45,8 +45,8 @@ public class CapeNode {
     public float vertSideTexU = 0;
     public float vertSideTexVTop = 0;
 
-    public static final float gravity = 0.1f;
-    public static final float resistance = 0.5f;
+    public final float gravity = 0.1f;
+    public final float resistance = 0.5f;
 
     public static final int FLOAT_NUM = 20;
 
@@ -110,14 +110,14 @@ public class CapeNode {
             velocity.y -= gravity * (resistance)/(1-resistance);
 
             float actualResistance = resistance;
-            BlockPos pos = new BlockPos(
+            /*BlockPos pos = new BlockPos(
                     MathHelper.floor_double(position.x),
                     MathHelper.floor_double(position.y),
                     MathHelper.floor_double(position.z));
             Block block = Minecraft.getMinecraft().theWorld.getBlockState(pos).getBlock();
             if(block.getMaterial().isLiquid()) {
                 actualResistance = 0.8f;
-            }
+            }*/
 
             velocity.scale(1-actualResistance);
 
@@ -160,8 +160,6 @@ public class CapeNode {
     }
 
     public void resolve(CapeNode other, float targetDist, float strength, boolean opt) {
-        if(other == null || Keyboard.isKeyDown(Keyboard.KEY_H)) return;
-
         double dX = position.x - other.position.x;
         double dY = position.y - other.position.y;
         double dZ = position.z - other.position.z;
@@ -209,7 +207,7 @@ public class CapeNode {
             NEUCape.Offset o = new NEUCape.Offset(d, 1);
             CapeNode neighbor = getNeighbor(o);
             if(neighbor != null) {
-                if(!Keyboard.isKeyDown(Keyboard.KEY_H))resolve(neighbor, 1f*NEUCape.targetDist*(d.yOff==0?horzDistMult:1f), 0.5f*7.5f, opt);
+                resolve(neighbor, 1f*NEUCape.targetDist*(d.yOff==0?horzDistMult:1f), 0.5f*7.5f, opt);
             }
         }
     }

@@ -19,7 +19,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-version = "1.0"
+version = "1.5-REL"
 group= "io.github.moulberry"
 archivesBaseName = "NotEnoughUpdates"
 String modid = "notenoughupdates"
@@ -34,13 +34,18 @@ minecraft {
 repositories {
     jcenter()
     maven { url 'https://repo.spongepowered.org/maven/' }
+	flatDir {
+		dirs 'deps'
+	}
 }
 
 dependencies {
     compile('org.spongepowered:mixin:0.7.11-SNAPSHOT')
-	compile('org.kohsuke:github-api:1.108')
+	//compile('org.kohsuke:github-api:1.108')
+    //compile('org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r')
 	compile('com.fasterxml.jackson.core:jackson-core:2.10.2')
     compile('info.bliki.wiki:bliki-core:3.1.0')
+	implementation name: 'Morus-1.0'
 }
 
 mixin {
@@ -49,6 +54,7 @@ mixin {
 
 jar {
     manifest.attributes(
+		'Main-Class': 'NotSkyblockAddonsInstallerFrame',
 		'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
 		'MixinConfigs': "mixins.${modid}.json",
 		'FMLCorePluginContainsFMLMod': true,
@@ -58,7 +64,8 @@ jar {
 
 shadowJar {
 	dependencies {
-        include(dependency('org.kohsuke:github-api:1.108'))
+        //include(dependency('org.kohsuke:github-api:1.108'))
+        //include(dependency('org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r'))
 		include(dependency('org.spongepowered:mixin:0.7.11-SNAPSHOT'))
 		
         include(dependency('commons-io:commons-io'))
@@ -73,6 +80,7 @@ shadowJar {
     }
 	
 	relocate 'com.fasterxml.jackson', 'neu.com.fasterxml.jackson'
+    relocate 'org.eclipse', 'neu.org.eclipse'
 	relocate 'org.slf4j', 'neu.org.slf4j'
 	
 	exclude 'module-info.class'

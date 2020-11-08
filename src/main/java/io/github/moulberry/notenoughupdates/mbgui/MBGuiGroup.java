@@ -35,8 +35,10 @@ public abstract class MBGuiGroup extends MBGuiElement {
 
     @Override
     public void mouseClick(float x, float y, int mouseX, int mouseY) {
+        Map<MBGuiElement, Vector2f> childrenPos = getChildrenPosition();
+
         for(MBGuiElement child : getChildren()) {
-            Vector2f childPos = childrenPosition.get(child);
+            Vector2f childPos = childrenPos.get(child);
             if(mouseX > x+childPos.x && mouseX < x+childPos.x+child.getWidth()) {
                 if(mouseY > y+childPos.y && mouseY < y+childPos.y+child.getHeight()) {
                     child.mouseClick(x+childPos.x, y+childPos.y, mouseX, mouseY);
@@ -54,8 +56,10 @@ public abstract class MBGuiGroup extends MBGuiElement {
 
     @Override
     public void render(float x, float y) {
+        Map<MBGuiElement, Vector2f> childrenPos = getChildrenPosition();
+
         for(MBGuiElement child : getChildren()) {
-            Vector2f childPos = childrenPosition.get(child);
+            Vector2f childPos = childrenPos.get(child);
             child.render(x+childPos.x, y+childPos.y);
         }
     }

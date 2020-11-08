@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NEUResourceManager;
+import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -47,13 +48,13 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     private static final int FILTER_ARMOR = 2;
     private static final int FILTER_ACCESSORY = 3;
     private static final int FILTER_PET = 4;
-    private static final int FILTER_TOOL = 5;
+    private static final int FILTER_DUNGEON = 5;
     private static final int FILTER_SLAYER_ZOMBIE = 6;
     private static final int FILTER_SLAYER_WOLF = 7;
     private static final int FILTER_SLAYER_SPIDER = 8;
     private int filterMode = FILTER_ALL;
     private String[] filterPrettyNames = new String[]{"ALL","WEAPON","ARMOR",
-            "ACCESSORY","PET","TOOL","ZOMBIE SLAYER","WOLF SLAYER","SPIDER SLAYER"};
+            "ACCESSORY","PET","DUNGEON","ZOMBIE SLAYER","WOLF SLAYER","SPIDER SLAYER"};
 
     private Framebuffer itemFramebuffer = null;
     private Framebuffer itemBGFramebuffer = null;
@@ -78,7 +79,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     private void refreshItems() {
         items.clear();
         for(String internalname : manager.getItemInformation().keySet()) {
-            if(!manager.isVanillaItem(internalname) && !internalname.matches(mobRegex)) {
+            if(!manager.auctionManager.isVanillaItem(internalname) && !internalname.matches(mobRegex)) {
                 JsonObject item = manager.getItemInformation().get(internalname);
                 JsonArray lore = manager.getItemInformation().get(internalname).get("lore").getAsJsonArray();
                 switch(filterMode) {
@@ -94,8 +95,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                     case FILTER_PET:
                         if(!internalname.matches(petRegex) || !item.get("displayname").getAsString().contains("[")) continue;
                         break;
-                    case FILTER_TOOL:
-                        if(overlay.checkItemType(lore, "AXE", "PICKAXE", "FISHING ROD", "SHOVEL", "HOE") < 0) continue;
+                    case FILTER_DUNGEON:
+                        if(Utils.checkItemType(lore, true, "DUNGEON") < 0) continue;
                         break;
                     case FILTER_SLAYER_ZOMBIE:
                         if(!item.has("slayer_req") || !item.get("slayer_req").getAsString().startsWith("ZOMBIE")) continue;
@@ -121,8 +122,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
             float cost1 = manager.auctionManager.getLowestBin(o1);
             float cost2 = manager.auctionManager.getLowestBin(o2);
 
-            if(cost1 == -1) cost1 = manager.getCraftCost(o1).craftCost;
-            if(cost2 == -1) cost2 = manager.getCraftCost(o2).craftCost;
+            if(cost1 == -1) cost1 = manager.auctionManager.getCraftCost(o1).craftCost;
+            if(cost2 == -1) cost2 = manager.auctionManager.getCraftCost(o2).craftCost;
 
             if(cost1 < cost2) return 1;
             if(cost1 > cost2) return -1;
@@ -241,19 +242,6 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         }
     }
 
-    private Matrix4f createProjectionMatrix(int width, int height) {
-        Matrix4f projMatrix  = new Matrix4f();
-        projMatrix.setIdentity();
-        projMatrix.m00 = 2.0F / (float)width;
-        projMatrix.m11 = 2.0F / (float)(-height);
-        projMatrix.m22 = -0.0020001999F;
-        projMatrix.m33 = 1.0F;
-        projMatrix.m03 = -1.0F;
-        projMatrix.m13 = 1.0F;
-        projMatrix.m23 = -1.0001999F;
-        return projMatrix;
-    }
-
     public int getCurrentAcquiredCount() {
         if(getAcquiredItems() == null) return 0;
         if(!getAcquiredItems().containsKey(manager.getCurrentProfile())) return 0;
@@ -268,7 +256,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
         if(itemFramebuffer != null && grayscaleShader != null &&
                 (itemFramebuffer.framebufferWidth != width || itemFramebuffer.framebufferHeight != height)) {
-            grayscaleShader.setProjectionMatrix(createProjectionMatrix(
+            grayscaleShader.setProjectionMatrix(Utils.createProjectionMatrix(
                     width*scaledresolution.getScaleFactor(), height*scaledresolution.getScaleFactor()));
         }
 
@@ -300,7 +288,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                 grayscaleShader = new Shader(new NEUResourceManager(Minecraft.getMinecraft().getResourceManager()),
                         "grayscale",
                         itemFramebuffer, itemFramebufferGrayscale);
-                grayscaleShader.setProjectionMatrix(createProjectionMatrix(
+                grayscaleShader.setProjectionMatrix(Utils.createProjectionMatrix(
                         width*scaledresolution.getScaleFactor(), height*scaledresolution.getScaleFactor()));
             } catch(Exception e) {
                 return;
@@ -316,7 +304,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
         itemFramebufferGrayscale.bindFramebufferTexture();
 
-        AtomicReference<JsonObject> tooltipToDisplay = new AtomicReference<>(null);
+        AtomicReference<ItemStack> tooltipToDisplay = new AtomicReference<>(null);
 
         AtomicBoolean isTop = new AtomicBoolean(false);
         AtomicInteger lowestY = new AtomicInteger(-1);
@@ -339,7 +327,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
                     if(mouseX > leftI && mouseX < rightI) {
                         if(mouseY > topI && mouseY < bottomI) {
-                            tooltipToDisplay.set(manager.getItemInformation().get(internalname));
+                            tooltipToDisplay.set(manager.jsonToStack(manager.getItemInformation().get(internalname), true));
                         }
                     }
 
@@ -373,16 +361,9 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
 
         itemFramebufferGrayscale.unbindFramebufferTexture();
 
-        JsonObject json = tooltipToDisplay.get();
-        if(json != null) {
-            List<String> text = new ArrayList<>();
-            text.add(json.get("displayname").getAsString());
-            JsonArray lore = json.get("lore").getAsJsonArray();
-
-            for(int i=0; i<lore.size(); i++) {
-                text.add(lore.get(i).getAsString());
-            }
-
+        ItemStack displayStack = tooltipToDisplay.get();
+        if(displayStack != null) {
+            List<String> text = displayStack.getTooltip(Minecraft.getMinecraft().thePlayer, true);
             Utils.drawHoveringText(text, mouseX, mouseY, width, height, -1, Minecraft.getMinecraft().fontRendererObj);
         }
     }
@@ -415,9 +396,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     }
 
     private void renderItemBackgrounds(Color fg, int left, int right, int top, int bottom) {
-        int opacity = Math.min(255, Math.max(0, manager.config.fgOpacity.value.intValue()));
-        Color fgGold = new Color(limCol(fg.getRed()+100), limCol(fg.getGreen()+50), limCol(fg.getBlue()-50), opacity);
-        Color fgCustomOpacity = new Color((fg.getRGB() & 0x00ffffff) | opacity << 24, true);
+        Color fgCustomOpacity = new Color(SpecialColour.specialToChromaRGB(manager.config.itemBackgroundColour.value), true);
+        Color fgGold = new Color(SpecialColour.specialToChromaRGB(manager.config.itemFavouriteColour.value), true);
 
         String[] items = getItemList();
         iterateItemSlots(new ItemSlotConsumer() {

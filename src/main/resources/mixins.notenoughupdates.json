@@ -5,6 +5,18 @@
   "mixins": [
     "MixinItemStack",
     "MixinInventoryEffectRenderer",
-    "MixinGuiIngame"
+    "MixinGuiIngame",
+    "MixinRenderItem",
+    "MixinEntityRenderer",
+    "MixinRenderGlobal",
+    "MixinNetHandlerPlayClient",
+    "MixinGuiChest",
+    "MixinGuiContainer",
+    "MixinVboRenderList",
+    "MixinRenderList",
+    "MixinEntityPlayer",
+    "MixinTileEntitySpecialRenderer",
+    "MixinRender",
+    "MixinRenderFish"
   ]
 }
