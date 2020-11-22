@@ -40,6 +40,7 @@ public class APIManager {
     private HashSet<String> playerBidsFinishedNotified = new HashSet<>();
 
     private JsonObject lowestBins = null;
+    private JsonObject auctionPricesAvgLowestBinJson = null;
 
     private LinkedList<Integer> pagesToDownload = null;
 
@@ -662,6 +663,9 @@ public class APIManager {
             auctionPricesJson = jsonObject;
             lastAuctionAvgUpdate = System.currentTimeMillis();
         }, () -> {});
+        manager.hypixelApi.getMyApiGZIPAsync("auction_averages_lbin/3day.json.gz", (jsonObject) -> {
+            auctionPricesAvgLowestBinJson = jsonObject;
+        }, () -> {});
     }
 
     public Set<String> getItemAuctionInfoKeySet() {
@@ -680,6 +684,15 @@ public class APIManager {
             return null;
         }
         return e.getAsJsonObject();
+    }
+
+    public float getItemAvgBin(String internalname) {
+        if(auctionPricesAvgLowestBinJson == null) return -1;
+        JsonElement e = auctionPricesAvgLowestBinJson.get(internalname);
+        if(e == null) {
+            return -1;
+        }
+        return Math.round(e.getAsFloat());
     }
 
     public JsonObject getBazaarInfo(String internalname) {

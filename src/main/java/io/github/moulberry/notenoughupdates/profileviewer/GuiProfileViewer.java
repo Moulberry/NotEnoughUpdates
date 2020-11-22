@@ -1934,8 +1934,8 @@ public class GuiProfileViewer extends GuiScreen {
                 if(!rank.equals("YOUTUBER") && !monthlyPackageRank.equals("NONE")) {
                     rank = monthlyPackageRank;
                 }
-                EnumChatFormatting rankPlusColorECF = EnumChatFormatting.getValueByName(Utils.getElementAsString(profile.getHypixelProfile().get("rankPlusColor"), "WHITE"));
-                String rankPlusColor = EnumChatFormatting.WHITE.toString();
+                EnumChatFormatting rankPlusColorECF = EnumChatFormatting.getValueByName(Utils.getElementAsString(profile.getHypixelProfile().get("rankPlusColor"), "YELLOW"));
+                String rankPlusColor = EnumChatFormatting.YELLOW.toString();
                 if(rankPlusColorECF != null) {
                     rankPlusColor = rankPlusColorECF.toString();
                 }

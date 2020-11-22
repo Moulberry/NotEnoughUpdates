@@ -479,9 +479,40 @@ public class Utils {
     }
 
     public static void drawStringF(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
-        GL11.glTranslatef(x, y, 0);
-        fr.drawString(str, 0, 0, colour, shadow);
-        GL11.glTranslatef(-x, -y, 0);
+        fr.drawString(str, x, y, colour, shadow);
+    }
+
+    public static int getCharVertLen(char c) {
+        if("acegmnopqrsuvwxyz".indexOf(c) >= 0) {
+            return 5;
+        } else {
+            return 7;
+        }
+    }
+
+    public static float getVerticalHeight(String str) {
+        str = cleanColour(str);
+        float height = 0;
+        for(int i=0; i<str.length(); i++) {
+            char c = str.charAt(i);
+            int charHeight =  getCharVertLen(c);
+            height += charHeight + 1.5f;
+        }
+        return height;
+    }
+
+    public static void drawStringVertical(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
+        String format = FontRenderer.getFormatFromString(str);
+        str = cleanColour(str);
+        for(int i=0; i<str.length(); i++) {
+            char c = str.charAt(i);
+            
+            int charHeight =  getCharVertLen(c);
+            int charWidth = fr.getCharWidth(c);
+            fr.drawString(format+c, x+(5-charWidth)/2f, y-7+charHeight, colour, shadow);
+
+            y += charHeight + 1.5f;
+        }
     }
 
     public static void drawStringScaledMaxWidth(String str, FontRenderer fr, float x, float y, boolean shadow, int len, int colour) {

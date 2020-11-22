@@ -23,7 +23,9 @@ import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiCrafting;
 import net.minecraft.client.gui.inventory.GuiEditSign;
+import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
@@ -35,7 +37,9 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -180,16 +184,18 @@ public class NEUEventListener {
                         displayUpdateMessageIfOutOfDate();
                     }
 
-                    long maxMemoryMB = Runtime.getRuntime().maxMemory()/1024L/1024L;
-                    if(maxMemoryMB > 4100) {
-                        notificationDisplayMillis = System.currentTimeMillis();
-                        notificationLines = new ArrayList<>();
-                        notificationLines.add(EnumChatFormatting.DARK_RED+"Too much memory allocated!");
-                        notificationLines.add(String.format(EnumChatFormatting.DARK_GRAY+"NEU has detected %03dMB of memory allocated to Minecraft!", maxMemoryMB));
-                        notificationLines.add(EnumChatFormatting.DARK_GRAY+"It is recommended to allocated between 2-4GB of memory");
-                        notificationLines.add(EnumChatFormatting.DARK_GRAY+"More than 4GB WILL cause FPS issues, EVEN if you have 16GB+ available");
-                        notificationLines.add("");
-                        notificationLines.add(EnumChatFormatting.DARK_GRAY+"For more information, visit #ram-info in discord.gg/spr6ESn");
+                    if(NotEnoughUpdates.INSTANCE.manager.config.doRamNotif.value) {
+                        long maxMemoryMB = Runtime.getRuntime().maxMemory()/1024L/1024L;
+                        if(maxMemoryMB > 4100) {
+                            notificationDisplayMillis = System.currentTimeMillis();
+                            notificationLines = new ArrayList<>();
+                            notificationLines.add(EnumChatFormatting.DARK_RED+"Too much memory allocated!");
+                            notificationLines.add(String.format(EnumChatFormatting.DARK_GRAY+"NEU has detected %03dMB of memory allocated to Minecraft!", maxMemoryMB));
+                            notificationLines.add(EnumChatFormatting.DARK_GRAY+"It is recommended to allocated between 2-4GB of memory");
+                            notificationLines.add(EnumChatFormatting.DARK_GRAY+"More than 4GB WILL cause FPS issues, EVEN if you have 16GB+ available");
+                            notificationLines.add("");
+                            notificationLines.add(EnumChatFormatting.DARK_GRAY+"For more information, visit #ram-info in discord.gg/spr6ESn");
+                        }
                     }
 
                     if(!neu.manager.config.loadedModBefore.value) {
@@ -358,6 +364,10 @@ public class NEUEventListener {
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
+        if(!(event.gui instanceof GuiContainer) && Minecraft.getMinecraft().currentScreen != null) {
+            CalendarOverlay.setEnabled(false);
+        }
+
         neu.manager.auctionManager.customAH.lastGuiScreenSwitch = System.currentTimeMillis();
         BetterContainers.reset();
 
@@ -489,6 +499,24 @@ public class NEUEventListener {
                     }
                 }, 200, TimeUnit.MILLISECONDS);
                 return;
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerInteract(EntityInteractEvent event) {
+        if(!event.isCanceled() && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
+                Minecraft.getMinecraft().thePlayer.isSneaking() &&
+                Minecraft.getMinecraft().ingameGUI != null) {
+            if(event.target instanceof EntityPlayer) {
+                for(NetworkPlayerInfo info : Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap()) {
+                    String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
+                    if(name.contains("Status: "+EnumChatFormatting.RESET+EnumChatFormatting.BLUE+"Guest")) {
+                        NotEnoughUpdates.INSTANCE.sendChatMessage("/trade " + event.target.getName());
+                        event.setCanceled(true);
+                        break;
+                    }
+                }
             }
         }
     }
@@ -665,12 +693,14 @@ public class NEUEventListener {
         if(!(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
                 neu.manager.auctionManager.customAH.isRenderOverAuctionView())) {
             if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
+                GlStateManager.pushMatrix();
                 if(!focusInv) {
                     GL11.glTranslatef(0, 0, 300);
                     neu.overlay.render(hoverInv && focusInv);
                     GL11.glTranslatef(0, 0, -300);
                 }
                 neu.overlay.renderOverlay();
+                GlStateManager.popMatrix();
             }
         }
     }
@@ -727,7 +757,10 @@ public class NEUEventListener {
                                 worthBIN = bazaarPrice;
                                 worthAUC = bazaarPrice;
                             } else {
-                                worthBIN = neu.manager.auctionManager.getLowestBin(internal);
+                                worthBIN = neu.manager.auctionManager.getItemAvgBin(internal);
+                                if(worthBIN <= 0) {
+                                    worthBIN = neu.manager.auctionManager.getLowestBin(internal);
+                                }
                                 JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
                                 if(aucInfo != null) {
                                     worthAUC = aucInfo.get("price").getAsFloat();
@@ -1250,7 +1283,50 @@ public class NEUEventListener {
                         if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
                             newTooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
                         } else {
-                            JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
+                            JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internalname);
+                            float lowestBinAvg = neu.manager.auctionManager.getItemAvgBin(internalname);
+
+                            int lowestBin = neu.manager.auctionManager.getLowestBin(internalname);
+                            APIManager.CraftInfo craftCost = neu.manager.auctionManager.getCraftCost(internalname);
+
+                            boolean hasAuctionPrice = auctionInfo != null;
+                            boolean hasLowestBinPrice = lowestBin > 0 && neu.manager.config.advancedPriceInfo.value;
+                            boolean hasLowestBinAvgPrice = lowestBinAvg > 0;
+
+                            NumberFormat format = NumberFormat.getInstance(Locale.US);
+
+                            if(hasLowestBinPrice) {
+                                newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
+                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+                            }
+                            if(hasLowestBinAvgPrice) {
+                                newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AVG Lowest BIN: "+
+                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBinAvg)+" coins");
+                            }
+                            if(hasAuctionPrice) {
+                                int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
+                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
+                                if(neu.manager.config.advancedPriceInfo.value) {
+                                    newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales: "+
+                                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
+                                }
+                                if(auctionInfo.has("clean_price")) {
+                                    newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price (Clean): "+
+                                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
+                                    if(neu.manager.config.advancedPriceInfo.value) {
+                                        newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales (Clean): "+
+                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
+                                    }
+                                }
+
+                            }
+                            if(hasAuctionPrice && craftCost.fromRecipe) {
+                                newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
+                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
+                            }
+
+                            /*JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
 
                             boolean hasAuctionPrice = auctionInfo != null;
 
@@ -1280,7 +1356,7 @@ public class NEUEventListener {
                             if(craftCost.fromRecipe) {
                                 newTooltip.add(EnumChatFormatting.GRAY+"Raw Craft Cost: "+
                                         EnumChatFormatting.GOLD+format.format((int)craftCost.craftCost)+" coins");
-                            }
+                            }*/
                         }
                     }
                 }
@@ -1314,10 +1390,28 @@ public class NEUEventListener {
                         ItemStack item = lower.getStackInSlot(11+i);
                         String internal = neu.manager.getInternalNameForItem(item);
                         if(internal != null) {
-                            float worthBIN = neu.manager.auctionManager.getLowestBin(internal);
-                            float worthAUC = neu.manager.auctionManager.getLowestBin(internal);
+                            float bazaarPrice = -1;
+                            JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internal);
+                            if(bazaarInfo != null && bazaarInfo.has("avg_sell")) {
+                                bazaarPrice = bazaarInfo.get("avg_sell").getAsFloat();
+                            }
 
-                            if(worthAUC == -1) worthAUC = neu.manager.auctionManager.getCraftCost(internal).craftCost;
+                            float worthBIN = -1;
+                            float worthAUC = -1;
+
+                            if(bazaarPrice > 0) {
+                                worthBIN = bazaarPrice;
+                                worthAUC = bazaarPrice;
+                            } else {
+                                worthBIN = neu.manager.auctionManager.getItemAvgBin(internal);
+                                if(worthBIN <= 0) {
+                                    worthBIN = neu.manager.auctionManager.getLowestBin(internal);
+                                }
+                                JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
+                                if(aucInfo != null) {
+                                    worthAUC = aucInfo.get("price").getAsFloat();
+                                }
+                            }
 
                             if(worthAUC <= 0 && worthBIN <= 0) {
                                 missing = true;
@@ -1392,20 +1486,26 @@ public class NEUEventListener {
             if(internalname != null) {
                 JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internalname);
                 JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internalname);
+                float lowestBinAvg = neu.manager.auctionManager.getItemAvgBin(internalname);
 
                 int lowestBin = neu.manager.auctionManager.getLowestBin(internalname);
                 APIManager.CraftInfo craftCost = neu.manager.auctionManager.getCraftCost(internalname);
 
                 boolean hasAuctionPrice = neu.manager.config.invAuctionPrice.value && auctionInfo != null;
                 boolean hasBazaarPrice = neu.manager.config.invBazaarPrice.value && bazaarInfo != null;
-                boolean hasLowestBinPrice = neu.manager.config.invAuctionPrice.value && lowestBin > 0;
+                boolean hasLowestBinPrice = neu.manager.config.invAuctionPrice.value && lowestBin > 0 && neu.manager.config.advancedPriceInfo.value;
+                boolean hasLowestBinAvgPrice = neu.manager.config.invAuctionPrice.value && lowestBinAvg > 0;
 
                 NumberFormat format = NumberFormat.getInstance(Locale.US);
 
-                if(hasAuctionPrice || hasBazaarPrice || hasLowestBinPrice) event.toolTip.add("");
+                if(hasAuctionPrice || hasBazaarPrice || hasLowestBinAvgPrice || hasLowestBinPrice) event.toolTip.add("");
                 if(hasLowestBinPrice) {
                     event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
                             EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+                }
+                if(hasLowestBinAvgPrice) {
+                    event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AVG Lowest BIN: "+
+                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBinAvg)+" coins");
                 }
                 if(hasAuctionPrice) {
                     int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());

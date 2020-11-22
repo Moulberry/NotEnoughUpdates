@@ -380,10 +380,10 @@ public class GuiCosmetics extends GuiScreen {
             }
             GlStateManager.color(1, 1, 1, 1);
 
-            ResourceLocation capeTexture = capesLocation.computeIfAbsent(cape, k -> new ResourceLocation("notenoughupdates", "capes/"+cape+".png"));
+            ResourceLocation capeTexture = capesLocation.computeIfAbsent(cape,
+                    k -> new ResourceLocation("notenoughupdates", "capes/"+cape+"_preview.png"));
             Minecraft.getMinecraft().getTextureManager().bindTexture(capeTexture);
-            Utils.drawTexturedRect(guiLeft+31+91*displayIndex-xOffset, guiTop+24, 59, 84,
-                    0, 293/1024f, 0, 420/1024f, GL11.GL_NEAREST);
+            Utils.drawTexturedRect(guiLeft+31+91*displayIndex-xOffset, guiTop+24, 59, 84, GL11.GL_NEAREST);
 
             displayIndex++;
         }

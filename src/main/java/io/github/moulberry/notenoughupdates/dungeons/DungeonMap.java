@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.dungeons;
 
+import com.google.common.collect.Iterables;
 import com.google.common.math.BigIntegerMath;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUResourceManager;
@@ -31,6 +32,7 @@ import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.util.*;
 import net.minecraft.world.storage.MapData;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.BufferUtils;
@@ -355,20 +357,20 @@ public class DungeonMap {
     }
 
     public int getRenderRoomSize() {
-        int roomSizeOption = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize.value.intValue();
+        double roomSizeOption = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize.value;
         if(roomSizeOption <= 0) return 12;
-        return 12 + roomSizeOption*4;
+        return 12 + (int)Math.round(roomSizeOption*4);
     }
 
     public int getRenderConnSize() {
-        int roomSizeOption = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize.value.intValue();
+        int roomSizeOption = (int)Math.round(NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize.value);
         if(roomSizeOption <= 0) return 3;
         return 3 + roomSizeOption;
     }
 
     private HashMap<Integer, Float> borderRadiusCache = new HashMap<>();
     public float getBorderRadius() {
-        int borderSizeOption = NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize.value.intValue();
+        int borderSizeOption = (int)Math.round(NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize.value.doubleValue());
         String sizeId = borderSizeOption == 0 ? "small" : borderSizeOption == 2 ? "large" : "medium";
 
         int style = NotEnoughUpdates.INSTANCE.manager.config.dmBorderStyle.value.intValue();
@@ -433,8 +435,14 @@ public class DungeonMap {
             rotation = (int)playerPos.rotation;
         }
 
-        int mapSizeX = borderSizeOption == 0 ? 90 : borderSizeOption == 2 ? 160 : borderSizeOption == 3 ? 240 : 120;
-        int mapSizeY = borderSizeOption == 0 ? 90 : borderSizeOption == 2 ? 160 : borderSizeOption == 3 ? 240 : 120;
+        int mapSizeX;
+        int mapSizeY;
+        if(NotEnoughUpdates.INSTANCE.manager.config.dmBorderStyle.value <= 1) {
+            mapSizeX = 80 + (int)Math.round(40*NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize.value);
+        } else {
+            mapSizeX = borderSizeOption == 0 ? 90 : borderSizeOption == 1 ? 120 : borderSizeOption == 2 ? 160 : 240;
+        }
+        mapSizeY = mapSizeX;
         int roomsSizeX = (maxRoomX-minRoomX)*(renderRoomSize+renderConnSize)+renderRoomSize;
         int roomsSizeY = (maxRoomY-minRoomY)*(renderRoomSize+renderConnSize)+renderRoomSize;
         int mapCenterX = mapSizeX/2;
@@ -454,6 +462,7 @@ public class DungeonMap {
             }
         } catch(Exception e) {
             e.printStackTrace();
+            Utils.pushGuiScale(-1);
             return;
         }
 
@@ -792,15 +801,15 @@ public class DungeonMap {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(rl);
                 GlStateManager.color(1, 1, 1, 1);
 
-                int size = borderSizeOption == 0 ? 165 : borderSizeOption == 2 ? 300 : borderSizeOption == 3 ? 440 : 220;
+                int size = borderSizeOption == 0 ? 165 : borderSizeOption == 1 ? 220 : borderSizeOption == 2 ? 300 : 440;
                 Utils.drawTexturedRect(-size/2, -size/2, size, size, GL11.GL_NEAREST);
             }
 
             GlStateManager.translate(-centerX, -centerY, -100);
         } catch(Exception e) {
             e.printStackTrace();
-            Minecraft.getMinecraft().entityRenderer.setupOverlayRendering();
             Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
+            Minecraft.getMinecraft().entityRenderer.setupOverlayRendering();
         }
 
         Utils.pushGuiScale(-1);
@@ -992,9 +1001,10 @@ public class DungeonMap {
         }
     }
 
+    private boolean failMap = false;
     private long lastClearCache = 0;
     public void renderMap(int centerX, int centerY, Color[][] colourMap, Map<String, Vec4b> mapDecorations,
-                          int roomSizeBlocks, Set<String> actualPlayers, boolean usePlayerPositions) {
+                          int roomSizeBlocks, Set<String> actualPlayers, boolean usePlayerPositions, float partialTicks) {
         if(!NotEnoughUpdates.INSTANCE.manager.config.dmEnable.value) return;
         if(colourMap == null) return;
         if(colourMap.length != 128) return;
@@ -1008,8 +1018,29 @@ public class DungeonMap {
             connectorSize = -1;
             roomSize = -1;
             borderRadiusCache.clear();
+            failMap = false;
 
             lastClearCache = System.currentTimeMillis();
+        }
+
+        if(failMap) {
+            return;
+        }
+
+        int alphaPixels = 0;
+        for(int x=0; x<128; x++) {
+            for(int y=0; y<128; y++) {
+                Color c = colourMap[x][y];
+                if(c == null) {
+                    return;
+                } else if(c.getAlpha() < 50) {
+                    alphaPixels++;
+                }
+            }
+        }
+        if(alphaPixels < 128*128/10) {
+            failMap = true;
+            return;
         }
 
         if(startRoomX < 0 || startRoomY < 0 || roomSize <= 0) {
@@ -1043,6 +1074,11 @@ public class DungeonMap {
                     }
                 }
             }
+        }
+
+        if(startRoomX < 0 || startRoomY < 0) {
+            failMap = true;
+            return;
         }
 
         if(connectorSize <= 0) {
@@ -1131,7 +1167,7 @@ public class DungeonMap {
                     playerConnOffsetY -= startRoomY/(roomSize+connectorSize);
 
                     MapPosition pos = new MapPosition(playerRoomOffsetX, playerConnOffsetX, playerRoomOffsetY, playerConnOffsetY);
-                    pos.rotation = player.rotationYawHead % 360;
+                    pos.rotation = (player.prevRotationYawHead + (player.rotationYawHead-player.prevRotationYawHead)*partialTicks) % 360;
                     if(pos.rotation < 0) pos.rotation += 360;
                     playerEntityMapPositions.put(player.getName(), pos);
                 }
@@ -1144,9 +1180,20 @@ public class DungeonMap {
             updateRoomConnections(offset);
         }
 
+        if(roomMap.isEmpty()) {
+            failMap = true;
+            return;
+        }
+
         if(mapDecorations != null && mapDecorations.size() > 0) {
             List<MapPosition> positions = new ArrayList<>();
+            int decorations = 0;
             for (Vec4b vec4b : mapDecorations.values()) {
+                byte id = vec4b.func_176110_a();
+                if(id != 1 && id != 3) continue;
+
+                if(decorations++ == 6) break;
+
                 float x = (float) vec4b.func_176112_b() / 2.0F + 64.0F;
                 float y = (float) vec4b.func_176113_c() / 2.0F + 64.0F;
 
@@ -1320,13 +1367,15 @@ public class DungeonMap {
     }
 
     @SubscribeEvent
+    public void onWorldChange(WorldEvent.Load event) {
+        colourMap = null;
+    }
+
+    @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent event) {
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
             if(!NotEnoughUpdates.INSTANCE.manager.config.dmEnable.value) return;
 
-            if(SBInfo.getInstance().getLocation() == null || !SBInfo.getInstance().getLocation().equals("dungeon")) {
-                return;
-            }
             if(Minecraft.getMinecraft().gameSettings.showDebugInfo ||
                     (Minecraft.getMinecraft().gameSettings.keyBindPlayerList.isKeyDown() &&
                             (!Minecraft.getMinecraft().isIntegratedServerRunning() ||
@@ -1335,7 +1384,7 @@ public class DungeonMap {
             }
             
             ItemStack stack = Minecraft.getMinecraft().thePlayer.inventory.mainInventory[8];
-            boolean holdingBow = stack != null && stack.getItem() == Items.arrow;
+            boolean holdingBow = stack != null && stack.getItem() == Items.arrow && colourMap != null;
             if(holdingBow || (stack != null && stack.getItem() instanceof ItemMap)) {
                 Map<String, Vec4b> decorations = null;
 
@@ -1343,7 +1392,7 @@ public class DungeonMap {
                 if(holdingBow) {
                     for(int x=0; x<128; x++) {
                         for(int y=0; y<128; y++) {
-                            if(this.colourMap != null && this.colourMap[x][y] != null) {
+                            if(this.colourMap[x][y] != null) {
                                 colourMap[x][y] = this.colourMap[x][y];
                             } else {
                                 colourMap[x][y] = new Color(0, true);
@@ -1412,15 +1461,31 @@ public class DungeonMap {
                 if(mostCommonDist > 31) roomSizeBlocks = mostCommonDist;*/
 
                 Set<String> actualPlayers = new HashSet<>();
+                /*for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                    if(player.getUniqueID().toString().charAt(14) == '4') {
+                        actualPlayers.add(player.getName());
+                        System.out.println(player.getName());
+
+                    }
+                }*/
+                int players = 0;
                 for(ScorePlayerTeam team : Minecraft.getMinecraft().thePlayer.getWorldScoreboard().getTeams()) {
-                    if(team.getTeamName().startsWith("a")) {
-                        actualPlayers.addAll(team.getMembershipCollection());
+                    if(team.getTeamName().startsWith("a") && team.getMembershipCollection().size() == 1) {
+                        String playerName = Iterables.get(team.getMembershipCollection(), 0);
+                        for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                            if(player.getName().equals(playerName) && (player == Minecraft.getMinecraft().thePlayer ||
+                                    (!player.isPlayerSleeping() && !player.isInvisible()))) {
+                                actualPlayers.add(playerName);
+                                break;
+                            }
+                        }
+                        if(++players >= 6) break;
                     }
                 }
 
                 renderMap((int)(NotEnoughUpdates.INSTANCE.manager.config.dmCenterX.value/100*Minecraft.getMinecraft().displayWidth/2),
                         (int)(NotEnoughUpdates.INSTANCE.manager.config.dmCenterY.value/100*Minecraft.getMinecraft().displayHeight/2),
-                        colourMap, decorations, roomSizeBlocks, actualPlayers, true);
+                        colourMap, decorations, roomSizeBlocks, actualPlayers, true, event.partialTicks);
             }
         }
     }

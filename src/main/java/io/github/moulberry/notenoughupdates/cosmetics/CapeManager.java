@@ -32,8 +32,9 @@ public class CapeManager {
     private boolean allAvailable = false;
     private HashSet<String> availableCapes = new HashSet<>();
 
-    private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee", "gravy", "space", "mcworld", "lava", "packshq", "mbstaff" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, true, true, true };
+    private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
+            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery" };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true };
 
     public static CapeManager getInstance() {
         return INSTANCE;

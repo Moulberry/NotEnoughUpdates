@@ -19,6 +19,8 @@ public class GuiTextures {
     public static final ResourceLocation help = new ResourceLocation("notenoughupdates:help.png");
     public static final ResourceLocation slider_off = new ResourceLocation("notenoughupdates:slider_off.png");
     public static final ResourceLocation slider_on = new ResourceLocation("notenoughupdates:slider_on.png");
+    public static final ResourceLocation slider_off_large = new ResourceLocation("notenoughupdates:slider_off_large.png");
+    public static final ResourceLocation slider_on_large = new ResourceLocation("notenoughupdates:slider_on_large.png");
     public static final ResourceLocation slider_button = new ResourceLocation("notenoughupdates:slider_button.png");
 
     public static final ResourceLocation item_mask = new ResourceLocation("notenoughupdates:item_mask.png");

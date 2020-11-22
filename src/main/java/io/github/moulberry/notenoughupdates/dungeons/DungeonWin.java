@@ -144,7 +144,7 @@ public class DungeonWin {
         long currentTime = System.currentTimeMillis();
         String unformatted = Utils.cleanColour(e.message.getUnformattedText());
         if(e.message.getFormattedText().startsWith(EnumChatFormatting.RESET+"   ")) {
-            if(currentTime - lastDungeonFinish > 10000) {
+            if(currentTime - lastDungeonFinish > 30000) {
                 Matcher matcher = TEAM_SCORE_REGEX.matcher(unformatted);
                 if(matcher.find()) {
                     lastDungeonFinish = currentTime;
@@ -177,7 +177,6 @@ public class DungeonWin {
                 e.setCanceled(true);
                 if(unformatted.contains("\u25AC")) {
                     hideChat = false;
-                    lastDungeonFinish = 0;
                     displayWin();
                 } else {
                     if(unformatted.trim().length() > 0) {

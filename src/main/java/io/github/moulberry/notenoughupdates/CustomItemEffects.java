@@ -19,6 +19,7 @@ import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
@@ -63,7 +64,8 @@ public class CustomItemEffects {
 
     @SubscribeEvent
     public void onTick(TickEvent.RenderTickEvent event) {
-        //if(aoteTeleportationTicks > 7) aoteTeleportationTicks = 7;
+        if(Minecraft.getMinecraft().thePlayer == null) return;
+
         long currentTime = System.currentTimeMillis();
         int delta = (int)(currentTime - lastMillis);
         lastMillis = currentTime;
@@ -158,10 +160,18 @@ public class CustomItemEffects {
                     if(matchItem != null) {
                         ItemStack matchStack =  new ItemStack(matchItem, 1,
                                 match.getBlock().getDamageValue(Minecraft.getMinecraft().theWorld, Minecraft.getMinecraft().objectMouseOver.getBlockPos()));
-                        int itemCount = countItemsInInventoryAndStorage(matchStack);
 
                         getBuildersWandCandidates(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().objectMouseOver, event.partialTicks,
                                 candidatesOld, candidatesOldSorted, 999-MAX_BUILDERS_BLOCKS);
+
+                        boolean usingDirtWand = false;
+                        int itemCount;
+                        if(match.getBlock() == Blocks.dirt && matchStack.getItemDamage() == 0 && hasDirtWand()) {
+                            itemCount = candidatesOld.size();
+                            usingDirtWand = true;
+                        } else {
+                            itemCount = countItemsInInventoryAndStorage(matchStack);
+                        }
 
                         if(candidatesOld.size() > MAX_BUILDERS_BLOCKS) {
                             Utils.drawStringCentered(EnumChatFormatting.RED.toString()+candidatesOld.size()+"/"+MAX_BUILDERS_BLOCKS,
@@ -178,15 +188,26 @@ public class CustomItemEffects {
                                     scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
                         }
 
-                        String itemCountS = EnumChatFormatting.DARK_GRAY+"x"+EnumChatFormatting.RESET+countItemsInInventoryAndStorage(matchStack);
+                        String itemCountS = EnumChatFormatting.DARK_GRAY+"x"+EnumChatFormatting.RESET+itemCount;
                         int itemCountLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(itemCountS);
 
                         if(NotEnoughUpdates.INSTANCE.manager.config.wandBlockCount.value) {
-                            Utils.drawItemStack(matchStack, scaledResolution.getScaledWidth()/2 - (itemCountLen+16)/2, scaledResolution.getScaledHeight()/2+10+4);
-                            Minecraft.getMinecraft().fontRendererObj.drawString(itemCountS,
-                                    scaledResolution.getScaledWidth()/2f - (itemCountLen+16)/2f+16, scaledResolution.getScaledHeight()/2f+10+8,
-                                    -1,
-                                    true);
+                            if(usingDirtWand) {
+                                Utils.drawItemStack(new ItemStack(Items.gold_nugget), scaledResolution.getScaledWidth()/2 - (itemCountLen+16)/2,
+                                        scaledResolution.getScaledHeight()/2+10+4);
+                                Minecraft.getMinecraft().fontRendererObj.drawString(itemCountS,
+                                        scaledResolution.getScaledWidth()/2f - (itemCountLen+16)/2f+11, scaledResolution.getScaledHeight()/2f+10+8,
+                                        -1,
+                                        true);
+                            } else {
+                                Utils.drawItemStack(matchStack, scaledResolution.getScaledWidth()/2 - (itemCountLen+16)/2,
+                                        scaledResolution.getScaledHeight()/2+10+4);
+                                Minecraft.getMinecraft().fontRendererObj.drawString(itemCountS,
+                                        scaledResolution.getScaledWidth()/2f - (itemCountLen+16)/2f+16, scaledResolution.getScaledHeight()/2f+10+8,
+                                        -1,
+                                        true);
+                            }
+
                         }
 
                         GlStateManager.color(1, 1, 1, 1);
@@ -210,10 +231,8 @@ public class CustomItemEffects {
         String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
 
         if(heldInternal != null && heldInternal.equals("BUILDERS_WAND")) {
-            //System.out.println("1");
             if(held.hasTagCompound() && held.getTagCompound().hasKey("ExtraAttributes", 10) &&
                     held.getTagCompound().getCompoundTag("ExtraAttributes").hasKey("builder's_wand_data", 7)) {
-                //System.out.println("2");
                 byte[] bytes = held.getTagCompound().getCompoundTag("ExtraAttributes").getByteArray("builder's_wand_data");
                 try {
                     NBTTagCompound contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(bytes));
@@ -221,7 +240,8 @@ public class CustomItemEffects {
                     for(int j=0; j<items.tagCount(); j++) {
                         NBTTagCompound buildersItem = items.getCompoundTagAt(j);
                         if(buildersItem.getKeySet().size() > 0) {
-                            if(buildersItem.getInteger("id") == Item.getIdFromItem(match.getItem())) {
+                            if(buildersItem.getInteger("id") == Item.getIdFromItem(match.getItem()) &&
+                                    buildersItem.getInteger("Damage") == match.getItemDamage()) {
                                 count += items.getCompoundTagAt(j).getByte("Count");
                             }
                         }
@@ -235,6 +255,41 @@ public class CustomItemEffects {
         return count;
     }
 
+    public boolean hasDirtWand() {
+        for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
+            String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
+            if(internalname != null && internalname.equals("INFINIDIRT_WAND")) {
+                return true;
+            }
+        }
+
+        ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
+        String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
+
+        if(heldInternal != null && heldInternal.equals("BUILDERS_WAND")) {
+            if(held.hasTagCompound() && held.getTagCompound().hasKey("ExtraAttributes", 10) &&
+                    held.getTagCompound().getCompoundTag("ExtraAttributes").hasKey("builder's_wand_data", 7)) {
+                byte[] bytes = held.getTagCompound().getCompoundTag("ExtraAttributes").getByteArray("builder's_wand_data");
+                try {
+                    NBTTagCompound contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(bytes));
+                    NBTTagList items = contents_nbt.getTagList("i", 10);
+                    for(int j=0; j<items.tagCount(); j++) {
+                        NBTTagCompound buildersItem = items.getCompoundTagAt(j);
+                        if(buildersItem.getKeySet().size() > 0) {
+                            String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalnameFromNBT(buildersItem.getCompoundTag("tag"));
+                            if(internalname != null && internalname.equals("INFINIDIRT_WAND")) {
+                                return true;
+                            }
+                        }
+                    }
+                } catch(Exception e) {
+                }
+            }
+        }
+
+        return false;
+    }
+
     @SubscribeEvent
     public void renderBlockOverlay(DrawBlockHighlightEvent event) {
         if(aoteTeleportationCurr != null && aoteTeleportationMillis > 0) {
@@ -243,6 +298,11 @@ public class CustomItemEffects {
         ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
         String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
         if(heldInternal != null) {
+            EntityPlayer player = event.player;
+            double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double)event.partialTicks;
+            double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)event.partialTicks;
+            double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double)event.partialTicks;
+
             if(!NotEnoughUpdates.INSTANCE.manager.config.disableTreecapOverlay.value &&
                     (heldInternal.equals("JUNGLE_AXE") || heldInternal.equals("TREECAPITATOR_AXE"))) {
                 int maxWood = 10;
@@ -257,7 +317,6 @@ public class CustomItemEffects {
 
                     if(Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos()).getBlock() == Blocks.log ||
                             Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos()).getBlock() == Blocks.log2) {
-                        EntityPlayer player = event.player;
 
                         int woods = 0;
 
@@ -301,9 +360,6 @@ public class CustomItemEffects {
                                 }
 
                                 block.setBlockBoundsBasedOnState(Minecraft.getMinecraft().theWorld, candidate);
-                                double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double)event.partialTicks;
-                                double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)event.partialTicks;
-                                double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double)event.partialTicks;
 
                                 drawFilledBoundingBox(block.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, candidate)
                                         .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2),
@@ -316,63 +372,200 @@ public class CustomItemEffects {
                     GlStateManager.enableTexture2D();
                     GlStateManager.disableBlend();
                 }
-            } else if(!NotEnoughUpdates.INSTANCE.manager.config.disableWandOverlay.value && heldInternal.equals("BUILDERS_WAND")) {
-                int maxBlocks = 164;
-                if (event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
-                    IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos().offset(event.target.sideHit, 1));
-                    if(hover.getBlock() == Blocks.air) {
-                        EntityPlayer player = event.player;
+            } else if(!NotEnoughUpdates.INSTANCE.manager.config.disableWandOverlay.value) {
+                if(heldInternal.equals("BUILDERS_WAND")) {
+                    int maxBlocks = 164;
+                    if (event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                        IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos().offset(event.target.sideHit, 1));
+                        if(hover.getBlock() == Blocks.air) {
+                            IBlockState match = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos());
+                            Item matchItem = Item.getItemFromBlock(match.getBlock());
+                            if(matchItem != null) {
+                                GlStateManager.enableBlend();
+                                GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+                                GlStateManager.disableTexture2D();
+                                GlStateManager.depthMask(false);
 
-                        IBlockState match = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos());
-                        Item matchItem = Item.getItemFromBlock(match.getBlock());
-                        if(matchItem != null) {
-                            GlStateManager.enableBlend();
-                            GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-                            GlStateManager.disableTexture2D();
-                            GlStateManager.depthMask(false);
+                                HashSet<BlockPos> candidatesOld = new HashSet<>();
+                                TreeMap<Float, Set<BlockPos>> candidatesOldSorted = new TreeMap<>();
 
-                            ItemStack matchStack =  new ItemStack(matchItem, 1, match.getBlock().getMetaFromState(match));
-                            int itemCount = countItemsInInventoryAndStorage(matchStack);
+                                getBuildersWandCandidates(player, event.target, event.partialTicks, candidatesOld, candidatesOldSorted, 10);
 
-                            HashSet<BlockPos> candidatesOld = new HashSet<>();
-                            TreeMap<Float, Set<BlockPos>> candidatesOldSorted = new TreeMap<>();
+                                ItemStack matchStack =  new ItemStack(matchItem, 1, match.getBlock().getMetaFromState(match));
+                                int itemCount;
+                                if(match.getBlock() == Blocks.dirt && matchStack.getItemDamage() == 0 && hasDirtWand()) {
+                                    itemCount = candidatesOld.size();
+                                } else {
+                                    itemCount = countItemsInInventoryAndStorage(matchStack);
+                                }
 
-                            getBuildersWandCandidates(player, event.target, event.partialTicks, candidatesOld, candidatesOldSorted, 10);
+                                String special = (candidatesOld.size() <= itemCount) ? NotEnoughUpdates.INSTANCE.manager.config.wandOverlayColour.value :
+                                        "0:255:255:0:0";
 
-                            String special = (candidatesOld.size() <= itemCount) ? NotEnoughUpdates.INSTANCE.manager.config.wandOverlayColour.value :
-                                    "0:255:255:0:0";
+                                if(candidatesOld.size() <= maxBlocks) {
+                                    for(Set<BlockPos> candidatesSorted : candidatesOldSorted.values()) {
+                                        for(BlockPos candidate : candidatesSorted) {
+                                            match.getBlock().setBlockBoundsBasedOnState(Minecraft.getMinecraft().theWorld, candidate);
+                                            AxisAlignedBB bb = match.getBlock().getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, candidate)
+                                                    .offset(event.target.sideHit.getFrontOffsetX(), event.target.sideHit.getFrontOffsetY(),
+                                                            event.target.sideHit.getFrontOffsetZ());
 
-                            if(candidatesOld.size() <= maxBlocks) {
-                                double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double)event.partialTicks;
-                                double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)event.partialTicks;
-                                double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double)event.partialTicks;
+                                            drawBlock((int)bb.minX, (int)bb.minY, (int)bb.minZ+1, match, event.partialTicks, 0.75f);
+                                        }
+                                    }
 
-                                for(Set<BlockPos> candidatesSorted : candidatesOldSorted.values()) {
-                                    for(BlockPos candidate : candidatesSorted) {
+                                    for(BlockPos candidate : candidatesOld) {
                                         match.getBlock().setBlockBoundsBasedOnState(Minecraft.getMinecraft().theWorld, candidate);
                                         AxisAlignedBB bb = match.getBlock().getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, candidate)
+                                                .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2)
                                                 .offset(event.target.sideHit.getFrontOffsetX(), event.target.sideHit.getFrontOffsetY(),
                                                         event.target.sideHit.getFrontOffsetZ());
 
-                                        drawBlock((int)bb.minX, (int)bb.minY, (int)bb.minZ+1, match, event.partialTicks, 0.75f);
+                                        drawOutlineBoundingBox(bb, 1f, special);
                                     }
                                 }
 
-                                for(BlockPos candidate : candidatesOld) {
-                                    match.getBlock().setBlockBoundsBasedOnState(Minecraft.getMinecraft().theWorld, candidate);
-                                    AxisAlignedBB bb = match.getBlock().getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, candidate)
-                                            .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2)
-                                            .offset(event.target.sideHit.getFrontOffsetX(), event.target.sideHit.getFrontOffsetY(),
-                                                    event.target.sideHit.getFrontOffsetZ());
+                                GlStateManager.depthMask(true);
+                                GlStateManager.enableTexture2D();
+                                GlStateManager.disableBlend();
+                            }
+                        }
+                    }
+                } else if(heldInternal.equals("INFINIDIRT_WAND") && event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                    BlockPos hover = event.target.getBlockPos().offset(event.target.sideHit, 1);
+                    IBlockState hoverState = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos().offset(event.target.sideHit, 1));
+                    if(hoverState.getBlock() == Blocks.air) {
+                        GlStateManager.enableBlend();
+                        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+                        GlStateManager.disableTexture2D();
+                        GlStateManager.depthMask(false);
 
-                                    drawOutlineBoundingBox(bb, 1f, special);
+                        String special = NotEnoughUpdates.INSTANCE.manager.config.wandOverlayColour.value;
+
+                        AxisAlignedBB bb = Blocks.dirt.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, hover);
+                        drawBlock((int)bb.minX, (int)bb.minY, (int)bb.minZ+1, Blocks.dirt.getDefaultState(),
+                                event.partialTicks, 0.75f);
+
+                        AxisAlignedBB bbExpanded = Blocks.dirt.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, hover)
+                                .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2);
+                        drawOutlineBoundingBox(bbExpanded, 1f, special);
+
+                        GlStateManager.depthMask(true);
+                        GlStateManager.enableTexture2D();
+                        GlStateManager.disableBlend();
+                    }
+                } else if((heldInternal.equals("WATER_BUCKET") || heldInternal.equals("MAGICAL_WATER_BUCKET")) &&
+                        event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                    BlockPos hover = event.target.getBlockPos().offset(event.target.sideHit, 1);
+
+                    HashSet<BlockPos> verticalSources = new HashSet<>();
+                    TreeMap<Float, HashMap<BlockPos, EnumFacing>> watersSorted = new TreeMap<>();
+
+                    for(int xOff=-1; xOff<=1; xOff++) {
+                        for(int yOff=0; yOff<=1; yOff++) {
+                            for(int zOff=-1; zOff<=1; zOff++) {
+                                if((xOff == 0 && yOff == 0) ||
+                                    (xOff == 0 && zOff == 0) ||
+                                    (zOff == 0 && yOff == 0)) {
+
+                                    BlockPos checkPos = hover.add(-xOff, -yOff, -zOff);
+                                    IBlockState check = Minecraft.getMinecraft().theWorld.getBlockState(checkPos);
+                                    if(check.getBlock() == Blocks.prismarine && check.getBlock().getMetaFromState(check) == 2) {
+                                        for(int i=0; i<300; i++) {
+                                            BlockPos renderPos = hover.add(xOff*i, yOff*i, zOff*i);
+
+                                            if(Math.abs(renderPos.getX()) > 128) {
+                                                break;
+                                            }
+                                            if(Math.abs(renderPos.getY()) > 255) {
+                                                break;
+                                            }
+                                            if(Math.abs(renderPos.getZ()) > 128) {
+                                                break;
+                                            }
+
+                                            IBlockState renderState = Minecraft.getMinecraft().theWorld.getBlockState(renderPos);
+
+                                            if(renderState.getBlock() != Blocks.air && renderState.getBlock() != Blocks.water &&
+                                                renderState.getBlock() != Blocks.flowing_water) {
+                                                break;
+                                            }
+
+                                            if(yOff != 0) {
+                                                verticalSources.add(renderPos);
+                                            } else {
+                                                IBlockState belowState = Minecraft.getMinecraft().theWorld.getBlockState(renderPos.add(0, -1, 0));
+                                                if(belowState.getBlock() == Blocks.air) {
+                                                    break;
+                                                }
+                                            }
+
+                                            for(EnumFacing facing : EnumFacing.values()) {
+                                                float xDist = (float)(renderPos.getX()+0.5f+0.5f*facing.getFrontOffsetX()-d0);
+                                                float yDist = (float)(renderPos.getY()+0.5f+0.5f*facing.getFrontOffsetY()-d1-player.getEyeHeight());
+                                                float zDist = (float)(renderPos.getZ()+0.5f+0.5f*facing.getFrontOffsetZ()-d2);
+
+                                                float distSq = xDist*xDist + yDist*yDist + zDist*zDist;
+
+                                                watersSorted.computeIfAbsent(distSq, k->new HashMap<>()).put(renderPos, facing);
+                                            }
+
+                                        }
+                                    }
                                 }
                             }
-
-                            GlStateManager.depthMask(true);
-                            GlStateManager.enableTexture2D();
-                            GlStateManager.disableBlend();
                         }
+                    }
+
+                    GlStateManager.enableDepth();
+                    GlStateManager.enableBlend();
+                    GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+                    GlStateManager.disableTexture2D();
+                    GlStateManager.depthMask(true);
+
+                    for(HashMap<BlockPos, EnumFacing> blockPoses : watersSorted.values()) {
+                        for(Map.Entry<BlockPos, EnumFacing> entry : blockPoses.entrySet()) {
+                            boolean vertical = verticalSources.contains(entry.getKey());
+                            AxisAlignedBB bbExpanded = Blocks.water.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, entry.getKey())
+                                    .expand(-0.001D, -0.001D-(vertical?0:0.0625D), -0.001D)
+                                    .offset(-d0, -d1-(vertical?0:0.0625), -d2);
+                            drawFilledBoundingBoxSide(bbExpanded, entry.getValue(), 1f, "0:100:20:50:160");
+                        }
+                    }
+
+                    GlStateManager.depthMask(true);
+                    GlStateManager.enableTexture2D();
+                    GlStateManager.disableBlend();
+                }  else if((heldInternal.equals("HOE_OF_GREAT_TILLING") || heldInternal.equals("HOE_OF_GREATER_TILLING")) &&
+                        event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                    BlockPos target = event.target.getBlockPos();
+                    IBlockState targetState = Minecraft.getMinecraft().theWorld.getBlockState(target);
+
+                    int radius = heldInternal.equals("HOE_OF_GREAT_TILLING") ? 1 : 2;
+
+                    if(targetState.getBlock() == Blocks.dirt || targetState.getBlock() == Blocks.grass) {
+                        GlStateManager.enableDepth();
+                        GlStateManager.enableBlend();
+                        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+                        GlStateManager.disableTexture2D();
+                        GlStateManager.depthMask(true);
+
+                        for(int xOff=-radius; xOff<=radius; xOff++) {
+                            for(int zOff=-radius; zOff<=radius; zOff++) {
+                                BlockPos renderPos = target.add(xOff, 0, zOff);
+                                IBlockState renderState = Minecraft.getMinecraft().theWorld.getBlockState(renderPos);
+                                if(renderState.getBlock() == Blocks.dirt || renderState.getBlock() == Blocks.grass) {
+                                    AxisAlignedBB bbExpanded = Blocks.dirt.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, renderPos)
+                                            .expand(0.001D, 0.001D, 0.001D)
+                                            .offset(-d0, -d1, -d2);
+                                    drawFilledBoundingBox(bbExpanded, 1f, "0:100:178:34:34");
+                                }
+                            }
+                        }
+
+                        GlStateManager.depthMask(true);
+                        GlStateManager.enableTexture2D();
+                        GlStateManager.disableBlend();
                     }
                 }
             }
@@ -513,10 +706,10 @@ public class CustomItemEffects {
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
         GlStateManager.disableTexture2D();
-        GlStateManager.depthMask(false);
 
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+
         //vertical
         worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ).endVertex();
@@ -559,6 +752,58 @@ public class CustomItemEffects {
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ).endVertex();
         tessellator.draw();
 
+    }
+
+    public static void drawFilledBoundingBoxSide(AxisAlignedBB p_181561_0_, EnumFacing facing, float alpha, String special) {
+        Color c = new Color(SpecialColour.specialToChromaRGB(special), true);
+        GlStateManager.color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha);
+
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+        GlStateManager.disableTexture2D();
+
+        Tessellator tessellator = Tessellator.getInstance();
+        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+        worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
+        switch(facing) {
+            case UP:
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ).endVertex();
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ).endVertex();
+                break;
+            case DOWN:
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ).endVertex();
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ).endVertex();
+                break;
+            case EAST:
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ).endVertex();
+                break;
+            case WEST:
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ).endVertex();
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ).endVertex();
+                break;
+            case SOUTH:
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ).endVertex();
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ).endVertex();
+                break;
+            case NORTH:
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ).endVertex();
+                worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ).endVertex();
+                break;
+        }
+        tessellator.draw();
     }
 
     public static void drawOutlineBoundingBox(AxisAlignedBB p_181561_0_, float alpha, String special) {

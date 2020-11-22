@@ -83,8 +83,10 @@ public class NEUCape {
             shaderName = "lava_cape";
         } else if(capeName.equalsIgnoreCase("lightning")) {
             shaderName = "lightning_cape";
+        } else if(capeName.equalsIgnoreCase("thebakery")) {
+            shaderName = "biscuit_cape";
         } else {
-            shaderName = "cape";
+            shaderName = "shiny_cape";
         }
 
         ResourceLocation staticCapeTex = new ResourceLocation("notenoughupdates:capes/"+capeName+".png");
@@ -150,9 +152,9 @@ public class NEUCape {
     public void createCapeNodes(EntityPlayer player) {
         nodes = new ArrayList<>();
 
-        float pX = (float)player.posX;
+        float pX = (float)player.posX % 7789;
         float pY = (float)player.posY;
-        float pZ = (float)player.posZ;
+        float pZ = (float)player.posZ % 7789;
 
         float uMinTop = 48/1024f;
         float uMaxTop = 246/1024f;
@@ -310,6 +312,9 @@ public class NEUCape {
             shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
         } else if(shaderName.equalsIgnoreCase("lightning_cape")) {
             shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
+        } else if(shaderName.equalsIgnoreCase("biscuit_cape") || shaderName.equalsIgnoreCase("shiny_cape")) {
+            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
+            shaderManager.loadData(shaderName, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
         }
     }
 
@@ -325,9 +330,9 @@ public class NEUCape {
         ensureCapeNodesCreated(player);
 
         Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
-        double viewerX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * e.partialRenderTick;
+        double viewerX = (viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * e.partialRenderTick) % 7789;
         double viewerY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * e.partialRenderTick;
-        double viewerZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * e.partialRenderTick;
+        double viewerZ = (viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * e.partialRenderTick) % 7789;
 
         GlStateManager.pushMatrix();
         GlStateManager.enableBlend();
@@ -398,9 +403,9 @@ public class NEUCape {
     }
 
     private Vector3f updateFixedCapeNodes(EntityPlayer player) {
-        double pX = player.posX;//player.lastTickPosX + (player.posX - player.lastTickPosX) * partialRenderTick;
+        double pX = player.posX % 7789;//player.lastTickPosX + (player.posX - player.lastTickPosX) * partialRenderTick;
         double pY = player.posY;//player.lastTickPosY + (player.posY - player.lastTickPosY) * partialRenderTick;
-        double pZ = player.posZ;//player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialRenderTick;
+        double pZ = player.posZ % 7789;//player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialRenderTick;
         double angle = Math.toRadians(player.renderYawOffset);
 
         double vertOffset2 = vertOffset + (player.isSneaking() ? -0.22f : 0) + (player.getCurrentArmor(2) != null ? 0.06f : 0);
@@ -440,9 +445,9 @@ public class NEUCape {
     }
 
     private void updateFixedCapeNodesPartial(EntityPlayer player, float partialRenderTick) {
-        double pX = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialRenderTick;
+        double pX = (player.lastTickPosX + (player.posX - player.lastTickPosX) * partialRenderTick) % 7789;
         double pY = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialRenderTick;
-        double pZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialRenderTick;
+        double pZ = (player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialRenderTick) % 7789;
         double angle = Math.toRadians(player.renderYawOffset);
 
         double vertOffset2 = vertOffset + (player.isSneaking() ? -0.22f : 0) + (player.getCurrentArmor(2) != null ? 0.06f : 0);
@@ -478,6 +483,12 @@ public class NEUCape {
                 eventMillis = currentTime;
                 eventLength = random.nextFloat()*2000+4000;
                 eventRandom = random.nextFloat();
+            }
+        } else if(shaderName.equals("biscuit_cape") || shaderName.equals("shiny_cape")) {
+            long currentTime = System.currentTimeMillis();
+            if(currentTime-startTime > eventMillis-startTime+eventLength) {
+                eventMillis = currentTime;
+                eventLength = random.nextFloat()*3000+3000;
             }
         }
 

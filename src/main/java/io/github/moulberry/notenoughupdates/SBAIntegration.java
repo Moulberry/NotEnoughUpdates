@@ -44,7 +44,10 @@ public class SBAIntegration {
                 backpackManager_getFromItem = backpackManagerClass.getDeclaredMethod("getFromItem", ItemStack.class);
             }
             if(backpackClass == null) {
-                backpackClass = Class.forName("codes.biscuit.skyblockaddons.features.backpacks.Backpack");
+                try { backpackClass = Class.forName("codes.biscuit.skyblockaddons.features.backpacks.Backpack"); } catch(Exception ignored){}
+            }
+            if(backpackClass == null) {
+                backpackClass = Class.forName("codes.biscuit.skyblockaddons.features.backpacks.ContainerPreview");
             }
             if(backpackClass_setX == null) {
                 backpackClass_setX = backpackClass.getDeclaredMethod("setX", int.class);
@@ -56,7 +59,10 @@ public class SBAIntegration {
                 utilsClass = Class.forName("codes.biscuit.skyblockaddons.utils.Utils");
             }
             if(utils_setBackpackToPreview == null) {
-                utils_setBackpackToPreview = utilsClass.getDeclaredMethod("setBackpackToPreview", backpackClass);
+                try { utils_setBackpackToPreview = utilsClass.getDeclaredMethod("setBackpackToPreview", backpackClass); } catch(Exception ignored){}
+            }
+            if(utils_setBackpackToPreview == null) {
+                utils_setBackpackToPreview = utilsClass.getDeclaredMethod("setContainerPreviewToRender", backpackClass);;
             }
         } catch(Exception e) {
             e.printStackTrace();

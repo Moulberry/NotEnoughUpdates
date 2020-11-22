@@ -202,6 +202,21 @@ public class Options {
             "Enables the auction house which can be found using /neuah.\n" +
                     "Don't enable this option unless you use /neuah\n" +
                     "You *may* need to restart after enabling this for the auctions to download properly", CAT_FEATURES);
+    public Option<Boolean> eventNotifications = new Option(
+            true,
+            "Skyblock Event Notifications",
+            false,
+            "Notifies you 5m (default) before and when favourited events (/neucalendar) start.", CAT_FEATURES);
+    public Option<Boolean> showEventTimerInInventory = new Option(
+            true,
+            "Event Timer In Inventory",
+            false,
+            "Will show how long until the next event starts at the top of your inventory", CAT_FEATURES);
+    public Option<Boolean> eventNotificationSounds = new Option(
+            true,
+            "Skyblock Event Notification Sounds",
+            false,
+            "Will play a sounds whenever a favourited event starts.", CAT_MISC);
     public Option<Boolean> accessoryBagOverlay = new Option(
             true,
             "Accessory Bag Overlay",
@@ -262,6 +277,11 @@ public class Options {
             "Dungeon Victory Screen Millis",
             false,
             "Changes how long the victory screen at the end of dungeons appears for. 0 = off", FLAG_INT, 0, 15000, CAT_SLIDERS);
+    public Option<Double> eventNotificationBeforeSeconds = new Option(
+            300.0,
+            "Event Notification Before Seconds",
+            false,
+            "Changes how long before skyblock events will the 'starting in' notification show. 0 = off", FLAG_INT, 0, 1800, CAT_SLIDERS);
 
     public Option<String> itemBackgroundColour = new Option(
             "00:255:100:100:100",
@@ -362,6 +382,11 @@ public class Options {
             "loadedModBefore",
             true,
             "loadedModBefore", CAT_ALL);
+    public Option<Boolean> doRamNotif = new Option(
+            true,
+            "doRamNotif",
+            false,
+            "doRamNotif", CAT_ALL);
     public Option<Boolean> customTradePrices = new Option(
             true,
             "Trade Item Values",
@@ -397,6 +422,11 @@ public class Options {
             "Favourites",
             false,
             "Favourites", CAT_ALL);
+    public Option<ArrayList<String>> eventFavourites = new Option(
+            new ArrayList<String>(),
+            "Event Favourites",
+            false,
+            "Event Favourites", CAT_ALL);
     public Option<Map<String, ArrayList<String>>> collectionLog = new Option(
             new HashMap<String, ArrayList<String>>(),
             "CollectionLog",
@@ -434,12 +464,12 @@ public class Options {
             1.0,
             "Border Size",
             false,
-            "Changes the size of the map border, without changing the size of the contents\nSmall = 90x\nMedium = 120x\nLarge = 160x", CAT_ALL);
+            "Changes the size of the map border, without changing the size of the contents\nSmall = 90x\nMedium = 120x\nLarge = 160x", 0, 5, CAT_ALL);
     public Option<Double> dmRoomSize = new Option(
             1.0,
             "Room Size",
             false,
-            "Changes the size of rooms. Useful for higher dungeons with larger maps\nSmall = 12x\nMedium = 16x\nLarge = 20x\nXLarge = 24x", CAT_ALL);
+            "Changes the size of rooms. Useful for higher dungeons with larger maps\nSmall = 12x\nMedium = 16x\nLarge = 20x\nXLarge = 24x", 0, 5, CAT_ALL);
     public Option<Double> dmBorderStyle = new Option(
             0.0,
             "Border Style",
@@ -614,6 +644,9 @@ public class Options {
         tryAddOption(accessoryBagOverlay, options);
         tryAddOption(rodColours, options);
         tryAddOption(neuAuctionHouse, options);
+        tryAddOption(eventNotifications, options);
+        tryAddOption(showEventTimerInInventory, options);
+        tryAddOption(eventNotificationSounds, options);
         //Sliders
         tryAddOption(paneGuiScale, options);
         tryAddOption(smoothAoteMillis, options);
@@ -624,6 +657,7 @@ public class Options {
         tryAddOption(dynamicMenuBackgroundStyle, options);
         tryAddOption(dynamicMenuButtonStyle, options);
         tryAddOption(dungeonWinMillis, options);
+        tryAddOption(eventNotificationBeforeSeconds, options);
         //Text
         tryAddOption(apiKey, options);
         //Colour

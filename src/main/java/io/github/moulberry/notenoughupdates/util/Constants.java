@@ -4,12 +4,28 @@ import com.google.gson.JsonObject;
 
 public class Constants {
 
-    public static final JsonObject BONUSES = Utils.getConstant("bonuses");
-    public static final JsonObject DISABLE = Utils.getConstant("disable");
-    public static final JsonObject ENCHANTS = Utils.getConstant("enchants");
-    public static final JsonObject LEVELING = Utils.getConstant("leveling");
-    public static final JsonObject MISC = Utils.getConstant("misc");
-    public static final JsonObject PETNUMS = Utils.getConstant("petnums");
-    public static final JsonObject PETS = Utils.getConstant("pets");
+    public static JsonObject BONUSES;
+    public static JsonObject DISABLE;
+    public static JsonObject ENCHANTS;
+    public static JsonObject LEVELING;
+    public static JsonObject MISC;
+    public static JsonObject PETNUMS;
+    public static JsonObject PETS;
+    public static JsonObject PARENTS;
+    
+    public static void reload() {
+        BONUSES = Utils.getConstant("bonuses");
+        DISABLE = Utils.getConstant("disable");
+        ENCHANTS = Utils.getConstant("enchants");
+        LEVELING = Utils.getConstant("leveling");
+        MISC = Utils.getConstant("misc");
+        PETNUMS = Utils.getConstant("petnums");
+        PETS = Utils.getConstant("pets");
+        PARENTS = Utils.getConstant("parents");
+    }
+
+    static {
+        reload();
+    }
 
 }

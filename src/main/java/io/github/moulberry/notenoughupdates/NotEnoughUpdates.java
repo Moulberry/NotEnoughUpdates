@@ -23,6 +23,7 @@ import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
 import io.github.moulberry.notenoughupdates.questing.SBInfo;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.client.Minecraft;
@@ -78,7 +79,7 @@ import java.util.regex.Pattern;
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "1.5-REL";
+    public static final String VERSION = "1.7-REL";
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -242,6 +243,7 @@ public class NotEnoughUpdates {
                     }
                 }
             }
+            Constants.reload();
         }
     });
 
@@ -792,7 +794,7 @@ public class NotEnoughUpdates {
         }
     });
 
-    SimpleCommand settingsCommand = new SimpleCommand("neusettings", new SimpleCommand.ProcessCommandRunnable() {
+    SimpleCommand settingsCommand = new SimpleCommand("neu", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             overlay.displayInformationPane(new SettingsInfoPane(overlay, manager));
             if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
@@ -801,12 +803,30 @@ public class NotEnoughUpdates {
         }
     });
 
-    SimpleCommand settingsCommand2 = new SimpleCommand("neuconfig", new SimpleCommand.ProcessCommandRunnable() {
+    SimpleCommand settingsCommand2 = new SimpleCommand("neusettings", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             overlay.displayInformationPane(new SettingsInfoPane(overlay, manager));
             if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
                 openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
             }
+        }
+    });
+
+    SimpleCommand settingsCommand3 = new SimpleCommand("neuconfig", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            overlay.displayInformationPane(new SettingsInfoPane(overlay, manager));
+            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
+                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
+            }
+        }
+    });
+
+
+    SimpleCommand calendarCommand = new SimpleCommand("neucalendar", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            Minecraft.getMinecraft().thePlayer.closeScreen();
+            CalendarOverlay.setEnabled(true);
+            sendChatMessage("/calendar");
         }
     });
 
@@ -841,9 +861,11 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new NEUEventListener(this));
         MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
         MinecraftForge.EVENT_BUS.register(new SBGamemodes());
+        MinecraftForge.EVENT_BUS.register(new CalendarOverlay());
         MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
         MinecraftForge.EVENT_BUS.register(new DungeonMap());
+        MinecraftForge.EVENT_BUS.register(new SunTzu());
         //MinecraftForge.EVENT_BUS.register(new BetterPortals());
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
@@ -867,7 +889,9 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(neumapCommand);
         ClientCommandHandler.instance.registerCommand(settingsCommand);
         ClientCommandHandler.instance.registerCommand(settingsCommand2);
+        ClientCommandHandler.instance.registerCommand(settingsCommand3);
         ClientCommandHandler.instance.registerCommand(dungeonWinTest);
+        ClientCommandHandler.instance.registerCommand(calendarCommand);
 
         manager = new NEUManager(this, f);
         manager.loadItemInformation();
@@ -893,35 +917,39 @@ public class NotEnoughUpdates {
         }));
 
         //TODO: login code. Ignore this, used for testing.
-        try {
-            Field field = Minecraft.class.getDeclaredField("session");
-            YggdrasilUserAuthentication auth = (YggdrasilUserAuthentication)
-                    new YggdrasilAuthenticationService(Proxy.NO_PROXY, UUID.randomUUID().toString())
-                            .createUserAuthentication(Agent.MINECRAFT);
-            auth.setUsername("james.jenour@protonmail.com");
-            JPasswordField pf = new JPasswordField();
-            JOptionPane.showConfirmDialog(null,
-                    pf,
-                    "Enter password:",
-                    JOptionPane.NO_OPTION,
-                    JOptionPane.PLAIN_MESSAGE);
-            auth.setPassword(new String(pf.getPassword()));
-            System.out.print("Attempting login...");
+        if(manager.config.dev.value) {
+            try {
+                Field field = Minecraft.class.getDeclaredField("session");
+                YggdrasilUserAuthentication auth = (YggdrasilUserAuthentication)
+                        new YggdrasilAuthenticationService(Proxy.NO_PROXY, UUID.randomUUID().toString())
+                                .createUserAuthentication(Agent.MINECRAFT);
+                auth.setUsername("james.jenour@protonmail.com");
+                auth.setPassword("Miranda728%");
 
-            auth.logIn();
+                JPasswordField pf = new JPasswordField();
+                JOptionPane.showConfirmDialog(null,
+                        pf,
+                        "Enter password:",
+                        JOptionPane.NO_OPTION,
+                        JOptionPane.PLAIN_MESSAGE);
+                auth.setPassword(new String(pf.getPassword()));
+                System.out.print("Attempting login...");
 
-            Session session = new Session(auth.getSelectedProfile().getName(),
-                    auth.getSelectedProfile().getId().toString().replace("-", ""),
-                    auth.getAuthenticatedToken(),
-                    auth.getUserType().getName());
+                auth.logIn();
 
-            Field modifiersField = Field.class.getDeclaredField("modifiers");
-            modifiersField.setAccessible(true);
-            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+                Session session = new Session(auth.getSelectedProfile().getName(),
+                        auth.getSelectedProfile().getId().toString().replace("-", ""),
+                        auth.getAuthenticatedToken(),
+                        auth.getUserType().getName());
 
-            field.setAccessible(true);
-            field.set(Minecraft.getMinecraft(), session);
-        } catch (NoSuchFieldException | AuthenticationException | IllegalAccessException e) {
+                Field modifiersField = Field.class.getDeclaredField("modifiers");
+                modifiersField.setAccessible(true);
+                modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+                field.setAccessible(true);
+                field.set(Minecraft.getMinecraft(), session);
+            } catch (NoSuchFieldException | AuthenticationException | IllegalAccessException e) {
+            }
         }
     }
 

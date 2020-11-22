@@ -6,6 +6,7 @@ import io.github.moulberry.notenoughupdates.options.Options;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
@@ -27,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import static io.github.moulberry.notenoughupdates.GuiTextures.*;
 
 import static io.github.moulberry.notenoughupdates.GuiTextures.*;
 import static io.github.moulberry.notenoughupdates.GuiTextures.colour_selector_dot;
@@ -56,6 +58,8 @@ public class GuiDungeonMapEditor extends GuiScreen {
     private GuiElementTextField yField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
     private GuiElementTextField blurField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
     private ColourEditor activeColourEditor = null;
+
+    private Options.Option<Double> clickedSlider = null;
 
     private class ColourEditor {
         public int x;
@@ -127,28 +131,28 @@ public class GuiDungeonMapEditor extends GuiScreen {
     public GuiDungeonMapEditor() {
         Options options = NotEnoughUpdates.INSTANCE.manager.config;
         //Map Border Size
-        buttons.add(new Button(0, 6, 37, "Small", options.dmBorderSize));
-        buttons.add(new Button(1, 52, 37, "Medium", options.dmBorderSize));
-        buttons.add(new Button(2, 98, 37, "Large", options.dmBorderSize));
+        //buttons.add(new Button(0, 6, 37, "Small", options.dmBorderSize));
+        //buttons.add(new Button(1, 52, 37, "Medium", options.dmBorderSize));
+        //buttons.add(new Button(2, 98, 37, "Large", options.dmBorderSize));
 
         //Map Rooms Size
-        buttons.add(new Button(3, 6, 67+19, "Small", options.dmRoomSize));
-        buttons.add(new Button(4, 52, 67+19, "Medium", options.dmRoomSize));
-        buttons.add(new Button(5, 98, 67+19, "Large", options.dmRoomSize));
+        //buttons.add(new Button(3, 6, 67+19, "Small", options.dmRoomSize));
+        //buttons.add(new Button(4, 52, 67+19, "Medium", options.dmRoomSize));
+        //buttons.add(new Button(5, 98, 67+19, "Large", options.dmRoomSize));
 
         //Map Border Styles
-        buttons.add(new Button(6, 6, 97+38, "None"));
-        buttons.add(new Button(7, 52, 97+38, "Custom"));
-        buttons.add(new Button(8, 98, 97+38, "Stone"));
-        buttons.add(new Button(9, 6, 116+38, "Wood"));
-        buttons.add(new Button(10, 52, 116+38, "Rustic(S)"));
-        buttons.add(new Button(11, 98, 116+38, "Rustic(C)"));
-        buttons.add(new Button(12, 6, 135+38, "Fade"));
-        buttons.add(new Button(13, 52, 135+38, "Ribbons"));
-        buttons.add(new Button(14, 98, 135+38, "Paper"));
-        buttons.add(new Button(15, 6, 154+38, "Crimson"));
-        buttons.add(new Button(16, 52, 154+38, "Ornate"));
-        buttons.add(new Button(17, 98, 154+38, "Dragon"));
+        buttons.add(new Button(6, 6, 97, "None"));
+        buttons.add(new Button(7, 52, 97, "Custom"));
+        buttons.add(new Button(8, 98, 97, "Stone"));
+        buttons.add(new Button(9, 6, 116, "Wood"));
+        buttons.add(new Button(10, 52, 116, "Rustic(S)"));
+        buttons.add(new Button(11, 98, 116, "Rustic(C)"));
+        buttons.add(new Button(12, 6, 135, "Fade"));
+        buttons.add(new Button(13, 52, 135, "Ribbons"));
+        buttons.add(new Button(14, 98, 135, "Paper"));
+        buttons.add(new Button(15, 6, 154, "Crimson"));
+        buttons.add(new Button(16, 52, 154, "Ornate"));
+        buttons.add(new Button(17, 98, 154, "Dragon"));
 
         //Dungeon Map
         buttons.add(new Button(18, 20+139, 36, "Yes/No", options.dmEnable));
@@ -175,8 +179,8 @@ public class GuiDungeonMapEditor extends GuiScreen {
         //Chroma Mode
         buttons.add(new Button(28, 84+139, 181, "Normal/Scroll", options.dmChromaBorder));
 
-        buttons.add(new Button(29, 52, 86+19, "XLarge", options.dmRoomSize));
-        buttons.add(new Button(30, 52, 56, "XLarge", options.dmBorderSize));
+        //buttons.add(new Button(29, 52, 86+19, "XLarge", options.dmRoomSize));
+        //buttons.add(new Button(30, 52, 56, "XLarge", options.dmBorderSize));
 
         xField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.manager.config.dmCenterX.value));
         yField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.manager.config.dmCenterY.value));
@@ -266,9 +270,9 @@ public class GuiDungeonMapEditor extends GuiScreen {
         Utils.drawStringCenteredScaledMaxWidth("Map Border Size", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+76, guiTop+30, false, 137, 0xFFB4B4B4);
         Utils.drawStringCenteredScaledMaxWidth("Map Rooms Size", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+76, guiTop+60+19, false, 137, 0xFFB4B4B4);
+                guiLeft+76, guiTop+60, false, 137, 0xFFB4B4B4);
         Utils.drawStringCenteredScaledMaxWidth("Map Border Style", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+76, guiTop+90+38, false, 137, 0xFFB4B4B4);
+                guiLeft+76, guiTop+90, false, 137, 0xFFB4B4B4);
 
         Utils.drawStringCenteredScaledMaxWidth("Dungeon Map", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+44+139, guiTop+30, false, 60, 0xFFB4B4B4);
@@ -301,32 +305,35 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 guiLeft+108+139, guiTop+175, false, 60, 0xFFB4B4B4);
 
         Utils.drawStringCenteredScaledMaxWidth("X (%)", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+44+139, guiTop+204, false, 60, 0xFFB4B4B4);
+                guiLeft+44, guiTop+189, false, 60, 0xFFB4B4B4);
         Utils.drawStringCenteredScaledMaxWidth("Y (%)", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+108+139, guiTop+204, false, 60, 0xFFB4B4B4);
+                guiLeft+108, guiTop+189, false, 60, 0xFFB4B4B4);
+
+        drawSlider(NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize, guiLeft+76, guiTop+45);
+        drawSlider(NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize, guiLeft+76, guiTop+75);
 
         Options options = NotEnoughUpdates.INSTANCE.manager.config;
-        buttons.get(18).text = options.dmEnable.value ? "Enabled" : "Disabled";
-        buttons.get(19).text = options.dmCenterPlayer.value ? "Player" : "Map";
-        buttons.get(20).text = options.dmRotatePlayer.value ? "Player" : "Vertical";
-        buttons.get(21).text = options.dmPlayerHeads.value <= 0 ? "Default" : options.dmPlayerHeads.value >= 3 ? "SmallHeads" :
+        buttons.get(18-6).text = options.dmEnable.value ? "Enabled" : "Disabled";
+        buttons.get(19-6).text = options.dmCenterPlayer.value ? "Player" : "Map";
+        buttons.get(20-6).text = options.dmRotatePlayer.value ? "Player" : "Vertical";
+        buttons.get(21-6).text = options.dmPlayerHeads.value <= 0 ? "Default" : options.dmPlayerHeads.value >= 3 ? "SmallHeads" :
                 options.dmPlayerHeads.value == 1 ? "Heads" : "ScaledHeads";
-        buttons.get(22).text = options.dmOrientCheck.value ? "Orient" : "Off";
-        buttons.get(23).text = options.dmCenterCheck.value ? "Center" : "Off";
-        buttons.get(24).text = options.dmPlayerInterp.value ? "Interp" : "No Interp";
-        buttons.get(25).text = options.dmCompat.value <= 0 ? "Normal" : options.dmCompat.value >= 2 ? "No FB/SHD" : "No SHD";
+        buttons.get(22-6).text = options.dmOrientCheck.value ? "Orient" : "Off";
+        buttons.get(23-6).text = options.dmCenterCheck.value ? "Center" : "Off";
+        buttons.get(24-6).text = options.dmPlayerInterp.value ? "Interp" : "No Interp";
+        buttons.get(25-6).text = options.dmCompat.value <= 0 ? "Normal" : options.dmCompat.value >= 2 ? "No FB/SHD" : "No SHD";
 
-        buttons.get(26).colour = new Color(SpecialColour.specialToChromaRGB(options.dmBackgroundColour.value));
-        buttons.get(27).colour = new Color(SpecialColour.specialToChromaRGB(options.dmBorderColour.value));
+        buttons.get(26-6).colour = new Color(SpecialColour.specialToChromaRGB(options.dmBackgroundColour.value));
+        buttons.get(27-6).colour = new Color(SpecialColour.specialToChromaRGB(options.dmBorderColour.value));
 
-        buttons.get(28).text = options.dmChromaBorder.value ? "Scroll" : "Normal";
+        buttons.get(28-6).text = options.dmChromaBorder.value ? "Scroll" : "Normal";
 
         blurField.setSize(48, 16);
         xField.setSize(48, 16);
         yField.setSize(48, 16);
         blurField.render(guiLeft+20+139, guiTop+181);
-        xField.render(guiLeft+20+139, guiTop+210);
-        yField.render(guiLeft+84+139, guiTop+210);
+        xField.render(guiLeft+20, guiTop+195);
+        yField.render(guiLeft+84, guiTop+195);
 
         Map<String, Vec4b> decorations = new HashMap<>();
         Vec4b vec4b = new Vec4b((byte)3, (byte)(((50)-64)*2), (byte)(((40)-64)*2), (byte)((60)*16/360));
@@ -337,7 +344,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
         GlStateManager.color(1, 1, 1, 1);
 
         demoMap.renderMap(guiLeft+357, guiTop+125, NotEnoughUpdates.INSTANCE.colourMap, decorations, 0,
-                players, false);
+                players, false, partialTicks);
 
         for(Button button : buttons) {
             button.render();
@@ -481,6 +488,39 @@ public class GuiDungeonMapEditor extends GuiScreen {
         Utils.pushGuiScale(-1);
     }
 
+    public void drawSlider(Options.Option<Double> option, int centerX, int centerY) {
+        float sliderAmount = (float)Math.max(0, Math.min(1, (option.value-option.minValue)/(option.maxValue-option.minValue)));
+        int sliderAmountI = (int)(96*sliderAmount);
+
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(slider_on_large);
+        Utils.drawTexturedRect(centerX-48, centerY-8, sliderAmountI, 16,
+                0, sliderAmount, 0, 1, GL11.GL_NEAREST);
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(slider_off_large);
+        Utils.drawTexturedRect(centerX-48+sliderAmountI, centerY-8, 96-sliderAmountI, 16,
+                sliderAmount, 1, 0, 1, GL11.GL_NEAREST);
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(slider_button);
+        Utils.drawTexturedRect(centerX-48+sliderAmountI-4, centerY-8, 8, 16,
+                0, 1, 0, 1, GL11.GL_NEAREST);
+    }
+
+    @Override
+    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+
+        if(clickedSlider != null) {
+            float sliderAmount = (mouseX - (guiLeft+76-48))/96f;
+            double val = clickedSlider.minValue+(clickedSlider.maxValue-clickedSlider.minValue)*sliderAmount;
+            if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                val = Math.round(val);
+            }
+            clickedSlider.value = Math.max(clickedSlider.minValue, Math.min(clickedSlider.maxValue, val));
+        }
+
+    }
+
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         for(Button button : buttons) {
@@ -495,6 +535,16 @@ public class GuiDungeonMapEditor extends GuiScreen {
             }
         }
 
+        clickedSlider = null;
+        if(mouseX >= guiLeft+76-48 && mouseX <= guiLeft+76+48) {
+            if(mouseY > guiTop+45-8 && mouseY < guiTop+45+8) {
+                clickedSlider = NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize;
+                return;
+            } else if(mouseY > guiTop+75-8 && mouseY < guiTop+75+8) {
+                clickedSlider = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize;
+                return;
+            }
+        }
 
         if(mouseY > guiTop+181 && mouseY < guiTop+181+16) {
             if(mouseX > guiLeft+20+139 && mouseX < guiLeft+20+139+48) {
@@ -503,13 +553,13 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 yField.otherComponentClick();
                 return;
             }
-        } else if(mouseY > guiTop+210 && mouseY < guiTop+210+16) {
-            if(mouseX > guiLeft+20+139 && mouseX < guiLeft+20+139+48) {
+        } else if(mouseY > guiTop+195 && mouseY < guiTop+195+16) {
+            if(mouseX > guiLeft+20 && mouseX < guiLeft+20+48) {
                 xField.mouseClicked(mouseX, mouseY, mouseButton);
                 yField.otherComponentClick();
                 blurField.otherComponentClick();
                 return;
-            } else if(mouseX > guiLeft+84+139 && mouseX < guiLeft+84+139+48) {
+            } else if(mouseX > guiLeft+84 && mouseX < guiLeft+84+48) {
                 yField.mouseClicked(mouseX, mouseY, mouseButton);
                 xField.otherComponentClick();
                 blurField.otherComponentClick();
@@ -836,9 +886,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
         blurOutputVert.bindFramebufferTexture();
         GlStateManager.color(1f, 1f, 1f, 1f);
-        //Utils.setScreen(width*f, height*f, f);
         Utils.drawTexturedRect(x, y, blurWidth, blurHeight, uMin, uMax, vMin, vMax);
-        //Utils.setScreen(width, height, f);
         blurOutputVert.unbindFramebufferTexture();
     }
 

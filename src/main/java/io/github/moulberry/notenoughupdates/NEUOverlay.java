@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.infopanes.*;
@@ -96,7 +97,7 @@ public class NEUOverlay extends Gui {
     private TreeSet<JsonObject> searchedItems = null;
     private JsonObject[] searchedItemsArr = null;
 
-    private HashMap<String, Set<String>> searchedItemsSubgroup = new HashMap<>();
+    private HashMap<String, List<String>> searchedItemsSubgroup = new HashMap<>();
 
     private long selectedItemMillis = 0;
     private int selectedItemGroupX = -1;
@@ -388,10 +389,11 @@ public class NEUOverlay extends Gui {
                 int paddingUnscaled = getPaddingUnscaled();
                 int bigItemSize = getSearchBarYSize();
 
-                if(quickCommandStr.split(":").length!=3) {
+                String[] quickCommandStrSplit = quickCommandStr.split(":");
+                if(quickCommandStrSplit.length!=3) {
                     return;
                 }
-                String display = quickCommandStr.split(":")[2];
+                String display = quickCommandStrSplit[2];
                 ItemStack render = null;
                 float extraScale = 1;
                 if(display.length() > 20) { //Custom head
@@ -424,6 +426,10 @@ public class NEUOverlay extends Gui {
                     }
                 }
                 if(render != null) {
+                    NBTTagCompound tag = render.getTagCompound() != null ? render.getTagCompound() : new NBTTagCompound();
+                    tag.setString("qc_id", quickCommandStrSplit[0].toLowerCase().trim());
+                    render.setTagCompound(tag);
+
                     Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
                     GlStateManager.color(1, 1, 1, 1);
                     Utils.drawTexturedRect(x, y,
@@ -435,7 +441,7 @@ public class NEUOverlay extends Gui {
                     if(mouseX > x && mouseX < x+bigItemSize) {
                         if(mouseY > y && mouseY < y+bigItemSize) {
                             textToDisplay = new ArrayList<>();
-                            textToDisplay.add(EnumChatFormatting.GRAY+quickCommandStr.split(":")[1]);
+                            textToDisplay.add(EnumChatFormatting.GRAY+quickCommandStrSplit[1]);
                         }
                     }
 
@@ -968,6 +974,10 @@ public class NEUOverlay extends Gui {
                             Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
                                     internalname.get(), item));
                             return true;
+                        } else if(keyPressed == manager.keybindItemSelect.getKeyCode()) {
+                            textField.setText("id:"+internalname.get());
+                            itemPaneOpen = true;
+                            updateSearch();
                         }
                     }
                 }
@@ -1142,32 +1152,47 @@ public class NEUOverlay extends Gui {
         return true;
     }
 
+    private HashMap<String, JsonObject> parentMap = new HashMap<>();
+
     /**
      * Clears the current item list, creating a new TreeSet if necessary.
      * Adds all items that match the search AND match the sort mode to the current item list.
      * Also adds some easter egg items. (Also I'm very upset if you came here to find them :'( )
      */
     public void updateSearch() {
+        SunTzu.randomizeQuote();
+
         if(searchedItems==null) searchedItems = new TreeSet<>(getItemComparator());
         searchedItems.clear();
         searchedItemsSubgroup.clear();
         searchedItemsArr = null;
         redrawItems = true;
+        Set<JsonObject> removeChildItems = new HashSet<>();
         Set<String> itemsMatch = manager.search(textField.getText(), true);
         for(String itemname : itemsMatch) {
             JsonObject item = manager.getItemInformation().get(itemname);
             if(checkMatchesSort(itemname, item)) {
-                if(item.has("parent") && item.get("parent").isJsonPrimitive()) {
-                    searchedItemsSubgroup
-                            .computeIfAbsent(item.get("parent").getAsString(), k->new HashSet<>())
-                            .add(item.get("internalname").getAsString());
-                } else {
-                    searchedItems.add(item);
+                if(Constants.PARENTS != null) {
+                    if(Constants.PARENTS.has(itemname) && Constants.PARENTS.get(itemname).isJsonArray()) {
+                        List<String> children = new ArrayList<>();
+                        for(JsonElement e : Constants.PARENTS.get(itemname).getAsJsonArray()) {
+                            if(e.isJsonPrimitive()) {
+                                children.add(e.getAsString());
+                            }
+                        }
+                        children.retainAll(itemsMatch);
+                        for(String child : children) {
+                            removeChildItems.add(manager.getItemInformation().get(child));
+                        }
+                        searchedItemsSubgroup.put(itemname, children);
+                    }
                 }
+                searchedItems.add(item);
             }
         }
+        searchedItems.removeAll(removeChildItems);
         out:
-        for(Map.Entry<String, Set<String>> entry : searchedItemsSubgroup.entrySet()) {
+        for(Map.Entry<String, List<String>> entry : searchedItemsSubgroup.entrySet()) {
             if(searchedItems.contains(manager.getItemInformation().get(entry.getKey()))) {
                 continue;
             }
@@ -1506,7 +1531,11 @@ public class NEUOverlay extends Gui {
                 GL11.glTranslatef(0, 0, 260);
                 int overlay = new Color(0, 0, 0, 100).getRGB();
                 for(Slot slot : inv.inventorySlots.inventorySlots) {
-                    if(slot.getStack() == null || !manager.doesStackMatchSearch(slot.getStack(), textField.getText())) {
+                    boolean matches = false;
+                    for(String search : textField.getText().split("\\|")) {
+                        matches |= slot.getStack() != null && manager.doesStackMatchSearch(slot.getStack(), search.trim());
+                    }
+                    if(!matches) {
                         drawRect(guiLeftI+slot.xDisplayPosition, guiTopI+slot.yDisplayPosition,
                                 guiLeftI+slot.xDisplayPosition+16, guiTopI+slot.yDisplayPosition+16,
                                 overlay);
@@ -1689,6 +1718,8 @@ public class NEUOverlay extends Gui {
             Utils.drawTexturedRect((width-64)/2f, (height-64)/2f-114, 64, 64, GL11.GL_LINEAR);
             GlStateManager.bindTexture(0);
         }
+
+        SunTzu.setEnabled(textField.getText().toLowerCase().startsWith("potato"));
 
         updateGuiGroupSize();
 
@@ -1926,6 +1957,9 @@ public class NEUOverlay extends Gui {
                 int selectedX = Math.min(selectedItemGroupX, width-getBoxPadding()-18*selectedItemGroup.size());
 
                 GlStateManager.depthFunc(GL11.GL_LESS);
+
+                drawRect(selectedX-1+2, selectedItemGroupY+17+2,
+                        selectedX-1+18*selectedItemGroup.size()+2, selectedItemGroupY+35+2, 0xa0000000);
                 drawRect(selectedX, selectedItemGroupY+18,
                         selectedX-2+18*selectedItemGroup.size(), selectedItemGroupY+34, fgCustomOpacity.getRGB());
                 drawRect(selectedX, selectedItemGroupY+18,
@@ -2000,20 +2034,26 @@ public class NEUOverlay extends Gui {
             String internalname = json.get("internalname").getAsString();
             JsonObject auctionInfo = manager.auctionManager.getItemAuctionInfo(internalname);
             JsonObject bazaarInfo = manager.auctionManager.getBazaarInfo(internalname);
+            float lowestBinAvg = manager.auctionManager.getItemAvgBin(internalname);
 
             int lowestBin = manager.auctionManager.getLowestBin(internalname);
-            APIManager.CraftInfo craftCost = manager.auctionManager.getCraftCost(json.get("internalname").getAsString());
+            APIManager.CraftInfo craftCost = manager.auctionManager.getCraftCost(internalname);
 
             boolean hasAuctionPrice = !manager.config.invAuctionPrice.value && auctionInfo != null;
             boolean hasBazaarPrice = !manager.config.invBazaarPrice.value && bazaarInfo != null;
-            boolean hasLowestBinPrice = !manager.config.invAuctionPrice.value && lowestBin > 0;
+            boolean hasLowestBinPrice = !manager.config.invAuctionPrice.value && lowestBin > 0 && manager.config.advancedPriceInfo.value;
+            boolean hasLowestBinAvgPrice = !manager.config.invAuctionPrice.value && lowestBinAvg > 0;
 
             NumberFormat format = NumberFormat.getInstance(Locale.US);
 
-            if(hasAuctionPrice || hasBazaarPrice || hasLowestBinPrice) text.add("");
+            if(hasAuctionPrice || hasBazaarPrice || hasLowestBinAvgPrice || hasLowestBinPrice) text.add("");
             if(hasLowestBinPrice) {
                 text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
                         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
+            }
+            if(hasLowestBinAvgPrice) {
+                text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AVG Lowest BIN: "+
+                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBinAvg)+" coins");
             }
             if(hasAuctionPrice) {
                 int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());

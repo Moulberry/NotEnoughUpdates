@@ -102,17 +102,17 @@ public class BetterContainers {
         return usingCached && System.currentTimeMillis() - lastRenderMillis < 300;
     }
 
-    public static boolean isAh() {
+    public static boolean isBlacklistedInventory() {
         if(!isChestOpen()) return false;
 
         GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
         ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
         String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-        return containerName.trim().startsWith("Auctions Browser") || containerName.trim().startsWith("Wardrobe");
+        return containerName.toLowerCase().trim().startsWith("navigate the maze");
     }
 
     public static boolean isOverriding() {
-        return isChestOpen() && ((loaded && texture != null));
+        return isChestOpen() && ((loaded && texture != null)) && !isBlacklistedInventory();
     }
 
     public static boolean isBlankStack(ItemStack stack) {
@@ -171,7 +171,6 @@ public class BetterContainers {
                 textColour = (int)Long.parseLong(textColourS, 16);
             } catch(Exception e) {
                 textColour = 4210752;
-                e.printStackTrace();
             }
 
             try {
