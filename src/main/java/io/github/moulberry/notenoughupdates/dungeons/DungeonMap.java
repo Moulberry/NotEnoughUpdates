@@ -216,7 +216,11 @@ public class DungeonMap {
                         GlStateManager.rotate(-rotation+180, 0, 0, 1);
                     }
 
+                    GlStateManager.pushMatrix();
+                    GlStateManager.scale(NotEnoughUpdates.INSTANCE.manager.config.dmIconScale.value,
+                            NotEnoughUpdates.INSTANCE.manager.config.dmIconScale.value, 1);
                     Utils.drawTexturedRect(-5, -5, 10, 10, GL11.GL_NEAREST);
+                    GlStateManager.popMatrix();
 
                     if(!NotEnoughUpdates.INSTANCE.manager.config.dmOrientCheck.value) {
                         GlStateManager.rotate(rotation-180, 0, 0, 1);
@@ -649,6 +653,7 @@ public class DungeonMap {
                         }
                     }
 
+                    boolean blackBorder = false;
                     boolean headLayer = false;
                     int pixelWidth = 8;
                     int pixelHeight = 8;
@@ -660,22 +665,14 @@ public class DungeonMap {
                             playerSkinMap.containsKey(entry.getKey())) {
                         Minecraft.getMinecraft().getTextureManager().bindTexture(playerSkinMap.get(entry.getKey()));
 
-                        headLayer = true;
-                        if(NotEnoughUpdates.INSTANCE.manager.config.dmPlayerHeads.value >= 3) {
-                            minU = 9/64f;
-                            minV = 9/64f;
-                            maxU = 15/64f;
-                            maxV = 15/64f;
-                        } else {
-                            minU = 8/64f;
-                            minV = 8/64f;
-                            maxU = 16/64f;
-                            maxV = 16/64f;
-                        }
+                        minU = 8/64f;
+                        minV = 8/64f;
+                        maxU = 16/64f;
+                        maxV = 16/64f;
 
+                        headLayer = true;
                         if(NotEnoughUpdates.INSTANCE.manager.config.dmPlayerHeads.value >= 2) {
-                            pixelWidth = pixelWidth*6/8;
-                            pixelHeight = pixelHeight*6/8;
+                            blackBorder = true;
                         }
                     } else {
                         Minecraft.getMinecraft().getTextureManager().bindTexture(mapIcons);
@@ -691,8 +688,16 @@ public class DungeonMap {
                     GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
                     GlStateManager.translate(x, y, -0.02F);
+                    GlStateManager.scale(NotEnoughUpdates.INSTANCE.manager.config.dmIconScale.value,
+                            NotEnoughUpdates.INSTANCE.manager.config.dmIconScale.value, 1);
                     GlStateManager.rotate(angle, 0.0F, 0.0F, 1.0F);
                     GlStateManager.translate(-0.5F, 0.5F, 0.0F);
+
+                    if(blackBorder) {
+                        Gui.drawRect(-pixelWidth/2-1,-pixelHeight/2-1, pixelWidth/2+1, pixelHeight/2+1, 0xff111111);
+                        GlStateManager.color(1, 1, 1, 1);
+                    }
+
                     worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
                     worldrenderer.pos(-pixelWidth/2f, pixelHeight/2f, 30+((float)k * -0.005F)).tex(minU, minV).endVertex();
                     worldrenderer.pos(pixelWidth/2f, pixelHeight/2f, 30+((float)k * -0.005F)).tex(maxU, minV).endVertex();
@@ -1192,13 +1197,14 @@ public class DungeonMap {
                 byte id = vec4b.func_176110_a();
                 if(id != 1 && id != 3) continue;
 
-                if(decorations++ == 6) break;
-
                 float x = (float) vec4b.func_176112_b() / 2.0F + 64.0F;
                 float y = (float) vec4b.func_176113_c() / 2.0F + 64.0F;
 
-                x = Math.max(0, Math.min(160, x));
-                y = Math.max(0, Math.min(160, y));
+                if(x < 0 || y < 0 || x > 128 || y > 128) {
+                    continue;
+                }
+
+                if(decorations++ >= 6) break;
 
                 float deltaX = x - startRoomX;
                 float deltaY = y - startRoomY;

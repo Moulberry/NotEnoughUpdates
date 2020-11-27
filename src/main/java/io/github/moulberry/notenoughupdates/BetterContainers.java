@@ -19,6 +19,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -90,6 +92,9 @@ public class BetterContainers {
             if(texture != null && loaded) {
                 if(!usingCached) lastRenderMillis = System.currentTimeMillis();
                 lastRenderMillis = System.currentTimeMillis();
+
+                GlStateManager.color(1, 1, 1, 1);
+
                 textureManager.loadTexture(rl, texture);
                 textureManager.bindTexture(rl);
                 return;

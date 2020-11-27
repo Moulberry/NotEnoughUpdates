@@ -148,6 +148,11 @@ public class Options {
             "Hide GUI Filler Tooltips",
             false,
             "Hides the tooltip of glass panes in skyblock GUIs. Contrib: ThatGravyBoat", CAT_MISC);
+    public Option<Boolean> guiButtonClicks = new Option(
+            true,
+            "Button Click Sounds",
+            false,
+            "Plays a click sound whenever various NEU GUIs are interacted with", CAT_MISC);
     public Option<Boolean> dungeonProfitLore = new Option(
             false,
             "Dungeon Profit in Lore",
@@ -217,6 +222,12 @@ public class Options {
             "Skyblock Event Notification Sounds",
             false,
             "Will play a sounds whenever a favourited event starts.", CAT_MISC);
+    public Option<Boolean> spookyMorningNotification = new Option(
+            true,
+            "Spooky Festival Morning Notification",
+            false,
+            "During a spooky festival, will notify the player whenever it hits 7am", CAT_MISC);
+
     public Option<Boolean> accessoryBagOverlay = new Option(
             true,
             "Accessory Bag Overlay",
@@ -464,12 +475,17 @@ public class Options {
             1.0,
             "Border Size",
             false,
-            "Changes the size of the map border, without changing the size of the contents\nSmall = 90x\nMedium = 120x\nLarge = 160x", 0, 5, CAT_ALL);
+            "Changes the size of the map border, without changing the size of the contents", 0, 5, CAT_ALL);
     public Option<Double> dmRoomSize = new Option(
             1.0,
             "Room Size",
             false,
-            "Changes the size of rooms. Useful for higher dungeons with larger maps\nSmall = 12x\nMedium = 16x\nLarge = 20x\nXLarge = 24x", 0, 5, CAT_ALL);
+            "Changes the size of rooms. Useful for higher dungeons with larger maps", 0, 5, CAT_ALL);
+    public Option<Double> dmIconScale = new Option(
+            1.0,
+            "Icon Size",
+            false,
+            "Changes the scale of room indicators and player icons", 0.5, 3, CAT_ALL);
     public Option<Double> dmBorderStyle = new Option(
             0.0,
             "Border Style",
@@ -616,6 +632,7 @@ public class Options {
         tryAddOption(showQuickCommands, options);
         tryAddOption(hidePotionEffect, options);
         tryAddOption(hideEmptyPanes, options);
+        tryAddOption(guiButtonClicks, options);
         tryAddOption(advancedPriceInfo, options);
         tryAddOption(showUpdateMsg, options);
         tryAddOption(tooltipBorderColours, options);
@@ -646,7 +663,7 @@ public class Options {
         tryAddOption(neuAuctionHouse, options);
         tryAddOption(eventNotifications, options);
         tryAddOption(showEventTimerInInventory, options);
-        tryAddOption(eventNotificationSounds, options);
+        tryAddOption(spookyMorningNotification, options);
         //Sliders
         tryAddOption(paneGuiScale, options);
         tryAddOption(smoothAoteMillis, options);

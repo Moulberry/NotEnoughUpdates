@@ -99,7 +99,7 @@ public class Utils {
             }
         }
 
-        int newScale = guiScales.size() > 0 ? Math.max(1, Math.min(4, guiScales.peek())) : Minecraft.getMinecraft().gameSettings.guiScale;
+        int newScale = guiScales.size() > 0 ? Math.max(0, Math.min(4, guiScales.peek())) : Minecraft.getMinecraft().gameSettings.guiScale;
         if(newScale == 0) newScale = Minecraft.getMinecraft().gameSettings.guiScale;
 
         int oldScale = Minecraft.getMinecraft().gameSettings.guiScale;
@@ -366,8 +366,10 @@ public class Utils {
     }
 
     public static void playPressSound() {
-        Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
-                new ResourceLocation("gui.button.press"), 1.0F));
+        if(NotEnoughUpdates.INSTANCE.manager.config.guiButtonClicks.value) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
+                    new ResourceLocation("gui.button.press"), 1.0F));
+        }
     }
 
     public static String cleanDuplicateColourCodes(String line) {
@@ -821,7 +823,7 @@ public class Utils {
             GlStateManager.disableRescaleNormal();
             RenderHelper.disableStandardItemLighting();
             GlStateManager.disableLighting();
-            GlStateManager.disableDepth();
+            GlStateManager.enableDepth();
             int tooltipTextWidth = 0;
 
             for (String textLine : textLines)
@@ -950,6 +952,7 @@ public class Utils {
             drawGradientRect(zLevel, tooltipX - 3, tooltipY - 3, tooltipX + tooltipTextWidth + 3, tooltipY - 3 + 1, borderColorStart, borderColorStart);
             drawGradientRect(zLevel, tooltipX - 3, tooltipY + tooltipHeight + 2, tooltipX + tooltipTextWidth + 3, tooltipY + tooltipHeight + 3, borderColorEnd, borderColorEnd);
 
+            GlStateManager.disableDepth();
             for (int lineNumber = 0; lineNumber < textLines.size(); ++lineNumber)
             {
                 String line = textLines.get(lineNumber);

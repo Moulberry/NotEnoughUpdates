@@ -663,7 +663,7 @@ public class APIManager {
             auctionPricesJson = jsonObject;
             lastAuctionAvgUpdate = System.currentTimeMillis();
         }, () -> {});
-        manager.hypixelApi.getMyApiGZIPAsync("auction_averages_lbin/3day.json.gz", (jsonObject) -> {
+        manager.hypixelApi.getMyApiGZIPAsync("auction_averages_lbin/1day.json.gz", (jsonObject) -> {
             auctionPricesAvgLowestBinJson = jsonObject;
         }, () -> {});
     }

@@ -34,6 +34,8 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
+
 import static io.github.moulberry.notenoughupdates.GuiTextures.*;
 
 import java.io.File;
@@ -91,6 +93,10 @@ public class CalendarOverlay {
     private int jfFavouriteSelectIndex = 0;
     private int jfFavouriteSelectX = 0;
     private int jfFavouriteSelectY = 0;
+
+    private boolean drawTimerForeground = false;
+
+    private static long spookyStart = 0;
 
     private static long SECOND = 1000;
     private static long MINUTE = SECOND*60;
@@ -649,7 +655,7 @@ public class CalendarOverlay {
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
-    public void onGuiDraw(RenderGameOverlayEvent event) {
+    public void onGuiDraw(RenderGameOverlayEvent.Post event) {
         if(NotEnoughUpdates.INSTANCE.manager.config.eventNotifications.value &&
                 event.type == RenderGameOverlayEvent.ElementType.ALL) {
             GlStateManager.pushMatrix();
@@ -712,6 +718,15 @@ public class CalendarOverlay {
     public boolean renderToast(SBEvent event, long timeUntil) {
         if(!NotEnoughUpdates.INSTANCE.manager.config.eventNotifications.value) {
             return false;
+        }
+
+        long currentTime = System.currentTimeMillis();
+        if(currentTime - spookyStart < HOUR && NotEnoughUpdates.INSTANCE.manager.config.spookyMorningNotification.value) {
+            long delta = (currentTime - SKYBLOCK_START) % (20*MINUTE) - 7*50*SECOND - 10*SECOND;
+            if(delta < 500 && delta > -8500) {
+                event = new SBEvent("spooky_festival_7am", "Spooky Festival 7am", new ItemStack(Items.bone), null);
+                timeUntil = delta;
+            }
         }
 
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
@@ -778,7 +793,23 @@ public class CalendarOverlay {
     }
 
     @SubscribeEvent
-    public void onGuiDraw(GuiScreenEvent.DrawScreenEvent.Post event) {
+    public void onGuiScreenDrawTimer(GuiScreenEvent.BackgroundDrawnEvent event) {
+        blurBackground();
+        if(!drawTimerForeground) {
+            drawTimer();
+        }
+        GlStateManager.color(1, 1, 1, 1);
+        GlStateManager.enableBlend();
+    }
+
+    @SubscribeEvent
+    public void onGuiScreenDrawTimer(GuiScreenEvent.DrawScreenEvent.Post event) {
+        if(drawTimerForeground) {
+            drawTimer();
+        }
+    }
+
+    public void drawTimer() {
         GlStateManager.pushMatrix();
         GlStateManager.translate(0, 0, 10);
         if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer && NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
@@ -814,6 +845,12 @@ public class CalendarOverlay {
 
                     if(timeUntilMillis < -10*SECOND) {
                         continue;
+                    }
+
+                    if(sbEvent.id.equals("spooky_festival")) {
+                        if(currentTime - spookyStart > HOUR || (sbEvents.getKey() > currentTime && sbEvents.getKey() < spookyStart)) {
+                            spookyStart = sbEvents.getKey();
+                        }
                     }
 
                     if(nextMajorEvent == null && !sbEvent.id.split(":")[0].equals("jacob_farming") &&
@@ -865,7 +902,11 @@ public class CalendarOverlay {
                     List<String> tooltipToDisplay = null;
                     FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
-                    blurBackground();
+                    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                    GlStateManager.disableFog();
+                    GlStateManager.disableLighting();
+                    GlStateManager.disableColorMaterial();
+
                     renderBlurredBackground(width, height, guiLeft+3, guiTop+3, xSize-6, ySize-6);
 
                     Minecraft.getMinecraft().getTextureManager().bindTexture(DISPLAYBAR);
@@ -934,8 +975,12 @@ public class CalendarOverlay {
                         }
                     }
 
+                    drawTimerForeground = false;
                     if(tooltipToDisplay != null) {
+                        drawTimerForeground = true;
+                        GlStateManager.translate(0, 0, 100);
                         Utils.drawHoveringText(tooltipToDisplay, mouseX, Math.max(17, mouseY), width, height, -1, fr);
+                        GlStateManager.translate(0, 0, -100);
                     }
                 }
             }
@@ -980,7 +1025,6 @@ public class CalendarOverlay {
 
         Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
 
-        blurBackground();
         renderBlurredBackground(width, height, guiLeft+3, guiTop+3, 162, 14);
         renderBlurredBackground(width, height, guiLeft+3, guiTop+26, 14, 141);
         renderBlurredBackground(width, height, guiLeft+151, guiTop+26, 14, 141);
@@ -1044,6 +1088,12 @@ public class CalendarOverlay {
 
                 int x = guiLeft+29+17*(index%3);
                 int y = guiTop+44+17*(index/3);
+
+                if(sbEvent.id.equals("spooky_festival")) {
+                    if(currentTime - spookyStart > HOUR || (sbEvents.getKey() > currentTime && sbEvents.getKey() < spookyStart)) {
+                        spookyStart = sbEvents.getKey();
+                    }
+                }
 
                 if(index >= 21) {
                     if(nextEvent != null) break;
@@ -1405,10 +1455,12 @@ public class CalendarOverlay {
         float vMin = (height-y)/(float)height;
         float vMax = (height-y-blurHeight)/(float)height;
 
+        GlStateManager.depthMask(false);
         blurOutputVert.bindFramebufferTexture();
         GlStateManager.color(1f, 1f, 1f, 1f);
         Utils.drawTexturedRect(x, y, blurWidth, blurHeight, uMin, uMax, vMin, vMax);
         blurOutputVert.unbindFramebufferTexture();
+        GlStateManager.depthMask(true);
     }
 
 }

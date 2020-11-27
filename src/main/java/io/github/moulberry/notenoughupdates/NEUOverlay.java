@@ -50,6 +50,9 @@ import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -369,11 +372,10 @@ public class NEUOverlay extends Gui {
                         String command = quickCommandStr.split(":")[0].trim();
                         if(command.startsWith("/")) {
                             NotEnoughUpdates.INSTANCE.sendChatMessage(command);
-                            Utils.playPressSound();
                         } else {
-                            ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/"+command); //Need to add '/' because of sk1er's patcher being unbelievably shit
-                            Utils.playPressSound();
+                            ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/"+command);
                         }
+                        Utils.playPressSound();
                     }
                 }
             }

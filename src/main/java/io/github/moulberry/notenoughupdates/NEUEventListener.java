@@ -88,14 +88,14 @@ public class NEUEventListener {
 
                 String version = o.get("version").getAsString();
 
-                if(!neu.VERSION.equalsIgnoreCase(version)) {
+                boolean shouldUpdate = !NotEnoughUpdates.VERSION.equalsIgnoreCase(version);
+                if(o.has("version_id") && o.get("version_id").isJsonPrimitive()) {
+                    int version_id = o.get("version_id").getAsInt();
+                    shouldUpdate = version_id > NotEnoughUpdates.VERSION_ID;
+                }
+
+                if(shouldUpdate) {
                     String update_msg = o.get("update_msg").getAsString();
-                    String discord_link = o.get("discord_link").getAsString();
-                    String youtube_link = o.get("youtube_link").getAsString();
-                    String update_link = o.get("update_link").getAsString();
-                    String github_link = o.get("github_link").getAsString();
-                    String other_text = o.get("other_text").getAsString();
-                    String other_link = o.get("other_link").getAsString();
 
                     int first_len = -1;
                     for(String line : update_msg.split("\n")) {
@@ -119,7 +119,6 @@ public class NEUEventListener {
                     neu.displayLinks(o);
 
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
-
                 }
             } catch(Exception ignored) {}
         }
@@ -722,7 +721,7 @@ public class NEUEventListener {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(dungeon_chest_worth);
                     GL11.glColor4f(1, 1, 1, 1);
                     GlStateManager.disableLighting();
-                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 71, 0, 180/256f, 0, 71/256f, GL11.GL_NEAREST);
+                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 101, 0, 180/256f, 0, 101/256f, GL11.GL_NEAREST);
 
                     int chestCost = 0;
                     String line6 = Utils.cleanColour(neu.manager.getLoreFromNBT(rewardChest.getTagCompound())[6]);
@@ -737,8 +736,11 @@ public class NEUEventListener {
                         chestCost = Integer.parseInt(cost.toString());
                     }
 
-                    boolean missing = false;
+                    String missingItemBIN = null;
+                    String missingItemABIN = null;
+                    String missingItemAUC = null;
                     int totalValueBIN = 0;
+                    int totalValueABIN = 0;
                     int totalValueAUC = 0;
                     for(int i=0; i<5; i++) {
                         ItemStack item = lower.getStackInSlot(11+i);
@@ -750,86 +752,119 @@ public class NEUEventListener {
                                 bazaarPrice = bazaarInfo.get("avg_sell").getAsFloat();
                             }
 
-                            float worthBIN = -1;
+                            float worthBIN;
+                            float worthABIN;
                             float worthAUC = -1;
 
                             if(bazaarPrice > 0) {
                                 worthBIN = bazaarPrice;
+                                worthABIN = bazaarPrice;
                                 worthAUC = bazaarPrice;
                             } else {
-                                worthBIN = neu.manager.auctionManager.getItemAvgBin(internal);
-                                if(worthBIN <= 0) {
-                                    worthBIN = neu.manager.auctionManager.getLowestBin(internal);
-                                }
+                                worthABIN = neu.manager.auctionManager.getItemAvgBin(internal);
+                                worthBIN = neu.manager.auctionManager.getLowestBin(internal);
+
                                 JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
                                 if(aucInfo != null) {
                                     worthAUC = aucInfo.get("price").getAsFloat();
                                 }
                             }
 
-                            if(worthAUC <= 0 && worthBIN <= 0) {
-                                missing = true;
-                                break;
-                            }
-
                             if(worthBIN > 0 && totalValueBIN >= 0) {
                                 totalValueBIN += worthBIN;
                             } else {
+                                if(totalValueBIN != -1) {
+                                    missingItemBIN = internal;
+                                }
                                 totalValueBIN = -1;
+                            }
+
+                            if(worthABIN > 0 && totalValueABIN >= 0) {
+                                totalValueABIN += worthABIN;
+                            } else {
+                                if(totalValueABIN != -1) {
+                                    missingItemABIN = internal;
+                                }
+                                totalValueABIN = -1;
                             }
 
                             if(worthAUC > 0 && totalValueAUC >= 0) {
                                 totalValueAUC += worthAUC;
                             } else {
+                                if(totalValueAUC != -1) {
+                                    missingItemAUC = internal;
+                                }
                                 totalValueAUC = -1;
                             }
                         }
                     }
-                    if(totalValueAUC <= 0 && totalValueBIN <= 0) {
-                        missing = true;
-                    }
 
-                    if(missing) {
-                        drawStringShadow(EnumChatFormatting.BLUE+"Couldn't find item on AH. Item is very rare!",
-                                guiLeft+xSize+4+90, guiTop+14, 170);
-                    } else {
-                        NumberFormat format = NumberFormat.getInstance(Locale.US);
-                        String valueStringBIN = EnumChatFormatting.YELLOW+"Value (BIN): " + EnumChatFormatting.GOLD
+                    NumberFormat format = NumberFormat.getInstance(Locale.US);
+                    String valueStringBIN;
+                    String valueStringABIN;
+                    String valueStringAUC;
+                    if(totalValueBIN >= 0) {
+                        valueStringBIN = EnumChatFormatting.YELLOW+"Value (BIN): " + EnumChatFormatting.GOLD
                                 + EnumChatFormatting.BOLD + format.format(totalValueBIN) + " coins";
-                        String valueStringAUC = EnumChatFormatting.YELLOW+"Value (AUC): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueAUC) + " coins";
-
-
-                        int profitLossBIN = totalValueBIN - chestCost;
-                        String plStringBIN;
-                        if(profitLossBIN >= 0) {
-                            plStringBIN = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
-                                    + EnumChatFormatting.BOLD + "+" + format.format(profitLossBIN) + " coins";
-                        } else {
-                            plStringBIN = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
-                                    + EnumChatFormatting.BOLD + "-" + format.format(-profitLossBIN) + " coins";
-                        }
-                        
-                        int profitLossAUC = totalValueAUC - chestCost;
-                        String plStringAUC;
-                        if(profitLossAUC >= 0) {
-                            plStringAUC = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
-                                    + EnumChatFormatting.BOLD + "+" + format.format(profitLossAUC) + " coins";
-                        } else {
-                            plStringAUC = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
-                                    + EnumChatFormatting.BOLD + "-" + format.format(-profitLossAUC) + " coins";
-                        }
-
-                        drawStringShadow(valueStringBIN, guiLeft+xSize+4+90,
-                                guiTop+14, 170);
-                        drawStringShadow(plStringBIN, guiLeft+xSize+4+90,
-                                guiTop+26, 170);
-
-                        drawStringShadow(valueStringAUC, guiLeft+xSize+4+90,
-                                guiTop+44, 170);
-                        drawStringShadow(plStringAUC, guiLeft+xSize+4+90,
-                                guiTop+56, 170);
+                    } else {
+                        valueStringBIN = EnumChatFormatting.YELLOW+"Can't find BIN: " + missingItemBIN;
                     }
+                    if(totalValueABIN >= 0) {
+                        valueStringABIN = EnumChatFormatting.YELLOW+"Value (AVG BIN): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueABIN) + " coins";
+                    } else {
+                        valueStringABIN = EnumChatFormatting.YELLOW+"Can't find AVG BIN: " + missingItemABIN;
+                    }
+                    if(totalValueAUC >= 0) {
+                        valueStringAUC = EnumChatFormatting.YELLOW+"Value (AUC): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueAUC) + " coins";
+                    } else {
+                        valueStringAUC = EnumChatFormatting.YELLOW+"Can't find AUC: " + missingItemAUC;
+                    }
+
+                    String profitPrefix = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
+                            + EnumChatFormatting.BOLD + "+";
+                    String lossPrefix = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
+                            + EnumChatFormatting.BOLD + "-";
+
+                    int profitLossBIN = totalValueBIN - chestCost;
+                    String plStringBIN;
+                    if(profitLossBIN >= 0) {
+                        plStringBIN = profitPrefix + format.format(profitLossBIN) + " coins";
+                    } else {
+                        plStringBIN = lossPrefix + format.format(-profitLossBIN) + " coins";
+                    }
+
+                    int profitLossABIN = totalValueABIN - chestCost;
+                    String plStringABIN;
+                    if(profitLossABIN >= 0) {
+                        plStringABIN = profitPrefix + format.format(profitLossABIN) + " coins";
+                    } else {
+                        plStringABIN = lossPrefix + format.format(-profitLossABIN) + " coins";
+                    }
+
+                    int profitLossAUC = totalValueAUC - chestCost;
+                    String plStringAUC;
+                    if(profitLossAUC >= 0) {
+                        plStringAUC = profitPrefix + format.format(profitLossAUC) + " coins";
+                    } else {
+                        plStringAUC = lossPrefix + format.format(-profitLossAUC) + " coins";
+                    }
+
+                    drawStringShadow(valueStringBIN, guiLeft+xSize+4+90,
+                            guiTop+14, 170);
+                    if(totalValueBIN >= 0) drawStringShadow(plStringBIN, guiLeft+xSize+4+90,
+                            guiTop+26, 170);
+
+                    drawStringShadow(valueStringABIN, guiLeft+xSize+4+90,
+                            guiTop+44, 170);
+                    if(totalValueABIN >= 0) drawStringShadow(plStringABIN, guiLeft+xSize+4+90,
+                            guiTop+56, 170);
+
+                    drawStringShadow(valueStringAUC, guiLeft+xSize+4+90,
+                            guiTop+74, 170);
+                    if(totalValueAUC >= 0) drawStringShadow(plStringAUC, guiLeft+xSize+4+90,
+                            guiTop+86, 170);
                 }
             } catch(Exception e) {
                 e.printStackTrace();
@@ -1383,8 +1418,11 @@ public class NEUEventListener {
                         chestCost = Integer.parseInt(cost.toString());
                     }
 
-                    boolean missing = false;
+                    String missingItemBIN = null;
+                    String missingItemABIN = null;
+                    String missingItemAUC = null;
                     int totalValueBIN = 0;
+                    int totalValueABIN = 0;
                     int totalValueAUC = 0;
                     for(int i=0; i<5; i++) {
                         ItemStack item = lower.getStackInSlot(11+i);
@@ -1396,81 +1434,113 @@ public class NEUEventListener {
                                 bazaarPrice = bazaarInfo.get("avg_sell").getAsFloat();
                             }
 
-                            float worthBIN = -1;
+                            float worthBIN;
+                            float worthABIN;
                             float worthAUC = -1;
 
                             if(bazaarPrice > 0) {
                                 worthBIN = bazaarPrice;
+                                worthABIN = bazaarPrice;
                                 worthAUC = bazaarPrice;
                             } else {
-                                worthBIN = neu.manager.auctionManager.getItemAvgBin(internal);
-                                if(worthBIN <= 0) {
-                                    worthBIN = neu.manager.auctionManager.getLowestBin(internal);
-                                }
+                                worthABIN = neu.manager.auctionManager.getItemAvgBin(internal);
+                                worthBIN = neu.manager.auctionManager.getLowestBin(internal);
+
                                 JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
                                 if(aucInfo != null) {
                                     worthAUC = aucInfo.get("price").getAsFloat();
                                 }
                             }
 
-                            if(worthAUC <= 0 && worthBIN <= 0) {
-                                missing = true;
-                                break;
-                            }
-
                             if(worthBIN > 0 && totalValueBIN >= 0) {
                                 totalValueBIN += worthBIN;
                             } else {
+                                if(totalValueBIN != -1) {
+                                    missingItemBIN = internal;
+                                }
                                 totalValueBIN = -1;
+                            }
+
+                            if(worthABIN > 0 && totalValueABIN >= 0) {
+                                totalValueABIN += worthABIN;
+                            } else {
+                                if(totalValueABIN != -1) {
+                                    missingItemABIN = internal;
+                                }
+                                totalValueABIN = -1;
                             }
 
                             if(worthAUC > 0 && totalValueAUC >= 0) {
                                 totalValueAUC += worthAUC;
                             } else {
+                                if(totalValueAUC != -1) {
+                                    missingItemAUC = internal;
+                                }
                                 totalValueAUC = -1;
                             }
                         }
                     }
-                    if(totalValueAUC <= 0 && totalValueBIN <= 0) {
-                        missing = true;
+
+                    NumberFormat format = NumberFormat.getInstance(Locale.US);
+                    String valueStringBIN;
+                    String valueStringABIN;
+                    String valueStringAUC;
+                    if(totalValueBIN >= 0) {
+                        valueStringBIN = EnumChatFormatting.YELLOW+"Value (BIN): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueBIN) + " coins";
+                    } else {
+                        valueStringBIN = EnumChatFormatting.YELLOW+"Can't find BIN: " + missingItemBIN;
+                    }
+                    if(totalValueABIN >= 0) {
+                        valueStringABIN = EnumChatFormatting.YELLOW+"Value (AVG BIN): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueABIN) + " coins";
+                    } else {
+                        valueStringABIN = EnumChatFormatting.YELLOW+"Can't find AVG BIN: " + missingItemABIN;
+                    }
+                    if(totalValueAUC >= 0) {
+                        valueStringAUC = EnumChatFormatting.YELLOW+"Value (AUC): " + EnumChatFormatting.GOLD
+                                + EnumChatFormatting.BOLD + format.format(totalValueAUC) + " coins";
+                    } else {
+                        valueStringAUC = EnumChatFormatting.YELLOW+"Can't find AUC: " + missingItemAUC;
+                    }
+
+                    String profitPrefix = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
+                            + EnumChatFormatting.BOLD + "+";
+                    String lossPrefix = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
+                            + EnumChatFormatting.BOLD + "-";
+
+                    int profitLossBIN = totalValueBIN - chestCost;
+                    String plStringBIN;
+                    if(profitLossBIN >= 0) {
+                        plStringBIN = profitPrefix + format.format(profitLossBIN) + " coins";
+                    } else {
+                        plStringBIN = lossPrefix + format.format(-profitLossBIN) + " coins";
+                    }
+
+                    int profitLossABIN = totalValueABIN - chestCost;
+                    String plStringABIN;
+                    if(profitLossABIN >= 0) {
+                        plStringABIN = profitPrefix + format.format(profitLossABIN) + " coins";
+                    } else {
+                        plStringABIN = lossPrefix + format.format(-profitLossABIN) + " coins";
+                    }
+
+                    int profitLossAUC = totalValueAUC - chestCost;
+                    String plStringAUC;
+                    if(profitLossAUC >= 0) {
+                        plStringAUC = profitPrefix + format.format(profitLossAUC) + " coins";
+                    } else {
+                        plStringAUC = lossPrefix + format.format(-profitLossAUC) + " coins";
                     }
 
                     String neu = EnumChatFormatting.YELLOW + "[NEU] ";
-                    if(missing) {
-                        newTooltip.add(neu + EnumChatFormatting.BLUE+"Couldn't find item on AH. Item is very rare!");
-                    } else {
-                        NumberFormat format = NumberFormat.getInstance(Locale.US);
-                        String valueStringBIN = EnumChatFormatting.YELLOW+"Value (BIN): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueBIN) + " coins";
-                        String valueStringAUC = EnumChatFormatting.YELLOW+"Value (AUC): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueAUC) + " coins";
 
-
-                        int profitLossBIN = totalValueBIN - chestCost;
-                        String plStringBIN;
-                        if(profitLossBIN >= 0) {
-                            plStringBIN = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
-                                    + EnumChatFormatting.BOLD + "+" + format.format(profitLossBIN) + " coins";
-                        } else {
-                            plStringBIN = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
-                                    + EnumChatFormatting.BOLD + "-" + format.format(-profitLossBIN) + " coins";
-                        }
-
-                        int profitLossAUC = totalValueAUC - chestCost;
-                        String plStringAUC;
-                        if(profitLossAUC >= 0) {
-                            plStringAUC = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
-                                    + EnumChatFormatting.BOLD + "+" + format.format(profitLossAUC) + " coins";
-                        } else {
-                            plStringAUC = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
-                                    + EnumChatFormatting.BOLD + "-" + format.format(-profitLossAUC) + " coins";
-                        }
-
-                        newTooltip.add(neu + valueStringBIN);
-                        newTooltip.add(neu + plStringBIN);
-                        newTooltip.add(neu + valueStringAUC);
-                        newTooltip.add(neu + plStringAUC);
-                    }
+                    newTooltip.add(neu + valueStringBIN);
+                    if(totalValueBIN >= 0) newTooltip.add(neu + plStringBIN);
+                    newTooltip.add(neu + valueStringABIN);
+                    if(totalValueABIN >= 0) newTooltip.add(neu + plStringABIN);
+                    newTooltip.add(neu + valueStringAUC);
+                    if(totalValueAUC >= 0) newTooltip.add(neu + plStringAUC);
                 }
             }
 

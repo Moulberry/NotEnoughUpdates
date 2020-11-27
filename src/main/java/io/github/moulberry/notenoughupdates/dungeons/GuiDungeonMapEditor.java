@@ -141,18 +141,18 @@ public class GuiDungeonMapEditor extends GuiScreen {
         //buttons.add(new Button(5, 98, 67+19, "Large", options.dmRoomSize));
 
         //Map Border Styles
-        buttons.add(new Button(6, 6, 97, "None"));
-        buttons.add(new Button(7, 52, 97, "Custom"));
-        buttons.add(new Button(8, 98, 97, "Stone"));
-        buttons.add(new Button(9, 6, 116, "Wood"));
-        buttons.add(new Button(10, 52, 116, "Rustic(S)"));
-        buttons.add(new Button(11, 98, 116, "Rustic(C)"));
-        buttons.add(new Button(12, 6, 135, "Fade"));
-        buttons.add(new Button(13, 52, 135, "Ribbons"));
-        buttons.add(new Button(14, 98, 135, "Paper"));
-        buttons.add(new Button(15, 6, 154, "Crimson"));
-        buttons.add(new Button(16, 52, 154, "Ornate"));
-        buttons.add(new Button(17, 98, 154, "Dragon"));
+        buttons.add(new Button(6, 6, 97+30, "None"));
+        buttons.add(new Button(7, 52, 97+30, "Custom"));
+        buttons.add(new Button(8, 98, 97+30, "Stone"));
+        buttons.add(new Button(9, 6, 116+30, "Wood"));
+        buttons.add(new Button(10, 52, 116+30, "Rustic(S)"));
+        buttons.add(new Button(11, 98, 116+30, "Rustic(C)"));
+        buttons.add(new Button(12, 6, 135+30, "Fade"));
+        buttons.add(new Button(13, 52, 135+30, "Ribbons"));
+        buttons.add(new Button(14, 98, 135+30, "Paper"));
+        buttons.add(new Button(15, 6, 154+30, "Crimson"));
+        buttons.add(new Button(16, 52, 154+30, "Ornate"));
+        buttons.add(new Button(17, 98, 154+30, "Dragon"));
 
         //Dungeon Map
         buttons.add(new Button(18, 20+139, 36, "Yes/No", options.dmEnable));
@@ -267,12 +267,14 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
         Minecraft.getMinecraft().fontRendererObj.drawString("NEU Dungeon Map Editor", guiLeft+8, guiTop+6, 0xFFB4B4B4);
 
-        Utils.drawStringCenteredScaledMaxWidth("Map Border Size", Minecraft.getMinecraft().fontRendererObj,
+        Utils.drawStringCenteredScaledMaxWidth("Border Size", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+76, guiTop+30, false, 137, 0xFFB4B4B4);
-        Utils.drawStringCenteredScaledMaxWidth("Map Rooms Size", Minecraft.getMinecraft().fontRendererObj,
+        Utils.drawStringCenteredScaledMaxWidth("Rooms Size", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+76, guiTop+60, false, 137, 0xFFB4B4B4);
-        Utils.drawStringCenteredScaledMaxWidth("Map Border Style", Minecraft.getMinecraft().fontRendererObj,
+        Utils.drawStringCenteredScaledMaxWidth("Icon Scale", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+76, guiTop+90, false, 137, 0xFFB4B4B4);
+        Utils.drawStringCenteredScaledMaxWidth("Border Style", Minecraft.getMinecraft().fontRendererObj,
+                guiLeft+76, guiTop+120, false, 137, 0xFFB4B4B4);
 
         Utils.drawStringCenteredScaledMaxWidth("Dungeon Map", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+44+139, guiTop+30, false, 60, 0xFFB4B4B4);
@@ -305,19 +307,19 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 guiLeft+108+139, guiTop+175, false, 60, 0xFFB4B4B4);
 
         Utils.drawStringCenteredScaledMaxWidth("X (%)", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+44, guiTop+189, false, 60, 0xFFB4B4B4);
+                guiLeft+44, guiTop+209, false, 60, 0xFFB4B4B4);
         Utils.drawStringCenteredScaledMaxWidth("Y (%)", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+108, guiTop+189, false, 60, 0xFFB4B4B4);
+                guiLeft+108, guiTop+209, false, 60, 0xFFB4B4B4);
 
         drawSlider(NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize, guiLeft+76, guiTop+45);
         drawSlider(NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize, guiLeft+76, guiTop+75);
+        drawSlider(NotEnoughUpdates.INSTANCE.manager.config.dmIconScale, guiLeft+76, guiTop+105);
 
         Options options = NotEnoughUpdates.INSTANCE.manager.config;
         buttons.get(18-6).text = options.dmEnable.value ? "Enabled" : "Disabled";
         buttons.get(19-6).text = options.dmCenterPlayer.value ? "Player" : "Map";
         buttons.get(20-6).text = options.dmRotatePlayer.value ? "Player" : "Vertical";
-        buttons.get(21-6).text = options.dmPlayerHeads.value <= 0 ? "Default" : options.dmPlayerHeads.value >= 3 ? "SmallHeads" :
-                options.dmPlayerHeads.value == 1 ? "Heads" : "ScaledHeads";
+        buttons.get(21-6).text = options.dmPlayerHeads.value <= 0 ? "Default" : options.dmPlayerHeads.value == 1 ? "Heads" : "Heads w/ Border";
         buttons.get(22-6).text = options.dmOrientCheck.value ? "Orient" : "Off";
         buttons.get(23-6).text = options.dmCenterCheck.value ? "Center" : "Off";
         buttons.get(24-6).text = options.dmPlayerInterp.value ? "Interp" : "No Interp";
@@ -332,8 +334,8 @@ public class GuiDungeonMapEditor extends GuiScreen {
         xField.setSize(48, 16);
         yField.setSize(48, 16);
         blurField.render(guiLeft+20+139, guiTop+181);
-        xField.render(guiLeft+20, guiTop+195);
-        yField.render(guiLeft+84, guiTop+195);
+        xField.render(guiLeft+20, guiTop+215);
+        yField.render(guiLeft+84, guiTop+215);
 
         Map<String, Vec4b> decorations = new HashMap<>();
         Vec4b vec4b = new Vec4b((byte)3, (byte)(((50)-64)*2), (byte)(((40)-64)*2), (byte)((60)*16/360));
@@ -543,6 +545,9 @@ public class GuiDungeonMapEditor extends GuiScreen {
             } else if(mouseY > guiTop+75-8 && mouseY < guiTop+75+8) {
                 clickedSlider = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize;
                 return;
+            } else if(mouseY > guiTop+105-8 && mouseY < guiTop+105+8) {
+                clickedSlider = NotEnoughUpdates.INSTANCE.manager.config.dmIconScale;
+                return;
             }
         }
 
@@ -553,7 +558,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 yField.otherComponentClick();
                 return;
             }
-        } else if(mouseY > guiTop+195 && mouseY < guiTop+195+16) {
+        } else if(mouseY > guiTop+215 && mouseY < guiTop+215+16) {
             if(mouseX > guiLeft+20 && mouseX < guiLeft+20+48) {
                 xField.mouseClicked(mouseX, mouseY, mouseButton);
                 yField.otherComponentClick();
@@ -746,7 +751,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 options.dmRotatePlayer.value = !options.dmRotatePlayer.value; break;
             case 21:
                 options.dmPlayerHeads.value++;
-                if(options.dmPlayerHeads.value > 3) options.dmPlayerHeads.value = 0.0;break;
+                if(options.dmPlayerHeads.value > 2) options.dmPlayerHeads.value = 0.0; break;
             case 22:
                 options.dmOrientCheck.value = !options.dmOrientCheck.value; break;
             case 23:

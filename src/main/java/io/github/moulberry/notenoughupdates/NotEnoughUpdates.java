@@ -79,7 +79,8 @@ import java.util.regex.Pattern;
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "1.7-REL";
+    public static final String VERSION = "1.7.1-REL";
+    public static final int VERSION_ID = 10701;
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -930,7 +931,7 @@ public class NotEnoughUpdates {
                 JOptionPane.showConfirmDialog(null,
                         pf,
                         "Enter password:",
-                        JOptionPane.NO_OPTION,
+                        JOptionPane.DEFAULT_OPTION,
                         JOptionPane.PLAIN_MESSAGE);
                 auth.setPassword(new String(pf.getPassword()));
                 System.out.print("Attempting login...");

@@ -103,12 +103,13 @@ public abstract class MixinGuiContainer {
         if(slotIn != null && BetterContainers.isOverriding() && (BetterContainers.isBlankStack(slotIn.getStack()) ||
                 BetterContainers.isButtonStack(slotIn.getStack()))) {
             BetterContainers.clickSlot(slotIn.getSlotIndex());
-            Utils.playPressSound();
 
             if(BetterContainers.isBlankStack(slotIn.getStack())) {
                 GuiContainer $this = (GuiContainer)(Object)this;
                 $this.mc.playerController.windowClick($this.inventorySlots.windowId, slotId, 2, clickType, $this.mc.thePlayer);
                 ci.cancel();
+            } else {
+                Utils.playPressSound();
             }
         }
     }
