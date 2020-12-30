@@ -206,6 +206,7 @@ public class CustomAH extends Gui {
     }
 
     public void tick() {
+        if(!manager.config.neuAuctionHouse.value) return;
         if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || renderOverAuctionView) {
             if(shouldUpdateSearch) updateSearch();
             if(shouldSortItems) {

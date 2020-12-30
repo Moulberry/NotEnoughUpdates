@@ -221,63 +221,15 @@ public class NEUManager {
                     if(latestRepoCommit == null || latestRepoCommit.isEmpty()) return;
 
                     if(new File(configLocation, "repo").exists() && new File(configLocation, "repo/items").exists()) {
-
                         if(currentCommitJSON != null && currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
                             dialog.setVisible(false);
                             return;
                         }
-
-                        /*HashMap<String, String> oldShas = new HashMap<>();
-                        for (Map.Entry<String, JsonElement> entry : itemShaConfig.entrySet()) {
-                            if (new File(repoLocation, entry.getKey() + ".json").exists()) {
-                                oldShas.put(entry.getKey() + ".json", entry.getValue().getAsString());
-                            }
-                        }
-                        changedFiles = neuio.getChangedItems(oldShas);*/
                     }
 
                     if (Display.isActive()) dialog.toFront();
 
-                    if (false) {//changedFiles != null && changedFiles.size() <= 20) {
-                        /*String startMessage = "NotEnoughUpdates: Syncing with remote repository (";
-                        int downloaded = 0;
-
-                        String dlUrl = "https://raw.githubusercontent.com/Moulberry/NotEnoughUpdates-REPO/master/";
-
-                        for (String name : changedFiles.keySet()) {
-                            pane.setMessage(startMessage + (++downloaded) + "/" + changedFiles.size() + ")\nCurrent: " + name);
-                            dialog.pack();
-                            if(config.dev.value) dialog.setVisible(true);
-                            if (Display.isActive()) dialog.toFront();
-
-                            File item = new File(repoLocation, name);
-                            try {
-                                item.getParentFile().mkdirs();
-                                item.createNewFile();
-                            } catch (IOException e) {
-                                continue;
-                            }
-                            URL url = new URL(dlUrl+name);
-                            URLConnection urlConnection = url.openConnection();
-                            urlConnection.setConnectTimeout(5000);
-                            urlConnection.setReadTimeout(5000);
-                            try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
-                                 FileOutputStream fileOutputStream = new FileOutputStream(item)) {
-                                byte dataBuffer[] = new byte[1024];
-                                int bytesRead;
-                                while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
-                                    fileOutputStream.write(dataBuffer, 0, bytesRead);
-                                }
-                                itemShaConfig.addProperty(name.substring(0, name.length() - 5),
-                                        changedFiles.get(name));
-                            } catch (IOException e) {
-                            }
-                        }
-                        try {
-                            writeJson(itemShaConfig, itemShaLocation);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }*/
+                    if (false) {
                     } else {
                         Utils.recursiveDelete(repoLocation);
                         repoLocation.mkdirs();
@@ -318,17 +270,6 @@ public class NEUManager {
                         if (Display.isActive()) dialog.toFront();
 
                         unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
-
-                        /*if (changedFiles != null) {
-                            for (Map.Entry<String, String> changedFile : changedFiles.entrySet()) {
-                                itemShaConfig.addProperty(changedFile.getKey().substring(0, changedFile.getKey().length() - 5),
-                                        changedFile.getValue());
-                            }
-                            try {
-                                writeJson(itemShaConfig, itemShaLocation);
-                            } catch (IOException e) {
-                            }
-                        }*/
                     }
 
                     if(currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
@@ -360,6 +301,7 @@ public class NEUManager {
             }
         });
 
+        System.out.println("finished thread create");
         File items = new File(repoLocation, "items");
         if(items.exists()) {
             File[] itemFiles = new File(repoLocation, "items").listFiles();
@@ -370,7 +312,6 @@ public class NEUManager {
                 }
             }
         }
-
         thread.start();
     }
 
@@ -1396,14 +1337,29 @@ public class NEUManager {
     }
 
     public ItemStack jsonToStack(JsonObject json, boolean useCache) {
-        return jsonToStack(json, useCache, true);
+        return jsonToStack(json, useCache, true, false);
     }
 
-    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {
+    private static ExecutorService asyncItemES = Executors.newFixedThreadPool(10);
+    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean multithread) {
         if(json == null) return new ItemStack(Items.painting, 1, 10);
+        String internalname = json.get("internalname").getAsString();
 
-        if(useCache && itemstackCache.containsKey(json.get("internalname").getAsString())) {
-            return itemstackCache.get(json.get("internalname").getAsString()).copy();
+        if(useCache) {
+            if(itemstackCache.containsKey(internalname)) {
+                ItemStack stack = itemstackCache.get(internalname);
+                if(stack == null) {
+                    if(multithread) {
+                        return null;
+                    }
+                } else {
+                    return stack.copy();
+                }
+            } else if(multithread) {
+                asyncItemES.submit(() -> jsonToStack(json, true, useReplacements, false));
+                itemstackCache.put(internalname, null);
+                return null;
+            }
         }
 
         ItemStack stack = new ItemStack(Item.itemRegistry.getObject(
@@ -1452,7 +1408,7 @@ public class NEUManager {
             }
         }
 
-        if(useCache) itemstackCache.put(json.get("internalname").getAsString(), stack);
+        if(useCache) itemstackCache.put(internalname, stack);
         return stack;
     }
 

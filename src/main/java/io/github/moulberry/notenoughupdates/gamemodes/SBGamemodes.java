@@ -241,6 +241,8 @@ public class SBGamemodes {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.START) return;
+
         if(getGamemode() == null || !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
 
         boolean inDungeons = SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon");

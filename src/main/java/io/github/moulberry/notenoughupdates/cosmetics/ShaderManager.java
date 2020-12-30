@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL43;
+import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -54,6 +55,9 @@ public class ShaderManager {
             GL20.glUniform1i(location, (Integer) value);
         } else if(value instanceof Float) {
             GL20.glUniform1f(location, (Float) value);
+        } else if(value instanceof Vector2f) {
+            Vector2f vec = (Vector2f) value;
+            GL20.glUniform2f(location, vec.x, vec.y);
         } else if(value instanceof Vector3f) {
             Vector3f vec = (Vector3f) value;
             GL20.glUniform3f(location, vec.x, vec.y, vec.z);

@@ -22,6 +22,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.*;
+import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
 import java.nio.FloatBuffer;
@@ -85,6 +86,8 @@ public class NEUCape {
             shaderName = "lightning_cape";
         } else if(capeName.equalsIgnoreCase("thebakery")) {
             shaderName = "biscuit_cape";
+        } else if(capeName.equalsIgnoreCase("negative")) {
+            shaderName = "negative";
         } else {
             shaderName = "shiny_cape";
         }
@@ -115,7 +118,9 @@ public class NEUCape {
     }
 
     private void bindTexture() {
-        if(capeTextures != null && capeTextures.length>0) {
+        if(capeName.equalsIgnoreCase("negative")) {
+            CapeManager.getInstance().backgroundFramebuffer.bindFramebufferTexture();
+        } else if(capeTextures != null && capeTextures.length>0) {
             long currentTime = System.currentTimeMillis();
             if(currentTime - lastFrameUpdate > 100) {
                 lastFrameUpdate = currentTime/100*100;
@@ -315,6 +320,11 @@ public class NEUCape {
         } else if(shaderName.equalsIgnoreCase("biscuit_cape") || shaderName.equalsIgnoreCase("shiny_cape")) {
             shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
             shaderManager.loadData(shaderName, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
+        } else if(shaderName.equalsIgnoreCase("negative")) {
+            shaderManager.loadData(shaderName, "screensize", new Vector2f(
+                    Minecraft.getMinecraft().displayWidth,
+                    Minecraft.getMinecraft().displayHeight
+            ));
         }
     }
 
@@ -339,8 +349,8 @@ public class NEUCape {
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA,
                 GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
         bindTexture();
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, 0x8191, GL11.GL_TRUE);
         GlStateManager.enableTexture2D();
+        GlStateManager.enableDepth();
         GlStateManager.disableCull();
 
         if(shaderName.equals("mcworld_cape")) {
@@ -363,7 +373,7 @@ public class NEUCape {
 
         GL20.glUseProgram(0);
 
-        GL11.glEnable(GL11.GL_CULL_FACE);
+        GlStateManager.enableCull();
         GlStateManager.enableTexture2D();
         GlStateManager.disableBlend();
         GlStateManager.popMatrix();

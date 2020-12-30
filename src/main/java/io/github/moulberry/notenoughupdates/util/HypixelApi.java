@@ -26,7 +26,7 @@ public class HypixelApi {
     private static final int FAILS_BEFORE_SWITCH = 3;
     private int currentUrl = 0;
     private long lastPrimaryUrl = 0;
-    private final String[] myApiURLs = {"https://moulberry.codes/", "http://51.79.51.21/", "http://moulberry.codes/", "http://51.75.78.252/" };
+    private final String[] myApiURLs = {"https://moulberry.codes/"};//, "http://moulberry.codes/", "http://51.79.51.21/"};//, "http://51.75.78.252/" };
     private final Integer[] myApiSuccesses = {0, 0, 0, 0};
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {
@@ -34,7 +34,7 @@ public class HypixelApi {
     }
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer, Runnable error) {
-        getApiAsync(generateApiUrl(apiKey.trim(), method, args), consumer, error);
+        getApiAsync(generateApiUrl(apiKey!=null?apiKey.trim():null, method, args), consumer, error);
     }
 
     private String getMyApiURL() {
@@ -79,6 +79,7 @@ public class HypixelApi {
             try {
                 consumer.accept(getApiSync(getMyApiURL()+urlS));
             } catch(Exception e) {
+                e.printStackTrace();
                 myApiError(current);
                 error.run();
             }
@@ -132,9 +133,16 @@ public class HypixelApi {
     }
 
     public String generateApiUrl(String apiKey, String method, HashMap<String, String> args) {
-        StringBuilder url = new StringBuilder("https://api.hypixel.net/" + method + "?key=" + apiKey);
+        StringBuilder url = new StringBuilder("https://api.hypixel.net/" + method + (apiKey != null ? ("?key=" + apiKey) : ""));
+        boolean first = true;
         for(Map.Entry<String, String> entry : args.entrySet()) {
-            url.append("&").append(entry.getKey()).append("=").append(entry.getValue());
+            if(first && apiKey == null) {
+                url.append("?");
+                first = false;
+            } else {
+                url.append("&");
+            }
+            url.append(entry.getKey()).append("=").append(entry.getValue());
         }
         return url.toString();
     }

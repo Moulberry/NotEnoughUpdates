@@ -6,6 +6,7 @@ import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -13,6 +14,8 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -33,8 +36,8 @@ public class CapeManager {
     private HashSet<String> availableCapes = new HashSet<>();
 
     private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
-            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true };
+            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative" };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false };
 
     public static CapeManager getInstance() {
         return INSTANCE;
@@ -146,6 +149,35 @@ public class CapeManager {
         return null;
     }
 
+    private static Framebuffer checkFramebufferSizes(Framebuffer framebuffer, int width, int height) {
+        if(framebuffer == null || framebuffer.framebufferWidth != width || framebuffer.framebufferHeight != height) {
+            if(framebuffer == null) {
+                framebuffer = new Framebuffer(width, height, true);
+            } else {
+                framebuffer.createBindFramebuffer(width, height);
+            }
+            framebuffer.setFramebufferFilter(GL11.GL_NEAREST);
+        }
+        return framebuffer;
+    }
+
+    public Framebuffer backgroundFramebuffer = null;
+    @SubscribeEvent
+    public void onRenderPlayer(RenderPlayerEvent.Pre e) {
+        int width = Minecraft.getMinecraft().displayWidth;
+        int height = Minecraft.getMinecraft().displayHeight;
+        backgroundFramebuffer = checkFramebufferSizes(backgroundFramebuffer,
+                width, height);
+
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, Minecraft.getMinecraft().getFramebuffer().framebufferObject);
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, backgroundFramebuffer.framebufferObject);
+        GL30.glBlitFramebuffer(0, 0, width, height,
+                0, 0, width, height,
+                GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
+
+        Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
+    }
+
     @SubscribeEvent
     public void onRenderPlayer(RenderPlayerEvent.Post e) {
         if(e.partialRenderTick == 1.0F) return; //rendering in inventory
@@ -172,6 +204,8 @@ public class CapeManager {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+
         String clientUuid = null;
         if(Minecraft.getMinecraft().thePlayer != null) {
             clientUuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
@@ -208,7 +242,5 @@ public class CapeManager {
     public String[] getCapes() {
         return capes;
     }
-
-    //private String[] contributors = new String[]{"thatgravyboat", "twasnt", "traxyrr", "some1sm", "meguminqt", "marethyu_77"};
 
 }

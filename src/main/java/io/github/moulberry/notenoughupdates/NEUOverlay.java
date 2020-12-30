@@ -2255,7 +2255,8 @@ public class NEUOverlay extends Gui {
         iterateItemSlots(new ItemSlotConsumer() {
             public void consume(int x, int y, int id) {
             JsonObject json = getSearchedItemPage(id);
-            if (json == null || !manager.jsonToStack(json).hasEffect()) {
+            ItemStack stack = manager.jsonToStack(json, true, true, true);
+            if (json == null || stack == null || !stack.hasEffect()) {
                 return;
             }
 
@@ -2409,11 +2410,13 @@ public class NEUOverlay extends Gui {
                     renderEntity(x + ITEM_SIZE / 2, y + ITEM_SIZE, scale, name, entities);
                 } else {
                     if(!items) return;
-                    ItemStack stack = manager.jsonToStack(json);
-                    if(glint) {
-                        Utils.drawItemStack(stack, x, y);
-                    } else {
-                        Utils.drawItemStackWithoutGlint(stack, x, y);
+                    ItemStack stack = manager.jsonToStack(json, true, true, true);
+                    if(stack != null) {
+                        if(glint) {
+                            Utils.drawItemStack(stack, x, y);
+                        } else {
+                            Utils.drawItemStackWithoutGlint(stack, x, y);
+                        }
                     }
                 }
 

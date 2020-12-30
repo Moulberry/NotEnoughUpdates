@@ -99,6 +99,11 @@ public class NotEnoughUpdates {
 
     SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
+            if(true) {
+                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                        "This feature has been disabled temporarily."));
+                return;
+            }
             if(!OpenGlHelper.isFramebufferEnabled()) {
                 sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "This feature requires FBOs to work. Try disabling Optifine's 'Fast Render'."));
@@ -867,6 +872,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
         MinecraftForge.EVENT_BUS.register(new DungeonMap());
         MinecraftForge.EVENT_BUS.register(new SunTzu());
+
         //MinecraftForge.EVENT_BUS.register(new BetterPortals());
 
         File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");

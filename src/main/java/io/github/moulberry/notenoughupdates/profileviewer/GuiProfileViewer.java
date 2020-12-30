@@ -734,7 +734,7 @@ public class GuiProfileViewer extends GuiScreen {
                 JsonObject petItem = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(petname+";"+tierNum);
                 if(petItem == null) continue;
 
-                ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(petItem, false, false);
+                ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(petItem, false, false, false);
                 HashMap<String, String> replacements = NotEnoughUpdates.INSTANCE.manager.getLoreReplacements(petname, tier, (int)Math.floor(level));
 
                 if(heldItem != null) {

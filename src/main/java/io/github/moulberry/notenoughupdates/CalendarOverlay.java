@@ -160,15 +160,19 @@ public class CalendarOverlay {
 
         if(jingleIndex == 0) {
             if (NotEnoughUpdates.INSTANCE.manager.config.eventNotificationSounds.value) {
-                Minecraft.getMinecraft().thePlayer.playSound("notenoughupdates:calendar_notif_jingle", 1, 1);
-            }
-            if (NotEnoughUpdates.INSTANCE.manager.config.eventNotificationSounds.value) {
-                Minecraft.getMinecraft().thePlayer.playSound("notenoughupdates:calendar_notif_in", 1, 1);
+                Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
+                        new ResourceLocation("notenoughupdates:calendar_notif_jingle")
+                ));
+                Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
+                        new ResourceLocation("notenoughupdates:calendar_notif_in")
+                ));
             }
             jingleIndex = -15*20;
         } else if(jingleIndex >= 1) {
             if (NotEnoughUpdates.INSTANCE.manager.config.eventNotificationSounds.value) {
-                Minecraft.getMinecraft().thePlayer.playSound("notenoughupdates:calendar_notif_in", 1, 1);
+                Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
+                        new ResourceLocation("notenoughupdates:calendar_notif_in")
+                ));
             }
             jingleIndex = -15*20;
         } else if(jingleIndex < -1) {
@@ -176,7 +180,9 @@ public class CalendarOverlay {
         }
         if(jingleIndex == -20*6-10) {
             if(NotEnoughUpdates.INSTANCE.manager.config.eventNotificationSounds.value) {
-                Minecraft.getMinecraft().thePlayer.playSound("notenoughupdates:calendar_notif_out", 1, 1);
+                Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
+                        new ResourceLocation("notenoughupdates:calendar_notif_out")
+                ));
             }
         }
 

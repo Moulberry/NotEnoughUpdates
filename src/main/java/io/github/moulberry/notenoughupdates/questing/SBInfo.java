@@ -84,10 +84,8 @@ public class SBInfo {
 
             ScoreObjective sidebarObjective = scoreboard.getObjectiveInDisplaySlot(1); //§707/14/20
 
-            List<Score> scores = new ArrayList<>();
-            for(Score score : scoreboard.getSortedScores(sidebarObjective)) {
-                scores.add(score);
-            }
+            List<Score> scores = new ArrayList<>(scoreboard.getSortedScores(sidebarObjective));
+
             List<String> lines = new ArrayList<>();
             for(int i=scores.size()-1; i>=0; i--) {
                 Score score = scores.get(i);

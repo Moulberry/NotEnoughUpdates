@@ -151,6 +151,9 @@ public class BetterPortals extends Gui {
 
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {
+        if(event.phase != TickEvent.Phase.END) {
+            return;
+        }
         if(Minecraft.getMinecraft().theWorld != null) {
             List<Vector3f> travelToPositions = new ArrayList<>();
             for(Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {

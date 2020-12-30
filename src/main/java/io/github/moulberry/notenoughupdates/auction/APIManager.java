@@ -171,16 +171,14 @@ public class APIManager {
     }
 
     public void tick() {
-        if(manager.config.apiKey.value == null || manager.config.apiKey.value.isEmpty()) return;
-
         customAH.tick();
         long currentTime = System.currentTimeMillis();
-        if(manager.config.neuAuctionHouse.value) {
+        if(manager.config.neuAuctionHouse.value && manager.config.apiKey.value != null &&
+                !manager.config.apiKey.value.isEmpty()) {
             if(currentTime - lastAuctionUpdate > 60*1000) {
                 lastAuctionUpdate = currentTime;
                 updatePageTick();
             }
-
             if(currentTime - lastShortAuctionUpdate > 10*1000) {
                 lastShortAuctionUpdate = currentTime;
                 updatePageTickShort();
@@ -198,11 +196,11 @@ public class APIManager {
                 }
             }
         }
-        if(currentTime - lastAuctionAvgUpdate > 30*60*1000) { //30 minutes
-            lastAuctionAvgUpdate = currentTime - 28*60*1000; //Try again in 2 minutes if updateAvgPrices doesn't succeed
+        if(currentTime - lastAuctionAvgUpdate > 5*60*1000) { //5 minutes
+            lastAuctionAvgUpdate = currentTime - 4*60*1000; //Try again in 1 minute if updateAvgPrices doesn't succeed
             updateAvgPrices();
         }
-        if(currentTime - lastBazaarUpdate > 10*60*1000) {
+        if(currentTime - lastBazaarUpdate > 5*60*1000) { //5 minutes
             lastBazaarUpdate = currentTime;
             updateBazaar();
         }
@@ -585,7 +583,7 @@ public class APIManager {
         //System.out.println("Trying to update page: " + page);
         HashMap<String, String> args = new HashMap<>();
         args.put("page", ""+page);
-        manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/auctions",
+        manager.hypixelApi.getHypixelApiAsync(null, "skyblock/auctions",
             args, jsonObject -> {
                     if(jsonObject == null) return;
 

@@ -121,7 +121,7 @@ public class CustomItemEffects {
             ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
             if(held != null) {
                 String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-                if(internal != null && internal.equals("ASPECT_OF_THE_END")) {
+                if(internal != null && (internal.equals("ASPECT_OF_THE_END") || internal.equals("HYPERION"))) {
                     aoteUseMillis = System.currentTimeMillis();
                     if(aoteTeleportationCurr == null) {
                         aoteTeleportationCurr = new Vector3f();

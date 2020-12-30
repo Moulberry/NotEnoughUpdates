@@ -151,6 +151,8 @@ public class NEUEventListener {
         }
         DungeonWin.tick();
         if(longUpdate) {
+            NotEnoughUpdates.INSTANCE.overlay.redrawItems();
+
             if(NotEnoughUpdates.INSTANCE.manager.config.slowDungeonBlocks.value) {
                 DungeonBlocks.tick();
             }
@@ -212,17 +214,15 @@ public class NEUEventListener {
                     }
                 }
                 SBInfo.getInstance().tick();
-                //GuiQuestLine.questLine.tick();
             }
             if(currentTime - lastSkyblockScoreboard < 5*60*1000) { //5 minutes
                 neu.manager.auctionManager.tick();
             } else {
                 neu.manager.auctionManager.markNeedsUpdate();
             }
-            //ItemRarityHalo.resetItemHaloCache();
         }
         if(longUpdate && neu.hasSkyblockScoreboard()) {
-            if(neu.manager.getCurrentProfile() == null || neu.manager.getCurrentProfile().length() == 0) {
+            /*if(neu.manager.getCurrentProfile() == null || neu.manager.getCurrentProfile().length() == 0) {
                 ProfileViewer.Profile profile = NotEnoughUpdates.profileViewer.getProfile(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
                         callback->{});
                 if(profile != null) {
@@ -231,8 +231,8 @@ public class NEUEventListener {
                         neu.manager.setCurrentProfileBackup(profile.getLatestProfile());
                     }
                 }
-            }
-            if(neu.manager.getCurrentProfile() != null && neu.manager.getCurrentProfile().length() > 0) {
+            }*/
+            /*if(neu.manager.getCurrentProfile() != null && neu.manager.getCurrentProfile().length() > 0) {
                 HashSet<String> newItem = new HashSet<>();
                 if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
                         !(Minecraft.getMinecraft().currentScreen instanceof GuiCrafting)) {
@@ -275,7 +275,7 @@ public class NEUEventListener {
                     }
                 }
                 newItemAddMap.keySet().retainAll(newItem);
-            }
+            }*/
         }
     }
 
@@ -310,11 +310,15 @@ public class NEUEventListener {
     }
 
     @SubscribeEvent
-    public void onRenderGameOverlay(RenderGameOverlayEvent event) {
-        if(event.type != null && event.type.equals(RenderGameOverlayEvent.ElementType.BOSSHEALTH) &&
+    public void onRenderGameOverlayPre(RenderGameOverlayEvent.Pre event) {
+        if (event.type != null && event.type.equals(RenderGameOverlayEvent.ElementType.BOSSHEALTH) &&
                 Minecraft.getMinecraft().currentScreen instanceof GuiContainer && neu.overlay.isUsingMobsFilter()) {
             event.setCanceled(true);
         }
+    }
+
+    @SubscribeEvent
+    public void onRenderGameOverlayPost(RenderGameOverlayEvent.Post event) {
         long timeRemaining = 15000 - (System.currentTimeMillis() - notificationDisplayMillis);
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
             DungeonWin.render(event.partialTicks);
@@ -746,6 +750,7 @@ public class NEUEventListener {
                         ItemStack item = lower.getStackInSlot(11+i);
                         String internal = neu.manager.getInternalNameForItem(item);
                         if(internal != null) {
+                            internal = internal.replace("\u00CD", "I").replace("\u0130", "I");
                             float bazaarPrice = -1;
                             JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internal);
                             if(bazaarInfo != null && bazaarInfo.has("avg_sell")) {
@@ -1018,59 +1023,6 @@ public class NEUEventListener {
                 }
             }
         }
-        /*if(Minecraft.getMinecraft().theWorld != null && Keyboard.getEventKey() == Keyboard.KEY_RBRACKET && Keyboard.getEventKeyState()) {
-            Minecraft.getMinecraft().displayGuiScreen(null);
-            started = true;
-            final Object[] items = neu.manager.getItemInformation().values().toArray();
-            AtomicInteger i = new AtomicInteger(0);
-
-            Runnable checker = new Runnable() {
-                @Override
-                public void run() {
-                    int in = i.getAndIncrement();
-                    /*if(missingRecipe.get()) {
-                        String internalname = ((JsonObject)items[in]).get("internalname").getAsString();
-
-                        JsonArray arr = null;
-                        File f = new File(neu.manager.configLocation, "missing.json");
-                        try(InputStream instream = new FileInputStream(f)) {
-                            BufferedReader reader = new BufferedReader(new InputStreamReader(instream, StandardCharsets.UTF_8));
-                            JsonObject json = neu.manager.gson.fromJson(reader, JsonObject.class);
-                            arr = json.getAsJsonArray("missing");
-                        } catch(IOException e) {}
-
-                        try {
-                            JsonObject json = new JsonObject();
-                            if(arr == null) arr = new JsonArray();
-                            arr.add(new JsonPrimitive(internalname));
-                            json.add("missing", arr);
-                            neu.manager.writeJson(json, f);
-                        } catch(IOException e) {}
-                    }
-                    missingRecipe.set(false);
-
-                    ses.schedule(() -> {
-                        int index = i.get();
-                        JsonObject o = (JsonObject)items[index];
-                        if(Minecraft.getMinecraft().currentScreen != null) {
-                            Minecraft.getMinecraft().displayGuiScreen(null);
-                        }
-                        Minecraft.getMinecraft().thePlayer.sendChatMessage("/viewrecipe " + o.get("internalname").getAsString());
-
-                        ses.schedule(this, 1000, TimeUnit.MILLISECONDS);
-                    }, 100, TimeUnit.MILLISECONDS);
-                }
-            };
-
-            int index = i.get();
-            JsonObject o = (JsonObject)items[index];
-            if(Minecraft.getMinecraft().currentScreen != null) {
-                Minecraft.getMinecraft().displayGuiScreen(null);
-            }
-            Minecraft.getMinecraft().thePlayer.sendChatMessage("/viewrecipe " + o.get("internalname").getAsString());
-
-            ses.schedule(checker, 1000, TimeUnit.MILLISECONDS);
-        }*/
     }
 
     private static String[] rarityArrC = new String[] {
@@ -1088,8 +1040,12 @@ public class NEUEventListener {
     public void onItemTooltipLow(ItemTooltipEvent event) {
         if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
 
-        boolean hasEnchantments = event.itemStack.hasTagCompound() && event.itemStack.getTagCompound().hasKey("ExtraAttributes", 10) &&
-                event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").hasKey("enchantments", 10);
+        String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
+        if(internalname == null) {
+            return;
+        }
+
+        boolean hasEnchantments = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").hasKey("enchantments", 10);
         Set<String> enchantIds = new HashSet<>();
         if(hasEnchantments) enchantIds = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").getCompoundTag("enchantments").getKeySet();
 
@@ -1312,7 +1268,6 @@ public class NEUEventListener {
                 if(line.contains(EnumChatFormatting.GRAY+"Buy it now: ") ||
                         line.contains(EnumChatFormatting.GRAY+"Bidder: ") ||
                         line.contains(EnumChatFormatting.GRAY+"Starting bid: ")) {
-                    String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
                     if(internalname != null) {
                         newTooltip.add("");
                         if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
@@ -1360,38 +1315,6 @@ public class NEUEventListener {
                                 newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
                                         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
                             }
-
-                            /*JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
-
-                            boolean hasAuctionPrice = auctionInfo != null;
-
-                            int lowestBin = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
-
-                            NumberFormat format = NumberFormat.getInstance(Locale.US);
-                            APIManager.CraftInfo craftCost = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(internalname);
-
-                            if(lowestBin > 0) {
-                                newTooltip.add(EnumChatFormatting.GRAY+"Lowest BIN: "+
-                                        EnumChatFormatting.GOLD+format.format(lowestBin)+" coins");
-                            }
-                            if(hasAuctionPrice) {
-                                int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
-                                newTooltip.add(EnumChatFormatting.GRAY+"AH Price: "+
-                                        EnumChatFormatting.GOLD+format.format(auctionPrice)+" coins");
-                                newTooltip.add(EnumChatFormatting.GRAY+"AH Sales: "+
-                                        EnumChatFormatting.GOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
-                                if(auctionInfo.has("clean_price")) {
-                                    newTooltip.add(EnumChatFormatting.GRAY+"AH Price (Clean): "+
-                                            EnumChatFormatting.GOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
-                                    newTooltip.add(EnumChatFormatting.GRAY+"AH Sales (Clean): "+
-                                            EnumChatFormatting.GOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
-                                }
-
-                            }
-                            if(craftCost.fromRecipe) {
-                                newTooltip.add(EnumChatFormatting.GRAY+"Raw Craft Cost: "+
-                                        EnumChatFormatting.GOLD+format.format((int)craftCost.craftCost)+" coins");
-                            }*/
                         }
                     }
                 }
@@ -1551,8 +1474,6 @@ public class NEUEventListener {
         event.toolTip.addAll(newTooltip);
 
         if(neu.manager.config.invAuctionPrice.value || neu.manager.config.invBazaarPrice.value) {
-            String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
-
             if(internalname != null) {
                 JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internalname);
                 JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internalname);

@@ -308,18 +308,6 @@ public class CapeNode {
                         .normal(nodeNorm.x, nodeNorm.y, nodeNorm.z).endVertex();
             }
             tessellator.draw();
-
-                /*for(CapeNode node : new CapeNode[]{this, nodeDown, nodeRight, nodeDownRight}) {
-                    Vector3f nodeNorm = node.normal();
-                    worldrenderer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-                    worldrenderer.pos(node.renderPosition.x+nodeNorm.x*0.05f, node.renderPosition.y+nodeNorm.y*0.05f, node.renderPosition.z+nodeNorm.z*0.05f)
-                            .tex(node.texU, node.texV)
-                            .normal(nodeNorm.x, nodeNorm.y, nodeNorm.z).endVertex();
-                    worldrenderer.pos(node.renderPosition.x+nodeNorm.x*0.25f, node.renderPosition.y+nodeNorm.y*0.25f, node.renderPosition.z+nodeNorm.z*0.25f)
-                            .tex(node.texU, node.texV)
-                            .normal(nodeNorm.x, nodeNorm.y, nodeNorm.z).endVertex();
-                    tessellator.draw();
-                }*/
         }
 
         if(nodeLeft == null || nodeRight == null) {
