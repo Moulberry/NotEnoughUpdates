@@ -1,14 +1,22 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.client.event.RenderWorldEvent;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.ArrayUtils;
@@ -36,8 +44,8 @@ public class CapeManager {
     private HashSet<String> availableCapes = new HashSet<>();
 
     private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
-            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false };
+            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative", "void" };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false, false };
 
     public static CapeManager getInstance() {
         return INSTANCE;
@@ -109,8 +117,7 @@ public class CapeManager {
 
         updateConfig = updateConfig && playerUUID.equals(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
         if(updateConfig) {
-            NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value = String.valueOf(capename);
-            try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
+            NotEnoughUpdates.INSTANCE.config.hidden.selectedCape = String.valueOf(capename);
         }
 
         if(updateConfig) {
@@ -138,13 +145,14 @@ public class CapeManager {
         return null;
     }
 
+    private static BiMap<String, EntityPlayer> playerMap = null;
+
     public EntityPlayer getPlayerForUUID(String uuid) {
-        if(Minecraft.getMinecraft().theWorld != null) {
-            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-                if(player.getUniqueID().toString().replace("-", "").equals(uuid)) {
-                    return player;
-                }
-            }
+        if(playerMap == null) {
+            return null;
+        }
+        if(playerMap.containsKey(uuid)) {
+            return playerMap.get(uuid);
         }
         return null;
     }
@@ -161,21 +169,26 @@ public class CapeManager {
         return framebuffer;
     }
 
+    public boolean updateWorldFramebuffer = false;
     public Framebuffer backgroundFramebuffer = null;
-    @SubscribeEvent
-    public void onRenderPlayer(RenderPlayerEvent.Pre e) {
+
+    public void postRenderBlocks() {
         int width = Minecraft.getMinecraft().displayWidth;
         int height = Minecraft.getMinecraft().displayHeight;
         backgroundFramebuffer = checkFramebufferSizes(backgroundFramebuffer,
                 width, height);
 
-        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, Minecraft.getMinecraft().getFramebuffer().framebufferObject);
-        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, backgroundFramebuffer.framebufferObject);
-        GL30.glBlitFramebuffer(0, 0, width, height,
-                0, 0, width, height,
-                GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
+        if(OpenGlHelper.isFramebufferEnabled() && updateWorldFramebuffer) {
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, Minecraft.getMinecraft().getFramebuffer().framebufferObject);
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, backgroundFramebuffer.framebufferObject);
+            GL30.glBlitFramebuffer(0, 0, width, height,
+                    0, 0, width, height,
+                    GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
 
-        Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
+            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
+        }
+
+        updateWorldFramebuffer = false;
     }
 
     @SubscribeEvent
@@ -186,7 +199,7 @@ public class CapeManager {
         String clientUuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
 
         if(Minecraft.getMinecraft().thePlayer != null && uuid.equals(clientUuid)) {
-            String selCape = NotEnoughUpdates.INSTANCE.manager.config.selectedCape.value;
+            String selCape = NotEnoughUpdates.INSTANCE.config.hidden.selectedCape;
             if(selCape != null && !selCape.isEmpty()) {
                 if(localCape == null) {
                     localCape = new MutablePair<>(new NEUCape(selCape), selCape);
@@ -205,20 +218,41 @@ public class CapeManager {
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        if(Minecraft.getMinecraft().theWorld == null) return;
 
         String clientUuid = null;
         if(Minecraft.getMinecraft().thePlayer != null) {
             clientUuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
         }
 
+        if(playerMap == null) {
+            playerMap = HashBiMap.create(Minecraft.getMinecraft().theWorld.playerEntities.size());
+        }
+        HashSet<String> contains = new HashSet<>();
+        for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+            String uuid = player.getUniqueID().toString().replace("-", "");
+            contains.add(uuid);
+            if(!playerMap.containsValue(player)) {
+                playerMap.put(uuid, player);
+            }
+        }
+        playerMap.keySet().retainAll(contains);
+
+        boolean hasLocalCape = localCape != null && localCape.getRight() != null && !localCape.getRight().equals("null");
+
         Set<String> toRemove = new HashSet<>();
         try {
             for(String playerUUID : capeMap.keySet()) {
-                EntityPlayer player = getPlayerForUUID(playerUUID);
+                EntityPlayer player;
+                if(playerUUID.equals(clientUuid)) {
+                    player = Minecraft.getMinecraft().thePlayer;
+                } else {
+                    player = getPlayerForUUID(playerUUID);
+                }
                 if(player != null) {
                     String capeName = capeMap.get(playerUUID).getRight();
                     if(capeName != null && !capeName.equals("null")) {
-                        if(playerUUID.equals(clientUuid) && localCape != null && localCape.getRight() != null && !localCape.getRight().equals("null")) {
+                        if(player == Minecraft.getMinecraft().thePlayer && hasLocalCape) {
                             continue;
                         }
                         capeMap.get(playerUUID).getLeft().setCapeTexture(capeName);
@@ -230,7 +264,7 @@ public class CapeManager {
             }
         } catch(Exception e) {}
 
-        if(localCape != null) {
+        if(hasLocalCape) {
             localCape.getLeft().setCapeTexture(localCape.getValue());
             localCape.getLeft().onTick(event, Minecraft.getMinecraft().thePlayer);
         }

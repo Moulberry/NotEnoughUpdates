@@ -8,10 +8,10 @@ import com.google.gson.JsonPrimitive;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.SBAIntegration;
+import io.github.moulberry.notenoughupdates.util.SBAIntegration;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
-import io.github.moulberry.notenoughupdates.questing.SBInfo;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -228,10 +228,6 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.drawHoveringText(grayTooltip, mouseX, mouseY, width, height, -1, Minecraft.getMinecraft().fontRendererObj);
             tooltipToDisplay = null;
         }
-    }
-
-    private boolean isLoadedProfile() {
-        return profile.getProfileInformation(profileId) != null;
     }
 
     private void renderTabs(boolean renderPressed) {
@@ -530,10 +526,8 @@ public class GuiProfileViewer extends GuiScreen {
 
             JsonObject inventoryInfo = profile.getInventoryInfo(profileId);
             if(inventoryInfo == null) return;
-            JsonObject collectionInfo = profile.getCollectionInfo(profileId);
-            if(collectionInfo == null) return;
 
-            ItemStack[][][] inventories = getItemsForInventory(inventoryInfo, collectionInfo, selectedInventory);
+            ItemStack[][][] inventories = getItemsForInventory(inventoryInfo, selectedInventory);
             if(currentInventoryIndex >= inventories.length) currentInventoryIndex = inventories.length-1;
             if(currentInventoryIndex < 0) currentInventoryIndex = 0;
 
@@ -575,13 +569,13 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
-    private class Level {
+    public static class Level {
         float level;
         float currentLevelRequirement;
         float maxXP;
     }
 
-    public Level getLevel(JsonArray levels, int offset, float exp) {
+    public static Level getLevel(JsonArray levels, int offset, float exp) {
         float xpTotal = 0;
         float level = 1;
         float currentLevelRequirement = 0;
@@ -618,7 +612,7 @@ public class GuiProfileViewer extends GuiScreen {
         return levelObj;
     }
 
-    private static final HashMap<String, HashMap<String, Float>> PET_STAT_BOOSTS = new HashMap<>();
+    public static final HashMap<String, HashMap<String, Float>> PET_STAT_BOOSTS = new HashMap<>();
     static {
         HashMap<String, Float> bigTeeth = new HashMap<>();
         bigTeeth.put("CRIT_CHANCE", 5f);
@@ -636,7 +630,7 @@ public class GuiProfileViewer extends GuiScreen {
         sharpenedClaws.put("CRIT_DAMAGE", 15f);
         PET_STAT_BOOSTS.put("PET_ITEM_SHARPENED_CLAWS_UNCOMMON", sharpenedClaws);
     }
-    private static final HashMap<String, HashMap<String, Float>> PET_STAT_BOOSTS_MULT = new HashMap<>();
+    public static final HashMap<String, HashMap<String, Float>> PET_STAT_BOOSTS_MULT = new HashMap<>();
     static {
         HashMap<String, Float> ironClaws = new HashMap<>();
         ironClaws.put("CRIT_DAMAGE", 1.4f);
@@ -652,13 +646,13 @@ public class GuiProfileViewer extends GuiScreen {
     private int petsPage = 0;
     private List<JsonObject> sortedPets = null;
     private List<ItemStack> sortedPetsStack = null;
-    private static HashMap<String, String> minionRarityToNumMap = new HashMap<>();
+    public static HashMap<String, String> MINION_RARITY_TO_NUM = new HashMap<>();
     static {
-        minionRarityToNumMap.put("COMMON", "0");
-        minionRarityToNumMap.put("UNCOMMON", "1");
-        minionRarityToNumMap.put("RARE", "2");
-        minionRarityToNumMap.put("EPIC", "3");
-        minionRarityToNumMap.put("LEGENDARY", "4");
+        MINION_RARITY_TO_NUM.put("COMMON", "0");
+        MINION_RARITY_TO_NUM.put("UNCOMMON", "1");
+        MINION_RARITY_TO_NUM.put("RARE", "2");
+        MINION_RARITY_TO_NUM.put("EPIC", "3");
+        MINION_RARITY_TO_NUM.put("LEGENDARY", "4");
     }
     private void drawPetsPage(int mouseX, int mouseY, float partialTicks) {
         JsonObject petsInfo = profile.getPetsInfo(profileId);
@@ -692,12 +686,12 @@ public class GuiProfileViewer extends GuiScreen {
             }
             sortedPets.sort((pet1, pet2) -> {
                 String tier1 = pet1.get("tier").getAsString();
-                String tierNum1 = minionRarityToNumMap.get(tier1);
+                String tierNum1 = MINION_RARITY_TO_NUM.get(tier1);
                 int tierNum1I = Integer.parseInt(tierNum1);
                 float exp1 = pet1.get("exp").getAsFloat();
 
                 String tier2 = pet2.get("tier").getAsString();
-                String tierNum2 = minionRarityToNumMap.get(tier2);
+                String tierNum2 = MINION_RARITY_TO_NUM.get(tier2);
                 int tierNum2I = Integer.parseInt(tierNum2);
                 float exp2 = pet2.get("exp").getAsFloat();
 
@@ -712,7 +706,7 @@ public class GuiProfileViewer extends GuiScreen {
                 String tier = pet.get("tier").getAsString();
                 String heldItem = Utils.getElementAsString(pet.get("heldItem"), null);
                 JsonObject heldItemJson = heldItem==null?null:NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(heldItem);
-                String tierNum = minionRarityToNumMap.get(tier);
+                String tierNum = MINION_RARITY_TO_NUM.get(tier);
                 float exp = pet.get("exp").getAsFloat();
                 if(tierNum == null) continue;
 
@@ -934,22 +928,22 @@ public class GuiProfileViewer extends GuiScreen {
             String[] split = display.split("] ");
             String colouredName = split[split.length-1];
 
-            renderAlignedString(colouredName, EnumChatFormatting.WHITE+"Level "+(int)Math.floor(level), guiLeft+319, guiTop+28, 98);
+            Utils.renderAlignedString(colouredName, EnumChatFormatting.WHITE+"Level "+(int)Math.floor(level), guiLeft+319, guiTop+28, 98);
 
             //Utils.drawStringCenteredScaledMaxWidth(, Minecraft.getMinecraft().fontRendererObj, guiLeft+368, guiTop+28+4, true, 98, 0);
             //renderAlignedString(display, EnumChatFormatting.YELLOW+"[LVL "+Math.floor(level)+"]", guiLeft+319, guiTop+28, 98);
             renderBar(guiLeft+319, guiTop+38, 98, (float)Math.floor(level)/100f);
 
-            renderAlignedString(EnumChatFormatting.YELLOW+"To Next LVL", EnumChatFormatting.WHITE.toString()+(int)(level%1*100)+"%", guiLeft+319, guiTop+46, 98);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"To Next LVL", EnumChatFormatting.WHITE.toString()+(int)(level%1*100)+"%", guiLeft+319, guiTop+46, 98);
             renderBar(guiLeft+319, guiTop+56, 98, level%1);
 
-            renderAlignedString(EnumChatFormatting.YELLOW+"To Max LVL", EnumChatFormatting.WHITE.toString()+Math.min(100, (int)(exp/maxXP*100))+"%", guiLeft+319, guiTop+64, 98);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"To Max LVL", EnumChatFormatting.WHITE.toString()+Math.min(100, (int)(exp/maxXP*100))+"%", guiLeft+319, guiTop+64, 98);
             renderBar(guiLeft+319, guiTop+74, 98, exp/maxXP);
 
-            renderAlignedString(EnumChatFormatting.YELLOW+"Total XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(exp, 0), guiLeft+319, guiTop+125, 98);
-            renderAlignedString(EnumChatFormatting.YELLOW+"Current LVL XP",
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(exp, 0), guiLeft+319, guiTop+125, 98);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Current LVL XP",
                         EnumChatFormatting.WHITE.toString()+shortNumberFormat((level%1)*currentLevelRequirement, 0), guiLeft+319, guiTop+143, 98);
-            renderAlignedString(EnumChatFormatting.YELLOW+"Required LVL XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(currentLevelRequirement, 0), guiLeft+319, guiTop+161, 98);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Required LVL XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(currentLevelRequirement, 0), guiLeft+319, guiTop+161, 98);
         }
     }
 
@@ -1216,6 +1210,16 @@ public class GuiProfileViewer extends GuiScreen {
         return 6;
     }
 
+    private boolean useActualMax(String invName) {
+        switch(invName) {
+            case "talisman_bag":
+            case "fishing_bag":
+            case "potion_bag":
+                return true;
+        }
+        return false;
+    }
+
     private int getIgnoredRowsForInventory(String invName) {
         switch(invName) {
             case "talisman_bag":
@@ -1257,30 +1261,44 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     private ItemStack fillerStack = new ItemStack(Item.getItemFromBlock(Blocks.stained_glass_pane), 1, 15);
-    public ItemStack[][][] getItemsForInventory(JsonObject inventoryInfo, JsonObject collectionInfo, String invName) {
+    public ItemStack[][][] getItemsForInventory(JsonObject inventoryInfo, String invName) {
         if(inventoryItems.containsKey(invName)) return inventoryItems.get(invName);
 
         JsonArray jsonInv = Utils.getElement(inventoryInfo, invName).getAsJsonArray();
 
+        if(jsonInv.size() == 0) return new ItemStack[1][][];
+
+        int jsonInvSize;
+        if(useActualMax(invName)) {
+            jsonInvSize = (int)Math.ceil(jsonInv.size()/9f)*9;
+        } else {
+            jsonInvSize = 9*4;
+            for(int i=9*4; i<jsonInv.size(); i++) {
+                JsonElement item = jsonInv.get(i);
+                if(item != null && item.isJsonObject()) {
+                    jsonInvSize = (i/9)*9;
+                }
+            }
+        }
+
         int rowSize = 9;
-        int rows = jsonInv.size()/rowSize;
+        int rows = jsonInvSize/rowSize;
         int maxRowsPerPage = getRowsForInventory(invName);
-        int ignoredRows = getIgnoredRowsForInventory(invName);
         int maxInvSize = rowSize*maxRowsPerPage;
 
-        int numInventories = (jsonInv.size()-1)/maxInvSize+1;
+        int numInventories = (jsonInvSize-1)/maxInvSize+1;
 
         ItemStack[][][] inventories = new ItemStack[numInventories][][];
 
-        int availableSlots = getAvailableSlotsForInventory(inventoryInfo, collectionInfo, invName);
+        //int availableSlots = getAvailableSlotsForInventory(inventoryInfo, collectionInfo, invName);
 
         for(int i=0; i<numInventories; i++) {
-            int thisRows = Math.min(maxRowsPerPage, rows-maxRowsPerPage*i)-ignoredRows;
+            int thisRows = Math.min(maxRowsPerPage, rows-maxRowsPerPage*i);
             if(thisRows <= 0) break;
 
             ItemStack[][] items = new ItemStack[thisRows][rowSize];
 
-            int invSize = Math.min(jsonInv.size(), maxInvSize+maxInvSize*i);
+            int invSize = Math.min(jsonInvSize, maxInvSize+maxInvSize*i);
             for(int j=maxInvSize*i; j<invSize; j++) {
                 int xIndex = (j%maxInvSize)%rowSize;
                 int yIndex = (j%maxInvSize)/rowSize;
@@ -1292,12 +1310,11 @@ public class GuiProfileViewer extends GuiScreen {
                     break;
                 }
 
+                if(j >= jsonInv.size()) {
+                    items[yIndex][xIndex] = fillerStack;
+                    continue;
+                }
                 if(jsonInv.get(j) == null || !jsonInv.get(j).isJsonObject()) {
-                    if(availableSlots >= 0) {
-                        if(j >= availableSlots) {
-                            items[yIndex][xIndex] = fillerStack;
-                        }
-                    }
                     continue;
                 }
 
@@ -1353,7 +1370,6 @@ public class GuiProfileViewer extends GuiScreen {
 
         JsonObject inventoryInfo = profile.getInventoryInfo(profileId);
         if(inventoryInfo == null) return;
-        JsonObject collectionInfo = profile.getCollectionInfo(profileId);
 
         int invNameIndex=0;
         for(Map.Entry<String, ItemStack> entry : invNameToDisplayMap.entrySet()) {
@@ -1411,7 +1427,7 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
 
-        ItemStack[][][] inventories = getItemsForInventory(inventoryInfo, collectionInfo, selectedInventory);
+        ItemStack[][][] inventories = getItemsForInventory(inventoryInfo, selectedInventory);
         if(currentInventoryIndex >= inventories.length) currentInventoryIndex = inventories.length-1;
         if(currentInventoryIndex < 0) currentInventoryIndex = 0;
 
@@ -1659,14 +1675,14 @@ public class GuiProfileViewer extends GuiScreen {
         float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), 0);
         float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
 
-        renderAlignedString(EnumChatFormatting.GOLD+"Bank Balance", EnumChatFormatting.WHITE.toString()+shortNumberFormat(bankBalance, 0),
+        Utils.renderAlignedString(EnumChatFormatting.GOLD+"Bank Balance", EnumChatFormatting.WHITE.toString()+shortNumberFormat(bankBalance, 0),
                 guiLeft+xStart, guiTop+yStartTop, 76);
-        renderAlignedString(EnumChatFormatting.GOLD+"Purse", EnumChatFormatting.WHITE.toString()+shortNumberFormat(purseBalance, 0),
+        Utils.renderAlignedString(EnumChatFormatting.GOLD+"Purse", EnumChatFormatting.WHITE.toString()+shortNumberFormat(purseBalance, 0),
                 guiLeft+xStart, guiTop+yStartTop+yOffset, 76);
 
 
         float fairySouls = Utils.getElementAsFloat(Utils.getElement(profileInfo, "fairy_souls_collected"), 0);
-        renderAlignedString(EnumChatFormatting.LIGHT_PURPLE+"Fairy Souls", EnumChatFormatting.WHITE.toString()+(int)fairySouls+"/209",
+        Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE+"Fairy Souls", EnumChatFormatting.WHITE.toString()+(int)fairySouls+"/209",
                 guiLeft+xStart, guiTop+yStartBottom, 76);
         if(skillInfo != null) {
             float totalSkillLVL = 0;
@@ -1694,11 +1710,11 @@ public class GuiProfileViewer extends GuiScreen {
             float avgTrueSkillLVL = totalTrueSkillLVL/totalSkillCount;
             float avgSlayerLVL = totalSlayerLVL/totalSlayerCount;
 
-            renderAlignedString(EnumChatFormatting.RED+"AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSkillLVL*10)/10,
+            Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSkillLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset, 76);
-            renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
+            Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
-            renderAlignedString(EnumChatFormatting.RED+"True AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgTrueSkillLVL*10)/10,
+            Utils.renderAlignedString(EnumChatFormatting.RED+"True AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgTrueSkillLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
         }
 
@@ -1710,17 +1726,17 @@ public class GuiProfileViewer extends GuiScreen {
         float auctions_gold_spent = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_gold_spent"), 0);
         float auctions_gold_earned = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_gold_earned"), 0);
 
-        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auction Bids", EnumChatFormatting.WHITE.toString()+(int)auctions_bids,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auction Bids", EnumChatFormatting.WHITE.toString()+(int)auctions_bids,
                 guiLeft+xStart+xOffset, guiTop+yStartTop, 76);
-        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Highest Bid", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_highest_bid, 0),
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Highest Bid", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_highest_bid, 0),
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset, 76);
-        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auctions Won", EnumChatFormatting.WHITE.toString()+(int)auctions_won,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auctions Won", EnumChatFormatting.WHITE.toString()+(int)auctions_won,
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*2, 76);
-        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auctions Created", EnumChatFormatting.WHITE.toString()+(int)auctions_created,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auctions Created", EnumChatFormatting.WHITE.toString()+(int)auctions_created,
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*3, 76);
-        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Spent", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_gold_spent, 0),
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Spent", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_gold_spent, 0),
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*4, 76);
-        renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Earned", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_gold_earned, 0),
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Earned", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_gold_earned, 0),
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*5, 76);
 
 
@@ -1731,17 +1747,17 @@ public class GuiProfileViewer extends GuiScreen {
         float wolf_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.boss_kills_tier_2"), 0);
         float wolf_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.boss_kills_tier_3"), 0);
 
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T3", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_2,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T3", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_2,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_3,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T3", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_2,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T3", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_2,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*2, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T4", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_3,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T4", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*3, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T3", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_2,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T3", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_2,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*4, 76);
-        renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T4", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_3,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T4", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*5, 76);
 
         float pet_milestone_ores_mined = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.pet_milestone_ores_mined"), 0);
@@ -1751,16 +1767,16 @@ public class GuiProfileViewer extends GuiScreen {
         float items_fished_treasure = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.items_fished_treasure"), 0);
         float items_fished_large_treasure = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.items_fished_large_treasure"), 0);
 
-        renderAlignedString(EnumChatFormatting.GREEN+"Ores Mined", EnumChatFormatting.WHITE.toString()+(int)pet_milestone_ores_mined,
+        Utils.renderAlignedString(EnumChatFormatting.GREEN+"Ores Mined", EnumChatFormatting.WHITE.toString()+(int)pet_milestone_ores_mined,
                 guiLeft+xStart+xOffset*2, guiTop+yStartTop, 76);
-        renderAlignedString(EnumChatFormatting.GREEN+"Sea Creatures Killed", EnumChatFormatting.WHITE.toString()+(int)pet_milestone_sea_creatures_killed,
+        Utils.renderAlignedString(EnumChatFormatting.GREEN+"Sea Creatures Killed", EnumChatFormatting.WHITE.toString()+(int)pet_milestone_sea_creatures_killed,
                 guiLeft+xStart+xOffset*2, guiTop+yStartTop+yOffset, 76);
 
-        renderAlignedString(EnumChatFormatting.GREEN+"Items Fished", EnumChatFormatting.WHITE.toString()+(int)items_fished,
+        Utils.renderAlignedString(EnumChatFormatting.GREEN+"Items Fished", EnumChatFormatting.WHITE.toString()+(int)items_fished,
                 guiLeft+xStart+xOffset*2, guiTop+yStartTop+yOffset*3, 76);
-        renderAlignedString(EnumChatFormatting.GREEN+"Treasures Fished", EnumChatFormatting.WHITE.toString()+(int)items_fished_treasure,
+        Utils.renderAlignedString(EnumChatFormatting.GREEN+"Treasures Fished", EnumChatFormatting.WHITE.toString()+(int)items_fished_treasure,
                 guiLeft+xStart+xOffset*2, guiTop+yStartTop+yOffset*4, 76);
-        renderAlignedString(EnumChatFormatting.GREEN+"Large Treasures", EnumChatFormatting.WHITE.toString()+(int)items_fished_large_treasure,
+        Utils.renderAlignedString(EnumChatFormatting.GREEN+"Large Treasures", EnumChatFormatting.WHITE.toString()+(int)items_fished_large_treasure,
                 guiLeft+xStart+xOffset*2, guiTop+yStartTop+yOffset*5, 76);
 
         if(topKills == null) {
@@ -1802,7 +1818,7 @@ public class GuiProfileViewer extends GuiScreen {
             Set<String> kills = topKills.get(killCount);
             for(String killType : kills) {
                 if(index >= 6) break;
-                renderAlignedString(EnumChatFormatting.YELLOW+killType+" Kills", EnumChatFormatting.WHITE.toString()+killCount,
+                Utils.renderAlignedString(EnumChatFormatting.YELLOW+killType+" Kills", EnumChatFormatting.WHITE.toString()+killCount,
                         guiLeft+xStart+xOffset*3, guiTop+yStartTop+yOffset*index, 76);
                 index++;
             }
@@ -1813,7 +1829,7 @@ public class GuiProfileViewer extends GuiScreen {
             Set<String> deaths = topDeaths.get(deathCount);
             for(String deathType : deaths) {
                 if(index >= 6) break;
-                renderAlignedString(EnumChatFormatting.YELLOW+"Deaths: "+ deathType, EnumChatFormatting.WHITE.toString()+deathCount,
+                Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Deaths: "+ deathType, EnumChatFormatting.WHITE.toString()+deathCount,
                         guiLeft+xStart+xOffset*3, guiTop+yStartBottom+yOffset*index, 76);
                 index++;
             }
@@ -1832,50 +1848,6 @@ public class GuiProfileViewer extends GuiScreen {
                         (int) d * 10 / 10 : d + ""
                 ) + "" + c[iteration])
                 : shortNumberFormat(d, iteration+1));
-    }
-
-    private void renderAlignedString(String first, String second, float x, float y, int length) {
-        if(fontRendererObj.getStringWidth(first + " " + second) >= length) {
-            for(int xOff=-2; xOff<=2; xOff++) {
-                for(int yOff=-2; yOff<=2; yOff++) {
-                    if(Math.abs(xOff) != Math.abs(yOff)) {
-                        Utils.drawStringCenteredScaledMaxWidth(Utils.cleanColourNotModifiers(first + " " + second), Minecraft.getMinecraft().fontRendererObj,
-                                x+length/2f+xOff/2f, y+4+yOff/2f, false, length,
-                                new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB());
-                    }
-                }
-            }
-
-            GlStateManager.color(1, 1, 1, 1);
-            Utils.drawStringCenteredScaledMaxWidth(first + " " + second, Minecraft.getMinecraft().fontRendererObj,
-                    x+length/2f, y+4, false, length, 4210752);
-        } else {
-            for(int xOff=-2; xOff<=2; xOff++) {
-                for(int yOff=-2; yOff<=2; yOff++) {
-                    if(Math.abs(xOff) != Math.abs(yOff)) {
-                        fontRendererObj.drawString(Utils.cleanColourNotModifiers(first),
-                                x+xOff/2f, y+yOff/2f,
-                                new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB(), false);
-                    }
-                }
-            }
-
-            int secondLen = fontRendererObj.getStringWidth(second);
-            GlStateManager.color(1, 1, 1, 1);
-            fontRendererObj.drawString(first, x, y, 4210752, false);
-            for(int xOff=-2; xOff<=2; xOff++) {
-                for(int yOff=-2; yOff<=2; yOff++) {
-                    if(Math.abs(xOff) != Math.abs(yOff)) {
-                        fontRendererObj.drawString(Utils.cleanColourNotModifiers(second),
-                                x+length-secondLen+xOff/2f, y+yOff/2f,
-                                new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB(), false);
-                    }
-                }
-            }
-
-            GlStateManager.color(1, 1, 1, 1);
-            fontRendererObj.drawString(second, x+length-secondLen, y, 4210752, false);
-        }
     }
 
     private void drawBasicPage(int mouseX, int mouseY, float partialTicks) {
@@ -1934,8 +1906,9 @@ public class GuiProfileViewer extends GuiScreen {
                 if(!rank.equals("YOUTUBER") && !monthlyPackageRank.equals("NONE")) {
                     rank = monthlyPackageRank;
                 }
-                EnumChatFormatting rankPlusColorECF = EnumChatFormatting.getValueByName(Utils.getElementAsString(profile.getHypixelProfile().get("rankPlusColor"), "YELLOW"));
-                String rankPlusColor = EnumChatFormatting.YELLOW.toString();
+                EnumChatFormatting rankPlusColorECF = EnumChatFormatting.getValueByName(Utils.getElementAsString(profile.getHypixelProfile().get("rankPlusColor"),
+                        "GOLD"));
+                String rankPlusColor = EnumChatFormatting.GOLD.toString();
                 if(rankPlusColorECF != null) {
                     rankPlusColor = rankPlusColorECF.toString();
                 }
@@ -2160,10 +2133,10 @@ public class GuiProfileViewer extends GuiScreen {
                 GlStateManager.color(1, 1, 1, 1);
                 GlStateManager.enableBlend();
                 GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
-                renderAlignedString(statNamePretty, EnumChatFormatting.WHITE.toString()+val, guiLeft+132, guiTop+32+12.5f*i, 80);
+                Utils.renderAlignedString(statNamePretty, EnumChatFormatting.WHITE.toString()+val, guiLeft+132, guiTop+27+11f*i, 80);
 
                 if(mouseX > guiLeft+132 && mouseX < guiLeft+212) {
-                    if(mouseY > guiTop+32+12.5f*i && mouseY < guiTop+40+12.5f*i) {
+                    if(mouseY > guiTop+27+11f*i && mouseY < guiTop+37+11f*i) {
                         List<String> split = splitter.splitToList(statNamePretty);
                         PlayerStats.Stats baseStats = PlayerStats.getBaseStats();
                         tooltipToDisplay = new ArrayList<>();
@@ -2207,7 +2180,7 @@ public class GuiProfileViewer extends GuiScreen {
                 int x = guiLeft+237+86*xPosition;
                 int y = guiTop+31+21*yPosition;
 
-                renderAlignedString(skillName, EnumChatFormatting.WHITE.toString()+levelFloored, x+14, y-4, 60);
+                Utils.renderAlignedString(skillName, EnumChatFormatting.WHITE.toString()+levelFloored, x+14, y-4, 60);
 
                 if(skillInfo.get("maxed_"+entry.getKey()).getAsBoolean()) {
                     renderGoldBar(x, y+6, 80);

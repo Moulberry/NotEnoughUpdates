@@ -293,7 +293,7 @@ public class ProfileViewer {
 
             HashMap<String, String> args = new HashMap<>();
             args.put("uuid", ""+uuid);
-            manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "status",
+            manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "status",
                     args, jsonObject -> {
                         if(jsonObject == null) return;
 
@@ -415,7 +415,7 @@ public class ProfileViewer {
 
             HashMap<String, String> args = new HashMap<>();
             args.put("uuid", "" + uuid);
-            manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/profiles",
+            manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "skyblock/profiles",
                     args, jsonObject -> {
                         if (jsonObject == null) return;
 
@@ -553,7 +553,7 @@ public class ProfileViewer {
             private boolean maxed = false;
         }
 
-        public Level getLevel(JsonArray levelingArray, float xp, boolean cumulative) {
+        public Level getLevel(JsonArray levelingArray, float xp, int levelCap, boolean cumulative) {
             Level levelObj = new Level();
             for(int level=0; level<levelingArray.size(); level++) {
                 float levelXp = levelingArray.get(level).getAsFloat();
@@ -567,14 +567,33 @@ public class ProfileViewer {
                         levelObj.maxXpForLevel = levelXp;
                         levelObj.level = level + xp/levelXp;
                     }
+                    if(levelObj.level > levelCap) {
+                        levelObj.level = levelCap;
+                        levelObj.maxed = true;
+                    }
                     return levelObj;
                 } else {
                     if(!cumulative) xp -= levelXp;
                 }
             }
             levelObj.level = levelingArray.size();
+            if(levelObj.level > levelCap) {
+                levelObj.level = levelCap;
+            }
             levelObj.maxed = true;
             return levelObj;
+        }
+
+        public int getCap(JsonObject leveling, String skillName) {
+            JsonElement capsElement = Utils.getElement(leveling, "leveling_caps");
+            if(capsElement == null || !capsElement.isJsonObject()) {
+                return 50;
+            }
+            JsonObject caps = capsElement.getAsJsonObject();
+            if(caps.has(skillName)) {
+                return caps.get(skillName).getAsInt();
+            }
+            return 50;
         }
 
         public JsonObject getSkillInfo(String profileId) {
@@ -597,7 +616,6 @@ public class ProfileViewer {
             float experience_skill_runecrafting = Utils.getElementAsFloat(Utils.getElement(profileInfo, "experience_skill_runecrafting"), 0);
 
             float experience_skill_catacombs = Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.catacombs.experience"), 0);
-            if(uuid.equals("d14403fd77664905929ee1a6e365e623")) experience_skill_catacombs = 569809640; //lvl 50
 
             float experience_slayer_zombie = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.xp"), 0);
             float experience_slayer_spider = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.xp"), 0);
@@ -632,22 +650,30 @@ public class ProfileViewer {
             skillInfo.addProperty("experience_slayer_spider", experience_slayer_spider);
             skillInfo.addProperty("experience_slayer_wolf", experience_slayer_wolf);
 
-            Level level_skill_taming = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_taming, false);
-            Level level_skill_mining = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_mining, false);
-            Level level_skill_foraging = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_foraging, false);
-            Level level_skill_enchanting = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_enchanting, false);
-            Level level_skill_carpentry = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_carpentry, false);
-            Level level_skill_farming = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_farming, false);
-            Level level_skill_combat = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_combat, false);
-            Level level_skill_fishing = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_fishing, false);
-            Level level_skill_alchemy = getLevel(Utils.getElement(leveling, "leveling_xp").getAsJsonArray(), experience_skill_alchemy, false);
-            Level level_skill_runecrafting = getLevel(Utils.getElement(leveling, "runecrafting_xp").getAsJsonArray(), experience_skill_runecrafting, false);
+            JsonArray levelingArray = Utils.getElement(leveling, "leveling_xp").getAsJsonArray();
+            int farmingCap = getCap(leveling, "farming") + (int)Utils.getElementAsFloat(
+                    Utils.getElement(profileInfo, "jacob2.perks.farming_level_cap"), 0);
+            Level level_skill_taming = getLevel(levelingArray, experience_skill_taming, getCap(leveling, "taming"), false);
+            Level level_skill_mining = getLevel(levelingArray, experience_skill_mining, getCap(leveling, "mining"), false);
+            Level level_skill_foraging = getLevel(levelingArray, experience_skill_foraging, getCap(leveling, "foraging"), false);
+            Level level_skill_enchanting = getLevel(levelingArray, experience_skill_enchanting, getCap(leveling, "enchanting"),  false);
+            Level level_skill_carpentry = getLevel(levelingArray, experience_skill_carpentry,getCap(leveling, "carpetry"),  false);
+            Level level_skill_farming = getLevel(levelingArray, experience_skill_farming, farmingCap, false);
+            Level level_skill_combat = getLevel(levelingArray, experience_skill_combat, getCap(leveling, "combat"), false);
+            Level level_skill_fishing = getLevel(levelingArray, experience_skill_fishing, getCap(leveling, "fishing"), false);
+            Level level_skill_alchemy = getLevel(levelingArray, experience_skill_alchemy, getCap(leveling, "alchemy"), false);
+            Level level_skill_runecrafting = getLevel(Utils.getElement(leveling, "runecrafting_xp").getAsJsonArray(),
+                    experience_skill_runecrafting, getCap(leveling, "runecrafting"), false);
 
-            Level level_skill_catacombs = getLevel(Utils.getElement(leveling, "catacombs").getAsJsonArray(), experience_skill_catacombs, false);
+            Level level_skill_catacombs = getLevel(Utils.getElement(leveling, "catacombs").getAsJsonArray(),
+                    experience_skill_catacombs, getCap(leveling, "catacombs"), false);
 
-            Level level_slayer_zombie = getLevel(Utils.getElement(leveling, "slayer_xp.zombie").getAsJsonArray(), experience_slayer_zombie, true);
-            Level level_slayer_spider = getLevel(Utils.getElement(leveling, "slayer_xp.spider").getAsJsonArray(), experience_slayer_spider, true);
-            Level level_slayer_wolf = getLevel(Utils.getElement(leveling, "slayer_xp.wolf").getAsJsonArray(), experience_slayer_wolf, true);
+            Level level_slayer_zombie = getLevel(Utils.getElement(leveling, "slayer_xp.zombie").getAsJsonArray(),
+                    experience_slayer_zombie, 9,true);
+            Level level_slayer_spider = getLevel(Utils.getElement(leveling, "slayer_xp.spider").getAsJsonArray(),
+                    experience_slayer_spider, 9,true);
+            Level level_slayer_wolf = getLevel(Utils.getElement(leveling, "slayer_xp.wolf").getAsJsonArray(),
+                    experience_slayer_wolf, 9,true);
 
             skillInfo.addProperty("level_skill_taming", level_skill_taming.level);
             skillInfo.addProperty("level_skill_mining", level_skill_mining.level);
@@ -785,7 +811,7 @@ public class ProfileViewer {
             JsonElement crafted_generators_element = Utils.getElement(profileInfo, "crafted_generators");
             JsonElement collectionInfoElement = Utils.getElement(profileInfo, "collection");
 
-            if(unlocked_coll_tiers_element == null || crafted_generators_element == null || collectionInfoElement == null) {
+            if(unlocked_coll_tiers_element == null || collectionInfoElement == null) {
                 return null;
             }
 
@@ -816,7 +842,7 @@ public class ProfileViewer {
                 }
             }
 
-            if(unlocked_coll_tiers_element != null && unlocked_coll_tiers_element.isJsonArray()) {
+            if(unlocked_coll_tiers_element.isJsonArray()) {
                 JsonArray unlocked_coll_tiers = unlocked_coll_tiers_element.getAsJsonArray();
                 for(int i=0; i<unlocked_coll_tiers.size(); i++) {
                     String unlocked = unlocked_coll_tiers.get(i).getAsString();
@@ -920,7 +946,8 @@ public class ProfileViewer {
                 return null;
             }
 
-            PlayerStats.Stats stats = PlayerStats.getStats(getSkillInfo(profileId), getInventoryInfo(profileId), getCollectionInfo(profileId), profileInfo);
+            PlayerStats.Stats stats = PlayerStats.getStats(getSkillInfo(profileId), getInventoryInfo(profileId), getCollectionInfo(profileId),
+                    getPetsInfo(profileId), profileInfo);
             this.stats.put(profileId, stats);
             return stats;
         }
@@ -942,7 +969,7 @@ public class ProfileViewer {
     public void getHypixelProfile(String name, Consumer<JsonObject> callback) {
         HashMap<String, String> args = new HashMap<>();
         args.put("name", ""+name);
-        manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "player",
+        manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "player",
                 args, jsonObject -> {
                     if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()
                             && jsonObject.get("player").isJsonObject()) {
@@ -1000,7 +1027,7 @@ public class ProfileViewer {
         updatingResourceCollection.set(true);
 
         HashMap<String, String> args = new HashMap<>();
-        NotEnoughUpdates.INSTANCE.manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.manager.config.apiKey.value, "resources/skyblock/collections",
+        NotEnoughUpdates.INSTANCE.manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "resources/skyblock/collections",
                 args, jsonObject -> {
                     updatingResourceCollection.set(false);
                     if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {

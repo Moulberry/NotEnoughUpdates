@@ -9,9 +9,12 @@ import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
+import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
+import io.github.moulberry.notenoughupdates.miscfeatures.StreamerMode;
+import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
-import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
-import io.github.moulberry.notenoughupdates.questing.SBInfo;
+import io.github.moulberry.notenoughupdates.util.RequestFocusListener;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -21,7 +24,6 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.gui.inventory.GuiCrafting;
 import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
@@ -39,7 +41,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -64,7 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.github.moulberry.notenoughupdates.GuiTextures.dungeon_chest_worth;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.dungeon_chest_worth;
 
 public class NEUEventListener {
 
@@ -124,6 +126,11 @@ public class NEUEventListener {
         }
     }
 
+    @SubscribeEvent
+    public void onWorldLoad(WorldEvent.Unload event) {
+        NotEnoughUpdates.INSTANCE.saveConfig();
+    }
+
     private long notificationDisplayMillis = 0;
     private List<String> notificationLines = null;
 
@@ -146,14 +153,14 @@ public class NEUEventListener {
             longUpdate = true;
             lastLongUpdate = currentTime;
         }
-        if(!NotEnoughUpdates.INSTANCE.manager.config.slowDungeonBlocks.value) {
+        if(!neu.config.dungeonBlock.slowDungeonBlocks) {
             DungeonBlocks.tick();
         }
         DungeonWin.tick();
         if(longUpdate) {
             NotEnoughUpdates.INSTANCE.overlay.redrawItems();
 
-            if(NotEnoughUpdates.INSTANCE.manager.config.slowDungeonBlocks.value) {
+            if(neu.config.dungeonBlock.slowDungeonBlocks) {
                 DungeonBlocks.tick();
             }
 
@@ -181,11 +188,11 @@ public class NEUEventListener {
 
                     SBGamemodes.loadFromFile();
 
-                    if(neu.manager.config.showUpdateMsg.value) {
+                    if(neu.config.notifications.showUpdateMsg) {
                         displayUpdateMessageIfOutOfDate();
                     }
 
-                    if(NotEnoughUpdates.INSTANCE.manager.config.doRamNotif.value) {
+                    if(neu.config.hidden.doRamNotif) {
                         long maxMemoryMB = Runtime.getRuntime().maxMemory()/1024L/1024L;
                         if(maxMemoryMB > 4100) {
                             notificationDisplayMillis = System.currentTimeMillis();
@@ -199,9 +206,8 @@ public class NEUEventListener {
                         }
                     }
 
-                    if(!neu.manager.config.loadedModBefore.value) {
-                        neu.manager.config.loadedModBefore.value = true;
-                        try { neu.manager.saveConfig(); } catch(IOException e) {}
+                    if(!neu.config.hidden.loadedModBefore) {
+                        neu.config.hidden.loadedModBefore = true;
 
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
@@ -283,7 +289,7 @@ public class NEUEventListener {
         if(stack != null && stack.hasTagCompound()) {
             String internalname = neu.manager.getInternalNameForItem(stack);
             if(internalname != null) {
-                ArrayList<String> log = neu.manager.config.collectionLog.value.computeIfAbsent(
+                /*ArrayList<String> log = neu.manager.config.collectionLog.value.computeIfAbsent(
                         neu.manager.getCurrentProfile(), k -> new ArrayList<>());
                 if(!log.contains(internalname)) {
                     newItem.add(internalname);
@@ -295,7 +301,7 @@ public class NEUEventListener {
                     } else {
                         newItemAddMap.put(internalname, System.currentTimeMillis());
                     }
-                }
+                }*/
             }
         }
     }
@@ -396,16 +402,8 @@ public class NEUEventListener {
         if(Minecraft.getMinecraft().currentScreen == null
                 && event.gui instanceof GuiContainer) {
             neu.overlay.reset();
-            neu.manager.loadConfig();
         }
-        //CLOSE
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer
-                && event.gui == null) {
-            try {
-                neu.manager.saveConfig();
-            } catch(IOException e) {}
-        }
-        if(event.gui != null && neu.manager.config.dev.value) {
+        if(event.gui != null && neu.config.hidden.dev) {
             if(event.gui instanceof GuiChest) {
                 GuiChest eventGui = (GuiChest) event.gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
@@ -540,8 +538,9 @@ public class NEUEventListener {
         } else if(unformatted.startsWith("Your profile was changed to: ")) {//Your profile was changed to:
             neu.manager.setCurrentProfile(unformatted.substring("Your profile was changed to: ".length()).split(" ")[0].trim());
         } else if(unformatted.startsWith("Your new API key is ")) {
-            neu.manager.config.apiKey.value = unformatted.substring("Your new API key is ".length());
-            try { neu.manager.saveConfig(); } catch(IOException ioe) {}
+            neu.config.apiKey.apiKey = unformatted.substring("Your new API key is ".length());
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW+
+                    "[NEU] API Key automatically configured"));
         }
         if(e.message.getFormattedText().equals(EnumChatFormatting.RESET.toString()+
                 EnumChatFormatting.RED+"You haven't unlocked this recipe!"+EnumChatFormatting.RESET)) {
@@ -566,7 +565,7 @@ public class NEUEventListener {
         }
         //System.out.println(e.message);
         if(unformatted.startsWith("Sending to server") &&
-                neu.isOnSkyblock() && neu.manager.config.streamerMode.value && e.message instanceof ChatComponentText) {
+                neu.isOnSkyblock() && neu.config.misc.streamerMode && e.message instanceof ChatComponentText) {
             String m = e.message.getFormattedText();
             String m2 = StreamerMode.filterChat(e.message.getFormattedText());
             if(!m.equals(m2)) {
@@ -631,13 +630,6 @@ public class NEUEventListener {
                     neu.overlay.render(hoverInv && focusInv);
                 } catch(ConcurrentModificationException e) {e.printStackTrace();}
                 GL11.glTranslatef(0, 0, 10);
-            }
-        }
-
-        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            renderDungeonChestOverlay(event.gui);
-            if(neu.manager.config.accessoryBagOverlay.value) {
-                AccessoryBagOverlay.renderOverlay();
             }
         }
     }
@@ -706,10 +698,17 @@ public class NEUEventListener {
                 GlStateManager.popMatrix();
             }
         }
+
+        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
+            renderDungeonChestOverlay(event.gui);
+            if(neu.config.accessoryBag.enableOverlay) {
+                AccessoryBagOverlay.renderOverlay();
+            }
+        }
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
-        if(gui instanceof GuiChest && !neu.manager.config.dungeonProfitLore.value) {
+        if(gui instanceof GuiChest && neu.config.dungeonProfit.profitDisplayLoc != 2) {
             try {
                 int xSize = (int) Utils.getField(GuiContainer.class, gui, "xSize", "field_146999_f");
                 int ySize = (int) Utils.getField(GuiContainer.class, gui, "ySize", "field_147000_g");
@@ -722,30 +721,24 @@ public class NEUEventListener {
 
                 ItemStack rewardChest = lower.getStackInSlot(31);
                 if (rewardChest != null && rewardChest.getDisplayName().endsWith(EnumChatFormatting.GREEN+"Open Reward Chest")) {
-                    Minecraft.getMinecraft().getTextureManager().bindTexture(dungeon_chest_worth);
-                    GL11.glColor4f(1, 1, 1, 1);
-                    GlStateManager.disableLighting();
-                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 101, 0, 180/256f, 0, 101/256f, GL11.GL_NEAREST);
-
                     int chestCost = 0;
-                    String line6 = Utils.cleanColour(neu.manager.getLoreFromNBT(rewardChest.getTagCompound())[6]);
-                    StringBuilder cost = new StringBuilder();
-                    for(int i=0; i<line6.length(); i++) {
-                        char c = line6.charAt(i);
-                        if("0123456789".indexOf(c) >= 0) {
-                            cost.append(c);
+                    try {
+                        String line6 = Utils.cleanColour(neu.manager.getLoreFromNBT(rewardChest.getTagCompound())[6]);
+                        StringBuilder cost = new StringBuilder();
+                        for(int i=0; i<line6.length(); i++) {
+                            char c = line6.charAt(i);
+                            if("0123456789".indexOf(c) >= 0) {
+                                cost.append(c);
+                            }
                         }
-                    }
-                    if(cost.length() > 0) {
-                        chestCost = Integer.parseInt(cost.toString());
-                    }
+                        if(cost.length() > 0) {
+                            chestCost = Integer.parseInt(cost.toString());
+                        }
+                    } catch(Exception ignored) {}
 
-                    String missingItemBIN = null;
-                    String missingItemABIN = null;
-                    String missingItemAUC = null;
-                    int totalValueBIN = 0;
-                    int totalValueABIN = 0;
-                    int totalValueAUC = 0;
+                    String missingItem = null;
+                    int totalValue = 0;
+                    HashMap<String, Float> itemValues = new HashMap<>();
                     for(int i=0; i<5; i++) {
                         ItemStack item = lower.getStackInSlot(11+i);
                         String internal = neu.manager.getInternalNameForItem(item);
@@ -757,119 +750,128 @@ public class NEUEventListener {
                                 bazaarPrice = bazaarInfo.get("avg_sell").getAsFloat();
                             }
 
-                            float worthBIN;
-                            float worthABIN;
-                            float worthAUC = -1;
-
+                            float worth = -1;
                             if(bazaarPrice > 0) {
-                                worthBIN = bazaarPrice;
-                                worthABIN = bazaarPrice;
-                                worthAUC = bazaarPrice;
+                                worth = bazaarPrice;
                             } else {
-                                worthABIN = neu.manager.auctionManager.getItemAvgBin(internal);
-                                worthBIN = neu.manager.auctionManager.getLowestBin(internal);
-
-                                JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                                if(aucInfo != null) {
-                                    worthAUC = aucInfo.get("price").getAsFloat();
+                                switch(neu.config.dungeonProfit.profitType) {
+                                    case 1:
+                                        worth = neu.manager.auctionManager.getItemAvgBin(internal);
+                                        break;
+                                    case 2:
+                                        JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
+                                        if(auctionInfo != null) {
+                                            if(auctionInfo.has("clean_price")) {
+                                                worth = (int)auctionInfo.get("clean_price").getAsFloat();
+                                            } else {
+                                                worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                            }
+                                        }
+                                        break;
+                                    default:
+                                        worth = neu.manager.auctionManager.getLowestBin(internal);
+                                }
+                                if(worth <= 0) {
+                                    worth = neu.manager.auctionManager.getLowestBin(internal);
+                                    if(worth <= 0) {
+                                        worth = neu.manager.auctionManager.getItemAvgBin(internal);
+                                        if(worth <= 0) {
+                                            JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
+                                            if(auctionInfo != null) {
+                                                if(auctionInfo.has("clean_price")) {
+                                                    worth = (int)auctionInfo.get("clean_price").getAsFloat();
+                                                } else {
+                                                    worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
-                            if(worthBIN > 0 && totalValueBIN >= 0) {
-                                totalValueBIN += worthBIN;
-                            } else {
-                                if(totalValueBIN != -1) {
-                                    missingItemBIN = internal;
-                                }
-                                totalValueBIN = -1;
-                            }
+                            if(worth > 0 && totalValue >= 0) {
+                                totalValue += worth;
+                                String display = item.getDisplayName();
 
-                            if(worthABIN > 0 && totalValueABIN >= 0) {
-                                totalValueABIN += worthABIN;
-                            } else {
-                                if(totalValueABIN != -1) {
-                                    missingItemABIN = internal;
-                                }
-                                totalValueABIN = -1;
-                            }
+                                if(display.contains("Enchanted Book")) {
+                                    NBTTagCompound tag = item.getTagCompound();
+                                    if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+                                        NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+                                        NBTTagCompound enchants = ea.getCompoundTag("enchantments");
 
-                            if(worthAUC > 0 && totalValueAUC >= 0) {
-                                totalValueAUC += worthAUC;
-                            } else {
-                                if(totalValueAUC != -1) {
-                                    missingItemAUC = internal;
+                                        int highestLevel = -1;
+                                        for(String enchname : enchants.getKeySet()) {
+                                            int level = enchants.getInteger(enchname);
+                                            if(level > highestLevel) {
+                                                display = EnumChatFormatting.BLUE+WordUtils.capitalizeFully(
+                                                        enchname.replace("_", " ")
+                                                                .replace("Ultimate", "")
+                                                                .trim()) + " " + level;
+                                            }
+                                        }
+                                    }
                                 }
-                                totalValueAUC = -1;
+
+                                itemValues.put(display, worth);
+                            } else {
+                                if(totalValue != -1) {
+                                    missingItem = internal;
+                                }
+                                totalValue = -1;
                             }
                         }
                     }
 
                     NumberFormat format = NumberFormat.getInstance(Locale.US);
-                    String valueStringBIN;
-                    String valueStringABIN;
-                    String valueStringAUC;
-                    if(totalValueBIN >= 0) {
-                        valueStringBIN = EnumChatFormatting.YELLOW+"Value (BIN): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueBIN) + " coins";
+                    String valueStringBIN1;
+                    String valueStringBIN2;
+                    if(totalValue >= 0) {
+                        valueStringBIN1 = EnumChatFormatting.YELLOW+"Value (BIN): ";
+                        valueStringBIN2 = EnumChatFormatting.GOLD + format.format(totalValue) + " coins";
                     } else {
-                        valueStringBIN = EnumChatFormatting.YELLOW+"Can't find BIN: " + missingItemBIN;
-                    }
-                    if(totalValueABIN >= 0) {
-                        valueStringABIN = EnumChatFormatting.YELLOW+"Value (AVG BIN): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueABIN) + " coins";
-                    } else {
-                        valueStringABIN = EnumChatFormatting.YELLOW+"Can't find AVG BIN: " + missingItemABIN;
-                    }
-                    if(totalValueAUC >= 0) {
-                        valueStringAUC = EnumChatFormatting.YELLOW+"Value (AUC): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueAUC) + " coins";
-                    } else {
-                        valueStringAUC = EnumChatFormatting.YELLOW+"Can't find AUC: " + missingItemAUC;
+                        valueStringBIN1 = EnumChatFormatting.YELLOW+"Can't find BIN: ";
+                        valueStringBIN2 = missingItem;
                     }
 
-                    String profitPrefix = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
-                            + EnumChatFormatting.BOLD + "+";
-                    String lossPrefix = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
-                            + EnumChatFormatting.BOLD + "-";
+                    int profitLossBIN = totalValue - chestCost;
 
-                    int profitLossBIN = totalValueBIN - chestCost;
+                    String profitPrefix =  EnumChatFormatting.DARK_GREEN.toString();
+                    String lossPrefix = EnumChatFormatting.RED.toString();
+                    String prefix = profitLossBIN >= 0 ? profitPrefix : lossPrefix;
+
                     String plStringBIN;
                     if(profitLossBIN >= 0) {
-                        plStringBIN = profitPrefix + format.format(profitLossBIN) + " coins";
+                        plStringBIN = prefix + "+" + format.format(profitLossBIN) + " coins";
                     } else {
-                        plStringBIN = lossPrefix + format.format(-profitLossBIN) + " coins";
+                        plStringBIN = prefix + "-" + format.format(-profitLossBIN) + " coins";
                     }
 
-                    int profitLossABIN = totalValueABIN - chestCost;
-                    String plStringABIN;
-                    if(profitLossABIN >= 0) {
-                        plStringABIN = profitPrefix + format.format(profitLossABIN) + " coins";
-                    } else {
-                        plStringABIN = lossPrefix + format.format(-profitLossABIN) + " coins";
+                    if(neu.config.dungeonProfit.profitDisplayLoc == 1 && !valueStringBIN2.equals(missingItem)) {
+                        int w = Minecraft.getMinecraft().fontRendererObj.getStringWidth(plStringBIN);
+                        GlStateManager.disableLighting();
+                        Minecraft.getMinecraft().fontRendererObj.drawString(plStringBIN, guiLeft+xSize-5-w, guiTop+5,
+                                0xffffffff, true);
+                        return;
                     }
 
-                    int profitLossAUC = totalValueAUC - chestCost;
-                    String plStringAUC;
-                    if(profitLossAUC >= 0) {
-                        plStringAUC = profitPrefix + format.format(profitLossAUC) + " coins";
-                    } else {
-                        plStringAUC = lossPrefix + format.format(-profitLossAUC) + " coins";
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(dungeon_chest_worth);
+                    GL11.glColor4f(1, 1, 1, 1);
+                    GlStateManager.disableLighting();
+                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 101, 0, 180/256f, 0, 101/256f, GL11.GL_NEAREST);
+
+                    Utils.renderAlignedString(valueStringBIN1, valueStringBIN2,
+                            guiLeft+xSize+4+10, guiTop+14, 160);
+                    if(totalValue >= 0) {
+                        Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Profit/Loss: ", plStringBIN,
+                                guiLeft+xSize+4+10, guiTop+24, 160);
                     }
 
-                    drawStringShadow(valueStringBIN, guiLeft+xSize+4+90,
-                            guiTop+14, 170);
-                    if(totalValueBIN >= 0) drawStringShadow(plStringBIN, guiLeft+xSize+4+90,
-                            guiTop+26, 170);
-
-                    drawStringShadow(valueStringABIN, guiLeft+xSize+4+90,
-                            guiTop+44, 170);
-                    if(totalValueABIN >= 0) drawStringShadow(plStringABIN, guiLeft+xSize+4+90,
-                            guiTop+56, 170);
-
-                    drawStringShadow(valueStringAUC, guiLeft+xSize+4+90,
-                            guiTop+74, 170);
-                    if(totalValueAUC >= 0) drawStringShadow(plStringAUC, guiLeft+xSize+4+90,
-                            guiTop+86, 170);
+                    int index=0;
+                    for(Map.Entry<String, Float> entry : itemValues.entrySet()) {
+                        Utils.renderAlignedString(entry.getKey(), prefix+
+                                        format.format(entry.getValue().intValue()),
+                                guiLeft+xSize+4+10, guiTop+29+(++index)*10, 160);
+                    }
                 }
             } catch(Exception e) {
                 e.printStackTrace();
@@ -918,7 +920,7 @@ public class NEUEventListener {
             return;
         }
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            if(!neu.manager.config.accessoryBagOverlay.value || !AccessoryBagOverlay.mouseClick()) {
+            if(!neu.config.accessoryBag.enableOverlay || !AccessoryBagOverlay.mouseClick()) {
                 if(!(hoverInv && focusInv)) {
                     if(neu.overlay.mouseInput()) {
                         event.setCanceled(true);
@@ -964,7 +966,7 @@ public class NEUEventListener {
                 event.setCanceled(true);
             }
         }
-        if(neu.manager.config.dev.value && neu.manager.config.enableItemEditing.value && Minecraft.getMinecraft().theWorld != null &&
+        if(neu.config.hidden.dev && neu.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
                 Keyboard.getEventKey() == Keyboard.KEY_O && Keyboard.getEventKeyState()) {
             GuiScreen gui = Minecraft.getMinecraft().currentScreen;
             if(gui instanceof GuiChest) {
@@ -1052,7 +1054,7 @@ public class NEUEventListener {
         JsonObject enchantsConst = Constants.ENCHANTS;
         JsonArray allItemEnchs = null;
         Set<String> ignoreFromPool = new HashSet<>();
-        if(enchantsConst != null && hasEnchantments && NotEnoughUpdates.INSTANCE.manager.config.missingEnchantList.value) {
+        if(enchantsConst != null && hasEnchantments && neu.config.tooltipTweaks.missingEnchantList) {
             try {
                 JsonArray enchantPools = enchantsConst.get("enchant_pools").getAsJsonArray();
                 for(JsonElement element : enchantPools) {
@@ -1104,7 +1106,7 @@ public class NEUEventListener {
                 line = line.replace("\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune",
                         Utils.chromaString("Rainbow Rune", index, false)+EnumChatFormatting.BLUE);
             } else if(hasEnchantments) {
-                if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && NotEnoughUpdates.INSTANCE.manager.config.missingEnchantList.value) {
+                if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && neu.config.tooltipTweaks.missingEnchantList) {
                     boolean lineHasEnch = false;
                     for(String s : enchantIds) {
                         String enchantName = WordUtils.capitalizeFully(s.replace("_", " "));
@@ -1147,7 +1149,7 @@ public class NEUEventListener {
                         }
                     }
                 }
-                for(String op : neu.manager.config.enchantColours.value) {
+                for(String op : neu.config.hidden.enchantColours) {
                     List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
                     String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
                     String comparator = GuiEnchantColour.getColourOpIndex(colourOps, 1);
@@ -1264,63 +1266,21 @@ public class NEUEventListener {
 
             newTooltip.add(line);
 
-            if(neu.manager.config.auctionPriceInfo.value) {
+            if(neu.config.tooltipTweaks.showPriceInfoAucItem) {
                 if(line.contains(EnumChatFormatting.GRAY+"Buy it now: ") ||
                         line.contains(EnumChatFormatting.GRAY+"Bidder: ") ||
                         line.contains(EnumChatFormatting.GRAY+"Starting bid: ")) {
-                    if(internalname != null) {
+
+                    if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
                         newTooltip.add("");
-                        if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
-                            newTooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
-                        } else {
-                            JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internalname);
-                            float lowestBinAvg = neu.manager.auctionManager.getItemAvgBin(internalname);
-
-                            int lowestBin = neu.manager.auctionManager.getLowestBin(internalname);
-                            APIManager.CraftInfo craftCost = neu.manager.auctionManager.getCraftCost(internalname);
-
-                            boolean hasAuctionPrice = auctionInfo != null;
-                            boolean hasLowestBinPrice = lowestBin > 0 && neu.manager.config.advancedPriceInfo.value;
-                            boolean hasLowestBinAvgPrice = lowestBinAvg > 0;
-
-                            NumberFormat format = NumberFormat.getInstance(Locale.US);
-
-                            if(hasLowestBinPrice) {
-                                newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
-                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
-                            }
-                            if(hasLowestBinAvgPrice) {
-                                newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AVG Lowest BIN: "+
-                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBinAvg)+" coins");
-                            }
-                            if(hasAuctionPrice) {
-                                int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
-                                newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
-                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
-                                if(neu.manager.config.advancedPriceInfo.value) {
-                                    newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales: "+
-                                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
-                                }
-                                if(auctionInfo.has("clean_price")) {
-                                    newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price (Clean): "+
-                                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
-                                    if(neu.manager.config.advancedPriceInfo.value) {
-                                        newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales (Clean): "+
-                                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
-                                    }
-                                }
-
-                            }
-                            if(hasAuctionPrice && craftCost.fromRecipe) {
-                                newTooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
-                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
-                            }
-                        }
+                        newTooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
+                    } else {
+                        ItemPriceInformation.addToTooltip(newTooltip, internalname);
                     }
                 }
             }
 
-            if(neu.manager.config.dungeonProfitLore.value && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            if(neu.config.dungeonProfit.profitDisplayLoc == 2 && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
                 if(line.contains(EnumChatFormatting.GREEN+"Open Reward Chest")) {
                     dungeonProfit = true;
                 } else if(index == 7 && dungeonProfit) {
@@ -1329,141 +1289,141 @@ public class NEUEventListener {
                     IInventory lower = cc.getLowerChestInventory();
 
                     int chestCost = 0;
-                    String line6 = Utils.cleanColour(line);
-                    StringBuilder cost = new StringBuilder();
-                    for(int i=0; i<line6.length(); i++) {
-                        char c = line6.charAt(i);
-                        if("0123456789".indexOf(c) >= 0) {
-                            cost.append(c);
+                    try {
+                        String line6 = Utils.cleanColour(line);
+                        StringBuilder cost = new StringBuilder();
+                        for(int i=0; i<line6.length(); i++) {
+                            char c = line6.charAt(i);
+                            if("0123456789".indexOf(c) >= 0) {
+                                cost.append(c);
+                            }
                         }
-                    }
-                    if(cost.length() > 0) {
-                        chestCost = Integer.parseInt(cost.toString());
-                    }
+                        if(cost.length() > 0) {
+                            chestCost = Integer.parseInt(cost.toString());
+                        }
+                    } catch(Exception ignored) {}
 
-                    String missingItemBIN = null;
-                    String missingItemABIN = null;
-                    String missingItemAUC = null;
-                    int totalValueBIN = 0;
-                    int totalValueABIN = 0;
-                    int totalValueAUC = 0;
+                    String missingItem = null;
+                    int totalValue = 0;
+                    HashMap<String, Float> itemValues = new HashMap<>();
                     for(int i=0; i<5; i++) {
                         ItemStack item = lower.getStackInSlot(11+i);
                         String internal = neu.manager.getInternalNameForItem(item);
                         if(internal != null) {
+                            internal = internal.replace("\u00CD", "I").replace("\u0130", "I");
                             float bazaarPrice = -1;
                             JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internal);
                             if(bazaarInfo != null && bazaarInfo.has("avg_sell")) {
                                 bazaarPrice = bazaarInfo.get("avg_sell").getAsFloat();
                             }
 
-                            float worthBIN;
-                            float worthABIN;
-                            float worthAUC = -1;
-
+                            float worth = -1;
                             if(bazaarPrice > 0) {
-                                worthBIN = bazaarPrice;
-                                worthABIN = bazaarPrice;
-                                worthAUC = bazaarPrice;
+                                worth = bazaarPrice;
                             } else {
-                                worthABIN = neu.manager.auctionManager.getItemAvgBin(internal);
-                                worthBIN = neu.manager.auctionManager.getLowestBin(internal);
-
-                                JsonObject aucInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                                if(aucInfo != null) {
-                                    worthAUC = aucInfo.get("price").getAsFloat();
+                                switch(neu.config.dungeonProfit.profitType) {
+                                    case 1:
+                                        worth = neu.manager.auctionManager.getItemAvgBin(internal);
+                                        break;
+                                    case 2:
+                                        JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
+                                        if(auctionInfo != null) {
+                                            if(auctionInfo.has("clean_price")) {
+                                                worth = (int)auctionInfo.get("clean_price").getAsFloat();
+                                            } else {
+                                                worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                            }
+                                        }
+                                        break;
+                                    default:
+                                        worth = neu.manager.auctionManager.getLowestBin(internal);
+                                }
+                                if(worth <= 0) {
+                                    worth = neu.manager.auctionManager.getLowestBin(internal);
+                                    if(worth <= 0) {
+                                        worth = neu.manager.auctionManager.getItemAvgBin(internal);
+                                        if(worth <= 0) {
+                                            JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
+                                            if(auctionInfo != null) {
+                                                if(auctionInfo.has("clean_price")) {
+                                                    worth = (int)auctionInfo.get("clean_price").getAsFloat();
+                                                } else {
+                                                    worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
-                            if(worthBIN > 0 && totalValueBIN >= 0) {
-                                totalValueBIN += worthBIN;
-                            } else {
-                                if(totalValueBIN != -1) {
-                                    missingItemBIN = internal;
-                                }
-                                totalValueBIN = -1;
-                            }
+                            if(worth > 0 && totalValue >= 0) {
+                                totalValue += worth;
 
-                            if(worthABIN > 0 && totalValueABIN >= 0) {
-                                totalValueABIN += worthABIN;
-                            } else {
-                                if(totalValueABIN != -1) {
-                                    missingItemABIN = internal;
-                                }
-                                totalValueABIN = -1;
-                            }
+                                String display = item.getDisplayName();
 
-                            if(worthAUC > 0 && totalValueAUC >= 0) {
-                                totalValueAUC += worthAUC;
-                            } else {
-                                if(totalValueAUC != -1) {
-                                    missingItemAUC = internal;
+                                if(display.contains("Enchanted Book")) {
+                                    NBTTagCompound tag = item.getTagCompound();
+                                    if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+                                        NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+                                        NBTTagCompound enchants = ea.getCompoundTag("enchantments");
+
+                                        int highestLevel = -1;
+                                        for(String enchname : enchants.getKeySet()) {
+                                            int level = enchants.getInteger(enchname);
+                                            if(level > highestLevel) {
+                                                display = EnumChatFormatting.BLUE+WordUtils.capitalizeFully(
+                                                        enchname.replace("_", " ")
+                                                                .replace("Ultimate", "")
+                                                                .trim()) + " " + level;
+                                            }
+                                        }
+                                    }
                                 }
-                                totalValueAUC = -1;
+
+                                itemValues.put(display, worth);
+                            } else {
+                                if(totalValue != -1) {
+                                    missingItem = internal;
+                                }
+                                totalValue = -1;
                             }
                         }
                     }
 
                     NumberFormat format = NumberFormat.getInstance(Locale.US);
-                    String valueStringBIN;
-                    String valueStringABIN;
-                    String valueStringAUC;
-                    if(totalValueBIN >= 0) {
-                        valueStringBIN = EnumChatFormatting.YELLOW+"Value (BIN): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueBIN) + " coins";
+                    String valueStringBIN1;
+                    String valueStringBIN2;
+                    if(totalValue >= 0) {
+                        valueStringBIN1 = EnumChatFormatting.YELLOW+"Value (BIN): ";
+                        valueStringBIN2 = EnumChatFormatting.GOLD + format.format(totalValue) + " coins";
                     } else {
-                        valueStringBIN = EnumChatFormatting.YELLOW+"Can't find BIN: " + missingItemBIN;
-                    }
-                    if(totalValueABIN >= 0) {
-                        valueStringABIN = EnumChatFormatting.YELLOW+"Value (AVG BIN): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueABIN) + " coins";
-                    } else {
-                        valueStringABIN = EnumChatFormatting.YELLOW+"Can't find AVG BIN: " + missingItemABIN;
-                    }
-                    if(totalValueAUC >= 0) {
-                        valueStringAUC = EnumChatFormatting.YELLOW+"Value (AUC): " + EnumChatFormatting.GOLD
-                                + EnumChatFormatting.BOLD + format.format(totalValueAUC) + " coins";
-                    } else {
-                        valueStringAUC = EnumChatFormatting.YELLOW+"Can't find AUC: " + missingItemAUC;
+                        valueStringBIN1 = EnumChatFormatting.YELLOW+"Can't find BIN: ";
+                        valueStringBIN2 = missingItem;
                     }
 
-                    String profitPrefix = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.DARK_GREEN
-                            + EnumChatFormatting.BOLD + "+";
-                    String lossPrefix = EnumChatFormatting.YELLOW+"Profit/Loss: " + EnumChatFormatting.RED
-                            + EnumChatFormatting.BOLD + "-";
+                    int profitLossBIN = totalValue - chestCost;
+                    String profitPrefix =  EnumChatFormatting.DARK_GREEN.toString();
+                    String lossPrefix = EnumChatFormatting.RED.toString();
+                    String prefix = profitLossBIN >= 0 ? profitPrefix : lossPrefix;
 
-                    int profitLossBIN = totalValueBIN - chestCost;
                     String plStringBIN;
                     if(profitLossBIN >= 0) {
-                        plStringBIN = profitPrefix + format.format(profitLossBIN) + " coins";
+                        plStringBIN = prefix + "+" + format.format(profitLossBIN) + " coins";
                     } else {
-                        plStringBIN = lossPrefix + format.format(-profitLossBIN) + " coins";
-                    }
-
-                    int profitLossABIN = totalValueABIN - chestCost;
-                    String plStringABIN;
-                    if(profitLossABIN >= 0) {
-                        plStringABIN = profitPrefix + format.format(profitLossABIN) + " coins";
-                    } else {
-                        plStringABIN = lossPrefix + format.format(-profitLossABIN) + " coins";
-                    }
-
-                    int profitLossAUC = totalValueAUC - chestCost;
-                    String plStringAUC;
-                    if(profitLossAUC >= 0) {
-                        plStringAUC = profitPrefix + format.format(profitLossAUC) + " coins";
-                    } else {
-                        plStringAUC = lossPrefix + format.format(-profitLossAUC) + " coins";
+                        plStringBIN = prefix + "-"+ format.format(-profitLossBIN) + " coins";
                     }
 
                     String neu = EnumChatFormatting.YELLOW + "[NEU] ";
 
-                    newTooltip.add(neu + valueStringBIN);
-                    if(totalValueBIN >= 0) newTooltip.add(neu + plStringBIN);
-                    newTooltip.add(neu + valueStringABIN);
-                    if(totalValueABIN >= 0) newTooltip.add(neu + plStringABIN);
-                    newTooltip.add(neu + valueStringAUC);
-                    if(totalValueAUC >= 0) newTooltip.add(neu + plStringAUC);
+                    newTooltip.add(neu + valueStringBIN1 + " " + valueStringBIN2);
+                    if(totalValue >= 0) {
+                        newTooltip.add(neu + EnumChatFormatting.YELLOW+"Profit/Loss: " + plStringBIN);
+                    }
+
+                    for(Map.Entry<String, Float> entry : itemValues.entrySet()) {
+                        newTooltip.add(neu + entry.getKey() + prefix+"+"+
+                                format.format(entry.getValue().intValue()));
+                    }
                 }
             }
 
@@ -1473,83 +1433,8 @@ public class NEUEventListener {
         event.toolTip.clear();
         event.toolTip.addAll(newTooltip);
 
-        if(neu.manager.config.invAuctionPrice.value || neu.manager.config.invBazaarPrice.value) {
-            if(internalname != null) {
-                JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internalname);
-                JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internalname);
-                float lowestBinAvg = neu.manager.auctionManager.getItemAvgBin(internalname);
-
-                int lowestBin = neu.manager.auctionManager.getLowestBin(internalname);
-                APIManager.CraftInfo craftCost = neu.manager.auctionManager.getCraftCost(internalname);
-
-                boolean hasAuctionPrice = neu.manager.config.invAuctionPrice.value && auctionInfo != null;
-                boolean hasBazaarPrice = neu.manager.config.invBazaarPrice.value && bazaarInfo != null;
-                boolean hasLowestBinPrice = neu.manager.config.invAuctionPrice.value && lowestBin > 0 && neu.manager.config.advancedPriceInfo.value;
-                boolean hasLowestBinAvgPrice = neu.manager.config.invAuctionPrice.value && lowestBinAvg > 0;
-
-                NumberFormat format = NumberFormat.getInstance(Locale.US);
-
-                if(hasAuctionPrice || hasBazaarPrice || hasLowestBinAvgPrice || hasLowestBinPrice) event.toolTip.add("");
-                if(hasLowestBinPrice) {
-                    event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
-                }
-                if(hasLowestBinAvgPrice) {
-                    event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AVG Lowest BIN: "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBinAvg)+" coins");
-                }
-                if(hasAuctionPrice) {
-                    int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
-                    event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
-                    if(neu.manager.config.advancedPriceInfo.value) {
-                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales: "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
-                    }
-                    if(auctionInfo.has("clean_price")) {
-                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price (Clean): "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
-                        if(neu.manager.config.advancedPriceInfo.value) {
-                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales (Clean): "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
-                        }
-                    }
-                } else if(hasBazaarPrice) {
-                    int stackMultiplier = 1;
-                    int shiftStackMultiplier = event.itemStack.stackSize > 1 ? event.itemStack.stackSize : 64;
-                    if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-                        stackMultiplier = shiftStackMultiplier;
-                    } else {
-                        event.toolTip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                    }
-                    if(bazaarInfo.has("avg_buy")) {
-                        int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*stackMultiplier;
-                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
-                    }
-                    if(bazaarInfo.has("avg_sell")) {
-                        int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*stackMultiplier;
-                        event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
-                                EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
-                    }
-                    if(neu.manager.config.advancedPriceInfo.value) {
-                        if(bazaarInfo.has("curr_buy")) {
-                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*stackMultiplier;
-                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
-                        }
-                        if(bazaarInfo.has("curr_sell")) {
-                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*stackMultiplier;
-                            event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
-                        }
-                    }
-                }
-                if((hasAuctionPrice || hasBazaarPrice) && craftCost.fromRecipe) {
-                    event.toolTip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
-                            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
-                }
-            }
+        if(neu.config.tooltipTweaks.showPriceInfoInvItem) {
+            ItemPriceInformation.addToTooltip(event.toolTip, internalname);
         }
     }
 
@@ -1560,7 +1445,7 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
         if(!neu.isOnSkyblock()) return;
-        if(neu.manager.config.hideEmptyPanes.value &&
+        if(neu.config.improvedSBMenu.hideEmptyPanes &&
                 event.itemStack.getItem().equals(Item.getItemFromBlock(Blocks.stained_glass_pane))) {
             String first = Utils.cleanColour(event.toolTip.get(0));
             first = first.replaceAll("\\(.*\\)", "").trim();
@@ -1617,7 +1502,7 @@ public class NEUEventListener {
                 }
             }
         }*/
-        if(!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || !neu.manager.config.dev.value) return;
+        if(!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)/* || /*!neu.config.hidden.dev*/) return;
         if(event.toolTip.size()>0&&event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
             event.toolTip.remove(event.toolTip.size()-1);
 

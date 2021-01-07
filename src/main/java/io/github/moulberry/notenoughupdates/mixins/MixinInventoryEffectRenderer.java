@@ -13,7 +13,7 @@ public class MixinInventoryEffectRenderer {
 
     @ModifyVariable(method="updateActivePotionEffects", at=@At(value="STORE"))
     public boolean hasVisibleEffect_updateActivePotionEffects(boolean hasVisibleEffect) {
-        if(NotEnoughUpdates.INSTANCE.manager.config.hidePotionEffect.value &&
+        if(NotEnoughUpdates.INSTANCE.config.misc.hidePotionEffect &&
                 NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
             return false;
         } else {

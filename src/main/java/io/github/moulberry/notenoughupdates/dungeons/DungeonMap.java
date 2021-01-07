@@ -1,30 +1,23 @@
 package io.github.moulberry.notenoughupdates.dungeons;
 
 import com.google.common.collect.Iterables;
-import com.google.common.math.BigIntegerMath;
 import com.google.gson.JsonObject;
-import io.github.moulberry.notenoughupdates.NEUResourceManager;
+import io.github.moulberry.notenoughupdates.util.NEUResourceManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.questing.SBInfo;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.block.material.MapColor;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.MapItemRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.entity.RenderItem;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemStack;
@@ -35,19 +28,12 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL45;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -198,7 +184,7 @@ public class DungeonMap {
                     float x = 0;
                     float y = 0;
 
-                    if(NotEnoughUpdates.INSTANCE.manager.config.dmCenterCheck.value) {
+                    if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterCheck) {
                         if(fillCorner) {
                             x += -(roomSize+connectorSize)/2f*Math.cos(Math.toRadians(rotation-45))*1.414f;
                             y += (roomSize+connectorSize)/2f*Math.sin(Math.toRadians(rotation-45))*1.414;
@@ -212,17 +198,17 @@ public class DungeonMap {
                         }
                     }
                     GlStateManager.translate(x, y, 0);
-                    if(!NotEnoughUpdates.INSTANCE.manager.config.dmOrientCheck.value) {
+                    if(!NotEnoughUpdates.INSTANCE.config.dungeonMap.dmOrientCheck) {
                         GlStateManager.rotate(-rotation+180, 0, 0, 1);
                     }
 
                     GlStateManager.pushMatrix();
-                    GlStateManager.scale(NotEnoughUpdates.INSTANCE.manager.config.dmIconScale.value,
-                            NotEnoughUpdates.INSTANCE.manager.config.dmIconScale.value, 1);
+                    GlStateManager.scale(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmIconScale,
+                            NotEnoughUpdates.INSTANCE.config.dungeonMap.dmIconScale, 1);
                     Utils.drawTexturedRect(-5, -5, 10, 10, GL11.GL_NEAREST);
                     GlStateManager.popMatrix();
 
-                    if(!NotEnoughUpdates.INSTANCE.manager.config.dmOrientCheck.value) {
+                    if(!NotEnoughUpdates.INSTANCE.config.dungeonMap.dmOrientCheck) {
                         GlStateManager.rotate(rotation-180, 0, 0, 1);
                     }
                     GlStateManager.translate(-x, -y, 0);
@@ -361,23 +347,23 @@ public class DungeonMap {
     }
 
     public int getRenderRoomSize() {
-        double roomSizeOption = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize.value;
+        double roomSizeOption = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmRoomSize;
         if(roomSizeOption <= 0) return 12;
         return 12 + (int)Math.round(roomSizeOption*4);
     }
 
     public int getRenderConnSize() {
-        int roomSizeOption = (int)Math.round(NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize.value);
+        int roomSizeOption = (int)Math.round(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmRoomSize);
         if(roomSizeOption <= 0) return 3;
         return 3 + roomSizeOption;
     }
 
     private HashMap<Integer, Float> borderRadiusCache = new HashMap<>();
     public float getBorderRadius() {
-        int borderSizeOption = (int)Math.round(NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize.value.doubleValue());
+        int borderSizeOption = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize;
         String sizeId = borderSizeOption == 0 ? "small" : borderSizeOption == 2 ? "large" : "medium";
 
-        int style = NotEnoughUpdates.INSTANCE.manager.config.dmBorderStyle.value.intValue();
+        int style = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderStyle;
         if(borderRadiusCache.containsKey(style)) {
             return borderRadiusCache.get(style);
         }
@@ -396,8 +382,8 @@ public class DungeonMap {
     }
 
     public void render(int centerX, int centerY) {
-        boolean useFb = NotEnoughUpdates.INSTANCE.manager.config.dmCompat.value <= 1;
-        boolean useShd = NotEnoughUpdates.INSTANCE.manager.config.dmCompat.value <= 0;
+        boolean useFb = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCompat <= 1;
+        boolean useShd = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCompat <= 0;
 
         if((useFb && !OpenGlHelper.isFramebufferEnabled()) || (useShd && !OpenGlHelper.areShadersSupported())) {
             Utils.drawStringCentered(EnumChatFormatting.RED+"NEU Dungeon Map requires framebuffers & shaders",
@@ -422,7 +408,7 @@ public class DungeonMap {
             maxRoomY = Math.max(offset.y, maxRoomY);
         }
 
-        int borderSizeOption = NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize.value.intValue();
+        int borderSizeOption = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize;
 
         int renderRoomSize = getRenderRoomSize();
         int renderConnSize = getRenderConnSize();
@@ -435,14 +421,14 @@ public class DungeonMap {
         }
 
         int rotation = 180;
-        if(playerPos != null && NotEnoughUpdates.INSTANCE.manager.config.dmRotatePlayer.value) {
+        if(playerPos != null && NotEnoughUpdates.INSTANCE.config.dungeonMap.dmRotatePlayer) {
             rotation = (int)playerPos.rotation;
         }
 
         int mapSizeX;
         int mapSizeY;
-        if(NotEnoughUpdates.INSTANCE.manager.config.dmBorderStyle.value <= 1) {
-            mapSizeX = 80 + (int)Math.round(40*NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize.value);
+        if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderStyle <= 1) {
+            mapSizeX = 80 + (int)Math.round(40*NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
         } else {
             mapSizeX = borderSizeOption == 0 ? 90 : borderSizeOption == 1 ? 120 : borderSizeOption == 2 ? 160 : 240;
         }
@@ -470,7 +456,7 @@ public class DungeonMap {
             return;
         }
 
-        int backgroundColour = SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundColour.value);
+        int backgroundColour = SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundColour);
 
         mapFramebuffer1.framebufferColor[0] = ((backgroundColour >> 16) & 0xFF)/255f;
         mapFramebuffer1.framebufferColor[1] = ((backgroundColour >> 8) & 0xFF)/255f;
@@ -506,7 +492,7 @@ public class DungeonMap {
                     GlStateManager.translate(centerX-mapSizeX/2, centerY-mapSizeY/2, 100);
                 }
 
-                if(NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.value > 0.1) {
+                if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur > 0.1) {
                     GlStateManager.translate(-centerX+mapSizeX/2, -centerY+mapSizeY/2, 0);
                     renderBlurredBackground(scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(),
                             centerX-mapSizeX/2, centerY-mapSizeY/2, mapSizeX, mapSizeY);
@@ -515,7 +501,7 @@ public class DungeonMap {
 
                 GlStateManager.translate(mapCenterX, mapCenterY, 10);
 
-                if(!useFb || NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.value > 0.1) {
+                if(!useFb || NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur > 0.1) {
                     GlStateManager.enableBlend();
                     GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
                 }
@@ -523,7 +509,7 @@ public class DungeonMap {
 
                 GlStateManager.rotate(-rotation+180, 0, 0, 1);
 
-                if(NotEnoughUpdates.INSTANCE.manager.config.dmCenterPlayer.value && playerPos != null) {
+                if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterPlayer && playerPos != null) {
                     float x = playerPos.getRenderX();
                     float y = playerPos.getRenderY();
                     x -= minRoomX*(renderRoomSize+renderConnSize);
@@ -597,7 +583,7 @@ public class DungeonMap {
                     float y = pos.getRenderY();
                     float angle = pos.rotation;
 
-                    boolean doInterp = NotEnoughUpdates.INSTANCE.manager.config.dmPlayerInterp.value;
+                    boolean doInterp = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerInterp;
                     if(playerEntityMapPositions.containsKey(name)) {
                         MapPosition entityPos = playerEntityMapPositions.get(name);
                         angle = entityPos.rotation;
@@ -605,7 +591,7 @@ public class DungeonMap {
                         float deltaX = entityPos.getRenderX() - pos.getRenderX();
                         float deltaY = entityPos.getRenderY() - pos.getRenderY();
 
-                        if(deltaX > (renderRoomSize + renderConnSize)/2) {
+                        /*if(deltaX > (renderRoomSize + renderConnSize)/2) {
                             deltaX -= (renderRoomSize + renderConnSize);
                         } else if(deltaX < -(renderRoomSize + renderConnSize)/2) {
                             deltaX += (renderRoomSize + renderConnSize);
@@ -614,7 +600,7 @@ public class DungeonMap {
                             deltaY -= (renderRoomSize + renderConnSize);
                         } else if(deltaY < -(renderRoomSize + renderConnSize)/2) {
                             deltaY += (renderRoomSize + renderConnSize);
-                        }
+                        }*/
 
                         x += deltaX;
                         y += deltaY;
@@ -661,7 +647,7 @@ public class DungeonMap {
                         pixelWidth = pixelHeight = 12;
                     }
                     GlStateManager.color(1, 1, 1, 1);
-                    if(NotEnoughUpdates.INSTANCE.manager.config.dmPlayerHeads.value >= 1 &&
+                    if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerHeads >= 1 &&
                             playerSkinMap.containsKey(entry.getKey())) {
                         Minecraft.getMinecraft().getTextureManager().bindTexture(playerSkinMap.get(entry.getKey()));
 
@@ -671,7 +657,7 @@ public class DungeonMap {
                         maxV = 16/64f;
 
                         headLayer = true;
-                        if(NotEnoughUpdates.INSTANCE.manager.config.dmPlayerHeads.value >= 2) {
+                        if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerHeads >= 2) {
                             blackBorder = true;
                         }
                     } else {
@@ -688,8 +674,8 @@ public class DungeonMap {
                     GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
                     GlStateManager.translate(x, y, -0.02F);
-                    GlStateManager.scale(NotEnoughUpdates.INSTANCE.manager.config.dmIconScale.value,
-                            NotEnoughUpdates.INSTANCE.manager.config.dmIconScale.value, 1);
+                    GlStateManager.scale(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmIconScale,
+                            NotEnoughUpdates.INSTANCE.config.dungeonMap.dmIconScale, 1);
                     GlStateManager.rotate(angle, 0.0F, 0.0F, 1.0F);
                     GlStateManager.translate(-0.5F, 0.5F, 0.0F);
 
@@ -757,8 +743,8 @@ public class DungeonMap {
 
             GlStateManager.translate(centerX, centerY, 100);
 
-            if(NotEnoughUpdates.INSTANCE.manager.config.dmChromaBorder.value) {
-                int colour = SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.manager.config.dmBorderColour.value);
+            if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmChromaBorder) {
+                int colour = SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderColour);
 
                 Gui.drawRect(-mapCenterX-2, -mapCenterY-2, -mapCenterX, -mapCenterY,
                         colour); //topleft
@@ -789,19 +775,19 @@ public class DungeonMap {
 
             } else {
                 Gui.drawRect(-mapCenterX-2, -mapCenterY, -mapCenterX, mapCenterY,
-                        SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.manager.config.dmBorderColour.value)); //left
+                        SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderColour)); //left
                 Gui.drawRect(mapCenterX, -mapCenterY, mapCenterX+2, mapCenterY,
-                        SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.manager.config.dmBorderColour.value)); //right
+                        SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderColour)); //right
                 Gui.drawRect(-mapCenterX-2, -mapCenterY-2, mapCenterX+2, -mapCenterY,
-                        SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.manager.config.dmBorderColour.value)); //top
+                        SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderColour)); //top
                 Gui.drawRect(-mapCenterX-2, mapCenterY, mapCenterX+2, mapCenterY+2,
-                        SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.manager.config.dmBorderColour.value)); //bottom
+                        SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderColour)); //bottom
             }
 
             String sizeId = borderSizeOption == 0 ? "small" : borderSizeOption == 2 ? "large" : "medium";
 
             ResourceLocation rl = new ResourceLocation("notenoughupdates:dungeon_map/borders/"+sizeId+"/"+
-                    NotEnoughUpdates.INSTANCE.manager.config.dmBorderStyle.value.intValue()+".png");
+                    NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderStyle+".png");
             if(Minecraft.getMinecraft().getTextureManager().getTexture(rl) != TextureUtil.missingTexture) {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(rl);
                 GlStateManager.color(1, 1, 1, 1);
@@ -1010,7 +996,7 @@ public class DungeonMap {
     private long lastClearCache = 0;
     public void renderMap(int centerX, int centerY, Color[][] colourMap, Map<String, Vec4b> mapDecorations,
                           int roomSizeBlocks, Set<String> actualPlayers, boolean usePlayerPositions, float partialTicks) {
-        if(!NotEnoughUpdates.INSTANCE.manager.config.dmEnable.value) return;
+        if(!NotEnoughUpdates.INSTANCE.config.dungeonMap.dmEnable) return;
         if(colourMap == null) return;
         if(colourMap.length != 128) return;
         if(colourMap[0].length != 128) return;
@@ -1364,8 +1350,8 @@ public class DungeonMap {
     @SubscribeEvent(priority=EventPriority.HIGH)
     public void onRenderOverlayPre(RenderGameOverlayEvent.Pre event) {
         if(event.type == RenderGameOverlayEvent.ElementType.ALL &&
-                NotEnoughUpdates.INSTANCE.manager.config.dmEnable.value &&
-                NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.value > 0.1) {
+                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmEnable &&
+                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur > 0.1) {
             blurBackground();
             GlStateManager.enableBlend();
             GlStateManager.enableTexture2D();
@@ -1378,9 +1364,9 @@ public class DungeonMap {
     }
 
     @SubscribeEvent
-    public void onRenderOverlay(RenderGameOverlayEvent event) {
+    public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
-            if(!NotEnoughUpdates.INSTANCE.manager.config.dmEnable.value) return;
+            if(!NotEnoughUpdates.INSTANCE.config.dungeonMap.dmEnable) return;
 
             if(Minecraft.getMinecraft().gameSettings.showDebugInfo ||
                     (Minecraft.getMinecraft().gameSettings.keyBindPlayerList.isKeyDown() &&
@@ -1489,8 +1475,8 @@ public class DungeonMap {
                     }
                 }
 
-                renderMap((int)(NotEnoughUpdates.INSTANCE.manager.config.dmCenterX.value/100*Minecraft.getMinecraft().displayWidth/2),
-                        (int)(NotEnoughUpdates.INSTANCE.manager.config.dmCenterY.value/100*Minecraft.getMinecraft().displayHeight/2),
+                renderMap((int)(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterX/100*Minecraft.getMinecraft().displayWidth/2),
+                        (int)(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterY/100*Minecraft.getMinecraft().displayHeight/2),
                         colourMap, decorations, roomSizeBlocks, actualPlayers, true, event.partialTicks);
             }
         }
@@ -1591,7 +1577,7 @@ public class DungeonMap {
             } catch(Exception e) { }
         }
         if(blurShaderHorz != null && blurShaderVert != null) {
-            float blur = NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.value.floatValue();
+            float blur = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur;
             blur = Math.max(0, Math.min(50, blur));
             if(blur != lastBgBlurFactor) {
                 blurShaderHorz.getShaderManager().getShaderUniform("Radius").set(blur);

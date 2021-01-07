@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.auction;
 
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.ItemPriceInformation;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -41,7 +42,7 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.github.moulberry.notenoughupdates.GuiTextures.*;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 
 public class CustomAH extends Gui {
 
@@ -206,7 +207,7 @@ public class CustomAH extends Gui {
     }
 
     public void tick() {
-        if(!manager.config.neuAuctionHouse.value) return;
+        if(!NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse) return;
         if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || renderOverAuctionView) {
             if(shouldUpdateSearch) updateSearch();
             if(shouldSortItems) {
@@ -340,43 +341,14 @@ public class CustomAH extends Gui {
             }
         }
 
-        if(manager.config.auctionPriceInfo.value) {
+        if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoAucItem) {
             String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(auc.getStack());
             if(internalname != null) {
-                tooltip.add("");
                 if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+                    tooltip.add("");
                     tooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
                 } else {
-                    JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
-
-                    boolean hasAuctionPrice = auctionInfo != null;
-
-                    int lowestBin = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
-
-                    APIManager.CraftInfo craftCost = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(internalname);
-
-                    if(lowestBin > 0) {
-                        tooltip.add(EnumChatFormatting.GRAY+"Lowest BIN: "+
-                                EnumChatFormatting.GOLD+format.format(lowestBin)+" coins");
-                    }
-                    if(hasAuctionPrice) {
-                        int auctionPrice = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
-                        tooltip.add(EnumChatFormatting.GRAY+"AH Price: "+
-                                EnumChatFormatting.GOLD+format.format(auctionPrice)+" coins");
-                        tooltip.add(EnumChatFormatting.GRAY+"AH Sales: "+
-                                EnumChatFormatting.GOLD+format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
-                        if(auctionInfo.has("clean_price")) {
-                            tooltip.add(EnumChatFormatting.GRAY+"AH Price (Clean): "+
-                                    EnumChatFormatting.GOLD+format.format((int)auctionInfo.get("clean_price").getAsFloat())+" coins");
-                            tooltip.add(EnumChatFormatting.GRAY+"AH Sales (Clean): "+
-                                    EnumChatFormatting.GOLD+format.format(auctionInfo.get("clean_sales").getAsFloat())+" sales/day");
-                        }
-
-                    }
-                    if(craftCost.fromRecipe) {
-                        tooltip.add(EnumChatFormatting.GRAY+"Raw Craft Cost: "+
-                                EnumChatFormatting.GOLD+format.format((int)craftCost.craftCost)+" coins");
-                    }
+                    ItemPriceInformation.addToTooltip(tooltip, internalname);
                 }
             }
         }
@@ -858,7 +830,7 @@ public class CustomAH extends Gui {
         int maxItemScroll = Math.max(0, totalItems - (5+splits)*9);
         itemsScroll = Math.min(itemsScroll, maxItemScroll);
 
-        if(manager.config.neuAuctionHouse.value) {
+        if(NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse) {
             out:
             for(int i=0; i<5+splits; i++) {
                 int itemY = guiTop + i*18 + 18;
@@ -904,7 +876,7 @@ public class CustomAH extends Gui {
         this.drawTexturedModalRect(guiLeft+175, guiTop+18+(int)((95+ySplitSize*2)*scrollAmount),
                 256-(scrollClicked?12:24), 0, 12, 15);
 
-        if(!manager.config.neuAuctionHouse.value) {
+        if(!NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse) {
             Utils.drawStringCentered(EnumChatFormatting.RED+"NEUAH is DISABLED! Enable in /neusettings.",
                     Minecraft.getMinecraft().fontRendererObj, guiLeft+getXSize()/2, guiTop+getYSize()/2-5, true, 0);
         }
@@ -1052,7 +1024,7 @@ public class CustomAH extends Gui {
     }
 
     public void handleMouseInput() {
-        if(!manager.config.neuAuctionHouse.value) {
+        if(!NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse) {
             return;
         }
 
@@ -1076,7 +1048,7 @@ public class CustomAH extends Gui {
             mouseClickMove(mouseX, mouseY, this.eventButton, l);
         }
 
-        if(!manager.config.disableAhScroll.value) {
+        if(!NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.disableAhScroll) {
             int dWheel = Mouse.getEventDWheel();
             dWheel = Math.max(-1, Math.min(1, dWheel));
 
@@ -1213,7 +1185,7 @@ public class CustomAH extends Gui {
 
     private ExecutorService es = Executors.newSingleThreadExecutor();
     public void updateSearch() {
-        if(!manager.config.neuAuctionHouse.value) {
+        if(!NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse) {
             return;
         }
 
@@ -1321,7 +1293,7 @@ public class CustomAH extends Gui {
     }
 
     public void sortItems() throws ConcurrentModificationException {
-        if(!manager.config.neuAuctionHouse.value) {
+        if(!NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse) {
             return;
         }
 
@@ -1372,7 +1344,7 @@ public class CustomAH extends Gui {
     }
 
     public boolean keyboardInput() {
-        if(!manager.config.neuAuctionHouse.value) {
+        if(!NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse) {
             return false;
         }
 

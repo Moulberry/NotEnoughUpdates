@@ -1,14 +1,14 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.authlib.Agent;
-import com.mojang.authlib.exceptions.AuthenticationException;
-import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
-import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
+import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
+import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.cosmetics.GuiCosmetics;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonMap;
@@ -17,12 +17,19 @@ import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
-import io.github.moulberry.notenoughupdates.infopanes.SettingsInfoPane;
+import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
+import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
+import io.github.moulberry.notenoughupdates.miscfeatures.SunTzu;
+import io.github.moulberry.notenoughupdates.miscgui.CalendarOverlay;
+import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
+import io.github.moulberry.notenoughupdates.miscgui.HelpGUI;
+import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
+import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
-import io.github.moulberry.notenoughupdates.questing.GuiQuestLine;
-import io.github.moulberry.notenoughupdates.questing.SBInfo;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.block.material.MapColor;
@@ -59,14 +66,10 @@ import org.apache.commons.lang3.text.translate.UnicodeUnescaper;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -86,6 +89,9 @@ public class NotEnoughUpdates {
 
     public NEUManager manager;
     public NEUOverlay overlay;
+    public NEUConfig config;
+
+    private File configFile;
 
     private static final long CHAT_MSG_COOLDOWN = 200;
     private long lastChatMessage = 0;
@@ -198,13 +204,6 @@ public class NotEnoughUpdates {
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "Usage: /neurename set [name...]"));
 
             }
-        }
-    });
-
-
-    SimpleCommand questingCommand = new SimpleCommand("neuquest", new SimpleCommand.ProcessCommandRunnable() {
-        public void processCommand(ICommandSender sender, String[] args) {
-            openGui = new GuiQuestLine();
         }
     });
 
@@ -519,7 +518,7 @@ public class NotEnoughUpdates {
                 builder.append("[Loaded Mods]").append("[").append(activeModCount).append("/").append(modCount).append("]").append("\n");
                 builder.append("[Forge]").append("[").append(ForgeVersion.getVersion()).append("]").append("\n");
                 builder.append("# Neu Settings").append("\n");
-                builder.append("[API Key]").append("[").append(!INSTANCE.manager.config.apiKey.value.isEmpty()).append("]").append("\n");
+                builder.append("[API Key]").append("[").append(!config.apiKey.apiKey.isEmpty()).append("]").append("\n");
                 builder.append("[On Skyblock]").append("[").append(hasSkyblockScoreboard).append("]").append("\n");
                 builder.append("[Mod Version]").append("[").append(Loader.instance().getIndexedModList().get(MODID).getSource().getName()).append("]").append("\n");
                 builder.append("# Repo Stats").append("\n");
@@ -566,7 +565,7 @@ public class NotEnoughUpdates {
                 } catch(Exception e) {
                 }
             }
-            if (manager.config.apiKey.value == null || manager.config.apiKey.value.trim().isEmpty()) {
+            if (config.apiKey.apiKey == null || config.apiKey.apiKey.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "Can't view profile, apikey is not set. Run /api new and put the result in settings."));
             } else if (args.length == 0) {
@@ -717,7 +716,7 @@ public class NotEnoughUpdates {
                 } catch(Exception ignored) { }
             }
 
-            if(!manager.config.dev.value) {
+            if(!config.hidden.dev) {
                 openGui = new GuiDungeonMapEditor();
                 return;
             }
@@ -802,28 +801,19 @@ public class NotEnoughUpdates {
 
     SimpleCommand settingsCommand = new SimpleCommand("neu", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            overlay.displayInformationPane(new SettingsInfoPane(overlay, manager));
-            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
-                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
-            }
+            openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
         }
     });
 
     SimpleCommand settingsCommand2 = new SimpleCommand("neusettings", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            overlay.displayInformationPane(new SettingsInfoPane(overlay, manager));
-            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
-                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
-            }
+            openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
         }
     });
 
     SimpleCommand settingsCommand3 = new SimpleCommand("neuconfig", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            overlay.displayInformationPane(new SettingsInfoPane(overlay, manager));
-            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
-                openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
-            }
+            openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
         }
     });
 
@@ -841,7 +831,7 @@ public class NotEnoughUpdates {
             if(!hasSkyblockScoreboard()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
                         "You must be on Skyblock to use this feature."));
-            } else if(manager.config.apiKey.value == null || manager.config.apiKey.value.trim().isEmpty()) {
+            } else if(config.apiKey.apiKey == null || config.apiKey.apiKey.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
                         "Can't open NeuAH, apikey is not set. Run /api new and put the result in settings."));
             } else {
@@ -855,6 +845,8 @@ public class NotEnoughUpdates {
         }
     });
 
+    private Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+
     /**
      * Instantiates NEUIo, NEUManager and NEUOverlay instances. Registers keybinds and adds a shutdown hook to clear tmp folder.
      * @param event
@@ -863,20 +855,33 @@ public class NotEnoughUpdates {
     public void preinit(FMLPreInitializationEvent event) {
         INSTANCE = this;
 
+        File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
+        f.mkdirs();
+
+        configFile = new File(f, "configNew.json");
+
+        if(configFile.exists()) {
+            try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
+                config = gson.fromJson(reader, NEUConfig.class);
+            } catch(Exception e) { }
+        }
+
+        if(config == null) {
+            config = new NEUConfig();
+            saveConfig();
+        }
+
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new NEUEventListener(this));
         MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
         MinecraftForge.EVENT_BUS.register(new SBGamemodes());
+        MinecraftForge.EVENT_BUS.register(new EnchantingSolvers());
         MinecraftForge.EVENT_BUS.register(new CalendarOverlay());
         MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
         MinecraftForge.EVENT_BUS.register(new DungeonMap());
         MinecraftForge.EVENT_BUS.register(new SunTzu());
 
-        //MinecraftForge.EVENT_BUS.register(new BetterPortals());
-
-        File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
-        f.mkdirs();
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);
@@ -900,6 +905,8 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(dungeonWinTest);
         ClientCommandHandler.instance.registerCommand(calendarCommand);
 
+        BackgroundBlur.registerListener();
+
         manager = new NEUManager(this, f);
         manager.loadItemInformation();
         overlay = new NEUOverlay(manager);
@@ -910,54 +917,26 @@ public class NotEnoughUpdates {
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                File tmp = new File(f, "tmp");
-                if(tmp.exists()) {
-                    for(File tmpFile : tmp.listFiles()) {
-                        tmpFile.delete();
-                    }
-                    tmp.delete();
+            File tmp = new File(f, "tmp");
+            if(tmp.exists()) {
+                for(File tmpFile : tmp.listFiles()) {
+                    tmpFile.delete();
                 }
-
-                manager.saveConfig();
-            } catch(IOException e) {}
-        }));
-
-        //TODO: login code. Ignore this, used for testing.
-        if(manager.config.dev.value) {
-            try {
-                Field field = Minecraft.class.getDeclaredField("session");
-                YggdrasilUserAuthentication auth = (YggdrasilUserAuthentication)
-                        new YggdrasilAuthenticationService(Proxy.NO_PROXY, UUID.randomUUID().toString())
-                                .createUserAuthentication(Agent.MINECRAFT);
-                auth.setUsername("james.jenour@protonmail.com");
-                auth.setPassword("Miranda728%");
-
-                JPasswordField pf = new JPasswordField();
-                JOptionPane.showConfirmDialog(null,
-                        pf,
-                        "Enter password:",
-                        JOptionPane.DEFAULT_OPTION,
-                        JOptionPane.PLAIN_MESSAGE);
-                auth.setPassword(new String(pf.getPassword()));
-                System.out.print("Attempting login...");
-
-                auth.logIn();
-
-                Session session = new Session(auth.getSelectedProfile().getName(),
-                        auth.getSelectedProfile().getId().toString().replace("-", ""),
-                        auth.getAuthenticatedToken(),
-                        auth.getUserType().getName());
-
-                Field modifiersField = Field.class.getDeclaredField("modifiers");
-                modifiersField.setAccessible(true);
-                modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
-                field.setAccessible(true);
-                field.set(Minecraft.getMinecraft(), session);
-            } catch (NoSuchFieldException | AuthenticationException | IllegalAccessException e) {
+                tmp.delete();
             }
-        }
+
+            saveConfig();
+        }));
+    }
+
+    public void saveConfig() {
+        try {
+            configFile.createNewFile();
+
+            try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
+                writer.write(gson.toJson(config));
+            }
+        } catch(IOException ignored) {}
     }
 
     /**
@@ -1037,7 +1016,7 @@ public class NotEnoughUpdates {
     }
 
     public boolean isOnSkyblock() {
-        if(!manager.config.onlyShowOnSkyblock.value) return true;
+        if(!config.misc.onlyShowOnSkyblock) return true;
         return hasSkyblockScoreboard();
     }
 

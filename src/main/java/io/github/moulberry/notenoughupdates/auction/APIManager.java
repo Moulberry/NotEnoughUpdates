@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -173,8 +174,9 @@ public class APIManager {
     public void tick() {
         customAH.tick();
         long currentTime = System.currentTimeMillis();
-        if(manager.config.neuAuctionHouse.value && manager.config.apiKey.value != null &&
-                !manager.config.apiKey.value.isEmpty()) {
+        if(NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse &&
+                NotEnoughUpdates.INSTANCE.config.apiKey.apiKey != null &&
+                !NotEnoughUpdates.INSTANCE.config.apiKey.apiKey.isEmpty()) {
             if(currentTime - lastAuctionUpdate > 60*1000) {
                 lastAuctionUpdate = currentTime;
                 updatePageTick();
@@ -250,13 +252,13 @@ public class APIManager {
     private void ahNotification() {
         playerBidsNotified.retainAll(playerBids);
         playerBidsFinishedNotified.retainAll(playerBids);
-        if(manager.config.ahNotification.value <= 0) {
+        if(NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.ahNotification <= 0) {
             return;
         }
         for(String aucid : playerBids) {
             Auction auc = auctionMap.get(aucid);
             if(!playerBidsNotified.contains(aucid)) {
-                if(auc != null && auc.end - System.currentTimeMillis() < 1000*60*manager.config.ahNotification.value) {
+                if(auc != null && auc.end - System.currentTimeMillis() < 1000*60*NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.ahNotification) {
                     ChatComponentText message = new ChatComponentText(
                             EnumChatFormatting.YELLOW+"The " + auc.getStack().getDisplayName() + EnumChatFormatting.YELLOW + " you have bid on is ending soon! Click here to view.");
                     ChatStyle clickEvent = new ChatStyle().setChatClickEvent(
@@ -618,7 +620,7 @@ public class APIManager {
     }
 
     public void updateBazaar() {
-        manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/bazaar", new HashMap<>(), (jsonObject) -> {
+        manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "skyblock/bazaar", new HashMap<>(), (jsonObject) -> {
             if(!jsonObject.get("success").getAsBoolean()) return;
 
             craftCost.clear();
@@ -890,7 +892,7 @@ public class APIManager {
         args.put("page", "0");
         AtomicInteger totalPages = new AtomicInteger(1);
         AtomicInteger currentPages = new AtomicInteger(0);
-        manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/auctions",
+        manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "skyblock/auctions",
                 args, jsonObject -> {
                     if (jsonObject.get("success").getAsBoolean()) {
                         pages.put(0, jsonObject);
@@ -901,7 +903,7 @@ public class APIManager {
                             int j = i;
                             HashMap<String, String> args2 = new HashMap<>();
                             args2.put("page", "" + i);
-                            manager.hypixelApi.getHypixelApiAsync(manager.config.apiKey.value, "skyblock/auctions",
+                            manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "skyblock/auctions",
                                     args2, jsonObject2 -> {
                                         if (jsonObject2.get("success").getAsBoolean()) {
                                             pages.put(j, jsonObject2);

@@ -1,20 +1,11 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
-import io.github.moulberry.notenoughupdates.BetterContainers;
-import io.github.moulberry.notenoughupdates.CustomItemEffects;
-import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import net.minecraft.client.gui.FontRenderer;
+import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
 import net.minecraft.client.renderer.EntityRenderer;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.EnumWorldBlockLayer;
 import org.lwjgl.util.vector.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityRenderer.class)
 public class MixinEntityRenderer {

@@ -8,7 +8,7 @@ import info.bliki.wiki.model.WikiModel;
 import info.bliki.wiki.tags.HTMLBlockTag;
 import info.bliki.wiki.tags.HTMLTag;
 import info.bliki.wiki.tags.IgnoreTag;
-import io.github.moulberry.notenoughupdates.AllowEmptyHTMLTag;
+import io.github.moulberry.notenoughupdates.util.AllowEmptyHTMLTag;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.util.Utils;

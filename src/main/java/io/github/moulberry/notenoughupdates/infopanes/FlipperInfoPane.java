@@ -9,7 +9,7 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 
-import static io.github.moulberry.notenoughupdates.GuiTextures.*;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 import static io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField.*;
 
 import java.awt.*;

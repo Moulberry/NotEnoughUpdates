@@ -1,18 +1,18 @@
 package io.github.moulberry.notenoughupdates.dungeons;
 
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.GuiElementColour;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorSlider;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
-import io.github.moulberry.notenoughupdates.options.Options;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.util.EnumChatFormatting;
@@ -24,14 +24,11 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
-import static io.github.moulberry.notenoughupdates.GuiTextures.*;
-
-import static io.github.moulberry.notenoughupdates.GuiTextures.*;
-import static io.github.moulberry.notenoughupdates.GuiTextures.colour_selector_dot;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 
 public class GuiDungeonMapEditor extends GuiScreen {
 
@@ -57,23 +54,9 @@ public class GuiDungeonMapEditor extends GuiScreen {
     private GuiElementTextField xField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
     private GuiElementTextField yField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
     private GuiElementTextField blurField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
-    private ColourEditor activeColourEditor = null;
+    private GuiElementColour activeColourEditor = null;
 
-    private Options.Option<Double> clickedSlider = null;
-
-    private class ColourEditor {
-        public int x;
-        public int y;
-        public Options.Option<String> option;
-        public String special;
-
-        public ColourEditor(int x, int y, Options.Option<String> option, String special) {
-            this.x = x;
-            this.y = y;
-            this.option = option;
-            this.special = special;
-        }
-    }
+    private Field clickedSlider;
 
     class Button {
         private int id;
@@ -81,18 +64,26 @@ public class GuiDungeonMapEditor extends GuiScreen {
         private int y;
         private String text;
         private Color colour = new Color(-1, true);
-        private Options.Option<?> option;
+        private Field option;
+        private String displayName;
+        private String desc;
 
         public Button(int id, int x, int y, String text) {
             this(id, x, y, text, null);
         }
 
-        public Button(int id, int x, int y, String text, Options.Option<?> option) {
+        public Button(int id, int x, int y, String text, Field option) {
             this.id = id;
             this.x = x;
             this.y = y;
             this.text = text;
             this.option = option;
+
+            if(option != null) {
+                ConfigOption optionAnnotation = option.getAnnotation(ConfigOption.class);
+                displayName = optionAnnotation.name();
+                desc = optionAnnotation.desc();
+            }
         }
 
         public List<String> getTooltip() {
@@ -101,8 +92,8 @@ public class GuiDungeonMapEditor extends GuiScreen {
             }
 
             List<String> tooltip = new ArrayList<>();
-            tooltip.add(EnumChatFormatting.YELLOW+option.displayName);
-            for(String line : option.desc.split("\n")) {
+            tooltip.add(EnumChatFormatting.YELLOW+displayName);
+            for(String line : desc.split("\n")) {
                 tooltip.add(EnumChatFormatting.AQUA+line);
             }
             return tooltip;
@@ -129,7 +120,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
     }
 
     public GuiDungeonMapEditor() {
-        Options options = NotEnoughUpdates.INSTANCE.manager.config;
+        NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
         //Map Border Size
         //buttons.add(new Button(0, 6, 37, "Small", options.dmBorderSize));
         //buttons.add(new Button(1, 52, 37, "Medium", options.dmBorderSize));
@@ -154,42 +145,41 @@ public class GuiDungeonMapEditor extends GuiScreen {
         buttons.add(new Button(16, 52, 154+30, "Ornate"));
         buttons.add(new Button(17, 98, 154+30, "Dragon"));
 
-        //Dungeon Map
-        buttons.add(new Button(18, 20+139, 36, "Yes/No", options.dmEnable));
-        //Center
-        buttons.add(new Button(19, 84+139, 36, "Player/Map", options.dmCenterPlayer));
-        //Rotate
-        buttons.add(new Button(20, 20+139, 65, "Player/No Rotate", options.dmRotatePlayer));
-        //Icon Style
-        buttons.add(new Button(21, 84+139, 65, "Default/Heads", options.dmPlayerHeads));
-        //Check Orient
-        buttons.add(new Button(22, 20+139, 94, "Normal/Reorient", options.dmOrientCheck));
-        //Check Center
-        buttons.add(new Button(23, 84+139, 94, "Yes/No", options.dmCenterCheck));
-        //Interpolation
-        buttons.add(new Button(24, 20+139, 123, "Yes/No", options.dmPlayerInterp));
-        //Compatibility
-        buttons.add(new Button(25, 84+139, 123, "Normal/No SHD/No FB/SHD", options.dmCompat));
+        try {
+            //Dungeon Map
+            buttons.add(new Button(18, 20+139, 36, "Yes/No", NEUConfig.DungeonMap.class.getDeclaredField("dmEnable")));
+            //Center
+            buttons.add(new Button(19, 84+139, 36, "Player/Map", NEUConfig.DungeonMap.class.getDeclaredField("dmCenterPlayer")));
+            //Rotate
+            buttons.add(new Button(20, 20+139, 65, "Player/No Rotate", NEUConfig.DungeonMap.class.getDeclaredField("dmRotatePlayer")));
+            //Icon Style
+            buttons.add(new Button(21, 84+139, 65, "Default/Heads", NEUConfig.DungeonMap.class.getDeclaredField("dmPlayerHeads")));
+            //Check Orient
+            buttons.add(new Button(22, 20+139, 94, "Normal/Reorient", NEUConfig.DungeonMap.class.getDeclaredField("dmOrientCheck")));
+            //Check Center
+            buttons.add(new Button(23, 84+139, 94, "Yes/No", NEUConfig.DungeonMap.class.getDeclaredField("dmCenterCheck")));
+            //Interpolation
+            buttons.add(new Button(24, 20+139, 123, "Yes/No", NEUConfig.DungeonMap.class.getDeclaredField("dmPlayerInterp")));
+            //Compatibility
+            buttons.add(new Button(25, 84+139, 123, "Normal/No SHD/No FB/SHD", NEUConfig.DungeonMap.class.getDeclaredField("dmCompat")));
 
-        //Background
-        buttons.add(new Button(26, 20+139, 152, "", options.dmBackgroundColour));
-        //Border
-        buttons.add(new Button(27, 84+139, 152, "", options.dmBorderColour));
+            //Background
+            buttons.add(new Button(26, 20+139, 152, "", NEUConfig.DungeonMap.class.getDeclaredField("dmBackgroundColour")));
+            //Border
+            buttons.add(new Button(27, 84+139, 152, "", NEUConfig.DungeonMap.class.getDeclaredField("dmBorderColour")));
 
-        //Chroma Mode
-        buttons.add(new Button(28, 84+139, 181, "Normal/Scroll", options.dmChromaBorder));
+            //Chroma Mode
+            buttons.add(new Button(28, 84+139, 181, "Normal/Scroll", NEUConfig.DungeonMap.class.getDeclaredField("dmChromaBorder")));
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
 
         //buttons.add(new Button(29, 52, 86+19, "XLarge", options.dmRoomSize));
         //buttons.add(new Button(30, 52, 56, "XLarge", options.dmBorderSize));
 
-        xField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.manager.config.dmCenterX.value));
-        yField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.manager.config.dmCenterY.value));
-        blurField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.value));
-    }
-
-    private void showColourEditor(int mouseX, int mouseY, Options.Option<String> option, String special) {
-        activeColourEditor = new ColourEditor(mouseX, mouseY, option, special);
-        hexField.otherComponentClick();
+        xField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterX));
+        yField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterY));
+        blurField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur));
     }
 
     @Override
@@ -311,24 +301,28 @@ public class GuiDungeonMapEditor extends GuiScreen {
         Utils.drawStringCenteredScaledMaxWidth("Y (%)", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+108, guiTop+209, false, 60, 0xFFB4B4B4);
 
-        drawSlider(NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize, guiLeft+76, guiTop+45);
-        drawSlider(NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize, guiLeft+76, guiTop+75);
-        drawSlider(NotEnoughUpdates.INSTANCE.manager.config.dmIconScale, guiLeft+76, guiTop+105);
+        try {
+            drawSlider(NEUConfig.DungeonMap.class.getDeclaredField("dmBorderSize"), guiLeft+76, guiTop+45);
+            drawSlider(NEUConfig.DungeonMap.class.getDeclaredField("dmRoomSize"), guiLeft+76, guiTop+75);
+            drawSlider(NEUConfig.DungeonMap.class.getDeclaredField("dmIconScale"), guiLeft+76, guiTop+105);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
 
-        Options options = NotEnoughUpdates.INSTANCE.manager.config;
-        buttons.get(18-6).text = options.dmEnable.value ? "Enabled" : "Disabled";
-        buttons.get(19-6).text = options.dmCenterPlayer.value ? "Player" : "Map";
-        buttons.get(20-6).text = options.dmRotatePlayer.value ? "Player" : "Vertical";
-        buttons.get(21-6).text = options.dmPlayerHeads.value <= 0 ? "Default" : options.dmPlayerHeads.value == 1 ? "Heads" : "Heads w/ Border";
-        buttons.get(22-6).text = options.dmOrientCheck.value ? "Orient" : "Off";
-        buttons.get(23-6).text = options.dmCenterCheck.value ? "Center" : "Off";
-        buttons.get(24-6).text = options.dmPlayerInterp.value ? "Interp" : "No Interp";
-        buttons.get(25-6).text = options.dmCompat.value <= 0 ? "Normal" : options.dmCompat.value >= 2 ? "No FB/SHD" : "No SHD";
+        NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
+        buttons.get(18-6).text = options.dmEnable ? "Enabled" : "Disabled";
+        buttons.get(19-6).text = options.dmCenterPlayer ? "Player" : "Map";
+        buttons.get(20-6).text = options.dmRotatePlayer ? "Player" : "Vertical";
+        buttons.get(21-6).text = options.dmPlayerHeads <= 0 ? "Default" : options.dmPlayerHeads == 1 ? "Heads" : "Heads w/ Border";
+        buttons.get(22-6).text = options.dmOrientCheck ? "Orient" : "Off";
+        buttons.get(23-6).text = options.dmCenterCheck ? "Center" : "Off";
+        buttons.get(24-6).text = options.dmPlayerInterp ? "Interp" : "No Interp";
+        buttons.get(25-6).text = options.dmCompat <= 0 ? "Normal" : options.dmCompat >= 2 ? "No FB/SHD" : "No SHD";
 
-        buttons.get(26-6).colour = new Color(SpecialColour.specialToChromaRGB(options.dmBackgroundColour.value));
-        buttons.get(27-6).colour = new Color(SpecialColour.specialToChromaRGB(options.dmBorderColour.value));
+        buttons.get(26-6).colour = new Color(SpecialColour.specialToChromaRGB(options.dmBackgroundColour));
+        buttons.get(27-6).colour = new Color(SpecialColour.specialToChromaRGB(options.dmBorderColour));
 
-        buttons.get(28-6).text = options.dmChromaBorder.value ? "Scroll" : "Normal";
+        buttons.get(28-6).text = options.dmChromaBorder ? "Scroll" : "Normal";
 
         blurField.setSize(48, 16);
         xField.setSize(48, 16);
@@ -358,140 +352,28 @@ public class GuiDungeonMapEditor extends GuiScreen {
         }
 
         if(activeColourEditor != null) {
-            Gui.drawRect(activeColourEditor.x, activeColourEditor.y, activeColourEditor.x+119, activeColourEditor.y+89, colourEditorBG);
-
-            int currentColour = SpecialColour.specialToSimpleRGB(activeColourEditor.special);
-            Color c = new Color(currentColour, true);
-            float[] hsv = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
-
-            BufferedImage bufferedImage = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
-            for(int x=0; x<256; x++) {
-                for(int y=0; y<256; y++) {
-                    float radius = (float) Math.sqrt(((x-128)*(x-128)+(y-128)*(y-128))/16384f);
-                    float angle = (float) Math.toDegrees(Math.atan((128-x)/(y-128+1E-5))+Math.PI/2);
-                    if(y < 128) angle += 180;
-                    if(radius <= 1) {
-                        int rgb = Color.getHSBColor(angle/360f, (float)Math.pow(radius, 1.5f), hsv[2]).getRGB();
-                        bufferedImage.setRGB(x, y, rgb);
-                    }
-                }
-            }
-
-            BufferedImage bufferedImageValue = new BufferedImage(10, 64, BufferedImage.TYPE_INT_ARGB);
-            for(int x=0; x<10; x++) {
-                for(int y=0; y<64; y++) {
-                    if((x == 0 || x == 9) && (y == 0 || y == 63)) continue;
-
-                    int rgb = Color.getHSBColor(hsv[0], hsv[1], (64-y)/64f).getRGB();
-                    bufferedImageValue.setRGB(x, y, rgb);
-                }
-            }
-
-            BufferedImage bufferedImageOpacity = new BufferedImage(10, 64, BufferedImage.TYPE_INT_ARGB);
-            for(int x=0; x<10; x++) {
-                for(int y=0; y<64; y++) {
-                    if((x == 0 || x == 9) && (y == 0 || y == 63)) continue;
-
-                    int rgb = (currentColour & 0x00FFFFFF) | (Math.min(255, (64-y)*4) << 24);
-                    bufferedImageOpacity.setRGB(x, y, rgb);
-                }
-            }
-
-            float selradius = (float) Math.pow(hsv[1], 1/1.5f)*32;
-            int selx = (int)(Math.cos(Math.toRadians(hsv[0]*360))*selradius);
-            int sely = (int)(Math.sin(Math.toRadians(hsv[0]*360))*selradius);
-
-            Minecraft.getMinecraft().getTextureManager().bindTexture(colour_selector_bar_alpha);
-            GlStateManager.color(1, 1, 1, 1);
-            Utils.drawTexturedRect(activeColourEditor.x+5+64+5+10+5, activeColourEditor.y+5, 10, 64, GL11.GL_NEAREST);
-
-            Minecraft.getMinecraft().getTextureManager().loadTexture(colourPickerBarValueLocation, new DynamicTexture(bufferedImageValue));
-            Minecraft.getMinecraft().getTextureManager().bindTexture(colourPickerBarValueLocation);
-            GlStateManager.color(1, 1, 1, 1);
-            Utils.drawTexturedRect(activeColourEditor.x+5+64+5, activeColourEditor.y+5, 10, 64, GL11.GL_NEAREST);
-
-            Minecraft.getMinecraft().getTextureManager().loadTexture(colourPickerBarOpacityLocation, new DynamicTexture(bufferedImageOpacity));
-            Minecraft.getMinecraft().getTextureManager().bindTexture(colourPickerBarOpacityLocation);
-            GlStateManager.color(1, 1, 1, 1);
-            Utils.drawTexturedRect(activeColourEditor.x+5+64+5+10+5, activeColourEditor.y+5, 10, 64, GL11.GL_NEAREST);
-
-            int chromaSpeed = SpecialColour.getSpeed(activeColourEditor.special);
-            int currentColourChroma = SpecialColour.specialToChromaRGB(activeColourEditor.special);
-            Color cChroma = new Color(currentColourChroma, true);
-            float hsvChroma[] = Color.RGBtoHSB(cChroma.getRed(), cChroma.getGreen(), cChroma.getBlue(), null);
-
-            if(chromaSpeed > 0) {
-                Gui.drawRect(activeColourEditor.x+5+64+5+10+5+10+5+1, activeColourEditor.y+5+1,
-                        activeColourEditor.x+5+64+5+10+5+10+5+10-1, activeColourEditor.y+5+64-1,
-                        Color.HSBtoRGB(hsvChroma[0], 0.8f, 0.8f));
-            } else {
-                Gui.drawRect(activeColourEditor.x+5+64+5+10+5+10+5+1, activeColourEditor.y+5+27+1,
-                        activeColourEditor.x+5+64+5+10+5+10+5+10-1, activeColourEditor.y+5+37-1,
-                        Color.HSBtoRGB((hsvChroma[0]+(System.currentTimeMillis()-SpecialColour.startTime)/1000f)%1, 0.8f, 0.8f));
-            }
-
-            Minecraft.getMinecraft().getTextureManager().bindTexture(colour_selector_bar);
-            GlStateManager.color(1, 1, 1, 1);
-            Utils.drawTexturedRect(activeColourEditor.x+5+64+5, activeColourEditor.y+5, 10, 64, GL11.GL_NEAREST);
-            Utils.drawTexturedRect(activeColourEditor.x+5+64+5+10+5, activeColourEditor.y+5, 10, 64, GL11.GL_NEAREST);
-
-            if(chromaSpeed > 0) {
-                Utils.drawTexturedRect(activeColourEditor.x+5+64+5+10+5+10+5, activeColourEditor.y+5, 10, 64, GL11.GL_NEAREST);
-            } else {
-                Minecraft.getMinecraft().getTextureManager().bindTexture(colour_selector_chroma);
-                Utils.drawTexturedRect(activeColourEditor.x+5+64+5+10+5+10+5, activeColourEditor.y+5+27, 10, 10, GL11.GL_NEAREST);
-            }
-
-            Gui.drawRect(activeColourEditor.x+5+64+5, activeColourEditor.y+5+64-(int)(64*hsv[2]),
-                    activeColourEditor.x+5+64+5+10, activeColourEditor.y+5+64-(int)(64*hsv[2])+1, 0xFF000000);
-            Gui.drawRect(activeColourEditor.x+5+64+5+10+5, activeColourEditor.y+5+64-c.getAlpha()/4,
-                    activeColourEditor.x+5+64+5+10+5+10, activeColourEditor.y+5+64-c.getAlpha()/4-1, 0xFF000000);
-            if(chromaSpeed > 0) {
-                Gui.drawRect(activeColourEditor.x+5+64+5+10+5+10+5,
-                        activeColourEditor.y+5+64-(int)(chromaSpeed/255f*64),
-                        activeColourEditor.x+5+64+5+10+5+10+5+10,
-                        activeColourEditor.y+5+64-(int)(chromaSpeed/255f*64)+1, 0xFF000000);
-            }
-
-            Minecraft.getMinecraft().getTextureManager().loadTexture(colourPickerLocation, new DynamicTexture(bufferedImage));
-            Minecraft.getMinecraft().getTextureManager().bindTexture(colourPickerLocation);
-            GlStateManager.color(1, 1, 1, 1);
-            Utils.drawTexturedRect(activeColourEditor.x+5, activeColourEditor.y+5, 64, 64, GL11.GL_NEAREST);
-
-            Minecraft.getMinecraft().getTextureManager().bindTexture(colour_selector_dot);
-            GlStateManager.color(1, 1, 1, 1);
-            Utils.drawTexturedRect(activeColourEditor.x+5+32+selx-4, activeColourEditor.y+5+32+sely-4, 8, 8, GL11.GL_NEAREST);
-
-            Utils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+Math.round(hsv[2]*100)+"",
-                    Minecraft.getMinecraft().fontRendererObj,
-                    activeColourEditor.x+5+64+5+5-(Math.round(hsv[2]*100)==100?1:0), activeColourEditor.y+5+64+5+5, true, 13, -1);
-            Utils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+Math.round(c.getAlpha()/255f*100)+"",
-                    Minecraft.getMinecraft().fontRendererObj,
-                    activeColourEditor.x+5+64+5+15+5, activeColourEditor.y+5+64+5+5, true, 13, -1);
-            if(chromaSpeed > 0) {
-                Utils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+(int)SpecialColour.getSecondsForSpeed(chromaSpeed)+"s",
-                        Minecraft.getMinecraft().fontRendererObj,
-                        activeColourEditor.x+5+64+5+30+6, activeColourEditor.y+5+64+5+5, true, 13, -1);
-            }
-
-            hexField.setSize(48, 10);
-            if(!hexField.getFocus()) hexField.setText(Integer.toHexString(c.getRGB() & 0xFFFFFF).toUpperCase());
-
-            StringBuilder sb = new StringBuilder(EnumChatFormatting.GRAY+"#");
-            for(int i=0; i<6-hexField.getText().length(); i++) {
-                sb.append("0");
-            }
-            sb.append(EnumChatFormatting.WHITE);
-
-            hexField.setPrependText(sb.toString());
-            hexField.render(activeColourEditor.x+5+8, activeColourEditor.y+5+64+5);
+            activeColourEditor.render();
         }
 
         Utils.pushGuiScale(-1);
     }
 
-    public void drawSlider(Options.Option<Double> option, int centerX, int centerY) {
-        float sliderAmount = (float)Math.max(0, Math.min(1, (option.value-option.minValue)/(option.maxValue-option.minValue)));
+    public void drawSlider(Field option, int centerX, int centerY) {
+        float value;
+        float minValue;
+        float maxValue;
+        try {
+            value = ((Number)option.get(NotEnoughUpdates.INSTANCE.config.dungeonMap)).floatValue();
+
+            ConfigEditorSlider sliderAnnotation = option.getAnnotation(ConfigEditorSlider.class);
+            minValue = sliderAnnotation.minValue();
+            maxValue = sliderAnnotation.maxValue();
+        } catch(Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        float sliderAmount = Math.max(0, Math.min(1, (value-minValue)/(maxValue-minValue)));
         int sliderAmountI = (int)(96*sliderAmount);
 
         GlStateManager.color(1f, 1f, 1f, 1f);
@@ -513,12 +395,32 @@ public class GuiDungeonMapEditor extends GuiScreen {
         super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
 
         if(clickedSlider != null) {
+            float minValue;
+            float maxValue;
+            try {
+                ConfigEditorSlider sliderAnnotation = clickedSlider.getAnnotation(ConfigEditorSlider.class);
+                minValue = sliderAnnotation.minValue();
+                maxValue = sliderAnnotation.maxValue();
+            } catch(Exception e) {
+                e.printStackTrace();
+                return;
+            }
+
             float sliderAmount = (mouseX - (guiLeft+76-48))/96f;
-            double val = clickedSlider.minValue+(clickedSlider.maxValue-clickedSlider.minValue)*sliderAmount;
+            double val = minValue+(maxValue-minValue)*sliderAmount;
             if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
                 val = Math.round(val);
             }
-            clickedSlider.value = Math.max(clickedSlider.minValue, Math.min(clickedSlider.maxValue, val));
+            float value = (float)Math.max(minValue, Math.min(maxValue, val));
+            try {
+                if(clickedSlider.getType() == int.class) {
+                    clickedSlider.set(NotEnoughUpdates.INSTANCE.config.dungeonMap, Math.round(value));
+                } else {
+                    clickedSlider.set(NotEnoughUpdates.INSTANCE.config.dungeonMap, value);
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
         }
 
     }
@@ -539,15 +441,19 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
         clickedSlider = null;
         if(mouseX >= guiLeft+76-48 && mouseX <= guiLeft+76+48) {
-            if(mouseY > guiTop+45-8 && mouseY < guiTop+45+8) {
-                clickedSlider = NotEnoughUpdates.INSTANCE.manager.config.dmBorderSize;
-                return;
-            } else if(mouseY > guiTop+75-8 && mouseY < guiTop+75+8) {
-                clickedSlider = NotEnoughUpdates.INSTANCE.manager.config.dmRoomSize;
-                return;
-            } else if(mouseY > guiTop+105-8 && mouseY < guiTop+105+8) {
-                clickedSlider = NotEnoughUpdates.INSTANCE.manager.config.dmIconScale;
-                return;
+            try {
+                if(mouseY > guiTop+45-8 && mouseY < guiTop+45+8) {
+                    clickedSlider = NEUConfig.DungeonMap.class.getDeclaredField("dmBorderSize");
+                    return;
+                } else if(mouseY > guiTop+75-8 && mouseY < guiTop+75+8) {
+                    clickedSlider = NEUConfig.DungeonMap.class.getDeclaredField("dmRoomSize");
+                    return;
+                } else if(mouseY > guiTop+105-8 && mouseY < guiTop+105+8) {
+                    clickedSlider = NEUConfig.DungeonMap.class.getDeclaredField("dmIconScale");
+                    return;
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
             }
         }
 
@@ -583,83 +489,8 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
         int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
         int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-        if(activeColourEditor != null && (Mouse.isButtonDown(0) || Mouse.isButtonDown(1))) {
-            if(mouseX >= activeColourEditor.x && mouseX <= activeColourEditor.x+119) {
-                if(mouseY >= activeColourEditor.y && mouseY <= activeColourEditor.y+89) {
-                    if(Mouse.getEventButtonState()) {
-                        if(mouseX > activeColourEditor.x+5+8 && mouseX < activeColourEditor.x+5+8+48) {
-                            if(mouseY > activeColourEditor.y+5+64+5 && mouseY < activeColourEditor.y+5+64+5+10) {
-                                hexField.mouseClicked(mouseX, mouseY, Mouse.getEventButton());
-                                Utils.pushGuiScale(-1);
-                                return;
-                            }
-                        }
-                    }
-                    hexField.otherComponentClick();
-
-                    int currentColour = SpecialColour.specialToSimpleRGB(activeColourEditor.special);
-                    Color c = new Color(currentColour, true);
-                    float[] hsv = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
-
-                    int xWheel = mouseX - activeColourEditor.x - 5;
-                    int yWheel = mouseY - activeColourEditor.y - 5;
-
-                    if(xWheel > 0 && xWheel < 64) {
-                        if(yWheel > 0 && yWheel < 64) {
-                            float radius = (float) Math.sqrt(((xWheel-32)*(xWheel-32)+(yWheel-32)*(yWheel-32))/1024f);
-                            float angle = (float) Math.toDegrees(Math.atan((32-xWheel)/(yWheel-32+1E-5))+Math.PI/2);
-                            if(yWheel < 32) angle += 180;
-
-                            int rgb = Color.getHSBColor(angle/360f, (float)Math.pow(Math.min(1, radius), 1.5f), hsv[2]).getRGB();
-                            activeColourEditor.special = SpecialColour.special(SpecialColour.getSpeed(activeColourEditor.special), c.getAlpha(), rgb);
-                            activeColourEditor.option.value = (String) activeColourEditor.special;
-                        }
-                    }
-
-                    int xValue = mouseX - (activeColourEditor.x+5+64+5);
-                    int y = mouseY - activeColourEditor.y - 5;
-
-                    if(y > -5 && y <= 69) {
-                        y = Math.max(0, Math.min(64, y));
-                        if(xValue > 0 && xValue < 10) {
-                            int rgb = Color.getHSBColor(hsv[0], hsv[1], 1-y/64f).getRGB();
-                            activeColourEditor.special = SpecialColour.special(SpecialColour.getSpeed(activeColourEditor.special), c.getAlpha(), rgb);
-                            activeColourEditor.option.value = activeColourEditor.special;
-                        }
-
-                        int xOpacity = mouseX - (activeColourEditor.x+5+64+5+10+5);
-
-                        if(xOpacity > 0 && xOpacity < 10) {
-                            activeColourEditor.special = SpecialColour.special(SpecialColour.getSpeed(activeColourEditor.special),
-                                    255-(int)(y/64f*255), currentColour);
-                            activeColourEditor.option.value = activeColourEditor.special;
-                        }
-                    }
-
-                    int chromaSpeed = SpecialColour.getSpeed(activeColourEditor.special);
-
-                    int xChroma = mouseX - (activeColourEditor.x+5+64+5+10+5+10+5);
-                    if(xChroma > 0 && xChroma < 10) {
-                        if(chromaSpeed > 0) {
-                            if(y > -5 && y <= 69) {
-                                y = Math.max(0, Math.min(64, y));
-                                activeColourEditor.special = SpecialColour.special(255-Math.round(y/64f*255), c.getAlpha(), currentColour);
-                                activeColourEditor.option.value =  activeColourEditor.special;
-                            }
-                        } else if(mouseY > activeColourEditor.y+5+27 && mouseY < activeColourEditor.y+5+37) {
-                            activeColourEditor.special = SpecialColour.special(200, c.getAlpha(), currentColour);
-                            activeColourEditor.option.value =  activeColourEditor.special;
-                        }
-                    }
-
-                    try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
-                    return;
-                }
-            }
-            if(Mouse.getEventButtonState()) {
-                activeColourEditor = null;
-                hexField.otherComponentClick();
-            }
+        if(activeColourEditor != null) {
+            activeColourEditor.mouseInput(mouseX, mouseY);
         }
     }
 
@@ -667,23 +498,8 @@ public class GuiDungeonMapEditor extends GuiScreen {
     public void handleKeyboardInput() throws IOException {
         super.handleKeyboardInput();
 
-        if(activeColourEditor != null && hexField.getFocus()) {
-            String old = hexField.getText();
-
-            hexField.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
-
-            if(hexField.getText().length() > 6) {
-                hexField.setText(old);
-            } else {
-                try {
-                    String text = hexField.getText().toLowerCase();
-
-                    int rgb = Integer.parseInt(text, 16);
-                    int alpha = (SpecialColour.specialToSimpleRGB(activeColourEditor.special) >> 24) & 0xFF;
-                    activeColourEditor.special = SpecialColour.special(SpecialColour.getSpeed(activeColourEditor.special), alpha, rgb);
-                    activeColourEditor.option.value = activeColourEditor.special;
-                } catch(Exception e) {};
-            }
+        if(activeColourEditor != null) {
+            activeColourEditor.keyboardInput();
         }
     }
 
@@ -696,8 +512,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
             try {
                 xField.setCustomBorderColour(-1);
-                NotEnoughUpdates.INSTANCE.manager.config.dmCenterX.setValue(xField.getText());
-                try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
+                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterX = Float.parseFloat(xField.getText());
             } catch(Exception e) {
                 xField.setCustomBorderColour(Color.RED.getRGB());
             }
@@ -706,8 +521,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
             try {
                 yField.setCustomBorderColour(-1);
-                NotEnoughUpdates.INSTANCE.manager.config.dmCenterY.setValue(yField.getText());
-                try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
+                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterY = Float.parseFloat(yField.getText());
             } catch(Exception e) {
                 yField.setCustomBorderColour(Color.RED.getRGB());
             }
@@ -716,8 +530,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
             try {
                 blurField.setCustomBorderColour(-1);
-                NotEnoughUpdates.INSTANCE.manager.config.dmBackgroundBlur.setValue(blurField.getText());
-                try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {}
+                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur = (int)Float.parseFloat(blurField.getText());
             } catch(Exception e) {
                 blurField.setCustomBorderColour(Color.RED.getRGB());
             }
@@ -725,71 +538,73 @@ public class GuiDungeonMapEditor extends GuiScreen {
     }
 
     private void buttonClicked(int mouseX, int mouseY, int id) {
-        Options options = NotEnoughUpdates.INSTANCE.manager.config;
+        NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
         switch (id) {
             case 0:
-                options.dmBorderSize.value = 0.0; break;
+                options.dmBorderSize = 0; break;
             case 1:
-                options.dmBorderSize.value = 1.0; break;
+                options.dmBorderSize = 1; break;
             case 2:
-                options.dmBorderSize.value = 2.0; break;
+                options.dmBorderSize = 2; break;
             case 30:
-                options.dmBorderSize.value = 3.0; break;
+                options.dmBorderSize = 3; break;
             case 3:
-                options.dmRoomSize.value = 0.0; break;
+                options.dmRoomSize = 0; break;
             case 4:
-                options.dmRoomSize.value = 1.0; break;
+                options.dmRoomSize = 1; break;
             case 5:
-                options.dmRoomSize.value = 2.0; break;
+                options.dmRoomSize = 2; break;
             case 29:
-                options.dmRoomSize.value = 3.0; break;
+                options.dmRoomSize = 3; break;
             case 18:
-                options.dmEnable.value = !options.dmEnable.value; break;
+                options.dmEnable = !options.dmEnable; break;
             case 19:
-                options.dmCenterPlayer.value = !options.dmCenterPlayer.value; break;
+                options.dmCenterPlayer = !options.dmCenterPlayer; break;
             case 20:
-                options.dmRotatePlayer.value = !options.dmRotatePlayer.value; break;
+                options.dmRotatePlayer = !options.dmRotatePlayer; break;
             case 21:
-                options.dmPlayerHeads.value++;
-                if(options.dmPlayerHeads.value > 2) options.dmPlayerHeads.value = 0.0; break;
+                options.dmPlayerHeads++;
+                if(options.dmPlayerHeads > 2) options.dmPlayerHeads = 0; break;
             case 22:
-                options.dmOrientCheck.value = !options.dmOrientCheck.value; break;
+                options.dmOrientCheck = !options.dmOrientCheck; break;
             case 23:
-                options.dmCenterCheck.value = !options.dmCenterCheck.value; break;
+                options.dmCenterCheck = !options.dmCenterCheck; break;
             case 24:
-                options.dmPlayerInterp.value = !options.dmPlayerInterp.value; break;
+                options.dmPlayerInterp = !options.dmPlayerInterp; break;
             case 25:
-                options.dmCompat.value++;
-                if(options.dmCompat.value > 2) options.dmCompat.value = 0.0;
+                options.dmCompat++;
+                if(options.dmCompat > 2) options.dmCompat = 0;
                 break;
             case 26:
-                showColourEditor(mouseX, mouseY, options.dmBackgroundColour, options.dmBackgroundColour.value); break;
+                activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBackgroundColour,
+                        (col) -> options.dmBackgroundColour = col, () -> activeColourEditor = null);
+                break;
             case 27:
-                showColourEditor(mouseX, mouseY, options.dmBorderColour, options.dmBorderColour.value); break;
+                activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBorderColour,
+                        (col) -> options.dmBorderColour = col, () -> activeColourEditor = null);
+                break;
             case 28:
-                options.dmChromaBorder.value = !options.dmChromaBorder.value; break;
+                options.dmChromaBorder = !options.dmChromaBorder; break;
             default:
                 if(id >= 6 && id <= 17) {
-                    options.dmBorderStyle.value = (double)id-6; break;
+                    options.dmBorderStyle = id-6; break;
                 }
-        }
-        try { NotEnoughUpdates.INSTANCE.manager.saveConfig(); } catch(IOException ignored) {};
-
+        };
     }
 
     private boolean isButtonPressed(int id) {
-        Options options = NotEnoughUpdates.INSTANCE.manager.config;
+        NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
 
         if(id >= 0 && id <= 2) {
-            return options.dmBorderSize.value == id;
+            return options.dmBorderSize == id;
         } else if(id >= 3 && id <= 5) {
-            return options.dmRoomSize.value == id-3;
+            return options.dmRoomSize == id-3;
         } else if(id >= 6 && id <= 17) {
-            return options.dmBorderStyle.value == id-6;
+            return options.dmBorderStyle == id-6;
         } else if(id == 29) {
-            return options.dmRoomSize.value == 3;
+            return options.dmRoomSize == 3;
         } else if(id == 30) {
-            return options.dmBorderSize.value == 3;
+            return options.dmBorderSize == 3;
         }
         return false;
     }

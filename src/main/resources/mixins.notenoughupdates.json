@@ -17,6 +17,8 @@
     "MixinEntityPlayer",
     "MixinTileEntitySpecialRenderer",
     "MixinRender",
-    "MixinRenderFish"
+    "MixinRenderFish",
+    "MixinContainer",
+    "MixinWorld"
   ]
 }

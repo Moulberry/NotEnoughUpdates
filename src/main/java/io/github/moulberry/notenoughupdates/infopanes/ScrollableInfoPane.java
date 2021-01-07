@@ -1,8 +1,8 @@
 package io.github.moulberry.notenoughupdates.infopanes;
 
-import io.github.moulberry.notenoughupdates.util.LerpingInteger;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
+import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import org.lwjgl.input.Mouse;
 
 public abstract class ScrollableInfoPane extends InfoPane {

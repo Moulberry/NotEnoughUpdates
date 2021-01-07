@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
-import io.github.moulberry.notenoughupdates.NEUResourceManager;
+import io.github.moulberry.notenoughupdates.util.NEUResourceManager;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -14,7 +14,6 @@ import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.Matrix4f;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -25,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.github.moulberry.notenoughupdates.GuiTextures.item_mask;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.item_mask;
 
 public class CollectionLogInfoPane extends ScrollableInfoPane {
 
@@ -114,7 +113,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     }
 
     private Map<String, ArrayList<String>> getAcquiredItems() {
-        return manager.config.collectionLog.value;
+        return null;//manager.config.collectionLog.value;
     }
 
     private Comparator<String> getItemComparator() {
@@ -267,13 +266,13 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         itemFramebufferGrayscale = checkFramebufferSizes(itemFramebufferGrayscale, width, height,
                 scaledresolution.getScaleFactor());
 
-        if(!manager.config.cacheRenderedItempane.value || previousAcquiredCount != getCurrentAcquiredCount() ||
+        /*if(!manager.config.cacheRenderedItempane.value || previousAcquiredCount != getCurrentAcquiredCount() ||
                 previousScroll != scrollHeight.getValue() || previousX != left || previousFilter != filterMode ||
                 System.currentTimeMillis() - lastUpdate > 5000) {
             lastUpdate = System.currentTimeMillis();
             renderItemsToImage(itemFramebuffer, fg, left+5, right, top+1, bottom);
             renderItemBGToImage(itemBGFramebuffer, fg, left+5, right, top+1, bottom);
-        }
+        }*/
         previousAcquiredCount = getCurrentAcquiredCount();
         previousScroll = scrollHeight.getValue();
         previousX = left;
@@ -396,8 +395,8 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     }
 
     private void renderItemBackgrounds(Color fg, int left, int right, int top, int bottom) {
-        Color fgCustomOpacity = new Color(SpecialColour.specialToChromaRGB(manager.config.itemBackgroundColour.value), true);
-        Color fgGold = new Color(SpecialColour.specialToChromaRGB(manager.config.itemFavouriteColour.value), true);
+        Color fgCustomOpacity = null;//new Color(SpecialColour.specialToChromaRGB(manager.config.itemBackgroundColour.value), true);
+        Color fgGold = null;//new Color(SpecialColour.specialToChromaRGB(manager.config.itemFavouriteColour.value), true);
 
         String[] items = getItemList();
         iterateItemSlots(new ItemSlotConsumer() {
@@ -413,13 +412,13 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
                     }
 
                     Minecraft.getMinecraft().getTextureManager().bindTexture(item_mask);
-                    if(manager.config.itemStyle.value) {
+                    /*if(manager.config.itemStyle.value) {
                         GlStateManager.color(color.getRed() / 255f, color.getGreen() / 255f,
                                 color.getBlue() / 255f, color.getAlpha() / 255f);
                         Utils.drawTexturedRect(x - 1, y - 1, overlay.ITEM_SIZE + 2, overlay.ITEM_SIZE + 2, GL11.GL_NEAREST);
                     } else {
                         drawRect(x-1, y-1, x+overlay.ITEM_SIZE+1, y+overlay.ITEM_SIZE+1, color.getRGB());
-                    }
+                    }*/
                     GlStateManager.bindTexture(0);
                 }
             }

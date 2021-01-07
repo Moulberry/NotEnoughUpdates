@@ -366,7 +366,7 @@ public class Utils {
     }
 
     public static void playPressSound() {
-        if(NotEnoughUpdates.INSTANCE.manager.config.guiButtonClicks.value) {
+        if(NotEnoughUpdates.INSTANCE.config.misc.guiButtonClicks) {
             Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
                     new ResourceLocation("gui.button.press"), 1.0F));
         }
@@ -514,6 +514,51 @@ public class Utils {
             fr.drawString(format+c, x+(5-charWidth)/2f, y-7+charHeight, colour, shadow);
 
             y += charHeight + 1.5f;
+        }
+    }
+
+    public static void renderAlignedString(String first, String second, float x, float y, int length) {
+        FontRenderer fontRendererObj = Minecraft.getMinecraft().fontRendererObj;
+        if(fontRendererObj.getStringWidth(first + " " + second) >= length) {
+            for(int xOff=-2; xOff<=2; xOff++) {
+                for(int yOff=-2; yOff<=2; yOff++) {
+                    if(Math.abs(xOff) != Math.abs(yOff)) {
+                        Utils.drawStringCenteredScaledMaxWidth(Utils.cleanColourNotModifiers(first + " " + second), Minecraft.getMinecraft().fontRendererObj,
+                                x+length/2f+xOff/2f, y+4+yOff/2f, false, length,
+                                new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB());
+                    }
+                }
+            }
+
+            GlStateManager.color(1, 1, 1, 1);
+            Utils.drawStringCenteredScaledMaxWidth(first + " " + second, Minecraft.getMinecraft().fontRendererObj,
+                    x+length/2f, y+4, false, length, 4210752);
+        } else {
+            for(int xOff=-2; xOff<=2; xOff++) {
+                for(int yOff=-2; yOff<=2; yOff++) {
+                    if(Math.abs(xOff) != Math.abs(yOff)) {
+                        fontRendererObj.drawString(Utils.cleanColourNotModifiers(first),
+                                x+xOff/2f, y+yOff/2f,
+                                new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB(), false);
+                    }
+                }
+            }
+
+            int secondLen = fontRendererObj.getStringWidth(second);
+            GlStateManager.color(1, 1, 1, 1);
+            fontRendererObj.drawString(first, x, y, 4210752, false);
+            for(int xOff=-2; xOff<=2; xOff++) {
+                for(int yOff=-2; yOff<=2; yOff++) {
+                    if(Math.abs(xOff) != Math.abs(yOff)) {
+                        fontRendererObj.drawString(Utils.cleanColourNotModifiers(second),
+                                x+length-secondLen+xOff/2f, y+yOff/2f,
+                                new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB(), false);
+                    }
+                }
+            }
+
+            GlStateManager.color(1, 1, 1, 1);
+            fontRendererObj.drawString(second, x+length-secondLen, y, 4210752, false);
         }
     }
 
@@ -939,11 +984,11 @@ public class Utils {
             drawGradientRect(zLevel, tooltipX + tooltipTextWidth + 3, tooltipY - 3, tooltipX + tooltipTextWidth + 4, tooltipY + tooltipHeight + 3, backgroundColor, backgroundColor);
             //TODO: Coloured Borders
             int borderColorStart = 0x505000FF;
-            if(NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderColours.value && coloured) {
+            if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.tooltipBorderColours && coloured) {
                 if(textLines.size() > 0) {
                     String first = textLines.get(0);
                     borderColorStart = getPrimaryColour(first).getRGB() & 0x00FFFFFF |
-                            ((NotEnoughUpdates.INSTANCE.manager.config.tooltipBorderOpacity.value.intValue()) << 24);
+                            ((NotEnoughUpdates.INSTANCE.config.tooltipTweaks.tooltipBorderOpacity) << 24);
                 }
             }
             final int borderColorEnd = (borderColorStart & 0xFEFEFE) >> 1 | borderColorStart & 0xFF000000;

@@ -1,15 +1,16 @@
 package io.github.moulberry.notenoughupdates.profileviewer;
 
 import com.google.gson.*;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.EnumChatFormatting;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,11 +31,12 @@ public class PlayerStats {
     public static final String PET_LUCK = "pet_luck";
 
     public static final String[] defaultStatNames = new String[]{"health","defence","strength","speed","crit_chance",
-            "crit_damage","bonus_attack_speed","intelligence","sea_creature_chance","magic_find","pet_luck"};
+            "crit_damage","bonus_attack_speed","intelligence","sea_creature_chance","magic_find","pet_luck","ferocity","ability_damage"};
     public static final String[] defaultStatNamesPretty = new String[]{EnumChatFormatting.RED+"\u2764 Health",EnumChatFormatting.GREEN+"\u2748 Defence",
             EnumChatFormatting.RED+"\u2741 Strength",EnumChatFormatting.WHITE+"\u2726 Speed",EnumChatFormatting.BLUE+"\u2623 Crit Chance",
             EnumChatFormatting.BLUE+"\u2620 Crit Damage",EnumChatFormatting.YELLOW+"\u2694 Attack Speed",EnumChatFormatting.AQUA+"\u270e Intelligence",
-            EnumChatFormatting.DARK_AQUA+"\u03b1 SC Chance",EnumChatFormatting.AQUA+"\u272f Magic Find",EnumChatFormatting.LIGHT_PURPLE+"\u2663 Pet Luck"};
+            EnumChatFormatting.DARK_AQUA+"\u03b1 SC Chance",EnumChatFormatting.AQUA+"\u272f Magic Find",EnumChatFormatting.LIGHT_PURPLE+"\u2663 Pet Luck",
+            EnumChatFormatting.RED+"\u2AFD Ferocity",EnumChatFormatting.RED+"\u2739 Ability Damage"};
 
     public static class Stats {
         JsonObject statsJson = new JsonObject();
@@ -86,6 +88,12 @@ public class PlayerStats {
                 }
             }
             return this;
+        }
+
+        public void scale(String statName, float scale) {
+            if(statsJson.has(statName)) {
+                statsJson.add(statName, new JsonPrimitive(statsJson.get(statName).getAsFloat()*scale));
+            }
         }
 
         public void scaleAll(float scale) {
@@ -159,7 +167,7 @@ public class PlayerStats {
         return skillBonus;
     }
 
-    private static Stats getPetBonus(JsonObject profile) {
+    private static Stats getTamingBonus(JsonObject profile) {
         JsonObject bonuses = Constants.BONUSES;
         if(bonuses == null) return null;
 
@@ -211,10 +219,9 @@ public class PlayerStats {
 
         Stats fairyBonus = getFairyBonus((int)Utils.getElementAsFloat(Utils.getElement(profile, "fairy_exchanges"), 0));
         Stats skillBonus = getSkillBonus(skillInfo);
-        Stats petBonus = getPetBonus(profile);
+        Stats petBonus = getTamingBonus(profile);
 
-        if(fairyBonus == null || skillBonus == null || petBonus == null) {
-            System.out.println(petBonus);
+        if(skillBonus == null || petBonus == null) {
             return null;
         }
 
@@ -332,6 +339,8 @@ public class PlayerStats {
     private static final Pattern ATKSPEED_PATTERN = Pattern.compile("^Bonus Attack Speed: ((?:\\+|-)[0-9]+)");
     private static final Pattern INTELLIGENCE_PATTERN = Pattern.compile("^Intelligence: ((?:\\+|-)[0-9]+)");
     private static final Pattern SCC_PATTERN = Pattern.compile("^Sea Creature Chance: ((?:\\+|-)[0-9]+)");
+    private static final Pattern FEROCITY_PATTERN = Pattern.compile("^Ferocity: ((?:\\+|-)[0-9]+)");
+    private static final Pattern AD_PATTERN = Pattern.compile("^Ability Damage: ((?:\\+|-)[0-9]+)");
     private static final HashMap<String, Pattern> STAT_PATTERN_MAP = new HashMap<>();
     static {
         STAT_PATTERN_MAP.put("health", HEALTH_PATTERN);
@@ -343,6 +352,8 @@ public class PlayerStats {
         STAT_PATTERN_MAP.put("bonus_attack_speed", ATKSPEED_PATTERN);
         STAT_PATTERN_MAP.put("intelligence", INTELLIGENCE_PATTERN);
         STAT_PATTERN_MAP.put("sea_creature_chance", SCC_PATTERN);
+        STAT_PATTERN_MAP.put("ferocity", FEROCITY_PATTERN);
+        STAT_PATTERN_MAP.put("ability_damage", AD_PATTERN);
     }
     private static Stats getStatForItem(String internalname, JsonObject item, JsonArray lore) {
         Stats stats = new Stats();
@@ -429,7 +440,102 @@ public class PlayerStats {
         for(Stats stats : itemBonuses.values()) {
             itemBonusesStats.add(stats);
         }
+
         return itemBonusesStats;
+    }
+
+    public static Stats getPetStatBonuses(JsonObject petsInfo) {
+        JsonObject petsJson = Constants.PETS;
+        JsonObject petnums = Constants.PETNUMS;
+        if(petsJson == null || petnums == null) return new Stats();
+
+        if(petsInfo != null && petsInfo.has("active_pet") && petsInfo.get("active_pet") != null &&
+                petsInfo.get("active_pet").isJsonObject()) {
+            JsonObject pet = petsInfo.get("active_pet").getAsJsonObject();
+            if(pet.has("type") && pet.get("type") != null &&
+                    pet.has("tier") && pet.get("tier") != null &&
+                    pet.has("exp") && pet.get("exp") != null) {
+
+                String petname = pet.get("type").getAsString();
+                String tier = pet.get("tier").getAsString();
+                String heldItem = Utils.getElementAsString(pet.get("heldItem"), null);
+
+                if(!petnums.has(petname)) {
+                    return new Stats();
+                }
+
+                String tierNum = GuiProfileViewer.MINION_RARITY_TO_NUM.get(tier);
+                float exp = pet.get("exp").getAsFloat();
+                if(tierNum == null) return new Stats();
+
+                if(pet.has("heldItem") && !pet.get("heldItem").isJsonNull() && pet.get("heldItem").getAsString().equals("PET_ITEM_TIER_BOOST")) {
+                    tierNum = ""+(Integer.parseInt(tierNum)+1);
+                }
+
+                int petRarityOffset = petsJson.get("pet_rarity_offset").getAsJsonObject().get(tier).getAsInt();
+                JsonArray levelsArr = petsJson.get("pet_levels").getAsJsonArray();
+
+                GuiProfileViewer.Level levelObj = GuiProfileViewer.getLevel(levelsArr, petRarityOffset, exp);
+                float level = levelObj.level;
+                float currentLevelRequirement = levelObj.currentLevelRequirement;
+                float maxXP = levelObj.maxXP;
+                pet.addProperty("level", level);
+                pet.addProperty("currentLevelRequirement", currentLevelRequirement);
+                pet.addProperty("maxXP", maxXP);
+
+                JsonObject petItem = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(petname+";"+tierNum);
+                if(petItem == null) return new Stats();
+
+                Stats stats = new Stats();
+
+                JsonObject petInfo = petnums.get(petname).getAsJsonObject();
+                if(petInfo.has(tier)) {
+                    JsonObject petInfoTier = petInfo.get(tier).getAsJsonObject();
+                    if(petInfoTier == null || !petInfoTier.has("1") || !petInfoTier.has("100")) {
+                        return new Stats();
+                    }
+
+                    JsonObject min = petInfoTier.get("1").getAsJsonObject();
+                    JsonObject max = petInfoTier.get("100").getAsJsonObject();
+
+                    float minMix = (100-level)/99f;
+                    float maxMix = (level-1)/99f;
+
+                    for(Map.Entry<String, JsonElement> entry : max.get("statNums").getAsJsonObject().entrySet()) {
+                        float statMax = entry.getValue().getAsFloat();
+                        float statMin = min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat();
+                        float val = statMin*minMix + statMax*maxMix;
+
+                        stats.addStat(entry.getKey().toLowerCase(), (int)Math.floor(val));
+                    }
+                }
+
+                if(heldItem != null) {
+                    HashMap<String, Float> petStatBoots = GuiProfileViewer.PET_STAT_BOOSTS.get(heldItem);
+                    HashMap<String, Float> petStatBootsMult = GuiProfileViewer.PET_STAT_BOOSTS_MULT.get(heldItem);
+                    if(petStatBoots != null) {
+                        for(Map.Entry<String, Float> entryBoost : petStatBoots.entrySet()) {
+                            String key = entryBoost.getKey().toLowerCase();
+                            try {
+                                stats.addStat(key, entryBoost.getValue());
+                            } catch(Exception ignored) {}
+                        }
+
+                    }
+                    if(petStatBootsMult != null) {
+                        for(Map.Entry<String, Float> entryBoost : petStatBootsMult.entrySet()) {
+                            String key = entryBoost.getKey().toLowerCase();
+                            try {
+                                stats.scale(key, entryBoost.getValue());
+                            } catch(Exception ignored) {}
+                        }
+                    }
+                }
+
+                return stats;
+            }
+        }
+        return new Stats();
     }
 
     private static float getStatMult(JsonObject inventoryInfo) {
@@ -485,7 +591,8 @@ public class PlayerStats {
         }
     }
 
-    public static Stats getStats(JsonObject skillInfo, JsonObject inventoryInfo, JsonObject collectionInfo, JsonObject profile) {
+    public static Stats getStats(JsonObject skillInfo, JsonObject inventoryInfo, JsonObject collectionInfo,
+                                 JsonObject petsInfo, JsonObject profile) {
         if(skillInfo == null || inventoryInfo == null || collectionInfo == null || profile == null) return null;
 
         JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
@@ -500,7 +607,14 @@ public class PlayerStats {
             return null;
         }
 
-        Stats stats = getBaseStats().add(passiveBonuses).add(armorBonuses).add(talismanBonuses);
+        Stats stats = getBaseStats();
+        if(stats == null) {
+            return null;
+        }
+
+        Stats petBonus = getPetStatBonuses(petsInfo);
+
+        stats = stats.add(passiveBonuses).add(armorBonuses).add(talismanBonuses).add(petBonus);
 
         stats.add(getSetBonuses(stats, inventoryInfo, collectionInfo, skillInfo, profile));
 

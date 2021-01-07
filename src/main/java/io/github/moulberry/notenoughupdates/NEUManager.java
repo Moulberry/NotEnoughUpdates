@@ -3,8 +3,7 @@ package io.github.moulberry.notenoughupdates;
 import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
-import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
-import io.github.moulberry.notenoughupdates.options.Options;
+import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -25,12 +24,9 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -77,19 +73,13 @@ public class NEUManager {
     public File configFile;
     public File itemRenameFile;
     public JsonObject itemRenameJson;
-    public Options config;
 
     public NEUManager(NotEnoughUpdates neu, File configLocation) {
         this.neu = neu;
         this.configLocation = configLocation;
         this.auctionManager = new APIManager(this);
 
-        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
-        gsonBuilder.registerTypeAdapter(Options.Option.class, Options.createSerializer());
-        gsonBuilder.registerTypeAdapter(Options.Option.class, Options.createDeserializer());
-        gson = gsonBuilder.create();
-
-        this.loadConfig();
+        gson = new GsonBuilder().setPrettyPrinting().create();
 
         this.repoLocation = new File(configLocation, "repo");
         repoLocation.mkdir();
@@ -128,20 +118,6 @@ public class NEUManager {
 
     public void saveItemRenameConfig() {
         try { writeJson(itemRenameJson, itemRenameFile); } catch(IOException ignored) {}
-    }
-
-    public void saveConfig() throws IOException {
-        config.saveToFile(gson, configFile);
-    }
-
-    public void loadConfig() {
-        this.configFile = new File(configLocation, "config.json");
-        try {
-            configFile.createNewFile();
-            config = Options.loadFromFile(gson, configFile);
-        } catch(Exception e) {
-            config = new Options();
-        }
     }
 
     /**
@@ -201,11 +177,11 @@ public class NEUManager {
         Thread thread = new Thread(() -> {
             JDialog dialog = null;
             try {
-                if(config.autoupdate.value) {
+                if(NotEnoughUpdates.INSTANCE.config.hidden.autoupdate) {
                     JOptionPane pane = new JOptionPane("Getting items to download from remote repository.");
                     dialog = pane.createDialog("NotEnoughUpdates Remote Sync");
                     dialog.setModal(false);
-                    if(config.dev.value) dialog.setVisible(true);
+                    if(NotEnoughUpdates.INSTANCE.config.hidden.dev) dialog.setVisible(true);
 
                     if (Display.isActive()) dialog.toFront();
 
@@ -239,7 +215,7 @@ public class NEUManager {
 
                         pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
                         dialog.pack();
-                        if(config.dev.value) dialog.setVisible(true);
+                        if(NotEnoughUpdates.INSTANCE.config.hidden.dev) dialog.setVisible(true);
                         if (Display.isActive()) dialog.toFront();
 
                         File itemsZip = new File(repoLocation, "neu-items-master.zip");

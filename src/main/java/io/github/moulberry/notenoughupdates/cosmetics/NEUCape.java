@@ -88,6 +88,8 @@ public class NEUCape {
             shaderName = "biscuit_cape";
         } else if(capeName.equalsIgnoreCase("negative")) {
             shaderName = "negative";
+        } else if(capeName.equalsIgnoreCase("void")) {
+            shaderName = "void";
         } else {
             shaderName = "shiny_cape";
         }
@@ -119,7 +121,10 @@ public class NEUCape {
 
     private void bindTexture() {
         if(capeName.equalsIgnoreCase("negative")) {
-            CapeManager.getInstance().backgroundFramebuffer.bindFramebufferTexture();
+            CapeManager.getInstance().updateWorldFramebuffer = true;
+            if(CapeManager.getInstance().backgroundFramebuffer != null) {
+                CapeManager.getInstance().backgroundFramebuffer.bindFramebufferTexture();
+            }
         } else if(capeTextures != null && capeTextures.length>0) {
             long currentTime = System.currentTimeMillis();
             if(currentTime - lastFrameUpdate > 100) {
@@ -321,6 +326,12 @@ public class NEUCape {
             shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
             shaderManager.loadData(shaderName, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
         } else if(shaderName.equalsIgnoreCase("negative")) {
+            shaderManager.loadData(shaderName, "screensize", new Vector2f(
+                    Minecraft.getMinecraft().displayWidth,
+                    Minecraft.getMinecraft().displayHeight
+            ));
+        } else if(shaderName.equalsIgnoreCase("void")) {
+            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
             shaderManager.loadData(shaderName, "screensize", new Vector2f(
                     Minecraft.getMinecraft().displayWidth,
                     Minecraft.getMinecraft().displayHeight

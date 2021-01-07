@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.github.moulberry.notenoughupdates.GuiTextures.*;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;

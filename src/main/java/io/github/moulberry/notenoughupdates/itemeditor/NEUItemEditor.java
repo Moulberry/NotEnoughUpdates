@@ -2,8 +2,8 @@ package io.github.moulberry.notenoughupdates.itemeditor;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import io.github.moulberry.notenoughupdates.util.LerpingInteger;
 import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
