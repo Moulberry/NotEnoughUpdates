@@ -61,6 +61,13 @@ public class CustomItems {
                   "39 legendary phoenix pets",
                   "",
                   "get flexed");
+    public static JsonObject IRONM00N = create(
+            "IRONM00N",
+            "diamond",
+            "IRONM00N",
+            "Epic Repo Man and Discord admin.",
+            "In general a cool dude ;)"
+    );
 
     /**
      * SHAAAAAAAAAAAAAAAAAAME
