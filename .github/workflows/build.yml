@@ -43,4 +43,8 @@ jobs:
     - name: Upload mod jar
       uses: actions/upload-artifact@v2
       with:
-        path: build/libs/*.jar
+        name: NotEnoughUpdates
+        path: |
+          build/libs/*.jar
+          !build/libs/*-dep.jar
+          !build/libs/*-sources.jar
