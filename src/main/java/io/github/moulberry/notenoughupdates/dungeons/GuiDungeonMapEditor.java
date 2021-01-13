@@ -177,9 +177,42 @@ public class GuiDungeonMapEditor extends GuiScreen {
         //buttons.add(new Button(29, 52, 86+19, "XLarge", options.dmRoomSize));
         //buttons.add(new Button(30, 52, 56, "XLarge", options.dmBorderSize));
 
-        xField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterX));
-        yField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterY));
-        blurField.setText(String.valueOf(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur));
+        {
+            double val = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterX;
+            String strVal;
+            if(val % 1 == 0) {
+                strVal = Integer.toString((int)val);
+            } else {
+                strVal = Double.toString(val);
+                strVal = strVal.replaceAll("(\\.\\d\\d\\d)(?:\\d)+", "$1");
+                strVal = strVal.replaceAll("0+$", "");
+            }
+            xField.setText(strVal);
+        }
+        {
+            double val = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterY;
+            String strVal;
+            if(val % 1 == 0) {
+                strVal = Integer.toString((int)val);
+            } else {
+                strVal = Double.toString(val);
+                strVal = strVal.replaceAll("(\\.\\d\\d\\d)(?:\\d)+", "$1");
+                strVal = strVal.replaceAll("0+$", "");
+            }
+            yField.setText(strVal);
+        }
+        {
+            double val = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur;
+            String strVal;
+            if(val % 1 == 0) {
+                strVal = Integer.toString((int)val);
+            } else {
+                strVal = Double.toString(val);
+                strVal = strVal.replaceAll("(\\.\\d\\d\\d)(?:\\d)+", "$1");
+                strVal = strVal.replaceAll("0+$", "");
+            }
+            blurField.setText(strVal);
+        }
     }
 
     @Override

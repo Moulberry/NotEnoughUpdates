@@ -467,7 +467,7 @@ public class EnchantingSolvers {
                         for (int index2 = 0; index2 < lower.getSizeInventory(); index2++) {
                             ItemStack stack2 = lower.getStackInSlot(index2);
                             if(stack2 != null && stack2.getDisplayName().equals(stack.getDisplayName()) &&
-                                    stack.getItem() == stack2.getItem()) {
+                                    stack.getItem() == stack2.getItem() && stack.getItemDamage() == stack2.getItemDamage()) {
                                 numMatches++;
                             }
                         }
@@ -480,7 +480,7 @@ public class EnchantingSolvers {
 
                                 ItemStack stack2 = lower.getStackInSlot(index2);
                                 if(stack2 != null && stack2.getDisplayName().equals(stack.getDisplayName()) &&
-                                        stack.getItem() == stack2.getItem()) {
+                                        stack.getItem() == stack2.getItem() && stack.getItemDamage() == stack2.getItemDamage()) {
                                     successfulMatches.add(index);
                                     successfulMatches.add(index2);
                                 }
@@ -496,7 +496,7 @@ public class EnchantingSolvers {
                                 if(superpairStacks.containsKey(index2) && superpairStacks.get(index2) != null) {
                                     ItemStack stack2 = superpairStacks.get(index2);
                                     if(stack1.getDisplayName().equals(stack2.getDisplayName()) &&
-                                            stack1.getItem() == stack2.getItem()) {
+                                            stack1.getItem() == stack2.getItem() && stack1.getItemDamage() == stack2.getItemDamage()) {
                                         possibleMatches.add(index);
                                         possibleMatches.add(index2);
                                     }

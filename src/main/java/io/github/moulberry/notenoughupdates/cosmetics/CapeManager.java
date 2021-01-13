@@ -44,8 +44,8 @@ public class CapeManager {
     private HashSet<String> availableCapes = new HashSet<>();
 
     private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
-            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative", "void" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false, false };
+            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative", "void", "ironmoon", "krusty" };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false, false, true, true };
 
     public static CapeManager getInstance() {
         return INSTANCE;
@@ -215,15 +215,8 @@ public class CapeManager {
         }
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public static void onTickSlow() {
         if(Minecraft.getMinecraft().theWorld == null) return;
-
-        String clientUuid = null;
-        if(Minecraft.getMinecraft().thePlayer != null) {
-            clientUuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
-        }
 
         if(playerMap == null) {
             playerMap = HashBiMap.create(Minecraft.getMinecraft().theWorld.playerEntities.size());
@@ -232,11 +225,26 @@ public class CapeManager {
         for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
             String uuid = player.getUniqueID().toString().replace("-", "");
             contains.add(uuid);
-            if(!playerMap.containsValue(player)) {
+            if(!playerMap.containsValue(player) && !playerMap.containsKey(uuid)) {
                 playerMap.put(uuid, player);
             }
         }
         playerMap.keySet().retainAll(contains);
+    }
+
+    @SubscribeEvent
+    public void onTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        if(Minecraft.getMinecraft().theWorld == null) return;
+
+        if(playerMap == null) {
+            return;
+        }
+
+        String clientUuid = null;
+        if(Minecraft.getMinecraft().thePlayer != null) {
+            clientUuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
+        }
 
         boolean hasLocalCape = localCape != null && localCape.getRight() != null && !localCape.getRight().equals("null");
 

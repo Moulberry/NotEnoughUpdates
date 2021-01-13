@@ -112,7 +112,6 @@ public class GuiElementSlider extends GuiElement {
             return true;
         }
 
-
         return false;
     }
 

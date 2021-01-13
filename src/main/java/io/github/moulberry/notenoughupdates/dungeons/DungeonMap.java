@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.dungeons;
 
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.util.NEUResourceManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
@@ -494,7 +495,7 @@ public class DungeonMap {
 
                 if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur > 0.1) {
                     GlStateManager.translate(-centerX+mapSizeX/2, -centerY+mapSizeY/2, 0);
-                    renderBlurredBackground(scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(),
+                    BackgroundBlur.renderBlurredBackground(scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(),
                             centerX-mapSizeX/2, centerY-mapSizeY/2, mapSizeX, mapSizeY);
                     GlStateManager.translate(centerX-mapSizeX/2, centerY-mapSizeY/2, 0);
                 }
@@ -1347,17 +1348,6 @@ public class DungeonMap {
         this.colourMap = colourMap;
     }
 
-    @SubscribeEvent(priority=EventPriority.HIGH)
-    public void onRenderOverlayPre(RenderGameOverlayEvent.Pre event) {
-        if(event.type == RenderGameOverlayEvent.ElementType.ALL &&
-                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmEnable &&
-                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur > 0.1) {
-            blurBackground();
-            GlStateManager.enableBlend();
-            GlStateManager.enableTexture2D();
-        }
-    }
-
     @SubscribeEvent
     public void onWorldChange(WorldEvent.Load event) {
         colourMap = null;
@@ -1532,85 +1522,6 @@ public class DungeonMap {
         projMatrix.m13 = 1.0F;
         projMatrix.m23 = -1.0001999F;
         return projMatrix;
-    }
-
-    private double lastBgBlurFactor = -1;
-    private void blurBackground() {
-        if(!OpenGlHelper.isFramebufferEnabled()) return;
-
-        int width = Minecraft.getMinecraft().displayWidth;
-        int height = Minecraft.getMinecraft().displayHeight;
-
-        if(blurOutputHorz == null) {
-            blurOutputHorz = new Framebuffer(width, height, false);
-            blurOutputHorz.setFramebufferFilter(GL11.GL_NEAREST);
-        }
-        if(blurOutputVert == null) {
-            blurOutputVert = new Framebuffer(width, height, false);
-            blurOutputVert.setFramebufferFilter(GL11.GL_NEAREST);
-        }
-        if(blurOutputHorz.framebufferWidth != width || blurOutputHorz.framebufferHeight != height) {
-            blurOutputHorz.createBindFramebuffer(width, height);
-            blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
-        }
-        if(blurOutputVert.framebufferWidth != width || blurOutputVert.framebufferHeight != height) {
-            blurOutputVert.createBindFramebuffer(width, height);
-            blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
-        }
-
-        if(blurShaderHorz == null) {
-            try {
-                blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                        Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
-                blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
-                blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch(Exception e) { }
-        }
-        if(blurShaderVert == null) {
-            try {
-                blurShaderVert = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                        blurOutputHorz, blurOutputVert);
-                blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
-                blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch(Exception e) { }
-        }
-        if(blurShaderHorz != null && blurShaderVert != null) {
-            float blur = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur;
-            blur = Math.max(0, Math.min(50, blur));
-            if(blur != lastBgBlurFactor) {
-                blurShaderHorz.getShaderManager().getShaderUniform("Radius").set(blur);
-                blurShaderVert.getShaderManager().getShaderUniform("Radius").set(blur);
-                lastBgBlurFactor = blur;
-            }
-            GL11.glPushMatrix();
-            blurShaderHorz.loadShader(0);
-            blurShaderVert.loadShader(0);
-            GlStateManager.enableDepth();
-            GL11.glPopMatrix();
-            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
-        }
-    }
-
-    /**
-     * Renders a subsection of the blurred framebuffer on to the corresponding section of the screen.
-     * Essentially, this method will "blur" the background inside the bounds specified by [x->x+blurWidth, y->y+blurHeight]
-     */
-    public void renderBlurredBackground(int width, int height, int x, int y, int blurWidth, int blurHeight) {
-        if(!OpenGlHelper.isFramebufferEnabled()) return;
-
-        if(blurOutputVert == null) return;
-
-        float uMin = x/(float)width;
-        float uMax = (x+blurWidth)/(float)width;
-        float vMin = (height-y)/(float)height;
-        float vMax = (height-y-blurHeight)/(float)height;
-
-        blurOutputVert.bindFramebufferTexture();
-        GlStateManager.color(1f, 1f, 1f, 1f);
-        Utils.drawTexturedRectNoBlend(x, y, blurWidth, blurHeight, uMin, uMax, vMin, vMax, GL11.GL_LINEAR);
-        blurOutputVert.unbindFramebufferTexture();
     }
 
 }

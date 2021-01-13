@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.infopanes.*;
@@ -440,6 +441,7 @@ public class NEUOverlay extends Gui {
                         }
                     }
 
+                    GlStateManager.enableDepth();
                     float itemScale = bigItemSize/(float)ITEM_SIZE*extraScale;
                     GlStateManager.pushMatrix();
                     GlStateManager.scale(itemScale, itemScale, 1);
@@ -1575,93 +1577,6 @@ public class NEUOverlay extends Gui {
         return projMatrix;
     }
 
-    /**
-     * Renders whatever is currently in the Minecraft framebuffer to our two framebuffers, applying a horizontal
-     * and vertical blur separately in order to significantly save computation time.
-     * This is only possible if framebuffers are supported by the system, so this method will exit prematurely
-     * if framebuffers are not available. (Apple machines, for example, have poor framebuffer support).
-     */
-    private double lastBgBlurFactor = 5;
-    private void blurBackground() {
-        int width = Minecraft.getMinecraft().displayWidth;
-        int height = Minecraft.getMinecraft().displayHeight;
-
-        if(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor <= 0 || !OpenGlHelper.isFramebufferEnabled()) return;
-
-        if(blurOutputHorz == null) {
-            blurOutputHorz = new Framebuffer(width, height, false);
-            blurOutputHorz.setFramebufferFilter(GL11.GL_NEAREST);
-        }
-        if(blurOutputVert == null) {
-            blurOutputVert = new Framebuffer(width, height, false);
-            blurOutputVert.setFramebufferFilter(GL11.GL_NEAREST);
-        }
-        if(blurOutputHorz.framebufferWidth != width || blurOutputHorz.framebufferHeight != height) {
-            blurOutputHorz.createBindFramebuffer(width, height);
-            blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
-        }
-        if(blurOutputVert.framebufferWidth != width || blurOutputVert.framebufferHeight != height) {
-            blurOutputVert.createBindFramebuffer(width, height);
-            blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
-        }
-
-        if(blurShaderHorz == null) {
-            try {
-                blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(),
-                        "blur", Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
-                blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
-                blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch(Exception e) { }
-        }
-        if(blurShaderVert == null) {
-            try {
-                blurShaderVert = new Shader(Minecraft.getMinecraft().getResourceManager(),
-                        "blur", blurOutputHorz, blurOutputVert);
-                blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
-                blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch(Exception e) { }
-        }
-        if(blurShaderHorz != null && blurShaderVert != null) {
-            if(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor != lastBgBlurFactor) {
-                if(blurShaderHorz.getShaderManager().getShaderUniform("Radius") == null) {
-                    return;
-                }
-                lastBgBlurFactor = Math.max(0, Math.min(50, NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor));
-                blurShaderHorz.getShaderManager().getShaderUniform("Radius").set((float)lastBgBlurFactor);
-                blurShaderVert.getShaderManager().getShaderUniform("Radius").set((float)lastBgBlurFactor);
-            }
-            GL11.glPushMatrix();
-            blurShaderHorz.loadShader(0);
-            blurShaderVert.loadShader(0);
-            GlStateManager.enableDepth();
-            GL11.glPopMatrix();
-
-            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
-        }
-    }
-
-    /**
-     * Renders a subsection of the blurred framebuffer on to the corresponding section of the screen.
-     * Essentially, this method will "blur" the background inside the bounds specified by [x->x+blurWidth, y->y+blurHeight]
-     */
-    public void renderBlurredBackground(int width, int height, int x, int y, int blurWidth, int blurHeight) {
-        if(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor <= 0 || !OpenGlHelper.isFramebufferEnabled()) return;
-
-        float uMin = x/(float)width;
-        float uMax = (x+blurWidth)/(float)width;
-        float vMin = y/(float)height;
-        float vMax = (y+blurHeight)/(float)height;
-
-        blurOutputVert.bindFramebufferTexture();
-        GlStateManager.color(1f, 1f, 1f, 1f);
-        //Utils.setScreen(width*f, height*f, f);
-        Utils.drawTexturedRect(x, y, blurWidth, blurHeight, uMin, uMax, vMax, vMin);
-        //Utils.setScreen(width, height, f);
-        blurOutputVert.unbindFramebufferTexture();
-    }
-
     public void updateGuiGroupSize() {
         Utils.pushGuiScale(NotEnoughUpdates.INSTANCE.config.itemlist.paneGuiScale);
         int width = Utils.peekGuiScale().getScaledWidth();
@@ -1727,8 +1642,6 @@ public class NEUOverlay extends Gui {
             oldWidthMult = getWidthMult();
             redrawItems = true;
         }
-
-        blurBackground();
 
         yaw++;
         yaw %= 360;
@@ -1799,9 +1712,12 @@ public class NEUOverlay extends Gui {
         //Atomic reference used so that below lambda doesn't complain about non-effectively-final variable
         AtomicReference<JsonObject> tooltipToDisplay = new AtomicReference<>(null);
         if(itemPaneOffsetFactor.getValue() < 1) {
-            renderBlurredBackground(width, height,
+            BackgroundBlur.renderBlurredBackground(width, height,
                     leftSide+getBoxPadding()-5, getBoxPadding()-5,
                     paneWidth-getBoxPadding()*2+10, height-getBoxPadding()*2+10);
+            Gui.drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,
+                    leftSide+getBoxPadding()-5+paneWidth-getBoxPadding()*2+10,
+                    getBoxPadding()-5+height-getBoxPadding()*2+10, 0xc8101010);
 
             drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,
                     leftSide+paneWidth-getBoxPadding()+5, height-getBoxPadding()+5, bg.getRGB());
@@ -1951,16 +1867,16 @@ public class NEUOverlay extends Gui {
 
                 int selectedX = Math.min(selectedItemGroupX, width-getBoxPadding()-18*selectedItemGroup.size());
 
+                GlStateManager.enableDepth();
                 GlStateManager.depthFunc(GL11.GL_LESS);
-
-                drawRect(selectedX-1+2, selectedItemGroupY+17+2,
-                        selectedX-1+18*selectedItemGroup.size()+2, selectedItemGroupY+35+2, 0xa0000000);
                 drawRect(selectedX, selectedItemGroupY+18,
                         selectedX-2+18*selectedItemGroup.size(), selectedItemGroupY+34, fgCustomOpacity.getRGB());
-                drawRect(selectedX, selectedItemGroupY+18,
-                        selectedX-1+18*selectedItemGroup.size(), selectedItemGroupY+35, new Color(30, 30, 30).getRGB());
                 drawRect(selectedX-1, selectedItemGroupY+17,
                         selectedX-2+18*selectedItemGroup.size(), selectedItemGroupY+34, new Color(180, 180, 180).getRGB());
+                drawRect(selectedX, selectedItemGroupY+18,
+                        selectedX-1+18*selectedItemGroup.size(), selectedItemGroupY+35, new Color(30, 30, 30).getRGB());
+                drawRect(selectedX-1+2, selectedItemGroupY+17+2,
+                        selectedX-1+18*selectedItemGroup.size()+2, selectedItemGroupY+35+2, 0xa0000000);
                 GlStateManager.depthFunc(GL11.GL_LEQUAL);
 
                 GL11.glTranslatef(0, 0, 10);

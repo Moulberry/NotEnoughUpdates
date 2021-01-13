@@ -45,6 +45,8 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,6 +54,7 @@ public class GuiProfileViewer extends GuiScreen {
 
     private static final ResourceLocation CHEST_GUI_TEXTURE = new ResourceLocation("textures/gui/container/generic_54.png");
     public static final ResourceLocation pv_basic = new ResourceLocation("notenoughupdates:pv_basic.png");
+    public static final ResourceLocation pv_dung = new ResourceLocation("notenoughupdates:pv_dung.png");
     public static final ResourceLocation pv_extra = new ResourceLocation("notenoughupdates:pv_extra.png");
     public static final ResourceLocation pv_invs = new ResourceLocation("notenoughupdates:pv_invs.png");
     public static final ResourceLocation pv_cols = new ResourceLocation("notenoughupdates:pv_cols.png");
@@ -65,7 +68,7 @@ public class GuiProfileViewer extends GuiScreen {
     private static final NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
 
     private final ProfileViewer.Profile profile;
-    private ProfileViewerPage currentPage = ProfileViewerPage.BASIC;
+    public static ProfileViewerPage currentPage = ProfileViewerPage.BASIC;
     private int sizeX;
     private int sizeY;
     private int guiLeft;
@@ -86,13 +89,13 @@ public class GuiProfileViewer extends GuiScreen {
         LOADING(null),
         INVALID_NAME(null),
         BASIC(new ItemStack(Items.paper)),
+        DUNG(new ItemStack(Item.getItemFromBlock(Blocks.deadbush))),
         EXTRA(new ItemStack(Items.book)),
         INVS(new ItemStack(Item.getItemFromBlock(Blocks.ender_chest))),
         COLS(new ItemStack(Items.painting)),
         PETS(new ItemStack(Items.bone));
 
         public final ItemStack stack;
-
 
         ProfileViewerPage(ItemStack stack) {
             this.stack = stack;
@@ -102,7 +105,7 @@ public class GuiProfileViewer extends GuiScreen {
     public GuiProfileViewer(ProfileViewer.Profile profile) {
         this.profile = profile;
         String name = "";
-        if(profile != null) {
+        if(profile != null && profile.getHypixelProfile() != null) {
             name = profile.getHypixelProfile().get("displayname").getAsString();
         }
         playerNameTextField = new GuiElementTextField(name,
@@ -195,6 +198,9 @@ public class GuiProfileViewer extends GuiScreen {
         switch (currentPage) {
             case BASIC:
                 drawBasicPage(mouseX, mouseY, partialTicks);
+                break;
+            case DUNG:
+                drawDungPage(mouseX, mouseY, partialTicks);
                 break;
             case EXTRA:
                 drawExtraPage(mouseX, mouseY, partialTicks);
@@ -312,6 +318,9 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
         switch (currentPage) {
+            case DUNG:
+                mouseClickedDung(mouseX, mouseY, mouseButton);
+                break;
             case INVS:
                 inventoryTextField.setSize(88, 20);
                 if(mouseX > guiLeft+19 && mouseX < guiLeft+19+88) {
@@ -408,6 +417,9 @@ public class GuiProfileViewer extends GuiScreen {
             case COLS:
                 keyTypedCols(typedChar, keyCode);
                 break;
+            case DUNG:
+                keyTypedDung(typedChar, keyCode);
+                break;
         }
         if(playerNameTextField.getFocus() && !(currentPage == ProfileViewerPage.LOADING)) {
             if(keyCode == Keyboard.KEY_RETURN) {
@@ -435,6 +447,40 @@ public class GuiProfileViewer extends GuiScreen {
             case PETS:
                 mouseReleasedPets(mouseX, mouseY, mouseButton);
         }
+    }
+
+    protected void mouseClickedDung(int mouseX, int mouseY, int mouseButton) {
+        if(mouseX >= guiLeft+50 && mouseX <= guiLeft+70 &&
+                mouseY >= guiTop+54 && mouseY <= guiTop+64) {
+            dungeonLevelTextField.mouseClicked(mouseX, mouseY, mouseButton);
+        } else {
+            dungeonLevelTextField.otherComponentClick();
+        }
+
+        int cW = fontRendererObj.getStringWidth("Calculate");
+        if(mouseX >= guiLeft+23+110-17-cW && mouseX <= guiLeft+23+110-17 &&
+                mouseY >= guiTop+55 && mouseY <= guiTop+65) {
+            calculateFloorLevelXP();
+        }
+
+        int y = guiTop+142;
+
+        if(mouseY >= y-2 && mouseY <= y+9) {
+            for(int i=1; i<=7; i++) {
+                int w = fontRendererObj.getStringWidth(""+i);
+
+                int x = guiLeft+23+110*i/8-w/2;
+
+                if(mouseX >= x-2 && mouseX <= x+7) {
+                    floorTime = i;
+                    return;
+                }
+            }
+        }
+    }
+
+    protected void keyTypedDung(char typedChar, int keyCode) {
+        dungeonLevelTextField.keyTyped(typedChar, keyCode);
     }
 
     protected void keyTypedInvs(char typedChar, int keyCode) throws IOException {
@@ -569,13 +615,316 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
-    public static class Level {
+    private static final ItemStack DEADBUSH = new ItemStack(Item.getItemFromBlock(Blocks.deadbush));
+    private static final ItemStack[] BOSS_HEADS = new ItemStack[7];
+
+    private ProfileViewer.Level levelObjCata = null;
+    private HashMap<String, ProfileViewer.Level> levelObjClasses = new HashMap<>();
+
+    private GuiElementTextField dungeonLevelTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
+
+    private static final String[] dungSkillsName = {"Healer", "Mage", "Berserk", "Archer", "Tank"};
+    private static final ItemStack[] dungSkillsStack = { new ItemStack(Items.potionitem, 1, 16389),
+            new ItemStack(Items.blaze_rod), new ItemStack(Items.iron_sword), new ItemStack(Items.bow), new ItemStack(Items.leather_chestplate)};
+    private static final String[] bossFloorArr = {"Bonzo", "Scarf", "Professor", "Thorn", "Livid", "Sadan", "Necron"};
+    private static final String[] bossFloorHeads = {
+            "12716ecbf5b8da00b05f316ec6af61e8bd02805b21eb8e440151468dc656549c",
+            "7de7bbbdf22bfe17980d4e20687e386f11d59ee1db6f8b4762391b79a5ac532d",
+            "9971cee8b833a62fc2a612f3503437fdf93cad692d216b8cf90bbb0538c47dd8",
+            "8b6a72138d69fbbd2fea3fa251cabd87152e4f1c97e5f986bf685571db3cc0",
+            "c1007c5b7114abec734206d4fc613da4f3a0e99f71ff949cedadc99079135a0b",
+            "fa06cb0c471c1c9bc169af270cd466ea701946776056e472ecdaeb49f0f4a4dc",
+            "a435164c05cea299a3f016bbbed05706ebb720dac912ce4351c2296626aecd9a"
+    };
+    private static int floorTime = 7;
+    private int floorLevelTo = -1;
+    private int floorLevelToXP = -1;
+
+    private void calculateFloorLevelXP() {
+        JsonObject leveling = Constants.LEVELING;
+        if(leveling == null)  return;
+        if(levelObjCata == null) return;
+
+        try {
+            dungeonLevelTextField.setCustomBorderColour(0xffffffff);
+            floorLevelTo = Integer.parseInt(dungeonLevelTextField.getText());
+
+            JsonArray levelingArray = Utils.getElement(leveling, "catacombs").getAsJsonArray();
+
+            float remaining = -((levelObjCata.level % 1) * levelObjCata.maxXpForLevel);
+
+            for(int level=0; level<Math.min(floorLevelTo, levelingArray.size()); level++) {
+                if(level < Math.floor(levelObjCata.level)) {
+                    continue;
+                }
+                remaining += levelingArray.get(level).getAsFloat();
+            }
+
+            if(remaining < 0) {
+                remaining = 0;
+            }
+            floorLevelToXP = (int) remaining;
+        } catch(Exception e) {
+            dungeonLevelTextField.setCustomBorderColour(0xffff0000);
+        }
+    }
+
+    private void drawDungPage(int mouseX, int mouseY, float partialTicks) {
+        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dung);
+        Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
+
+        JsonObject hypixelInfo = profile.getHypixelProfile();
+        if(hypixelInfo == null) return;
+        JsonObject profileInfo = profile.getProfileInformation(profileId);
+        if(profileInfo == null) return;
+
+        JsonObject leveling = Constants.LEVELING;
+        if(leveling == null)  return;
+
+        int sectionWidth = 110;
+
+        //Catacombs level thingy
+        {
+            if(levelObjCata == null) {
+                float cataXp = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.catacombs.experience"), 0);
+                levelObjCata = ProfileViewer.getLevel(Utils.getElement(leveling, "catacombs").getAsJsonArray(),
+                        cataXp, 50, false);
+            }
+
+            String skillName = EnumChatFormatting.RED+"Catacombs";
+            float level = levelObjCata.level;
+            int levelFloored = (int)Math.floor(level);
+
+            if(floorLevelTo == -1 && levelFloored >= 0) {
+                dungeonLevelTextField.setText(""+(levelFloored+1));
+                calculateFloorLevelXP();
+            }
+
+            int x = guiLeft+23;
+            int y = guiTop+25;
+
+            renderXpBar(skillName, DEADBUSH, x, y, sectionWidth, levelFloored, level, mouseX, mouseY);
+
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Until Cata "+floorLevelTo+": ",
+                    EnumChatFormatting.WHITE.toString()+shortNumberFormat(floorLevelToXP, 0), x, y+16, sectionWidth);
+
+            dungeonLevelTextField.setSize(20, 10);
+            dungeonLevelTextField.render(x+22, y+29);
+            //fontRendererObj.drawString("Calculate",
+            //        x+sectionWidth-17-fontRendererObj.getStringWidth("Calculate"), y+30, 0xffffffff);
+            int calcLen = fontRendererObj.getStringWidth("Calculate");
+            Utils.renderShadowedString(EnumChatFormatting.WHITE+"Calculate", x+sectionWidth-17-calcLen/2f,
+                    y+30, 100);
+
+            //Random stats
+
+            float secrets = Utils.getElementAsFloat(Utils.getElement(hypixelInfo,
+                    "achievements.skyblock_treasure_hunter"), 0);
+
+            float totalRuns = 0;
+            float totalRunsF5 = 0;
+            for(int i=1; i<=7; i++) {
+                float runs = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.catacombs.tier_completions."+i), 0);
+                totalRuns += runs;
+                if(i >= 5) {
+                    totalRunsF5 += runs;
+                }
+            }
+
+            float mobKills = 0;
+            float mobKillsF5 = 0;
+            for(int i=1; i<=7; i++) {
+                float kills = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.catacombs.mobs_killed."+i), 0);
+                mobKills += kills;
+                if(i >= 5) {
+                    mobKillsF5 += kills;
+                }
+            }
+
+            int miscTopY = y+55;
+
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs  ",
+                    EnumChatFormatting.WHITE.toString()+((int)(totalRuns)), x, miscTopY, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs (F5-7)  ",
+                    EnumChatFormatting.WHITE.toString()+((int)(totalRunsF5)), x, miscTopY+10, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (Total)  ",
+                    EnumChatFormatting.WHITE.toString()+shortNumberFormat(secrets, 0), x, miscTopY+20, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (/Run)  ",
+                    EnumChatFormatting.WHITE.toString()+(Math.round(secrets/totalRunsF5*100)/100f), x, miscTopY+30, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Mob Kills (Total)  ",
+                    EnumChatFormatting.WHITE.toString()+shortNumberFormat(mobKills, 0), x, miscTopY+40, sectionWidth);
+
+            int y3 = y+117;
+
+            for(int i=1; i<=7; i++) {
+                int w = fontRendererObj.getStringWidth(""+i);
+
+                int bx = x+sectionWidth*i/8-w/2;
+
+                boolean invert = i == floorTime;
+                float uMin = 20/256f;
+                float uMax = 29/256f;
+                float vMin = 0/256f;
+                float vMax = 11/256f;
+
+                GlStateManager.color(1, 1, 1, 1);
+                Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
+                Utils.drawTexturedRect(bx-2, y3-2, 9, 11,
+                        invert ? uMax : uMin, invert ? uMin : uMax,
+                        invert ? vMax : vMin, invert ? vMin : vMax, GL11.GL_NEAREST);
+
+                Utils.renderShadowedString(EnumChatFormatting.WHITE.toString()+i, bx+w/2, y3, 10);
+            }
+
+            float timeNorm = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                    "dungeons.dungeon_types.catacombs.fastest_time."+floorTime), 0);
+            float timeS = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                    "dungeons.dungeon_types.catacombs.fastest_time_s."+floorTime), 0);
+            float timeSPLUS = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                    "dungeons.dungeon_types.catacombs.fastest_time_s_plus."+floorTime), 0);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" ",
+                    EnumChatFormatting.WHITE.toString()+Utils.prettyTime((long)timeNorm), x, y3+10, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" S",
+                    EnumChatFormatting.WHITE.toString()+Utils.prettyTime((long)timeS), x, y3+20, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" S+",
+                    EnumChatFormatting.WHITE.toString()+Utils.prettyTime((long)timeSPLUS), x, y3+30, sectionWidth);
+        }
+
+        //Completions
+        {
+            int x = guiLeft+161;
+            int y = guiTop+27;
+
+            Utils.renderShadowedString(EnumChatFormatting.RED+"Boss Collections",
+                    x+sectionWidth/2, y, sectionWidth);
+            for(int i=1; i<=7; i++) {
+                float compl = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.catacombs.tier_completions."+i), 0);
+
+                if(BOSS_HEADS[i-1] == null) {
+                    String textureLink = bossFloorHeads[i-1];
+
+                    String b64Decoded = "{\"textures\":{\"SKIN\":{\"url\":\"http://textures.minecraft.net/texture/" + textureLink + "\"}}}";
+                    String b64Encoded = new String(Base64.getEncoder().encode(b64Decoded.getBytes()));
+
+                    ItemStack stack = new ItemStack(Items.skull, 1, 3);
+                    NBTTagCompound nbt = new NBTTagCompound();
+                    NBTTagCompound skullOwner = new NBTTagCompound();
+                    NBTTagCompound properties = new NBTTagCompound();
+                    NBTTagList textures = new NBTTagList();
+                    NBTTagCompound textures_0 = new NBTTagCompound();
+
+                    String uuid = UUID.nameUUIDFromBytes(b64Encoded.getBytes()).toString();
+                    skullOwner.setString("Id", uuid);
+                    skullOwner.setString("Name", uuid);
+
+                    textures_0.setString("Value", b64Encoded);
+                    textures.appendTag(textures_0);
+
+                    properties.setTag("textures", textures);
+                    skullOwner.setTag("Properties", properties);
+                    nbt.setTag("SkullOwner", skullOwner);
+                    stack.setTagCompound(nbt);
+
+                    BOSS_HEADS[i-1] = stack;
+                }
+
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(x-4, y+10+20*(i-1), 0);
+                GlStateManager.scale(1.3f, 1.3f, 1);
+                Utils.drawItemStack(BOSS_HEADS[i-1], 0, 0);
+                GlStateManager.popMatrix();
+
+                Utils.renderAlignedString(String.format(EnumChatFormatting.YELLOW+"%s (F%d) ", bossFloorArr[i-1], i),
+                        EnumChatFormatting.WHITE.toString()+(int)compl,
+                        x+16, y+18+20*(i-1), sectionWidth-15);
+
+            }
+        }
+
+        //Skills
+        {
+            int x = guiLeft+298;
+            int y = guiTop+27;
+
+            //Gui.drawRect(x, y, x+120, y+147, 0xffffffff);
+
+            Utils.renderShadowedString(EnumChatFormatting.DARK_PURPLE+"Class Levels",
+                    x+sectionWidth/2, y, sectionWidth);
+
+            JsonElement activeClassElement = Utils.getElement(profileInfo, "dungeons.selected_dungeon_class");
+            String activeClass = null;
+            if(activeClassElement instanceof JsonPrimitive && ((JsonPrimitive) activeClassElement).isString()) {
+                activeClass = activeClassElement.getAsString();
+            }
+
+            for(int i=0; i<dungSkillsName.length; i++) {
+                String skillName = dungSkillsName[i];
+
+                if(!levelObjClasses.containsKey(skillName)) {
+                    float cataXp = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                           "dungeons.player_classes."+skillName.toLowerCase()+".experience"), 0);
+                    ProfileViewer.Level levelObj = ProfileViewer.getLevel(Utils.getElement(leveling, "catacombs").getAsJsonArray(),
+                           cataXp, 50, false);
+                    levelObjClasses.put(skillName, levelObj);
+                }
+
+                String colour = EnumChatFormatting.WHITE.toString();
+                if(activeClass != null && skillName.toLowerCase().equals(activeClass)) {
+                    colour = EnumChatFormatting.GREEN.toString();
+                }
+
+                ProfileViewer.Level levelObj = levelObjClasses.get(skillName);
+
+                float level = levelObj.level;
+                int levelFloored = (int)Math.floor(level);
+
+                renderXpBar(colour+skillName, dungSkillsStack[i], x, y+20+29*i, sectionWidth, levelFloored, level, mouseX, mouseY);
+            }
+        }
+    }
+
+    private void renderXpBar(String skillName, ItemStack stack, int x, int y, int xSize, int levelFloored, float level, int mouseX, int mouseY) {
+        Utils.renderAlignedString(skillName, EnumChatFormatting.WHITE.toString()+levelFloored, x+14, y-4, xSize-20);
+
+        if(levelObjCata.maxed) {
+            renderGoldBar(x, y+6, xSize);
+        } else {
+            renderBar(x, y+6, xSize, level%1);
+        }
+
+        if(mouseX > x && mouseX < x+120) {
+            if(mouseY > y-4 && mouseY < y+13) {
+                String levelStr;
+                if(levelObjCata.maxed) {
+                    levelStr = EnumChatFormatting.GOLD+"MAXED!";
+                } else {
+                    int maxXp = (int)levelObjCata.maxXpForLevel;
+                    levelStr = EnumChatFormatting.DARK_PURPLE.toString() + shortNumberFormat(Math.round((level%1)*maxXp),
+                            0) + "/" + shortNumberFormat(maxXp, 0);
+                }
+
+                tooltipToDisplay = Utils.createList(levelStr);
+            }
+        }
+
+        GL11.glTranslatef((x), (y-6f), 0);
+        GL11.glScalef(0.7f, 0.7f, 1);
+        Utils.drawItemStackLinear(stack, 0, 0);
+        GL11.glScalef(1/0.7f, 1/0.7f, 1);
+        GL11.glTranslatef(-(x), -(y-6f), 0);
+    }
+
+    public static class PetLevel {
         float level;
         float currentLevelRequirement;
         float maxXP;
     }
 
-    public static Level getLevel(JsonArray levels, int offset, float exp) {
+    public static PetLevel getPetLevel(JsonArray levels, int offset, float exp) {
         float xpTotal = 0;
         float level = 1;
         float currentLevelRequirement = 0;
@@ -605,7 +954,7 @@ public class GuiProfileViewer extends GuiScreen {
         } else if(level > 100) {
             level = 100;
         }
-        Level levelObj = new Level();
+        PetLevel levelObj = new PetLevel();
         levelObj.level = level;
         levelObj.currentLevelRequirement = currentLevelRequirement;
         levelObj.maxXP = xpTotal;
@@ -717,7 +1066,7 @@ public class GuiProfileViewer extends GuiScreen {
                 int petRarityOffset = petsJson.get("pet_rarity_offset").getAsJsonObject().get(tier).getAsInt();
                 JsonArray levelsArr = petsJson.get("pet_levels").getAsJsonArray();
 
-                Level levelObj = getLevel(levelsArr, petRarityOffset, exp);
+                PetLevel levelObj = getPetLevel(levelsArr, petRarityOffset, exp);
                 float level = levelObj.level;
                 float currentLevelRequirement = levelObj.currentLevelRequirement;
                 float maxXP = levelObj.maxXP;
@@ -1841,6 +2190,14 @@ public class GuiProfileViewer extends GuiScreen {
     private static char[] c = new char[]{'k', 'm', 'b', 't'};
 
     public static String shortNumberFormat(double n, int iteration) {
+        if(n < 1000) {
+            if(n % 1 == 0) {
+                return Integer.toString((int)n);
+            } else {
+                return Double.toString(n);
+            }
+        }
+
         double d = ((long) n / 100) / 10.0;
         boolean isRound = (d * 10) %10 == 0;
         return (d < 1000?
@@ -1849,6 +2206,9 @@ public class GuiProfileViewer extends GuiScreen {
                 ) + "" + c[iteration])
                 : shortNumberFormat(d, iteration+1));
     }
+
+    private boolean loadingProfile = false;
+    private static final ExecutorService profileLoader = Executors.newSingleThreadExecutor();
 
     private void drawBasicPage(int mouseX, int mouseY, float partialTicks) {
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
@@ -2014,23 +2374,29 @@ public class GuiProfileViewer extends GuiScreen {
         }
 
         if(entityPlayer == null) {
-            UUID playerUUID = UUID.fromString(niceUuid(profile.getUuid()));
-            GameProfile fakeProfile = Minecraft.getMinecraft().getSessionService().fillProfileProperties(new GameProfile(playerUUID, "CoolGuy123"), false);
-            entityPlayer = new EntityOtherPlayerMP(Minecraft.getMinecraft().theWorld, fakeProfile) {
-                public ResourceLocation getLocationSkin() {
-                    return playerLocationSkin == null ? DefaultPlayerSkin.getDefaultSkin(this.getUniqueID()) : playerLocationSkin;
-                }
+            if(!loadingProfile) {
+                loadingProfile = true;
+                UUID playerUUID = UUID.fromString(niceUuid(profile.getUuid()));
 
-                public ResourceLocation getLocationCape() {
-                    return playerLocationCape;
-                }
+                profileLoader.submit(() -> {
+                    GameProfile fakeProfile = Minecraft.getMinecraft().getSessionService().fillProfileProperties(new GameProfile(playerUUID, "CoolGuy123"), false);
+                    entityPlayer = new EntityOtherPlayerMP(Minecraft.getMinecraft().theWorld, fakeProfile) {
+                        public ResourceLocation getLocationSkin() {
+                            return playerLocationSkin == null ? DefaultPlayerSkin.getDefaultSkin(this.getUniqueID()) : playerLocationSkin;
+                        }
 
-                public String getSkinType() {
-                    return skinType == null ? DefaultPlayerSkin.getSkinType(this.getUniqueID()) : skinType;
-                }
-            };
-            entityPlayer.setAlwaysRenderNameTag(false);
-            entityPlayer.setCustomNameTag("");
+                        public ResourceLocation getLocationCape() {
+                            return playerLocationCape;
+                        }
+
+                        public String getSkinType() {
+                            return skinType == null ? DefaultPlayerSkin.getSkinType(this.getUniqueID()) : skinType;
+                        }
+                    };
+                    entityPlayer.setAlwaysRenderNameTag(false);
+                    entityPlayer.setCustomNameTag("");
+                });
+            }
         } else {
             entityPlayer.refreshDisplayName();
             byte b = 0;
@@ -2046,25 +2412,27 @@ public class GuiProfileViewer extends GuiScreen {
         JsonObject skillInfo = profile.getSkillInfo(profileId);
         JsonObject inventoryInfo = profile.getInventoryInfo(profileId);
 
-        if(backgroundClickedX != -1 && Mouse.isButtonDown(1)) {
-            for(int i=0; i<entityPlayer.inventory.armorInventory.length; i++) {
-                entityPlayer.inventory.armorInventory[i] = null;
-            }
-        } else {
-            if(inventoryInfo != null && inventoryInfo.has("inv_armor")) {
-                JsonArray items = inventoryInfo.get("inv_armor").getAsJsonArray();
-                if(items != null && items.size() == 4) {
-                    for(int i=0; i<entityPlayer.inventory.armorInventory.length; i++) {
-                        JsonElement itemElement = items.get(i);
-                        if(itemElement != null && itemElement.isJsonObject()) {
-                            entityPlayer.inventory.armorInventory[i] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(itemElement.getAsJsonObject(), false);
+        if(entityPlayer != null) {
+            if(backgroundClickedX != -1 && Mouse.isButtonDown(1)) {
+                for(int i=0; i<entityPlayer.inventory.armorInventory.length; i++) {
+                    entityPlayer.inventory.armorInventory[i] = null;
+                }
+            } else {
+                if(inventoryInfo != null && inventoryInfo.has("inv_armor")) {
+                    JsonArray items = inventoryInfo.get("inv_armor").getAsJsonArray();
+                    if(items != null && items.size() == 4) {
+                        for(int i=0; i<entityPlayer.inventory.armorInventory.length; i++) {
+                            JsonElement itemElement = items.get(i);
+                            if(itemElement != null && itemElement.isJsonObject()) {
+                                entityPlayer.inventory.armorInventory[i] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(itemElement.getAsJsonObject(), false);
+                            }
                         }
                     }
                 }
             }
         }
 
-        if(playerLocationSkin == null) {
+        if(entityPlayer != null && playerLocationSkin == null) {
             try {
                 Minecraft.getMinecraft().getSkinManager().loadProfileTextures(entityPlayer.getGameProfile(), new SkinManager.SkinAvailableCallback() {
                     public void skinAvailable(MinecraftProfileTexture.Type type, ResourceLocation location, MinecraftProfileTexture profileTexture) {
@@ -2118,7 +2486,9 @@ public class GuiProfileViewer extends GuiScreen {
                 }
             }
         }
-        drawEntityOnScreen(guiLeft+63, guiTop+128+7, 36, guiLeft+63-mouseX, guiTop+129-mouseY, entityPlayer);
+        if(entityPlayer != null) {
+            drawEntityOnScreen(guiLeft+63, guiTop+128+7, 36, guiLeft+63-mouseX, guiTop+129-mouseY, entityPlayer);
+        }
 
         PlayerStats.Stats stats = profile.getStats(profileId);
 

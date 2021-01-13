@@ -146,6 +146,8 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if(event.phase != TickEvent.Phase.START) return;
+        if(Minecraft.getMinecraft().theWorld == null) return;
+        if(Minecraft.getMinecraft().thePlayer == null) return;
 
         boolean longUpdate = false;
         long currentTime = System.currentTimeMillis();
@@ -159,6 +161,13 @@ public class NEUEventListener {
         DungeonWin.tick();
         if(longUpdate) {
             NotEnoughUpdates.INSTANCE.overlay.redrawItems();
+            CapeManager.onTickSlow();
+
+            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                NotEnoughUpdates.profileViewer.putNameUuid(player.getName(), player.getUniqueID().toString().replace("-", ""));
+            }
+            NotEnoughUpdates.profileViewer.putNameUuid(Minecraft.getMinecraft().thePlayer.getName(),
+                    Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
 
             if(neu.config.dungeonBlock.slowDungeonBlocks) {
                 DungeonBlocks.tick();

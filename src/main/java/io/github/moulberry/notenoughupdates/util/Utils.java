@@ -517,22 +517,26 @@ public class Utils {
         }
     }
 
+    public static void renderShadowedString(String str, float x, float y, int maxLength) {
+        for(int xOff=-2; xOff<=2; xOff++) {
+            for(int yOff=-2; yOff<=2; yOff++) {
+                if(Math.abs(xOff) != Math.abs(yOff)) {
+                    Utils.drawStringCenteredScaledMaxWidth(Utils.cleanColourNotModifiers(str), Minecraft.getMinecraft().fontRendererObj,
+                            x+xOff/2f, y+4+yOff/2f, false, maxLength,
+                            new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB());
+                }
+            }
+        }
+
+        GlStateManager.color(1, 1, 1, 1);
+        Utils.drawStringCenteredScaledMaxWidth(str, Minecraft.getMinecraft().fontRendererObj,
+                x, y+4, false, maxLength, 4210752);
+    }
+
     public static void renderAlignedString(String first, String second, float x, float y, int length) {
         FontRenderer fontRendererObj = Minecraft.getMinecraft().fontRendererObj;
         if(fontRendererObj.getStringWidth(first + " " + second) >= length) {
-            for(int xOff=-2; xOff<=2; xOff++) {
-                for(int yOff=-2; yOff<=2; yOff++) {
-                    if(Math.abs(xOff) != Math.abs(yOff)) {
-                        Utils.drawStringCenteredScaledMaxWidth(Utils.cleanColourNotModifiers(first + " " + second), Minecraft.getMinecraft().fontRendererObj,
-                                x+length/2f+xOff/2f, y+4+yOff/2f, false, length,
-                                new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB());
-                    }
-                }
-            }
-
-            GlStateManager.color(1, 1, 1, 1);
-            Utils.drawStringCenteredScaledMaxWidth(first + " " + second, Minecraft.getMinecraft().fontRendererObj,
-                    x+length/2f, y+4, false, length, 4210752);
+            renderShadowedString(first + " " + second, x+length/2f, y, length);
         } else {
             for(int xOff=-2; xOff<=2; xOff++) {
                 for(int yOff=-2; yOff<=2; yOff++) {
@@ -1078,6 +1082,32 @@ public class Utils {
         worldrenderer.pos((double)left, (double)top, 0.0D).endVertex();
         tessellator.draw();
         GlStateManager.enableTexture2D();
+    }
+
+    public static String prettyTime(long millis) {
+        long seconds = millis / 1000 % 60;
+        long minutes = (millis / 1000 / 60) % 60;
+        long hours = (millis / 1000 / 60 / 60) % 24;
+        long days = (millis / 1000 / 60 / 60 / 24);
+
+        String endsIn = "";
+        if(millis < 0) {
+            endsIn += "Ended!";
+        } else if(minutes == 0 && hours == 0 && days == 0) {
+            endsIn += seconds + "s";
+        } else if(hours==0 && days==0) {
+            endsIn += minutes + "m" + seconds + "s";
+        } else if(days==0) {
+            if(hours <= 6) {
+                endsIn += hours + "h" + minutes + "m" + seconds + "s";
+            } else {
+                endsIn += hours + "h";
+            }
+        } else {
+            endsIn += days + "d" + hours + "h";
+        }
+
+        return endsIn;
     }
 
 }

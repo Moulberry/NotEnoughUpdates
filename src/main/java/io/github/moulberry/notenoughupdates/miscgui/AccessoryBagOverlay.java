@@ -518,6 +518,7 @@ public class AccessoryBagOverlay {
                         String second = containerName.trim().split("/")[1].split("\\)")[0];
                         //System.out.println(second + ":" + pagesVisited.size());
                         if(Integer.parseInt(second) > pagesVisited.size()) {
+                            GlStateManager.color(1, 1, 1, 1);
                             Minecraft.getMinecraft().getTextureManager().bindTexture(accessory_bag_overlay);
                             Utils.drawTexturedRect(guiLeft+xSize+3, guiTop, 80, 149, 0, 80/256f, 0, 149/256f, GL11.GL_NEAREST);
 
@@ -542,8 +543,11 @@ public class AccessoryBagOverlay {
                         if(hasStack) pagesVisited.add(1);
                     }
 
+                    GlStateManager.disableLighting();
+
                     for(int i=0; i<=TAB_MISSING; i++) {
                         if(i != currentTab) {
+                            GlStateManager.color(1, 1, 1, 1);
                             Minecraft.getMinecraft().getTextureManager().bindTexture(accessory_bag_overlay);
                             Utils.drawTexturedRect(guiLeft+xSize+80, guiTop+20*i, 25, 22,
                                     80/256f, 105/256f, 0, 22/256f, GL11.GL_NEAREST);
@@ -551,6 +555,7 @@ public class AccessoryBagOverlay {
                         }
                     }
 
+                    GlStateManager.color(1, 1, 1, 1);
                     Minecraft.getMinecraft().getTextureManager().bindTexture(accessory_bag_overlay);
                     Utils.drawTexturedRect(guiLeft+xSize+3, guiTop, 80, 149, 0, 80/256f, 0, 149/256f, GL11.GL_NEAREST);
 

@@ -4,7 +4,6 @@ import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.EnumChatFormatting;
 import org.apache.commons.lang3.StringUtils;
@@ -475,7 +474,7 @@ public class PlayerStats {
                 int petRarityOffset = petsJson.get("pet_rarity_offset").getAsJsonObject().get(tier).getAsInt();
                 JsonArray levelsArr = petsJson.get("pet_levels").getAsJsonArray();
 
-                GuiProfileViewer.Level levelObj = GuiProfileViewer.getLevel(levelsArr, petRarityOffset, exp);
+                GuiProfileViewer.PetLevel levelObj = GuiProfileViewer.getPetLevel(levelsArr, petRarityOffset, exp);
                 float level = levelObj.level;
                 float currentLevelRequirement = levelObj.currentLevelRequirement;
                 float maxXP = levelObj.maxXP;

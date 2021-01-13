@@ -595,6 +595,28 @@ public class NotEnoughUpdates {
         }
     };
 
+
+    SimpleCommand joinDungeonCommand = new SimpleCommand("join", new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            if (!hasSkyblockScoreboard()) {
+                Minecraft.getMinecraft().thePlayer.sendChatMessage("/join " + StringUtils.join(args, " "));
+            } else {
+                if(args.length != 1) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                            EnumChatFormatting.RED+"Example Usage: /join f7 or /join 7"));
+                } else {
+                    String cmd = "/joindungeon catacombs " + args[0].charAt(args[0].length()-1);
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                            EnumChatFormatting.YELLOW+"Running command: "+cmd));
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                            EnumChatFormatting.YELLOW+"The dungeon should start soon. If it doesn't, make sure you have a party of 5 people"));
+                    Minecraft.getMinecraft().thePlayer.sendChatMessage(cmd);
+                }
+            }
+        }
+    });
+
     SimpleCommand viewProfileCommand = new SimpleCommand("neuprofile", viewProfileRunnable, new SimpleCommand.TabCompleteRunnable() {
         @Override
         public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
@@ -638,14 +660,11 @@ public class NotEnoughUpdates {
         }
     });
 
-    SimpleCommand viewProfileShort2Command = new SimpleCommand("vp", new SimpleCommand.ProcessCommandRunnable() {
+    SimpleCommand viewCataCommand = new SimpleCommand("cata", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!isOnSkyblock()) {
-                Minecraft.getMinecraft().thePlayer.sendChatMessage("/vp " + StringUtils.join(args, " "));
-            } else {
-                viewProfileRunnable.processCommand(sender, args);
-            }
+            GuiProfileViewer.currentPage = GuiProfileViewer.ProfileViewerPage.DUNG;
+            viewProfileRunnable.processCommand(sender, args);
         }
     }, new SimpleCommand.TabCompleteRunnable() {
         @Override
@@ -889,9 +908,10 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(resetRepoCommand);
         ClientCommandHandler.instance.registerCommand(reloadRepoCommand);
         ClientCommandHandler.instance.registerCommand(itemRenameCommand);
+        ClientCommandHandler.instance.registerCommand(joinDungeonCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
-        ClientCommandHandler.instance.registerCommand(viewProfileShort2Command);
+        ClientCommandHandler.instance.registerCommand(viewCataCommand);
         ClientCommandHandler.instance.registerCommand(peekCommand);
         ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);

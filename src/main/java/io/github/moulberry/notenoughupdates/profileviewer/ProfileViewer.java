@@ -20,6 +20,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +60,7 @@ public class ProfileViewer {
         skillToSkillDisplayMap.put("skill_fishing", Utils.createItemStack(Items.fishing_rod, EnumChatFormatting.AQUA+"Fishing"));
         skillToSkillDisplayMap.put("skill_alchemy", Utils.createItemStack(Items.brewing_stand, EnumChatFormatting.BLUE+"Alchemy"));
         skillToSkillDisplayMap.put("skill_runecrafting", Utils.createItemStack(Items.magma_cream, EnumChatFormatting.DARK_PURPLE+"Runecrafting"));
-        skillToSkillDisplayMap.put("skill_catacombs", Utils.createItemStack(Item.getItemFromBlock(Blocks.deadbush), EnumChatFormatting.GOLD+"Catacombs"));
+        //skillToSkillDisplayMap.put("skill_catacombs", Utils.createItemStack(Item.getItemFromBlock(Blocks.deadbush), EnumChatFormatting.GOLD+"Catacombs"));
         skillToSkillDisplayMap.put("slayer_zombie", Utils.createItemStack(Items.rotten_flesh, EnumChatFormatting.GOLD+"Rev Slayer"));
         skillToSkillDisplayMap.put("slayer_spider", Utils.createItemStack(Items.spider_eye, EnumChatFormatting.GOLD+"Tara Slayer"));
         skillToSkillDisplayMap.put("slayer_wolf", Utils.createItemStack(Items.bone, EnumChatFormatting.GOLD+"Sven Slayer"));
@@ -259,6 +260,43 @@ public class ProfileViewer {
         return Collections.unmodifiableMap(skillToSkillDisplayMap);
     }
 
+    public static class Level {
+        public float level = 0;
+        public float maxXpForLevel = 0;
+        public boolean maxed = false;
+    }
+
+    public static Level getLevel(JsonArray levelingArray, float xp, int levelCap, boolean cumulative) {
+        Level levelObj = new Level();
+        for(int level=0; level<levelingArray.size(); level++) {
+            float levelXp = levelingArray.get(level).getAsFloat();
+            if(levelXp > xp) {
+                if(cumulative) {
+                    float previous = 0;
+                    if(level > 0) previous = levelingArray.get(level-1).getAsFloat();
+                    levelObj.maxXpForLevel = (levelXp-previous);
+                    levelObj.level = 1 + level + (xp-levelXp)/levelObj.maxXpForLevel;
+                } else {
+                    levelObj.maxXpForLevel = levelXp;
+                    levelObj.level = level + xp/levelXp;
+                }
+                if(levelObj.level > levelCap) {
+                    levelObj.level = levelCap;
+                    levelObj.maxed = true;
+                }
+                return levelObj;
+            } else {
+                if(!cumulative) xp -= levelXp;
+            }
+        }
+        levelObj.level = levelingArray.size();
+        if(levelObj.level > levelCap) {
+            levelObj.level = levelCap;
+        }
+        levelObj.maxed = true;
+        return levelObj;
+    }
+
     public class Profile {
         private final String uuid;
         private String latestProfile = null;
@@ -325,10 +363,10 @@ public class ProfileViewer {
 
                             if(manager.auctionManager.isVanillaItem(internalname)) continue;
 
-                            JsonObject info = manager.auctionManager.getItemAuctionInfo(internalname);
-                            if(info == null || !info.has("price") || !info.has("count")) continue;
-
-                            int auctionPrice = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
+                            int auctionPrice = (int)manager.auctionManager.getItemAvgBin(internalname);
+                            if(auctionPrice <= 0) {
+                                auctionPrice = (int)manager.auctionManager.getLowestBin(internalname);
+                            }
 
                             try {
                                 if(item.has("item_contents")) {
@@ -346,9 +384,10 @@ public class ProfileViewer {
                                             if(internalname2 != null) {
                                                 if(manager.auctionManager.isVanillaItem(internalname2)) continue;
 
-                                                JsonObject info2 = manager.auctionManager.getItemAuctionInfo(internalname2);
-                                                if(info2 == null || !info2.has("price") || !info2.has("count")) continue;
-                                                int auctionPrice2 = (int)(info2.get("price").getAsFloat() / info2.get("count").getAsFloat());
+                                                int auctionPrice2 = (int)manager.auctionManager.getItemAvgBin(internalname2);
+                                                if(auctionPrice2 <= 0) {
+                                                    auctionPrice2 = (int)manager.auctionManager.getLowestBin(internalname2);
+                                                }
 
                                                 int count2 = items.getCompoundTagAt(j).getByte("Count");
                                                 networth += auctionPrice2 * count2;
@@ -369,6 +408,8 @@ public class ProfileViewer {
                 }
             }
             if(networth == 0) return -1;
+
+            networth = (int)(networth*1.3f);
 
             JsonObject petsInfo = getPetsInfo(profileId);
             if(petsInfo != null && petsInfo.has("pets")) {
@@ -545,43 +586,6 @@ public class ProfileViewer {
             inventoryInfoMap.clear();
             collectionInfoMap.clear();
             networth = -1;
-        }
-
-        private class Level {
-            private float level = 0;
-            private float maxXpForLevel = 0;
-            private boolean maxed = false;
-        }
-
-        public Level getLevel(JsonArray levelingArray, float xp, int levelCap, boolean cumulative) {
-            Level levelObj = new Level();
-            for(int level=0; level<levelingArray.size(); level++) {
-                float levelXp = levelingArray.get(level).getAsFloat();
-                if(levelXp > xp) {
-                    if(cumulative) {
-                        float previous = 0;
-                        if(level > 0) previous = levelingArray.get(level-1).getAsFloat();
-                        levelObj.maxXpForLevel = (levelXp-previous);
-                        levelObj.level = 1 + level + (xp-levelXp)/levelObj.maxXpForLevel;
-                    } else {
-                        levelObj.maxXpForLevel = levelXp;
-                        levelObj.level = level + xp/levelXp;
-                    }
-                    if(levelObj.level > levelCap) {
-                        levelObj.level = levelCap;
-                        levelObj.maxed = true;
-                    }
-                    return levelObj;
-                } else {
-                    if(!cumulative) xp -= levelXp;
-                }
-            }
-            levelObj.level = levelingArray.size();
-            if(levelObj.level > levelCap) {
-                levelObj.level = levelCap;
-            }
-            levelObj.maxed = true;
-            return levelObj;
         }
 
         public int getCap(JsonObject leveling, String skillName) {
@@ -956,7 +960,7 @@ public class ProfileViewer {
             return uuid;
         }
 
-        public JsonObject getHypixelProfile() {
+        public @Nullable JsonObject getHypixelProfile() {
             if(uuidToHypixelProfile.containsKey(uuid)) return uuidToHypixelProfile.get(uuid);
             return null;
         }
@@ -967,39 +971,69 @@ public class ProfileViewer {
     private HashMap<String, Profile> uuidToProfileMap = new HashMap<>();
 
     public void getHypixelProfile(String name, Consumer<JsonObject> callback) {
+        String nameF = name.toLowerCase();
         HashMap<String, String> args = new HashMap<>();
-        args.put("name", ""+name);
+        args.put("name", ""+nameF);
         manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "player",
                 args, jsonObject -> {
                     if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()
                             && jsonObject.get("player").isJsonObject()) {
-                        nameToHypixelProfile.put(name, jsonObject.get("player").getAsJsonObject());
+                        nameToUuid.put(nameF, jsonObject.get("player").getAsJsonObject().get("uuid").getAsString());
                         uuidToHypixelProfile.put(jsonObject.get("player").getAsJsonObject().get("uuid").getAsString(), jsonObject.get("player").getAsJsonObject());
                         if(callback != null) callback.accept(jsonObject);
                     } else {
                         if(callback != null) callback.accept(null);
-                        return;
                     }
                 }
         );
     }
 
-    public Profile getProfileByName(String name, Consumer<Profile> callback) {
-        if(nameToHypixelProfile.containsKey(name)) {
-            Profile profile = getProfileReset(nameToHypixelProfile.get(name).get("uuid").getAsString(), ignored -> {});
-            callback.accept(profile);
-            return profile;
-        } else {
-            getHypixelProfile(name, jsonObject -> {
-                if(jsonObject == null) {
-                    callback.accept(null);
-                } else {
-                    callback.accept(getProfileReset(jsonObject.get("player").getAsJsonObject().get("uuid").getAsString(), ignored -> {}));
-                }
+    private final HashMap<String, String> nameToUuid = new HashMap<>();
 
-            });
+    public void putNameUuid(String name, String uuid) {
+        nameToUuid.put(name, uuid);
+    }
+
+    public void getPlayerUUID(String name, Consumer<String> uuidCallback) {
+        String nameF = name.toLowerCase();
+        if(nameToUuid.containsKey(nameF)) {
+            uuidCallback.accept(nameToUuid.get(nameF));
+            return;
         }
-        return null;
+
+        manager.hypixelApi.getApiAsync("https://api.mojang.com/users/profiles/minecraft/"+nameF,
+                (jsonObject) -> {
+                    if(jsonObject.has("id") && jsonObject.get("id").isJsonPrimitive() &&
+                            ((JsonPrimitive)jsonObject.get("id")).isString()) {
+                        String uuid = jsonObject.get("id").getAsString();
+                        nameToUuid.put(nameF, uuid);
+                        uuidCallback.accept(uuid);
+                        return;
+                    }
+                    uuidCallback.accept(null);
+                }, () -> uuidCallback.accept(null)
+        );
+    }
+
+    public void getProfileByName(String name, Consumer<Profile> callback) {
+        String nameF = name.toLowerCase();
+
+        getPlayerUUID(nameF, (uuid) -> {
+            if(uuid == null) {
+                getHypixelProfile(nameF, jsonObject -> {
+                    if(jsonObject != null) {
+                        callback.accept(getProfileReset(nameToUuid.get(nameF), ignored -> {}));
+                    }
+                });
+            } else {
+                if(!uuidToHypixelProfile.containsKey(uuid)) {
+                    getHypixelProfile(nameF, jsonObject -> {});
+                }
+                callback.accept(getProfileReset(uuid, ignored -> {}));
+            }
+        });
+
+        return;
     }
 
     public Profile getProfile(String uuid, Consumer<Profile> callback) {

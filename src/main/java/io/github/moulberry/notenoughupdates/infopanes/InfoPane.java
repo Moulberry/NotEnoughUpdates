@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.infopanes;
 
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
+import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 
@@ -37,7 +38,7 @@ public abstract class InfoPane extends Gui  {
         int boxLeft = leftSide + overlay.getBoxPadding() - 5;
         int boxRight = rightSide - overlay.getBoxPadding() + 5;
 
-        overlay.renderBlurredBackground(width, height,
+        BackgroundBlur.renderBlurredBackground(width, height,
                 boxLeft, overlay.getBoxPadding()-5,
                 boxRight-boxLeft, height-overlay.getBoxPadding()*2+10);
         drawRect(boxLeft, overlay.getBoxPadding() - 5, boxRight,

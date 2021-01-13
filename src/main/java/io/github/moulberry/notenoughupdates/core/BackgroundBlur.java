@@ -14,6 +14,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -23,6 +24,7 @@ public class BackgroundBlur {
     private static boolean registered = false;
     public static void registerListener() {
         if(!registered) {
+            registered = true;
             MinecraftForge.EVENT_BUS.register(new BackgroundBlur());
         }
     }
@@ -79,7 +81,7 @@ public class BackgroundBlur {
 
     private static double lastBgBlurFactor = -1;
     private static void blurBackground() {
-        if(!OpenGlHelper.isFramebufferEnabled()) return;
+        if(!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
 
         int width = Minecraft.getMinecraft().displayWidth;
         int height = Minecraft.getMinecraft().displayHeight;
@@ -161,7 +163,7 @@ public class BackgroundBlur {
      */
     public static void renderBlurredBackground(int screenWidth, int screenHeight,
                                                int x, int y, int blurWidth, int blurHeight) {
-        if(!OpenGlHelper.isFramebufferEnabled()) return;
+        if(!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
         if(blurOutputVert == null) return;
 
         float uMin = x/(float)screenWidth;
