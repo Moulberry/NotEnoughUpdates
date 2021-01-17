@@ -693,7 +693,7 @@ public class NEUEventListener {
      * @param event
      */
     @SubscribeEvent
-    public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
+    public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.BackgroundDrawnEvent event) {
         if(!(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
                 neu.manager.auctionManager.customAH.isRenderOverAuctionView())) {
             if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
