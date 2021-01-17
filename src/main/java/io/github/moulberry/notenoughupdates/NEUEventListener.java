@@ -707,7 +707,10 @@ public class NEUEventListener {
                 GlStateManager.popMatrix();
             }
         }
+    }
 
+    @SubscribeEvent
+    public void onScreenBackgroundRender(GuiScreenEvent.DrawScreenEvent.BackgroundDrawnEvent event) {
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
             renderDungeonChestOverlay(event.gui);
             if(neu.config.accessoryBag.enableOverlay) {
