@@ -150,7 +150,6 @@ public class DungeonWin {
                     lastDungeonFinish = currentTime;
 
                     String score = matcher.group(1);
-                    System.out.println(score);
                     switch (score.toUpperCase()) {
                         case "S+":
                             TEAM_SCORE = SPLUS; break;

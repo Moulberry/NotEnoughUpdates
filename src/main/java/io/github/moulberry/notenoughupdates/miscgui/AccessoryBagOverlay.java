@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -24,6 +25,7 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -236,7 +238,7 @@ public class AccessoryBagOverlay {
         }
     }
 
-    private static Set<ItemStack> duplicates = null;
+    private static List<ItemStack> duplicates = null;
     public static void renderDuplicatesOverlay(int x, int y) {
         if(duplicates == null) {
             JsonObject misc = Constants.MISC;
@@ -253,7 +255,7 @@ public class AccessoryBagOverlay {
             }
             JsonObject talisman_upgrades = talisman_upgrades_element.getAsJsonObject();
 
-            duplicates = new HashSet<>();
+            duplicates = new ArrayList<>();
 
             Set<String> prevInternalnames = new HashSet<>();
             for(ItemStack stack : accessoryStacks) {
@@ -303,6 +305,26 @@ public class AccessoryBagOverlay {
                 Utils.drawStringCenteredScaledMaxWidth("+" + (duplicates.size()-10) + " More",
                         Minecraft.getMinecraft().fontRendererObj, x+40, y+16+121, false, 70,
                         new Color(80, 80, 80).getRGB());
+
+
+                final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+                final int scaledWidth = scaledresolution.getScaledWidth();
+                final int scaledHeight = scaledresolution.getScaledHeight();
+                int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
+                int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
+
+                if(mouseX > x && mouseX < x+80 &&
+                        mouseY > y+11+121 && mouseY < y+21+121) {
+                    List<String> text = new ArrayList<>();
+                    String line = "";
+                    for(int i=0; i<duplicates.size(); i++) {
+                        line += duplicates.get(i).getDisplayName();
+                        text.add(line);
+                        line = "";
+                    }
+
+                    Utils.drawHoveringText(text, mouseX, mouseY, scaledWidth, scaledHeight, -1, Minecraft.getMinecraft().fontRendererObj);
+                }
             }
         }
     }
@@ -339,13 +361,14 @@ public class AccessoryBagOverlay {
                 String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
                 missingInternal.remove(internalname);
 
+                out:
                 for(Map.Entry<String, JsonElement> talisman_upgrade_element : talisman_upgrades.entrySet()) {
                     JsonArray upgrades = talisman_upgrade_element.getValue().getAsJsonArray();
                     for(int j=0; j<upgrades.size(); j++) {
                         String upgrade = upgrades.get(j).getAsString();
                         if(internalname.equals(upgrade)) {
                             missingInternal.remove(talisman_upgrade_element.getKey());
-                            break;
+                            break out;
                         }
                     }
                 }
@@ -354,7 +377,24 @@ public class AccessoryBagOverlay {
             missingInternal.sort(getItemComparator());
 
             for(String internal : missingInternal) {
-                missing.add(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(internal)));
+                boolean hasDup = false;
+
+                if(talisman_upgrades.has(internal)) {
+                    JsonArray upgrades = talisman_upgrades.get(internal).getAsJsonArray();
+                    for(int j=0; j<upgrades.size(); j++) {
+                        String upgrade = upgrades.get(j).getAsString();
+                        if(missingInternal.contains(upgrade)) {
+                            hasDup = true;
+                            break;
+                        }
+                    }
+                }
+
+                ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(internal), false);
+                if(hasDup) {
+                    stack.setStackDisplayName(stack.getDisplayName()+"*");
+                }
+                missing.add(stack);
             }
         }
         if(missing.isEmpty()) {
@@ -378,6 +418,63 @@ public class AccessoryBagOverlay {
                 Utils.drawStringCenteredScaledMaxWidth("+" + (missing.size()-10) + " More",
                         Minecraft.getMinecraft().fontRendererObj, x+40, y+16+121, false, 70,
                         new Color(80, 80, 80).getRGB());
+
+                final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+                final int scaledWidth = scaledresolution.getScaledWidth();
+                final int scaledHeight = scaledresolution.getScaledHeight();
+                int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
+                int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
+
+                if(mouseX > x && mouseX < x+80 &&
+                        mouseY > y+11+121 && mouseY < y+21+121) {
+                    List<String> text = new ArrayList<>();
+                    StringBuilder line = new StringBuilder();
+                    int leftMaxSize = 0;
+                    int middleMaxSize = 0;
+                    for(int i=0; i<missing.size(); i += 3) {
+                        leftMaxSize = Math.max(leftMaxSize, Minecraft.getMinecraft().fontRendererObj.
+                                getStringWidth(missing.get(i).getDisplayName()));
+                    }
+                    for(int i=1; i<missing.size(); i += 3) {
+                        middleMaxSize = Math.max(middleMaxSize, Minecraft.getMinecraft().fontRendererObj.
+                                getStringWidth(missing.get(i).getDisplayName()));
+                    }
+                    for(int i=0; i<missing.size(); i++) {
+                        if(i % 3 == 0 && i > 0) {
+                            text.add(line.toString());
+                            line = new StringBuilder();
+                        }
+                        StringBuilder name = new StringBuilder(missing.get(i).getDisplayName());
+                        int nameLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(name.toString());
+
+                        int padSize = -1;
+                        if(i % 3 == 0) padSize = leftMaxSize;
+                        if(i % 3 == 1) padSize = middleMaxSize;
+                        if(padSize > 0) {
+                            float padNum = (padSize - nameLen) / 4.0f;
+                            int remainder = (int)((padNum % 1) * 4);
+                            while(padNum >= 1) {
+                                if(remainder > 0) {
+                                    name.append(EnumChatFormatting.BOLD).append(" ");
+                                    remainder--;
+                                } else {
+                                    name.append(EnumChatFormatting.RESET).append(" ");
+                                }
+                                padNum--;
+                            }
+                        }
+                        line.append('\u00A7').append(Utils.getPrimaryColourCode(missing.get(i).getDisplayName()));
+                        if(i < 9) {
+                            line.append((char)('\u2776'+i)).append(' ');
+                        } else {
+                            line.append("\u2b24 ");
+                        }
+                        line.append(name);
+                        if(i % 3 < 2) line.append("  ");
+                    }
+
+                    Utils.drawHoveringText(text, mouseX, mouseY, scaledWidth, scaledHeight, -1, Minecraft.getMinecraft().fontRendererObj);
+                }
             }
         }
     }
@@ -465,6 +562,10 @@ public class AccessoryBagOverlay {
                 cost2 = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(o2).craftCost;
             }
 
+
+            if(cost1 == -1 && cost2 == -1) return o1.compareTo(o2);
+            if(cost1 == -1) return 1;
+            if(cost2 == -1) return -1;
 
             if(cost1 < cost2) return -1;
             if(cost1 > cost2) return 1;

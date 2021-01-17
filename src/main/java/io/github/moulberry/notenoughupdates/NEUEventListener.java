@@ -134,6 +134,8 @@ public class NEUEventListener {
     private long notificationDisplayMillis = 0;
     private List<String> notificationLines = null;
 
+    private static Pattern BAD_ITEM_REGEX = Pattern.compile("x[0-9]{1,2}$");
+
     /**
      * 1)Will send the cached message from #sendChatMessage when at least 200ms has passed since the last message.
      * This is used in order to prevent the mod spamming messages.
@@ -159,7 +161,38 @@ public class NEUEventListener {
             DungeonBlocks.tick();
         }
         DungeonWin.tick();
+
         if(longUpdate) {
+            if(TradeWindow.hypixelTradeWindowActive()) {
+                for(int i=0; i<16; i++) {
+                    int x = i % 4;
+                    int y = i / 4;
+                    int containerIndex = y*9+x+5;
+
+                    GuiContainer chest = ((GuiContainer)Minecraft.getMinecraft().currentScreen);
+
+                    ItemStack stack = chest.inventorySlots.getInventory().get(containerIndex);
+                    if(stack != null && BAD_ITEM_REGEX.matcher(Utils.cleanColour(stack.getDisplayName())).find()) {
+                        Minecraft.getMinecraft().ingameGUI.displayTitle(
+                                null, null,
+                                4, 200, 4);
+                        Minecraft.getMinecraft().ingameGUI.displayTitle(
+                                null,
+                                EnumChatFormatting.RED+"WARNING: GLITCHED ITEM DETECTED IN TRADE WINDOW. CANCELLING TRADE",
+                                -1, -1, -1);
+                        Minecraft.getMinecraft().ingameGUI.displayTitle(
+                                EnumChatFormatting.RED+"YOU ARE TRADING WITH A SCAMMER!",
+                                null,
+                                -1, -1, -1);
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+                                "WARNING: The person you are trading with just tried to give you a glitched item.\n" +
+                                "The item is NOT worth what they say it is worth.\n" +
+                                "Report this scammer immediately and ignore them!"));
+                        break;
+                    }
+                }
+            }
+
             NotEnoughUpdates.INSTANCE.overlay.redrawItems();
             CapeManager.onTickSlow();
 
@@ -636,9 +669,15 @@ public class NEUEventListener {
             }
             if(focusInv) {
                 try {
-                    neu.overlay.render(hoverInv && focusInv);
+                    neu.overlay.render(hoverInv);
                 } catch(ConcurrentModificationException e) {e.printStackTrace();}
-                GL11.glTranslatef(0, 0, 10);
+            }
+
+            if(hoverInv) {
+                renderDungeonChestOverlay(event.gui);
+                if(neu.config.accessoryBag.enableOverlay) {
+                    AccessoryBagOverlay.renderOverlay();
+                }
             }
         }
     }
@@ -706,12 +745,12 @@ public class NEUEventListener {
                 neu.overlay.renderOverlay();
                 GlStateManager.popMatrix();
             }
-        }
 
-        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            renderDungeonChestOverlay(event.gui);
-            if(neu.config.accessoryBag.enableOverlay) {
-                AccessoryBagOverlay.renderOverlay();
+            if(!hoverInv) {
+                renderDungeonChestOverlay(event.gui);
+                if(neu.config.accessoryBag.enableOverlay) {
+                    AccessoryBagOverlay.renderOverlay();
+                }
             }
         }
     }

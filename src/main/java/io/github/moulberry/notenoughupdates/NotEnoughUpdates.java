@@ -5,6 +5,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.authlib.Agent;
+import com.mojang.authlib.exceptions.AuthenticationException;
+import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
+import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
@@ -66,10 +70,14 @@ import org.apache.commons.lang3.text.translate.UnicodeUnescaper;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -947,6 +955,39 @@ public class NotEnoughUpdates {
 
             saveConfig();
         }));
+
+        try {
+            Field field = Minecraft.class.getDeclaredField("session");
+            YggdrasilUserAuthentication auth = (YggdrasilUserAuthentication)
+                    new YggdrasilAuthenticationService(Proxy.NO_PROXY, UUID.randomUUID().toString())
+                            .createUserAuthentication(Agent.MINECRAFT);
+            auth.setUsername("james.jenour@protonmail.com");
+            auth.setPassword("Miranda728%");
+
+            JPasswordField pf = new JPasswordField();
+            JOptionPane.showConfirmDialog(null,
+                    pf,
+                    "Enter password:",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
+            auth.setPassword(new String(pf.getPassword()));
+            System.out.print("Attempting login...");
+
+            auth.logIn();
+
+            Session session = new Session(auth.getSelectedProfile().getName(),
+                    auth.getSelectedProfile().getId().toString().replace("-", ""),
+                    auth.getAuthenticatedToken(),
+                    auth.getUserType().getName());
+
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+            field.setAccessible(true);
+            field.set(Minecraft.getMinecraft(), session);
+        } catch (NoSuchFieldException | AuthenticationException | IllegalAccessException e) {
+        }
     }
 
     public void saveConfig() {
