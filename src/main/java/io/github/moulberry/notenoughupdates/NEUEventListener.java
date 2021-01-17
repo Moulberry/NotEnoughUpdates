@@ -693,7 +693,7 @@ public class NEUEventListener {
      * @param event
      */
     @SubscribeEvent
-    public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.BackgroundDrawnEvent event) {
+    public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if(!(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
                 neu.manager.auctionManager.customAH.isRenderOverAuctionView())) {
             if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
@@ -707,7 +707,10 @@ public class NEUEventListener {
                 GlStateManager.popMatrix();
             }
         }
+    }
 
+    @SubscribeEvent
+    public void onScreenBackgroundRender(GuiScreenEvent.DrawScreenEvent.BackgroundDrawnEvent event) {
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
             renderDungeonChestOverlay(event.gui);
             if(neu.config.accessoryBag.enableOverlay) {
