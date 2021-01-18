@@ -426,7 +426,7 @@ public class NEUConfig extends Config {
                 desc = "Set the price information displayed on Line #1"
         )
         @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN"}
+                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
         )
         public int line1 = 1;
 
@@ -436,7 +436,7 @@ public class NEUConfig extends Config {
                 desc = "Set the price information displayed on Line #2"
         )
         @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN"}
+                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
         )
         public int line2 = 2;
 
@@ -446,7 +446,7 @@ public class NEUConfig extends Config {
                 desc = "Set the price information displayed on Line #3"
         )
         @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN"}
+                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
         )
         public int line3 = 3;
 
@@ -456,7 +456,7 @@ public class NEUConfig extends Config {
                 desc = "Set the price information displayed on Line #4"
         )
         @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN"}
+                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
         )
         public int line4 = 4;
 
@@ -466,9 +466,9 @@ public class NEUConfig extends Config {
                 desc = "Set the price information displayed on Line #5"
         )
         @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN"}
+                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
         )
-        public int line5 = 0;
+        public int line5 = 6;
 
         @Expose
         @ConfigOption(
@@ -476,7 +476,7 @@ public class NEUConfig extends Config {
                 desc = "Set the price information displayed on Line #6"
         )
         @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN"}
+                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
         )
         public int line6 = 0;
     }

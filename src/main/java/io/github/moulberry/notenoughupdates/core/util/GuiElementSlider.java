@@ -83,7 +83,7 @@ public class GuiElementSlider extends GuiElement {
             Utils.drawTexturedRect(notchX, y+(HEIGHT-4)/2, 2, 4, GL11.GL_NEAREST);
         }
 
-        Minecraft.getMinecraft().getTextureManager().bindTexture(slider_button);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(slider_button_new);
         Utils.drawTexturedRect(x+sliderAmountI-4, y, 8, HEIGHT, GL11.GL_NEAREST);
     }
 

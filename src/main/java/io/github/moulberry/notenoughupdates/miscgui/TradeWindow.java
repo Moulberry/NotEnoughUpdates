@@ -55,30 +55,37 @@ public class TradeWindow {
     private static int lastBackpackX;
     private static int lastBackpackY;
 
-    public static boolean tradeWindowActive() {
-        if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return false;
-        if(!NotEnoughUpdates.INSTANCE.config.tradeMenu.enableCustomTrade) return false;
 
+    public static boolean hypixelTradeWindowActive() {
+        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return false;
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
         if(guiScreen instanceof GuiChest) {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.trim().startsWith("You     ")) {
-                return true;
-            }
+            return containerName.trim().startsWith("You     ");
         }
-
-        lastTradeMillis = -1;
-        ourTradeIndexes = new Integer[16];
-        theirTradeIndexes = new Integer[16];
-        theirTradeOld = new String[16];
-        theirTradeChangesMillis = new Long[16];
-
         return false;
     }
 
-    private static TexLoc tl = new TexLoc(0, 0, Keyboard.KEY_M);
+    public static boolean tradeWindowActive() {
+        if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return false;
+        if(!NotEnoughUpdates.INSTANCE.config.tradeMenu.enableCustomTrade) return false;
+
+        if(hypixelTradeWindowActive()) {
+            return true;
+        }
+
+        if(lastTradeMillis != -99) {
+            lastTradeMillis = -99;
+            ourTradeIndexes = new Integer[16];
+            theirTradeIndexes = new Integer[16];
+            theirTradeOld = new String[16];
+            theirTradeChangesMillis = new Long[16];
+        }
+
+        return false;
+    }
 
     private static void drawStringShadow(String str, float x, float y, int len) {
         for(int xOff=-2; xOff<=2; xOff++) {
@@ -296,7 +303,6 @@ public class TradeWindow {
         List<String> tooltipToDisplay = null;
         ItemStack stackToRender = null;
         int tooltipLen = -1;
-        tl.handleKeyboardInput();
 
         //Set index mappings
         //Our slots

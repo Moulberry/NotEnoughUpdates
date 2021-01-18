@@ -27,21 +27,43 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
     @Override
     public void render(int x, int y, int width) {
         super.render(x, y, width);
-        int height = getHeight();
 
-        FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
-        int dropdownWidth = Math.min(width/3-10, 80);
-        int left = x+width/6-dropdownWidth/2;
-        int top = y+height-7-14;
+        if(!open) {
+            int height = getHeight();
 
-        String selectedString = " - Select - ";
-        if(selected >= 0 && selected < values.length) {
-            selectedString = values[selected];
+            FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+            int dropdownWidth = Math.min(width/3-10, 80);
+            int left = x+width/6-dropdownWidth/2;
+            int top = y+height-7-14;
+
+            String selectedString = " - Select - ";
+            if(selected >= 0 && selected < values.length) {
+                selectedString = values[selected];
+            }
+
+            RenderUtils.drawFloatingRectWithAlpha(left, top, dropdownWidth, 14, 0xff, false);
+            TextRenderUtils.drawStringScaled("\u25BC", fr, left+dropdownWidth-10, y+height-7-15, false, 0xff404040, 2);
+
+            TextRenderUtils.drawStringScaledMaxWidth(selectedString, fr, left+3, top+3, false,
+                    dropdownWidth-16, 0xff404040);
+            //fr.drawString(selectedString, left+3, top+3, 0xff404040);
         }
+    }
 
+    @Override
+    public void renderOverlay(int x, int y, int width) {
         if(open) {
-            GL11.glDisable(GL11.GL_SCISSOR_TEST);
-            GlStateManager.translate(0, 0, 10);
+            String selectedString = " - Select - ";
+            if(selected >= 0 && selected < values.length) {
+                selectedString = values[selected];
+            }
+
+            int height = getHeight();
+
+            FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+            int dropdownWidth = Math.min(width/3-10, 80);
+            int left = x+width/6-dropdownWidth/2;
+            int top = y+height-7-14;
 
             int dropdownHeight = 13 + 12*values.length;
 
@@ -61,7 +83,6 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
                     option = "<NONE>";
                 }
                 TextRenderUtils.drawStringScaledMaxWidth(option, fr, left+3, top+3+dropdownY, false, dropdownWidth-6, 0xff404040);
-                //fr.drawString(option, left+3, top+3+dropdownY, 0xff404040);
                 dropdownY += 12;
             }
 
@@ -70,17 +91,6 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
 
             TextRenderUtils.drawStringScaledMaxWidth(selectedString, fr, left+3, top+3, false,
                     dropdownWidth-16, 0xff404040);
-            //fr.drawString(selectedString, left+3, top+3, 0xff404040);
-            
-            GlStateManager.translate(0, 0, -10);
-            GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        } else {
-            RenderUtils.drawFloatingRectWithAlpha(left, top, dropdownWidth, 14, 0xff, false);
-            TextRenderUtils.drawStringScaled("\u25BC", fr, left+dropdownWidth-10, y+height-7-15, false, 0xff404040, 2);
-
-            TextRenderUtils.drawStringScaledMaxWidth(selectedString, fr, left+3, top+3, false,
-                    dropdownWidth-16, 0xff404040);
-            //fr.drawString(selectedString, left+3, top+3, 0xff404040);
         }
     }
 
@@ -103,7 +113,7 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
     }
 
     @Override
-    public boolean mouseInputGlobal(int x, int y, int width, int mouseX, int mouseY) {
+    public boolean mouseInputOverlay(int x, int y, int width, int mouseX, int mouseY) {
         int height = getHeight();
 
         int left = x+width/6-40;

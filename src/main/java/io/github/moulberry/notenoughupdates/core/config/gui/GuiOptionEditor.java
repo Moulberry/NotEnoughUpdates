@@ -54,8 +54,9 @@ public abstract class GuiOptionEditor {
     public abstract boolean mouseInput(int x, int y, int width, int mouseX, int mouseY);
     public abstract boolean keyboardInput();
 
-    public boolean mouseInputGlobal(int x, int y, int width, int mouseX, int mouseY) {
+    public boolean mouseInputOverlay(int x, int y, int width, int mouseX, int mouseY) {
         return false;
     }
+    public void renderOverlay(int x, int y, int width) {};
 
 }

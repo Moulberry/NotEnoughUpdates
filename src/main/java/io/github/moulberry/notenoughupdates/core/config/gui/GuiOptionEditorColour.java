@@ -36,16 +36,17 @@ public class GuiOptionEditorColour extends GuiOptionEditor {
         GlStateManager.color(r/255f, g/255f, b/255f, 1);
         Minecraft.getMinecraft().getTextureManager().bindTexture(button_white);
         RenderUtils.drawTexturedRect(x+width/6-24, y+height-7-14, 48, 16);
+    }
 
+    @Override
+    public void renderOverlay(int x, int y, int width) {
         if(colourElement != null) {
-            GL11.glDisable(GL11.GL_SCISSOR_TEST);
             colourElement.render();
-            GL11.glEnable(GL11.GL_SCISSOR_TEST);
         }
     }
 
     @Override
-    public boolean mouseInputGlobal(int x, int y, int width, int mouseX, int mouseY) {
+    public boolean mouseInputOverlay(int x, int y, int width, int mouseX, int mouseY) {
         if(colourElement != null && colourElement.mouseInput(mouseX, mouseY)) {
             return true;
         }

@@ -17,9 +17,7 @@ import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
-import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
-import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
-import io.github.moulberry.notenoughupdates.miscfeatures.SunTzu;
+import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.CalendarOverlay;
 import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.miscgui.HelpGUI;
@@ -160,7 +158,7 @@ public class NotEnoughUpdates {
                     ChatStyle style = new ChatStyle();
                     style.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                             new ChatComponentText(EnumChatFormatting.GRAY+"Click to copy to clipboard")));
-                    style.setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "neurename copyuuid"));
+                    style.setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/neurename copyuuid"));
 
                     ChatComponentText text = new ChatComponentText(EnumChatFormatting.YELLOW+"[NEU] The UUID of your currently held item is: " +
                             EnumChatFormatting.GREEN + heldUUID);
@@ -865,6 +863,7 @@ public class NotEnoughUpdates {
     });
 
     private Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    private File neuDir;
 
     /**
      * Instantiates NEUIo, NEUManager and NEUOverlay instances. Registers keybinds and adds a shutdown hook to clear tmp folder.
@@ -874,16 +873,18 @@ public class NotEnoughUpdates {
     public void preinit(FMLPreInitializationEvent event) {
         INSTANCE = this;
 
-        File f = new File(event.getModConfigurationDirectory(), "notenoughupdates");
-        f.mkdirs();
+        neuDir = new File(event.getModConfigurationDirectory(), "notenoughupdates");
+        neuDir.mkdirs();
 
-        configFile = new File(f, "configNew.json");
+        configFile = new File(neuDir, "configNew.json");
 
         if(configFile.exists()) {
             try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
                 config = gson.fromJson(reader, NEUConfig.class);
             } catch(Exception e) { }
         }
+
+        FairySouls.load(new File(neuDir, "collected_fairy_souls.json"), gson);
 
         if(config == null) {
             config = new NEUConfig();
@@ -900,6 +901,8 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
         MinecraftForge.EVENT_BUS.register(new DungeonMap());
         MinecraftForge.EVENT_BUS.register(new SunTzu());
+        MinecraftForge.EVENT_BUS.register(new MiningStuff());
+        MinecraftForge.EVENT_BUS.register(new FairySouls());
 
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
@@ -924,10 +927,11 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(settingsCommand3);
         ClientCommandHandler.instance.registerCommand(dungeonWinTest);
         ClientCommandHandler.instance.registerCommand(calendarCommand);
+        ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommand());
 
         BackgroundBlur.registerListener();
 
-        manager = new NEUManager(this, f);
+        manager = new NEUManager(this, neuDir);
         manager.loadItemInformation();
         overlay = new NEUOverlay(manager);
         profileViewer = new ProfileViewer(manager);
@@ -937,14 +941,13 @@ public class NotEnoughUpdates {
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            File tmp = new File(f, "tmp");
+            File tmp = new File(neuDir, "tmp");
             if(tmp.exists()) {
                 for(File tmpFile : tmp.listFiles()) {
                     tmpFile.delete();
                 }
                 tmp.delete();
             }
-
             saveConfig();
         }));
     }
@@ -956,6 +959,8 @@ public class NotEnoughUpdates {
             try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
                 writer.write(gson.toJson(config));
             }
+
+            FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson);
         } catch(IOException ignored) {}
     }
 

@@ -49,7 +49,8 @@ public class NEUConfigEditor extends GuiElement {
 
     private String selectedCategory = null;
 
-    private LerpingInteger optionsScroll = new LerpingInteger(0, 150);
+    private final LerpingInteger optionsScroll = new LerpingInteger(0, 150);
+    private final LerpingInteger categoryScroll = new LerpingInteger(0, 150);
 
     private LinkedHashMap<String, ConfigProcessor.ProcessedCategory> processedConfig;
 
@@ -73,6 +74,7 @@ public class NEUConfigEditor extends GuiElement {
 
     public void render() {
         optionsScroll.tick();
+        categoryScroll.tick();
 
         List<String> tooltipToDisplay = null;
 
@@ -139,7 +141,8 @@ public class NEUConfigEditor extends GuiElement {
         GlScissorStack.push(0, innerTop+1, scaledResolution.getScaledWidth(),
                 innerBottom-1, scaledResolution);
 
-        int categoryIndex = 0;
+        float catBarSize = 1;
+        int catY = -categoryScroll.getValue();
         for(Map.Entry<String, ConfigProcessor.ProcessedCategory> entry : getCurrentConfigEditing().entrySet()) {
             if(getSelectedCategory() == null) {
                 setSelectedCategory(entry.getKey());
@@ -151,9 +154,29 @@ public class NEUConfigEditor extends GuiElement {
                 catName = EnumChatFormatting.GRAY + catName;
             }
             TextRenderUtils.drawStringCenteredScaledMaxWidth(catName,
-                    fr, x+75, y+70+categoryIndex*15, false, 140, -1);
-            categoryIndex++;
+                    fr, x+75, y+70+catY, false, 100, -1);
+            catY += 15;
+            if(catY > 0) {
+                catBarSize = LerpUtils.clampZeroOne((float)(innerBottom-innerTop-2)/(catY+5+categoryScroll.getValue()));
+            }
         }
+
+        float catBarStart = categoryScroll.getValue() / (float)(catY + categoryScroll.getValue());
+        float catBarEnd = catBarStart+catBarSize;
+        if(catBarEnd > 1) {
+            catBarEnd = 1;
+            if(categoryScroll.getTarget()/(float)(catY + categoryScroll.getValue())+catBarSize < 1) {
+                int target = optionsScroll.getTarget();
+                categoryScroll.setValue((int)Math.ceil((catY+5+categoryScroll.getValue())-catBarSize*(catY+5+categoryScroll.getValue())));
+                categoryScroll.setTarget(target);
+            } else {
+                categoryScroll.setValue((int)Math.ceil((catY+5+categoryScroll.getValue())-catBarSize*(catY+5+categoryScroll.getValue())));
+            }
+        }
+        int catDist = innerBottom-innerTop-12;
+        Gui.drawRect(innerLeft+2, innerTop+5, innerLeft+7, innerBottom-5, 0xff101010);
+        Gui.drawRect(innerLeft+3, innerTop+6+(int)(catDist*catBarStart), innerLeft+6,
+                innerTop+6+(int)(catDist*catBarEnd), 0xff303030);
 
         GlScissorStack.pop(scaledResolution);
 
@@ -181,7 +204,6 @@ public class NEUConfigEditor extends GuiElement {
         Gui.drawRect(innerLeft+1, innerTop+1, innerRight-1, innerBottom-1, 0x6008080E); //Middle
 
         GlScissorStack.push(innerLeft+1, innerTop+1, innerRight-1, innerBottom-1, scaledResolution);
-
         float barSize = 1;
         int optionY = -optionsScroll.getValue();
         if(getSelectedCategory() != null && getCurrentConfigEditing().containsKey(getSelectedCategory())) {
@@ -206,6 +228,30 @@ public class NEUConfigEditor extends GuiElement {
         }
 
         GlScissorStack.pop(scaledResolution);
+
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        if(getSelectedCategory() != null && getCurrentConfigEditing().containsKey(getSelectedCategory())) {
+            int optionYOverlay = -optionsScroll.getValue();
+            ConfigProcessor.ProcessedCategory cat = getCurrentConfigEditing().get(getSelectedCategory());
+            int optionWidth = innerRight-innerLeft-20;
+
+            GlStateManager.translate(0, 0, 10);
+            GlStateManager.enableDepth();
+            for(ConfigProcessor.ProcessedOption option : cat.options.values()) {
+                GuiOptionEditor editor = option.editor;
+                if(editor == null) {
+                    continue;
+                }
+                int optionHeight = editor.getHeight();
+                if(innerTop+5+optionYOverlay+optionHeight > innerTop+1 && innerTop+5+optionYOverlay < innerBottom-1) {
+                    editor.renderOverlay(innerLeft+5, innerTop+5+optionYOverlay, optionWidth);
+                }
+                optionYOverlay += optionHeight + 5;
+            }
+            GlStateManager.disableDepth();
+            GlStateManager.translate(0, 0, -10);
+        }
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
 
         float barStart = optionsScroll.getValue() / (float)(optionY + optionsScroll.getValue());
         float barEnd = barStart+barSize;
@@ -271,52 +317,83 @@ public class NEUConfigEditor extends GuiElement {
             if(dWheel > 0) {
                 dWheel = 1;
             }
-            boolean resetTimer = true;
-            int newTarget = optionsScroll.getTarget() - dWheel*30;
-            if(newTarget < 0) {
-                newTarget = 0;
-                resetTimer = false;
-            }
+            if(mouseX < innerLeft) {
+                boolean resetTimer = true;
+                int newTarget = categoryScroll.getTarget() - dWheel*30;
+                if(newTarget < 0) {
+                    newTarget = 0;
+                    resetTimer = false;
+                }
 
-            float barSize = 1;
-            int optionY = -newTarget;
-            if(getSelectedCategory() != null && getCurrentConfigEditing() != null && getCurrentConfigEditing().containsKey(getSelectedCategory())) {
-                ConfigProcessor.ProcessedCategory cat = getCurrentConfigEditing().get(getSelectedCategory());
-                for(ConfigProcessor.ProcessedOption option : cat.options.values()) {
-                    GuiOptionEditor editor = option.editor;
-                    if(editor == null) {
-                        continue;
+                float catBarSize = 1;
+                int catY = -newTarget;
+                for(Map.Entry<String, ConfigProcessor.ProcessedCategory> entry : getCurrentConfigEditing().entrySet()) {
+                    if(getSelectedCategory() == null) {
+                        setSelectedCategory(entry.getKey());
                     }
-                    optionY += editor.getHeight() + 5;
-
-                    if(optionY > 0) {
-                        barSize = LerpUtils.clampZeroOne((float)(innerBottom-innerTop-2)/(optionY+5 + newTarget));
+                    catY += 15;
+                    if(catY > 0) {
+                        catBarSize = LerpUtils.clampZeroOne((float)(innerBottom-innerTop-2)/(catY+5+newTarget));
                     }
                 }
-            }
 
-            int barMax = (int)Math.floor((optionY+5+newTarget)-barSize*(optionY+5+newTarget));
-            if(newTarget > barMax) {
-                newTarget = barMax;
-                resetTimer = false;
+                int barMax = (int)Math.floor((catY+5+newTarget)-catBarSize*(catY+5+newTarget));
+                if(newTarget > barMax) {
+                    newTarget = barMax;
+                    resetTimer = false;
+                }
+                //if(categoryScroll.getTimeSpent() <= 0 || (resetTimer && categoryScroll.getTarget() != newTarget)) {
+                categoryScroll.resetTimer();
+                //}
+                categoryScroll.setTarget(newTarget);
+            } else {
+                boolean resetTimer = true;
+                int newTarget = optionsScroll.getTarget() - dWheel*30;
+                if(newTarget < 0) {
+                    newTarget = 0;
+                    resetTimer = false;
+                }
+
+                float barSize = 1;
+                int optionY = -newTarget;
+                if(getSelectedCategory() != null && getCurrentConfigEditing() != null && getCurrentConfigEditing().containsKey(getSelectedCategory())) {
+                    ConfigProcessor.ProcessedCategory cat = getCurrentConfigEditing().get(getSelectedCategory());
+                    for(ConfigProcessor.ProcessedOption option : cat.options.values()) {
+                        GuiOptionEditor editor = option.editor;
+                        if(editor == null) {
+                            continue;
+                        }
+                        optionY += editor.getHeight() + 5;
+
+                        if(optionY > 0) {
+                            barSize = LerpUtils.clampZeroOne((float)(innerBottom-innerTop-2)/(optionY+5 + newTarget));
+                        }
+                    }
+                }
+
+                int barMax = (int)Math.floor((optionY+5+newTarget)-barSize*(optionY+5+newTarget));
+                if(newTarget > barMax) {
+                    newTarget = barMax;
+                    resetTimer = false;
+                }
+                if(optionsScroll.getTimeSpent() <= 0 || (resetTimer && optionsScroll.getTarget() != newTarget)) {
+                    optionsScroll.resetTimer();
+                }
+                optionsScroll.setTarget(newTarget);
             }
-            if(resetTimer && optionsScroll.getTarget() != newTarget) {
-                optionsScroll.resetTimer();
-            }
-            optionsScroll.setTarget(newTarget);
         } else if(Mouse.getEventButtonState() && Mouse.getEventButton() == 0) {
             if(getCurrentConfigEditing() != null) {
-                int categoryIndex = 0;
+                int catY = -categoryScroll.getValue();
                 for(Map.Entry<String, ConfigProcessor.ProcessedCategory> entry : getCurrentConfigEditing().entrySet()) {
                     if(getSelectedCategory() == null) {
                         setSelectedCategory(entry.getKey());
                     }
                     if(mouseX >= x+5 && mouseX <= x+145 &&
-                            mouseY >= y+70+categoryIndex*15-7 && mouseY <= y+70+categoryIndex*15+7) {
+                            mouseY >= y+70+catY-7 && mouseY <= y+70+catY+7) {
                         setSelectedCategory(entry.getKey());
                         return true;
                     }
-                    categoryIndex++;
+                    catY += 15;
                 }
             }
 
@@ -342,7 +419,7 @@ public class NEUConfigEditor extends GuiElement {
                 if(editor == null) {
                     continue;
                 }
-                if(editor.mouseInputGlobal(innerLeft+5, innerTop+5+optionY, optionWidth, mouseX, mouseY)) {
+                if(editor.mouseInputOverlay(innerLeft+5, innerTop+5+optionY, optionWidth, mouseX, mouseY)) {
                     return true;
                 }
                 optionY += editor.getHeight() + 5;

@@ -10,6 +10,7 @@ import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
+import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
 import io.github.moulberry.notenoughupdates.miscfeatures.StreamerMode;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
@@ -134,6 +135,8 @@ public class NEUEventListener {
     private long notificationDisplayMillis = 0;
     private List<String> notificationLines = null;
 
+    private static Pattern BAD_ITEM_REGEX = Pattern.compile("x[0-9]{1,2}$");
+
     /**
      * 1)Will send the cached message from #sendChatMessage when at least 200ms has passed since the last message.
      * This is used in order to prevent the mod spamming messages.
@@ -160,6 +163,37 @@ public class NEUEventListener {
         }
         DungeonWin.tick();
         if(longUpdate) {
+            FairySouls.tick();
+            if(TradeWindow.hypixelTradeWindowActive()) {
+                for(int i=0; i<16; i++) {
+                    int x = i % 4;
+                    int y = i / 4;
+                    int containerIndex = y*9+x+5;
+
+                    GuiContainer chest = ((GuiContainer)Minecraft.getMinecraft().currentScreen);
+
+                    ItemStack stack = chest.inventorySlots.getInventory().get(containerIndex);
+                    if(stack != null && BAD_ITEM_REGEX.matcher(Utils.cleanColour(stack.getDisplayName())).find()) {
+                        Minecraft.getMinecraft().ingameGUI.displayTitle(
+                                null, null,
+                                4, 200, 4);
+                        Minecraft.getMinecraft().ingameGUI.displayTitle(
+                                null,
+                                EnumChatFormatting.RED+"WARNING: GLITCHED ITEM DETECTED IN TRADE WINDOW. CANCELLING TRADE",
+                                -1, -1, -1);
+                        Minecraft.getMinecraft().ingameGUI.displayTitle(
+                                EnumChatFormatting.RED+"YOU ARE TRADING WITH A SCAMMER!",
+                                null,
+                                -1, -1, -1);
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+                                "WARNING: The person you are trading with just tried to give you a glitched item.\n" +
+                                "The item is NOT worth what they say it is worth.\n" +
+                                "Report this scammer immediately and ignore them!"));
+                        break;
+                    }
+                }
+            }
+
             NotEnoughUpdates.INSTANCE.overlay.redrawItems();
             CapeManager.onTickSlow();
 
@@ -636,9 +670,15 @@ public class NEUEventListener {
             }
             if(focusInv) {
                 try {
-                    neu.overlay.render(hoverInv && focusInv);
+                    neu.overlay.render(hoverInv);
                 } catch(ConcurrentModificationException e) {e.printStackTrace();}
                 GL11.glTranslatef(0, 0, 10);
+            }
+            if(hoverInv) {
+                renderDungeonChestOverlay(event.gui);
+                if(neu.config.accessoryBag.enableOverlay) {
+                    AccessoryBagOverlay.renderOverlay();
+                }
             }
         }
     }
@@ -708,7 +748,7 @@ public class NEUEventListener {
             }
         }
 
-        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
+        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock() && !hoverInv) {
             renderDungeonChestOverlay(event.gui);
             if(neu.config.accessoryBag.enableOverlay) {
                 AccessoryBagOverlay.renderOverlay();
@@ -943,6 +983,8 @@ public class NEUEventListener {
 
     ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
 
+    JsonObject essenceJson = new JsonObject();
+
     /**
      * Sends a kbd event to NEUOverlay, cancelling if NEUOverlay#keyboardInput returns true.
      * Also includes a dev function used for creating custom named json files with recipes.
@@ -973,6 +1015,62 @@ public class NEUEventListener {
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
             if(neu.overlay.keyboardInput(focusInv)) {
                 event.setCanceled(true);
+            }
+        }
+        if(neu.config.hidden.dev && neu.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
+                Keyboard.getEventKey() == Keyboard.KEY_N && Keyboard.getEventKeyState()) {
+            GuiScreen gui = Minecraft.getMinecraft().currentScreen;
+            if(gui instanceof GuiChest) {
+                GuiChest eventGui = (GuiChest) event.gui;
+                ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+                IInventory lower = cc.getLowerChestInventory();
+
+                if(!lower.getDisplayName().getUnformattedText().endsWith("Essence")) return;
+
+                for(int i=0; i<lower.getSizeInventory(); i++) {
+                    ItemStack stack = lower.getStackInSlot(i);
+
+                    String internalname = neu.manager.getInternalNameForItem(stack);
+                    if(internalname != null) {
+                        String[] lore = neu.manager.getLoreFromNBT(stack.getTagCompound());
+
+                        for(String line : lore) {
+                            if(line.contains(":") && (line.startsWith("\u00A77Upgrade to") ||
+                                    line.startsWith("\u00A77Convert to Dungeon Item"))) {
+                                String[] split = line.split(":");
+                                String after = Utils.cleanColour(split[1]);
+                                StringBuilder costS = new StringBuilder();
+                                for(char c : after.toCharArray()) {
+                                    if(c >= '0' && c <= '9') {
+                                        costS.append(c);
+                                    }
+                                }
+                                int cost = Integer.parseInt(costS.toString());
+                                String[] afterSplit = after.split(" ");
+                                String type = afterSplit[afterSplit.length-2];
+
+                                if(!essenceJson.has(internalname)) {
+                                    essenceJson.add(internalname, new JsonObject());
+                                }
+                                JsonObject obj = essenceJson.get(internalname).getAsJsonObject();
+                                obj.addProperty("type", type);
+
+                                if(line.startsWith("\u00A77Convert to Dungeon Item")) {
+                                    obj.addProperty("dungeonize", cost);
+                                } else if(line.startsWith("\u00A77Upgrade to")) {
+                                    int stars = 0;
+                                    for(char c : line.toCharArray()) {
+                                        if(c == '\u272A') stars++;
+                                    }
+                                    if(stars > 0) {
+                                        obj.addProperty(stars+"", cost);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                System.out.println(essenceJson);
             }
         }
         if(neu.config.hidden.dev && neu.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
@@ -1284,7 +1382,7 @@ public class NEUEventListener {
                         newTooltip.add("");
                         newTooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
                     } else {
-                        ItemPriceInformation.addToTooltip(newTooltip, internalname);
+                        ItemPriceInformation.addToTooltip(newTooltip, internalname, event.itemStack);
                     }
                 }
             }
@@ -1443,7 +1541,7 @@ public class NEUEventListener {
         event.toolTip.addAll(newTooltip);
 
         if(neu.config.tooltipTweaks.showPriceInfoInvItem) {
-            ItemPriceInformation.addToTooltip(event.toolTip, internalname);
+            ItemPriceInformation.addToTooltip(event.toolTip, internalname, event.itemStack);
         }
     }
 

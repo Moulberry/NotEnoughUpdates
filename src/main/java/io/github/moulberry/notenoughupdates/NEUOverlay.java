@@ -264,6 +264,7 @@ public class NEUOverlay extends Gui {
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
                 if(Mouse.getEventButtonState()) {
+                    Minecraft.getMinecraft().thePlayer.closeScreen();
                     Minecraft.getMinecraft().displayGuiScreen(new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config)));
                 }
             }
@@ -1930,11 +1931,12 @@ public class NEUOverlay extends Gui {
         //Render tooltip
         JsonObject json = tooltipToDisplay.get();
         if(json != null) {
-            List<String> text = manager.jsonToStack(json).getTooltip(Minecraft.getMinecraft().thePlayer, false);
+            ItemStack stack = manager.jsonToStack(json);
+            List<String> text = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
 
             String internalname = json.get("internalname").getAsString();
             if(!NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoInvItem) {
-                ItemPriceInformation.addToTooltip(text, internalname);
+                ItemPriceInformation.addToTooltip(text, internalname, stack);
             }
 
             boolean hasClick = false;

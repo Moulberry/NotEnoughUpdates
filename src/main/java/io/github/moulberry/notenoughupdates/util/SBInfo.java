@@ -53,12 +53,11 @@ public class SBInfo {
             try {
                 JsonObject obj = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(event.message.getUnformattedText(), JsonObject.class);
                 if(obj.has("server")) {
-                    event.setCanceled(true);
+                    if(System.currentTimeMillis() - lastLocRaw < 5000) event.setCanceled(true);
                     if(obj.has("gametype") && obj.has("mode") && obj.has("map")) {
                         locraw = obj;
                     }
                 }
-
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -73,7 +72,8 @@ public class SBInfo {
     }
 
     public void tick() {
-        if(locraw == null && (System.currentTimeMillis() - lastLocRaw) > 20000) {
+        if(Minecraft.getMinecraft().theWorld != null &&
+                locraw == null && (System.currentTimeMillis() - lastLocRaw) > 20000) {
             lastLocRaw = System.currentTimeMillis();
             NotEnoughUpdates.INSTANCE.sendChatMessage("/locraw");
         }

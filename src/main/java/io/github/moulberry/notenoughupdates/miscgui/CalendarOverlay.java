@@ -694,11 +694,6 @@ public class CalendarOverlay {
                     }
                 }
 
-                if(nextEvent == null) {
-                    nextEvent = firstEvent;
-                    timeUntilNext = timeUntilFirst;
-                }
-
                 if(nextEvent != null) {
                     renderToast(nextEvent, timeUntilNext);
                 }
@@ -883,9 +878,12 @@ public class CalendarOverlay {
                 }
             }
 
-            if(nextEvent == null) {
-                nextEvent = firstEvent;
-                timeUntilNext = timeUntilFirst;
+            if(nextEvent == null && firstEvent != null) {
+                String[] split = firstEvent.id.split(":");
+                if(eventFavourites.contains(split[0])) {
+                    nextEvent = firstEvent;
+                    timeUntilNext = timeUntilFirst;
+                }
             }
 
             if(nextEvent != null) {

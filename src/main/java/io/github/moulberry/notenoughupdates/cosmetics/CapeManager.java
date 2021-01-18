@@ -45,7 +45,7 @@ public class CapeManager {
 
     private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
             "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative", "void", "ironmoon", "krusty" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false, false, true, true };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false, false, true, false };
 
     public static CapeManager getInstance() {
         return INSTANCE;

@@ -2,6 +2,9 @@ package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
+import io.github.moulberry.notenoughupdates.util.Constants;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Keyboard;
 
@@ -11,7 +14,7 @@ import java.util.Locale;
 
 public class ItemPriceInformation {
 
-    public static boolean addToTooltip(List<String> tooltip, String internalname) {
+    public static boolean addToTooltip(List<String> tooltip, String internalname, ItemStack stack) {
         JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
         JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
         float lowestBinAvg = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAvgBin(internalname);
@@ -104,6 +107,44 @@ public class ItemPriceInformation {
                             }
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AVG Lowest BIN: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBinAvg)+" coins");
+                        }
+                        break;
+                    case 6:
+                        if(Constants.ESSENCECOSTS == null) break;
+                        JsonObject essenceCosts = Constants.ESSENCECOSTS;
+                        if(!essenceCosts.has(internalname)) {
+                            break;
+                        }
+                        JsonObject itemCosts = essenceCosts.get(internalname).getAsJsonObject();
+                        String essenceType = itemCosts.get("type").getAsString();
+
+                        int dungeonItemLevel = -1;
+                        if(stack != null && stack.hasTagCompound() &&
+                                stack.getTagCompound().hasKey("ExtraAttributes", 10)) {
+                            NBTTagCompound ea = stack.getTagCompound().getCompoundTag("ExtraAttributes");
+
+                            if (ea.hasKey("dungeon_item_level", 99)) {
+                                dungeonItemLevel = ea.getInteger("dungeon_item_level");
+                            }
+                        }
+                        if(dungeonItemLevel == -1) {
+                            int dungeonizeCost = 0;
+                            if(itemCosts.has("dungeonize")) {
+                                dungeonizeCost = itemCosts.get("dungeonize").getAsInt();
+                            }
+                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Dungeonize Cost: " +
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+dungeonizeCost+" "+essenceType);
+                        } else if(dungeonItemLevel >= 0 && dungeonItemLevel <= 4) {
+                            String costType = (dungeonItemLevel+1)+"";
+
+                            int upgradeCost = itemCosts.get(costType).getAsInt();
+                            StringBuilder star = new StringBuilder();
+                            for(int i=0; i<=dungeonItemLevel; i++) {
+                                star.append('\u272A');
+                            }
+                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Upgrade to "+
+                                    EnumChatFormatting.GOLD+star+EnumChatFormatting.YELLOW+EnumChatFormatting.BOLD+": " +
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+upgradeCost+" "+essenceType);
                         }
                         break;
                 }

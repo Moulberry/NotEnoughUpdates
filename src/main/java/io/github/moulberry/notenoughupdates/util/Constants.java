@@ -12,6 +12,8 @@ public class Constants {
     public static JsonObject PETNUMS;
     public static JsonObject PETS;
     public static JsonObject PARENTS;
+    public static JsonObject ESSENCECOSTS;
+    public static JsonObject FAIRYSOULS;
     
     public static void reload() {
         BONUSES = Utils.getConstant("bonuses");
@@ -22,6 +24,8 @@ public class Constants {
         PETNUMS = Utils.getConstant("petnums");
         PETS = Utils.getConstant("pets");
         PARENTS = Utils.getConstant("parents");
+        ESSENCECOSTS = Utils.getConstant("essencecosts");
+        FAIRYSOULS = Utils.getConstant("fairy_souls");
     }
 
     static {

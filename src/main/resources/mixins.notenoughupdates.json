@@ -19,6 +19,9 @@
     "MixinRender",
     "MixinRenderFish",
     "MixinContainer",
-    "MixinWorld"
+    "MixinWorld",
+    "MixinPlayerControllerMP",
+    "MixinLayerCreeperCharge",
+    "MixinEffectRenderer"
   ]
 }

@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.profileviewer;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -709,10 +710,67 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Until Cata "+floorLevelTo+": ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(floorLevelToXP, 0), x, y+16, sectionWidth);
 
+            if(mouseX > x && mouseX < x + sectionWidth &&
+                    mouseY > y+16 && mouseY < y+24) {
+                float xpF5 = 2000;
+                float xpF6 = 4000;
+                float xpF7 = 20000;
+                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                    xpF5 *= 1.1;
+                    xpF6 *= 1.1;
+                    xpF7 *= 1.1;
+                }
+
+                long runsF5 = (int)Math.ceil(floorLevelToXP/xpF5);
+                long runsF6 = (int)Math.ceil(floorLevelToXP/xpF6);
+                long runsF7 = (int)Math.ceil(floorLevelToXP/xpF7);
+
+                float timeF5 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.catacombs.fastest_time_s_plus.5"), 0);
+                float timeF6 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.catacombs.fastest_time_s_plus.6"), 0);
+                float timeF7 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.catacombs.fastest_time_s_plus.7"), 0);
+
+                tooltipToDisplay = Lists.newArrayList(
+              String.format("# F5 Runs (%s xp) : %d", shortNumberFormat(xpF5, 0), runsF5),
+                        String.format("# F6 Runs (%s xp) : %d", shortNumberFormat(xpF6, 0), runsF6),
+                        String.format("# F7 Runs (%s xp) : %d", shortNumberFormat(xpF7, 0), runsF7),
+                        ""
+                );
+                boolean hasTime = false;
+                if(timeF5 > 1000) {
+                    tooltipToDisplay.add(String.format("Expected Time (F5) : %s", Utils.prettyTime(runsF5*(long)(timeF5*1.2))));
+                    hasTime = true;
+                }
+                if(timeF6 > 1000) {
+                    tooltipToDisplay.add(String.format("Expected Time (F6) : %s", Utils.prettyTime(runsF6*(long)(timeF6*1.2))));
+                    hasTime = true;
+                }
+                if(timeF7 > 1000) {
+                    tooltipToDisplay.add(String.format("Expected Time (F7) : %s", Utils.prettyTime(runsF7*(long)(timeF7*1.2))));
+                    hasTime = true;
+                }
+                if(hasTime) {
+                    tooltipToDisplay.add("");
+                }
+                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" to show without Expert Ring]");
+                }
+                if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)) {
+                    if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) tooltipToDisplay.add("");
+                    tooltipToDisplay.add("Number of runs is calculated as [Remaining XP]/[XP per Run].");
+                    tooltipToDisplay.add("The [XP per Run] is the average xp gained from an S+ run");
+                    tooltipToDisplay.add("The "+EnumChatFormatting.DARK_PURPLE+"Catacombs Expert Ring"+EnumChatFormatting.GRAY+
+                            " is assumed to be used, unless "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" is held.");
+                    tooltipToDisplay.add("[Time per run] is calculated using fastestSPlus x 120%");
+                } else {
+                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"CTRL"+EnumChatFormatting.GRAY+" to see details]");
+                }
+            }
+
             dungeonLevelTextField.setSize(20, 10);
             dungeonLevelTextField.render(x+22, y+29);
-            //fontRendererObj.drawString("Calculate",
-            //        x+sectionWidth-17-fontRendererObj.getStringWidth("Calculate"), y+30, 0xffffffff);
             int calcLen = fontRendererObj.getStringWidth("Calculate");
             Utils.renderShadowedString(EnumChatFormatting.WHITE+"Calculate", x+sectionWidth-17-calcLen/2f,
                     y+30, 100);
@@ -753,7 +811,7 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (Total)  ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(secrets, 0), x, miscTopY+20, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (/Run)  ",
-                    EnumChatFormatting.WHITE.toString()+(Math.round(secrets/totalRunsF5*100)/100f), x, miscTopY+30, sectionWidth);
+                    EnumChatFormatting.WHITE.toString()+(Math.round(secrets/Math.max(1, totalRunsF5)*100)/100f), x, miscTopY+30, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Mob Kills (Total)  ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(mobKills, 0), x, miscTopY+40, sectionWidth);
 
@@ -785,12 +843,15 @@ public class GuiProfileViewer extends GuiScreen {
                     "dungeons.dungeon_types.catacombs.fastest_time_s."+floorTime), 0);
             float timeSPLUS = Utils.getElementAsFloat(Utils.getElement(profileInfo,
                     "dungeons.dungeon_types.catacombs.fastest_time_s_plus."+floorTime), 0);
+            String timeNormStr = timeNorm <= 0 ? "N/A" : Utils.prettyTime((long)timeNorm);
+            String timeSStr = timeS <= 0 ? "N/A" : Utils.prettyTime((long)timeS);
+            String timeSPlusStr = timeSPLUS <= 0 ? "N/A" : Utils.prettyTime((long)timeSPLUS);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" ",
-                    EnumChatFormatting.WHITE.toString()+Utils.prettyTime((long)timeNorm), x, y3+10, sectionWidth);
+                    EnumChatFormatting.WHITE.toString()+timeNormStr, x, y3+10, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" S",
-                    EnumChatFormatting.WHITE.toString()+Utils.prettyTime((long)timeS), x, y3+20, sectionWidth);
+                    EnumChatFormatting.WHITE.toString()+timeSStr, x, y3+20, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" S+",
-                    EnumChatFormatting.WHITE.toString()+Utils.prettyTime((long)timeSPLUS), x, y3+30, sectionWidth);
+                    EnumChatFormatting.WHITE.toString()+timeSPlusStr, x, y3+30, sectionWidth);
         }
 
         //Completions

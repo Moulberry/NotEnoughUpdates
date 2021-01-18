@@ -45,6 +45,10 @@ public class LerpingInteger {
         }
     }
 
+    public int getTimeSpent() {
+        return timeSpent;
+    }
+
     public void resetTimer() {
         this.timeSpent = 0;
         this.lastMillis = System.currentTimeMillis();

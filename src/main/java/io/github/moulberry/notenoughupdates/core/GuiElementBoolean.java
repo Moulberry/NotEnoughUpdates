@@ -36,6 +36,9 @@ public class GuiElementBoolean extends GuiElement {
         this.previewValue = value;
         this.clickRadius = clickRadius;
         this.toggleCallback = toggleCallback;
+        this.lastMillis = System.currentTimeMillis();
+
+        if(value) animation = 36;
     }
 
     @Override

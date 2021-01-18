@@ -776,7 +776,6 @@ public class Utils {
             } catch (Exception ignored) {
             }
         }
-        System.out.println(constant + " = null");
         return null;
     }
 
@@ -827,7 +826,7 @@ public class Utils {
         file.delete();
     }
 
-    public static Color getPrimaryColour(String displayname) {
+    public static char getPrimaryColourCode(String displayname) {
         int lastColourCode = -99;
         int currentColour = 0;
         int[] mostCommon = new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -856,7 +855,11 @@ public class Utils {
             }
         }
 
-        int colourInt = Minecraft.getMinecraft().fontRendererObj.getColorCode("0123456789abcdef".charAt(currentColour));
+        return "0123456789abcdef".charAt(currentColour);
+    }
+
+    public static Color getPrimaryColour(String displayname) {
+        int colourInt = Minecraft.getMinecraft().fontRendererObj.getColorCode(getPrimaryColourCode(displayname));
         return new Color(colourInt).darker();
     }
 

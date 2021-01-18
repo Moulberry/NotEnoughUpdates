@@ -348,7 +348,7 @@ public class CustomAH extends Gui {
                     tooltip.add("");
                     tooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
                 } else {
-                    ItemPriceInformation.addToTooltip(tooltip, internalname);
+                    ItemPriceInformation.addToTooltip(tooltip, internalname, auc.getStack());
                 }
             }
         }
