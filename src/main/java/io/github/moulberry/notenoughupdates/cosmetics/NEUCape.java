@@ -734,15 +734,23 @@ public class NEUCape {
                 newPosition.y = node.lastPosition.y + (node.position.y - node.lastPosition.y) * partialRenderTick;
                 newPosition.z = node.lastPosition.z + (node.position.z - node.lastPosition.z) * partialRenderTick;
 
-                if(node.oldRenderPosition[node.oldRenderPosition.length-1] == null) {
+                int length = node.oldRenderPosition.length;
+                int fps = Minecraft.getDebugFPS();
+                if(fps < 50) {
+                    length = 2;
+                } else if(fps < 100) {
+                    length = 2+(int)((fps-50)/50f*3);
+                }
+
+                if(node.oldRenderPosition[length-1] == null) {
                     node.renderPosition = newPosition;
                 } else {
                     Vector3f accum = new Vector3f();
-                    for(int i=0; i<node.oldRenderPosition.length; i++) {
+                    for(int i=0; i<length; i++) {
                         Vector3f.add(accum, node.oldRenderPosition[i], accum);
                         Vector3f.add(accum, avgPositionFixed, accum);
                     }
-                    accum.scale(1/(float)node.oldRenderPosition.length);
+                    accum.scale(1/(float)length);
 
                     float blendFactor = 0.5f+0.3f*y/(float)(nodes.size()-1); //0.5/0.5 -> 0.8/0.2 //0-1
                     accum.scale(blendFactor);

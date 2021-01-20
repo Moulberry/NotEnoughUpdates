@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
+import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
 import io.github.moulberry.notenoughupdates.miscfeatures.MiningStuff;
 import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.util.BlockPos;
@@ -16,6 +17,7 @@ public class MixinPlayerControllerMP {
     @Inject(method="clickBlock", at=@At("HEAD"))
     public void clickBlock(BlockPos loc, EnumFacing face, CallbackInfoReturnable<Boolean> cir) {
         MiningStuff.blockClicked(loc);
+        ItemCooldowns.blockClicked(loc);
     }
 
 }

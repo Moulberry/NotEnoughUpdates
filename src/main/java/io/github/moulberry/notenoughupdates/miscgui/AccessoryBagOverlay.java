@@ -4,7 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
+import io.github.moulberry.notenoughupdates.textoverlays.TextOverlayStyle;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -172,7 +174,7 @@ public class AccessoryBagOverlay {
         int yIndex = 0;
         for(Map.Entry<Integer, Integer> entry : talismanCountRarity.descendingMap().entrySet()) {
             String rarityName = rarityArrC[entry.getKey()];
-            renderAlignedString(rarityName, EnumChatFormatting.WHITE.toString()+entry.getValue(), x+5, y+20+11*yIndex, 70);
+            Utils.renderAlignedString(rarityName, EnumChatFormatting.WHITE.toString()+entry.getValue(), x+5, y+20+11*yIndex, 70);
             yIndex++;
         }
     }
@@ -201,7 +203,7 @@ public class AccessoryBagOverlay {
             GlStateManager.color(1, 1, 1, 1);
             GlStateManager.enableBlend();
             GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            renderAlignedString(statNamePretty, EnumChatFormatting.WHITE.toString()+val, x+5, y+20+11*yIndex, 70);
+            Utils.renderAlignedString(statNamePretty, EnumChatFormatting.WHITE.toString()+val, x+5, y+20+11*yIndex, 70);
 
             yIndex++;
         }
@@ -230,7 +232,7 @@ public class AccessoryBagOverlay {
             GlStateManager.color(1, 1, 1, 1);
             GlStateManager.enableBlend();
             GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            renderAlignedString(statNamePretty, EnumChatFormatting.WHITE.toString()+val, x+5, y+20+11*yIndex, 70);
+            Utils.renderAlignedString(statNamePretty, EnumChatFormatting.WHITE.toString()+val, x+5, y+20+11*yIndex, 70);
 
             yIndex++;
         }
@@ -291,7 +293,8 @@ public class AccessoryBagOverlay {
 
             int yIndex = 0;
             for(ItemStack duplicate : duplicates) {
-                renderAlignedString(duplicate.getDisplayName(), "", x+5, y+20+11*yIndex, 70);
+                String s = duplicate.getDisplayName();
+                Utils.renderShadowedString(s, x+40, y+20+11*yIndex, 70);
                 if(duplicates.size() > 11) {
                     if(++yIndex >= 10) break;
                 } else {
@@ -382,8 +385,27 @@ public class AccessoryBagOverlay {
                     new Color(80, 80, 80).getRGB());
 
             int yIndex = 0;
+            long currentTime = System.currentTimeMillis();
+            int marqueeOffset = (int)(currentTime/500 % 100);
             for(ItemStack missingStack : missing) {
-                renderAlignedString(missingStack.getDisplayName(), "", x+5, y+20+11*yIndex, 70);
+                String s = missingStack.getDisplayName();
+
+                //int marueeOffset
+                //if(s.length()) {
+
+                //}
+
+                s = Minecraft.getMinecraft().fontRendererObj.trimStringToWidth(s, 70);
+
+                String clean = StringUtils.cleanColourNotModifiers(s);
+                for(int xO = -1; xO <= 1; xO++) {
+                    for(int yO = -1; yO <= 1; yO++) {
+                        int col = 0xff202020;
+                        //if(xO != 0 && yO != 0) col = 0xff252525;
+                        Minecraft.getMinecraft().fontRendererObj.drawString(clean, x+5+xO, y+20+11*yIndex+yO, col, false);
+                    }
+                }
+                Minecraft.getMinecraft().fontRendererObj.drawString(s, x+5, y+20+11*yIndex, 0xffffff, false);
                 if(missing.size() > 11) {
                     if(++yIndex >= 10) break;
                 } else {
@@ -674,7 +696,7 @@ public class AccessoryBagOverlay {
         }
     }
 
-    private static void renderAlignedString(String first, String second, float x, float y, int length) {
+    /*private static void renderAlignedString(String first, String second, float x, float y, int length) {
         FontRenderer fontRendererObj = Minecraft.getMinecraft().fontRendererObj;
 
         if(fontRendererObj.getStringWidth(first + " " + second) >= length) {
@@ -718,7 +740,7 @@ public class AccessoryBagOverlay {
             GlStateManager.color(1, 1, 1, 1);
             fontRendererObj.drawString(second, x+length-secondLen, y, 4210752, false);
         }
-    }
+    }*/
 
     private static final Pattern HEALTH_PATTERN_BONUS = Pattern.compile("^Health: (?:\\+|-)[0-9]+ HP \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
     private static final Pattern DEFENCE_PATTERN_BONUS = Pattern.compile("^Defense: (?:\\+|-)[0-9]+ \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");

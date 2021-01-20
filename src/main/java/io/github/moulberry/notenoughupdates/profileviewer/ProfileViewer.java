@@ -1047,9 +1047,8 @@ public class ProfileViewer {
     }
 
     public Profile getProfileReset(String uuid, Consumer<Profile> callback) {
-        Profile profile = getProfile(uuid, callback);
-        profile.resetCache();
-        return profile;
+        if(uuidToProfileMap.containsKey(uuid)) uuidToProfileMap.get(uuid).resetCache();
+        return getProfile(uuid, callback);
     }
 
     private static JsonObject resourceCollection = null;

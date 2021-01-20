@@ -103,7 +103,7 @@ public class GuiElementBoolean extends GuiElement {
             if(Mouse.getEventButton() == 0) {
                 if(Mouse.getEventButtonState()) {
                     previewValue = !value;
-                } else {
+                } else if(previewValue == !value) {
                     value = !value;
                     toggleCallback.accept(value);
                 }

@@ -106,6 +106,8 @@ public class FairySouls {
         }
 
         JsonObject fairySouls = Constants.FAIRYSOULS;
+        if(fairySouls == null) return;
+
         String location = SBInfo.getInstance().getLocation();
         if(location == null) {
             currentSoulList = null;

@@ -3,20 +3,20 @@ package io.github.moulberry.notenoughupdates;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
+import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
-import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
-import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
-import io.github.moulberry.notenoughupdates.miscfeatures.StreamerMode;
+import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
+import io.github.moulberry.notenoughupdates.textoverlays.TextOverlay;
+import io.github.moulberry.notenoughupdates.textoverlays.TextOverlayStyle;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.RequestFocusListener;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
-import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -58,8 +58,8 @@ import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -71,7 +71,7 @@ import static io.github.moulberry.notenoughupdates.util.GuiTextures.dungeon_ches
 
 public class NEUEventListener {
 
-    private NotEnoughUpdates neu;
+    private final NotEnoughUpdates neu;
 
     private boolean hoverInv = false;
     private boolean focusInv = false;
@@ -135,16 +135,26 @@ public class NEUEventListener {
     private long notificationDisplayMillis = 0;
     private List<String> notificationLines = null;
 
-    private static Pattern BAD_ITEM_REGEX = Pattern.compile("x[0-9]{1,2}$");
+    private static final Pattern BAD_ITEM_REGEX = Pattern.compile("x[0-9]{1,2}$");
+
+    public static Class<? extends TextOverlay> dontRenderOverlay = null;
+    private final List<TextOverlay> textOverlays = new ArrayList<>();
+    {
+        textOverlays.add(new CommissionOverlay(NotEnoughUpdates.INSTANCE.config.mining.overlayPosition, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.mining.overlayStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        }));
+    }
 
     /**
      * 1)Will send the cached message from #sendChatMessage when at least 200ms has passed since the last message.
      * This is used in order to prevent the mod spamming messages.
      * 2)Adds unique items to the collection log
      */
-    private HashMap<String, Long> newItemAddMap = new HashMap<>();
     private long lastLongUpdate = 0;
-    private long lastVeryLongUpdate = 0;
     private long lastSkyblockScoreboard = 0;
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
@@ -163,7 +173,12 @@ public class NEUEventListener {
         }
         DungeonWin.tick();
         if(longUpdate) {
+            CrystalOverlay.tick();
+            DwarvenMinesTextures.tick();
             FairySouls.tick();
+            for(TextOverlay overlay : textOverlays) {
+                overlay.tick();
+            }
             if(TradeWindow.hypixelTradeWindowActive()) {
                 for(int i=0; i<16; i++) {
                     int x = i % 4;
@@ -270,8 +285,8 @@ public class NEUEventListener {
                 neu.manager.auctionManager.markNeedsUpdate();
             }
         }
-        if(longUpdate && neu.hasSkyblockScoreboard()) {
-            /*if(neu.manager.getCurrentProfile() == null || neu.manager.getCurrentProfile().length() == 0) {
+        /*if(longUpdate && neu.hasSkyblockScoreboard()) {
+            if(neu.manager.getCurrentProfile() == null || neu.manager.getCurrentProfile().length() == 0) {
                 ProfileViewer.Profile profile = NotEnoughUpdates.profileViewer.getProfile(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
                         callback->{});
                 if(profile != null) {
@@ -324,11 +339,11 @@ public class NEUEventListener {
                     }
                 }
                 newItemAddMap.keySet().retainAll(newItem);
-            }*/
-        }
+            }
+        }*/
     }
 
-    private void processUniqueStack(ItemStack stack, HashSet<String> newItem) {
+    /*private void processUniqueStack(ItemStack stack, HashSet<String> newItem) {
         if(stack != null && stack.hasTagCompound()) {
             String internalname = neu.manager.getInternalNameForItem(stack);
             if(internalname != null) {
@@ -344,13 +359,13 @@ public class NEUEventListener {
                     } else {
                         newItemAddMap.put(internalname, System.currentTimeMillis());
                     }
-                }*/
+                }
             }
         }
-    }
+    }*/
 
     @SubscribeEvent(priority= EventPriority.HIGHEST)
-    public void onRenderEntitySpecials(RenderLivingEvent.Specials.Pre event) {
+    public void onRenderEntitySpecials(RenderLivingEvent.Specials.Pre<EntityPlayer> event) {
         if(Minecraft.getMinecraft().currentScreen instanceof GuiProfileViewer) {
             if(((GuiProfileViewer)Minecraft.getMinecraft().currentScreen).getEntityPlayer() == event.entity) {
                 event.setCanceled(true);
@@ -371,6 +386,13 @@ public class NEUEventListener {
         long timeRemaining = 15000 - (System.currentTimeMillis() - notificationDisplayMillis);
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
             DungeonWin.render(event.partialTicks);
+            for(TextOverlay overlay : textOverlays) {
+                if(dontRenderOverlay != null && dontRenderOverlay.isAssignableFrom(overlay.getClass())) {
+                    continue;
+                }
+                overlay.render();
+            }
+            dontRenderOverlay = null;
         }
         if(event.type == RenderGameOverlayEvent.ElementType.ALL &&
                 timeRemaining > 0 && notificationLines != null && notificationLines.size() > 0) {
@@ -393,7 +415,7 @@ public class NEUEventListener {
             Gui.drawRect(midX-width/2+2, sr.getScaledHeight()*3/4-height/2+2,
                     midX+width/2-2, sr.getScaledHeight()*3/4+height/2-2, 0xFFC8C8C8);
 
-            Minecraft.getMinecraft().fontRendererObj.drawString((timeRemaining/1000)+"s", midX-width/2+3,
+            Minecraft.getMinecraft().fontRendererObj.drawString((timeRemaining/1000)+"s", midX-width/2f+3,
                     topY+3, 0xFF000000, false);
 
             Utils.drawStringCentered(notificationLines.get(0), Minecraft.getMinecraft().fontRendererObj,
@@ -542,7 +564,6 @@ public class NEUEventListener {
                         }
                     }
                 }, 200, TimeUnit.MILLISECONDS);
-                return;
             }
         }
     }
@@ -653,7 +674,6 @@ public class NEUEventListener {
                         focusInv = true;
                     }
                 } catch(NullPointerException npe) {
-                    npe.printStackTrace();
                     focusInv = !hoverPane;
                 }
             }
@@ -1609,7 +1629,7 @@ public class NEUEventListener {
                 }
             }
         }*/
-        if(!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)/* || /*!neu.config.hidden.dev*/) return;
+        if(!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || !neu.config.hidden.dev) return;
         if(event.toolTip.size()>0&&event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
             event.toolTip.remove(event.toolTip.size()-1);
 

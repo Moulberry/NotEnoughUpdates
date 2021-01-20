@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.dungeons;
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
+import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.util.NEUResourceManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
@@ -1465,8 +1466,10 @@ public class DungeonMap {
                     }
                 }
 
-                renderMap((int)(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterX/100*Minecraft.getMinecraft().displayWidth/2),
-                        (int)(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterY/100*Minecraft.getMinecraft().displayHeight/2),
+                Position pos = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPosition;
+
+                int size = 80 + Math.round(40*NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
+                renderMap(pos.getAbsX(event.resolution)+size/2, pos.getAbsY(event.resolution)+size/2,
                         colourMap, decorations, roomSizeBlocks, actualPlayers, true, event.partialTicks);
             }
         }

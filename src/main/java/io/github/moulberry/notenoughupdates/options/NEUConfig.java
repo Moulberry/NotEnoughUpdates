@@ -1,13 +1,65 @@
 package io.github.moulberry.notenoughupdates.options;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
+import io.github.moulberry.notenoughupdates.NEUEventListener;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
 import io.github.moulberry.notenoughupdates.core.config.Config;
+import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
+import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
+import io.github.moulberry.notenoughupdates.miscfeatures.CommissionOverlay;
+import io.github.moulberry.notenoughupdates.textoverlays.TextOverlay;
+import io.github.moulberry.notenoughupdates.textoverlays.TextOverlayStyle;
+import net.minecraft.client.Minecraft;
+import net.minecraftforge.client.ClientCommandHandler;
 
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 public class NEUConfig extends Config {
+
+    @Override
+    public void executeRunnable(int runnableId) {
+        switch (runnableId) {
+            case 0:
+                ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neumap");
+                return;
+            case 1:
+                final CommissionOverlay overlay = new CommissionOverlay(NotEnoughUpdates.INSTANCE.config.mining.overlayPosition, () -> {
+                    int style = NotEnoughUpdates.INSTANCE.config.mining.overlayStyle;
+                    if(style >= 0 && style < TextOverlayStyle.values().length) {
+                        return TextOverlayStyle.values()[style];
+                    }
+                    return TextOverlayStyle.BACKGROUND;
+                });
+                overlay.tick();
+                JsonObject test = null;
+                if(overlay.overlayWidth <= 0 || overlay.overlayHeight <= 0) {
+                    Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
+                            NotEnoughUpdates.INSTANCE.config.mining.overlayPosition,
+                            300, 100, () -> {
+                    }, () -> {
+                    }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
+                            new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config))
+                    ));
+                } else {
+                    Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
+                            NotEnoughUpdates.INSTANCE.config.mining.overlayPosition,
+                            overlay.overlayWidth+10, overlay.overlayHeight+10, () -> {
+                                overlay.render();
+                                NEUEventListener.dontRenderOverlay = CommissionOverlay.class;
+                    }, () -> {
+                    }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
+                            new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config))
+                    ));
+                }
+                return;
+        }
+    }
 
     @Expose
     @Category(
@@ -83,6 +135,13 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
+            name = "Mining",
+            desc = "Mining"
+    )
+    public Mining mining = new Mining();
+
+    @Expose
+    @Category(
             name = "NEU Auction House",
             desc = "NEU Auction House"
     )
@@ -122,6 +181,14 @@ public class NEUConfig extends Config {
             desc = "Builders Wand Overlay"
     )
     public BuilderWand builderWand = new BuilderWand();
+
+
+    @Expose
+    @Category(
+            name = "Dungeon Map",
+            desc = "Dungeon Map"
+    )
+    public DungeonMapOpen dungeonMapOpen = new DungeonMapOpen();
 
     @Expose
     @Category(
@@ -671,6 +738,79 @@ public class NEUConfig extends Config {
         public int supPower = 11;
     }
 
+    public static class Mining {
+        @Expose
+        @ConfigOption(
+                name = "Puzzler Solver",
+                desc = "Show the correct block to mine for the puzzler puzzle in Dwarven Mines"
+        )
+        @ConfigEditorBoolean
+        public boolean puzzlerSolver = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Titanium Alert",
+                desc = "Show an alert whenever titanium appears nearby"
+        )
+        @ConfigEditorBoolean
+        public boolean titaniumAlert = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Overlay Position",
+                desc = "Change the position of the Dwarven Mines information overlay (commisions, powder & forge statuses)"
+        )
+        @ConfigEditorButton(
+                runnableId = 1,
+                buttonText = "Edit"
+        )
+        public Position overlayPosition = new Position(10, 100);
+
+        @Expose
+        @ConfigOption(
+                name = "Overlay Style",
+                desc = "Change the style of the Dwarven Mines information overlay"
+        )
+        @ConfigEditorDropdown(
+                values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+        )
+        public int overlayStyle = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Commissions Overlay",
+                desc = "Show current commissions on the screen while in Dwarven Mines"
+        )
+        @ConfigEditorBoolean
+        public boolean commissionsOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Powder Overlay",
+                desc = "Show powder count on the screen while in Dwarven Mines"
+        )
+        @ConfigEditorBoolean
+        public boolean powderOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Forges Overlay",
+                desc = "Show forge statuses on the screen while in Dwarven Mines"
+        )
+        @ConfigEditorBoolean
+        public boolean forgeOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Hide Empty Forges",
+                desc = "Hide empty forges in the information overlay"
+        )
+        @ConfigEditorBoolean
+        public boolean hideEmptyForges = true;
+
+
+    }
+
     public static class NeuAuctionHouse {
         @Expose
         @ConfigOption(
@@ -853,6 +993,20 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorColour
         public String wandOverlayColour = "00:50:64:224:208";
+    }
+
+    public static class DungeonMapOpen {
+        @Expose
+        @ConfigOption(
+                name = "Edit Dungeon Map",
+                desc = "The NEU dungeon map has it's own editor (/neumap).\n" +
+                        "Click the button on the left to open it"
+        )
+        @ConfigEditorButton(
+                runnableId = 0,
+                buttonText = "Edit"
+        )
+        public int editDungeonMap = 0;
     }
 
     public static class DungeonBlock {
@@ -1218,17 +1372,10 @@ public class NEUConfig extends Config {
         
         @Expose
         @ConfigOption(
-                name = "Center X (%)",
-                desc = "The horizontal position of the map"
+                name = "Position",
+                desc = "The position of the map"
         )
-        public double dmCenterX = 8.5;
-        
-        @Expose
-        @ConfigOption(
-                name = "Center Y (%)",
-                desc = "The vertical position of the map"
-        )
-        public double dmCenterY = 15.0;
+        public Position dmPosition = new Position(10, 10);
     }
 
 }

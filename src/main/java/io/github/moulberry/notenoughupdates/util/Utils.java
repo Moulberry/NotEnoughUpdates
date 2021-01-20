@@ -518,11 +518,20 @@ public class Utils {
     }
 
     public static void renderShadowedString(String str, float x, float y, int maxLength) {
+        int strLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(str);
+        float factor;
+        if(maxLength < 0) {
+            factor = 1;
+        } else {
+            factor = maxLength/(float)strLen;
+            factor = Math.min(1, factor);
+        }
+
         for(int xOff=-2; xOff<=2; xOff++) {
             for(int yOff=-2; yOff<=2; yOff++) {
                 if(Math.abs(xOff) != Math.abs(yOff)) {
                     Utils.drawStringCenteredScaledMaxWidth(Utils.cleanColourNotModifiers(str), Minecraft.getMinecraft().fontRendererObj,
-                            x+xOff/2f, y+4+yOff/2f, false, maxLength,
+                            x+xOff/2f*factor, y+4+yOff/2f*factor, false, maxLength,
                             new Color(0, 0, 0, 200/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB());
                 }
             }

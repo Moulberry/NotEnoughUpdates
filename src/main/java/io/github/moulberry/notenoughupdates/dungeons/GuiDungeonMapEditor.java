@@ -1,5 +1,8 @@
 package io.github.moulberry.notenoughupdates.dungeons;
 
+import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
+import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
+import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GuiElementColour;
@@ -43,16 +46,6 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
     private List<Button> buttons = new ArrayList<>();
 
-    private static final int colourEditorBG = new Color(80, 80, 80, 220).getRGB();
-    private static ResourceLocation colourPickerLocation = new ResourceLocation("notenoughupdates:dynamic/colourpicker");
-    private static ResourceLocation colourPickerBarValueLocation = new ResourceLocation("notenoughupdates:dynamic/colourpickervalue");
-    private static ResourceLocation colourPickerBarOpacityLocation = new ResourceLocation("notenoughupdates:dynamic/colourpickeropacity");
-
-    private GuiElementTextField hexField = new GuiElementTextField("",
-            GuiElementTextField.SCALE_TEXT | GuiElementTextField.FORCE_CAPS | GuiElementTextField.NO_SPACE);
-
-    private GuiElementTextField xField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
-    private GuiElementTextField yField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
     private GuiElementTextField blurField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
     private GuiElementColour activeColourEditor = null;
 
@@ -177,30 +170,6 @@ public class GuiDungeonMapEditor extends GuiScreen {
         //buttons.add(new Button(29, 52, 86+19, "XLarge", options.dmRoomSize));
         //buttons.add(new Button(30, 52, 56, "XLarge", options.dmBorderSize));
 
-        {
-            double val = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterX;
-            String strVal;
-            if(val % 1 == 0) {
-                strVal = Integer.toString((int)val);
-            } else {
-                strVal = Double.toString(val);
-                strVal = strVal.replaceAll("(\\.\\d\\d\\d)(?:\\d)+", "$1");
-                strVal = strVal.replaceAll("0+$", "");
-            }
-            xField.setText(strVal);
-        }
-        {
-            double val = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterY;
-            String strVal;
-            if(val % 1 == 0) {
-                strVal = Integer.toString((int)val);
-            } else {
-                strVal = Double.toString(val);
-                strVal = strVal.replaceAll("(\\.\\d\\d\\d)(?:\\d)+", "$1");
-                strVal = strVal.replaceAll("0+$", "");
-            }
-            yField.setText(strVal);
-        }
         {
             double val = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur;
             String strVal;
@@ -329,10 +298,8 @@ public class GuiDungeonMapEditor extends GuiScreen {
         Utils.drawStringCenteredScaledMaxWidth("Chroma Type", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+108+139, guiTop+175, false, 60, 0xFFB4B4B4);
 
-        Utils.drawStringCenteredScaledMaxWidth("X (%)", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+44, guiTop+209, false, 60, 0xFFB4B4B4);
-        Utils.drawStringCenteredScaledMaxWidth("Y (%)", Minecraft.getMinecraft().fontRendererObj,
-                guiLeft+108, guiTop+209, false, 60, 0xFFB4B4B4);
+        Utils.drawStringCenteredScaledMaxWidth("Edit Map Position", Minecraft.getMinecraft().fontRendererObj,
+                guiLeft+76, guiTop+209, false, 200, 0xFFB4B4B4);
 
         try {
             drawSlider(NEUConfig.DungeonMap.class.getDeclaredField("dmBorderSize"), guiLeft+76, guiTop+45);
@@ -358,11 +325,13 @@ public class GuiDungeonMapEditor extends GuiScreen {
         buttons.get(28-6).text = options.dmChromaBorder ? "Scroll" : "Normal";
 
         blurField.setSize(48, 16);
-        xField.setSize(48, 16);
-        yField.setSize(48, 16);
         blurField.render(guiLeft+20+139, guiTop+181);
-        xField.render(guiLeft+20, guiTop+215);
-        yField.render(guiLeft+84, guiTop+215);
+
+        GlStateManager.color(1, 1, 1, 1);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(button_tex);
+        RenderUtils.drawTexturedRect(guiLeft+52, guiTop+215, 48, 16);
+        TextRenderUtils.drawStringCenteredScaledMaxWidth("Edit", fontRendererObj, guiLeft+76, guiTop+223,
+                false, 48, 0xFF303030);
 
         Map<String, Vec4b> decorations = new HashMap<>();
         Vec4b vec4b = new Vec4b((byte)3, (byte)(((50)-64)*2), (byte)(((40)-64)*2), (byte)((60)*16/360));
@@ -465,8 +434,6 @@ public class GuiDungeonMapEditor extends GuiScreen {
                     mouseY >= guiTop+button.y && mouseY <= guiTop+button.y+16) {
                 buttonClicked(mouseX, mouseY, button.id);
 
-                xField.otherComponentClick();
-                yField.otherComponentClick();
                 blurField.otherComponentClick();
                 return;
             }
@@ -493,27 +460,37 @@ public class GuiDungeonMapEditor extends GuiScreen {
         if(mouseY > guiTop+181 && mouseY < guiTop+181+16) {
             if(mouseX > guiLeft+20+139 && mouseX < guiLeft+20+139+48) {
                 blurField.mouseClicked(mouseX, mouseY, mouseButton);
-                xField.otherComponentClick();
-                yField.otherComponentClick();
                 return;
             }
         } else if(mouseY > guiTop+215 && mouseY < guiTop+215+16) {
-            if(mouseX > guiLeft+20 && mouseX < guiLeft+20+48) {
-                xField.mouseClicked(mouseX, mouseY, mouseButton);
-                yField.otherComponentClick();
-                blurField.otherComponentClick();
-                return;
-            } else if(mouseX > guiLeft+84 && mouseX < guiLeft+84+48) {
-                yField.mouseClicked(mouseX, mouseY, mouseButton);
-                xField.otherComponentClick();
-                blurField.otherComponentClick();
+            if(mouseX > guiLeft+52 && mouseX < guiLeft+100) {
+                int size = 80 + Math.round(40*NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
+
+                Map<String, Vec4b> decorations = new HashMap<>();
+                Vec4b vec4b = new Vec4b((byte)3, (byte)(((50)-64)*2), (byte)(((40)-64)*2), (byte)((60)*16/360));
+                decorations.put(Minecraft.getMinecraft().thePlayer.getName(), vec4b);
+
+                HashSet<String> players = new HashSet<>();
+                players.add(Minecraft.getMinecraft().thePlayer.getName());
+                GlStateManager.color(1, 1, 1, 1);
+
+                ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+
+                Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
+                        NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPosition,
+                        size, size, () -> {
+                            demoMap.renderMap(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPosition.getAbsX(scaledResolution)+size/2,
+                                    NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPosition.getAbsY(scaledResolution)+size/2,
+                                    NotEnoughUpdates.INSTANCE.colourMap, decorations, 0,
+                                players, false, 0);
+                        }, () -> {
+                        }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiDungeonMapEditor()
+                ));
                 return;
             }
         }
 
         blurField.otherComponentClick();
-        xField.otherComponentClick();
-        yField.otherComponentClick();
     }
 
     @Override
@@ -540,25 +517,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
 
-        if(xField.getFocus()) {
-            xField.keyTyped(typedChar, keyCode);
-
-            try {
-                xField.setCustomBorderColour(-1);
-                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterX = Float.parseFloat(xField.getText());
-            } catch(Exception e) {
-                xField.setCustomBorderColour(Color.RED.getRGB());
-            }
-        } else if(yField.getFocus()) {
-            yField.keyTyped(typedChar, keyCode);
-
-            try {
-                yField.setCustomBorderColour(-1);
-                NotEnoughUpdates.INSTANCE.config.dungeonMap.dmCenterY = Float.parseFloat(yField.getText());
-            } catch(Exception e) {
-                yField.setCustomBorderColour(Color.RED.getRGB());
-            }
-        }  else if(blurField.getFocus()) {
+        if(blurField.getFocus()) {
             blurField.keyTyped(typedChar, keyCode);
 
             try {

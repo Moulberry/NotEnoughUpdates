@@ -99,7 +99,7 @@ public class NotEnoughUpdates {
     //Stolen from Biscut and used for detecting whether in skyblock
     private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK","\u7A7A\u5C9B\u751F\u5B58", "\u7A7A\u5CF6\u751F\u5B58");
 
-    private GuiScreen openGui = null;
+    public GuiScreen openGui = null;
 
     SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -903,6 +903,9 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new SunTzu());
         MinecraftForge.EVENT_BUS.register(new MiningStuff());
         MinecraftForge.EVENT_BUS.register(new FairySouls());
+        MinecraftForge.EVENT_BUS.register(new CrystalOverlay());
+        MinecraftForge.EVENT_BUS.register(new ItemCooldowns());
+        MinecraftForge.EVENT_BUS.register(new DwarvenMinesTextures());
 
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);

@@ -39,7 +39,7 @@ public class NEUConfigEditor extends GuiElement {
     };
     private static final String[] socialsLink = new String[] {
             "https://discord.gg/moulberry",
-            "https://github.com/Moulberry/Hychat",
+            "https://github.com/Moulberry/NotEnoughUpdates",
             "https://twitter.com/moulberry/",
             "https://www.youtube.com/channel/UCPh-OKmRSS3IQi9p6YppLcw",
             "https://patreon.com/moulberry"

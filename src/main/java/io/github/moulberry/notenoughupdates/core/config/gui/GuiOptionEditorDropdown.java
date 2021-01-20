@@ -41,11 +41,11 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
                 selectedString = values[selected];
             }
 
-            RenderUtils.drawFloatingRectWithAlpha(left, top, dropdownWidth, 14, 0xff, false);
-            TextRenderUtils.drawStringScaled("\u25BC", fr, left+dropdownWidth-10, y+height-7-15, false, 0xff404040, 2);
+            RenderUtils.drawFloatingRectDark(left, top, dropdownWidth, 14, false);
+            TextRenderUtils.drawStringScaled("\u25BC", fr, left+dropdownWidth-10, y+height-7-15, false, 0xffa0a0a0, 2);
 
             TextRenderUtils.drawStringScaledMaxWidth(selectedString, fr, left+3, top+3, false,
-                    dropdownWidth-16, 0xff404040);
+                    dropdownWidth-16, 0xffa0a0a0);
             //fr.drawString(selectedString, left+3, top+3, 0xff404040);
         }
     }
@@ -67,8 +67,8 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
 
             int dropdownHeight = 13 + 12*values.length;
 
-            int main = 0xffc0c0c0;
-            int blue = 0xff3365bd;
+            int main = 0xff202026;
+            int blue = 0xff2355ad;
             Gui.drawRect(left, top, left+1, top+dropdownHeight, blue); //Left
             Gui.drawRect(left+1, top, left+dropdownWidth, top+1, blue); //Top
             Gui.drawRect(left+dropdownWidth-1, top+1, left+dropdownWidth, top+dropdownHeight, blue); //Right
@@ -82,15 +82,15 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
                 if(option.isEmpty()) {
                     option = "<NONE>";
                 }
-                TextRenderUtils.drawStringScaledMaxWidth(option, fr, left+3, top+3+dropdownY, false, dropdownWidth-6, 0xff404040);
+                TextRenderUtils.drawStringScaledMaxWidth(option, fr, left+3, top+3+dropdownY, false, dropdownWidth-6, 0xffa0a0a0);
                 dropdownY += 12;
             }
 
-            TextRenderUtils.drawStringScaled("\u25B2", fr, left+dropdownWidth-10, y+height-7-15, false, 0xff404040, 2);
+            TextRenderUtils.drawStringScaled("\u25B2", fr, left+dropdownWidth-10, y+height-7-15, false, 0xffa0a0a0, 2);
 
 
             TextRenderUtils.drawStringScaledMaxWidth(selectedString, fr, left+3, top+3, false,
-                    dropdownWidth-16, 0xff404040);
+                    dropdownWidth-16, 0xffa0a0a0);
         }
     }
 

@@ -109,8 +109,6 @@ public class MiningStuff {
                 overlayLoc.getY()+1-viewerY,
                 overlayLoc.getZ()+1-viewerZ).expand(0.01f, 0.01f, 0.01f);
 
-        //181 / 195 / 135
-
         GlStateManager.disableCull();
         CustomItemEffects.drawFilledBoundingBox(bb, 1f, SpecialColour.special(0, 100, 0xff0000));
         GlStateManager.enableCull();
