@@ -1056,8 +1056,8 @@ public class NotEnoughUpdates {
 
     //Stolen from Biscut's SkyblockAddons
     public void updateSkyblockScoreboard() {
-        final Pattern SERVER_BRAND_PATTERN = Pattern.compile("(.+) <- (?:.+)");
-        final String HYPIXEL_SERVER_BRAND = "BungeeCord (Hypixel)";
+        final Pattern SERVER_BRAND_PATTERN = Pattern.compile("(?:.*)(Hypixel)(?:.*) <- (?:.+)");
+        final String HYPIXEL_SERVER_BRAND = "Hypixel";
 
         Minecraft mc = Minecraft.getMinecraft();
 
