@@ -1067,7 +1067,7 @@ public class NotEnoughUpdates {
 
                 if (matcher.find()) {
                     // Group 1 is the server brand.
-                    if(!matcher.group(1).equals(HYPIXEL_SERVER_BRAND)) {
+                    if(!matcher.group(1).equals("BungeeCord (Hypixel)") && !matcher.group(1).startsWith("Hypixel BungeeCord (")) {
                         hasSkyblockScoreboard = false;
                         return;
                     }
