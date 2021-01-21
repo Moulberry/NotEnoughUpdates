@@ -31,7 +31,7 @@ public class MiningStuff {
         IBlockState state = packetIn.getBlockState();
         if(SBInfo.getInstance().getLocation() != null &&
                 SBInfo.getInstance().getLocation().startsWith("mining_") &&
-                state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) {
+                state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH && NotEnoughUpdates.INSTANCE.config.mining.titaniumAlert) {
             BlockPos pos = packetIn.getBlockPosition();
 
             IBlockState existingBlock = Minecraft.getMinecraft().theWorld.getBlockState(pos);
