@@ -1,11 +1,13 @@
-package io.github.moulberry.notenoughupdates.textoverlays;
+package io.github.moulberry.notenoughupdates.overlays;
 
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 
 import java.awt.*;
 import java.util.List;
@@ -66,6 +68,11 @@ public abstract class TextOverlay {
                 if(s == null) {
                     yOff += 3;
                 } else {
+
+                    GlStateManager.enableBlend();
+                    GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                    GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
                     if(style == TextOverlayStyle.FULL_SHADOW) {
                         String clean = Utils.cleanColourNotModifiers(s);
                         for(int xO=-2; xO<=2; xO++) {

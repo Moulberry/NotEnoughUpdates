@@ -71,7 +71,7 @@ public class ReverseWorldRenderer {
         final float[] afloat = new float[i];
 
         for (int j = 0; j < i; ++j) {
-            afloat[j] = func_181665_a(this.rawFloatBuffer, (float) ((double) p_181674_1_ + this.xOffset), (float) ((double) p_181674_2_ + this.yOffset), (float) ((double) p_181674_3_ + this.zOffset), this.vertexFormat.func_181719_f(), j * this.vertexFormat.getNextOffset());
+            afloat[j] = func_181665_a(this.rawFloatBuffer, (float) ((double) p_181674_1_ + this.xOffset), (float) ((double) p_181674_2_ + this.yOffset), (float) ((double) p_181674_3_ + this.zOffset), this.vertexFormat.getIntegerSize(), j * this.vertexFormat.getNextOffset());
         }
 
         Integer[] ainteger = new Integer[i];
@@ -130,7 +130,7 @@ public class ReverseWorldRenderer {
     }
 
     private int getBufferSize() {
-        return this.vertexCount * this.vertexFormat.func_181719_f();
+        return this.vertexCount * this.vertexFormat.getIntegerSize();
     }
 
     private static float func_181665_a(FloatBuffer p_181665_0_, float p_181665_1_, float p_181665_2_, float p_181665_3_, int p_181665_4_, int p_181665_5_) {
@@ -181,7 +181,7 @@ public class ReverseWorldRenderer {
     }
 
     public ReverseWorldRenderer tex(double u, double v) {
-        int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.func_181720_d(this.vertexFormatIndex);
+        int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
         switch (this.vertexFormatElement.getType()) {
             case FLOAT:
@@ -209,7 +209,7 @@ public class ReverseWorldRenderer {
     }
 
     public ReverseWorldRenderer lightmap(int p_181671_1_, int p_181671_2_) {
-        int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.func_181720_d(this.vertexFormatIndex);
+        int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
         switch (this.vertexFormatElement.getType()) {
             case FLOAT:
@@ -237,7 +237,7 @@ public class ReverseWorldRenderer {
     }
 
     public void putBrightness4(int p_178962_1_, int p_178962_2_, int p_178962_3_, int p_178962_4_) {
-        int i = (this.vertexCount - 4) * this.vertexFormat.func_181719_f() + this.vertexFormat.getUvOffsetById(1) / 4;
+        int i = (this.vertexCount - 4) * this.vertexFormat.getIntegerSize() + this.vertexFormat.getUvOffsetById(1) / 4;
         int j = this.vertexFormat.getNextOffset() >> 2;
         this.rawIntBuffer.put(i, p_178962_1_);
         this.rawIntBuffer.put(i + j, p_178962_2_);
@@ -246,7 +246,7 @@ public class ReverseWorldRenderer {
     }
 
     public void putPosition(double x, double y, double z) {
-        int i = this.vertexFormat.func_181719_f();
+        int i = this.vertexFormat.getIntegerSize();
         int j = (this.vertexCount - 4) * i;
 
         for (int k = 0; k < 4; ++k) {
@@ -331,7 +331,7 @@ public class ReverseWorldRenderer {
         if (this.noColor) {
             return this;
         } else {
-            int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.func_181720_d(this.vertexFormatIndex);
+            int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
             switch (this.vertexFormatElement.getType()) {
                 case FLOAT:
@@ -379,16 +379,16 @@ public class ReverseWorldRenderer {
         this.growBuffer(vertexData.length);
         this.rawIntBuffer.position(this.getBufferSize());
         this.rawIntBuffer.put(vertexData);
-        this.vertexCount += vertexData.length / this.vertexFormat.func_181719_f();
+        this.vertexCount += vertexData.length / this.vertexFormat.getIntegerSize();
     }
 
     public void endVertex() {
         ++this.vertexCount;
-        this.growBuffer(this.vertexFormat.func_181719_f());
+        this.growBuffer(this.vertexFormat.getIntegerSize());
     }
 
     public ReverseWorldRenderer pos(double x, double y, double z) {
-        int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.func_181720_d(this.vertexFormatIndex);
+        int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
         switch (this.vertexFormatElement.getType()) {
             case FLOAT:
@@ -443,7 +443,7 @@ public class ReverseWorldRenderer {
     }
 
     public ReverseWorldRenderer normal(float p_181663_1_, float p_181663_2_, float p_181663_3_) {
-        int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.func_181720_d(this.vertexFormatIndex);
+        int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
         switch (this.vertexFormatElement.getType()) {
             case FLOAT:
@@ -542,7 +542,7 @@ public class ReverseWorldRenderer {
         }
 
         public int getVertexCount() {
-            return this.stateRawBuffer.length / this.stateVertexFormat.func_181719_f();
+            return this.stateRawBuffer.length / this.stateVertexFormat.getIntegerSize();
         }
 
         public VertexFormat getVertexFormat() {

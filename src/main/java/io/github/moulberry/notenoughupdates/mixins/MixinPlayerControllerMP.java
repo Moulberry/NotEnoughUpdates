@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
+import io.github.moulberry.notenoughupdates.miscfeatures.DwarvenMinesTextures;
 import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
 import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
 import io.github.moulberry.notenoughupdates.miscfeatures.MiningStuff;
@@ -14,10 +15,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(PlayerControllerMP.class)
 public class MixinPlayerControllerMP {
 
-    @Inject(method="clickBlock", at=@At("HEAD"))
+    @Inject(method="clickBlock", at=@At("HEAD"), cancellable = true)
     public void clickBlock(BlockPos loc, EnumFacing face, CallbackInfoReturnable<Boolean> cir) {
-        MiningStuff.blockClicked(loc);
         ItemCooldowns.blockClicked(loc);
+        //DwarvenMinesTextures.blockClicked(loc);
+        if(MiningStuff.blockClicked(loc)) {
+            cir.setReturnValue(false);
+        }
     }
 
 }

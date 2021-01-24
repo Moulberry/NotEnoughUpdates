@@ -24,6 +24,7 @@ import io.github.moulberry.notenoughupdates.miscgui.HelpGUI;
 import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
+import io.github.moulberry.notenoughupdates.overlays.FuelBar;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
@@ -80,8 +81,8 @@ import java.util.regex.Pattern;
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
-    public static final String VERSION = "1.7.1-REL";
-    public static final int VERSION_ID = 10701;
+    public static final String VERSION = "2.0.0-REL";
+    public static final int VERSION_ID = 20000;
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -767,7 +768,7 @@ public class NotEnoughUpdates {
                         if (j / 4 == 0) {
                             c = new Color((i + i / 128 & 1) * 8 + 16 << 24, true);
                         } else {
-                            c = new Color(MapColor.mapColorArray[j / 4].func_151643_b(j & 3), true);
+                            c = new Color(MapColor.mapColorArray[j / 4].getMapColor(j & 3), true);
                         }
 
                         json.addProperty(x+":"+y, c.getRGB());
@@ -906,6 +907,8 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new CrystalOverlay());
         MinecraftForge.EVENT_BUS.register(new ItemCooldowns());
         MinecraftForge.EVENT_BUS.register(new DwarvenMinesTextures());
+        MinecraftForge.EVENT_BUS.register(new DwarvenMinesWaypoints());
+        MinecraftForge.EVENT_BUS.register(new FuelBar());
 
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
@@ -1057,7 +1060,6 @@ public class NotEnoughUpdates {
     //Stolen from Biscut's SkyblockAddons
     public void updateSkyblockScoreboard() {
         final Pattern SERVER_BRAND_PATTERN = Pattern.compile("(.+) <- (?:.+)");
-        final String HYPIXEL_SERVER_BRAND = "BungeeCord (Hypixel)";
 
         Minecraft mc = Minecraft.getMinecraft();
 
@@ -1067,7 +1069,7 @@ public class NotEnoughUpdates {
 
                 if (matcher.find()) {
                     // Group 1 is the server brand.
-                    if(!matcher.group(1).equals(HYPIXEL_SERVER_BRAND)) {
+                    if(!matcher.group(1).toLowerCase().contains("hypixel")) {
                         hasSkyblockScoreboard = false;
                         return;
                     }

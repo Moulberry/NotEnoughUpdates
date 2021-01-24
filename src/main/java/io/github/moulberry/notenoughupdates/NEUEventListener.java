@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
-import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
@@ -12,8 +11,8 @@ import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
-import io.github.moulberry.notenoughupdates.textoverlays.TextOverlay;
-import io.github.moulberry.notenoughupdates.textoverlays.TextOverlayStyle;
+import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
+import io.github.moulberry.notenoughupdates.overlays.TextOverlayStyle;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.RequestFocusListener;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -176,6 +175,7 @@ public class NEUEventListener {
             CrystalOverlay.tick();
             DwarvenMinesTextures.tick();
             FairySouls.tick();
+            MiningStuff.tick();
             for(TextOverlay overlay : textOverlays) {
                 overlay.tick();
             }

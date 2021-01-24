@@ -80,7 +80,7 @@ public class ItemCooldowns {
     }
 
     private static Pattern PICKAXE_ABILITY_REGEX = Pattern.compile("\\u00a7r\\u00a7aYou used your " +
-            "\\u00a7r\\u00a7e.+ \\u00a7r\\u00a7aPickaxe Ability!\\u00a7r");
+            "\\u00a7r\\u00a7..+ \\u00a7r\\u00a7aPickaxe Ability!\\u00a7r");
 
     @SubscribeEvent
     public void onChatMessage(ClientChatReceivedEvent event) {

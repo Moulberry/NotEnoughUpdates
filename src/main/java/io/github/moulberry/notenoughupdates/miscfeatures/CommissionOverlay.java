@@ -6,8 +6,8 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
-import io.github.moulberry.notenoughupdates.textoverlays.TextOverlay;
-import io.github.moulberry.notenoughupdates.textoverlays.TextOverlayStyle;
+import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
+import io.github.moulberry.notenoughupdates.overlays.TextOverlayStyle;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
@@ -28,14 +28,17 @@ public class CommissionOverlay extends TextOverlay {
         super(position, styleSupplier);
     }
 
+    public static Map<String, Float> commissionProgress = new LinkedHashMap<>();
+
     @Override
     public void update() {
-        overlayStrings = new ArrayList<>();
+        overlayStrings = null;
 
         if(SBInfo.getInstance().getLocation() == null) return;
         if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
 
-        Map<String, Float> commissionProgress = new LinkedHashMap<>();
+        overlayStrings = new ArrayList<>();
+        commissionProgress.clear();
         List<String> forgeStrings = new ArrayList<>();
         String mithrilPowder = null;
 
@@ -44,7 +47,7 @@ public class CommissionOverlay extends TextOverlay {
         List<NetworkPlayerInfo> players = playerOrdering.sortedCopy(Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap());
         for(NetworkPlayerInfo info : players) {
             String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
-            if(name.contains("Mithril Powder")) {
+            if(name.contains("Mithril Powder:")) {
                 mithrilPowder = trimIgnoreColour(name);
             }
             if(name.equals(RESET.toString()+BLUE+BOLD+"Forges"+RESET)) {

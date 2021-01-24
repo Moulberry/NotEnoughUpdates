@@ -1512,6 +1512,8 @@ public class NEUOverlay extends Gui {
      * is enabled)
      */
     public void renderOverlay() {
+        GlStateManager.enableDepth();
+
         int width = Utils.peekGuiScale().getScaledWidth();
         int height = Utils.peekGuiScale().getScaledHeight();
         int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;

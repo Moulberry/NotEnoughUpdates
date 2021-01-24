@@ -1400,7 +1400,7 @@ public class DungeonMap {
                         if (j / 4 == 0) {
                             c = new Color((i + i / 128 & 1) * 8 + 16 << 24, true);
                         } else {
-                            c = new Color(MapColor.mapColorArray[j / 4].func_151643_b(j & 3), true);
+                            c = new Color(MapColor.mapColorArray[j / 4].getMapColor(j & 3), true);
                         }
 
                         colourMap[x][y] = c;
@@ -1469,8 +1469,10 @@ public class DungeonMap {
                 Position pos = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPosition;
 
                 int size = 80 + Math.round(40*NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
-                renderMap(pos.getAbsX(event.resolution)+size/2, pos.getAbsY(event.resolution)+size/2,
+                ScaledResolution scaledResolution = Utils.pushGuiScale(2);
+                renderMap(pos.getAbsX(scaledResolution)+size/2, pos.getAbsY(scaledResolution)+size/2,
                         colourMap, decorations, roomSizeBlocks, actualPlayers, true, event.partialTicks);
+                Utils.pushGuiScale(-1);
             }
         }
     }

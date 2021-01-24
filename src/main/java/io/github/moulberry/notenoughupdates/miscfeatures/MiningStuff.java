@@ -1,6 +1,8 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -10,15 +12,18 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.monster.EntityCreeper;
 import net.minecraft.init.Blocks;
 import net.minecraft.network.play.server.S23PacketBlockChange;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -28,28 +33,42 @@ public class MiningStuff {
     private static long titaniumNotifMillis = 0;
 
     public static void processBlockChangePacket(S23PacketBlockChange packetIn) {
+        if(!NotEnoughUpdates.INSTANCE.config.mining.titaniumAlert) {
+            return;
+        }
+
         IBlockState state = packetIn.getBlockState();
         if(SBInfo.getInstance().getLocation() != null &&
                 SBInfo.getInstance().getLocation().startsWith("mining_") &&
                 state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) {
-            BlockPos pos = packetIn.getBlockPosition();
 
-            IBlockState existingBlock = Minecraft.getMinecraft().theWorld.getBlockState(pos);
-            if(existingBlock == null) return;
-            if(existingBlock.getBlock() == Blocks.stone && existingBlock.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) return;
+            for(String s : CommissionOverlay.commissionProgress.keySet()) {
+                if(s.contains("Titanium")) {
+                    BlockPos pos = packetIn.getBlockPosition();
 
-            BlockPos player = Minecraft.getMinecraft().thePlayer.getPosition();
+                    IBlockState existingBlock = Minecraft.getMinecraft().theWorld.getBlockState(pos);
+                    if(existingBlock == null) return;
+                    if(existingBlock.getBlock() == Blocks.stone && existingBlock.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) return;
 
-            double distSq = pos.distanceSq(player);
+                    BlockPos player = Minecraft.getMinecraft().thePlayer.getPosition();
 
-            if(distSq < 8*8) {
-                titaniumNotifMillis = System.currentTimeMillis();
+                    double distSq = pos.distanceSq(player);
+
+                    if(distSq < 12*12) {
+                        titaniumNotifMillis = System.currentTimeMillis();
+                    }
+                    return;
+                }
             }
         }
     }
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
+        if(!NotEnoughUpdates.INSTANCE.config.mining.titaniumAlert) {
+            return;
+        }
+
         int delta = (int)(System.currentTimeMillis() - titaniumNotifMillis);
         int notifLen = 5000;
         int fadeLen = 500;
@@ -88,8 +107,24 @@ public class MiningStuff {
         }
     }
 
-    public static Vector3f getCreeperColour() {
-        return new Vector3f(0, 1, 0);
+    public static void tick() {
+        if(SBInfo.getInstance().getLocation() == null) return;
+        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
+        if(Minecraft.getMinecraft().theWorld == null) return;
+
+        for(Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {
+            if(entity instanceof EntityCreeper) {
+                EntityCreeper creeper = (EntityCreeper) entity;
+                if(creeper.isInvisible() && creeper.getPowered()) {
+
+                    BlockPos below = creeper.getPosition().down();
+                    IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(below);
+                    if(state != null && state.getBlock() == Blocks.stained_glass) {
+                        creeper.setInvisible(!NotEnoughUpdates.INSTANCE.config.mining.revealMistCreepers);
+                    }
+                }
+            }
+        }
     }
 
     @SubscribeEvent
@@ -122,6 +157,11 @@ public class MiningStuff {
 
     @SubscribeEvent
     public void onChatRecevied(ClientChatReceivedEvent event) {
+        if(!NotEnoughUpdates.INSTANCE.config.mining.puzzlerSolver) {
+            overlayLoc = null;
+            return;
+        }
+
         if(event.message.getFormattedText().startsWith("\u00A7e[NPC] \u00A7dPuzzler") &&
                 event.message.getUnformattedText().contains(":")) {
             String clean = Utils.cleanColour(event.message.getUnformattedText());
@@ -149,10 +189,18 @@ public class MiningStuff {
         }
     }
 
-    public static void blockClicked(BlockPos loc) {
+    public static boolean blockClicked(BlockPos loc) {
         if(loc.equals(overlayLoc)) {
             overlayLoc = null;
         }
+        IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(loc);
+        if(NotEnoughUpdates.INSTANCE.config.mining.dontMineStone &&
+                state != null && SBInfo.getInstance().getLocation() != null &&
+                SBInfo.getInstance().getLocation().startsWith("mining_") &&
+                state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.STONE) {
+            return true;
+        }
+        return false;
     }
 
 }

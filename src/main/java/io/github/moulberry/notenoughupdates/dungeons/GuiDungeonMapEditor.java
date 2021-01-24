@@ -353,11 +353,11 @@ public class GuiDungeonMapEditor extends GuiScreen {
             Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, 200, Minecraft.getMinecraft().fontRendererObj);
         }
 
+        Utils.pushGuiScale(-1);
+
         if(activeColourEditor != null) {
             activeColourEditor.render();
         }
-
-        Utils.pushGuiScale(-1);
     }
 
     public void drawSlider(Field option, int centerX, int centerY) {
@@ -474,18 +474,18 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 players.add(Minecraft.getMinecraft().thePlayer.getName());
                 GlStateManager.color(1, 1, 1, 1);
 
-                ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
-
                 Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
                         NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPosition,
                         size, size, () -> {
+                            ScaledResolution scaledResolution = Utils.pushGuiScale(2);
                             demoMap.renderMap(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPosition.getAbsX(scaledResolution)+size/2,
                                     NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPosition.getAbsY(scaledResolution)+size/2,
                                     NotEnoughUpdates.INSTANCE.colourMap, decorations, 0,
                                 players, false, 0);
+                            Utils.pushGuiScale(-1);
                         }, () -> {
                         }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiDungeonMapEditor()
-                ));
+                ).withScale(2));
                 return;
             }
         }
@@ -497,9 +497,10 @@ public class GuiDungeonMapEditor extends GuiScreen {
     public void handleMouseInput() throws IOException {
         super.handleMouseInput();
 
-        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
-        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
         if(activeColourEditor != null) {
+            ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
+            int mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
+            int mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
             activeColourEditor.mouseInput(mouseX, mouseY);
         }
     }
@@ -567,13 +568,21 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 options.dmCompat++;
                 if(options.dmCompat > 2) options.dmCompat = 0;
                 break;
-            case 26:
-                activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBackgroundColour,
-                        (col) -> options.dmBackgroundColour = col, () -> activeColourEditor = null);
+            case 26: {
+                    ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
+                    mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
+                    mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
+                    activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBackgroundColour,
+                            (col) -> options.dmBackgroundColour = col, () -> activeColourEditor = null);
+                }
                 break;
-            case 27:
-                activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBorderColour,
-                        (col) -> options.dmBorderColour = col, () -> activeColourEditor = null);
+            case 27: {
+                    ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
+                    mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
+                    mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
+                    activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBorderColour,
+                            (col) -> options.dmBorderColour = col, () -> activeColourEditor = null);
+                }
                 break;
             case 28:
                 options.dmChromaBorder = !options.dmChromaBorder; break;

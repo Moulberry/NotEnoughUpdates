@@ -1,4 +1,4 @@
-package io.github.moulberry.notenoughupdates.textoverlays;
+package io.github.moulberry.notenoughupdates.overlays;
 
 public enum TextOverlayStyle {
 

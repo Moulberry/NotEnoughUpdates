@@ -10,15 +10,12 @@ import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
 import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
-import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.miscfeatures.CommissionOverlay;
-import io.github.moulberry.notenoughupdates.textoverlays.TextOverlay;
-import io.github.moulberry.notenoughupdates.textoverlays.TextOverlayStyle;
+import io.github.moulberry.notenoughupdates.overlays.TextOverlayStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
 
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 
 public class NEUConfig extends Config {
 
@@ -57,6 +54,15 @@ public class NEUConfig extends Config {
                             new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config))
                     ));
                 }
+                return;
+            case 2:
+                Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
+                        NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarPosition,
+                        NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, 12, () -> {
+                }, () -> {
+                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
+                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config))
+                ));
                 return;
         }
     }
@@ -755,6 +761,47 @@ public class NEUConfig extends Config {
         @ConfigEditorBoolean
         public boolean titaniumAlert = true;
 
+
+        @Expose
+        @ConfigOption(
+                name = "Don't Mine Stone",
+                desc = "Prevent mining stone blocks in mining areas"
+        )
+        @ConfigEditorBoolean
+        public boolean dontMineStone = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Reveal Mist Creepers",
+                desc = "Make the creepers in the Dwarven Mines mist visible"
+        )
+        @ConfigEditorBoolean
+        public boolean revealMistCreepers = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Mines Waypoints",
+                desc = "Show waypoints in the Dwarven mines to the various locations\n" +
+                        "Use \"Commissions Only\" to only show active commission locations"
+        )
+        @ConfigEditorDropdown(
+                values = {"Hide", "Commissions Only", "Always"},
+                initialIndex = 1
+        )
+        public int locWaypoints = 1;
+
+        @Expose
+        @ConfigOption(
+                name = "Emissary Waypoints",
+                desc = "Show waypoints in the Dwarven mines to emissaries\n" +
+                        "Use \"Commission End\" to only show after finishing commissions"
+        )
+        @ConfigEditorDropdown(
+                values = {"Hide", "Commission End", "Always"},
+                initialIndex = 1
+        )
+        public int emissaryWaypoints = 1;
+
         @Expose
         @ConfigOption(
                 name = "Overlay Position",
@@ -808,7 +855,36 @@ public class NEUConfig extends Config {
         @ConfigEditorBoolean
         public boolean hideEmptyForges = true;
 
+        @Expose
+        @ConfigOption(
+                name = "Drill Fuel Bar",
+                desc = "Show a fancy drill fuel bar when holding a drill in mining areas"
+        )
+        @ConfigEditorBoolean
+        public boolean drillFuelBar = true;
 
+        @Expose
+        @ConfigOption(
+                name = "Fuel Bar Width",
+                desc = "Change the width of the drill fuel bar"
+        )
+        @ConfigEditorSlider(
+                minValue = 50,
+                maxValue = 400,
+                minStep = 10
+        )
+        public int drillFuelBarWidth = 200;
+
+        @Expose
+        @ConfigOption(
+                name = "Fuel Bar Position",
+                desc = "Set the position of the drill fuel bar"
+        )
+        @ConfigEditorButton(
+                runnableId = 2,
+                buttonText = "Edit"
+        )
+        public Position drillFuelBarPosition = new Position(0, -100, true, false);
     }
 
     public static class NeuAuctionHouse {
@@ -1217,6 +1293,7 @@ public class NEUConfig extends Config {
     }
 
     public static class Hidden {
+        @Expose public int commissionMilestone = 0;
         @Expose public boolean enableItemEditing = false;
         @Expose public boolean cacheRenderedItempane = true;
         @Expose public boolean autoupdate = true;
@@ -1251,7 +1328,7 @@ public class NEUConfig extends Config {
         @ConfigEditorSlider(
                 minValue = 0,
                 maxValue = 5,
-                minStep = 1
+                minStep = 0.25f
         )
         public int dmBorderSize = 1;
 
@@ -1263,7 +1340,7 @@ public class NEUConfig extends Config {
         @ConfigEditorSlider(
                 minValue = 0,
                 maxValue = 5,
-                minStep = 1
+                minStep = 0.25f
         )
         public int dmRoomSize = 1;
 
