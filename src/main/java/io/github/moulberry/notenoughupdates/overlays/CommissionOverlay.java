@@ -1,4 +1,4 @@
-package io.github.moulberry.notenoughupdates.miscfeatures;
+package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;

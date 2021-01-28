@@ -50,10 +50,30 @@ public abstract class TextOverlay {
         }
     }
 
+    public void updateFrequent() {};
     public abstract void update();
 
     public void render() {
+        if(overlayStrings == null) return;
+
+        updateFrequent();
+
         if(overlayStrings != null) {
+            overlayHeight = 0;
+            overlayWidth = 0;
+            for(String s : overlayStrings) {
+                if(s == null) {
+                    overlayHeight += 3;
+                    continue;
+                }
+                int sWidth = Minecraft.getMinecraft().fontRendererObj.getStringWidth(s);
+                if(sWidth > overlayWidth) {
+                    overlayWidth = sWidth;
+                }
+                overlayHeight += 10;
+            }
+            overlayHeight -= 2;
+
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
             int x = position.getAbsX(scaledResolution);

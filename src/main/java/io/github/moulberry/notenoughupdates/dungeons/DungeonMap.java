@@ -23,7 +23,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemStack;
+import net.minecraft.scoreboard.Score;
+import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
+import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.*;
 import net.minecraft.world.storage.MapData;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -83,6 +86,7 @@ public class DungeonMap {
 
     private Map<String, MapPosition> playerEntityMapPositions = new HashMap<>();
     private Map<String, MapPosition> playerMarkerMapPositions = new HashMap<>();
+    private Set<MapPosition> rawPlayerMarkerMapPositions = new HashSet<>();
     private Map<String, MapPosition> playerMarkerMapPositionsLast = new HashMap<>();
 
     private Map<String, ResourceLocation> playerSkinMap = new HashMap<>();
@@ -586,7 +590,7 @@ public class DungeonMap {
                     float angle = pos.rotation;
 
                     boolean doInterp = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerInterp;
-                    if(playerEntityMapPositions.containsKey(name)) {
+                    if(!isFloorOne && playerEntityMapPositions.containsKey(name)) {
                         MapPosition entityPos = playerEntityMapPositions.get(name);
                         angle = entityPos.rotation;
 
@@ -994,6 +998,7 @@ public class DungeonMap {
         }
     }
 
+    private boolean isFloorOne = false;
     private boolean failMap = false;
     private long lastClearCache = 0;
     public void renderMap(int centerX, int centerY, Color[][] colourMap, Map<String, Vec4b> mapDecorations,
@@ -1014,6 +1019,25 @@ public class DungeonMap {
             failMap = false;
 
             lastClearCache = System.currentTimeMillis();
+
+            isFloorOne = false;
+            Scoreboard scoreboard = Minecraft.getMinecraft().thePlayer.getWorldScoreboard();
+
+            ScoreObjective sidebarObjective = scoreboard.getObjectiveInDisplaySlot(1);
+
+            List<Score> scores = new ArrayList<>(scoreboard.getSortedScores(sidebarObjective));
+
+            for(int i=scores.size()-1; i>=0; i--) {
+                Score score = scores.get(i);
+                ScorePlayerTeam scoreplayerteam1 = scoreboard.getPlayersTeam(score.getPlayerName());
+                String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
+                line = Utils.cleanDuplicateColourCodes(line);
+
+                if(line.contains("(F1)")) {
+                    isFloorOne = true;
+                    break;
+                }
+            }
         }
 
         if(failMap) {
@@ -1192,8 +1216,6 @@ public class DungeonMap {
                     continue;
                 }
 
-                if(decorations++ >= 6) break;
-
                 float deltaX = x - startRoomX;
                 float deltaY = y - startRoomY;
 
@@ -1229,10 +1251,13 @@ public class DungeonMap {
                 MapPosition pos = new MapPosition(roomsOffsetX, connOffsetX, roomsOffsetY, connOffsetY);
                 pos.rotation = angle % 360;
                 if(pos.rotation < 0) pos.rotation += 360;
-                positions.add(pos);
+
+                if(decorations++ <= 6) {
+                    positions.add(pos);
+                }
+                rawPlayerMarkerMapPositions.add(pos);
             }
 
-            //System.out.println(playerMarkerMapPositions.size() + ":" + positions.size());
             boolean different = playerMarkerMapPositions.size() != positions.size();
 
             if (!different) {
@@ -1274,9 +1299,6 @@ public class DungeonMap {
 
                 List<String> playerList = new ArrayList<>(playerMarkerMapPositionsLast.keySet());
                 List<List<String>> playerPermutations = permutations(playerList);
-
-                //if(playerPermutations.size() > 0 || playerMarkerMapPositionsLast.size() > 0)
-                //    System.out.println("Perm Size: " + playerPermutations.size() + " from " + playerMarkerMapPositionsLast.size());
 
                 List<Integer> finalUsedIndexes = new ArrayList<>();
                 if (playerPermutations.size() > 0) {
@@ -1455,13 +1477,15 @@ public class DungeonMap {
                 for(ScorePlayerTeam team : Minecraft.getMinecraft().thePlayer.getWorldScoreboard().getTeams()) {
                     if(team.getTeamName().startsWith("a") && team.getMembershipCollection().size() == 1) {
                         String playerName = Iterables.get(team.getMembershipCollection(), 0);
+                        boolean foundPlayer = false;
                         for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-                            if(player.getName().equals(playerName) && (player == Minecraft.getMinecraft().thePlayer ||
-                                    (!player.isPlayerSleeping() && !player.isInvisible()))) {
+                            if(player.getName().equals(playerName) && (player == Minecraft.getMinecraft().thePlayer || !player.isPlayerSleeping())) {
                                 actualPlayers.add(playerName);
+                                foundPlayer = true;
                                 break;
                             }
                         }
+                        if(!foundPlayer) actualPlayers.add(playerName);
                         if(++players >= 6) break;
                     }
                 }

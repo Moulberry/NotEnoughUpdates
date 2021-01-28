@@ -108,6 +108,10 @@ public class CrystalOverlay {
         int radius;
     }
 
+    private static double posLastUpdateX;
+    private static double posLastUpdateY;
+    private static double posLastUpdateZ;
+
     private static HashMap<String, CrystalType> skullId = new HashMap<>();
     static {
         skullId.put("d9c3168a-8654-3dd8-b297-4d3b7e55b95a", CrystalType.FARMING_MINION);
@@ -117,6 +121,8 @@ public class CrystalOverlay {
     }
 
     public static long displayMillis = 0;
+
+    public static long lastMiningUpdate = 0;
 
     public static HashMap<CrystalType, BlockPos> crystals = new HashMap<>();
 
@@ -131,6 +137,7 @@ public class CrystalOverlay {
         long currentTime = System.currentTimeMillis();
 
         if(currentTime - displayMillis > 10*1000) {
+            crystals.clear();
             displayMillis = -1;
         }
 
@@ -191,11 +198,35 @@ public class CrystalOverlay {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if(displayMillis < 0) {
+            return;
+        }
+
         EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
         if(p == null) return;
 
         if(event.phase == TickEvent.Phase.START) {
+            double dX = p.posX - posLastUpdateX;
+            double dY = p.posY - posLastUpdateY;
+            double dZ = p.posZ - posLastUpdateZ;
+
+            if(dX*dX + dY*dY + dZ*dZ < 1) {
+                return;
+            }
+
+            posLastUpdateX = p.posX;
+            posLastUpdateY = p.posY;
+            posLastUpdateZ = p.posZ;
+
             for(CrystalType type : crystals.keySet()) {
+                if(type == CrystalType.MINING_MINION) {
+                    long currentTime = System.currentTimeMillis();
+                    if(currentTime - lastMiningUpdate < 1000) {
+                        continue;
+                    }
+                    lastMiningUpdate = currentTime;
+                }
+
                 ReverseWorldRenderer worldRenderer = type.getOverlayVBO();
                 if(worldRenderer != null) {
                     BlockPos crystal = crystals.get(type);
@@ -205,6 +236,11 @@ public class CrystalOverlay {
                             (float)p.posX-crystal.getX(),
                             (float)p.posY-crystal.getY(),
                             (float)p.posZ-crystal.getZ());
+                    /*es.submit(() -> worldRenderer.sortVertexData(
+                            (float)p.posX-crystal.getX(),
+                            (float)p.posY-crystal.getY(),
+                            (float)p.posZ-crystal.getZ()));*/
+
                 }
             }
         }

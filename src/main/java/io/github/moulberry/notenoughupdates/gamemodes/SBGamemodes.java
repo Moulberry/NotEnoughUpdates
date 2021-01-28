@@ -247,8 +247,7 @@ public class SBGamemodes {
 
         boolean inDungeons = SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon");
 
-        if("Your Island".equals(SBInfo.getInstance().location) &&
-                (EnumChatFormatting.YELLOW+"Break a log").equals(SBInfo.getInstance().objective)) {
+        if((EnumChatFormatting.YELLOW+"Break a log").equals(SBInfo.getInstance().objective)) {
             getGamemode().locked = false;
         } else {
             getGamemode().locked = true;

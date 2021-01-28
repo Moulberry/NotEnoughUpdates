@@ -40,7 +40,7 @@ public class FuelBar {
         ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
         if(held != null) {
             String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-            if(internalname.contains("_DRILL_")) {
+            if(internalname != null && internalname.contains("_DRILL_")) {
                 String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(held.getTagCompound());
                 for(String line : lore) {
                     try {

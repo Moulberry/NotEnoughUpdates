@@ -3,20 +3,23 @@ package io.github.moulberry.notenoughupdates;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
+import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
+import io.github.moulberry.notenoughupdates.mixins.MinecraftAccessor;
+import io.github.moulberry.notenoughupdates.overlays.CommissionOverlay;
+import io.github.moulberry.notenoughupdates.overlays.FarmingOverlay;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlayStyle;
-import io.github.moulberry.notenoughupdates.util.Constants;
-import io.github.moulberry.notenoughupdates.util.RequestFocusListener;
-import io.github.moulberry.notenoughupdates.util.SBInfo;
-import io.github.moulberry.notenoughupdates.util.Utils;
+import io.github.moulberry.notenoughupdates.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -27,17 +30,21 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.texture.ITextureObject;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -46,6 +53,7 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -56,9 +64,12 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -146,6 +157,7 @@ public class NEUEventListener {
             }
             return TextOverlayStyle.BACKGROUND;
         }));
+        textOverlays.add(new FarmingOverlay(new Position(20, 300), () -> TextOverlayStyle.BACKGROUND));
     }
 
     /**
@@ -153,13 +165,36 @@ public class NEUEventListener {
      * This is used in order to prevent the mod spamming messages.
      * 2)Adds unique items to the collection log
      */
+    private boolean preloadedItems = false;
     private long lastLongUpdate = 0;
     private long lastSkyblockScoreboard = 0;
+
+    private final ExecutorService itemPreloader = Executors.newFixedThreadPool(10);
+    private final List<ItemStack> toPreload = new ArrayList<>();
+
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if(event.phase != TickEvent.Phase.START) return;
         if(Minecraft.getMinecraft().theWorld == null) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
+
+        if(neu.hasSkyblockScoreboard()) {
+            if(!preloadedItems) {
+                preloadedItems = true;
+                for(JsonObject json : neu.manager.getItemInformation().values()) {
+                    itemPreloader.submit(() -> {
+                        ItemStack stack = neu.manager.jsonToStack(json, true, true);
+                        if(stack.getItem() == Items.skull) toPreload.add(stack);
+                    });
+                }
+            } else if(!toPreload.isEmpty()) {
+                System.out.println("Preload size:"+toPreload.size());
+                Utils.drawItemStack(toPreload.get(0), -100, -100);
+                toPreload.remove(0);
+            } else {
+                itemPreloader.shutdown();
+            }
+        }
 
         boolean longUpdate = false;
         long currentTime = System.currentTimeMillis();
@@ -176,6 +211,8 @@ public class NEUEventListener {
             DwarvenMinesTextures.tick();
             FairySouls.tick();
             MiningStuff.tick();
+            ProfileApiSyncer.getInstance().tick();
+            DamageCommas.tick();
             for(TextOverlay overlay : textOverlays) {
                 overlay.tick();
             }
@@ -285,6 +322,9 @@ public class NEUEventListener {
                 neu.manager.auctionManager.markNeedsUpdate();
             }
         }
+
+
+
         /*if(longUpdate && neu.hasSkyblockScoreboard()) {
             if(neu.manager.getCurrentProfile() == null || neu.manager.getCurrentProfile().length() == 0) {
                 ProfileViewer.Profile profile = NotEnoughUpdates.profileViewer.getProfile(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
@@ -777,6 +817,8 @@ public class NEUEventListener {
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
+        if(neu.config.dungeonProfit.profitDisplayLoc == 3) return;
+
         if(gui instanceof GuiChest && neu.config.dungeonProfit.profitDisplayLoc != 2) {
             try {
                 int xSize = (int) Utils.getField(GuiContainer.class, gui, "xSize", "field_146999_f");
@@ -815,9 +857,10 @@ public class NEUEventListener {
                             internal = internal.replace("\u00CD", "I").replace("\u0130", "I");
                             float bazaarPrice = -1;
                             JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internal);
-                            if(bazaarInfo != null && bazaarInfo.has("avg_sell")) {
-                                bazaarPrice = bazaarInfo.get("avg_sell").getAsFloat();
+                            if(bazaarInfo != null && bazaarInfo.has("curr_sell")) {
+                                bazaarPrice = bazaarInfo.get("curr_sell").getAsFloat();
                             }
+                            if(bazaarPrice < 5000000 && internal.equals("RECOMBOBULATOR_3000")) bazaarPrice = 5000000;
 
                             float worth = -1;
                             if(bazaarPrice > 0) {
@@ -918,8 +961,10 @@ public class NEUEventListener {
                     if(neu.config.dungeonProfit.profitDisplayLoc == 1 && !valueStringBIN2.equals(missingItem)) {
                         int w = Minecraft.getMinecraft().fontRendererObj.getStringWidth(plStringBIN);
                         GlStateManager.disableLighting();
+                        GlStateManager.translate(0, 0, 200);
                         Minecraft.getMinecraft().fontRendererObj.drawString(plStringBIN, guiLeft+xSize-5-w, guiTop+5,
                                 0xffffffff, true);
+                        GlStateManager.translate(0, 0, -200);
                         return;
                     }
 
@@ -1440,9 +1485,10 @@ public class NEUEventListener {
                             internal = internal.replace("\u00CD", "I").replace("\u0130", "I");
                             float bazaarPrice = -1;
                             JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internal);
-                            if(bazaarInfo != null && bazaarInfo.has("avg_sell")) {
-                                bazaarPrice = bazaarInfo.get("avg_sell").getAsFloat();
+                            if(bazaarInfo != null && bazaarInfo.has("curr_sell")) {
+                                bazaarPrice = bazaarInfo.get("curr_sell").getAsFloat();
                             }
+                            if(bazaarPrice < 5000000 && internal.equals("RECOMBOBULATOR_3000")) bazaarPrice = 5000000;
 
                             float worth = -1;
                             if(bazaarPrice > 0) {

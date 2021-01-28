@@ -45,6 +45,7 @@ public class SBInfo {
     public void onWorldChange(WorldEvent.Load event) {
         lastLocRaw = -1;
         locraw = null;
+        mode = null;
     }
 
     @SubscribeEvent
@@ -53,9 +54,10 @@ public class SBInfo {
             try {
                 JsonObject obj = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(event.message.getUnformattedText(), JsonObject.class);
                 if(obj.has("server")) {
-                    if(System.currentTimeMillis() - lastLocRaw < 5000) event.setCanceled(true);
+                    if(true || System.currentTimeMillis() - lastLocRaw < 5000) event.setCanceled(true);
                     if(obj.has("gametype") && obj.has("mode") && obj.has("map")) {
                         locraw = obj;
+                        mode = locraw.get("mode").getAsString();
                     }
                 }
             } catch(Exception e) {
@@ -65,10 +67,10 @@ public class SBInfo {
     }
 
     public String getLocation() {
-        if(locraw == null) {
+        if(mode == null) {
             return null;
         }
-        return locraw.get("mode").getAsString();
+        return mode;
     }
 
     public void tick() {

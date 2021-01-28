@@ -54,6 +54,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -264,8 +266,7 @@ public class NEUOverlay extends Gui {
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
                 if(Mouse.getEventButtonState()) {
-                    Minecraft.getMinecraft().thePlayer.closeScreen();
-                    Minecraft.getMinecraft().displayGuiScreen(new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config)));
+                    NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config));
                 }
             }
 
@@ -415,7 +416,7 @@ public class NEUOverlay extends Gui {
 
                     extraScale = 1.3f;
                 } else if(manager.getItemInformation().containsKey(display)) {
-                    render = manager.jsonToStack(manager.getItemInformation().get(display));
+                    render = manager.jsonToStack(manager.getItemInformation().get(display), true, true);
                 } else {
                     Item item = Item.itemRegistry.getObject(new ResourceLocation(display.toLowerCase()));
                     if(item != null) {
@@ -1148,6 +1149,8 @@ public class NEUOverlay extends Gui {
 
     private HashMap<String, JsonObject> parentMap = new HashMap<>();
 
+    private ExecutorService searchES = Executors.newSingleThreadExecutor();
+
     /**
      * Clears the current item list, creating a new TreeSet if necessary.
      * Adds all items that match the search AND match the sort mode to the current item list.
@@ -1156,69 +1159,77 @@ public class NEUOverlay extends Gui {
     public void updateSearch() {
         SunTzu.randomizeQuote();
 
-        if(searchedItems==null) searchedItems = new TreeSet<>(getItemComparator());
-        searchedItems.clear();
-        searchedItemsSubgroup.clear();
-        searchedItemsArr = null;
-        redrawItems = true;
-        Set<JsonObject> removeChildItems = new HashSet<>();
-        Set<String> itemsMatch = manager.search(textField.getText(), true);
-        for(String itemname : itemsMatch) {
-            JsonObject item = manager.getItemInformation().get(itemname);
-            if(checkMatchesSort(itemname, item)) {
-                if(Constants.PARENTS != null) {
-                    if(Constants.PARENTS.has(itemname) && Constants.PARENTS.get(itemname).isJsonArray()) {
-                        List<String> children = new ArrayList<>();
-                        for(JsonElement e : Constants.PARENTS.get(itemname).getAsJsonArray()) {
-                            if(e.isJsonPrimitive()) {
-                                children.add(e.getAsString());
-                            }
-                        }
-                        children.retainAll(itemsMatch);
-                        for(String child : children) {
-                            removeChildItems.add(manager.getItemInformation().get(child));
-                        }
-                        searchedItemsSubgroup.put(itemname, children);
-                    }
-                }
-                searchedItems.add(item);
-            }
-        }
-        searchedItems.removeAll(removeChildItems);
-        out:
-        for(Map.Entry<String, List<String>> entry : searchedItemsSubgroup.entrySet()) {
-            if(searchedItems.contains(manager.getItemInformation().get(entry.getKey()))) {
-                continue;
-            }
-            for(String itemname : entry.getValue()) {
+        if(searchedItems == null) searchedItems = new TreeSet<>(getItemComparator());
+
+        searchES.submit(() -> {
+            TreeSet<JsonObject> searchedItems = new TreeSet<>(getItemComparator());
+            HashMap<String, List<String>> searchedItemsSubgroup = new HashMap<>();
+
+            Set<JsonObject> removeChildItems = new HashSet<>();
+            Set<String> itemsMatch = manager.search(textField.getText(), true);
+            for(String itemname : itemsMatch) {
                 JsonObject item = manager.getItemInformation().get(itemname);
-                if(item != null) searchedItems.add(item);
+                if(checkMatchesSort(itemname, item)) {
+                    if(Constants.PARENTS != null) {
+                        if(Constants.PARENTS.has(itemname) && Constants.PARENTS.get(itemname).isJsonArray()) {
+                            List<String> children = new ArrayList<>();
+                            for(JsonElement e : Constants.PARENTS.get(itemname).getAsJsonArray()) {
+                                if(e.isJsonPrimitive()) {
+                                    children.add(e.getAsString());
+                                }
+                            }
+                            children.retainAll(itemsMatch);
+                            for(String child : children) {
+                                removeChildItems.add(manager.getItemInformation().get(child));
+                            }
+                            searchedItemsSubgroup.put(itemname, children);
+                        }
+                    }
+                    searchedItems.add(item);
+                }
             }
-        }
-        switch(textField.getText().toLowerCase().trim()) {
-            case "nullzee":
-                searchedItems.add(CustomItems.NULLZEE);
-                break;
-            case "rune":
-                searchedItems.add(CustomItems.RUNE);
-                break;
-            case "2b2t":
-                searchedItems.add(CustomItems.TWOBEETWOTEE);
-                break;
-            case "ducttape":
-            case "ducttapedigger":
-                searchedItems.add(CustomItems.DUCTTAPE);
-                break;
-            case "thirtyvirus":
-                searchedItems.add(manager.getItemInformation().get("SPIKED_BAIT"));
-                break;
-            case "leocthl":
-                searchedItems.add(CustomItems.LEOCTHL);
-                break;
-            case "spinaxx":
-                searchedItems.add(CustomItems.SPINAXX);
-                break;
-        }
+            searchedItems.removeAll(removeChildItems);
+            out:
+            for(Map.Entry<String, List<String>> entry : searchedItemsSubgroup.entrySet()) {
+                if(searchedItems.contains(manager.getItemInformation().get(entry.getKey()))) {
+                    continue;
+                }
+                for(String itemname : entry.getValue()) {
+                    JsonObject item = manager.getItemInformation().get(itemname);
+                    if(item != null) searchedItems.add(item);
+                }
+            }
+            switch(textField.getText().toLowerCase().trim()) {
+                case "nullzee":
+                    searchedItems.add(CustomItems.NULLZEE);
+                    break;
+                case "rune":
+                    searchedItems.add(CustomItems.RUNE);
+                    break;
+                case "2b2t":
+                    searchedItems.add(CustomItems.TWOBEETWOTEE);
+                    break;
+                case "ducttape":
+                case "ducttapedigger":
+                    searchedItems.add(CustomItems.DUCTTAPE);
+                    break;
+                case "thirtyvirus":
+                    searchedItems.add(manager.getItemInformation().get("SPIKED_BAIT"));
+                    break;
+                case "leocthl":
+                    searchedItems.add(CustomItems.LEOCTHL);
+                    break;
+                case "spinaxx":
+                    searchedItems.add(CustomItems.SPINAXX);
+                    break;
+            }
+
+            this.searchedItems = searchedItems;
+            this.searchedItemsSubgroup = searchedItemsSubgroup;
+
+            searchedItemsArr = null;
+            redrawItems = true;
+        });
     }
 
     /**
@@ -1512,8 +1523,6 @@ public class NEUOverlay extends Gui {
      * is enabled)
      */
     public void renderOverlay() {
-        GlStateManager.enableDepth();
-
         int width = Utils.peekGuiScale().getScaledWidth();
         int height = Utils.peekGuiScale().getScaledHeight();
         int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
@@ -1610,6 +1619,8 @@ public class NEUOverlay extends Gui {
         if(disabled) {
             return;
         }
+        GlStateManager.enableDepth();
+
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
         Utils.resetGuiScale();
@@ -2086,8 +2097,11 @@ public class NEUOverlay extends Gui {
         iterateItemSlots(new ItemSlotConsumer() {
             public void consume(int x, int y, int id) {
             JsonObject json = getSearchedItemPage(id);
-            ItemStack stack = manager.jsonToStack(json, true, true, true);
-            if (json == null || stack == null || !stack.hasEffect()) {
+            if(json == null) {
+                return;
+            }
+            ItemStack stack = manager.jsonToStack(json, true, true, false);
+            if (stack == null || !stack.hasEffect()) {
                 return;
             }
 
@@ -2241,7 +2255,7 @@ public class NEUOverlay extends Gui {
                     renderEntity(x + ITEM_SIZE / 2, y + ITEM_SIZE, scale, name, entities);
                 } else {
                     if(!items) return;
-                    ItemStack stack = manager.jsonToStack(json, true, true, true);
+                    ItemStack stack = manager.jsonToStack(json, true, true, false);
                     if(stack != null) {
                         if(glint) {
                             Utils.drawItemStack(stack, x, y);

@@ -73,6 +73,8 @@ public class FairySouls {
 
     @SubscribeEvent
     public void onChatReceived(ClientChatReceivedEvent event) {
+        if(currentSoulList == null) return;
+
         if(event.message.getFormattedText().equals("\u00A7r\u00A7dYou have already found that Fairy Soul!\u00A7r") ||
                 event.message.getFormattedText().equals("\u00A7d\u00A7lSOUL! \u00A7fYou found a \u00A7r\u00A7dFairy Soul\u00A7r\u00A7f!\u00A7r")) {
             String location = SBInfo.getInstance().getLocation();

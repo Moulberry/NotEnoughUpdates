@@ -48,6 +48,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,6 +90,7 @@ public class GuiProfileViewer extends GuiScreen {
     public enum ProfileViewerPage {
         LOADING(null),
         INVALID_NAME(null),
+        NO_SKYBLOCK(null),
         BASIC(new ItemStack(Items.paper)),
         DUNG(new ItemStack(Item.getItemFromBlock(Blocks.deadbush))),
         EXTRA(new ItemStack(Items.book)),
@@ -112,6 +114,10 @@ public class GuiProfileViewer extends GuiScreen {
         playerNameTextField = new GuiElementTextField(name,
                 GuiElementTextField.SCALE_TEXT);
         playerNameTextField.setSize(100, 20);
+
+        if(currentPage == ProfileViewerPage.LOADING) {
+            currentPage = ProfileViewerPage.BASIC;
+        }
     }
 
     private GuiElementTextField playerNameTextField;
@@ -121,9 +127,15 @@ public class GuiProfileViewer extends GuiScreen {
         currentTime = System.currentTimeMillis();
         if(startTime == 0) startTime = currentTime;
 
+        ProfileViewerPage page = currentPage;
         if(profile == null) {
-            currentPage = ProfileViewerPage.INVALID_NAME;
+            page = ProfileViewerPage.INVALID_NAME;
+        } else if(profile.getPlayerInformation(null) == null) {
+            page = ProfileViewerPage.LOADING;
+        } else if(profile.getLatestProfile() == null) {
+            page = ProfileViewerPage.NO_SKYBLOCK;
         }
+
         if(profileId == null && profile != null && profile.getLatestProfile() != null) {
             profileId = profile.getLatestProfile();
         }
@@ -159,7 +171,7 @@ public class GuiProfileViewer extends GuiScreen {
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bg);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
 
-        if(!(currentPage == ProfileViewerPage.LOADING) && profileId != null) {
+        if(!(page == ProfileViewerPage.LOADING)) {
             playerNameTextField.render(guiLeft+sizeX-100, guiTop+sizeY+5);
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
@@ -196,7 +208,7 @@ public class GuiProfileViewer extends GuiScreen {
         }
 
         GlStateManager.color(1, 1, 1, 1);
-        switch (currentPage) {
+        switch (page) {
             case BASIC:
                 drawBasicPage(mouseX, mouseY, partialTicks);
                 break;
@@ -216,11 +228,25 @@ public class GuiProfileViewer extends GuiScreen {
                 drawPetsPage(mouseX, mouseY, partialTicks);
                 break;
             case LOADING:
-                Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Loading player profiles...", Minecraft.getMinecraft().fontRendererObj,
+                String str = EnumChatFormatting.YELLOW+"Loading player profiles.";
+                long currentTimeMod = System.currentTimeMillis() % 1000;
+                if(currentTimeMod > 333) {
+                    if(currentTimeMod < 666) {
+                        str += ".";
+                    } else {
+                        str += "..";
+                    }
+                }
+
+                Utils.drawStringCentered(str, Minecraft.getMinecraft().fontRendererObj,
                         guiLeft+sizeX/2f, guiTop+101, true, 0);
                 break;
             case INVALID_NAME:
                 Utils.drawStringCentered(EnumChatFormatting.RED+"Invalid name or API is down!", Minecraft.getMinecraft().fontRendererObj,
+                        guiLeft+sizeX/2f, guiTop+101, true, 0);
+                break;
+            case NO_SKYBLOCK:
+                Utils.drawStringCentered(EnumChatFormatting.RED+"No skyblock data found!", Minecraft.getMinecraft().fontRendererObj,
                         guiLeft+sizeX/2f, guiTop+101, true, 0);
                 break;
         }
@@ -619,8 +645,8 @@ public class GuiProfileViewer extends GuiScreen {
     private static final ItemStack DEADBUSH = new ItemStack(Item.getItemFromBlock(Blocks.deadbush));
     private static final ItemStack[] BOSS_HEADS = new ItemStack[7];
 
-    private ProfileViewer.Level levelObjCata = null;
-    private HashMap<String, ProfileViewer.Level> levelObjClasses = new HashMap<>();
+    private HashMap<String, ProfileViewer.Level> levelObjCatas = new HashMap<>();
+    private HashMap<String, HashMap<String, ProfileViewer.Level>> levelObjClasseses = new HashMap<>();
 
     private GuiElementTextField dungeonLevelTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
 
@@ -644,6 +670,7 @@ public class GuiProfileViewer extends GuiScreen {
     private void calculateFloorLevelXP() {
         JsonObject leveling = Constants.LEVELING;
         if(leveling == null)  return;
+        ProfileViewer.Level levelObjCata = levelObjCatas.get(profileId);
         if(levelObjCata == null) return;
 
         try {
@@ -684,6 +711,7 @@ public class GuiProfileViewer extends GuiScreen {
 
         int sectionWidth = 110;
 
+        ProfileViewer.Level levelObjCata = levelObjCatas.get(profileId);
         //Catacombs level thingy
         {
             if(levelObjCata == null) {
@@ -691,6 +719,7 @@ public class GuiProfileViewer extends GuiScreen {
                         "dungeons.dungeon_types.catacombs.experience"), 0);
                 levelObjCata = ProfileViewer.getLevel(Utils.getElement(leveling, "catacombs").getAsJsonArray(),
                         cataXp, 50, false);
+                levelObjCatas.put(profileId, levelObjCata);
             }
 
             String skillName = EnumChatFormatting.RED+"Catacombs";
@@ -925,6 +954,8 @@ public class GuiProfileViewer extends GuiScreen {
             for(int i=0; i<dungSkillsName.length; i++) {
                 String skillName = dungSkillsName[i];
 
+
+                HashMap<String, ProfileViewer.Level> levelObjClasses = levelObjClasseses.computeIfAbsent(profileId, k->new HashMap<>());
                 if(!levelObjClasses.containsKey(skillName)) {
                     float cataXp = Utils.getElementAsFloat(Utils.getElement(profileInfo,
                            "dungeons.player_classes."+skillName.toLowerCase()+".experience"), 0);
@@ -934,7 +965,7 @@ public class GuiProfileViewer extends GuiScreen {
                 }
 
                 String colour = EnumChatFormatting.WHITE.toString();
-                if(activeClass != null && skillName.toLowerCase().equals(activeClass)) {
+                if(skillName.toLowerCase().equals(activeClass)) {
                     colour = EnumChatFormatting.GREEN.toString();
                 }
 
@@ -950,6 +981,8 @@ public class GuiProfileViewer extends GuiScreen {
 
     private void renderXpBar(String skillName, ItemStack stack, int x, int y, int xSize, int levelFloored, float level, int mouseX, int mouseY) {
         Utils.renderAlignedString(skillName, EnumChatFormatting.WHITE.toString()+levelFloored, x+14, y-4, xSize-20);
+
+        ProfileViewer.Level levelObjCata = levelObjCatas.get(profileId);
 
         if(levelObjCata.maxed) {
             renderGoldBar(x, y+6, xSize);
@@ -1138,7 +1171,7 @@ public class GuiProfileViewer extends GuiScreen {
                 JsonObject petItem = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(petname+";"+tierNum);
                 if(petItem == null) continue;
 
-                ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(petItem, false, false, false);
+                ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(petItem, false, false);
                 HashMap<String, String> replacements = NotEnoughUpdates.INSTANCE.manager.getLoreReplacements(petname, tier, (int)Math.floor(level));
 
                 if(heldItem != null) {
@@ -2269,7 +2302,7 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     private boolean loadingProfile = false;
-    private static final ExecutorService profileLoader = Executors.newSingleThreadExecutor();
+    private static final ExecutorService profileLoader = Executors.newFixedThreadPool(1);
 
     private void drawBasicPage(int mouseX, int mouseY, float partialTicks) {
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
@@ -2435,7 +2468,7 @@ public class GuiProfileViewer extends GuiScreen {
         }
 
         if(entityPlayer == null) {
-            if(!loadingProfile) {
+            if(!loadingProfile || ((ThreadPoolExecutor)profileLoader).getActiveCount() == 0) {
                 loadingProfile = true;
                 UUID playerUUID = UUID.fromString(niceUuid(profile.getUuid()));
 
@@ -2475,9 +2508,7 @@ public class GuiProfileViewer extends GuiScreen {
 
         if(entityPlayer != null) {
             if(backgroundClickedX != -1 && Mouse.isButtonDown(1)) {
-                for(int i=0; i<entityPlayer.inventory.armorInventory.length; i++) {
-                    entityPlayer.inventory.armorInventory[i] = null;
-                }
+                Arrays.fill(entityPlayer.inventory.armorInventory, null);
             } else {
                 if(inventoryInfo != null && inventoryInfo.has("inv_armor")) {
                     JsonArray items = inventoryInfo.get("inv_armor").getAsJsonArray();
@@ -2489,6 +2520,8 @@ public class GuiProfileViewer extends GuiScreen {
                             }
                         }
                     }
+                } else {
+                    Arrays.fill(entityPlayer.inventory.armorInventory, null);
                 }
             }
         }
@@ -2621,15 +2654,18 @@ public class GuiProfileViewer extends GuiScreen {
 
                 if(mouseX > x && mouseX < x+80) {
                     if(mouseY > y-4 && mouseY < y+13) {
-                        String levelStr;
+                        tooltipToDisplay = new ArrayList<>();
+                        tooltipToDisplay.add(skillName);
                         if(skillInfo.get("maxed_"+entry.getKey()).getAsBoolean()) {
-                            levelStr = EnumChatFormatting.GOLD+"MAXED!";
+                            tooltipToDisplay.add(EnumChatFormatting.GRAY+"Progress: "+EnumChatFormatting.GOLD+"MAXED!");
                         } else {
                             int maxXp = (int)skillInfo.get("maxxp_"+entry.getKey()).getAsFloat();
-                            levelStr = EnumChatFormatting.DARK_PURPLE.toString() + shortNumberFormat(Math.round((level%1)*maxXp), 0) + "/" + shortNumberFormat(maxXp, 0);
+                            tooltipToDisplay.add(EnumChatFormatting.GRAY+"Progress: "+EnumChatFormatting.DARK_PURPLE.toString() +
+                                    shortNumberFormat(Math.round((level%1)*maxXp), 0) + "/" + shortNumberFormat(maxXp, 0));
                         }
-
-                        tooltipToDisplay = Utils.createList(levelStr);
+                        String totalXpS = NumberFormat.getIntegerInstance().format((int)skillInfo.get("experience_"+entry.getKey()).getAsFloat());
+                        tooltipToDisplay.add(EnumChatFormatting.GRAY+"Total XP: " +
+                                EnumChatFormatting.DARK_PURPLE+totalXpS);
                     }
                 }
 

@@ -10,7 +10,7 @@ import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
 import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
-import io.github.moulberry.notenoughupdates.miscfeatures.CommissionOverlay;
+import io.github.moulberry.notenoughupdates.overlays.CommissionOverlay;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlayStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -256,7 +256,7 @@ public class NEUConfig extends Config {
         @Expose
         @ConfigOption(
                 name = "Hide Potion Effects",
-                desc = "Hides the potion effects inside your inventory while on skyblock"
+                desc = "Hide the potion effects inside your inventory while on skyblock"
         )
         @ConfigEditorBoolean
         public boolean hidePotionEffect = true;
@@ -264,7 +264,7 @@ public class NEUConfig extends Config {
         @Expose
         @ConfigOption(
                 name = "Streamer Mode",
-                desc = "Randomizes lobby names in the scoreboard and chat messages to help prevent stream sniping"
+                desc = "Randomize lobby names in the scoreboard and chat messages to help prevent stream sniping"
         )
         @ConfigEditorBoolean
         public boolean streamerMode = false;
@@ -272,10 +272,18 @@ public class NEUConfig extends Config {
         @Expose
         @ConfigOption(
                 name = "Gui Click Sounds",
-                desc = "Plays click sounds in various NEU-related GUIs when pressing buttons"
+                desc = "Play click sounds in various NEU-related GUIs when pressing buttons"
         )
         @ConfigEditorBoolean
         public boolean guiButtonClicks = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Commas in Damage Numbers",
+                desc = "Add a comma to damage number indicators to make it more readable"
+        )
+        @ConfigEditorBoolean
+        public boolean damageCommas = true;
     }
 
     public static class Notifications {
@@ -636,7 +644,7 @@ public class NEUConfig extends Config {
                         "Lore = Inside the \"Open Reward Chest\" item"
         )
         @ConfigEditorDropdown(
-                values = {"Overlay", "GUI Title", "Lore"}
+                values = {"Overlay", "GUI Title", "Lore", "Off"}
         )
         public int profitDisplayLoc = 0;
     }
@@ -1287,7 +1295,7 @@ public class NEUConfig extends Config {
         arr.add("/enderchest:Ender Chest:ENDER_CHEST");
         arr.add("/wardrobe:Wardrobe:LEATHER_CHESTPLATE");
         arr.add("/pets:Pets:BONE");
-        arr.add("/ah:Auction House:GOLD_BLOCK");
+        arr.add("/neuah:NEU Auction House:GOLD_BLOCK");
         arr.add("/bz:Bazaar:GOLD_BARDING");
         return arr;
     }

@@ -1,7 +1,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.options.NEUConfig;
+import io.github.moulberry.notenoughupdates.overlays.CommissionOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -194,7 +194,11 @@ public class DwarvenMinesWaypoints {
                 } else {
                     for(String commissionName : CommissionOverlay.commissionProgress.keySet()) {
                         if(commissionName.toLowerCase().contains(entry.getKey().toLowerCase())) {
-                            renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
+                            if(commissionName.contains("Titanium")) {
+                                renderWayPoint(EnumChatFormatting.WHITE+entry.getKey(), entry.getValue(), event.partialTicks);
+                            } else {
+                                renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
+                            }
                         }
                     }
                 }

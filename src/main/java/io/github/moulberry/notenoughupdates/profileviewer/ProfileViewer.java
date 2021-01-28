@@ -314,13 +314,14 @@ public class ProfileViewer {
         private JsonObject playerStatus = null;
         private HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
         private HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
-        private long networth = -1;
+        private HashMap<String, Long> networth = new HashMap<>();
 
         public Profile(String uuid) {
             this.uuid = uuid;
         }
 
         private AtomicBoolean updatingPlayerInfoState = new AtomicBoolean(false);
+        private long lastPlayerInfoState = 0;
         private AtomicBoolean updatingPlayerStatusState = new AtomicBoolean(false);
 
         public JsonObject getPlayerStatus() {
@@ -346,7 +347,8 @@ public class ProfileViewer {
         }
 
         public long getNetWorth(String profileId) {
-            if(networth != -1) return networth;
+            if(profileId == null) profileId = latestProfile;
+            if(networth.get(profileId) != null) return networth.get(profileId);
             if(getProfileInformation(profileId) == null) return -1;
             if(getInventoryInfo(profileId) == null) return -1;
 
@@ -363,9 +365,16 @@ public class ProfileViewer {
 
                             if(manager.auctionManager.isVanillaItem(internalname)) continue;
 
-                            int auctionPrice = (int)manager.auctionManager.getItemAvgBin(internalname);
-                            if(auctionPrice <= 0) {
-                                auctionPrice = (int)manager.auctionManager.getLowestBin(internalname);
+                            JsonObject bzInfo = manager.auctionManager.getBazaarInfo(internalname);
+
+                            int auctionPrice;
+                            if(bzInfo != null) {
+                                auctionPrice = (int)bzInfo.get("curr_sell").getAsFloat();
+                            } else {
+                                auctionPrice = (int)manager.auctionManager.getItemAvgBin(internalname);
+                                if(auctionPrice <= 0) {
+                                    auctionPrice = manager.auctionManager.getLowestBin(internalname);
+                                }
                             }
 
                             try {
@@ -384,9 +393,16 @@ public class ProfileViewer {
                                             if(internalname2 != null) {
                                                 if(manager.auctionManager.isVanillaItem(internalname2)) continue;
 
-                                                int auctionPrice2 = (int)manager.auctionManager.getItemAvgBin(internalname2);
-                                                if(auctionPrice2 <= 0) {
-                                                    auctionPrice2 = (int)manager.auctionManager.getLowestBin(internalname2);
+                                                JsonObject bzInfo2 = manager.auctionManager.getBazaarInfo(internalname);
+
+                                                int auctionPrice2;
+                                                if(bzInfo2 != null) {
+                                                    auctionPrice2 = (int)bzInfo2.get("curr_sell").getAsFloat();
+                                                } else {
+                                                    auctionPrice2 = (int)manager.auctionManager.getItemAvgBin(internalname2);
+                                                    if(auctionPrice2 <= 0) {
+                                                        auctionPrice2 = manager.auctionManager.getLowestBin(internalname2);
+                                                    }
                                                 }
 
                                                 int count2 = items.getCompoundTagAt(j).getByte("Count");
@@ -401,7 +417,6 @@ public class ProfileViewer {
                             if(element.getAsJsonObject().has("count")) {
                                 count = element.getAsJsonObject().get("count").getAsInt();
                             }
-
                             networth += auctionPrice * count;
                         }
                     }
@@ -440,7 +455,7 @@ public class ProfileViewer {
 
             networth += bankBalance+purseBalance;
 
-            this.networth = networth;
+            this.networth.put(profileId, networth);
             return networth;
         }
 
@@ -450,17 +465,21 @@ public class ProfileViewer {
 
         public JsonArray getPlayerInformation(Runnable runnable) {
             if (playerInformation != null) return playerInformation;
-            if (updatingPlayerInfoState.get()) return null;
 
+            long currentTime = System.currentTimeMillis();
+
+            if (currentTime - lastPlayerInfoState < 15*1000 && updatingPlayerInfoState.get()) return null;
+
+            lastPlayerInfoState = currentTime;
             updatingPlayerInfoState.set(true);
 
             HashMap<String, String> args = new HashMap<>();
             args.put("uuid", "" + uuid);
             manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "skyblock/profiles",
                     args, jsonObject -> {
-                        if (jsonObject == null) return;
-
                         updatingPlayerInfoState.set(false);
+
+                        if (jsonObject == null) return;
                         if (jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
                             playerInformation = jsonObject.get("profiles").getAsJsonArray();
                             if (playerInformation == null) return;
@@ -498,8 +517,8 @@ public class ProfileViewer {
 
                                 }
                             }
-                            if (runnable != null) runnable.run();
                             latestProfile = backup;
+                            if (runnable != null) runnable.run();
                         }
                     }, () -> {
                         updatingPlayerInfoState.set(false);
@@ -585,7 +604,7 @@ public class ProfileViewer {
             skillInfoMap.clear();
             inventoryInfoMap.clear();
             collectionInfoMap.clear();
-            networth = -1;
+            networth.clear();
         }
 
         public int getCap(JsonObject leveling, String skillName) {
@@ -1018,11 +1037,19 @@ public class ProfileViewer {
     public void getProfileByName(String name, Consumer<Profile> callback) {
         String nameF = name.toLowerCase();
 
+        if(nameToUuid.containsKey(nameF) && nameToUuid.get(nameF) == null) {
+            callback.accept(null);
+            return;
+        }
+
         getPlayerUUID(nameF, (uuid) -> {
             if(uuid == null) {
                 getHypixelProfile(nameF, jsonObject -> {
                     if(jsonObject != null) {
                         callback.accept(getProfileReset(nameToUuid.get(nameF), ignored -> {}));
+                    } else {
+                        callback.accept(null);
+                        nameToUuid.put(nameF, null);
                     }
                 });
             } else {

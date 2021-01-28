@@ -31,6 +31,7 @@ import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import io.github.moulberry.notenoughupdates.util.XPInformation;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -909,6 +910,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new DwarvenMinesTextures());
         MinecraftForge.EVENT_BUS.register(new DwarvenMinesWaypoints());
         MinecraftForge.EVENT_BUS.register(new FuelBar());
+        MinecraftForge.EVENT_BUS.register(XPInformation.getInstance());
 
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
@@ -920,7 +922,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(joinDungeonCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
-        ClientCommandHandler.instance.registerCommand(viewCataCommand);
+        if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
         ClientCommandHandler.instance.registerCommand(peekCommand);
         ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);

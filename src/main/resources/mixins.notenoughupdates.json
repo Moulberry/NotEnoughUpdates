@@ -22,6 +22,8 @@
     "MixinWorld",
     "MixinPlayerControllerMP",
     "MixinLayerCreeperCharge",
-    "MixinEffectRenderer"
+    "MixinEffectRenderer",
+    "MixinRendererLivingEntity",
+    "MinecraftAccessor"
   ]
 }

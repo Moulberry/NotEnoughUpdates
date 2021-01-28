@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -172,8 +173,6 @@ public class NEUManager {
 
         }*/
 
-
-
         Thread thread = new Thread(() -> {
             JDialog dialog = null;
             try {
@@ -277,7 +276,6 @@ public class NEUManager {
             }
         });
 
-        System.out.println("finished thread create");
         File items = new File(repoLocation, "items");
         if(items.exists()) {
             File[] itemFiles = new File(repoLocation, "items").listFiles();
@@ -652,6 +650,8 @@ public class NEUManager {
 
             if(ea.hasKey("id", 8)) {
                 internalname = ea.getString("id").replaceAll(":", "-");
+            } else {
+                return null;
             }
 
             if("PET".equals(internalname)) {
@@ -1313,28 +1313,25 @@ public class NEUManager {
     }
 
     public ItemStack jsonToStack(JsonObject json, boolean useCache) {
-        return jsonToStack(json, useCache, true, false);
+        return jsonToStack(json, useCache, true);
     }
 
-    private static ExecutorService asyncItemES = Executors.newFixedThreadPool(10);
-    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean multithread) {
+    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {
+        return jsonToStack(json, useCache, useReplacements, true);
+    }
+
+    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean copyStack) {
         if(json == null) return new ItemStack(Items.painting, 1, 10);
         String internalname = json.get("internalname").getAsString();
 
         if(useCache) {
-            if(itemstackCache.containsKey(internalname)) {
-                ItemStack stack = itemstackCache.get(internalname);
-                if(stack == null) {
-                    if(multithread) {
-                        return null;
-                    }
-                } else {
+            ItemStack stack = itemstackCache.get(internalname);
+            if(stack != null) {
+                if(copyStack) {
                     return stack.copy();
+                } else {
+                    return stack;
                 }
-            } else if(multithread) {
-                asyncItemES.submit(() -> jsonToStack(json, true, useReplacements, false));
-                itemstackCache.put(internalname, null);
-                return null;
             }
         }
 
@@ -1385,7 +1382,11 @@ public class NEUManager {
         }
 
         if(useCache) itemstackCache.put(internalname, stack);
-        return stack;
+        if(copyStack) {
+            return stack.copy();
+        } else {
+            return stack;
+        }
     }
 
 }
