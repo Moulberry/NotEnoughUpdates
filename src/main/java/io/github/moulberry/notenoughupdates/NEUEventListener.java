@@ -3,8 +3,6 @@ package io.github.moulberry.notenoughupdates;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
@@ -13,7 +11,6 @@ import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
-import io.github.moulberry.notenoughupdates.mixins.MinecraftAccessor;
 import io.github.moulberry.notenoughupdates.overlays.CommissionOverlay;
 import io.github.moulberry.notenoughupdates.overlays.FarmingOverlay;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
@@ -30,7 +27,8 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.texture.ITextureObject;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
@@ -41,10 +39,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -53,7 +48,6 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -64,8 +58,6 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
@@ -188,7 +180,6 @@ public class NEUEventListener {
                     });
                 }
             } else if(!toPreload.isEmpty()) {
-                System.out.println("Preload size:"+toPreload.size());
                 Utils.drawItemStack(toPreload.get(0), -100, -100);
                 toPreload.remove(0);
             } else {
@@ -207,6 +198,14 @@ public class NEUEventListener {
         }
         DungeonWin.tick();
         if(longUpdate) {
+            /*for(Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {
+                if(entity instanceof EntityArmorStand) {
+                    EntityArmorStand stand = (EntityArmorStand) entity;
+                    stand.setInvisible(false);
+                    stand.getDataWatcher().updateObject(10, (byte)(stand.getDataWatcher().getWatchableObjectByte(10) & 0b1111111101111));
+                }
+            }*/
+
             CrystalOverlay.tick();
             DwarvenMinesTextures.tick();
             FairySouls.tick();
@@ -626,6 +625,51 @@ public class NEUEventListener {
         }
     }
 
+    private IChatComponent processChatComponent(IChatComponent chatComponent) {
+        IChatComponent newComponent;
+        if(chatComponent instanceof ChatComponentText) {
+            ChatComponentText text = (ChatComponentText) chatComponent;
+
+            newComponent = new ChatComponentText(processText(text.getUnformattedTextForChat()));
+            newComponent.setChatStyle(text.getChatStyle().createShallowCopy());
+
+            for(IChatComponent sibling : text.getSiblings()) {
+                newComponent.appendSibling(processChatComponent(sibling));
+            }
+        } else if(chatComponent instanceof ChatComponentTranslation) {
+            ChatComponentTranslation trans = (ChatComponentTranslation) chatComponent;
+
+            Object[] args = trans.getFormatArgs();
+            Object[] newArgs = new Object[args.length];
+            for(int i=0; i<trans.getFormatArgs().length; i++) {
+                if(args[i] instanceof IChatComponent) {
+                    newArgs[i] = processChatComponent((IChatComponent) args[i]);
+                } else {
+                    newArgs[i] = args[i];
+                }
+            }
+            newComponent = new ChatComponentTranslation(trans.getKey(), newArgs);
+
+            for(IChatComponent sibling : trans.getSiblings()) {
+                newComponent.appendSibling(processChatComponent(sibling));
+            }
+        } else {
+            newComponent = chatComponent.createCopy();
+        }
+
+        return newComponent;
+    }
+
+    private String processText(String text) {
+        if(SBInfo.getInstance().getLocation() == null) return text;
+        if(!SBInfo.getInstance().getLocation().startsWith("mining_")) return text;
+
+        if(Minecraft.getMinecraft().thePlayer == null) return text;
+        if(!NotEnoughUpdates.INSTANCE.config.mining.drillFuelBar) return text;
+
+        return Utils.trimIgnoreColour(text.replaceAll(EnumChatFormatting.DARK_GREEN+"\\S+ Drill Fuel", ""));
+    }
+
     /**
      * 1) When receiving "You are playing on profile" messages, will set the current profile.
      * 2) When a /viewrecipe command fails (i.e. player does not have recipe unlocked, will open the custom recipe GUI)
@@ -633,6 +677,11 @@ public class NEUEventListener {
      */
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onGuiChat(ClientChatReceivedEvent e) {
+        if(e.type == 2) {
+            e.message = processChatComponent(e.message);
+            return;
+        }
+
         DungeonWin.onChatMessage(e);
 
         String r = null;

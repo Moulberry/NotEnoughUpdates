@@ -2288,7 +2288,7 @@ public class GuiProfileViewer extends GuiScreen {
             if(n % 1 == 0) {
                 return Integer.toString((int)n);
             } else {
-                return Double.toString(n);
+                return String.format("%.2f", n);
             }
         }
 

@@ -28,7 +28,10 @@ public class MixinWorld {
 
     @Inject(method="getBiomeGenForCoords", at=@At("HEAD"), cancellable = true)
     public void getBiomeGenForCoords(BlockPos pos, CallbackInfoReturnable<BiomeGenBase> cir) {
-        if(DwarvenMinesTextures.shouldBeRetextured(pos)) {
+        int retexture = DwarvenMinesTextures.retexture(pos);
+        if(retexture == 1) {
+            cir.setReturnValue(BiomeGenBase.extremeHillsPlus);
+        } else if(retexture == 2) {
             cir.setReturnValue(BiomeGenBase.extremeHillsEdge);
         }
     }

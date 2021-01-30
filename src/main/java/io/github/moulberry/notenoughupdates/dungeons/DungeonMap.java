@@ -366,7 +366,7 @@ public class DungeonMap {
 
     private HashMap<Integer, Float> borderRadiusCache = new HashMap<>();
     public float getBorderRadius() {
-        int borderSizeOption = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize;
+        int borderSizeOption = Math.round(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
         String sizeId = borderSizeOption == 0 ? "small" : borderSizeOption == 2 ? "large" : "medium";
 
         int style = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderStyle;
@@ -414,7 +414,7 @@ public class DungeonMap {
             maxRoomY = Math.max(offset.y, maxRoomY);
         }
 
-        int borderSizeOption = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize;
+        int borderSizeOption = Math.round(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
 
         int renderRoomSize = getRenderRoomSize();
         int renderConnSize = getRenderConnSize();
@@ -434,7 +434,7 @@ public class DungeonMap {
         int mapSizeX;
         int mapSizeY;
         if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderStyle <= 1) {
-            mapSizeX = 80 + (int)Math.round(40*NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
+            mapSizeX = 80 + Math.round(40*NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
         } else {
             mapSizeX = borderSizeOption == 0 ? 90 : borderSizeOption == 1 ? 120 : borderSizeOption == 2 ? 160 : 240;
         }
@@ -653,7 +653,8 @@ public class DungeonMap {
                         pixelWidth = pixelHeight = 12;
                     }
                     GlStateManager.color(1, 1, 1, 1);
-                    if(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerHeads >= 1 &&
+                    if((playerMarkerMapPositions.size() <= 1 || minU != 1/4f) &&
+                            NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerHeads >= 1 &&
                             playerSkinMap.containsKey(entry.getKey())) {
                         Minecraft.getMinecraft().getTextureManager().bindTexture(playerSkinMap.get(entry.getKey()));
 

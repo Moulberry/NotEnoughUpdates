@@ -9,6 +9,7 @@ import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlayStyle;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.scoreboard.ScorePlayerTeam;
@@ -48,7 +49,7 @@ public class CommissionOverlay extends TextOverlay {
         for(NetworkPlayerInfo info : players) {
             String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
             if(name.contains("Mithril Powder:")) {
-                mithrilPowder = trimIgnoreColour(name);
+                mithrilPowder = Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
             }
             if(name.equals(RESET.toString()+BLUE+BOLD+"Forges"+RESET)) {
                 commissions = false;
@@ -63,7 +64,7 @@ public class CommissionOverlay extends TextOverlay {
             if(forges && clean.startsWith(" ")) {
                 if(name.contains("LOCKED")) continue;
                 if(NotEnoughUpdates.INSTANCE.config.mining.hideEmptyForges && name.contains("EMPTY")) continue;
-                forgeStrings.add(DARK_AQUA+"Forge "+trimIgnoreColour(name));
+                forgeStrings.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
             } else if(commissions && clean.startsWith(" ")) {
                 String[] split = clean.trim().split(": ");
                 if(split.length == 2) {
@@ -125,25 +126,6 @@ public class CommissionOverlay extends TextOverlay {
             if(hasAny) overlayStrings.add(null);
             overlayStrings.addAll(forgeStrings);
         }
-    }
-
-    private String trimIgnoreColour(String str) {
-        str = str.trim();
-        boolean colourCodeLast = false;
-        for(int i=0; i<str.length(); i++) {
-            char c = str.charAt(i);
-            if(colourCodeLast) {
-                colourCodeLast = false;
-                continue;
-            }
-            if(c == '\u00A7') {
-                colourCodeLast = true;
-            } else if(c != ' ') {
-                return str.substring(i);
-            }
-        }
-
-        return "";
     }
 
     private static final Ordering<NetworkPlayerInfo> playerOrdering = Ordering.from(new PlayerComparator());

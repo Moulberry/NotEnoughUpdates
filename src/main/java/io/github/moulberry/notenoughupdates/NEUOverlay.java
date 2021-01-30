@@ -1227,19 +1227,22 @@ public class NEUOverlay extends Gui {
             this.searchedItems = searchedItems;
             this.searchedItemsSubgroup = searchedItemsSubgroup;
 
-            searchedItemsArr = null;
+            this.searchedItemsArr = null;
+
             redrawItems = true;
         });
     }
 
     /**
      * Returns an index-able array containing the elements in searchedItems.
-     * Whenever searchedItems is updated via the above method, the array is recreated here.
+     * Whenever searchedItems is updated in updateSearch(), the array is recreated here.
      */
     public JsonObject[] getSearchedItems() {
-        if(searchedItems==null) {
+        if(searchedItems == null) {
             updateSearch();
+            return new JsonObject[0];
         }
+
         if(searchedItemsArr==null) {
             searchedItemsArr = new JsonObject[searchedItems.size()];
             int i=0;

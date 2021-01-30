@@ -228,6 +228,48 @@ public class Utils {
                 : shortNumberFormat(d, iteration+1));
     }
 
+    public static String trimIgnoreColour(String str) {
+        return trimIgnoreColourStart(trimIgnoreColourEnd(str));
+    }
+
+    public static String trimIgnoreColourStart(String str) {
+        str = str.trim();
+        boolean colourCodeLast = false;
+        StringBuilder colours = new StringBuilder();
+        for(int i=0; i<str.length(); i++) {
+            char c = str.charAt(i);
+            if(colourCodeLast) {
+                colours.append('\u00a7').append(c);
+                colourCodeLast = false;
+                continue;
+            }
+            if(c == '\u00A7') {
+                colourCodeLast = true;
+            } else if(c != ' ') {
+                return colours.append(str.substring(i)).toString();
+            }
+        }
+
+        return "";
+    }
+
+    public static String trimIgnoreColourEnd(String str) {
+        str = str.trim();
+        for(int i=str.length()-1; i>=0; i--) {
+            char c = str.charAt(i);
+            if(c == ' ') {
+                continue;
+            } else if(i > 0 && str.charAt(i-1) == '\u00a7') {
+                i--;
+                continue;
+            }
+
+            return str.substring(0, i+1);
+        }
+
+        return "";
+    }
+
     public static void drawItemStackLinear(ItemStack stack, int x, int y) {
         if(stack == null)return;
 

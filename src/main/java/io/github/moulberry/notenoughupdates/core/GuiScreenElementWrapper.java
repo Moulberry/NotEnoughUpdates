@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class GuiScreenElementWrapper extends GuiScreen {
 
-    private final GuiElement element;
+    public final GuiElement element;
 
     public GuiScreenElementWrapper(GuiElement element) {
         this.element = element;

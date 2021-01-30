@@ -23,7 +23,6 @@
     "MixinPlayerControllerMP",
     "MixinLayerCreeperCharge",
     "MixinEffectRenderer",
-    "MixinRendererLivingEntity",
-    "MinecraftAccessor"
+    "MixinRendererLivingEntity"
   ]
 }

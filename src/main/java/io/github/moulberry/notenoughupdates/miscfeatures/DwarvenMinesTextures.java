@@ -54,23 +54,27 @@ public class DwarvenMinesTextures {
     private static long time;
     private static boolean error = false;
 
-    public static boolean shouldBeRetextured(BlockPos pos) {
-        if(error) return false;
-        if(Minecraft.getMinecraft().theWorld == null) return false;
+    public static int retexture(BlockPos pos) {
+        if(error) return 0;
+        if(Minecraft.getMinecraft().theWorld == null) return 0;
 
-        if(SBInfo.getInstance().getLocation() == null) return false;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return false;
+        if(SBInfo.getInstance().getLocation() == null) return 0;
+        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return 0;
 
         IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(pos);
         boolean titanium = state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH;
         if(titanium) {
             IBlockState plus = Minecraft.getMinecraft().theWorld.getBlockState(pos.add(1, 0, 0));
             if(plus.getBlock() == Blocks.double_stone_slab) {
-                return false;
+                return 1;
             }
             IBlockState minus = Minecraft.getMinecraft().theWorld.getBlockState(pos.add(-1, 0, 0));
             if(minus.getBlock() == Blocks.double_stone_slab) {
-                return false;
+                return 1;
+            }
+            IBlockState above = Minecraft.getMinecraft().theWorld.getBlockState(pos.add(0, 1, 0));
+            if(above.getBlock() == Blocks.stone_slab) {
+                return 1;
             }
         }
 
@@ -94,9 +98,8 @@ public class DwarvenMinesTextures {
                         }
                     }
                 } catch(Exception e) {
-                    e.printStackTrace();
                     error = true;
-                    return false;
+                    return 1;
                 }
             }
             if(ignoredChunks != null) {
@@ -106,10 +109,10 @@ public class DwarvenMinesTextures {
                 lastRetextureCheck.put(pair, time);
 
                 if(ignoredChunks.contains(pair)) {
-                    return false;
+                    return 1;
                 }
                 if(titanium) {
-                    return true;
+                    return 2;
                 }
 
                 if(!loadedChunkData.containsKey(pair)) {
@@ -153,7 +156,6 @@ public class DwarvenMinesTextures {
                             }
                         }
                     } catch(Exception e) {
-                        e.printStackTrace();
                         loadedChunkData.put(pair, null);
                     }
                 }
@@ -169,11 +171,11 @@ public class DwarvenMinesTextures {
                     if(map.containsKey(offset)) {
                         IgnoreColumn ignore = map.get(offset);
                         if(ignore.always) {
-                            return false;
+                            return 1;
                         } else {
                             int y = pos.getY();
                             if(y >= ignore.minY && y <= ignore.maxY) {
-                                return false;
+                                return 1;
                             }
                         }
                     }
@@ -181,7 +183,7 @@ public class DwarvenMinesTextures {
             }
         }
 
-        return true;
+        return 2;
     }
 
     /*@SubscribeEvent

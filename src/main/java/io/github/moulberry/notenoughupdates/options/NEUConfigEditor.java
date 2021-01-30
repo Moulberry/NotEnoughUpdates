@@ -55,15 +55,44 @@ public class NEUConfigEditor extends GuiElement {
     private LinkedHashMap<String, ConfigProcessor.ProcessedCategory> processedConfig;
 
     public NEUConfigEditor(Config config) {
+        this(config, null);
+    }
+
+    public NEUConfigEditor(Config config, String categoryOpen) {
         this.openedMillis = System.currentTimeMillis();
         this.processedConfig = ConfigProcessor.create(config);
+
+        if(categoryOpen != null) {
+            for(String category : processedConfig.keySet()) {
+                if(category.equalsIgnoreCase(categoryOpen)) {
+                    selectedCategory = category;
+                    break;
+                }
+            }
+            if(selectedCategory == null) {
+                for(String category : processedConfig.keySet()) {
+                    if(category.toLowerCase().startsWith(categoryOpen.toLowerCase())) {
+                        selectedCategory = category;
+                        break;
+                    }
+                }
+            }
+            if(selectedCategory == null) {
+                for(String category : processedConfig.keySet()) {
+                    if(category.toLowerCase().contains(categoryOpen.toLowerCase())) {
+                        selectedCategory = category;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     private LinkedHashMap<String, ConfigProcessor.ProcessedCategory> getCurrentConfigEditing() {
         return processedConfig;
     }
 
-    private String getSelectedCategory() {
+    public String getSelectedCategory() {
         return selectedCategory;
     }
 

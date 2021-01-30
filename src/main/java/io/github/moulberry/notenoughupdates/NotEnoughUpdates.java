@@ -660,6 +660,13 @@ public class NotEnoughUpdates {
         }
     });
 
+    SimpleCommand dhCommand = new SimpleCommand("dh", new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            Minecraft.getMinecraft().thePlayer.sendChatMessage("/warp dungeon_hub");
+        }
+    });
+
     SimpleCommand viewCataCommand = new SimpleCommand("cata", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
@@ -818,24 +825,19 @@ public class NotEnoughUpdates {
         }
     });
 
-    SimpleCommand settingsCommand = new SimpleCommand("neu", new SimpleCommand.ProcessCommandRunnable() {
+    SimpleCommand.ProcessCommandRunnable settingsRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
+            if(args.length > 0) {
+                openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config, StringUtils.join(args, " ")));
+            } else {
+                openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
+            }
         }
-    });
+    };
 
-    SimpleCommand settingsCommand2 = new SimpleCommand("neusettings", new SimpleCommand.ProcessCommandRunnable() {
-        public void processCommand(ICommandSender sender, String[] args) {
-            openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
-        }
-    });
-
-    SimpleCommand settingsCommand3 = new SimpleCommand("neuconfig", new SimpleCommand.ProcessCommandRunnable() {
-        public void processCommand(ICommandSender sender, String[] args) {
-            openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
-        }
-    });
-
+    SimpleCommand settingsCommand = new SimpleCommand("neu", settingsRunnable);
+    SimpleCommand settingsCommand2 = new SimpleCommand("neusettings", settingsRunnable);
+    SimpleCommand settingsCommand3 = new SimpleCommand("neuconfig", settingsRunnable);
 
     SimpleCommand calendarCommand = new SimpleCommand("neucalendar", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -922,6 +924,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(joinDungeonCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
+        ClientCommandHandler.instance.registerCommand(dhCommand);
         if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
         ClientCommandHandler.instance.registerCommand(peekCommand);
         ClientCommandHandler.instance.registerCommand(tutorialCommand);
@@ -1059,27 +1062,12 @@ public class NotEnoughUpdates {
         return hasSkyblockScoreboard;
     }
 
-    //Stolen from Biscut's SkyblockAddons
     public void updateSkyblockScoreboard() {
-        final Pattern SERVER_BRAND_PATTERN = Pattern.compile("(.+) <- (?:.+)");
-
         Minecraft mc = Minecraft.getMinecraft();
 
         if (mc != null && mc.theWorld != null && mc.thePlayer != null) {
-            if (!mc.isSingleplayer() && mc.thePlayer.getClientBrand() != null) {
-                Matcher matcher = SERVER_BRAND_PATTERN.matcher(mc.thePlayer.getClientBrand());
-
-                if (matcher.find()) {
-                    // Group 1 is the server brand.
-                    if(!matcher.group(1).toLowerCase().contains("hypixel")) {
-                        hasSkyblockScoreboard = false;
-                        return;
-                    }
-                } else {
-                    hasSkyblockScoreboard = false;
-                    return;
-                }
-            } else {
+            if (mc.isSingleplayer() || mc.thePlayer.getClientBrand() == null ||
+                    !mc.thePlayer.getClientBrand().toLowerCase().contains("hypixel")) {
                 hasSkyblockScoreboard = false;
                 return;
             }

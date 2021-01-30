@@ -1,7 +1,6 @@
 package io.github.moulberry.notenoughupdates.options;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
@@ -21,6 +20,16 @@ public class NEUConfig extends Config {
 
     @Override
     public void executeRunnable(int runnableId) {
+
+        String activeConfigCategory = null;
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper) {
+            GuiScreenElementWrapper wrapper = (GuiScreenElementWrapper) Minecraft.getMinecraft().currentScreen;
+            if(wrapper.element instanceof NEUConfigEditor) {
+                activeConfigCategory = ((NEUConfigEditor)wrapper.element).getSelectedCategory();
+            }
+        }
+        final String activeConfigCategoryF = activeConfigCategory;
+
         switch (runnableId) {
             case 0:
                 ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neumap");
@@ -34,14 +43,13 @@ public class NEUConfig extends Config {
                     return TextOverlayStyle.BACKGROUND;
                 });
                 overlay.tick();
-                JsonObject test = null;
                 if(overlay.overlayWidth <= 0 || overlay.overlayHeight <= 0) {
                     Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
                             NotEnoughUpdates.INSTANCE.config.mining.overlayPosition,
-                            300, 100, () -> {
+                            150, 75, () -> {
                     }, () -> {
                     }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                            new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config))
+                            new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
                     ));
                 } else {
                     Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
@@ -51,7 +59,7 @@ public class NEUConfig extends Config {
                                 NEUEventListener.dontRenderOverlay = CommissionOverlay.class;
                     }, () -> {
                     }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                            new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config))
+                            new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
                     ));
                 }
                 return;
@@ -61,7 +69,7 @@ public class NEUConfig extends Config {
                         NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, 12, () -> {
                 }, () -> {
                 }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config))
+                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
                 ));
                 return;
         }
@@ -1338,7 +1346,7 @@ public class NEUConfig extends Config {
                 maxValue = 5,
                 minStep = 0.25f
         )
-        public int dmBorderSize = 1;
+        public float dmBorderSize = 1;
 
         @Expose
         @ConfigOption(
@@ -1350,7 +1358,7 @@ public class NEUConfig extends Config {
                 maxValue = 5,
                 minStep = 0.25f
         )
-        public int dmRoomSize = 1;
+        public float dmRoomSize = 1;
 
         @Expose
         @ConfigOption(

@@ -31,12 +31,16 @@ public class DamageCommas {
 
         if(formatted.length() >= 7 && formatted.startsWith("\u00A7f\u2727") &&
                 formatted.endsWith("\u2727\u00a7r")) {
+
             StringBuilder builder = new StringBuilder();
             boolean numLast = false;
             boolean colLast = false;
+            boolean colLastLast;
             int numCount = 0;
             for(int i=formatted.length()-4; i>=3; i--) {
                 char c = formatted.charAt(i);
+                colLastLast = colLast;
+
                 if(c == '\u00a7') {
                     if(numLast) numCount--;
                     numLast = false;
@@ -53,8 +57,8 @@ public class DamageCommas {
                     numLast = false;
                 }
 
+                if(colLastLast && numLast && numCount > 1 && (numCount-1) % 3 == 0) builder.append(',');
                 builder.append(c);
-                if(numLast && numCount % 3 == 0) builder.append(',');
             }
 
             ChatComponentText ret = new ChatComponentText("\u00A7f\u2727"+builder.reverse().toString()+"\u2727\u00a7r");

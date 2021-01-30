@@ -181,7 +181,7 @@ public class DwarvenMinesWaypoints {
             for(Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
                 if(entry.getKey().equals(powderGhastLocation)) {
                     renderWayPoint(EnumChatFormatting.GOLD+"Powder Ghast",
-                            new Vector3f(entry.getValue()).translate(0, 5, 0), event.partialTicks);
+                            new Vector3f(entry.getValue()).translate(0, 15, 0), event.partialTicks);
                     break;
                 }
             }

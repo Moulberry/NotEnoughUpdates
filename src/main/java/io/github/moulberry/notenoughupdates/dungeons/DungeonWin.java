@@ -140,6 +140,8 @@ public class DungeonWin {
     }
 
     public static void onChatMessage(ClientChatReceivedEvent e) {
+        if(e.type == 2) return;
+
         if(NotEnoughUpdates.INSTANCE.config.dungeonWin.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeonWin.enableDungeonWin) return;
         long currentTime = System.currentTimeMillis();
         String unformatted = Utils.cleanColour(e.message.getUnformattedText());
@@ -165,7 +167,7 @@ public class DungeonWin {
                             TEAM_SCORE = D; break;
                     }
 
-                    SES.schedule(()->{
+                    SES.schedule(()-> {
                         NotEnoughUpdates.INSTANCE.sendChatMessage("/showextrastats");
                     }, 100L, TimeUnit.MILLISECONDS);
                 }

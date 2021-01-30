@@ -27,7 +27,94 @@ public class ItemPriceInformation {
 
         NumberFormat format = NumberFormat.getInstance(Locale.US);
 
-        if(auctionItem) {
+        if(bazaarItem) {
+            int[] lines = {
+                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line1,
+                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line2,
+                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line3,
+                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line4,
+                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line5,
+                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line6
+            };
+
+            boolean added = false;
+
+            boolean shiftPressed = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT);
+
+            int stackMultiplier = 1;
+            int shiftStackMultiplier = 64;
+            if(shiftPressed) {
+                stackMultiplier = shiftStackMultiplier;
+            }
+
+            //values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
+            for(int lineId : lines) {
+                switch (lineId) {
+                    case 0:
+                        continue;
+                    case 1:
+                        if(bazaarInfo.has("avg_buy")) {
+                            if(!added) {
+                                tooltip.add("");
+                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                                added = true;
+                            }
+                            int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*stackMultiplier;
+                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
+                        }
+                        break;
+                    case 2:
+                        if(bazaarInfo.has("avg_sell")) {
+                            if(!added) {
+                                tooltip.add("");
+                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                                added = true;
+                            }
+                            int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*stackMultiplier;
+                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
+                        }
+                        break;
+                    case 3:
+                        if(bazaarInfo.has("curr_buy")) {
+                            if(!added) {
+                                tooltip.add("");
+                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                                added = true;
+                            }
+                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*stackMultiplier;
+                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
+                        }
+                        break;
+                    case 4:
+                        if(bazaarInfo.has("curr_sell")) {
+                            if(!added) {
+                                tooltip.add("");
+                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                                added = true;
+                            }
+                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*stackMultiplier;
+                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
+                        }
+                        break;
+                    case 5:
+                        if(craftCost.fromRecipe) {
+                            if(!added) {
+                                tooltip.add("");
+                                added = true;
+                            }
+                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
+                        }
+                        break;
+                }
+            }
+
+            return added;
+        } else if(auctionItem) {
             int[] lines = {
                 NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line1,
                 NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line2,
@@ -145,93 +232,6 @@ public class ItemPriceInformation {
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Upgrade to "+
                                     EnumChatFormatting.GOLD+star+EnumChatFormatting.YELLOW+EnumChatFormatting.BOLD+": " +
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+upgradeCost+" "+essenceType);
-                        }
-                        break;
-                }
-            }
-
-            return added;
-        } else if(bazaarItem) {
-            int[] lines = {
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line1,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line2,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line3,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line4,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line5,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line6
-            };
-
-            boolean added = false;
-
-            boolean shiftPressed = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT);
-
-            int stackMultiplier = 1;
-            int shiftStackMultiplier = 64;
-            if(shiftPressed) {
-                stackMultiplier = shiftStackMultiplier;
-            }
-
-            //values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
-            for(int lineId : lines) {
-                switch (lineId) {
-                    case 0:
-                        continue;
-                    case 1:
-                        if(bazaarInfo.has("avg_buy")) {
-                            if(!added) {
-                                tooltip.add("");
-                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                                added = true;
-                            }
-                            int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*stackMultiplier;
-                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
-                        }
-                        break;
-                    case 2:
-                        if(bazaarInfo.has("avg_sell")) {
-                            if(!added) {
-                                tooltip.add("");
-                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                                added = true;
-                            }
-                            int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*stackMultiplier;
-                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
-                        }
-                        break;
-                    case 3:
-                        if(bazaarInfo.has("curr_buy")) {
-                            if(!added) {
-                                tooltip.add("");
-                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                                added = true;
-                            }
-                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*stackMultiplier;
-                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
-                        }
-                        break;
-                    case 4:
-                        if(bazaarInfo.has("curr_sell")) {
-                            if(!added) {
-                                tooltip.add("");
-                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                                added = true;
-                            }
-                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*stackMultiplier;
-                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
-                        }
-                        break;
-                    case 5:
-                        if(craftCost.fromRecipe) {
-                            if(!added) {
-                                tooltip.add("");
-                                added = true;
-                            }
-                            tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
-                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
                         }
                         break;
                 }
