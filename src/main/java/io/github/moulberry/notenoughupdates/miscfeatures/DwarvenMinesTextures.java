@@ -226,7 +226,14 @@ public class DwarvenMinesTextures {
 
     public static void tick() {
         time = System.currentTimeMillis();
-        lastRetextureCheck.entrySet().removeIf((checks) -> time - checks.getValue() > 30*1000);
+        Set<ChunkCoordIntPair> remove = new HashSet<>();
+        for(Map.Entry<ChunkCoordIntPair, Long> entry : lastRetextureCheck.entrySet()) {
+            if(time - entry.getValue() > 30*1000) {
+                remove.add(entry.getKey());
+            }
+        }
+        lastRetextureCheck.keySet().removeAll(remove);
+        loadedChunkData.keySet().removeAll(remove);
 
         /*if(Minecraft.getMinecraft().theWorld == null) return;
 

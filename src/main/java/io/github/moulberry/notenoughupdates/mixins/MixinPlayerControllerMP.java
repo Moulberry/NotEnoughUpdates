@@ -18,7 +18,6 @@ public class MixinPlayerControllerMP {
     @Inject(method="clickBlock", at=@At("HEAD"), cancellable = true)
     public void clickBlock(BlockPos loc, EnumFacing face, CallbackInfoReturnable<Boolean> cir) {
         ItemCooldowns.blockClicked(loc);
-        //DwarvenMinesTextures.blockClicked(loc);
         if(MiningStuff.blockClicked(loc)) {
             cir.setReturnValue(false);
         }

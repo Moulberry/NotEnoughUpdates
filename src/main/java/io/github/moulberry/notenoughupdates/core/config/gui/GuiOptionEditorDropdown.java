@@ -46,7 +46,6 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
 
             TextRenderUtils.drawStringScaledMaxWidth(selectedString, fr, left+3, top+3, false,
                     dropdownWidth-16, 0xffa0a0a0);
-            //fr.drawString(selectedString, left+3, top+3, 0xff404040);
         }
     }
 

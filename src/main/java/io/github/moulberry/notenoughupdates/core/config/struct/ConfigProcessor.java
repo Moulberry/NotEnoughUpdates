@@ -8,6 +8,7 @@ import io.github.moulberry.notenoughupdates.core.config.Config;
 
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 public class ConfigProcessor {
 
@@ -113,6 +114,12 @@ public class ConfigProcessor {
                             if(optionField.isAnnotationPresent(ConfigEditorDropdown.class)) {
                                 ConfigEditorDropdown configEditorAnnotation = optionField.getAnnotation(ConfigEditorDropdown.class);
                                 editor = new GuiOptionEditorDropdown(option, configEditorAnnotation.values(), (int)option.get(), true);
+                            }
+                        }
+                        if(optionType.isAssignableFrom(List.class)) {
+                            if(optionField.isAnnotationPresent(ConfigEditorDraggableList.class)) {
+                                ConfigEditorDraggableList configEditorAnnotation = optionField.getAnnotation(ConfigEditorDraggableList.class);
+                                editor = new GuiOptionEditorDraggableList(option, configEditorAnnotation.exampleText());
                             }
                         }
                         if(optionType.isAssignableFrom(String.class)) {

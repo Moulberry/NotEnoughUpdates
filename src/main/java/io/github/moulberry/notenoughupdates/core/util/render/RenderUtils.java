@@ -23,7 +23,7 @@ public class RenderUtils {
 
         if(OpenGlHelper.isFramebufferEnabled()) {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
-            BackgroundBlur.renderBlurredBackground(scaledResolution.getScaledWidth(),
+            BackgroundBlur.renderBlurredBackground(15, scaledResolution.getScaledWidth(),
                     scaledResolution.getScaledHeight(), x, y, width, height);
         } else {
             alpha = 0xff000000;

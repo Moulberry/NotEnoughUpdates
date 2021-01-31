@@ -1729,7 +1729,8 @@ public class NEUOverlay extends Gui {
         //Atomic reference used so that below lambda doesn't complain about non-effectively-final variable
         AtomicReference<JsonObject> tooltipToDisplay = new AtomicReference<>(null);
         if(itemPaneOffsetFactor.getValue() < 1) {
-            BackgroundBlur.renderBlurredBackground(width, height,
+            BackgroundBlur.renderBlurredBackground(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor,
+                    width, height,
                     leftSide+getBoxPadding()-5, getBoxPadding()-5,
                     paneWidth-getBoxPadding()*2+10, height-getBoxPadding()*2+10);
             Gui.drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,

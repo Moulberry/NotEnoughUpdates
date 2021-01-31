@@ -15,6 +15,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class NEUConfig extends Config {
 
@@ -630,6 +632,24 @@ public class NEUConfig extends Config {
                 values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
         )
         public int line6 = 0;
+    }
+
+    public static class SkillOverlays {
+        @Expose
+        @ConfigOption(
+                name = "Farming Text",
+                desc = ""
+        )
+        @ConfigEditorDraggableList(
+                exampleText = {"\u00a7bCounter: \u00a7e37,547,860",
+                        "\u00a7bCrops/m: \u00a7e38.29",
+                        "\u00a7bFarm: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+                        "\u00a7bCurrent XP: \u00a7e6,734",
+                        "\u00a7bRemaining XP: \u00a7e3,265",
+                        "\u00a7bXP/h: \u00a7e238,129",
+                        "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52"}
+        )
+        public List<Integer> priceInfoAuc = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
     }
 
     public static class DungeonProfit {
@@ -1303,7 +1323,7 @@ public class NEUConfig extends Config {
         arr.add("/enderchest:Ender Chest:ENDER_CHEST");
         arr.add("/wardrobe:Wardrobe:LEATHER_CHESTPLATE");
         arr.add("/pets:Pets:BONE");
-        arr.add("/neuah:NEU Auction House:GOLD_BLOCK");
+        arr.add("neuah:NEU Auction House:GOLD_BLOCK");
         arr.add("/bz:Bazaar:GOLD_BARDING");
         return arr;
     }

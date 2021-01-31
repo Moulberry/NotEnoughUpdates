@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
+import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
@@ -212,6 +213,7 @@ public class NEUEventListener {
             MiningStuff.tick();
             ProfileApiSyncer.getInstance().tick();
             DamageCommas.tick();
+            BackgroundBlur.tick();
             for(TextOverlay overlay : textOverlays) {
                 overlay.tick();
             }
@@ -321,8 +323,6 @@ public class NEUEventListener {
                 neu.manager.auctionManager.markNeedsUpdate();
             }
         }
-
-
 
         /*if(longUpdate && neu.hasSkyblockScoreboard()) {
             if(neu.manager.getCurrentProfile() == null || neu.manager.getCurrentProfile().length() == 0) {
