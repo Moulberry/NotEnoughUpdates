@@ -58,6 +58,7 @@ public class NEUManager {
     private String currentProfile = "";
     private String currentProfileBackup = "";
     public final HypixelApi hypixelApi = new HypixelApi();
+    public JsonObject scammers;
 
     private ResourceLocation wkZip = new ResourceLocation("notenoughupdates:wkhtmltox.zip");
     private Map<String, ItemStack> itemstackCache = new HashMap<>();
@@ -79,7 +80,7 @@ public class NEUManager {
         this.neu = neu;
         this.configLocation = configLocation;
         this.auctionManager = new APIManager(this);
-
+        hypixelApi.getMyApiAsync("scammers.json", jsonObject -> this.scammers = jsonObject, () -> this.scammers = new JsonObject());
         gson = new GsonBuilder().setPrettyPrinting().create();
 
         this.repoLocation = new File(configLocation, "repo");

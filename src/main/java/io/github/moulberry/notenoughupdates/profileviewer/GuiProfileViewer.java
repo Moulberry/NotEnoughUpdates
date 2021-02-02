@@ -2415,6 +2415,16 @@ public class GuiProfileViewer extends GuiScreen {
                 fr.drawString(playerName, x-halfRankPrefixLen, y, 0, true);
             }
         }
+        if (NotEnoughUpdates.INSTANCE.manager.scammers.has(profile.getUuid())) {
+            Utils.drawStringCentered(EnumChatFormatting.RED + "Scammer", fr, guiLeft + 63, guiTop + 20, true, 0);
+            int half = fontRendererObj.getStringWidth("Scammer") / 2;
+            if (mouseX > guiLeft + (63 - half) && mouseX < guiLeft + 63 + half) {
+                if (mouseY > guiTop + 14 && mouseY < guiTop + 14 + fontRendererObj.FONT_HEIGHT) {
+                    tooltipToDisplay = new ArrayList<>();
+                    tooltipToDisplay.add(EnumChatFormatting.RED + "Reason: " + NotEnoughUpdates.INSTANCE.manager.scammers.get(profile.getUuid()).getAsJsonObject().get("reason").getAsString());
+                }
+            }
+        }
 
         long networth = profile.getNetWorth(profileId);
         if(networth > 0) {

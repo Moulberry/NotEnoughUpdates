@@ -11,6 +11,7 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
@@ -294,7 +295,7 @@ public class TradeWindow {
         GuiContainer chest = ((GuiContainer)Minecraft.getMinecraft().currentScreen);
         ContainerChest cc = (ContainerChest) chest.inventorySlots;
         String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-
+        EntityPlayer trader = Minecraft.getMinecraft().theWorld.playerEntities.stream().filter(x -> x.getName().toLowerCase().startsWith(containerName.toLowerCase().replaceAll("you", "").trim())).findFirst().orElse(null);
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
         guiLeft = (scaledResolution.getScaledWidth()-xSize)/2;
@@ -820,6 +821,12 @@ public class TradeWindow {
             Minecraft.getMinecraft().getTextureManager().bindTexture(location);
             Utils.drawTexturedRect(guiLeft+xSize+3, guiTop, 80, 106,
                     176/256f, 1, 0, 106/256f, GL11.GL_NEAREST);
+            if (trader != null && NotEnoughUpdates.INSTANCE.manager.scammers.has(trader.getUniqueID().toString().replaceAll("-", ""))) {
+                drawStringShadow(EnumChatFormatting.RED.toString() + EnumChatFormatting.BOLD + "Scammer",
+                        guiLeft - 40 - 3, guiTop - 40, 72);
+                drawStringShadow(EnumChatFormatting.RED + NotEnoughUpdates.INSTANCE.manager.scammers.get(trader.getUniqueID().toString().replaceAll("-", "")).getAsJsonObject().get("reason").getAsString(),
+                        guiLeft - 40 - 3, guiTop - 20, 72);
+            }
             drawStringShadow(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+"Total Value",
                     guiLeft+xSize+3+40, guiTop+11, 72);
             drawStringShadow(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+format.format(theirPrice),
