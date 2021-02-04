@@ -79,8 +79,8 @@ public class FuelBar {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
             Position position = NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarPosition;
-            int x = position.getAbsX(scaledResolution);
-            int y = position.getAbsY(scaledResolution);
+            int x = position.getAbsX(scaledResolution, NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth);
+            int y = position.getAbsY(scaledResolution, 12);
             x -= NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth/2;
             renderBar(x, y+4, NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, fuelAmount);
 

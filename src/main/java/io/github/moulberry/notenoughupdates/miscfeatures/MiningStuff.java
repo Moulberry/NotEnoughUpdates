@@ -2,7 +2,7 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
-import io.github.moulberry.notenoughupdates.overlays.CommissionOverlay;
+import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -38,7 +38,7 @@ public class MiningStuff {
                 SBInfo.getInstance().getLocation().startsWith("mining_") &&
                 state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) {
 
-            for(String s : CommissionOverlay.commissionProgress.keySet()) {
+            for(String s : MiningOverlay.commissionProgress.keySet()) {
                 if(s.contains("Titanium")) {
                     BlockPos pos = packetIn.getBlockPosition();
 
@@ -193,7 +193,8 @@ public class MiningStuff {
         if(NotEnoughUpdates.INSTANCE.config.mining.dontMineStone &&
                 state != null && SBInfo.getInstance().getLocation() != null &&
                 SBInfo.getInstance().getLocation().startsWith("mining_") &&
-                state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.STONE) {
+                (state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.STONE ||
+                        state.getBlock() == Blocks.cobblestone)) {
             return true;
         }
         return false;

@@ -270,6 +270,14 @@ public class Utils {
         return "";
     }
 
+    public static String floatToString(float f, int decimals) {
+        if(decimals <= 0) {
+            return String.valueOf(Math.round(f));
+        } else {
+            return String.format("%."+decimals+"f", f + 0.00001f);
+        }
+    }
+
     public static void drawItemStackLinear(ItemStack stack, int x, int y) {
         if(stack == null)return;
 

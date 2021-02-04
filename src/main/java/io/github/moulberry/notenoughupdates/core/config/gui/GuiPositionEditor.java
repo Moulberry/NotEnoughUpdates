@@ -78,8 +78,8 @@ public class GuiPositionEditor extends GuiScreen {
 
         renderCallback.run();
 
-        int x = position.getAbsX(scaledResolution);
-        int y = position.getAbsY(scaledResolution);
+        int x = position.getAbsX(scaledResolution, elementWidth);
+        int y = position.getAbsY(scaledResolution, elementHeight);
 
         if(position.isCenterX()) x -= elementWidth/2;
         if(position.isCenterY()) y -= elementHeight/2;
@@ -104,8 +104,8 @@ public class GuiPositionEditor extends GuiScreen {
             mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
             mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-            int x = position.getAbsX(scaledResolution);
-            int y = position.getAbsY(scaledResolution);
+            int x = position.getAbsX(scaledResolution, elementWidth);
+            int y = position.getAbsY(scaledResolution, elementHeight);
             if(position.isCenterX()) x -= elementWidth/2;
             if(position.isCenterY()) y -= elementHeight/2;
 

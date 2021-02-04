@@ -14,6 +14,8 @@ public class Position {
     @Expose
     private boolean centerY;
 
+    private static final int EDGE_OFFSET = 0;
+
     public Position(int x, int y) {
         this(x, y, false, false);
     }
@@ -45,7 +47,7 @@ public class Position {
         return y;
     }
 
-    public int getAbsX(ScaledResolution scaledResolution) {
+    public int getAbsX(ScaledResolution scaledResolution, int objWidth) {
         int width = scaledResolution.getScaledWidth();
 
         if(centerX) {
@@ -58,12 +60,12 @@ public class Position {
         }
 
         if(ret < 0) ret = 0;
-        if(ret > width) ret = width;
+        if(ret > width) ret = width - objWidth;
 
         return ret;
     }
 
-    public int getAbsY(ScaledResolution scaledResolution) {
+    public int getAbsY(ScaledResolution scaledResolution, int objHeight) {
         int height = scaledResolution.getScaledHeight();
 
         if(centerY) {
@@ -76,7 +78,7 @@ public class Position {
         }
 
         if(ret < 0) ret = 0;
-        if(ret > height) ret = height;
+        if(ret > height) ret = height - objHeight;
 
         return ret;
     }
@@ -102,22 +104,22 @@ public class Position {
         }
 
         if(wasPositiveX) {
-            if(this.x < 2) {
-                deltaX += 2-this.x;
-                this.x = 2;
+            if(this.x < EDGE_OFFSET) {
+                deltaX += EDGE_OFFSET-this.x;
+                this.x = EDGE_OFFSET;
             }
-            if(this.x > screenWidth-2) {
-                deltaX += screenWidth-2-this.x;
-                this.x = screenWidth-2;
+            if(this.x > screenWidth-EDGE_OFFSET) {
+                deltaX += screenWidth-EDGE_OFFSET-this.x;
+                this.x = screenWidth-EDGE_OFFSET;
             }
         } else {
-            if(this.x+objWidth > -2) {
-                deltaX += -2-objWidth-this.x;
-                this.x = -2-objWidth;
+            if(this.x+objWidth > -EDGE_OFFSET) {
+                deltaX += -EDGE_OFFSET-objWidth-this.x;
+                this.x = -EDGE_OFFSET-objWidth;
             }
-            if(this.x+screenWidth < 2) {
-                deltaX += 2-screenWidth-this.x;
-                this.x = 2-screenWidth;
+            if(this.x+screenWidth < EDGE_OFFSET) {
+                deltaX += EDGE_OFFSET-screenWidth-this.x;
+                this.x = EDGE_OFFSET-screenWidth;
             }
         }
 
@@ -151,22 +153,22 @@ public class Position {
         }
 
         if(wasPositiveY) {
-            if(this.y < 2) {
-                deltaY += 2-this.y;
-                this.y = 2;
+            if(this.y < EDGE_OFFSET) {
+                deltaY += EDGE_OFFSET-this.y;
+                this.y = EDGE_OFFSET;
             }
-            if(this.y > screenHeight-2) {
-                deltaY += screenHeight-2-this.y;
-                this.y = screenHeight-2;
+            if(this.y > screenHeight-EDGE_OFFSET) {
+                deltaY += screenHeight-EDGE_OFFSET-this.y;
+                this.y = screenHeight-EDGE_OFFSET;
             }
         } else {
-            if(this.y+objHeight > -2) {
-                deltaY += -2-objHeight-this.y;
-                this.y = -2-objHeight;
+            if(this.y+objHeight > -EDGE_OFFSET) {
+                deltaY += -EDGE_OFFSET-objHeight-this.y;
+                this.y = -EDGE_OFFSET-objHeight;
             }
-            if(this.y+screenHeight < 2) {
-                deltaY += 2-screenHeight-this.y;
-                this.y = 2-screenHeight;
+            if(this.y+screenHeight < EDGE_OFFSET) {
+                deltaY += EDGE_OFFSET-screenHeight-this.y;
+                this.y = EDGE_OFFSET-screenHeight;
             }
         }
 

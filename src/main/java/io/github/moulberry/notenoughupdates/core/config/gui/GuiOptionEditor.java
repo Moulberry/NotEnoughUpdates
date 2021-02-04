@@ -32,7 +32,7 @@ public abstract class GuiOptionEditor {
 
         float paraHeight = 9 * lineCount - 1;
 
-        while(paraHeight >= height-10) {
+        while(paraHeight >= HEIGHT-10) {
             scale -= 1/8f;
             lineCount = fr.listFormattedStringToWidth(option.desc, (int)(width*2/3/scale-10)).size();
             paraHeight = (int)(9*scale * lineCount - 1*scale);

@@ -654,7 +654,8 @@ public class DungeonMap {
                         pixelWidth = pixelHeight = 12;
                     }
                     GlStateManager.color(1, 1, 1, 1);
-                    if((playerMarkerMapPositions.size() <= 1 || minU != 1/4f) &&
+                    if((!NotEnoughUpdates.INSTANCE.config.dungeonMapOpen.showOwnHeadAsMarker ||
+                            playerMarkerMapPositions.size() <= 1 || minU != 1/4f) &&
                             NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerHeads >= 1 &&
                             playerSkinMap.containsKey(entry.getKey())) {
                         Minecraft.getMinecraft().getTextureManager().bindTexture(playerSkinMap.get(entry.getKey()));
@@ -1033,7 +1034,7 @@ public class DungeonMap {
                 Score score = scores.get(i);
                 ScorePlayerTeam scoreplayerteam1 = scoreboard.getPlayersTeam(score.getPlayerName());
                 String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
-                line = Utils.cleanDuplicateColourCodes(line);
+                line = Utils.cleanColour(line);
 
                 if(line.contains("(F1)")) {
                     isFloorOne = true;
@@ -1496,7 +1497,7 @@ public class DungeonMap {
 
                 int size = 80 + Math.round(40*NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
                 ScaledResolution scaledResolution = Utils.pushGuiScale(2);
-                renderMap(pos.getAbsX(scaledResolution)+size/2, pos.getAbsY(scaledResolution)+size/2,
+                renderMap(pos.getAbsX(scaledResolution, size/2)+size/2, pos.getAbsY(scaledResolution, size/2)+size/2,
                         colourMap, decorations, roomSizeBlocks, actualPlayers, true, event.partialTicks);
                 Utils.pushGuiScale(-1);
             }

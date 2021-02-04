@@ -2,17 +2,16 @@ package io.github.moulberry.notenoughupdates.options;
 
 import com.google.common.collect.Lists;
 import com.google.gson.annotations.Expose;
-import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
 import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
 import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
-import io.github.moulberry.notenoughupdates.overlays.CommissionOverlay;
-import io.github.moulberry.notenoughupdates.overlays.TextOverlayStyle;
+import io.github.moulberry.notenoughupdates.overlays.*;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
+import org.lwjgl.util.vector.Vector2f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,9 +19,21 @@ import java.util.List;
 
 public class NEUConfig extends Config {
 
+    private void editOverlay(String activeConfig, TextOverlay overlay, Position position) {
+        Vector2f size = overlay.getDummySize();
+        int width = (int)size.x;
+        int height = (int)size.y;
+        Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(position, width, height, () -> {
+            overlay.renderDummy();
+            OverlayManager.dontRenderOverlay = overlay.getClass();
+        }, () -> {
+        }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
+                new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfig))
+        ));
+    }
+
     @Override
     public void executeRunnable(int runnableId) {
-
         String activeConfigCategory = null;
         if(Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper) {
             GuiScreenElementWrapper wrapper = (GuiScreenElementWrapper) Minecraft.getMinecraft().currentScreen;
@@ -37,33 +48,7 @@ public class NEUConfig extends Config {
                 ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neumap");
                 return;
             case 1:
-                final CommissionOverlay overlay = new CommissionOverlay(NotEnoughUpdates.INSTANCE.config.mining.overlayPosition, () -> {
-                    int style = NotEnoughUpdates.INSTANCE.config.mining.overlayStyle;
-                    if(style >= 0 && style < TextOverlayStyle.values().length) {
-                        return TextOverlayStyle.values()[style];
-                    }
-                    return TextOverlayStyle.BACKGROUND;
-                });
-                overlay.tick();
-                if(overlay.overlayWidth <= 0 || overlay.overlayHeight <= 0) {
-                    Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
-                            NotEnoughUpdates.INSTANCE.config.mining.overlayPosition,
-                            150, 75, () -> {
-                    }, () -> {
-                    }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                            new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
-                    ));
-                } else {
-                    Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
-                            NotEnoughUpdates.INSTANCE.config.mining.overlayPosition,
-                            overlay.overlayWidth+10, overlay.overlayHeight+10, () -> {
-                                overlay.render();
-                                NEUEventListener.dontRenderOverlay = CommissionOverlay.class;
-                    }, () -> {
-                    }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                            new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
-                    ));
-                }
+                editOverlay(activeConfigCategory, OverlayManager.miningOverlay, mining.overlayPosition);
                 return;
             case 2:
                 Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
@@ -73,6 +58,9 @@ public class NEUConfig extends Config {
                 }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
                         new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
                 ));
+                return;
+            case 3:
+                editOverlay(activeConfigCategory, OverlayManager.farmingOverlay, skillOverlays.farmingPosition);
                 return;
         }
     }
@@ -125,6 +113,13 @@ public class NEUConfig extends Config {
             desc = "Price Info (Bazaar)"
     )
     public PriceInfoBaz priceInfoBaz = new PriceInfoBaz();
+
+    @Expose
+    @Category(
+            name = "Skill Overlays",
+            desc = "Skill Overlays"
+    )
+    public SkillOverlays skillOverlays = new SkillOverlays();
 
     @Expose
     @Category(
@@ -262,6 +257,14 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         public boolean onlyShowOnSkyblock = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Private Island Fly Fix",
+                desc = "Fix flying being delaying on private islands"
+        )
+        @ConfigEditorBoolean
+        public boolean flyFix = true;
 
         @Expose
         @ConfigOption(
@@ -637,8 +640,17 @@ public class NEUConfig extends Config {
     public static class SkillOverlays {
         @Expose
         @ConfigOption(
+                name = "Enable Farming Overlay",
+                desc = "Show an overlay while farming with useful information"
+        )
+        @ConfigEditorBoolean
+        public boolean farmingOverlay = true;
+
+        @Expose
+        @ConfigOption(
                 name = "Farming Text",
-                desc = ""
+                desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
+                        "\u00a7rHold a mathematical hoe or use an axe while gaining farming xp to show the overlay"
         )
         @ConfigEditorDraggableList(
                 exampleText = {"\u00a7bCounter: \u00a7e37,547,860",
@@ -647,9 +659,31 @@ public class NEUConfig extends Config {
                         "\u00a7bCurrent XP: \u00a7e6,734",
                         "\u00a7bRemaining XP: \u00a7e3,265",
                         "\u00a7bXP/h: \u00a7e238,129",
-                        "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52"}
+                        "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52",
+                        "\u00a7bETA: 13h12m"}
         )
-        public List<Integer> priceInfoAuc = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
+        public List<Integer> farmingText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 7, 6));
+
+        @Expose
+        @ConfigOption(
+                name = "Farming Position",
+                desc = "Change the position of the Farming overlay"
+        )
+        @ConfigEditorButton(
+                runnableId = 3,
+                buttonText = "Edit"
+        )
+        public Position farmingPosition = new Position(10, 200);
+
+        @Expose
+        @ConfigOption(
+                name = "Farming Style",
+                desc = "Change the style of the Farming overlay"
+        )
+        @ConfigEditorDropdown(
+                values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+        )
+        public int farmingStyle = 0;
     }
 
     public static class DungeonProfit {
@@ -840,59 +874,6 @@ public class NEUConfig extends Config {
 
         @Expose
         @ConfigOption(
-                name = "Overlay Position",
-                desc = "Change the position of the Dwarven Mines information overlay (commisions, powder & forge statuses)"
-        )
-        @ConfigEditorButton(
-                runnableId = 1,
-                buttonText = "Edit"
-        )
-        public Position overlayPosition = new Position(10, 100);
-
-        @Expose
-        @ConfigOption(
-                name = "Overlay Style",
-                desc = "Change the style of the Dwarven Mines information overlay"
-        )
-        @ConfigEditorDropdown(
-                values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
-        )
-        public int overlayStyle = 0;
-
-        @Expose
-        @ConfigOption(
-                name = "Commissions Overlay",
-                desc = "Show current commissions on the screen while in Dwarven Mines"
-        )
-        @ConfigEditorBoolean
-        public boolean commissionsOverlay = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Powder Overlay",
-                desc = "Show powder count on the screen while in Dwarven Mines"
-        )
-        @ConfigEditorBoolean
-        public boolean powderOverlay = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Forges Overlay",
-                desc = "Show forge statuses on the screen while in Dwarven Mines"
-        )
-        @ConfigEditorBoolean
-        public boolean forgeOverlay = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Hide Empty Forges",
-                desc = "Hide empty forges in the information overlay"
-        )
-        @ConfigEditorBoolean
-        public boolean hideEmptyForges = true;
-
-        @Expose
-        @ConfigOption(
                 name = "Drill Fuel Bar",
                 desc = "Show a fancy drill fuel bar when holding a drill in mining areas"
         )
@@ -921,6 +902,50 @@ public class NEUConfig extends Config {
                 buttonText = "Edit"
         )
         public Position drillFuelBarPosition = new Position(0, -100, true, false);
+
+
+        @Expose
+        @ConfigOption(
+                name = "Dwarven Overlay",
+                desc = "Show an overlay with useful information on the screen while in Dwarven Mines"
+        )
+        @ConfigEditorBoolean
+        public boolean dwarvenOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Dwarven Text",
+                desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
+                        "\u00a7rGo to the Dwarven Mines to show this overlay with useful information"
+        )
+        @ConfigEditorDraggableList(
+                exampleText = {"\u00a73Goblin Slayer: \u00a7626.5%\n\u00a73Lucky Raffle: \u00a7c0.0%",
+                "\u00a73Mithril Powder: \u00a726,243",
+                "\u00a73Forge 1) \u00a79Diamonite\u00a77: \u00a7aReady!",
+                "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY"}
+        )
+        public List<Integer> dwarvenText = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
+
+        @Expose
+        @ConfigOption(
+                name = "Overlay Position",
+                desc = "Change the position of the Dwarven Mines information overlay (commisions, powder & forge statuses)"
+        )
+        @ConfigEditorButton(
+                runnableId = 1,
+                buttonText = "Edit"
+        )
+        public Position overlayPosition = new Position(10, 100);
+
+        @Expose
+        @ConfigOption(
+                name = "Overlay Style",
+                desc = "Change the style of the Dwarven Mines information overlay"
+        )
+        @ConfigEditorDropdown(
+                values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+        )
+        public int overlayStyle = 0;
     }
 
     public static class NeuAuctionHouse {
@@ -1119,6 +1144,14 @@ public class NEUConfig extends Config {
                 buttonText = "Edit"
         )
         public int editDungeonMap = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Show Own Head As Marker",
+                desc = "If you have the \"Head\" icon style selected, don't replace your green marker with a head"
+        )
+        @ConfigEditorBoolean
+        public boolean showOwnHeadAsMarker = false;
     }
 
     public static class DungeonBlock {

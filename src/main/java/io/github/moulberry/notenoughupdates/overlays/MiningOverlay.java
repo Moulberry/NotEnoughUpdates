@@ -6,8 +6,6 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
-import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
-import io.github.moulberry.notenoughupdates.overlays.TextOverlayStyle;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -23,10 +21,10 @@ import java.util.function.Supplier;
 
 import static net.minecraft.util.EnumChatFormatting.*;
 
-public class CommissionOverlay extends TextOverlay {
+public class MiningOverlay extends TextOverlay {
 
-    public CommissionOverlay(Position position, Supplier<TextOverlayStyle> styleSupplier) {
-        super(position, styleSupplier);
+    public MiningOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
+        super(position, dummyStrings, styleSupplier);
     }
 
     public static Map<String, Float> commissionProgress = new LinkedHashMap<>();
@@ -35,12 +33,14 @@ public class CommissionOverlay extends TextOverlay {
     public void update() {
         overlayStrings = null;
 
+        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay) return;
         if(SBInfo.getInstance().getLocation() == null) return;
         if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
 
         overlayStrings = new ArrayList<>();
         commissionProgress.clear();
         List<String> forgeStrings = new ArrayList<>();
+        List<String> forgeStringsEmpty = new ArrayList<>();
         String mithrilPowder = null;
 
         boolean commissions = false;
@@ -49,7 +49,7 @@ public class CommissionOverlay extends TextOverlay {
         for(NetworkPlayerInfo info : players) {
             String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
             if(name.contains("Mithril Powder:")) {
-                mithrilPowder = Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
+                mithrilPowder = DARK_AQUA+Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
             }
             if(name.equals(RESET.toString()+BLUE+BOLD+"Forges"+RESET)) {
                 commissions = false;
@@ -63,8 +63,11 @@ public class CommissionOverlay extends TextOverlay {
             String clean = StringUtils.cleanColour(name);
             if(forges && clean.startsWith(" ")) {
                 if(name.contains("LOCKED")) continue;
-                if(NotEnoughUpdates.INSTANCE.config.mining.hideEmptyForges && name.contains("EMPTY")) continue;
-                forgeStrings.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                if(name.contains("EMPTY")) {
+                    forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                } else {
+                    forgeStrings.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                }
             } else if(commissions && clean.startsWith(" ")) {
                 String[] split = clean.trim().split(": ");
                 if(split.length == 2) {
@@ -98,20 +101,13 @@ public class CommissionOverlay extends TextOverlay {
                     col = GOLD;
                 }
 
-                String valS = String.valueOf(entry.getValue()*100);
-                int periodIndex = valS.indexOf('.');//1.3
-                if(periodIndex > 0) {
-                    valS = valS.substring(0, Math.min(valS.length(), periodIndex+2));
-                }
-                if(valS.endsWith("0")) {
-                    valS = valS.substring(0, Math.max(0, valS.length()-2));
-                }
+                String valS = Utils.floatToString(entry.getValue()*100, 1);
 
                 commissionsStrings.add(DARK_AQUA+entry.getKey() + ": " + col+valS+"%");
             }
         }
-        boolean hasAny = false;
-        if(NotEnoughUpdates.INSTANCE.config.mining.commissionsOverlay) {
+        /*boolean hasAny = false;
+        if(NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay) {
             overlayStrings.addAll(commissionsStrings);
             hasAny = true;
         }
@@ -125,7 +121,22 @@ public class CommissionOverlay extends TextOverlay {
         if(NotEnoughUpdates.INSTANCE.config.mining.forgeOverlay) {
             if(hasAny) overlayStrings.add(null);
             overlayStrings.addAll(forgeStrings);
+        }*/
+
+        for(int index : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText) {
+            switch(index) {
+                case 0:
+                    overlayStrings.addAll(commissionsStrings); break;
+                case 1:
+                    overlayStrings.add(mithrilPowder); break;
+                case 2:
+                    overlayStrings.addAll(forgeStrings); break;
+                case 3:
+                    overlayStrings.addAll(forgeStringsEmpty); break;
+            }
         }
+
+        if(overlayStrings.isEmpty()) overlayStrings = null;
     }
 
     private static final Ordering<NetworkPlayerInfo> playerOrdering = Ordering.from(new PlayerComparator());

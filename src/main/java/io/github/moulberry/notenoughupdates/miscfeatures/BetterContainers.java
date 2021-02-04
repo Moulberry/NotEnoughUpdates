@@ -102,6 +102,7 @@ public class BetterContainers {
                 return;
             }
         }
+        GlStateManager.enableBlend();
         textureManager.bindTexture(location);
     }
 

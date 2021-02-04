@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.overlays;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.util.XPInformation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
@@ -14,6 +15,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class FarmingOverlay extends TextOverlay {
@@ -36,8 +38,8 @@ public class FarmingOverlay extends TextOverlay {
 
     private String skillType = "Farming";
 
-    public FarmingOverlay(Position position, Supplier<TextOverlayStyle> styleSupplier) {
-        super(position, styleSupplier);
+    public FarmingOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
+        super(position, dummyStrings, styleSupplier);
     }
 
     private float interp(float now, float last) {
@@ -52,6 +54,12 @@ public class FarmingOverlay extends TextOverlay {
 
     @Override
     public void update() {
+        if(!NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingOverlay) {
+            counter = -1;
+            overlayStrings = null;
+            return;
+        }
+
         lastUpdate = System.currentTimeMillis();
         counterLast = counter;
         xpGainHourLast = xpGainHour;
@@ -88,7 +96,7 @@ public class FarmingOverlay extends TextOverlay {
                 float delta = totalXp - lastTotalXp;
 
                 if(delta > 0 && delta < 1000) {
-                    xpGainQueue.add(delta);
+                    xpGainQueue.add(0, delta);
                     while (xpGainQueue.size() > 120) {
                         xpGainQueue.removeLast();
                     }
@@ -106,7 +114,6 @@ public class FarmingOverlay extends TextOverlay {
 
             lastTotalXp = totalXp;
         }
-
 
         while(counterQueue.size() >= 4) {
             counterQueue.removeLast();
@@ -133,6 +140,8 @@ public class FarmingOverlay extends TextOverlay {
 
     @Override
     public void updateFrequent() {
+        super.updateFrequent();
+
         if(counter < 0) {
             overlayStrings = null;
         } else {
@@ -152,6 +161,16 @@ public class FarmingOverlay extends TextOverlay {
 
                 lineMap.put(1, EnumChatFormatting.AQUA+"Crops/m: "+EnumChatFormatting.YELLOW+
                         String.format("%.2f", cpsInterp*60));
+            }
+
+            float xpInterp = xpGainHour;
+            if(xpGainHourLast == xpGainHour && xpGainHour <= 0) {
+                lineMap.put(5, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+"N/A");
+            } else {
+                xpInterp = interp(xpGainHour, xpGainHourLast);
+
+                lineMap.put(5, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+
+                        format.format(xpInterp)+(isFarming ? "" : EnumChatFormatting.RED + " (PAUSED)"));
             }
 
             if(skillInfo != null) {
@@ -196,16 +215,15 @@ public class FarmingOverlay extends TextOverlay {
                 lineMap.put(2, levelStr.toString());
                 lineMap.put(3, EnumChatFormatting.AQUA+"Current XP: " + EnumChatFormatting.YELLOW+ format.format(current));
                 lineMap.put(4, EnumChatFormatting.AQUA+"Remaining XP: " + EnumChatFormatting.YELLOW+ format.format(remaining));
+
+                if(xpGainHour < 1000) {
+                    lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ "N/A");
+                } else {
+                    lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ Utils.prettyTime((long)(remaining)*1000*60*60/(long)xpInterp));
+                }
             }
 
-            if(xpGainHourLast == xpGainHour && xpGainHour <= 0) {
-                lineMap.put(5, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+"N/A");
-            } else {
-                float xpInterp = interp(xpGainHour, xpGainHourLast);
 
-                lineMap.put(5, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+
-                        format.format(xpInterp)+(isFarming ? "" : EnumChatFormatting.RED + " (PAUSED)"));
-            }
 
             float yaw = Minecraft.getMinecraft().thePlayer.rotationYawHead;
             yaw %= 360;
@@ -215,11 +233,11 @@ public class FarmingOverlay extends TextOverlay {
             lineMap.put(6, EnumChatFormatting.AQUA+"Yaw: "+EnumChatFormatting.YELLOW+
                     String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u1D52");
 
-            /*for(int strIndex : NotEnoughUpdates.INSTANCE.config) {
+            for(int strIndex : NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingText) {
                 if(lineMap.containsKey(strIndex)) {
                     overlayStrings.add(lineMap.get(strIndex));
                 }
-            }*/
+            }
             if(overlayStrings != null && overlayStrings.isEmpty()) overlayStrings = null;
         }
     }

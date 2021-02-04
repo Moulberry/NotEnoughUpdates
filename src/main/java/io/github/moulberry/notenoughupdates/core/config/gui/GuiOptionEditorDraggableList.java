@@ -49,7 +49,8 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
         int height = super.getHeight() + 13;
 
         for(int strIndex : activeText) {
-            height += 10;
+            String str = exampleText[strIndex];
+            height += 10 * str.split("\n").length;
         }
 
         return height;
@@ -88,12 +89,20 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
         for(int strIndex : activeText) {
             String str = exampleText[strIndex];
 
+            String[] multilines = str.split("\n");
+
+            int ySize = multilines.length * 10;
+
             if(i++ != dragStartIndex) {
-                Utils.drawStringScaledMaxWidth("\u2261 "+str+EnumChatFormatting.RESET, Minecraft.getMinecraft().fontRendererObj,
-                        x+10, y+50+yOff, true, width-20, 0xffffffff);
+                for(int multilineIndex=0; multilineIndex<multilines.length; multilineIndex++) {
+                    String line = multilines[multilineIndex];
+                    Utils.drawStringScaledMaxWidth(line+EnumChatFormatting.RESET, Minecraft.getMinecraft().fontRendererObj,
+                            x+20, y+50+yOff+multilineIndex*10, true, width-20, 0xffffffff);
+                }
+                Minecraft.getMinecraft().fontRendererObj.drawString("\u2261", x+10, y+50+yOff + ySize/2 - 4, 0xffffff, true);
             }
 
-            yOff += 10;
+            yOff += ySize;
         }
     }
 
@@ -129,7 +138,8 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
                 if(str.isEmpty()) {
                     str = "<NONE>";
                 }
-                TextRenderUtils.drawStringScaledMaxWidth(str, fr, left+3, top+3+dropdownY, false, dropdownWidth-6, 0xffa0a0a0);
+                TextRenderUtils.drawStringScaledMaxWidth(str.replaceAll("(\n.*)+", " ..."),
+                        fr, left+3, top+3+dropdownY, false, dropdownWidth-6, 0xffa0a0a0);
                 dropdownY += 12;
             }
         } else if(currentDragging >= 0) {
@@ -151,9 +161,20 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
 
             String str = exampleText[currentDragging];
 
+            String[] multilines = str.split("\n");
+
             GlStateManager.enableBlend();
-            Utils.drawStringScaledMaxWidth("\u2261 "+str+EnumChatFormatting.RESET, Minecraft.getMinecraft().fontRendererObj,
-                    dragOffsetX + mouseX, dragOffsetY + mouseY, true, width-20, 0xffffff | (opacity << 24));
+            for(int multilineIndex=0; multilineIndex<multilines.length; multilineIndex++) {
+                String line = multilines[multilineIndex];
+                Utils.drawStringScaledMaxWidth(line+EnumChatFormatting.RESET, Minecraft.getMinecraft().fontRendererObj,
+                        dragOffsetX + mouseX + 10, dragOffsetY + mouseY + multilineIndex*10, true, width-20, 0xffffff | (opacity << 24));
+            }
+
+            int ySize = multilines.length * 10;
+
+            Minecraft.getMinecraft().fontRendererObj.drawString("\u2261",
+                    dragOffsetX + mouseX,
+                    dragOffsetY + mouseY + ySize/2 - 4, 0xffffff, true);
         }
     }
 
@@ -230,7 +251,8 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
                 int yOff=0;
                 int i = 0;
                 for(int strIndex : activeText) {
-                    if(mouseY < y+50+yOff+10) {
+                    int ySize = 10 * exampleText[strIndex].split("\n").length;
+                    if(mouseY < y+50+yOff+ySize) {
                         dragOffsetX = x+10 - mouseX;
                         dragOffsetY = y+50+yOff - mouseY;
 
@@ -238,7 +260,7 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
                         dragStartIndex = i;
                         break;
                     }
-                    yOff += 10;
+                    yOff += ySize;
                     i++;
                 }
             }
@@ -253,7 +275,7 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
                     dragStartIndex = i;
                     break;
                 }
-                yOff += 10;
+                yOff += 10 * exampleText[strIndex].split("\n").length;
                 i++;
             }
         }

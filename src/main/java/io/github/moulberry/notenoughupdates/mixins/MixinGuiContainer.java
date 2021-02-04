@@ -83,6 +83,7 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Redirect(method="drawSlot", at=@At(value="INVOKE", target=TARGET_GETSTACK))
     public ItemStack drawSlot_getStack(Slot slot) {
         GuiContainer $this = (GuiContainer)(Object)this;
+
         ItemStack stack = slot.getStack();
 
         if(stack != null) {
