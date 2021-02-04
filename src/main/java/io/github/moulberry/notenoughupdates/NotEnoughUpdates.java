@@ -664,9 +664,7 @@ public class NotEnoughUpdates {
     SimpleCommand dhCommand = new SimpleCommand("dh", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            //Minecraft.getMinecraft().thePlayer.sendChatMessage("/warp dungeon_hub");
-            Minecraft.getMinecraft().thePlayer.capabilities.isFlying = !Minecraft.getMinecraft().thePlayer.capabilities.isFlying;
-            Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C13PacketPlayerAbilities(Minecraft.getMinecraft().thePlayer.capabilities));
+            Minecraft.getMinecraft().thePlayer.sendChatMessage("/warp dungeon_hub");
         }
     });
 
