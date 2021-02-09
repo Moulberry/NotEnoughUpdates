@@ -13,7 +13,7 @@ public class FlyFix {
     private static long lastAbilitySend = 0;
 
     public static void onSendAbilities(C13PacketPlayerAbilities packet) {
-        if(true) return;
+        //if(true) return;
         if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
         if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
@@ -28,7 +28,7 @@ public class FlyFix {
     }
 
     public static void onReceiveAbilities(S39PacketPlayerAbilities packet) {
-        if(true) return;
+        //if(true) return;
         if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
         if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
@@ -49,7 +49,7 @@ public class FlyFix {
     }
 
     public static void tick() {
-        if(true) return;
+        //if(true) return;
         if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
         if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;

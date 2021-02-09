@@ -1,13 +1,11 @@
 package io.github.moulberry.notenoughupdates;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
-import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
@@ -27,8 +25,6 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
@@ -48,7 +44,6 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -207,7 +202,7 @@ public class NEUEventListener {
             XPInformation.getInstance().tick();
             ProfileApiSyncer.getInstance().tick();
             DamageCommas.tick();
-            BackgroundBlur.tick();
+            BackgroundBlur.markDirty();
             for(TextOverlay overlay : OverlayManager.textOverlays) {
                 overlay.tick();
             }
@@ -788,6 +783,12 @@ public class NEUEventListener {
 
     @SubscribeEvent
     public void onGuiScreenDrawPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
+        if(AuctionSearchOverlay.shouldReplace()) {
+            AuctionSearchOverlay.render();
+            event.setCanceled(true);
+            return;
+        }
+
         if(TradeWindow.tradeWindowActive() ||
                 event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
@@ -1064,6 +1065,11 @@ public class NEUEventListener {
         if(!event.isCanceled()) {
             Utils.scrollTooltip(Mouse.getEventDWheel());
         }
+        if(AuctionSearchOverlay.shouldReplace()) {
+            AuctionSearchOverlay.mouseEvent();
+            event.setCanceled(true);
+            return;
+        }
         if(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
                 neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
@@ -1099,6 +1105,12 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
+        if(AuctionSearchOverlay.shouldReplace()) {
+            AuctionSearchOverlay.keyEvent();
+            event.setCanceled(true);
+            return;
+        }
+
         if(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
                 neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
             if(event.gui instanceof CustomAHGui ||

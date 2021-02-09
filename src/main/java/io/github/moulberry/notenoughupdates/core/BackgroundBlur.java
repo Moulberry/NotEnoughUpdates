@@ -26,9 +26,9 @@ import java.util.Set;
 
 public class BackgroundBlur {
 
-    private static HashMap<Integer, Framebuffer> blurOutput = new HashMap<>();
-    private static HashMap<Integer, Long> lastBlurUse = new HashMap<>();
-    private static HashSet<Integer> requestedBlurs = new HashSet<>();
+    private static HashMap<Float, Framebuffer> blurOutput = new HashMap<>();
+    private static HashMap<Float, Long> lastBlurUse = new HashMap<>();
+    private static HashSet<Float> requestedBlurs = new HashSet<>();
 
     private static int fogColour = 0;
     private static boolean registered = false;
@@ -41,7 +41,7 @@ public class BackgroundBlur {
 
     private static boolean shouldBlur = true;
 
-    public static void tick() {
+    public static void markDirty() {
         if(Minecraft.getMinecraft().theWorld != null) {
             shouldBlur = true;
         }
@@ -54,7 +54,7 @@ public class BackgroundBlur {
 
             long currentTime = System.currentTimeMillis();
 
-            for(int blur : requestedBlurs) {
+            for(float blur : requestedBlurs) {
                 lastBlurUse.put(blur, currentTime);
 
                 int width = Minecraft.getMinecraft().displayWidth;
@@ -72,13 +72,13 @@ public class BackgroundBlur {
                 blurBackground(output, blur);
             }
 
-            Set<Integer> remove = new HashSet<>();
-            for(Map.Entry<Integer, Long> entry : lastBlurUse.entrySet()) {
+            Set<Float> remove = new HashSet<>();
+            for(Map.Entry<Float, Long> entry : lastBlurUse.entrySet()) {
                 if(currentTime - entry.getValue() > 30*1000) {
                     remove.add(entry.getKey());
                 }
             }
-            remove.remove(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor);
+            remove.remove((float)NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor);
 
             blurOutput.keySet().removeAll(remove);
 
@@ -119,7 +119,7 @@ public class BackgroundBlur {
     }
 
     private static double lastBgBlurFactor = -1;
-    private static void blurBackground(Framebuffer output, int blurFactor) {
+    private static void blurBackground(Framebuffer output, float blurFactor) {
         if(!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
 
         int width = Minecraft.getMinecraft().displayWidth;
@@ -166,8 +166,8 @@ public class BackgroundBlur {
                 return;
             }
             if(blurFactor != lastBgBlurFactor) {
-                blurShaderHorz.getShaderManager().getShaderUniform("Radius").set((float)blurFactor);
-                blurShaderVert.getShaderManager().getShaderUniform("Radius").set((float)blurFactor);
+                blurShaderHorz.getShaderManager().getShaderUniform("Radius").set(blurFactor);
+                blurShaderVert.getShaderManager().getShaderUniform("Radius").set(blurFactor);
                 lastBgBlurFactor = blurFactor;
             }
             GL11.glPushMatrix();
@@ -190,7 +190,7 @@ public class BackgroundBlur {
      * Renders a subsection of the blurred framebuffer on to the corresponding section of the screen.
      * Essentially, this method will "blur" the background inside the bounds specified by [x->x+blurWidth, y->y+blurHeight]
      */
-    public static void renderBlurredBackground(int blurStrength, int screenWidth, int screenHeight,
+    public static void renderBlurredBackground(float blurStrength, int screenWidth, int screenHeight,
                                                int x, int y, int blurWidth, int blurHeight) {
         requestedBlurs.add(blurStrength);
 

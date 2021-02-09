@@ -734,7 +734,7 @@ public class GuiProfileViewer extends GuiScreen {
             int x = guiLeft+23;
             int y = guiTop+25;
 
-            renderXpBar(skillName, DEADBUSH, x, y, sectionWidth, levelFloored, level, mouseX, mouseY);
+            renderXpBar(skillName, DEADBUSH, x, y, sectionWidth, levelObjCata, mouseX, mouseY);
 
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Until Cata "+floorLevelTo+": ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(floorLevelToXP, 0), x, y+16, sectionWidth);
@@ -971,20 +971,18 @@ public class GuiProfileViewer extends GuiScreen {
 
                 ProfileViewer.Level levelObj = levelObjClasses.get(skillName);
 
-                float level = levelObj.level;
-                int levelFloored = (int)Math.floor(level);
-
-                renderXpBar(colour+skillName, dungSkillsStack[i], x, y+20+29*i, sectionWidth, levelFloored, level, mouseX, mouseY);
+                renderXpBar(colour+skillName, dungSkillsStack[i], x, y+20+29*i, sectionWidth, levelObj, mouseX, mouseY);
             }
         }
     }
 
-    private void renderXpBar(String skillName, ItemStack stack, int x, int y, int xSize, int levelFloored, float level, int mouseX, int mouseY) {
+    private void renderXpBar(String skillName, ItemStack stack, int x, int y, int xSize, ProfileViewer.Level levelObj, int mouseX, int mouseY) {
+        float level = levelObj.level;
+        int levelFloored = (int)Math.floor(level);
+
         Utils.renderAlignedString(skillName, EnumChatFormatting.WHITE.toString()+levelFloored, x+14, y-4, xSize-20);
 
-        ProfileViewer.Level levelObjCata = levelObjCatas.get(profileId);
-
-        if(levelObjCata.maxed) {
+        if(levelObj.maxed) {
             renderGoldBar(x, y+6, xSize);
         } else {
             renderBar(x, y+6, xSize, level%1);
@@ -993,10 +991,10 @@ public class GuiProfileViewer extends GuiScreen {
         if(mouseX > x && mouseX < x+120) {
             if(mouseY > y-4 && mouseY < y+13) {
                 String levelStr;
-                if(levelObjCata.maxed) {
+                if(levelObj.maxed) {
                     levelStr = EnumChatFormatting.GOLD+"MAXED!";
                 } else {
-                    int maxXp = (int)levelObjCata.maxXpForLevel;
+                    int maxXp = (int)levelObj.maxXpForLevel;
                     levelStr = EnumChatFormatting.DARK_PURPLE.toString() + shortNumberFormat(Math.round((level%1)*maxXp),
                             0) + "/" + shortNumberFormat(maxXp, 0);
                 }

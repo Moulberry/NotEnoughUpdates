@@ -246,7 +246,6 @@ public class DwarvenMinesWaypoints {
         }
     }
 
-
     private void renderWayPoint(String str, Vector3f loc, float partialTicks) {
         GlStateManager.alphaFunc(516, 0.1F);
 
@@ -257,9 +256,9 @@ public class DwarvenMinesWaypoints {
         double viewerY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * partialTicks;
         double viewerZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * partialTicks;
 
-        double x = loc.x-viewerX;
+        double x = loc.x-viewerX+0.5f;
         double y = loc.y-viewerY-viewer.getEyeHeight();
-        double z = loc.z-viewerZ;
+        double z = loc.z-viewerZ+0.5f;
 
         double distSq = x*x + y*y + z*z;
         double dist = Math.sqrt(distSq);

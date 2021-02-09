@@ -64,11 +64,12 @@ public class MiningStuff {
         if(!NotEnoughUpdates.INSTANCE.config.mining.titaniumAlert) {
             return;
         }
+        if(titaniumNotifMillis <= 0) return;
 
         int delta = (int)(System.currentTimeMillis() - titaniumNotifMillis);
         int notifLen = 5000;
         int fadeLen = 500;
-        if(delta < notifLen && event.type == RenderGameOverlayEvent.ElementType.ALL) {
+        if(delta > 0 && delta < notifLen && event.type == RenderGameOverlayEvent.ElementType.ALL) {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
             int width = scaledResolution.getScaledWidth();
             int height = scaledResolution.getScaledHeight();

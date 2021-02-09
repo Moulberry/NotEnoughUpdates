@@ -503,6 +503,7 @@ public class DungeonMap {
                     BackgroundBlur.renderBlurredBackground(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBackgroundBlur,
                             scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(),
                             centerX-mapSizeX/2, centerY-mapSizeY/2, mapSizeX, mapSizeY);
+                    BackgroundBlur.markDirty();
                     GlStateManager.translate(centerX-mapSizeX/2, centerY-mapSizeY/2, 0);
                 }
 
@@ -1036,7 +1037,7 @@ public class DungeonMap {
                 String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
                 line = Utils.cleanColour(line);
 
-                if(line.contains("(F1)")) {
+                if(line.contains("(F1)") || line.contains("(E)")) {
                     isFloorOne = true;
                     break;
                 }

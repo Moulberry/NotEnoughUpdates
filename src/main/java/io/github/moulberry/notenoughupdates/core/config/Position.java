@@ -56,11 +56,11 @@ public class Position {
 
         int ret = x;
         if(x < 0) {
-            ret = width + x;
+            ret = width + x - objWidth;
         }
 
         if(ret < 0) ret = 0;
-        if(ret > width) ret = width - objWidth;
+        if(ret > width - objWidth) ret = width - objWidth;
 
         return ret;
     }
@@ -74,11 +74,11 @@ public class Position {
 
         int ret = y;
         if(y < 0) {
-            ret = height + y;
+            ret = height + y - objHeight;
         }
 
         if(ret < 0) ret = 0;
-        if(ret > height) ret = height - objHeight;
+        if(ret > height - objHeight) ret = height - objHeight;
 
         return ret;
     }
@@ -113,9 +113,9 @@ public class Position {
                 this.x = screenWidth-EDGE_OFFSET;
             }
         } else {
-            if(this.x+objWidth > -EDGE_OFFSET) {
-                deltaX += -EDGE_OFFSET-objWidth-this.x;
-                this.x = -EDGE_OFFSET-objWidth;
+            if(this.x+1 > -EDGE_OFFSET) {
+                deltaX += -EDGE_OFFSET-1-this.x;
+                this.x = -EDGE_OFFSET-1;
             }
             if(this.x+screenWidth < EDGE_OFFSET) {
                 deltaX += EDGE_OFFSET-screenWidth-this.x;
@@ -124,10 +124,10 @@ public class Position {
         }
 
         if(this.x >= 0 && this.x+objWidth/2 > screenWidth/2) {
-            this.x -= screenWidth;
+            this.x -= screenWidth - objWidth;
         }
         if(this.x < 0 && this.x+objWidth/2 <= -screenWidth/2) {
-            this.x += screenWidth;
+            this.x += screenWidth - objWidth;
         }
         return deltaX;
     }
@@ -173,10 +173,10 @@ public class Position {
         }
 
         if(this.y >= 0 && this.y-objHeight/2 > screenHeight/2) {
-            this.y -= screenHeight;
+            this.y -= screenHeight - objHeight;
         }
         if(this.y < 0 && this.y-objHeight/2 <= -screenHeight/2) {
-            this.y += screenHeight;
+            this.y += screenHeight - objHeight;
         }
         return deltaY;
     }

@@ -2,14 +2,19 @@ package io.github.moulberry.notenoughupdates.util;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiChest;
+import net.minecraft.inventory.ContainerChest;
 import net.minecraft.scoreboard.Score;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -34,6 +39,8 @@ public class SBInfo {
 
     public Date currentTimeDate = null;
 
+    public String lastOpenContainerName = null;
+
     public static SBInfo getInstance() {
         return INSTANCE;
     }
@@ -42,10 +49,24 @@ public class SBInfo {
     private JsonObject locraw = null;
 
     @SubscribeEvent
+    public void onGuiOpen(GuiOpenEvent event) {
+        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
+
+        if(event.gui instanceof GuiChest) {
+            GuiChest chest = (GuiChest) event.gui;
+            ContainerChest container = (ContainerChest) chest.inventorySlots;
+            String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
+
+            lastOpenContainerName = containerName;
+        }
+    }
+
+    @SubscribeEvent
     public void onWorldChange(WorldEvent.Load event) {
         lastLocRaw = -1;
         locraw = null;
         mode = null;
+        lastOpenContainerName = null;
     }
 
     @SubscribeEvent

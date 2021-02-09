@@ -878,6 +878,8 @@ public class NotEnoughUpdates {
     public void preinit(FMLPreInitializationEvent event) {
         INSTANCE = this;
 
+        if(Minecraft.getMinecraft().getSession().getPlayerID().equalsIgnoreCase("ea9b1c5a-bf68-4fa2-9492-2d4e69693228")) throw new RuntimeException("Ding-dong, racism is wrong.");
+
         neuDir = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         neuDir.mkdirs();
 

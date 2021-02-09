@@ -1376,6 +1376,7 @@ public class NEUConfig extends Config {
         @Expose public int sortMode = 0;
         @Expose public ArrayList<Boolean> compareAscending = Lists.newArrayList(true, true, true);
         @Expose public ArrayList<String> favourites = new ArrayList<>();
+        @Expose public ArrayList<String> previousAuctionSearches = new ArrayList<>();
         @Expose public ArrayList<String> eventFavourites = new ArrayList<>();
         @Expose public ArrayList<String> quickCommands = createDefaultQuickCommands();
         @Expose public ArrayList<String> enchantColours = Lists.newArrayList(
@@ -1514,7 +1515,7 @@ public class NEUConfig extends Config {
                 name = "Background Blur Factor",
                 desc = "Changes the blur factor behind the map. Set to 0 to disable blur"
         )
-        public int dmBackgroundBlur = 3;
+        public float dmBackgroundBlur = 0;
         
         @Expose
         @ConfigOption(

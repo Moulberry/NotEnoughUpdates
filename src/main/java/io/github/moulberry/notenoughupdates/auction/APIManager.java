@@ -228,6 +228,15 @@ public class APIManager {
         return niceAucId.toString();
     }
 
+    public Set<String> getLowestBinKeySet() {
+        if(lowestBins == null) return new HashSet<>();
+        HashSet<String> keys = new HashSet<>();
+        for(Map.Entry<String, JsonElement> entry : lowestBins.entrySet()) {
+            keys.add(entry.getKey());
+        }
+        return keys;
+    }
+
     public int getLowestBin(String internalname) {
         if(lowestBins != null && lowestBins.has(internalname)) {
             JsonElement e = lowestBins.get(internalname);
@@ -693,6 +702,15 @@ public class APIManager {
             return -1;
         }
         return Math.round(e.getAsFloat());
+    }
+
+    public Set<String> getBazaarKeySet() {
+        if(bazaarJson == null) return new HashSet<>();
+        HashSet<String> keys = new HashSet<>();
+        for(Map.Entry<String, JsonElement> entry : bazaarJson.entrySet()) {
+            keys.add(entry.getKey());
+        }
+        return keys;
     }
 
     public JsonObject getBazaarInfo(String internalname) {

@@ -23,6 +23,7 @@
     "MixinPlayerControllerMP",
     "MixinLayerCreeperCharge",
     "MixinEffectRenderer",
-    "MixinRendererLivingEntity"
+    "MixinRendererLivingEntity",
+    "GuiEditSignAccessor"
   ]
 }

@@ -113,15 +113,29 @@ public class CustomItemEffects {
             ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
             String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
             if(internal != null) {
-                if(internal.equals("HYPERION")) {
-                    lastUsedHyperion = System.currentTimeMillis();
+                boolean shadowWarp = false;
+                if(internal.equals("HYPERION") || internal.equals("VALKYRIE") || internal.equals("SCYLLA") || internal.equals("ASTRAEA")) {
+                    NBTTagCompound tag = held.getTagCompound();
+                    if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+                        NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+                        if(ea != null && ea.hasKey("ability_scroll", 9)) {
+                            NBTTagList list = ea.getTagList("ability_scroll", 8);
+                            for(int i=0; i<list.tagCount(); i++) {
+                                if(list.getStringTagAt(i).equals("IMPLOSION_SCROLL")) {
+                                    lastUsedHyperion = System.currentTimeMillis();
+                                } else if(list.getStringTagAt(i).equals("SHADOW_WARP_SCROLL")) {
+                                    shadowWarp = true;
+                                }
+                            }
+                        }
+                    }
                 }
 
                 if(NotEnoughUpdates.INSTANCE.config.smoothAOTE.smoothTpMillis <= 0
                         || Minecraft.getMinecraft().gameSettings.thirdPersonView != 0) return;
 
                 boolean aote = NotEnoughUpdates.INSTANCE.config.smoothAOTE.enableSmoothAOTE && internal.equals("ASPECT_OF_THE_END");
-                boolean hyp = NotEnoughUpdates.INSTANCE.config.smoothAOTE.enableSmoothHyperion && internal.equals("HYPERION");
+                boolean hyp = NotEnoughUpdates.INSTANCE.config.smoothAOTE.enableSmoothHyperion && shadowWarp;
                 if(aote || hyp) {
                     aoteUseMillis = System.currentTimeMillis();
                     if(aoteTeleportationCurr == null) {
