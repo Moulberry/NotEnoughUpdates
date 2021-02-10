@@ -204,6 +204,9 @@ public class NEUEventListener {
             ProfileApiSyncer.getInstance().tick();
             DamageCommas.tick();
             BackgroundBlur.markDirty();
+            if(neu.config.overlay.enablePetInfo || neu.config.treecap.enableMonkeyCheck || neu.config.notifications.showWrongPetMsg){
+                PetInfo.longTick();
+            }
             for(TextOverlay overlay : OverlayManager.textOverlays) {
                 overlay.tick();
             }

@@ -1011,9 +1011,10 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     public static class PetLevel {
-        float level;
-        float currentLevelRequirement;
-        float maxXP;
+        public float level;
+        public float currentLevelRequirement;
+        public float maxXP;
+        public float levelPercentage;
     }
 
     public static PetLevel getPetLevel(JsonArray levels, int offset, float exp) {
@@ -1050,6 +1051,7 @@ public class GuiProfileViewer extends GuiScreen {
         levelObj.level = level;
         levelObj.currentLevelRequirement = currentLevelRequirement;
         levelObj.maxXP = xpTotal;
+        levelObj.levelPercentage = remainingToNextLevel;
         return levelObj;
     }
 

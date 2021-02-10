@@ -917,6 +917,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new DwarvenMinesWaypoints());
         MinecraftForge.EVENT_BUS.register(new FuelBar());
         MinecraftForge.EVENT_BUS.register(XPInformation.getInstance());
+        MinecraftForge.EVENT_BUS.register(new PetInfo());
 
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);

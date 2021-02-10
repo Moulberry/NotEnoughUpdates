@@ -62,6 +62,15 @@ public class NEUConfig extends Config {
             case 3:
                 editOverlay(activeConfigCategory, OverlayManager.farmingOverlay, skillOverlays.farmingPosition);
                 return;
+            case 4:
+                Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
+                        NotEnoughUpdates.INSTANCE.config.overlay.petInfoPosition,
+                        150, 22, () -> {
+                }, () -> {
+                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
+                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
+                ));
+                return;
         }
     }
 
@@ -184,7 +193,14 @@ public class NEUConfig extends Config {
             name = "Treecap Overlay",
             desc = "Treecap Overlay"
     )
-    public TreecapOverlay treecapOverlay = new TreecapOverlay();
+    public Treecap treecap = new Treecap();
+
+    @Expose
+    @Category(
+            name = "Overlays",
+            desc = "Overlays"
+    )
+    public Overlay overlay = new Overlay();
 
     @Expose
     @Category(
@@ -307,6 +323,14 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         public boolean showUpdateMsg = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Wrong Pet",
+                desc = "Gives a notification in chat whenever you're using a pet that doesnt match the same xp you're gathering."
+        )
+        @ConfigEditorBoolean
+        public boolean showWrongPetMsg = false;
     }
 
     public static class Itemlist {
@@ -1088,7 +1112,7 @@ public class NEUConfig extends Config {
         public boolean customTradePriceStyle = true;
     }
 
-    public static class TreecapOverlay {
+    public static class Treecap {
         @Expose
         @ConfigOption(
                 name = "Enable Treecap Overlay",
@@ -1104,6 +1128,46 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorColour
         public String treecapOverlayColour = "00:50:64:224:208";
+
+        @Expose
+        @ConfigOption(
+                name = "Enable Monkey Pet Check",
+                desc = "Will check use the API to check what pet you're using\nto determine the cooldown based off of if you have monkey pet."
+        )
+        @ConfigEditorBoolean
+
+        public boolean enableMonkeyCheck = false;
+    }
+
+    public static class Overlay {
+        @Expose
+        @ConfigOption(
+                name = "Enable Pet Info Overlay",
+                desc = "Shows current active pet and pet exp on screen."
+        )
+        @ConfigEditorBoolean
+        public boolean enablePetInfo = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Pet Info Position",
+                desc = "The position of the pet info."
+        )
+        @ConfigEditorButton(
+                runnableId = 4,
+                buttonText = "Edit"
+        )
+        public Position petInfoPosition = new Position(0, 15);
+
+        @Expose
+        @ConfigOption(
+                name = "Pet Info Overlay Style",
+                desc = "Change the style of the Pet Info overlay"
+        )
+        @ConfigEditorDropdown(
+                values = {"Background", "No Shadow", "Shadow Only", "Full Shadow", "With Shadow"}
+        )
+        public int petInfoOverlayStyle = 0;
     }
 
     public static class BuilderWand {
