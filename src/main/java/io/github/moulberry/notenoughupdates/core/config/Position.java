@@ -162,9 +162,9 @@ public class Position {
                 this.y = screenHeight-EDGE_OFFSET;
             }
         } else {
-            if(this.y+objHeight > -EDGE_OFFSET) {
-                deltaY += -EDGE_OFFSET-objHeight-this.y;
-                this.y = -EDGE_OFFSET-objHeight;
+            if(this.y+1 > -EDGE_OFFSET) {
+                deltaY += -EDGE_OFFSET-1-this.y;
+                this.y = -EDGE_OFFSET-1;
             }
             if(this.y+screenHeight < EDGE_OFFSET) {
                 deltaY += EDGE_OFFSET-screenHeight-this.y;

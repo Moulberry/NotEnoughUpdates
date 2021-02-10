@@ -13,8 +13,8 @@ public class FlyFix {
     private static long lastAbilitySend = 0;
 
     public static void onSendAbilities(C13PacketPlayerAbilities packet) {
-        //if(true) return;
-        if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
+        if(true) return;
+        //if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
         if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
         if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
@@ -28,8 +28,8 @@ public class FlyFix {
     }
 
     public static void onReceiveAbilities(S39PacketPlayerAbilities packet) {
-        //if(true) return;
-        if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
+        if(true) return;
+        //if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
         if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
         if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
@@ -39,6 +39,7 @@ public class FlyFix {
         long currentTime = System.currentTimeMillis();
 
         serverWantFly = packet.isFlying();
+
         if(serverWantFly != clientWantFly) {
             if(currentTime - lastAbilitySend > 0 && currentTime - lastAbilitySend < 500) {
                 packet.setFlying(clientWantFly);
@@ -49,8 +50,8 @@ public class FlyFix {
     }
 
     public static void tick() {
-        //if(true) return;
-        if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
+        if(true) return;
+        //if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
         if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
         if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;

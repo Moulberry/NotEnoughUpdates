@@ -114,7 +114,7 @@ public class SBInfo {
                 Minecraft.getMinecraft().theWorld != null &&
                 locraw == null &&
                 (currentTime - joinedWorld) > 1000 &&
-                (currentTime - lastLocRaw) > 10000) {
+                (currentTime - lastLocRaw) > 15000) {
             lastLocRaw = System.currentTimeMillis();
             NotEnoughUpdates.INSTANCE.sendChatMessage("/locraw");
         }

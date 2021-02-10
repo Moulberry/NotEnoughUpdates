@@ -62,11 +62,16 @@ public class MiningOverlay extends TextOverlay {
             }
             String clean = StringUtils.cleanColour(name);
             if(forges && clean.startsWith(" ")) {
-                if(name.contains("LOCKED")) continue;
-                if(name.contains("EMPTY")) {
-                    forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                char firstChar = clean.trim().charAt(0);
+                if(firstChar < '0' || firstChar > '9') {
+                    forges = false;
                 } else {
-                    forgeStrings.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                    if(name.contains("LOCKED")) continue;
+                    if(name.contains("EMPTY")) {
+                        forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                    } else {
+                        forgeStrings.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                    }
                 }
             } else if(commissions && clean.startsWith(" ")) {
                 String[] split = clean.trim().split(": ");

@@ -63,24 +63,24 @@ public class NEUConfigEditor extends GuiElement {
         this.processedConfig = ConfigProcessor.create(config);
 
         if(categoryOpen != null) {
-            for(String category : processedConfig.keySet()) {
-                if(category.equalsIgnoreCase(categoryOpen)) {
-                    selectedCategory = category;
+            for(Map.Entry<String, ConfigProcessor.ProcessedCategory> category : processedConfig.entrySet()) {
+                if(category.getValue().name.equalsIgnoreCase(categoryOpen)) {
+                    selectedCategory = category.getKey();
                     break;
                 }
             }
             if(selectedCategory == null) {
-                for(String category : processedConfig.keySet()) {
-                    if(category.toLowerCase().startsWith(categoryOpen.toLowerCase())) {
-                        selectedCategory = category;
+                for(Map.Entry<String, ConfigProcessor.ProcessedCategory> category : processedConfig.entrySet()) {
+                    if(category.getValue().name.toLowerCase().startsWith(categoryOpen.toLowerCase())) {
+                        selectedCategory = category.getKey();
                         break;
                     }
                 }
             }
             if(selectedCategory == null) {
-                for(String category : processedConfig.keySet()) {
-                    if(category.toLowerCase().contains(categoryOpen.toLowerCase())) {
-                        selectedCategory = category;
+                for(Map.Entry<String, ConfigProcessor.ProcessedCategory> category : processedConfig.entrySet()) {
+                    if(category.getValue().name.toLowerCase().contains(categoryOpen.toLowerCase())) {
+                        selectedCategory = category.getKey();
                         break;
                     }
                 }

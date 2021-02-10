@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
+import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
@@ -264,6 +265,7 @@ public class NEUEventListener {
             }
 
             if(neu.hasSkyblockScoreboard()) {
+                SBInfo.getInstance().tick();
                 if(Loader.isModLoaded("morus")) {
                     MorusIntegration.getInstance().tick();
                 }
@@ -304,7 +306,6 @@ public class NEUEventListener {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                     }
                 }
-                SBInfo.getInstance().tick();
             }
             if(currentTime - lastSkyblockScoreboard < 5*60*1000) { //5 minutes
                 neu.manager.auctionManager.tick();
@@ -466,6 +467,14 @@ public class NEUEventListener {
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper &&
+                event.gui == null && !(Keyboard.getEventKeyState() && Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) &&
+                System.currentTimeMillis() - NotEnoughUpdates.INSTANCE.lastOpenedGui < 500) {
+            NotEnoughUpdates.INSTANCE.lastOpenedGui = 0;
+            event.setCanceled(true);
+            return;
+        }
+
         if(!(event.gui instanceof GuiContainer) && Minecraft.getMinecraft().currentScreen != null) {
             CalendarOverlay.setEnabled(false);
         }
@@ -788,6 +797,11 @@ public class NEUEventListener {
             event.setCanceled(true);
             return;
         }
+        if(RancherBootOverlay.shouldReplace()) {
+            RancherBootOverlay.render();
+            event.setCanceled(true);
+            return;
+        }
 
         if(TradeWindow.tradeWindowActive() ||
                 event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
@@ -1070,6 +1084,11 @@ public class NEUEventListener {
             event.setCanceled(true);
             return;
         }
+        if(RancherBootOverlay.shouldReplace()) {
+            RancherBootOverlay.mouseEvent();
+            event.setCanceled(true);
+            return;
+        }
         if(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
                 neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
             event.setCanceled(true);
@@ -1107,6 +1126,11 @@ public class NEUEventListener {
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
         if(AuctionSearchOverlay.shouldReplace()) {
             AuctionSearchOverlay.keyEvent();
+            event.setCanceled(true);
+            return;
+        }
+        if(RancherBootOverlay.shouldReplace()) {
+            RancherBootOverlay.keyEvent();
             event.setCanceled(true);
             return;
         }
