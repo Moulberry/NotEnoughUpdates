@@ -318,7 +318,7 @@ public class CustomItemEffects {
             double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)event.partialTicks;
             double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double)event.partialTicks;
 
-            if(NotEnoughUpdates.INSTANCE.config.treecapOverlay.enableTreecapOverlay &&
+            if(NotEnoughUpdates.INSTANCE.config.treecap.enableTreecapOverlay &&
                     (heldInternal.equals("JUNGLE_AXE") || heldInternal.equals("TREECAPITATOR_AXE"))) {
                 int maxWood = 10;
                 if(heldInternal.equals("TREECAPITATOR_AXE")) maxWood = 35;
@@ -378,7 +378,7 @@ public class CustomItemEffects {
 
                                 drawFilledBoundingBox(block.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, candidate)
                                         .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2),
-                                        random ? 0.5f : 1f, NotEnoughUpdates.INSTANCE.config.treecapOverlay.treecapOverlayColour);
+                                        random ? 0.5f : 1f, NotEnoughUpdates.INSTANCE.config.treecap.treecapOverlayColour);
                             }
                         }
                     }

@@ -52,6 +52,19 @@ public class ItemCooldowns {
         blocksClicked.clear();
     }
 
+    public static long getTreecapCooldownWithPet(){
+        if (NotEnoughUpdates.INSTANCE.config.treecap.enableMonkeyCheck && PetInfo.currentPet != null) {
+            PetInfo.pet pet = PetInfo.currentPet;
+            if (pet.petLevel != null &&
+                pet.petType.equalsIgnoreCase("monkey") &&
+                pet.rarity.equals(PetInfo.Rarity.LEGENDARY)
+            ) {
+                return 2000 - (int) (2000 * (0.005 * (int) PetInfo.currentPet.petLevel.level));
+            }
+        }
+        return 2000;
+    }
+
     public static void blockClicked(BlockPos pos) {
         long currentTime = System.currentTimeMillis();
         blocksClicked.put(currentTime, pos);
@@ -74,7 +87,7 @@ public class ItemCooldowns {
         if(internalname != null) {
             if(treecapitatorCooldownMillisRemaining < 0 &&
                     (internalname.equals("TREECAPITATOR_AXE") || internalname.equals("JUNGLE_AXE"))) {
-                treecapitatorCooldownMillisRemaining = 2*1000;
+                treecapitatorCooldownMillisRemaining = getTreecapCooldownWithPet();
             }
         }
     }
@@ -120,10 +133,10 @@ public class ItemCooldowns {
                 return -1;
             }
 
-            if(treecapitatorCooldownMillisRemaining > 2*1000) {
+            if(treecapitatorCooldownMillisRemaining > getTreecapCooldownWithPet()) {
                 return stack.getItemDamage();
             }
-            float dura = (float)(treecapitatorCooldownMillisRemaining/(2.0*1000.0));
+            float dura = (treecapitatorCooldownMillisRemaining/(float)getTreecapCooldownWithPet());
             durabilityOverrideMap.put(stack, dura);
             return dura;
         }
