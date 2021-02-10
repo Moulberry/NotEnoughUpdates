@@ -24,6 +24,7 @@
     "MixinLayerCreeperCharge",
     "MixinEffectRenderer",
     "MixinRendererLivingEntity",
-    "GuiEditSignAccessor"
+    "GuiEditSignAccessor",
+    "MixinGuiScreen"
   ]
 }

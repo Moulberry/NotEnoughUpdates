@@ -13,6 +13,7 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -45,7 +46,9 @@ public class SBInfo {
         return INSTANCE;
     }
 
+    private long lastManualLocRaw = -1;
     private long lastLocRaw = -1;
+    private long joinedWorld = -1;
     private JsonObject locraw = null;
 
     @SubscribeEvent
@@ -66,16 +69,26 @@ public class SBInfo {
         lastLocRaw = -1;
         locraw = null;
         mode = null;
+        joinedWorld = System.currentTimeMillis();
         lastOpenContainerName = null;
     }
 
-    @SubscribeEvent
+    private static final Pattern JSON_BRACKET_PATTERN = Pattern.compile("\\{.+}");
+
+    public void onSendChatMessage(String msg) {
+        if(msg.trim().startsWith("/locraw") || msg.trim().startsWith("/locraw ")) {
+            lastManualLocRaw = System.currentTimeMillis();
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOW, receiveCanceled = true)
     public void onChatMessage(ClientChatReceivedEvent event) {
-        if(event.message.getUnformattedText().startsWith("{")) {
+        Matcher matcher = JSON_BRACKET_PATTERN.matcher(event.message.getUnformattedText());
+        if(matcher.find()) {
             try {
-                JsonObject obj = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(event.message.getUnformattedText(), JsonObject.class);
+                JsonObject obj = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(matcher.group(), JsonObject.class);
                 if(obj.has("server")) {
-                    if(true || System.currentTimeMillis() - lastLocRaw < 5000) event.setCanceled(true);
+                    if(System.currentTimeMillis() - lastManualLocRaw > 5000) event.setCanceled(true);
                     if(obj.has("gametype") && obj.has("mode") && obj.has("map")) {
                         locraw = obj;
                         mode = locraw.get("mode").getAsString();
@@ -95,8 +108,13 @@ public class SBInfo {
     }
 
     public void tick() {
-        if(Minecraft.getMinecraft().theWorld != null &&
-                locraw == null && (System.currentTimeMillis() - lastLocRaw) > 20000) {
+        long currentTime = System.currentTimeMillis();
+
+        if(Minecraft.getMinecraft().thePlayer != null &&
+                Minecraft.getMinecraft().theWorld != null &&
+                locraw == null &&
+                (currentTime - joinedWorld) > 1000 &&
+                (currentTime - lastLocRaw) > 10000) {
             lastLocRaw = System.currentTimeMillis();
             NotEnoughUpdates.INSTANCE.sendChatMessage("/locraw");
         }
