@@ -250,8 +250,8 @@ public class PetInfo {
                 int xPos = config.overlay.petInfoPosition.getAbsX(scaledResolution, Math.max(font.getStringWidth(petName), font.getStringWidth(lvlString)) + 20);
                 int yPos = config.overlay.petInfoPosition.getAbsY(scaledResolution, (currentPet.petLevel.level < 100 ? 22 : 11)) + 2;
 
-                if (!(mc.currentScreen instanceof GuiPositionEditor) && overlayStyle == 0)
-                    Gui.drawRect(xPos, yPos-2, xPos+Math.max(font.getStringWidth(lvlString), font.getStringWidth(petName))+20, yPos+(currentPet.petLevel.level < 100 ? 20 : 16), 0x80000000);
+                if (!(mc.currentScreen instanceof GuiPositionEditor) && (overlayStyle == 0 || overlayStyle == 4))
+                    Gui.drawRect(xPos, yPos-2, xPos+Math.max(font.getStringWidth(lvlString), font.getStringWidth(petName))+22, yPos+(currentPet.petLevel.level < 100 ? 20 : 16), 0x80000000);
 
                 if (overlayStyle == 3) {
                     for (int xO = -2; xO <= 2; xO++) {
@@ -263,7 +263,7 @@ public class PetInfo {
                     }
                 }
 
-                font.drawString(petName, xPos + 20, yPos + (currentPet.petLevel.level < 100 ? 0 : 4), 0xffffff, overlayStyle == 2);
+                font.drawString(petName, xPos + 20, yPos + (currentPet.petLevel.level < 100 ? 0 : 4), 0xffffff, overlayStyle == 2 || overlayStyle == 4);
                 if (currentPet.petLevel.level < 100){
                     if (overlayStyle == 3) {
                         for (int xO = -2; xO <= 2; xO++) {
@@ -274,7 +274,7 @@ public class PetInfo {
                             }
                         }
                     }
-                    font.drawString(lvlString, xPos + 20, yPos + font.FONT_HEIGHT, 0xffffff, overlayStyle == 2);
+                    font.drawString(lvlString, xPos + 20, yPos + font.FONT_HEIGHT, 0xffffff, overlayStyle == 2 || overlayStyle == 4);
                 }
 
                 JsonObject petItem = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(currentPet.petType+";"+currentPet.rarity.petId);

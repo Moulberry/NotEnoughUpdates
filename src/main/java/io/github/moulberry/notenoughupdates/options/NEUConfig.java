@@ -1165,7 +1165,7 @@ public class NEUConfig extends Config {
                 desc = "Change the style of the Pet Info overlay"
         )
         @ConfigEditorDropdown(
-                values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+                values = {"Background", "No Shadow", "Shadow Only", "Full Shadow", "With Shadow"}
         )
         public int petInfoOverlayStyle = 0;
     }
