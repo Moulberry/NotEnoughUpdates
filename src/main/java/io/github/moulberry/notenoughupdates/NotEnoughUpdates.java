@@ -103,6 +103,7 @@ public class NotEnoughUpdates {
     private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK","\u7A7A\u5C9B\u751F\u5B58", "\u7A7A\u5CF6\u751F\u5B58");
 
     public GuiScreen openGui = null;
+    public long lastOpenedGui = 0;
 
     SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -1047,6 +1048,7 @@ public class NotEnoughUpdates {
             }
             Minecraft.getMinecraft().displayGuiScreen(openGui);
             openGui = null;
+            lastOpenedGui = System.currentTimeMillis();
         }
         if(currChatMessage != null && currentTime - lastChatMessage > CHAT_MSG_COOLDOWN) {
             lastChatMessage = currentTime;

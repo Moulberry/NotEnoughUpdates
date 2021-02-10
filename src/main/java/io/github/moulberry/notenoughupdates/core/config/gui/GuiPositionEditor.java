@@ -1,7 +1,6 @@
 package io.github.moulberry.notenoughupdates.core.config.gui;
 
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -13,19 +12,16 @@ import java.io.IOException;
 
 public class GuiPositionEditor extends GuiScreen {
 
-    private Position position;
+    private final Position position;
     private Position originalPosition;
-    private int elementWidth;
-    private int elementHeight;
-    private Runnable renderCallback;
-    private Runnable positionChangedCallback;
-    private Runnable closedCallback;
+    private final int elementWidth;
+    private final int elementHeight;
+    private final Runnable renderCallback;
+    private final Runnable positionChangedCallback;
+    private final Runnable closedCallback;
     private boolean clicked = false;
     private int grabbedX = 0;
     private int grabbedY = 0;
-
-    private int oldMouseX = 0;
-    private int oldMouseY = 0;
 
     private int guiScaleOverride = -1;
 
@@ -62,7 +58,6 @@ public class GuiPositionEditor extends GuiScreen {
         } else {
             scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         }
-
 
         this.width = scaledResolution.getScaledWidth();
         this.height = scaledResolution.getScaledHeight();
@@ -141,9 +136,6 @@ public class GuiPositionEditor extends GuiScreen {
             }
             mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
             mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
-
-            oldMouseX = mouseX;
-            oldMouseY = mouseY;
 
             grabbedX += position.moveX(mouseX - grabbedX, elementWidth, scaledResolution);
             grabbedY += position.moveY(mouseY - grabbedY, elementHeight, scaledResolution);

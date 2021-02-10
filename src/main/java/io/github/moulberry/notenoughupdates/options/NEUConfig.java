@@ -219,6 +219,21 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
+            name = "Smooth AOTE",
+            desc = "Smooth AOTE"
+    )
+    public SmoothAOTE smoothAOTE = new SmoothAOTE();
+
+
+    @Expose
+    @Category(
+            name = "AH Search GUI",
+            desc = "AH Search GUI"
+    )
+    public AuctionHouseSearch auctionHouseSearch = new AuctionHouseSearch();
+
+    @Expose
+    @Category(
             name = "Dungeon Block Overlay",
             desc = "Dungeon Block Overlay"
     )
@@ -230,13 +245,6 @@ public class NEUConfig extends Config {
             desc = "Accessory Bag Overlay"
     )
     public AccessoryBag accessoryBag = new AccessoryBag();
-
-    @Expose
-    @Category(
-            name = "Smooth AOTE",
-            desc = "Smooth AOTE"
-    )
-    public SmoothAOTE smoothAOTE = new SmoothAOTE();
 
     @Expose
     @Category(
@@ -273,14 +281,6 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         public boolean onlyShowOnSkyblock = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Private Island Fly Fix",
-                desc = "Fix flying being delaying on private islands"
-        )
-        @ConfigEditorBoolean
-        public boolean flyFix = true;
 
         @Expose
         @ConfigOption(
@@ -1216,6 +1216,41 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         public boolean showOwnHeadAsMarker = false;
+    }
+
+    public static class AuctionHouseSearch {
+        @Expose
+        @ConfigOption(
+                name = "Enable Search GUI",
+                desc = "Use the advanced search GUI with autocomplete and history instead of the normal sign GUI"
+        )
+        @ConfigEditorBoolean
+        public boolean enableSearchOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Keep Previous Search",
+                desc = "Don't clear the search bar after closing the GUI"
+        )
+        @ConfigEditorBoolean
+        public boolean keepPreviousSearch = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Past Searches",
+                desc = "Show past searches below the autocomplete box"
+        )
+        @ConfigEditorBoolean
+        public boolean showPastSearches = true;
+
+        @Expose
+        @ConfigOption(
+                name = "ESC to Full Close",
+                desc = "Make pressing ESCAPE close the search GUI without opening up the AH again\n" +
+                        "ENTER can still be used to search"
+        )
+        @ConfigEditorBoolean
+        public boolean escFullClose = true;
     }
 
     public static class DungeonBlock {

@@ -144,7 +144,7 @@ public class CrystalOverlay {
         ItemStack held = p.getHeldItem();
         String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
         if(internal != null) {
-            if(internal.endsWith("_CRYSTAL")) {
+            if(internal.endsWith("_CRYSTAL") && !internal.equals("POWER_CRYSTAL")) {
                 displayMillis = System.currentTimeMillis();
             }
         }

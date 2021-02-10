@@ -204,48 +204,45 @@ public class NEUManager {
 
                     if (Display.isActive()) dialog.toFront();
 
-                    if (false) {
-                    } else {
-                        Utils.recursiveDelete(repoLocation);
-                        repoLocation.mkdirs();
+                    Utils.recursiveDelete(repoLocation);
+                    repoLocation.mkdirs();
 
-                        //TODO: Store hard-coded value somewhere else
-                        String dlUrl = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
+                    //TODO: Store hard-coded value somewhere else
+                    String dlUrl = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
 
-                        pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
-                        dialog.pack();
-                        if(NotEnoughUpdates.INSTANCE.config.hidden.dev) dialog.setVisible(true);
-                        if (Display.isActive()) dialog.toFront();
+                    pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
+                    dialog.pack();
+                    if(NotEnoughUpdates.INSTANCE.config.hidden.dev) dialog.setVisible(true);
+                    if (Display.isActive()) dialog.toFront();
 
-                        File itemsZip = new File(repoLocation, "neu-items-master.zip");
-                        try {
-                            itemsZip.createNewFile();
-                        } catch (IOException e) {
-                            return;
-                        }
-                        URL url = new URL(dlUrl);
-                        URLConnection urlConnection = url.openConnection();
-                        urlConnection.setConnectTimeout(15000);
-                        urlConnection.setReadTimeout(20000);
-                        try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
-                             FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
-                            byte dataBuffer[] = new byte[1024];
-                            int bytesRead;
-                            while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
-                                fileOutputStream.write(dataBuffer, 0, bytesRead);
-                            }
-                        } catch (IOException e) {
-                            dialog.dispose();
-                            return;
-                        }
-
-                        pane.setMessage("Unzipping NEU Master Archive.");
-                        dialog.pack();
-                        //dialog.setVisible(true);
-                        if (Display.isActive()) dialog.toFront();
-
-                        unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
+                    File itemsZip = new File(repoLocation, "neu-items-master.zip");
+                    try {
+                        itemsZip.createNewFile();
+                    } catch (IOException e) {
+                        return;
                     }
+                    URL url = new URL(dlUrl);
+                    URLConnection urlConnection = url.openConnection();
+                    urlConnection.setConnectTimeout(15000);
+                    urlConnection.setReadTimeout(20000);
+                    try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
+                         FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
+                        byte dataBuffer[] = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
+                            fileOutputStream.write(dataBuffer, 0, bytesRead);
+                        }
+                    } catch (IOException e) {
+                        dialog.dispose();
+                        return;
+                    }
+
+                    pane.setMessage("Unzipping NEU Master Archive.");
+                    dialog.pack();
+                    //dialog.setVisible(true);
+                    if (Display.isActive()) dialog.toFront();
+
+                    unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
 
                     if(currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
                         JsonObject newCurrentCommitJSON = new JsonObject();
