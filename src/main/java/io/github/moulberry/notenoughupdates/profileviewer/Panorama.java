@@ -14,6 +14,7 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
+import zone.nora.moulberry.MoulberryKt;
 
 public class Panorama {
 
@@ -73,18 +74,14 @@ public class Panorama {
             for (int k = 0; k < 6; ++k) {
                 GlStateManager.pushMatrix();
 
-                switch (k) {
-                    case 1:
-                        GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F); break;
-                    case 2:
-                        GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F); break;
-                    case 3:
-                        GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F); break;
-                    case 4:
-                        GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F); break;
-                    case 5:
-                        GlStateManager.rotate(-90.0F, 1.0F, 0.0F, 0.0F); break;
-                }
+                MoulberryKt.javaSwitch(k, iSwitch -> {
+                    iSwitch.addCase(1, false, () -> GlStateManager.rotate(90f, 0f, 1f, 0f));
+                    iSwitch.addCase(2, false, () -> GlStateManager.rotate(180f, 0f, 1f, 0f));
+                    iSwitch.addCase(3, false, () -> GlStateManager.rotate(-90f, 0f, 1f, 0f));
+                    iSwitch.addCase(4, false, () -> GlStateManager.rotate(90f, 1f, 0f, 0f));
+                    iSwitch.addCase(5, false, () -> GlStateManager.rotate(-90f, 1f, 0f, 0f));
+                    return iSwitch;
+                });
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(panoramas[k]);
                 float splits = 0.1f;

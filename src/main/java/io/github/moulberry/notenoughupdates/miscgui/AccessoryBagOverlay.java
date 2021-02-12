@@ -27,6 +27,7 @@ import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
@@ -673,20 +674,15 @@ public class AccessoryBagOverlay {
                             80/256f, 108/256f, 22/256f, 44/256f, GL11.GL_NEAREST);
                     Utils.drawItemStack(TAB_STACKS[currentTab], guiLeft+xSize+80+8, guiTop+20*currentTab+3);
 
-                    switch (currentTab) {
-                        case TAB_BASIC:
-                            renderBasicOverlay(guiLeft+xSize+3, guiTop); return;
-                        case TAB_TOTAL:
-                            renderTotalStatsOverlay(guiLeft+xSize+3, guiTop); return;
-                        case TAB_BONUS:
-                            renderReforgeStatsOverlay(guiLeft+xSize+3, guiTop); return;
-                        case TAB_DUP:
-                            renderDuplicatesOverlay(guiLeft+xSize+3, guiTop); return;
-                        case TAB_MISSING:
-                            renderMissingOverlay(guiLeft+xSize+3, guiTop); return;
-                        case TAB_OPTIMIZER:
-                            renderOptimizerOverlay(guiLeft+xSize+3, guiTop); return;
-                    }
+                    MoulberryKt.javaSwitch(currentTab, tabSwitch -> {
+                        tabSwitch.addCase(TAB_BASIC, false, () -> renderBasicOverlay(guiLeft+xSize+3, guiTop));
+                        tabSwitch.addCase(TAB_TOTAL, false, () -> renderTotalStatsOverlay(guiLeft+xSize+3, guiTop));
+                        tabSwitch.addCase(TAB_BONUS, false, () -> renderReforgeStatsOverlay(guiLeft+xSize+3, guiTop));
+                        tabSwitch.addCase(TAB_DUP, false, () -> renderDuplicatesOverlay(guiLeft+xSize+3, guiTop));
+                        tabSwitch.addCase(TAB_MISSING, false, () -> renderMissingOverlay(guiLeft+xSize+3, guiTop));
+                        tabSwitch.addCase(TAB_OPTIMIZER, false, () -> renderOptimizerOverlay(guiLeft+xSize+3, guiTop));
+                        return tabSwitch;
+                    });
                 } catch(Exception e) {
                     e.printStackTrace();
                 }

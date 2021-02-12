@@ -14,6 +14,7 @@ import net.minecraft.util.Matrix4f;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.awt.*;
 import java.util.List;
@@ -81,11 +82,11 @@ public class GuiCosmetics extends GuiScreen {
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
 
         GlStateManager.color(1, 1, 1, 1);
-        switch (currentPage) {
-            case CAPES:
-                drawCapesPage(mouseX, mouseY, partialTicks);
-                break;
-        }
+
+        MoulberryKt.javaSwitch(currentPage, pageSwitch -> {
+            pageSwitch.addCase(CosmeticsPage.CAPES, false, () -> drawCapesPage(mouseX, mouseY, partialTicks));
+            return pageSwitch;
+        });
 
         if(tooltipToDisplay != null) {
             List<String> grayTooltip = new ArrayList<>(tooltipToDisplay.size());

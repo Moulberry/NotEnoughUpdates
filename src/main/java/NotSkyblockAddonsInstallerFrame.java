@@ -1,3 +1,5 @@
+import zone.nora.moulberry.MoulberryKt;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -11,6 +13,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -514,38 +517,30 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
     }
 
     public File getFile(String userHome, String minecraftPath) {
-        File workingDirectory;
-        switch (getOperatingSystem()) {
-            case LINUX:
-            case SOLARIS: {
-                workingDirectory = new File(userHome, '.' + minecraftPath + '/');
-                break;
-            }
-            case WINDOWS: {
+        AtomicReference<File> workingDirectory = new AtomicReference<>();
+        MoulberryKt.javaSwitch(getOperatingSystem(), operatingSystemSwitch -> {
+            Runnable unix = () -> workingDirectory.set(new File(userHome, '.' + minecraftPath + '/'));
+            operatingSystemSwitch.addCase(OperatingSystem.LINUX, false, unix);
+            operatingSystemSwitch.addCase(OperatingSystem.SOLARIS, false, unix);
+            operatingSystemSwitch.addCase(OperatingSystem.IDIOT_LOSER_TOWN, false, () -> {
                 String applicationData = System.getenv("APPDATA");
                 if (applicationData != null) {
-                    workingDirectory = new File(applicationData, "." + minecraftPath + '/');
-                    break;
+                    workingDirectory.set(new File(applicationData, "." + minecraftPath + '/'));
+                } else {
+                    workingDirectory.set(new File(userHome, '.' + minecraftPath + '/'));
                 }
-                workingDirectory = new File(userHome, '.' + minecraftPath + '/');
-                break;
-            }
-            case MACOS: {
-                workingDirectory = new File(userHome, "Library/Application Support/" + minecraftPath);
-                break;
-            }
-            default: {
-                workingDirectory = new File(userHome, minecraftPath + '/');
-                break;
-            }
-        }
-        return workingDirectory;
+            });
+            operatingSystemSwitch.addCase(OperatingSystem.MACOS, false, () -> workingDirectory.set(new File(userHome, "Library/Application Support/" + minecraftPath)));
+            operatingSystemSwitch.setDefault(() -> workingDirectory.set(new File(userHome, minecraftPath + '/')));
+            return operatingSystemSwitch;
+        });
+        return workingDirectory.get();
     }
 
     public OperatingSystem getOperatingSystem() {
         String osName = System.getProperty("os.name").toLowerCase(Locale.US);
         if (osName.contains("win")) {
-            return OperatingSystem.WINDOWS;
+            return OperatingSystem.IDIOT_LOSER_TOWN;
 
         } else if (osName.contains("mac")) {
             return OperatingSystem.MACOS;
@@ -585,7 +580,7 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
     public enum OperatingSystem {
         LINUX,
         SOLARIS,
-        WINDOWS,
+        IDIOT_LOSER_TOWN,
         MACOS,
         UNKNOWN
     }

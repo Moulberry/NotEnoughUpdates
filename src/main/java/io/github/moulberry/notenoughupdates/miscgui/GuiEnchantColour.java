@@ -12,11 +12,13 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GuiEnchantColour extends GuiScreen {
 
@@ -204,14 +206,13 @@ public class GuiEnchantColour extends GuiScreen {
             comparators.computeIfAbsent(yIndex, k->">");
             if(mouseY > guiTop+23+25*yIndex && mouseY < guiTop+23+25*yIndex+20) {
                 if(mouseX > guiLeft+71 && mouseX < guiLeft+71+20) {
-                    switch (comparators.get(yIndex)) {
-                        case ">":
-                            comparators.put(yIndex, "="); break;
-                        case "=":
-                            comparators.put(yIndex, "<"); break;
-                        default:
-                            comparators.put(yIndex, ">"); break;
-                    }
+                    int finalYIndex = yIndex;
+                    MoulberryKt.javaSwitch(comparators.get(yIndex), ySwitch -> {
+                        ySwitch.addCase(">", false, () -> comparators.put(finalYIndex, "="));
+                        ySwitch.addCase("=", false, () -> comparators.put(finalYIndex, "<"));
+                        ySwitch.setDefault(() -> comparators.put(finalYIndex, ">"));
+                        return ySwitch;
+                    });
                     NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.remove(yIndex);
                     NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.add(yIndex,
                             getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex)));
@@ -233,17 +234,15 @@ public class GuiEnchantColour extends GuiScreen {
         if(colourOps.size() > index) {
             return colourOps.get(index);
         } else {
-            switch(index) {
-                case 0:
-                    return "[a-zA-Z\\- ]+";
-                case 1:
-                    return ">";
-                case 2:
-                    return "5";
-                case 3:
-                    return "9";
-            }
+            AtomicReference<String> s = new AtomicReference<>(null);
+            MoulberryKt.javaSwitch(index, indexSwitch -> {
+                indexSwitch.addCase(0, false, () -> s.set("[a-zA-Z\\- ]+"));
+                indexSwitch.addCase(1, false, () -> s.set(">"));
+                indexSwitch.addCase(2, false, () -> s.set("5"));
+                indexSwitch.addCase(3, false, () -> s.set("9"));
+                return indexSwitch;
+            });
+            return s.get();
         }
-        return null;
     }
 }

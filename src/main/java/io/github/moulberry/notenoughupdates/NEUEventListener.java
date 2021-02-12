@@ -49,6 +49,7 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import zone.nora.moulberry.MoulberryKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,6 +64,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -877,6 +879,26 @@ public class NEUEventListener {
         }
     }
 
+    private float getWorth(String internal) {
+        AtomicReference<Float> worth = new AtomicReference<>(-1f);
+        MoulberryKt.javaSwitch(neu.config.dungeonProfit.profitType, worthSwitch -> {
+            worthSwitch.addCase(1, false, () -> worth.set(neu.manager.auctionManager.getItemAvgBin(internal)));
+            worthSwitch.addCase(2, false, () -> {
+                JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
+                if(auctionInfo != null) {
+                    if(auctionInfo.has("clean_price")) {
+                        worth.set(auctionInfo.get("clean_price").getAsFloat());
+                    } else {
+                        worth.set((auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat()));
+                    }
+                }
+            });
+            worthSwitch.setDefault(() -> worth.set((float) neu.manager.auctionManager.getLowestBin(internal)));
+            return worthSwitch;
+        });
+        return worth.get();
+    }
+
     private void renderDungeonChestOverlay(GuiScreen gui) {
         if(neu.config.dungeonProfit.profitDisplayLoc == 3) return;
 
@@ -927,23 +949,7 @@ public class NEUEventListener {
                             if(bazaarPrice > 0) {
                                 worth = bazaarPrice;
                             } else {
-                                switch(neu.config.dungeonProfit.profitType) {
-                                    case 1:
-                                        worth = neu.manager.auctionManager.getItemAvgBin(internal);
-                                        break;
-                                    case 2:
-                                        JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                                        if(auctionInfo != null) {
-                                            if(auctionInfo.has("clean_price")) {
-                                                worth = (int)auctionInfo.get("clean_price").getAsFloat();
-                                            } else {
-                                                worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        worth = neu.manager.auctionManager.getLowestBin(internal);
-                                }
+                                worth = getWorth(internal);
                                 if(worth <= 0) {
                                     worth = neu.manager.auctionManager.getLowestBin(internal);
                                     if(worth <= 0) {
@@ -1606,60 +1612,45 @@ public class NEUEventListener {
                         try {
                             level = Integer.parseInt(levelStr);
                         } catch(Exception e) {
-                            switch(levelStr) {
-                                case "I":
-                                    level = 1; break;
-                                case "II":
-                                    level = 2; break;
-                                case "III":
-                                    level = 3; break;
-                                case "IV":
-                                    level = 4; break;
-                                case "V":
-                                    level = 5; break;
-                                case "VI":
-                                    level = 6; break;
-                                case "VII":
-                                    level = 7; break;
-                                case "VIII":
-                                    level = 8; break;
-                                case "IX":
-                                    level = 9; break;
-                                case "X":
-                                    level = 10; break;
-                                case "XI":
-                                    level = 11; break;
-                                case "XII":
-                                    level = 12; break;
-                                case "XIII":
-                                    level = 13; break;
-                                case "XIV":
-                                    level = 14; break;
-                                case "XV":
-                                    level = 15; break;
-                                case "XVI":
-                                    level = 16; break;
-                                case "XVII":
-                                    level = 17; break;
-                                case "XVIII":
-                                    level = 18; break;
-                                case "XIX":
-                                    level = 19; break;
-                                case "XX":
-                                    level = 20; break;
+                            HashMap<String, Integer> levelStrMap = new HashMap<>();
+                            levelStrMap.put("I", 1);
+                            levelStrMap.put("I",1);
+                            levelStrMap.put("II",2);
+                            levelStrMap.put("III",3);
+                            levelStrMap.put("IV",4);
+                            levelStrMap.put("V",5);
+                            levelStrMap.put("VI",6);
+                            levelStrMap.put("VII",7);
+                            levelStrMap.put("VIII",8);
+                            levelStrMap.put("IX",9);
+                            levelStrMap.put("X",10);
+                            levelStrMap.put("XI",11);
+                            levelStrMap.put("XII",12);
+                            levelStrMap.put("XIII",13);
+                            levelStrMap.put("XIV",14);
+                            levelStrMap.put("XV",15);
+                            levelStrMap.put("XVI",16);
+                            levelStrMap.put("XVII",17);
+                            levelStrMap.put("XVIII",18);
+                            levelStrMap.put("XIX",19);
+                            levelStrMap.put("XX",20);
+                            if (levelStrMap.containsKey(levelStr)) {
+                                level = levelStrMap.get(levelStr);
                             }
                         }
                         boolean matches = false;
+                        AtomicBoolean atomicMatches = new AtomicBoolean(false);
                         if(level > 0) {
-                            switch(comparator) {
-                                case ">":
-                                    matches = level > levelToFind; break;
-                                case "=":
-                                    matches = level == levelToFind; break;
-                                case "<":
-                                    matches = level < levelToFind; break;
-                            }
+                            int finalLevel = level;
+                            int finalLevelToFind = levelToFind;
+                            MoulberryKt.javaSwitch(comparator, comparatorSwitch -> {
+                                comparatorSwitch.addCase(">", false, () -> atomicMatches.set(finalLevel > finalLevelToFind));
+                                comparatorSwitch.addCase("=", false, () -> atomicMatches.set(finalLevel == finalLevelToFind));
+                                comparatorSwitch.addCase("<", false, () -> atomicMatches.set(finalLevel < finalLevelToFind));
+                                return comparatorSwitch;
+                            });
                         }
+                        matches = atomicMatches.get();
                         if(matches) {
                             if(!colourCode.equals("z")) {
                                 line = line.replace("\u00A79"+matcher.group(2), "\u00A7"+colourCode+matcher.group(2));
@@ -1738,23 +1729,7 @@ public class NEUEventListener {
                             if(bazaarPrice > 0) {
                                 worth = bazaarPrice;
                             } else {
-                                switch(neu.config.dungeonProfit.profitType) {
-                                    case 1:
-                                        worth = neu.manager.auctionManager.getItemAvgBin(internal);
-                                        break;
-                                    case 2:
-                                        JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                                        if(auctionInfo != null) {
-                                            if(auctionInfo.has("clean_price")) {
-                                                worth = (int)auctionInfo.get("clean_price").getAsFloat();
-                                            } else {
-                                                worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        worth = neu.manager.auctionManager.getLowestBin(internal);
-                                }
+                                worth = getWorth(internal);
                                 if(worth <= 0) {
                                     worth = neu.manager.auctionManager.getLowestBin(internal);
                                     if(worth <= 0) {

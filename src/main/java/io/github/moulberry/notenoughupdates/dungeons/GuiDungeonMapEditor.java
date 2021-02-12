@@ -25,6 +25,7 @@ import net.minecraft.util.Vec4b;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.awt.*;
 import java.io.IOException;
@@ -200,34 +201,6 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 if(button.id >= 6 && button.id <= 17) {
                     String mapDesc = null;
                     String mapCredit = null;
-                    int id = button.id;
-                    switch(id) {
-                        case 6:
-                            mapDesc = "No Border"; break;
-                        case 7:
-                            mapDesc = "Used by custom Resource Packs"; break;
-                        case 8:
-                            mapDesc = "Simple gray border"; mapCredit = "TomEngMaster"; break;
-                        case 9:
-                            mapDesc = "Viney wood border"; mapCredit = "iDevil4Hell"; break;
-                        case 10:
-                            mapDesc = "Steampunk-inspired square border"; mapCredit = "ThatGravyBoat"; break;
-                        case 11:
-                            mapDesc = "Steampunk-inspired circular border"; mapCredit = "ThatGravyBoat"; break;
-                        case 12:
-                            mapDesc = "Light fade border"; mapCredit = "Qwiken"; break;
-                        case 13:
-                            mapDesc = "Simple gray border with red ribbons"; mapCredit = "Sai"; break;
-                        case 14:
-                            mapDesc = "Paper border"; mapCredit = "KingJames02st"; break;
-                        case 15:
-                            mapDesc = "Nether-inspired border"; mapCredit = "DTRW191"; break;
-                        case 16:
-                            mapDesc = "Golden ornate border"; mapCredit = "iDevil4Hell"; break;
-                        case 17:
-                            mapDesc = "Stone dragon border"; mapCredit = "ImperiaL"; break;
-                    }
-
                     ArrayList<String> tooltip = new ArrayList<>();
                     tooltip.add(EnumChatFormatting.YELLOW+"Border Style");
                     tooltip.add(EnumChatFormatting.AQUA+"Customize the look of the dungeon border");
@@ -532,65 +505,55 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
     private void buttonClicked(int mouseX, int mouseY, int id) {
         NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
-        switch (id) {
-            case 0:
-                options.dmBorderSize = 0; break;
-            case 1:
-                options.dmBorderSize = 1; break;
-            case 2:
-                options.dmBorderSize = 2; break;
-            case 30:
-                options.dmBorderSize = 3; break;
-            case 3:
-                options.dmRoomSize = 0; break;
-            case 4:
-                options.dmRoomSize = 1; break;
-            case 5:
-                options.dmRoomSize = 2; break;
-            case 29:
-                options.dmRoomSize = 3; break;
-            case 18:
-                options.dmEnable = !options.dmEnable; break;
-            case 19:
-                options.dmCenterPlayer = !options.dmCenterPlayer; break;
-            case 20:
-                options.dmRotatePlayer = !options.dmRotatePlayer; break;
-            case 21:
+        MoulberryKt.javaSwitch(id, iSwitch -> {
+            iSwitch.addCase(0, false, () -> options.dmBorderSize = 0);
+            iSwitch.addCase(1, false, () -> options.dmBorderSize = 1);
+            iSwitch.addCase(2, false, () -> options.dmBorderSize = 2);
+            iSwitch.addCase(30, false, () -> options.dmBorderSize = 3);
+            iSwitch.addCase(3, false, () -> options.dmRoomSize = 0);
+            iSwitch.addCase(4, false, () -> options.dmRoomSize = 1);
+            iSwitch.addCase(5, false, () -> options.dmRoomSize = 2);
+            iSwitch.addCase(29, false, () -> options.dmRoomSize = 3);
+            iSwitch.addCase(18, false, () -> options.dmEnable = !options.dmEnable);
+            iSwitch.addCase(19, false, () -> options.dmCenterPlayer = !options.dmCenterPlayer);
+            iSwitch.addCase(20, false, () -> options.dmRotatePlayer = !options.dmRotatePlayer);
+            iSwitch.addCase(21, false, () -> {
                 options.dmPlayerHeads++;
-                if(options.dmPlayerHeads > 2) options.dmPlayerHeads = 0; break;
-            case 22:
-                options.dmOrientCheck = !options.dmOrientCheck; break;
-            case 23:
-                options.dmCenterCheck = !options.dmCenterCheck; break;
-            case 24:
-                options.dmPlayerInterp = !options.dmPlayerInterp; break;
-            case 25:
+                if (options.dmPlayerHeads > 2) {
+                    options.dmPlayerHeads = 0;
+                }
+            });
+            iSwitch.addCase(22, false, () -> options.dmOrientCheck = !options.dmOrientCheck);
+            iSwitch.addCase(23, false, () -> options.dmCenterCheck = !options.dmCenterCheck);
+            iSwitch.addCase(24, false, () -> options.dmPlayerInterp = !options.dmPlayerInterp);
+            iSwitch.addCase(25, false, () -> {
                 options.dmCompat++;
-                if(options.dmCompat > 2) options.dmCompat = 0;
-                break;
-            case 26: {
-                    ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
-                    mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
-                    mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
-                    activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBackgroundColour,
-                            (col) -> options.dmBackgroundColour = col, () -> activeColourEditor = null);
+                if (options.dmCompat > 2) {
+                    options.dmCompat = 0;
                 }
-                break;
-            case 27: {
-                    ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
-                    mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
-                    mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
-                    activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBorderColour,
-                            (col) -> options.dmBorderColour = col, () -> activeColourEditor = null);
+            });
+            iSwitch.addCase(26, false, () -> {
+                ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
+                int mouseX2 = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
+                int mouseY2 = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
+                activeColourEditor = new GuiElementColour(mouseX2, mouseY2, options.dmBackgroundColour,
+                        (col) -> options.dmBackgroundColour = col, () -> activeColourEditor = null);
+            });
+            iSwitch.addCase(27, false, () -> {
+                ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
+                int mouseX2 = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
+                int mouseY2 = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
+                activeColourEditor = new GuiElementColour(mouseX2, mouseY2, options.dmBorderColour,
+                        (col) -> options.dmBorderColour = col, () -> activeColourEditor = null);
+            });
+            iSwitch.addCase(28, false, () -> options.dmChromaBorder = !options.dmChromaBorder);
+            iSwitch.setDefault(() -> {
+                if (id >= 6 && id <= 17) {
+                    options.dmBorderSize = id-6;
                 }
-                break;
-            case 28:
-                options.dmChromaBorder = !options.dmChromaBorder; break;
-            default:
-                if(id >= 6 && id <= 17) {
-                    options.dmBorderStyle = id-6; break;
-                }
-        };
+            });
+            return iSwitch;
+        });
     }
 
     private boolean isButtonPressed(int id) {

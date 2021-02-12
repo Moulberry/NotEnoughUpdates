@@ -13,6 +13,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.awt.*;
 import java.util.*;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,15 +91,14 @@ public class DungeonWin {
 
         if(deltaTime < 1000) {
             ScaledResolution sr = Utils.pushGuiScale(2);
-            int cap = 0;
-            switch(TEAM_SCORE.getResourcePath()) {
-                case "dungeon_win/splus.png":
-                    cap = 200; break;
-                case "dungeon_win/s.png":
-                    cap = 100; break;
-                case "dungeon_win/a.png":
-                    cap = 50; break;
-            }
+            AtomicInteger atomicCap = new AtomicInteger(0);
+            MoulberryKt.javaSwitch(TEAM_SCORE.getResourcePath(), resourcePathSwitch -> {
+                resourcePathSwitch.addCase("dungeon_win/splus.png", false, () -> atomicCap.set(200));
+                resourcePathSwitch.addCase("dungeon_win/s.png", false, () -> atomicCap.set(100));
+                resourcePathSwitch.addCase("dungeon_win/a.png", false, () -> atomicCap.set(50));
+                return resourcePathSwitch;
+            });
+            int cap = atomicCap.get();
             int maxConfetti = Math.min(cap, deltaTime/5);
             while(confetti.size() < maxConfetti) {
                 int y;
@@ -152,20 +153,15 @@ public class DungeonWin {
                     lastDungeonFinish = currentTime;
 
                     String score = matcher.group(1);
-                    switch (score.toUpperCase()) {
-                        case "S+":
-                            TEAM_SCORE = SPLUS; break;
-                        case "S":
-                            TEAM_SCORE = S; break;
-                        case "A":
-                            TEAM_SCORE = A; break;
-                        case "B":
-                            TEAM_SCORE = B; break;
-                        case "C":
-                            TEAM_SCORE = C; break;
-                        default:
-                            TEAM_SCORE = D; break;
-                    }
+                    MoulberryKt.javaSwitch(score.toUpperCase(), scoreSwitch -> {
+                        scoreSwitch.addCase("S+", false, () -> TEAM_SCORE = SPLUS);
+                        scoreSwitch.addCase("S", false, () -> TEAM_SCORE = S);
+                        scoreSwitch.addCase("A", false, () -> TEAM_SCORE = A);
+                        scoreSwitch.addCase("B", false, () -> TEAM_SCORE = B);
+                        scoreSwitch.addCase("C", false, () -> TEAM_SCORE = C);
+                        scoreSwitch.setDefault(() -> TEAM_SCORE = D);
+                        return scoreSwitch;
+                    });
 
                     SES.schedule(()-> {
                         NotEnoughUpdates.INSTANCE.sendChatMessage("/showextrastats");

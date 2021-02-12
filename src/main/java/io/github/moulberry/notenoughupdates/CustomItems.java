@@ -62,6 +62,10 @@ public class CustomItems {
                   "",
                   "get flexed");
 
+    public static JsonObject NORA = create("NORA", "diamond", "\u00a7dNora <3",
+            "i deserve this after this shit omg",
+            "https://github.com/mew/moulberry");
+
     /**
      * SHAAAAAAAAAAAAAAAAAAME
      */

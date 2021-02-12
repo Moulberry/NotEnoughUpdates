@@ -3,7 +3,6 @@ package io.github.moulberry.notenoughupdates.miscgui;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.SBAIntegration;
-import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -24,12 +23,14 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -119,19 +120,8 @@ public class TradeWindow {
                     if("0123456789.".indexOf(c) >= 0) {
                         sb.append(c);
                     } else {
-                        switch(c) {
-                            case 'K':
-                            case 'k':
-                                mult = 1000; break;
-                            case 'M':
-                            case 'm':
-                                mult = 1000000; break;
-                            case 'B':
-                            case 'b':
-                                mult = 1000000000; break;
-                            default:
-                                break;
-                        }
+                        int i = getMult(c);
+                        if (i != 0) mult = i;
                         break;
                     }
                 }
@@ -329,19 +319,8 @@ public class TradeWindow {
                         if("0123456789.".indexOf(c) >= 0) {
                             sb.append(c);
                         } else {
-                            switch(c) {
-                                case 'K':
-                                case 'k':
-                                    mult = 1000; break;
-                                case 'M':
-                                case 'm':
-                                    mult = 1000000; break;
-                                case 'B':
-                                case 'b':
-                                    mult = 1000000000; break;
-                                default:
-                                    break;
-                            }
+                            int j = getMult(c);
+                            if (j != 0) mult = j;
                             break;
                         }
                     }
@@ -427,19 +406,8 @@ public class TradeWindow {
                         if("0123456789.".indexOf(c) >= 0) {
                             sb.append(c);
                         } else {
-                            switch(c) {
-                                case 'K':
-                                case 'k':
-                                    mult = 1000; break;
-                                case 'M':
-                                case 'm':
-                                    mult = 1000000; break;
-                                case 'B':
-                                case 'b':
-                                    mult = 1000000000; break;
-                                default:
-                                    break;
-                            }
+                            int j = getMult(c);
+                            if (j != 0) mult = j;
                             break;
                         }
                     }
@@ -1037,6 +1005,20 @@ public class TradeWindow {
                 }
             }
         }
+    }
+
+    private static int getMult(char c) {
+        AtomicInteger mult = new AtomicInteger(0);
+        MoulberryKt.javaSwitch(c, cSwitch -> {
+            cSwitch.addCase('k', false, () -> mult.set(1000));
+            cSwitch.addCase('K', false, () -> mult.set(1000));
+            cSwitch.addCase('m', false, () -> mult.set(1000000));
+            cSwitch.addCase('M', false, () -> mult.set(1000000));
+            cSwitch.addCase('B', false, () -> mult.set(1000000000));
+            cSwitch.addCase('b', false, () -> mult.set(1000000000));
+            return cSwitch;
+        });
+        return mult.get();
     }
 
     public static boolean keyboardInput() {

@@ -66,6 +66,7 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.text.translate.UnicodeUnescaper;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -130,13 +131,14 @@ public class NotEnoughUpdates {
                 args = new String[]{"help"};
             }
             String heldUUID = manager.getUUIDForItem(Minecraft.getMinecraft().thePlayer.getHeldItem());
-            switch(args[0].toLowerCase()) {
-                case "clearall":
+            String[] finalArgs = args;
+            MoulberryKt.javaSwitch(args[0].toLowerCase(), aSwitch -> {
+                aSwitch.addCase("clearall", false, () -> {
                     manager.itemRenameJson = new JsonObject();
                     manager.saveItemRenameConfig();
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[NEU] Cleared custom name for all items"));
-                    break;
-                case "clear":
+                });
+                aSwitch.addCase("clear", false, () -> {
                     if(heldUUID == null) {
                         sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Can't clear rename - no UUID"));
                         return;
@@ -144,8 +146,8 @@ public class NotEnoughUpdates {
                     manager.itemRenameJson.remove(heldUUID);
                     manager.saveItemRenameConfig();
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[NEU] Cleared custom name for held item"));
-                    break;
-                case "copyuuid":
+                });
+                aSwitch.addCase("copyuuid", false, () -> {
                     if(heldUUID == null) {
                         sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Can't clear rename - no UUID"));
                         return;
@@ -153,8 +155,8 @@ public class NotEnoughUpdates {
                     StringSelection selection = new StringSelection(heldUUID);
                     Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[NEU] UUID copied to clipboard"));
-                    break;
-                case "uuid":
+                });
+                aSwitch.addCase("uuid", false, () -> {
                     if(heldUUID == null) {
                         sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Can't get UUID - no UUID"));
                         return;
@@ -168,20 +170,20 @@ public class NotEnoughUpdates {
                             EnumChatFormatting.GREEN + heldUUID);
                     text.setChatStyle(style);
                     sender.addChatMessage(text);
-                    break;
-                case "set":
+                });
+                aSwitch.addCase("set", false, () -> {
                     if(heldUUID == null) {
                         sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Can't rename item - no UUID"));
                         return;
                     }
-                    if(args.length == 1) {
+                    if(finalArgs.length == 1) {
                         sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Usage: /neurename set [name...]"));
                         return;
                     }
                     StringBuilder sb = new StringBuilder();
-                    for(int i=1; i<args.length; i++) {
-                        sb.append(args[i]);
-                        if(i<args.length-1) sb.append(" ");
+                    for(int i = 1; i< finalArgs.length; i++) {
+                        sb.append(finalArgs[i]);
+                        if(i< finalArgs.length-1) sb.append(" ");
                     }
                     String name = sb.toString()
                             .replace("\\&", "{amp}")
@@ -191,10 +193,8 @@ public class NotEnoughUpdates {
                     manager.itemRenameJson.addProperty(heldUUID, name);
                     manager.saveItemRenameConfig();
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[NEU] Set custom name for held item"));
-                    break;
-                default:
-                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Unknown subcommand \""+args[0]+"\""));
-                case "help":
+                });
+                Runnable helpRunnable = () -> {
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "[NEU] Available commands:"));
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "help: Print this message"));
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "clearall: Clears all custom names "
@@ -204,8 +204,14 @@ public class NotEnoughUpdates {
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "uuid: Returns the UUID of the currently held item"));
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "set: Sets the custom name of the currently held item"));
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "Usage: /neurename set [name...]"));
-
-            }
+                };
+                aSwitch.addCase("help", false, helpRunnable);
+                aSwitch.setDefault(() -> {
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Unknown subcommand \""+ finalArgs[0]+"\""));
+                    helpRunnable.run();
+                });
+                return aSwitch;
+            });
         }
     });
 

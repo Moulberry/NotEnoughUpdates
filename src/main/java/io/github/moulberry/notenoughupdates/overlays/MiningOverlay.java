@@ -15,6 +15,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.WorldSettings;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -129,16 +130,14 @@ public class MiningOverlay extends TextOverlay {
         }*/
 
         for(int index : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText) {
-            switch(index) {
-                case 0:
-                    overlayStrings.addAll(commissionsStrings); break;
-                case 1:
-                    overlayStrings.add(mithrilPowder); break;
-                case 2:
-                    overlayStrings.addAll(forgeStrings); break;
-                case 3:
-                    overlayStrings.addAll(forgeStringsEmpty); break;
-            }
+            String finalMithrilPowder = mithrilPowder;
+            MoulberryKt.javaSwitch(index, iSwitch -> {
+                iSwitch.addCase(0, false, () -> overlayStrings.addAll(commissionsStrings));
+                iSwitch.addCase(1, false, () -> overlayStrings.add(finalMithrilPowder));
+                iSwitch.addCase(2, false, () -> overlayStrings.addAll(forgeStrings));
+                iSwitch.addCase(3, false, () -> overlayStrings.addAll(forgeStringsEmpty));
+                return iSwitch;
+            });
         }
 
         if(overlayStrings.isEmpty()) overlayStrings = null;

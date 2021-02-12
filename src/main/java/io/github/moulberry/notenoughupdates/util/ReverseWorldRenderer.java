@@ -18,6 +18,7 @@ import net.minecraft.util.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
+import zone.nora.moulberry.MoulberryKt;
 
 @SideOnly(Side.CLIENT)
 public class ReverseWorldRenderer {
@@ -183,26 +184,28 @@ public class ReverseWorldRenderer {
     public ReverseWorldRenderer tex(double u, double v) {
         int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
-        switch (this.vertexFormatElement.getType()) {
-            case FLOAT:
-                this.byteBuffer.putFloat(i, (float) u);
-                this.byteBuffer.putFloat(i + 4, (float) v);
-                break;
-            case UINT:
-            case INT:
-                this.byteBuffer.putInt(i, (int) u);
-                this.byteBuffer.putInt(i + 4, (int) v);
-                break;
-            case USHORT:
-            case SHORT:
-                this.byteBuffer.putShort(i, (short) ((int) v));
-                this.byteBuffer.putShort(i + 2, (short) ((int) u));
-                break;
-            case UBYTE:
-            case BYTE:
-                this.byteBuffer.put(i, (byte) ((int) v));
-                this.byteBuffer.put(i + 1, (byte) ((int) u));
-        }
+        MoulberryKt.javaSwitch(vertexFormatElement.getType(), typeSwitch -> {
+            typeSwitch.addCase(VertexFormatElement.EnumType.FLOAT, false, () -> {
+                byteBuffer.putFloat(i, (float) u);
+                byteBuffer.putFloat(i + 4, (float) v);
+            });
+            Runnable intRunnable = () -> { byteBuffer.putInt(i, (int) u); byteBuffer.putInt(i + 4, (int) v); };
+            typeSwitch.addCase(VertexFormatElement.EnumType.UINT, false, intRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.INT, false, intRunnable);
+            Runnable shortRunnable = () -> {
+                byteBuffer.putShort(i, (short) (int) v);
+                byteBuffer.putShort(i + 4, (short) (int) v);
+            };
+            typeSwitch.addCase(VertexFormatElement.EnumType.USHORT, false, shortRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.SHORT, false, shortRunnable);
+            Runnable byteRunnable = () -> {
+                byteBuffer.put(i, (byte) v);
+                byteBuffer.put(i + 4, (byte) u);
+            };
+            typeSwitch.addCase(VertexFormatElement.EnumType.UBYTE, false, byteRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.UBYTE, false, byteRunnable);
+            return typeSwitch;
+        });
 
         this.nextVertexFormatIndex();
         return this;
@@ -211,26 +214,28 @@ public class ReverseWorldRenderer {
     public ReverseWorldRenderer lightmap(int p_181671_1_, int p_181671_2_) {
         int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
-        switch (this.vertexFormatElement.getType()) {
-            case FLOAT:
-                this.byteBuffer.putFloat(i, (float) p_181671_1_);
-                this.byteBuffer.putFloat(i + 4, (float) p_181671_2_);
-                break;
-            case UINT:
-            case INT:
-                this.byteBuffer.putInt(i, p_181671_1_);
-                this.byteBuffer.putInt(i + 4, p_181671_2_);
-                break;
-            case USHORT:
-            case SHORT:
-                this.byteBuffer.putShort(i, (short) p_181671_2_);
-                this.byteBuffer.putShort(i + 2, (short) p_181671_1_);
-                break;
-            case UBYTE:
-            case BYTE:
-                this.byteBuffer.put(i, (byte) p_181671_2_);
-                this.byteBuffer.put(i + 1, (byte) p_181671_1_);
-        }
+        MoulberryKt.javaSwitch(vertexFormatElement.getType(), typeSwitch -> {
+            typeSwitch.addCase(VertexFormatElement.EnumType.FLOAT, false, () -> {
+                byteBuffer.putFloat(i, (float) p_181671_1_);
+                byteBuffer.putFloat(i + 4, (float) p_181671_2_);
+            });
+            Runnable intRunnable = () -> { byteBuffer.putInt(i, p_181671_1_); byteBuffer.putInt(i + 4, p_181671_2_); };
+            typeSwitch.addCase(VertexFormatElement.EnumType.UINT, false, intRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.INT, false, intRunnable);
+            Runnable shortRunnable = () -> {
+                byteBuffer.putShort(i, (short) p_181671_2_);
+                byteBuffer.putShort(i + 4, (short) p_181671_1_);
+            };
+            typeSwitch.addCase(VertexFormatElement.EnumType.USHORT, false, shortRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.SHORT, false, shortRunnable);
+            Runnable byteRunnable = () -> {
+                byteBuffer.put(i, (byte) p_181671_2_);
+                byteBuffer.put(i + 4, (byte) p_181671_1_);
+            };
+            typeSwitch.addCase(VertexFormatElement.EnumType.UBYTE, false, byteRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.UBYTE, false, byteRunnable);
+            return typeSwitch;
+        });
 
         this.nextVertexFormatIndex();
         return this;
@@ -333,42 +338,46 @@ public class ReverseWorldRenderer {
         } else {
             int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
-            switch (this.vertexFormatElement.getType()) {
-                case FLOAT:
-                    this.byteBuffer.putFloat(i, (float) red / 255.0F);
-                    this.byteBuffer.putFloat(i + 4, (float) green / 255.0F);
-                    this.byteBuffer.putFloat(i + 8, (float) blue / 255.0F);
-                    this.byteBuffer.putFloat(i + 12, (float) alpha / 255.0F);
-                    break;
-                case UINT:
-                case INT:
-                    this.byteBuffer.putFloat(i, (float) red);
-                    this.byteBuffer.putFloat(i + 4, (float) green);
-                    this.byteBuffer.putFloat(i + 8, (float) blue);
-                    this.byteBuffer.putFloat(i + 12, (float) alpha);
-                    break;
-                case USHORT:
-                case SHORT:
-                    this.byteBuffer.putShort(i, (short) red);
-                    this.byteBuffer.putShort(i + 2, (short) green);
-                    this.byteBuffer.putShort(i + 4, (short) blue);
-                    this.byteBuffer.putShort(i + 6, (short) alpha);
-                    break;
-                case UBYTE:
-                case BYTE:
-
+            MoulberryKt.javaSwitch(vertexFormatElement.getType(), typeSwitch -> {
+                typeSwitch.addCase(VertexFormatElement.EnumType.FLOAT, false, () -> {
+                    byteBuffer.putFloat(i, (float) red / 255.0F);
+                    byteBuffer.putFloat(i + 4, (float) green / 255.0F);
+                    byteBuffer.putFloat(i + 8, (float) blue / 255.0F);
+                    byteBuffer.putFloat(i + 12, (float) alpha / 255.0F);
+                });
+                Runnable intRunnable = () -> {
+                    byteBuffer.putFloat(i, (float) red);
+                    byteBuffer.putFloat(i + 4, (float) green);
+                    byteBuffer.putFloat(i + 8, (float) blue);
+                    byteBuffer.putFloat(i + 12, (float) alpha);
+                };
+                Runnable shortRunnable = () -> {
+                    byteBuffer.putShort(i, (short) red);
+                    byteBuffer.putShort(i + 2, (short) green);
+                    byteBuffer.putShort(i + 4, (short) blue);
+                    byteBuffer.putShort(i + 6, (short) alpha);
+                };
+                Runnable byteRunnable = () -> {
                     if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
-                        this.byteBuffer.put(i, (byte) red);
-                        this.byteBuffer.put(i + 1, (byte) green);
-                        this.byteBuffer.put(i + 2, (byte) blue);
-                        this.byteBuffer.put(i + 3, (byte) alpha);
+                        byteBuffer.put(i, (byte) red);
+                        byteBuffer.put(i + 1, (byte) green);
+                        byteBuffer.put(i + 2, (byte) blue);
+                        byteBuffer.put(i + 3, (byte) alpha);
                     } else {
-                        this.byteBuffer.put(i, (byte) alpha);
-                        this.byteBuffer.put(i + 1, (byte) blue);
-                        this.byteBuffer.put(i + 2, (byte) green);
-                        this.byteBuffer.put(i + 3, (byte) red);
+                        byteBuffer.put(i, (byte) alpha);
+                        byteBuffer.put(i + 1, (byte) blue);
+                        byteBuffer.put(i + 2, (byte) green);
+                        byteBuffer.put(i + 3, (byte) red);
                     }
-            }
+                };
+                typeSwitch.addCase(VertexFormatElement.EnumType.UINT, false, intRunnable);
+                typeSwitch.addCase(VertexFormatElement.EnumType.INT, false, intRunnable);
+                typeSwitch.addCase(VertexFormatElement.EnumType.USHORT, false, shortRunnable);
+                typeSwitch.addCase(VertexFormatElement.EnumType.SHORT, false, shortRunnable);
+                typeSwitch.addCase(VertexFormatElement.EnumType.UBYTE, false, byteRunnable);
+                typeSwitch.addCase(VertexFormatElement.EnumType.BYTE, false, byteRunnable);
+                return typeSwitch;
+            });
 
             this.nextVertexFormatIndex();
             return this;
@@ -390,30 +399,35 @@ public class ReverseWorldRenderer {
     public ReverseWorldRenderer pos(double x, double y, double z) {
         int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
-        switch (this.vertexFormatElement.getType()) {
-            case FLOAT:
-                this.byteBuffer.putFloat(i, (float) (x + this.xOffset));
-                this.byteBuffer.putFloat(i + 4, (float) (y + this.yOffset));
-                this.byteBuffer.putFloat(i + 8, (float) (z + this.zOffset));
-                break;
-            case UINT:
-            case INT:
-                this.byteBuffer.putInt(i, Float.floatToRawIntBits((float) (x + this.xOffset)));
-                this.byteBuffer.putInt(i + 4, Float.floatToRawIntBits((float) (y + this.yOffset)));
-                this.byteBuffer.putInt(i + 8, Float.floatToRawIntBits((float) (z + this.zOffset)));
-                break;
-            case USHORT:
-            case SHORT:
-                this.byteBuffer.putShort(i, (short) ((int) (x + this.xOffset)));
-                this.byteBuffer.putShort(i + 2, (short) ((int) (y + this.yOffset)));
-                this.byteBuffer.putShort(i + 4, (short) ((int) (z + this.zOffset)));
-                break;
-            case UBYTE:
-            case BYTE:
-                this.byteBuffer.put(i, (byte) ((int) (x + this.xOffset)));
-                this.byteBuffer.put(i + 1, (byte) ((int) (y + this.yOffset)));
-                this.byteBuffer.put(i + 2, (byte) ((int) (z + this.zOffset)));
-        }
+        MoulberryKt.javaSwitch(vertexFormatElement.getType(), typeSwitch -> {
+            typeSwitch.addCase(VertexFormatElement.EnumType.FLOAT, false, () -> {
+                byteBuffer.putFloat(i, (float) (x + this.xOffset));
+                byteBuffer.putFloat(i + 4, (float) (y + this.yOffset));
+                byteBuffer.putFloat(i + 8, (float) (z + this.zOffset));
+            });
+            Runnable intRunnable = () -> {
+                byteBuffer.putInt(i, Float.floatToRawIntBits((float) (x + this.xOffset)));
+                byteBuffer.putInt(i + 4, Float.floatToRawIntBits((float) (y + this.yOffset)));
+                byteBuffer.putInt(i + 8, Float.floatToRawIntBits((float) (z + this.zOffset)));
+            };
+            Runnable shortRunnable = () -> {
+                byteBuffer.putShort(i, (short) ((int) (x + this.xOffset)));
+                byteBuffer.putShort(i + 2, (short) ((int) (y + this.yOffset)));
+                byteBuffer.putShort(i + 4, (short) ((int) (z + this.zOffset)));
+            };
+            Runnable byteRunnable = () -> {
+                byteBuffer.put(i, (byte) ((int) (x + this.xOffset)));
+                byteBuffer.put(i + 1, (byte) ((int) (y + this.yOffset)));
+                byteBuffer.put(i + 2, (byte) ((int) (z + this.zOffset)));
+            };
+            typeSwitch.addCase(VertexFormatElement.EnumType.UINT, false, intRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.INT, false, intRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.USHORT, false, shortRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.SHORT, false, shortRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.UBYTE, false, byteRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.BYTE, false, byteRunnable);
+            return typeSwitch;
+        });
 
         this.nextVertexFormatIndex();
         return this;
@@ -445,30 +459,35 @@ public class ReverseWorldRenderer {
     public ReverseWorldRenderer normal(float p_181663_1_, float p_181663_2_, float p_181663_3_) {
         int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
-        switch (this.vertexFormatElement.getType()) {
-            case FLOAT:
-                this.byteBuffer.putFloat(i, p_181663_1_);
-                this.byteBuffer.putFloat(i + 4, p_181663_2_);
-                this.byteBuffer.putFloat(i + 8, p_181663_3_);
-                break;
-            case UINT:
-            case INT:
-                this.byteBuffer.putInt(i, (int) p_181663_1_);
-                this.byteBuffer.putInt(i + 4, (int) p_181663_2_);
-                this.byteBuffer.putInt(i + 8, (int) p_181663_3_);
-                break;
-            case USHORT:
-            case SHORT:
-                this.byteBuffer.putShort(i, (short) ((int) (p_181663_1_ * 32767) & 65535));
-                this.byteBuffer.putShort(i + 2, (short) ((int) (p_181663_2_ * 32767) & 65535));
-                this.byteBuffer.putShort(i + 4, (short) ((int) (p_181663_3_ * 32767) & 65535));
-                break;
-            case UBYTE:
-            case BYTE:
-                this.byteBuffer.put(i, (byte) ((int) (p_181663_1_ * 127) & 255));
-                this.byteBuffer.put(i + 1, (byte) ((int) (p_181663_2_ * 127) & 255));
-                this.byteBuffer.put(i + 2, (byte) ((int) (p_181663_3_ * 127) & 255));
-        }
+        MoulberryKt.javaSwitch(vertexFormatElement.getType(), typeSwitch -> {
+            typeSwitch.addCase(VertexFormatElement.EnumType.UINT, false, () -> {
+                byteBuffer.putFloat(i, p_181663_1_);
+                byteBuffer.putFloat(i + 4, p_181663_2_);
+                byteBuffer.putFloat(i + 8, p_181663_3_);
+            });
+            Runnable intRunnable = () -> {
+                byteBuffer.putInt(i, (int) p_181663_1_);
+                byteBuffer.putInt(i + 4, (int) p_181663_2_);
+                byteBuffer.putInt(i + 8, (int) p_181663_3_);
+            };
+            Runnable shortRunnable = () -> {
+                byteBuffer.putShort(i, (short) ((int) (p_181663_1_ * 32767) & 65535));
+                byteBuffer.putShort(i + 2, (short) ((int) (p_181663_2_ * 32767) & 65535));
+                byteBuffer.putShort(i + 4, (short) ((int) (p_181663_3_ * 32767) & 65535));
+            };
+            Runnable byteRunnable = () -> {
+                byteBuffer.put(i, (byte) ((int) (p_181663_1_ * 127) & 255));
+                byteBuffer.put(i + 1, (byte) ((int) (p_181663_2_ * 127) & 255));
+                byteBuffer.put(i + 2, (byte) ((int) (p_181663_3_ * 127) & 255));
+            };
+            typeSwitch.addCase(VertexFormatElement.EnumType.UINT, false, intRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.INT, false, intRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.USHORT, false, shortRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.SHORT, false, shortRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.UBYTE, false, byteRunnable);
+            typeSwitch.addCase(VertexFormatElement.EnumType.BYTE, false, byteRunnable);
+            return typeSwitch;
+        });
 
         this.nextVertexFormatIndex();
         return this;

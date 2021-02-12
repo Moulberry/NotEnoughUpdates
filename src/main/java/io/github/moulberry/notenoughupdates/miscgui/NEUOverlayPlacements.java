@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.awt.*;
 import java.io.IOException;
@@ -64,44 +65,43 @@ public class NEUOverlayPlacements extends GuiScreen {
             drawRect((int)position.x, (int)position.y,
                     (int)position.x+element.getWidth(), (int)position.y+element.getHeight(), new Color(100, 100, 100, 200).getRGB());
 
-            switch(anchorPoint.anchorPoint) {
-                case TOPLEFT:
-                case TOPRIGHT:
-                case BOTLEFT:
-                case BOTRIGHT:
-                    drawRect((int)(position.x+element.getWidth()*anchorPoint.anchorPoint.x*0.9f),
-                            (int)(position.y+element.getHeight()*anchorPoint.anchorPoint.y*0.9f),
-                            (int)(position.x+element.getWidth()*anchorPoint.anchorPoint.x*0.9f+element.getWidth()*0.1f),
-                            (int)(position.y+element.getHeight()*anchorPoint.anchorPoint.y*0.9f+element.getHeight()*0.1f),
-                            new Color(200, 200, 200, 100).getRGB());
-                    break;
-                case TOPMID:
+            MoulberryKt.javaSwitch(anchorPoint.anchorPoint, anchorPointSwitch -> {
+                Runnable firstRunnable = () -> drawRect((int)(position.x+element.getWidth()*anchorPoint.anchorPoint.x*0.9f),
+                        (int)(position.y+element.getHeight()*anchorPoint.anchorPoint.y*0.9f),
+                        (int)(position.x+element.getWidth()*anchorPoint.anchorPoint.x*0.9f+element.getWidth()*0.1f),
+                        (int)(position.y+element.getHeight()*anchorPoint.anchorPoint.y*0.9f+element.getHeight()*0.1f),
+                        new Color(200, 200, 200, 100).getRGB());
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.TOPLEFT, false, firstRunnable);
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.TOPRIGHT, false, firstRunnable);
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.BOTLEFT, false, firstRunnable);
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.BOTRIGHT, false, firstRunnable);
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.TOPMID, false, () -> {
                     drawRect((int)position.x, (int)position.y,
                             (int)position.x+element.getWidth(), (int)(position.y+element.getHeight()*0.1f),
                             new Color(200, 200, 200, 100).getRGB());
-                    break;
-                case MIDLEFT:
+                });
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.MIDLEFT, false, () -> {
                     drawRect((int)position.x, (int)position.y,
                             (int)(position.x+element.getWidth()*0.1f), (int)position.y+element.getHeight(),
                             new Color(200, 200, 200, 100).getRGB());
-                    break;
-                case MIDRIGHT:
+                });
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.MIDRIGHT, false, () -> {
                     drawRect((int)(position.x+element.getWidth()*0.9f), (int)position.y,
                             (int)position.x+element.getWidth(), (int)position.y+element.getHeight(),
                             new Color(200, 200, 200, 100).getRGB());
-                    break;
-                case BOTMID:
+                });
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.BOTMID, false, () -> {
                     drawRect((int)position.x, (int)(position.y+element.getHeight()*0.9f),
                             (int)position.x+element.getWidth(), (int)position.y+element.getHeight(),
                             new Color(200, 200, 200, 100).getRGB());
-                    break;
-                case MIDMID:
+                });
+                anchorPointSwitch.addCase(MBAnchorPoint.AnchorPoint.MIDMID, false, () -> {
                     drawRect((int)(position.x+element.getWidth()*0.45f), (int)(position.y+element.getHeight()*0.45f),
                             (int)(position.x+element.getWidth()*0.55f), (int)(position.y+element.getHeight()*0.55f),
                             new Color(200, 200, 200, 100).getRGB());
-                    break;
-
-            }
+                });
+                return anchorPointSwitch;
+            });
 
             if(anchorPoint.inventoryRelative) {
                 Utils.drawStringCentered(GOLD+"Inv-Relative", Minecraft.getMinecraft().fontRendererObj,
