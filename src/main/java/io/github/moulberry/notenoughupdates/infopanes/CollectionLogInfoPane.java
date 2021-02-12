@@ -81,31 +81,22 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
             if(!manager.auctionManager.isVanillaItem(internalname) && !internalname.matches(mobRegex)) {
                 JsonObject item = manager.getItemInformation().get(internalname);
                 JsonArray lore = manager.getItemInformation().get(internalname).get("lore").getAsJsonArray();
-                switch(filterMode) {
-                    case FILTER_WEAPON:
-                        if(overlay.checkItemType(lore, "SWORD", "BOW", "WAND") < 0) continue;
-                        break;
-                    case FILTER_ARMOR:
-                        if(overlay.checkItemType(lore, "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS") < 0) continue;
-                        break;
-                    case FILTER_ACCESSORY:
-                        if(overlay.checkItemType(lore, "ACCESSORY") < 0) continue;
-                        break;
-                    case FILTER_PET:
-                        if(!internalname.matches(petRegex) || !item.get("displayname").getAsString().contains("[")) continue;
-                        break;
-                    case FILTER_DUNGEON:
+                if (filterMode == FILTER_WEAPON) {
+                    if (overlay.checkItemType(lore, "SWORD", "BOW", "WAND") < 0) continue;
+                } else if (filterMode == FILTER_ARMOR) {
+                    if (overlay.checkItemType(lore, "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS") < 0) continue;
+                } else if (filterMode == FILTER_ACCESSORY) {
+                    if(overlay.checkItemType(lore, "ACCESSORY") < 0) continue;
+                } else if (filterMode == FILTER_PET) {
+                    if (!internalname.matches(petRegex) || !item.get("displayname").getAsString().contains("[")) continue;
+                } else if (filterMode == FILTER_DUNGEON) {
                         if(Utils.checkItemType(lore, true, "DUNGEON") < 0) continue;
-                        break;
-                    case FILTER_SLAYER_ZOMBIE:
+                } else if (filterMode == FILTER_SLAYER_ZOMBIE) {
                         if(!item.has("slayer_req") || !item.get("slayer_req").getAsString().startsWith("ZOMBIE")) continue;
-                        break;
-                    case FILTER_SLAYER_WOLF:
+                } else if (filterMode == FILTER_SLAYER_WOLF) {
                         if(!item.has("slayer_req") || !item.get("slayer_req").getAsString().startsWith("WOLF")) continue;
-                        break;
-                    case FILTER_SLAYER_SPIDER:
+                } else if (filterMode == FILTER_SLAYER_SPIDER) {
                         if(!item.has("slayer_req") || !item.get("slayer_req").getAsString().startsWith("SPIDER")) continue;
-                        break;
                 }
                 items.add(internalname);
             }

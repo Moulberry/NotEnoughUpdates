@@ -12,6 +12,7 @@ import io.github.moulberry.notenoughupdates.overlays.*;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
 import org.lwjgl.util.vector.Vector2f;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,35 +44,27 @@ public class NEUConfig extends Config {
         }
         final String activeConfigCategoryF = activeConfigCategory;
 
-        switch (runnableId) {
-            case 0:
-                ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neumap");
-                return;
-            case 1:
-                editOverlay(activeConfigCategory, OverlayManager.miningOverlay, mining.overlayPosition);
-                return;
-            case 2:
-                Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
-                        NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarPosition,
-                        NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, 12, () -> {
-                }, () -> {
-                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
-                ));
-                return;
-            case 3:
-                editOverlay(activeConfigCategory, OverlayManager.farmingOverlay, skillOverlays.farmingPosition);
-                return;
-            case 4:
-                Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
-                        NotEnoughUpdates.INSTANCE.config.overlay.petInfoPosition,
-                        150, 22, () -> {
-                }, () -> {
-                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
-                ));
-                return;
-        }
+        String finalActiveConfigCategory = activeConfigCategory;
+        MoulberryKt.javaSwitch(runnableId, iSwitch -> {
+            iSwitch.addCase(0, false, () -> ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neumap"));
+            iSwitch.addCase(1, false, () -> editOverlay(finalActiveConfigCategory, OverlayManager.miningOverlay, mining.overlayPosition));
+            iSwitch.addCase(2, false, () -> Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
+                    NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarPosition,
+                    NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, 12, () -> {
+            }, () -> {
+            }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
+                    new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
+            )));
+            iSwitch.addCase(3, false, () -> editOverlay(finalActiveConfigCategory, OverlayManager.farmingOverlay, skillOverlays.farmingPosition));
+            iSwitch.addCase(4, false, () -> Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
+                    NotEnoughUpdates.INSTANCE.config.overlay.petInfoPosition,
+                    150, 22, () -> {
+            }, () -> {
+            }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
+                    new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
+            )));
+            return iSwitch;
+        });
     }
 
     @Expose

@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
-import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
@@ -20,13 +19,14 @@ import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector3f;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FairySouls {
 
@@ -303,35 +303,40 @@ public class FairySouls {
                         return;
                     }
                     String subcommand = args[0].toLowerCase();
-
-                    switch (subcommand) {
-                        case "help":
+                    AtomicBoolean t = new AtomicBoolean(false);
+                    MoulberryKt.javaSwitch(subcommand, commandSwitch -> {
+                        commandSwitch.addCase("help", false, () -> {
                             printHelp();
-                            return;
-                        case "on":
-                        case "enable":
+                            t.set(true);
+                        });
+                        Runnable on = () -> {
                             print(EnumChatFormatting.DARK_PURPLE+"Enabled fairy soul waypoints");
                             enabled = true;
-                            return;
-                        case "off":
-                        case "disable":
+                            t.set(true);
+                        };
+                        commandSwitch.addCase("on", false, on);
+                        commandSwitch.addCase("enable", false, on);
+                        Runnable off = () -> {
                             print(EnumChatFormatting.DARK_PURPLE+"Disabled fairy soul waypoints");
                             enabled = false;
-                            return;
-                        case "clear": {
-                                String location = SBInfo.getInstance().getLocation();
-                                if(currentSoulList == null || location == null) {
-                                    print(EnumChatFormatting.RED+"No fairy souls found in your current world");
-                                } else {
-                                    Set<Integer> found = foundSouls.computeIfAbsent(location, k -> new HashSet<>());
-                                    for(int i=0; i<currentSoulList.size(); i++) {
-                                        found.add(i);
-                                    }
-                                    print(EnumChatFormatting.DARK_PURPLE+"Marked all fairy souls as found");
+                            t.set(true);
+                        };
+                        commandSwitch.addCase("off", false, off);
+                        commandSwitch.addCase("disable", false, off);
+                        commandSwitch.addCase("clear", false, () -> {
+                            String location = SBInfo.getInstance().getLocation();
+                            if(currentSoulList == null || location == null) {
+                                print(EnumChatFormatting.RED+"No fairy souls found in your current world");
+                            } else {
+                                Set<Integer> found = foundSouls.computeIfAbsent(location, k -> new HashSet<>());
+                                for(int i=0; i<currentSoulList.size(); i++) {
+                                    found.add(i);
                                 }
+                                print(EnumChatFormatting.DARK_PURPLE+"Marked all fairy souls as found");
                             }
-                            return;
-                        case "unclear":
+                            t.set(true);
+                        });
+                        commandSwitch.addCase("unclear", false, () -> {
                             String location = SBInfo.getInstance().getLocation();
                             if(location == null) {
                                 print(EnumChatFormatting.RED+"No fairy souls found in your current world");
@@ -339,10 +344,14 @@ public class FairySouls {
                                 print(EnumChatFormatting.DARK_PURPLE+"Marked all fairy souls as not found");
                                 foundSouls.remove(location);
                             }
-                            return;
-                    }
+                            t.set(true);
+                        });
+                        return commandSwitch;
+                    });
 
-                    print(EnumChatFormatting.RED+"Unknown subcommand: " + subcommand);
+                    if (!t.get()) {
+                        print(EnumChatFormatting.RED + "Unknown subcommand: " + subcommand);
+                    }
                 }
             });
         }

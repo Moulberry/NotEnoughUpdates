@@ -18,6 +18,7 @@ import net.minecraft.network.play.client.C0DPacketCloseWindow;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
+import zone.nora.moulberry.MoulberryKt;
 
 import javax.swing.*;
 import java.io.*;
@@ -28,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -657,18 +659,16 @@ public class NEUManager {
                     JsonObject petInfoObject = gson.fromJson(petInfo, JsonObject.class);
                     internalname = petInfoObject.get("type").getAsString();
                     String tier = petInfoObject.get("tier").getAsString();
-                    switch(tier) {
-                        case "COMMON":
-                            internalname += ";0"; break;
-                        case "UNCOMMON":
-                            internalname += ";1"; break;
-                        case "RARE":
-                            internalname += ";2"; break;
-                        case "EPIC":
-                            internalname += ";3"; break;
-                        case "LEGENDARY":
-                            internalname += ";4"; break;
-                    }
+                    AtomicInteger i = new AtomicInteger(0);
+                    MoulberryKt.javaSwitch(tier, tierSwitch -> {
+                        tierSwitch.addCase("COMMON", false, () -> i.set(0));
+                        tierSwitch.addCase("UNCOMMON", false, () -> i.set(1));
+                        tierSwitch.addCase("RARE", false, () -> i.set(2));
+                        tierSwitch.addCase("EPIC", false, () -> i.set(3));
+                        tierSwitch.addCase("LEGENDARY", false, () -> i.set(4));
+                        return tierSwitch;
+                    });
+                    internalname += ";" + i.get();
                 }
             }
             if("ENCHANTED_BOOK".equals(internalname)) {
@@ -1273,15 +1273,14 @@ public class NEUManager {
                 if(petInfo.has("heldItem")) {
                     String heldItem = petInfo.get("heldItem").getAsString();
                     if(heldItem.equals("PET_ITEM_TIER_BOOST")) {
-                        switch(tier) {
-                            case "COMMON":
-                                tier = "UNCOMMON"; break;
-                            case "UNCOMMON":
-                                tier = "RARE"; break;
-                            case "RARE":
-                                tier = "EPIC"; break;
-                            case "EPIC":
-                                tier = "LEGENDARY"; break;
+                        if (tier.equals("COMMON")) {
+                            tier = "UNCOMMON";
+                        } else if (tier.equals("UNCOMMON")) {
+                            tier = "RARE";
+                        } else if (tier.equals("RARE")) {
+                            tier = "EPIC";
+                        } else if (tier.equals("EPIC")) {
+                            tier = "LEGENDARY";
                         }
                     }
                 }

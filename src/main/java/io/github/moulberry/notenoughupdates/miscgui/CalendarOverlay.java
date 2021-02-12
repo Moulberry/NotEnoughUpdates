@@ -34,11 +34,13 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import zone.nora.moulberry.MoulberryKt;
 
 import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -121,7 +123,7 @@ public class CalendarOverlay {
     }
 
     public long getTimeOffset(String time) {
-        long offset = 0;
+        AtomicLong offset = new AtomicLong();
 
         StringBuilder numS = new StringBuilder();
         for(int timeIndex=0; timeIndex<time.length(); timeIndex++) {
@@ -132,22 +134,19 @@ public class CalendarOverlay {
             } else {
                 try {
                     int num = Integer.parseInt(numS.toString());
-                    switch (c) {
-                        case 'd':
-                            offset += num * DAY; continue;
-                        case 'h':
-                            offset += num * HOUR; continue;
-                        case 'm':
-                            offset += num * MINUTE; continue;
-                        case 's':
-                            offset += num * SECOND; continue;
-                    }
+                    MoulberryKt.javaSwitch(c, cSwitch -> {
+                        cSwitch.addCase('d', false, () -> offset.addAndGet(num * DAY));
+                        cSwitch.addCase('h', false, () -> offset.addAndGet(num * HOUR));
+                        cSwitch.addCase('m', false, () -> offset.addAndGet(num * MINUTE));
+                        cSwitch.addCase('s', false, () -> offset.addAndGet(num * SECOND));
+                        return cSwitch;
+                    });
                 } catch(Exception ignored) {}
                 numS = new StringBuilder();
             }
         }
 
-        return offset;
+        return offset.get();
     }
 
     private static Pattern CALENDAR_PATTERN = Pattern.compile("([A-Za-z ]+), Year ([0-9]+)");

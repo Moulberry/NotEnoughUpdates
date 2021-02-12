@@ -7,6 +7,7 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.nbt.*;
 import net.minecraft.util.EnumChatFormatting;
 import org.apache.commons.lang3.StringUtils;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -267,42 +268,32 @@ public class PlayerStats {
         String fullset = getFullset(armor, -1);
 
         if(fullset != null) {
-            switch(fullset) {
-                case "LAPIS_ARMOR_":
-                    bonuses.addStat(HEALTH, 60);
-                    break;
-                case "EMERALD_ARMOR_":
-                    {
-                        int bonus = (int)Math.floor(Utils.getElementAsFloat(Utils.getElement(collectionInfo, "EMERALD"), 0)/3000);
-                        bonuses.addStat(HEALTH, bonus);
-                        bonuses.addStat(DEFENCE, bonus);
-                    }
-                    break;
-                case "FAIRY_":
-                    bonuses.addStat(HEALTH, Utils.getElementAsFloat(Utils.getElement(profile, "fairy_souls_collected"), 0));
-                    break;
-                case "SPEEDSTER_":
-                    bonuses.addStat(SPEED, 20);
-                    break;
-                case "YOUNG_DRAGON_":
-                    bonuses.addStat(SPEED, 70);
-                    break;
-                case "MASTIFF_":
-                    bonuses.addStat(HEALTH, 50*Math.round(stats.get(CRIT_DAMAGE)));
-                    break;
-                case "ANGLER_":
+            MoulberryKt.javaSwitch(fullset, armourSwitch -> {
+                armourSwitch.addCase("LAPIS_ARMOR_", false, () -> bonuses.addStat(HEALTH, 60));
+                armourSwitch.addCase("EMERALD_ARMOR", false, () -> {
+                    int bonus = (int)Math.floor(Utils.getElementAsFloat(Utils.getElement(collectionInfo, "EMERALD"), 0)/3000);
+                    bonuses.addStat(HEALTH, bonus);
+                    bonuses.addStat(DEFENCE, bonus);
+                });
+                armourSwitch.addCase("FAIRY_", false, () -> bonuses.addStat(HEALTH, Utils.getElementAsFloat(Utils.getElement(profile, "fairy_souls_collected"), 0)));
+                armourSwitch.addCase("SPEEDSTER_", false, () -> bonuses.addStat(SPEED, 20));
+                armourSwitch.addCase("YOUNG_DRAGON_", false, () -> bonuses.addStat(SPEED, 70));
+                armourSwitch.addCase("MASTIFF_", false, () -> bonuses.addStat(HEALTH, 50 * Math.round(stats.get(CRIT_DAMAGE))));
+                armourSwitch.addCase("ANGLER_", false, () -> {
                     bonuses.addStat(HEALTH, 10*(float)Math.floor(Utils.getElementAsFloat(Utils.getElement(skillInfo, "level_skill_fishing"), 0)));
                     bonuses.addStat(SEA_CREATURE_CHANCE, 4);
-                    break;
-                case "ARMOR_OF_MAGMA_":
+                });
+                armourSwitch.addCase("ARMOR_OF_MAGMA_", false, () -> {
                     int bonus = (int)Math.min(200, Math.floor(Utils.getElementAsFloat(Utils.getElement(profile, "stats.kills_magma_cube"), 0)/10));
                     bonuses.addStat(HEALTH, bonus);
                     bonuses.addStat(INTELLIGENCE, bonus);
-                case "OLD_DRAGON_":
+                });
+                armourSwitch.addCase("OLD_DRAGON_", false, () -> {
                     bonuses.addStat(HEALTH, 200);
                     bonuses.addStat(DEFENCE, 40);
-                    break;
-            }
+                });
+                return armourSwitch;
+            });
         }
 
         JsonElement chestplateElement = armor.get(2);
@@ -572,14 +563,12 @@ public class PlayerStats {
         String fullset = getFullset(armor, 3);
 
         if(fullset != null) {
-            switch(fullset) {
-                case "CHEAP_TUXEDO_":
-                    stats.statsJson.add(HEALTH, new JsonPrimitive(Math.min(75, stats.get(HEALTH))));
-                case "FANCY_TUXEDO_":
-                    stats.statsJson.add(HEALTH, new JsonPrimitive(Math.min(150, stats.get(HEALTH))));
-                case "ELEGANT_TUXEDO_":
-                    stats.statsJson.add(HEALTH, new JsonPrimitive(Math.min(250, stats.get(HEALTH))));
-            }
+            MoulberryKt.javaSwitch(fullset, armourSwitch -> {
+                armourSwitch.addCase("CHEAP_TUXEDO_", false, () -> stats.statsJson.add(HEALTH, new JsonPrimitive(Math.min(75, stats.get(HEALTH)))));
+                armourSwitch.addCase("FANCY_TUXEDO_", false, () -> stats.statsJson.add(HEALTH, new JsonPrimitive(Math.min(150, stats.get(HEALTH)))));
+                armourSwitch.addCase("ELEGANT_TUXEDO_", false, () -> stats.statsJson.add(HEALTH, new JsonPrimitive(Math.min(250, stats.get(HEALTH)))));
+                return armourSwitch;
+            });
         }
 
         for(Map.Entry<String, JsonElement> statEntry : stats.statsJson.entrySet()) {

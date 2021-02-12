@@ -7,10 +7,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Keyboard;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ItemPriceInformation {
 
@@ -37,7 +39,7 @@ public class ItemPriceInformation {
                     NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line6
             };
 
-            boolean added = false;
+            final AtomicBoolean added = new AtomicBoolean(false);
 
             boolean shiftPressed = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT);
 
@@ -49,71 +51,71 @@ public class ItemPriceInformation {
 
             //values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
             for(int lineId : lines) {
-                switch (lineId) {
-                    case 0:
-                        continue;
-                    case 1:
+                int stackMultiplier2 = stackMultiplier;
+                MoulberryKt.javaSwitch(lineId, lineSwitch -> {
+                    lineSwitch.addCase(1, false, () -> {
                         if(bazaarInfo.has("avg_buy")) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
                                 if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                                added = true;
+                                added.set(true);
                             }
-                            int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*stackMultiplier;
+                            int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()* stackMultiplier2;
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Buy: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
                         }
-                        break;
-                    case 2:
+                    });
+                    lineSwitch.addCase(2, false, () -> {
                         if(bazaarInfo.has("avg_sell")) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
                                 if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                                added = true;
+                                added.set(true);
                             }
-                            int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*stackMultiplier;
+                            int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*stackMultiplier2;
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Sell: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
                         }
-                        break;
-                    case 3:
+                    });
+                    lineSwitch.addCase(3, false, () -> {
                         if(bazaarInfo.has("curr_buy")) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
                                 if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                                added = true;
+                                added.set(true);
                             }
-                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*stackMultiplier;
+                            int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*stackMultiplier2;
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Buy: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
                         }
-                        break;
-                    case 4:
+                    });
+                    lineSwitch.addCase(4, false, () -> {
                         if(bazaarInfo.has("curr_sell")) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
                                 if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
-                                added = true;
+                                added.set(true);
                             }
-                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*stackMultiplier;
+                            int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*stackMultiplier2;
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Bazaar Insta-Sell: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
                         }
-                        break;
-                    case 5:
+                    });
+                    lineSwitch.addCase(5, false, () -> {
                         if(craftCost.fromRecipe) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
-                                added = true;
+                                added.set(true);
                             }
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
                         }
-                        break;
-                }
+                    });
+                    return lineSwitch;
+                });
             }
 
-            return added;
+            return added.get();
         } else if(auctionItem) {
             int[] lines = {
                 NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line1,
@@ -123,30 +125,26 @@ public class ItemPriceInformation {
                 NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line5,
                 NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line6
             };
-
-            boolean added = false;
+            final AtomicBoolean added = new AtomicBoolean(false);
 
             for(int lineId : lines) {
-                switch (lineId) {
-                    case 0:
-                        continue;
-                    case 1:
+                MoulberryKt.javaSwitch(lineId, lineSwitch -> {
+                    lineSwitch.addCase(1, false, () -> {
                         if(lowestBin > 0) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
-                                added = true;
+                                added.set(true);
                             }
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Lowest BIN: " +
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
                         }
-                        break;
-                    case 2:
+                    });
+                    lineSwitch.addCase(2, false, () -> {
                         if(auctionInfo != null) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
-                                added = true;
+                                added.set(true);
                             }
-
                             if(auctionInfo.has("clean_price")) {
                                 tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price (Clean): "+ EnumChatFormatting.GOLD+
                                         EnumChatFormatting.BOLD+
@@ -156,14 +154,13 @@ public class ItemPriceInformation {
                                 tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Price: "+ EnumChatFormatting.GOLD+
                                         EnumChatFormatting.BOLD+format.format(auctionPrice)+" coins");
                             }
-
                         }
-                        break;
-                    case 3:
+                    });
+                    lineSwitch.addCase(3, false, () -> {
                         if(auctionInfo != null) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
-                                added = true;
+                                added.set(true);
                             }
                             if(auctionInfo.has("clean_price")) {
                                 tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AH Sales (Clean): "+
@@ -175,32 +172,32 @@ public class ItemPriceInformation {
                                         format.format(auctionInfo.get("sales").getAsFloat())+" sales/day");
                             }
                         }
-                        break;
-                    case 4:
+                    });
+                    lineSwitch.addCase(4, false, () -> {
                         if(craftCost.fromRecipe) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
-                                added = true;
+                                added.set(true);
                             }
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Raw Craft Cost: "+
-                                        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
+                                    EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
                         }
-                        break;
-                    case 5:
+                    });
+                    lineSwitch.addCase(5, false, () -> {
                         if(lowestBinAvg > 0) {
-                            if(!added) {
+                            if(!added.get()) {
                                 tooltip.add("");
-                                added = true;
+                                added.set(true);
                             }
                             tooltip.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"AVG Lowest BIN: "+
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBinAvg)+" coins");
                         }
-                        break;
-                    case 6:
-                        if(Constants.ESSENCECOSTS == null) break;
+                    });
+                    lineSwitch.addCase(6, false, () -> {
+                        if(Constants.ESSENCECOSTS == null) return;
                         JsonObject essenceCosts = Constants.ESSENCECOSTS;
                         if(!essenceCosts.has(internalname)) {
-                            break;
+                            return;
                         }
                         JsonObject itemCosts = essenceCosts.get(internalname).getAsJsonObject();
                         String essenceType = itemCosts.get("type").getAsString();
@@ -233,11 +230,12 @@ public class ItemPriceInformation {
                                     EnumChatFormatting.GOLD+star+EnumChatFormatting.YELLOW+EnumChatFormatting.BOLD+": " +
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+upgradeCost+" "+essenceType);
                         }
-                        break;
-                }
+                    });
+                    return lineSwitch;
+                });
             }
 
-            return added;
+            return added.get();
         }
 
         return false;

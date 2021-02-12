@@ -48,6 +48,7 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Vector2f;
+import zone.nora.moulberry.MoulberryKt;
 
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
@@ -573,17 +574,12 @@ public class NEUOverlay extends Gui {
 
             String internalname = item.get("internalname").getAsString();
             String name = item.get("displayname").getAsString();
-            switch(item.get("infoType").getAsString()) {
-                case "WIKI_URL":
-                    displayInformationPane(HTMLInfoPane.createFromWikiUrl(this, manager, name, loreS));
-                    return;
-                case "WIKI":
-                    displayInformationPane(HTMLInfoPane.createFromWiki(this, manager, name, internalname, loreS));
-                    return;
-                case "HTML":
-                    displayInformationPane(new HTMLInfoPane(this, manager, name, internalname, loreS));
-                    return;
-            }
+            MoulberryKt.javaSwitch(item.get("infoType").getAsString(), infoSwitch -> {
+                infoSwitch.addCase("WIKI_URL", false, () -> displayInformationPane(HTMLInfoPane.createFromWikiUrl(this, manager, name, loreS)));
+                infoSwitch.addCase("WIKI", false, () -> displayInformationPane(HTMLInfoPane.createFromWiki(this, manager, name, internalname, loreS)));
+                infoSwitch.addCase("HTML", false, () -> displayInformationPane(new HTMLInfoPane(this, manager, name, internalname, loreS)));
+                return infoSwitch;
+            });
             displayInformationPane(new TextInfoPane(this, manager, name, loreS));
         }
     }
@@ -1199,30 +1195,23 @@ public class NEUOverlay extends Gui {
                     if(item != null) searchedItems.add(item);
                 }
             }
-            switch(textField.getText().toLowerCase().trim()) {
-                case "nullzee":
-                    searchedItems.add(CustomItems.NULLZEE);
-                    break;
-                case "rune":
-                    searchedItems.add(CustomItems.RUNE);
-                    break;
-                case "2b2t":
-                    searchedItems.add(CustomItems.TWOBEETWOTEE);
-                    break;
-                case "ducttape":
-                case "ducttapedigger":
-                    searchedItems.add(CustomItems.DUCTTAPE);
-                    break;
-                case "thirtyvirus":
-                    searchedItems.add(manager.getItemInformation().get("SPIKED_BAIT"));
-                    break;
-                case "leocthl":
-                    searchedItems.add(CustomItems.LEOCTHL);
-                    break;
-                case "spinaxx":
-                    searchedItems.add(CustomItems.SPINAXX);
-                    break;
-            }
+            AtomicReference<JsonObject> atomicJson = new AtomicReference<>(null);
+            MoulberryKt.javaSwitch(textField.getText().toLowerCase().trim(), textSwitch -> {
+                textSwitch.addCase("nullzee", false, () -> atomicJson.set(CustomItems.NULLZEE));
+                textSwitch.addCase("rune", false, () -> atomicJson.set(CustomItems.RUNE));
+                textSwitch.addCase("2b2t", false, () -> atomicJson.set(CustomItems.TWOBEETWOTEE));
+                textSwitch.addCase("ducttape", false, () -> atomicJson.set(CustomItems.DUCTTAPE));
+                textSwitch.addCase("ducttapedigger", false, () -> atomicJson.set(CustomItems.DUCTTAPE));
+
+                // lol i like this one.
+                textSwitch.addCase("thirtyvirus", false, () -> atomicJson.set(manager.getItemInformation().get("SPIKED_BAIT")));
+
+                textSwitch.addCase("leocthl", false, () -> atomicJson.set(CustomItems.LEOCTHL));
+                textSwitch.addCase("spinaxx", false, () -> atomicJson.set(CustomItems.SPINAXX));
+                textSwitch.addCase("nora", false, () -> atomicJson.set(CustomItems.NORA));
+                textSwitch.addCase("switch", false, () -> atomicJson.set(CustomItems.NORA));
+                return textSwitch;
+            });
 
             this.searchedItems = searchedItems;
             this.searchedItemsSubgroup = searchedItemsSubgroup;
