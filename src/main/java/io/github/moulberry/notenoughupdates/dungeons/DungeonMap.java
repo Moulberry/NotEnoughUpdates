@@ -1382,6 +1382,7 @@ public class DungeonMap {
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
+        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
             if(!NotEnoughUpdates.INSTANCE.config.dungeonMap.dmEnable) return;
 

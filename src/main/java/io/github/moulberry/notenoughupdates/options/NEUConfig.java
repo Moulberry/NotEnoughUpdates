@@ -63,13 +63,14 @@ public class NEUConfig extends Config {
                 editOverlay(activeConfigCategory, OverlayManager.farmingOverlay, skillOverlays.farmingPosition);
                 return;
             case 4:
-                Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
-                        NotEnoughUpdates.INSTANCE.config.overlay.petInfoPosition,
+                editOverlay(activeConfigCategory, OverlayManager.petInfoOverlay, petOverlay.petInfoPosition);
+                /*Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
+                        NotEnoughUpdates.INSTANCE.config.petOverlay.petInfoPosition,
                         150, 22, () -> {
                 }, () -> {
                 }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
                         new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
-                ));
+                ));*/
                 return;
         }
     }
@@ -197,10 +198,10 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Overlays",
-            desc = "Overlays"
+            name = "Pet Overlay",
+            desc = "Pet Overlay"
     )
-    public Overlay overlay = new Overlay();
+    public PetOverlay petOverlay = new PetOverlay();
 
     @Expose
     @Category(
@@ -308,11 +309,13 @@ public class NEUConfig extends Config {
 
         @Expose
         @ConfigOption(
-                name = "Commas in Damage Numbers",
-                desc = "Add a comma to damage number indicators to make it more readable"
+                name = "Damage Indicator Style",
+                desc = "Change the style of Skyblock damage indicators to be easier to read"
         )
-        @ConfigEditorBoolean
-        public boolean damageCommas = true;
+        @ConfigEditorDropdown(
+                values = {"Off", "Commas", "Shortened"}
+        )
+        public int damageCommas = 1;
     }
 
     public static class Notifications {
@@ -1136,10 +1139,10 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
 
-        public boolean enableMonkeyCheck = false;
+        public boolean enableMonkeyCheck = true;
     }
 
-    public static class Overlay {
+    public static class PetOverlay {
         @Expose
         @ConfigOption(
                 name = "Enable Pet Info Overlay",
@@ -1157,7 +1160,33 @@ public class NEUConfig extends Config {
                 runnableId = 4,
                 buttonText = "Edit"
         )
-        public Position petInfoPosition = new Position(0, 15);
+        public Position petInfoPosition = new Position(-1, -1);
+
+        @Expose
+        @ConfigOption(
+                name = "Pet Overlay Text",
+                desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
+                        "\u00a7rEquip a pet to show the overlay"
+        )
+        @ConfigEditorDraggableList(
+                exampleText = {"\u00a7a[Lvl 37] \u00a7fRock",
+                        "\u00a7b2,312.9/2,700\u00a7e (85.7%)",
+                        "\u00a7b2.3k/2.7k\u00a7e (85.7%)",
+                        "\u00a7bXP/h: \u00a7e27,209",
+                        "\u00a7bTotal XP: \u00a7e30,597.9",
+                        "\u00a7bHeld Item: \u00a7fMining Exp Boost",
+                        "\u00a7bUntil L38: \u00a7e5m13s",
+                        "\u00a7bUntil L100: \u00a7e2d13h"}
+        )
+        public List<Integer> petOverlayText = new ArrayList<>(Arrays.asList(0, 2, 3, 6, 4));
+
+        @Expose
+        @ConfigOption(
+                name = "Pet Overlay Icon",
+                desc = "Show the icon of the pet you have equiped in the overlay"
+        )
+        @ConfigEditorBoolean
+        public boolean petOverlayIcon = true;
 
         @Expose
         @ConfigOption(
@@ -1165,7 +1194,7 @@ public class NEUConfig extends Config {
                 desc = "Change the style of the Pet Info overlay"
         )
         @ConfigEditorDropdown(
-                values = {"Background", "No Shadow", "Shadow Only", "Full Shadow", "With Shadow"}
+                values = {"Background", "No Shadow", "Shadow Only", "Full Shadow"}
         )
         public int petInfoOverlayStyle = 0;
     }
@@ -1222,7 +1251,7 @@ public class NEUConfig extends Config {
         @Expose
         @ConfigOption(
                 name = "Enable Search GUI",
-                desc = "Use the advanced search GUI with autocomplete and history instead of the normal sign GUI"
+                desc = "Use the advanced search GUI with autocomplete and history instead of the normal sign GUI\n\u00a7eStar Selection Texture: Johnny#4567"
         )
         @ConfigEditorBoolean
         public boolean enableSearchOverlay = true;

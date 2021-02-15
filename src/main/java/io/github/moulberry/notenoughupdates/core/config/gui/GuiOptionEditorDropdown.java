@@ -19,6 +19,7 @@ public class GuiOptionEditorDropdown extends GuiOptionEditor {
 
     public GuiOptionEditorDropdown(ConfigProcessor.ProcessedOption option, String[] values, int selected, boolean useOrdinal) {
         super(option);
+        if(selected >= values.length) selected = values.length;
         this.values = values;
         this.selected = selected;
         this.useOrdinal = useOrdinal;

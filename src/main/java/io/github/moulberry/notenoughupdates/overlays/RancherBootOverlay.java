@@ -30,6 +30,7 @@ public class RancherBootOverlay {
     private static boolean textFieldClicked = false;
 
     public static boolean shouldReplace() {
+        if(true) return false;
         //if(!NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.enableSearchOverlay) return false;
 
         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiEditSign)) return false;

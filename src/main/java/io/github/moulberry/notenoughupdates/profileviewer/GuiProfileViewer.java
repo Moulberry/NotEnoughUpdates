@@ -1015,23 +1015,24 @@ public class GuiProfileViewer extends GuiScreen {
         public float currentLevelRequirement;
         public float maxXP;
         public float levelPercentage;
+        public float levelXp;
+        public float totalXp;
     }
 
     public static PetLevel getPetLevel(JsonArray levels, int offset, float exp) {
         float xpTotal = 0;
         float level = 1;
         float currentLevelRequirement = 0;
-        float remainingToNextLevel = 0;
+        float currentLevelProgress = 0;
 
         boolean addLevel = true;
 
         for(int i=offset; i<offset+99; i++) {
-
             if(addLevel) {
                 currentLevelRequirement = levels.get(i).getAsFloat();
                 xpTotal += currentLevelRequirement;
                 if(xpTotal > exp) {
-                    remainingToNextLevel = (exp-(xpTotal-currentLevelRequirement))/currentLevelRequirement;
+                    currentLevelProgress = (exp-(xpTotal-currentLevelRequirement));
                     addLevel = false;
                 } else {
                     level += 1;
@@ -1041,7 +1042,7 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
 
-        level += remainingToNextLevel;
+        level += currentLevelProgress/currentLevelRequirement;
         if(level <= 0) {
             level = 1;
         } else if(level > 100) {
@@ -1051,7 +1052,9 @@ public class GuiProfileViewer extends GuiScreen {
         levelObj.level = level;
         levelObj.currentLevelRequirement = currentLevelRequirement;
         levelObj.maxXP = xpTotal;
-        levelObj.levelPercentage = remainingToNextLevel;
+        levelObj.levelPercentage = currentLevelProgress/currentLevelRequirement;
+        levelObj.levelXp = currentLevelProgress;
+        levelObj.totalXp = exp;
         return levelObj;
     }
 

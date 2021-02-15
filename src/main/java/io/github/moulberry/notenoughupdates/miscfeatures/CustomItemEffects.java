@@ -41,7 +41,7 @@ public class CustomItemEffects {
 
     public static final CustomItemEffects INSTANCE = new CustomItemEffects();
 
-    private static final int MAX_BUILDERS_BLOCKS = 164;
+    private static final int MAX_BUILDERS_BLOCKS = 241;
 
     public long aoteUseMillis = 0;
 
@@ -389,7 +389,7 @@ public class CustomItemEffects {
                 }
             } else if(NotEnoughUpdates.INSTANCE.config.builderWand.enableWandOverlay) {
                 if(heldInternal.equals("BUILDERS_WAND")) {
-                    int maxBlocks = 164;
+                    int maxBlocks = MAX_BUILDERS_BLOCKS;
                     if (event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                         IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos().offset(event.target.sideHit, 1));
                         if(hover.getBlock() == Blocks.air) {

@@ -53,13 +53,13 @@ public class ItemCooldowns {
     }
 
     public static long getTreecapCooldownWithPet(){
-        if (NotEnoughUpdates.INSTANCE.config.treecap.enableMonkeyCheck && PetInfo.currentPet != null) {
-            PetInfo.pet pet = PetInfo.currentPet;
+        if (NotEnoughUpdates.INSTANCE.config.treecap.enableMonkeyCheck && PetInfoOverlay.currentPet != null) {
+            PetInfoOverlay.Pet pet = PetInfoOverlay.currentPet;
             if (pet.petLevel != null &&
                 pet.petType.equalsIgnoreCase("monkey") &&
-                pet.rarity.equals(PetInfo.Rarity.LEGENDARY)
+                pet.rarity.equals(PetInfoOverlay.Rarity.LEGENDARY)
             ) {
-                return 2000 - (int) (2000 * (0.005 * (int) PetInfo.currentPet.petLevel.level));
+                return 2000 - (int) (2000 * (0.005 * (int) PetInfoOverlay.currentPet.petLevel.level));
             }
         }
         return 2000;

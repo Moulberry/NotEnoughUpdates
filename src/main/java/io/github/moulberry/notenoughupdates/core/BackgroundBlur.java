@@ -80,6 +80,7 @@ public class BackgroundBlur {
             }
             remove.remove((float)NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor);
 
+            lastBlurUse.keySet().removeAll(remove);
             blurOutput.keySet().removeAll(remove);
 
             requestedBlurs.clear();
@@ -165,11 +166,10 @@ public class BackgroundBlur {
                 //Corrupted shader?
                 return;
             }
-            if(blurFactor != lastBgBlurFactor) {
-                blurShaderHorz.getShaderManager().getShaderUniform("Radius").set(blurFactor);
-                blurShaderVert.getShaderManager().getShaderUniform("Radius").set(blurFactor);
-                lastBgBlurFactor = blurFactor;
-            }
+
+            blurShaderHorz.getShaderManager().getShaderUniform("Radius").set(blurFactor);
+            blurShaderVert.getShaderManager().getShaderUniform("Radius").set(blurFactor);
+
             GL11.glPushMatrix();
             /*GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, Minecraft.getMinecraft().getFramebuffer().framebufferObject);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, blurOutputVert.framebufferObject);
@@ -192,6 +192,7 @@ public class BackgroundBlur {
      */
     public static void renderBlurredBackground(float blurStrength, int screenWidth, int screenHeight,
                                                int x, int y, int blurWidth, int blurHeight) {
+        if(blurStrength < 0.5) return;
         requestedBlurs.add(blurStrength);
 
         if(!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
@@ -200,6 +201,7 @@ public class BackgroundBlur {
 
         Framebuffer fb = blurOutput.get(blurStrength);
         if(fb == null) {
+            System.out.println("Blur not found:"+blurStrength);
             fb = blurOutput.values().iterator().next();
         }
 

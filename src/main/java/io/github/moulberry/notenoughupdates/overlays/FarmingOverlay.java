@@ -23,6 +23,7 @@ public class FarmingOverlay extends TextOverlay {
     private long lastUpdate = -1;
     private int counterLast = -1;
     private int counter = -1;
+    private boolean dicerHeld = false;
     private float cropsPerSecondLast = 0;
     private float cropsPerSecond = 0;
     private LinkedList<Integer> counterQueue = new LinkedList<>();
@@ -86,6 +87,9 @@ public class FarmingOverlay extends TextOverlay {
         } else {
             skillType = "Farming";
         }
+        if(internalname != null && (internalname.equals("MELON_DICER") || internalname.equals("PUMPKIN_DICER"))) {
+            dicerHeld = true;
+        }
 
         skillInfoLast = skillInfo;
         skillInfo = XPInformation.getInstance().getSkillInfo(skillType);
@@ -97,7 +101,7 @@ public class FarmingOverlay extends TextOverlay {
 
                 if(delta > 0 && delta < 1000) {
                     xpGainQueue.add(0, delta);
-                    while (xpGainQueue.size() > 120) {
+                    while (xpGainQueue.size() > 20) {
                         xpGainQueue.removeLast();
                     }
 
@@ -130,7 +134,7 @@ public class FarmingOverlay extends TextOverlay {
             cropsPerSecond = (first - last)/3f;
         }
 
-        if(counter != -1) {
+        if(counter != -1 || dicerHeld) {
             overlayStrings = new ArrayList<>();
         } else {
             overlayStrings = null;
@@ -142,25 +146,30 @@ public class FarmingOverlay extends TextOverlay {
     public void updateFrequent() {
         super.updateFrequent();
 
-        if(counter < 0) {
+        if(counter < 0 && !dicerHeld) {
             overlayStrings = null;
         } else {
             HashMap<Integer, String> lineMap = new HashMap<>();
 
             overlayStrings = new ArrayList<>();
 
-            int counterInterp = (int)interp(counter, counterLast);
-
             NumberFormat format = NumberFormat.getIntegerInstance();
-            lineMap.put(0, EnumChatFormatting.AQUA+"Counter: "+EnumChatFormatting.YELLOW+format.format(counterInterp));
 
-            if(cropsPerSecondLast == cropsPerSecond && cropsPerSecond <= 0) {
-                lineMap.put(1, EnumChatFormatting.AQUA+"Crops/m: "+EnumChatFormatting.YELLOW+"N/A");
-            } else {
-                float cpsInterp = interp(cropsPerSecond, cropsPerSecondLast);
+            if(counter >= 0) {
+                int counterInterp = (int)interp(counter, counterLast);
 
-                lineMap.put(1, EnumChatFormatting.AQUA+"Crops/m: "+EnumChatFormatting.YELLOW+
-                        String.format("%.2f", cpsInterp*60));
+                lineMap.put(0, EnumChatFormatting.AQUA+"Counter: "+EnumChatFormatting.YELLOW+format.format(counterInterp));
+            }
+
+            if(counter >= 0) {
+                if(cropsPerSecondLast == cropsPerSecond && cropsPerSecond <= 0) {
+                    lineMap.put(1, EnumChatFormatting.AQUA+"Crops/m: "+EnumChatFormatting.YELLOW+"N/A");
+                } else {
+                    float cpsInterp = interp(cropsPerSecond, cropsPerSecondLast);
+
+                    lineMap.put(1, EnumChatFormatting.AQUA+"Crops/m: "+EnumChatFormatting.YELLOW+
+                            String.format("%.2f", cpsInterp*60));
+                }
             }
 
             float xpInterp = xpGainHour;
@@ -237,7 +246,7 @@ public class FarmingOverlay extends TextOverlay {
                     String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u1D52");
 
             for(int strIndex : NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingText) {
-                if(lineMap.containsKey(strIndex)) {
+                if(lineMap.get(strIndex) != null) {
                     overlayStrings.add(lineMap.get(strIndex));
                 }
             }

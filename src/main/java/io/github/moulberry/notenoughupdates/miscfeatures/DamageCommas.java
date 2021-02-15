@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -13,12 +14,14 @@ public class DamageCommas {
 
     private static final HashMap<Integer, ChatComponentText> replacementMap = new HashMap<>();
 
+    private static final EnumChatFormatting[] colours = {EnumChatFormatting.RED, EnumChatFormatting.GOLD, EnumChatFormatting.YELLOW, EnumChatFormatting.WHITE};
+
     public static void tick() {
         replacementMap.clear();
     }
 
     public static IChatComponent replaceName(IChatComponent name) {
-        if(!NotEnoughUpdates.INSTANCE.config.misc.damageCommas) return name;
+        if(NotEnoughUpdates.INSTANCE.config.misc.damageCommas == 0) return name;
 
         String formatted = name.getFormattedText();
         int hashCode = formatted.hashCode();
@@ -31,6 +34,37 @@ public class DamageCommas {
 
         if(formatted.length() >= 7 && formatted.startsWith("\u00A7f\u2727") &&
                 formatted.endsWith("\u2727\u00a7r")) {
+
+            if(NotEnoughUpdates.INSTANCE.config.misc.damageCommas == 2) {
+                String numbers = Utils.cleanColour(formatted.substring(3, formatted.length()-3)).trim().replaceAll("[^0-9]", "");
+                try {
+                    int damage = Integer.parseInt(numbers);
+
+                    String damageString;
+                    if(damage > 999) {
+                        damageString = Utils.shortNumberFormat(damage, 0);
+                    } else {
+                        damageString = NumberFormat.getIntegerInstance().format(damage);
+                    }
+
+                    StringBuilder colouredString = new StringBuilder();
+                    int colourIndex = 0;
+                    for(int i=0; i<damageString.length(); i++) {
+                        int index = damageString.length() - 1 - i;
+                        char c = damageString.charAt(index);
+                        if(c >= '0' && c <= '9') {
+                            colouredString.insert(0, c);
+                            colouredString.insert(0, colours[colourIndex++ % colours.length]);
+                        } else {
+                            colouredString.insert(0, c);
+                        }
+                    }
+
+                    ChatComponentText ret = new ChatComponentText("\u00A7f\u2727"+colouredString+"\u00a7r\u2727\u00a7r");
+                    replacementMap.put(hashCode, ret);
+                    return ret;
+                } catch(NumberFormatException ignored) {}
+            }
 
             StringBuilder builder = new StringBuilder();
             boolean numLast = false;
@@ -81,7 +115,12 @@ public class DamageCommas {
             try {
                 int damage = Integer.parseInt(damageS);
 
-                String damageFormatted = NumberFormat.getIntegerInstance().format(damage);
+                String damageFormatted;
+                if(NotEnoughUpdates.INSTANCE.config.misc.damageCommas == 2 && damage > 999) {
+                    damageFormatted = Utils.shortNumberFormat(damage, 0);
+                } else {
+                    damageFormatted = NumberFormat.getIntegerInstance().format(damage);
+                }
 
                 ChatComponentText ret = new ChatComponentText(EnumChatFormatting.GRAY+damageFormatted+EnumChatFormatting.RESET);
                 replacementMap.put(hashCode, ret);

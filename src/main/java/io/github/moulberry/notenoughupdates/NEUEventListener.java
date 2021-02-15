@@ -169,6 +169,10 @@ public class NEUEventListener {
             } else {
                 itemPreloader.shutdown();
             }
+
+            for(TextOverlay overlay : OverlayManager.textOverlays) {
+                overlay.shouldUpdateFrequent = true;
+            }
         }
 
         boolean longUpdate = false;
@@ -183,9 +187,6 @@ public class NEUEventListener {
         DungeonWin.tick();
         FlyFix.tick();
 
-        for(TextOverlay overlay : OverlayManager.textOverlays) {
-            overlay.shouldUpdateFrequent = true;
-        }
 
         if(longUpdate) {
             /*for(Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {
@@ -204,11 +205,11 @@ public class NEUEventListener {
             ProfileApiSyncer.getInstance().tick();
             DamageCommas.tick();
             BackgroundBlur.markDirty();
-            if(neu.config.overlay.enablePetInfo || neu.config.treecap.enableMonkeyCheck || neu.config.notifications.showWrongPetMsg){
-                PetInfo.longTick();
-            }
-            for(TextOverlay overlay : OverlayManager.textOverlays) {
-                overlay.tick();
+
+            if(neu.hasSkyblockScoreboard()) {
+                for(TextOverlay overlay : OverlayManager.textOverlays) {
+                    overlay.tick();
+                }
             }
             if(TradeWindow.hypixelTradeWindowActive()) {
                 for(int i=0; i<16; i++) {
@@ -416,7 +417,7 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onRenderGameOverlayPost(RenderGameOverlayEvent.Post event) {
         long timeRemaining = 15000 - (System.currentTimeMillis() - notificationDisplayMillis);
-        if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
+        if(neu.hasSkyblockScoreboard() && event.type == RenderGameOverlayEvent.ElementType.ALL) {
             DungeonWin.render(event.partialTicks);
             for(TextOverlay overlay : OverlayManager.textOverlays) {
                 if(OverlayManager.dontRenderOverlay != null && OverlayManager.dontRenderOverlay.isAssignableFrom(overlay.getClass())) {
@@ -470,7 +471,8 @@ public class NEUEventListener {
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper &&
+        if((Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper ||
+                Minecraft.getMinecraft().currentScreen instanceof GuiItemRecipe) &&
                 event.gui == null && !(Keyboard.getEventKeyState() && Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) &&
                 System.currentTimeMillis() - NotEnoughUpdates.INSTANCE.lastOpenedGui < 500) {
             NotEnoughUpdates.INSTANCE.lastOpenedGui = 0;

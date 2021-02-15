@@ -7,6 +7,7 @@ import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
 import io.github.moulberry.notenoughupdates.mixins.GuiEditSignAccessor;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -33,12 +34,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class AuctionSearchOverlay {
 
-    private static final ResourceLocation SEARCH_OVERLAY_TEXTURE = new ResourceLocation("notenoughupdates:ah_search_overlay.png");
+    private static final ResourceLocation SEARCH_OVERLAY_TEXTURE = new ResourceLocation("notenoughupdates:auc_search/ah_search_overlay.png");
+    private static final ResourceLocation STAR = new ResourceLocation("notenoughupdates:auc_search/star.png");
+    private static final ResourceLocation STAR_BOARD = new ResourceLocation("notenoughupdates:auc_search/star_board.png");
 
     private static GuiElementTextField textField = new GuiElementTextField("", 200, 20, 0);
     private static boolean searchFieldClicked = false;
     private static String searchString = "";
+    private static String searchStringExtra = "";
     private static Splitter SPACE_SPLITTER = Splitter.on(" ").omitEmptyStrings().trimResults();
+
+    private static int selectedStars = 0;
+    private static boolean atLeast = true;
 
     private static final int AUTOCOMPLETE_HEIGHT = 118;
 
@@ -103,7 +110,26 @@ public class AuctionSearchOverlay {
         }
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(SEARCH_OVERLAY_TEXTURE);
+        GlStateManager.color(1, 1, 1, 1);
         Utils.drawTexturedRect(width/2-100, topY-1, 203, h, 0, 203/512f, 0, h/256f, GL11.GL_NEAREST);
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(STAR_BOARD);
+        Utils.drawTexturedRect(width/2+105, topY+27, 55, 13, GL11.GL_NEAREST);
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(STAR);
+        GlStateManager.color(1, 1, 1, 1);
+        int stars = atLeast && selectedStars > 0 ? 5 : selectedStars;
+        for(int i=0; i<stars; i++) {
+            if(i >= selectedStars) {
+                GlStateManager.color(1, 1, 1, 0.3f);
+            }
+            Utils.drawTexturedRect(width/2+108+10*i, topY+29, 9, 10, GL11.GL_NEAREST);
+        }
+
+        Gui.drawRect(width/2+106, topY+42, width/2+115, topY+51, 0xffffffff);
+        Gui.drawRect(width/2+107, topY+43, width/2+114, topY+50, 0xff000000);
+        if(atLeast) Gui.drawRect(width/2+108, topY+44, width/2+113, topY+49, 0xffffffff);
+        Minecraft.getMinecraft().fontRendererObj.drawString("At Least?", width/2+117, topY+43, 0xffffff);
 
         Minecraft.getMinecraft().fontRendererObj.drawString("Enter Query:", width/2-100, topY-10, 0xdddddd, true);
 
@@ -168,12 +194,25 @@ public class AuctionSearchOverlay {
     }
 
     public static void close() {
+        if(NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.keepPreviousSearch) {
+            search();
+        } else {
+            synchronized(autocompletedItems) {
+                autocompletedItems.clear();
+            }
+        }
+
+
         TileEntitySign tes = ((GuiEditSignAccessor)Minecraft.getMinecraft().currentScreen).getTileSign();
 
-        if(searchString.length() <= 15) {
-            tes.signText[0] = new ChatComponentText(searchString.substring(0, Math.min(searchString.length(), 15)));
+        String search = searchString.trim();
+        if(searchStringExtra != null && !searchStringExtra.isEmpty()) {
+            search += " " + searchStringExtra.trim();
+        }
+        if(search.length() <= 15) {
+            tes.signText[0] = new ChatComponentText(search.substring(0, Math.min(search.length(), 15)));
         } else {
-            List<String> words = SPACE_SPLITTER.splitToList(searchString);
+            List<String> words = SPACE_SPLITTER.splitToList(search);
 
             StringBuilder line0 = new StringBuilder();
             StringBuilder line1 = new StringBuilder();
@@ -233,67 +272,74 @@ public class AuctionSearchOverlay {
     private static ExecutorService searchES = Executors.newSingleThreadExecutor();
     private static AtomicInteger searchId = new AtomicInteger(0);
 
+    public static void search() {
+        final int thisSearchId = searchId.incrementAndGet();
+
+        searchES.submit(() -> {
+            if(thisSearchId != searchId.get()) return;
+
+            List<String> title = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.search("title:"+searchString.trim()));
+
+            if(thisSearchId != searchId.get()) return;
+
+            if(!searchString.trim().contains(" ")) {
+                StringBuilder sb = new StringBuilder();
+                for(char c : searchString.toCharArray()) {
+                    sb.append(c).append(" ");
+                }
+                title.addAll(NotEnoughUpdates.INSTANCE.manager.search("title:"+sb.toString().trim()));
+            }
+
+            if(thisSearchId != searchId.get()) return;
+
+            List<String> desc = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.search("desc:"+searchString.trim()));
+            desc.removeAll(title);
+
+            if(thisSearchId != searchId.get()) return;
+
+            Set<String> auctionableItems = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBinKeySet();
+            auctionableItems.addAll(NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfoKeySet());
+
+            if(!auctionableItems.isEmpty()) {
+                title.retainAll(auctionableItems);
+                desc.retainAll(auctionableItems);
+
+                title.sort(salesComparator);
+                desc.sort(salesComparator);
+            } else {
+                Set<String> bazaarItems = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarKeySet();
+
+                title.removeAll(bazaarItems);
+                desc.removeAll(bazaarItems);
+            }
+
+            if(thisSearchId != searchId.get()) return;
+
+            synchronized(autocompletedItems) {
+                autocompletedItems.clear();
+                autocompletedItems.addAll(title);
+                autocompletedItems.addAll(desc);
+            }
+        });
+    }
+
     public static void keyEvent() {
         if(Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
+            searchStringExtra = "";
             close();
             if(NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.escFullClose) {
                 Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(Minecraft.getMinecraft().thePlayer.openContainer.windowId));
             }
         } else if(Keyboard.getEventKey() == Keyboard.KEY_RETURN) {
+            searchStringExtra = "";
             close();
         } else if(Keyboard.getEventKeyState()) {
+            textField.setFocus(true);
             textField.setText(searchString);
             textField.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
             searchString = textField.getText();
 
-            final int thisSearchId = searchId.incrementAndGet();
-
-            searchES.submit(() -> {
-                if(thisSearchId != searchId.get()) return;
-
-                List<String> title = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.search("title:"+searchString.trim()));
-
-                if(thisSearchId != searchId.get()) return;
-
-                if(!searchString.trim().contains(" ")) {
-                    StringBuilder sb = new StringBuilder();
-                    for(char c : searchString.toCharArray()) {
-                        sb.append(c).append(" ");
-                    }
-                    title.addAll(NotEnoughUpdates.INSTANCE.manager.search("title:"+sb.toString().trim()));
-                }
-
-                if(thisSearchId != searchId.get()) return;
-
-                List<String> desc = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.search("desc:"+searchString.trim()));
-                desc.removeAll(title);
-
-                if(thisSearchId != searchId.get()) return;
-
-                Set<String> auctionableItems = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBinKeySet();
-                auctionableItems.addAll(NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfoKeySet());
-
-                if(!auctionableItems.isEmpty()) {
-                    title.retainAll(auctionableItems);
-                    desc.retainAll(auctionableItems);
-
-                    title.sort(salesComparator);
-                    desc.sort(salesComparator);
-                } else {
-                    Set<String> bazaarItems = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarKeySet();
-
-                    title.removeAll(bazaarItems);
-                    desc.removeAll(bazaarItems);
-                }
-
-                if(thisSearchId != searchId.get()) return;
-
-                synchronized(autocompletedItems) {
-                    autocompletedItems.clear();
-                    autocompletedItems.addAll(title);
-                    autocompletedItems.addAll(desc);
-                }
-            });
+            search();
         }
     }
 
@@ -309,6 +355,29 @@ public class AuctionSearchOverlay {
         int topY = height/4;
         if(scaledResolution.getScaleFactor() >= 4) {
             topY = height/2 - h/2 + 5;
+        }
+
+        if(Mouse.getEventButtonState() && mouseX > width/2+105 && mouseX < width/2+105+55 &&
+            mouseY > topY+27 && mouseY < topY+40) {
+            int starClicked = 5;
+            for(int i=1; i<=5; i++) {
+                if(mouseX < width/2+108+10*i) {
+                    starClicked = i;
+                    break;
+                }
+            }
+            if(selectedStars == starClicked) {
+                selectedStars = 0;
+            } else {
+                selectedStars = starClicked;
+            }
+            return;
+        }
+
+        if(Mouse.getEventButtonState() && mouseX >= width/2+106 && mouseX <= width/2+116 &&
+                mouseY >= topY+42 && mouseY <= topY+50) {
+            atLeast = !atLeast;
+            return;
         }
 
         if(!Mouse.getEventButtonState() && Mouse.getEventButton() == -1 && searchFieldClicked) {
@@ -333,8 +402,10 @@ public class AuctionSearchOverlay {
                             }
                         }
                     } else if(mouseX < width/2+75) {
+                        searchStringExtra = "";
                         close();
                     } else if(mouseX < width/2+100) {
+                        searchStringExtra = "";
                         close();
                         Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(Minecraft.getMinecraft().thePlayer.openContainer.windowId));
                         NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(new NEUConfigEditor(
@@ -353,6 +424,19 @@ public class AuctionSearchOverlay {
                                 if(searchString.contains("Enchanted Book") && str.contains(";")) {
                                     searchString = WordUtils.capitalizeFully(str.split(";")[0].replace("_", " "));
                                 }
+
+                                JsonObject essenceCosts = Constants.ESSENCECOSTS;
+                                searchStringExtra = "";
+                                if(essenceCosts != null && essenceCosts.has(str) && selectedStars > 0) {
+                                    for(int i=0; i<selectedStars; i++) {
+                                        searchStringExtra += "\u272A";
+                                    }
+                                    if(selectedStars < 5 && !atLeast) {
+                                        searchStringExtra += " ";
+                                        searchStringExtra += stack.getItem().getItemStackDisplayName(stack).substring(0, 1);
+                                    }
+                                }
+
                                 close();
                                 return;
                             }
@@ -369,6 +453,7 @@ public class AuctionSearchOverlay {
                         String s = NotEnoughUpdates.INSTANCE.config.hidden.previousAuctionSearches.get(i);
                         if(mouseX >= width/2-95 && mouseX <= width/2+95 && mouseY >= topY+45+AUTOCOMPLETE_HEIGHT+i*10 && mouseY <= topY+45+AUTOCOMPLETE_HEIGHT+i*10+10) {
                             searchString = s;
+                            searchStringExtra = "";
                             close();
                             return;
                         }

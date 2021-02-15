@@ -310,29 +310,30 @@ public class NEUCape {
     }
 
     private void loadShaderUniforms(ShaderManager shaderManager) {
+        String shaderId = "capes/"+shaderName+"/"+shaderName;
         if(shaderName.equalsIgnoreCase("fade_cape")) {
-            shaderManager.loadData(shaderName, "millis", (int)(System.currentTimeMillis()-startTime));
+            shaderManager.loadData(shaderId, "millis", (int)(System.currentTimeMillis()-startTime));
         } else if(shaderName.equalsIgnoreCase("space_cape")) {
-            shaderManager.loadData(shaderName, "millis", (int)(System.currentTimeMillis()-startTime));
-            shaderManager.loadData(shaderName, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
-            shaderManager.loadData(shaderName, "eventRand", eventRandom);
+            shaderManager.loadData(shaderId, "millis", (int)(System.currentTimeMillis()-startTime));
+            shaderManager.loadData(shaderId, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
+            shaderManager.loadData(shaderId, "eventRand", eventRandom);
         } else if(shaderName.equalsIgnoreCase("mcworld_cape")) {
-            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
+            shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
         } else if(shaderName.equalsIgnoreCase("lava_cape")) {
-            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
+            shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
         } else if(shaderName.equalsIgnoreCase("lightning_cape")) {
-            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
+            shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
         } else if(shaderName.equalsIgnoreCase("biscuit_cape") || shaderName.equalsIgnoreCase("shiny_cape")) {
-            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
-            shaderManager.loadData(shaderName, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
+            shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
+            shaderManager.loadData(shaderId, "eventMillis", (int)(System.currentTimeMillis()-eventMillis));
         } else if(shaderName.equalsIgnoreCase("negative")) {
-            shaderManager.loadData(shaderName, "screensize", new Vector2f(
+            shaderManager.loadData(shaderId, "screensize", new Vector2f(
                     Minecraft.getMinecraft().displayWidth,
                     Minecraft.getMinecraft().displayHeight
             ));
         } else if(shaderName.equalsIgnoreCase("void")) {
-            shaderManager.loadData(shaderName, "millis", (int) (System.currentTimeMillis() - startTime));
-            shaderManager.loadData(shaderName, "screensize", new Vector2f(
+            shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
+            shaderManager.loadData(shaderId, "screensize", new Vector2f(
                     Minecraft.getMinecraft().displayWidth,
                     Minecraft.getMinecraft().displayHeight
             ));
@@ -375,7 +376,7 @@ public class NEUCape {
         GL11.glTranslatef(-(float)viewerX, -(float)viewerY, -(float)viewerZ);
 
         ShaderManager shaderManager = ShaderManager.getInstance();
-        shaderManager.loadShader(shaderName);
+        shaderManager.loadShader("capes/"+shaderName+"/"+shaderName);
         loadShaderUniforms(shaderManager);
 
         renderCape(player, e.partialRenderTick);

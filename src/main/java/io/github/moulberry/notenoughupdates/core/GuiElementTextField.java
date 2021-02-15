@@ -90,6 +90,9 @@ public class GuiElementTextField {
         return textField.getText();
     }
 
+    public void setFocus(boolean focus) {
+        this.focus = focus;
+    }
     public boolean getFocus() {
         return focus;
     }

@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
@@ -83,6 +84,12 @@ public class GuiPositionEditor extends GuiScreen {
         if(guiScaleOverride >= 0) {
             Utils.pushGuiScale(-1);
         }
+
+        scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+        Utils.drawStringCentered("Position Editor", Minecraft.getMinecraft().fontRendererObj,
+                scaledResolution.getScaledWidth()/2, 8, true, 0xffffff);
+        Utils.drawStringCentered("R to Reset - Arrow keys/mouse to move", Minecraft.getMinecraft().fontRendererObj,
+                scaledResolution.getScaledWidth()/2, 18, true, 0xffffff);
     }
 
     @Override
@@ -115,6 +122,28 @@ public class GuiPositionEditor extends GuiScreen {
                 Utils.pushGuiScale(-1);
             }
         }
+    }
+
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        Keyboard.enableRepeatEvents(true);
+
+        if(keyCode == Keyboard.KEY_R) {
+            position.set(originalPosition);
+        } else if(!clicked) {
+            boolean shiftHeld = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
+            int dist = shiftHeld ? 10 : 1;
+            if(keyCode == Keyboard.KEY_DOWN) {
+                position.moveY(dist, elementHeight, new ScaledResolution(Minecraft.getMinecraft()));
+            } else if(keyCode == Keyboard.KEY_UP) {
+                position.moveY(-dist, elementHeight, new ScaledResolution(Minecraft.getMinecraft()));
+            } else if(keyCode == Keyboard.KEY_LEFT) {
+                position.moveX(-dist, elementWidth, new ScaledResolution(Minecraft.getMinecraft()));
+            } else if(keyCode == Keyboard.KEY_RIGHT) {
+                position.moveX(dist, elementWidth, new ScaledResolution(Minecraft.getMinecraft()));
+            }
+        }
+        super.keyTyped(typedChar, keyCode);
     }
 
     @Override

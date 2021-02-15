@@ -657,7 +657,6 @@ public class ProfileViewer {
             float totalSkillXP = experience_skill_taming + experience_skill_mining + experience_skill_foraging
                     + experience_skill_enchanting + experience_skill_carpentry + experience_skill_farming
                     + experience_skill_combat + experience_skill_fishing + experience_skill_alchemy
-                    + experience_skill_catacombs
                     + experience_skill_runecrafting;
 
             if(totalSkillXP <= 0) {
@@ -1071,6 +1070,10 @@ public class ProfileViewer {
         });
 
         return;
+    }
+
+    public Profile getProfileRaw(String uuid) {
+        return uuidToProfileMap.get(uuid);
     }
 
     public Profile getProfile(String uuid, Consumer<Profile> callback) {

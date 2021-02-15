@@ -27,8 +27,15 @@ public class Position {
         this.centerY = centerY;
     }
 
+    public void set(Position other) {
+        this.x = other.x;
+        this.y = other.y;
+        this.centerX = other.centerX;
+        this.centerY = other.centerY;
+    }
+
     public Position clone() {
-        return new Position(x, y);
+        return new Position(x, y, centerX, centerY);
     }
 
     public boolean isCenterX() {
@@ -90,14 +97,14 @@ public class Position {
 
         if(centerX) {
             if(wasPositiveX) {
-                if(this.x > screenWidth/2-objWidth) {
-                    deltaX += screenWidth/2-objWidth-this.x;
-                    this.x = screenWidth/2-objWidth;
+                if(this.x > screenWidth/2-objWidth/2) {
+                    deltaX += screenWidth/2-objWidth/2-this.x;
+                    this.x = screenWidth/2-objWidth/2;
                 }
             } else {
-                if(this.x < -screenWidth/2) {
-                    deltaX += -screenWidth/2-this.x;
-                    this.x = -screenWidth/2;
+                if(this.x < -screenWidth/2+objWidth/2) {
+                    deltaX += -screenWidth/2+objWidth/2-this.x;
+                    this.x = -screenWidth/2+objWidth/2;
                 }
             }
             return deltaX;
@@ -139,14 +146,14 @@ public class Position {
 
         if(centerY) {
             if(wasPositiveY) {
-                if(this.y > screenHeight/2-objHeight) {
-                    deltaY += screenHeight/2-objHeight-this.y;
-                    this.y = screenHeight/2-objHeight;
+                if(this.y > screenHeight/2-objHeight/2) {
+                    deltaY += screenHeight/2-objHeight/2-this.y;
+                    this.y = screenHeight/2-objHeight/2;
                 }
             } else {
-                if(this.y < -screenHeight/2) {
-                    deltaY += -screenHeight/2-this.y;
-                    this.y = -screenHeight/2;
+                if(this.y < -screenHeight/2+objHeight/2) {
+                    deltaY += -screenHeight/2+objHeight/2-this.y;
+                    this.y = -screenHeight/2+objHeight/2;
                 }
             }
             return deltaY;

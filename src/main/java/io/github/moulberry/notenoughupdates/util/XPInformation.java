@@ -32,7 +32,11 @@ public class XPInformation {
     private HashMap<String, SkillInfo> skillInfoMap = new HashMap<>();
 
     private static Splitter SPACE_SPLITTER = Splitter.on("  ").omitEmptyStrings().trimResults();
-    private static Pattern SKILL_PATTERN = Pattern.compile("\\+(\\d+(?:\\.\\d+)?) (.+) \\((\\d+(?:,\\d+)*(?:\\.\\d+)?)/(\\d+(?:,\\d+)*(?:\\.\\d+)?)\\)");
+    private static Pattern SKILL_PATTERN = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d+(?:,\\d+)*(?:\\.\\d+)?)/(\\d+(?:,\\d+)*(?:\\.\\d+)?)\\)");
+
+    public HashMap<String, SkillInfo> getSkillInfoMap() {
+        return skillInfoMap;
+    }
 
     public SkillInfo getSkillInfo(String skillName) {
         return skillInfoMap.get(skillName.toLowerCase());

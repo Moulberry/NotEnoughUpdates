@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.common.collect.Lists;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ public class OverlayManager {
 
     public static MiningOverlay miningOverlay;
     public static FarmingOverlay farmingOverlay;
+    public static PetInfoOverlay petInfoOverlay;
     public static final List<TextOverlay> textOverlays = new ArrayList<>();
 
     static {
@@ -54,8 +56,32 @@ public class OverlayManager {
             return TextOverlayStyle.BACKGROUND;
         });
 
+        List<String> petInfoDummy = Lists.newArrayList("\u00a7a[Lvl 37] \u00a7fRock",
+                "\u00a7b2,312.9/2,700\u00a7e (85.7%)",
+                "\u00a7b2.3k/2.7k\u00a7e (85.7%)",
+                "\u00a7bXP/h: \u00a7e27,209",
+                "\u00a7bTotal XP: \u00a7e30,597.9",
+                "\u00a7bHeld Item: \u00a7fMining Exp Boost",
+                "\u00a7bUntil L38: \u00a7e5m13s",
+                "\u00a7bUntil L100: \u00a7e2d13h");
+        petInfoOverlay = new PetInfoOverlay(NotEnoughUpdates.INSTANCE.config.petOverlay.petInfoPosition, () -> {
+            List<String> strings = new ArrayList<>();
+            for(int i : NotEnoughUpdates.INSTANCE.config.petOverlay.petOverlayText) {
+                if(i >= 0 && i < petInfoDummy.size()) strings.add(petInfoDummy.get(i));
+            }
+            return strings;
+        }, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.petOverlay.petInfoOverlayStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
+
         textOverlays.add(miningOverlay);
         textOverlays.add(farmingOverlay);
+        textOverlays.add(petInfoOverlay);
+
     }
 
 }

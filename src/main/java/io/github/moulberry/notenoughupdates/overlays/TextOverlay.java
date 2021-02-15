@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 public abstract class TextOverlay {
 
     private Position position;
-    private Supplier<TextOverlayStyle> styleSupplier;
+    protected Supplier<TextOverlayStyle> styleSupplier;
     public int overlayWidth = -1;
     public int overlayHeight = -1;
     public List<String> overlayStrings = null;
@@ -43,24 +43,7 @@ public abstract class TextOverlay {
         List<String> dummyStrings = this.dummyStrings.get();
 
         if(dummyStrings != null) {
-            int overlayHeight = 0;
-            int overlayWidth = 0;
-            for(String s : dummyStrings) {
-                if(s == null) {
-                    overlayHeight += 3;
-                    continue;
-                }
-                for(String s2 : s.split("\n")) {
-                    int sWidth = Minecraft.getMinecraft().fontRendererObj.getStringWidth(s2);
-                    if(sWidth > overlayWidth) {
-                        overlayWidth = sWidth;
-                    }
-                    overlayHeight += 10;
-                }
-            }
-            overlayHeight -= 2;
-
-            return new Vector2f(overlayWidth+PADDING_X*2, overlayHeight+PADDING_Y*2);
+            return getSize(dummyStrings);
         }
         return new Vector2f(100, 50);
     }
@@ -85,11 +68,9 @@ public abstract class TextOverlay {
         render(overlayStrings);
     }
 
-    private void render(List<String> strings) {
-        if(strings == null) return;
-
-        overlayHeight = 0;
-        overlayWidth = 0;
+    protected Vector2f getSize(List<String> strings) {
+        int overlayHeight = 0;
+        int overlayWidth = 0;
         for(String s : strings) {
             if(s == null) {
                 overlayHeight += 3;
@@ -105,18 +86,57 @@ public abstract class TextOverlay {
         }
         overlayHeight -= 2;
 
+        int paddingX = 0;
+        int paddingY = 0;
+        if(styleSupplier.get() == TextOverlayStyle.BACKGROUND) {
+            paddingX = PADDING_X;
+            paddingY = PADDING_Y;
+        }
+        return new Vector2f(overlayWidth+paddingX*2, overlayHeight+paddingY*2);
+    }
+
+    protected Vector2f getTextOffset() {
+        return new Vector2f();
+    }
+
+    protected Vector2f getPosition(int overlayWidth, int overlayHeight) {
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
-        int x = position.getAbsX(scaledResolution, overlayWidth+PADDING_X*2);
-        int y = position.getAbsY(scaledResolution, overlayHeight+PADDING_Y*2);
+        int x = position.getAbsX(scaledResolution, overlayWidth);
+        int y = position.getAbsY(scaledResolution, overlayHeight);
+
+        return new Vector2f(x, y);
+    }
+
+    private void render(List<String> strings) {
+        if(strings == null) return;
+
+        Vector2f size = getSize(strings);
+        overlayHeight = (int)size.y;
+        overlayWidth = (int)size.x;
+
+        Vector2f position = getPosition(overlayWidth, overlayHeight);
+        int x = (int)position.x;
+        int y = (int)position.y;
 
         TextOverlayStyle style = styleSupplier.get();
 
-        if(style == TextOverlayStyle.BACKGROUND) Gui.drawRect(x, y, x+overlayWidth+PADDING_X*2, y+overlayHeight+PADDING_Y*2, 0x80000000);
+        if(style == TextOverlayStyle.BACKGROUND) Gui.drawRect(x, y, x+overlayWidth, y+overlayHeight, 0x80000000);
 
         GlStateManager.enableBlend();
         GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        int paddingX = 0;
+        int paddingY = 0;
+        if(styleSupplier.get() == TextOverlayStyle.BACKGROUND) {
+            paddingX = PADDING_X;
+            paddingY = PADDING_Y;
+        }
+
+        Vector2f textOffset = getTextOffset();
+        paddingX += (int) textOffset.x;
+        paddingY += (int) textOffset.y;
 
         int yOff = 0;
         for(String s : strings) {
@@ -130,14 +150,14 @@ public abstract class TextOverlay {
                             for(int yO=-2; yO<=2; yO++) {
                                 if(Math.abs(xO) != Math.abs(yO)) {
                                     Minecraft.getMinecraft().fontRendererObj.drawString(clean,
-                                            x+PADDING_X+xO/2f, y+PADDING_Y+yOff+yO/2f,
+                                            x+paddingX+xO/2f, y+paddingY+yOff+yO/2f,
                                             new Color(0, 0, 0, 200/Math.max(Math.abs(xO), Math.abs(yO))).getRGB(), false);
                                 }
                             }
                         }
                     }
                     Minecraft.getMinecraft().fontRendererObj.drawString(s2,
-                            x+PADDING_X, y+PADDING_Y+yOff, 0xffffff, style == TextOverlayStyle.MC_SHADOW);
+                            x+paddingX, y+paddingY+yOff, 0xffffff, style == TextOverlayStyle.MC_SHADOW);
 
                     yOff += 10;
                 }

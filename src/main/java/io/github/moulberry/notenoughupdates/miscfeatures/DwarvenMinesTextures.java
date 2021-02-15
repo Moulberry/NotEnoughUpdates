@@ -168,8 +168,8 @@ public class DwarvenMinesTextures {
                     if(modZ < 0) modZ += 16;
                     ChunkCoordIntPair offset = new ChunkCoordIntPair(modX, modZ);
 
-                    if(map.containsKey(offset)) {
-                        IgnoreColumn ignore = map.get(offset);
+                    IgnoreColumn ignore = map.get(offset);
+                    if(ignore != null) {
                         if(ignore.always) {
                             return 1;
                         } else {

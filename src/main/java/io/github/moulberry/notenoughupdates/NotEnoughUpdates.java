@@ -25,6 +25,7 @@ import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
 import io.github.moulberry.notenoughupdates.overlays.FuelBar;
+import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
@@ -38,6 +39,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -45,7 +47,6 @@ import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.play.client.C13PacketPlayerAbilities;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.*;
@@ -77,8 +78,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
@@ -669,6 +668,14 @@ public class NotEnoughUpdates {
         }
     });
 
+    SimpleCommand dnCommand = new SimpleCommand("dn", new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            Minecraft.getMinecraft().thePlayer.sendChatMessage("/warp dungeon_hub");
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA+"Warping to:"+EnumChatFormatting.YELLOW+" Deez Nuts lmao"));
+        }
+    });
+
     SimpleCommand viewCataCommand = new SimpleCommand("cata", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
@@ -879,7 +886,10 @@ public class NotEnoughUpdates {
     public void preinit(FMLPreInitializationEvent event) {
         INSTANCE = this;
 
-        if(Minecraft.getMinecraft().getSession().getPlayerID().equalsIgnoreCase("ea9b1c5a-bf68-4fa2-9492-2d4e69693228")) throw new RuntimeException("Ding-dong, racism is wrong.");
+        String uuid = Minecraft.getMinecraft().getSession().getPlayerID();
+        if(uuid.equalsIgnoreCase("ea9b1c5a-bf68-4fa2-9492-2d4e69693228")) throw new RuntimeException("Ding-dong, racism is wrong.");
+        if(uuid.equalsIgnoreCase("1f4bc571-783a-490a-8ef6-54d18bb72c7c")) throw new RuntimeException("Oops misclicked");
+        if(uuid.equalsIgnoreCase("784747a0-3ac9-4ad6-bc75-8cf1bc9d7080")) throw new RuntimeException("Oops did it again");
 
         neuDir = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         neuDir.mkdirs();
@@ -917,7 +927,11 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new DwarvenMinesWaypoints());
         MinecraftForge.EVENT_BUS.register(new FuelBar());
         MinecraftForge.EVENT_BUS.register(XPInformation.getInstance());
-        MinecraftForge.EVENT_BUS.register(new PetInfo());
+        MinecraftForge.EVENT_BUS.register(OverlayManager.petInfoOverlay);
+
+        if(Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
+            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());
+        }
 
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
@@ -930,6 +944,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
         ClientCommandHandler.instance.registerCommand(dhCommand);
+        ClientCommandHandler.instance.registerCommand(dnCommand);
         if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
         ClientCommandHandler.instance.registerCommand(peekCommand);
         ClientCommandHandler.instance.registerCommand(tutorialCommand);

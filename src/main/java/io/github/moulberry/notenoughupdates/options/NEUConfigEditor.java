@@ -338,7 +338,7 @@ public class NEUConfigEditor extends GuiElement {
         int innerLeft = x+149+innerPadding;
         int innerRight = x+xSize-5-innerPadding;
 
-        int dWheel = Mouse.getDWheel();
+        int dWheel = Mouse.getEventDWheel();
         if(mouseY > innerTop && mouseY < innerBottom && dWheel != 0) {
             if(dWheel < 0) {
                 dWheel = -1;

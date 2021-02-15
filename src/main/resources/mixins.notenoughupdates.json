@@ -25,6 +25,7 @@
     "MixinEffectRenderer",
     "MixinRendererLivingEntity",
     "GuiEditSignAccessor",
-    "MixinGuiScreen"
+    "MixinGuiScreen",
+    "MixinTileEntitySkullRenderer"
   ]
 }
