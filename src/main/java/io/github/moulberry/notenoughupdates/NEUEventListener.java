@@ -4,9 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
+import io.github.moulberry.notenoughupdates.core.util.MiscUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
@@ -36,6 +39,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.*;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.entity.player.EntityInteractEvent;
@@ -1318,6 +1322,8 @@ public class NEUEventListener {
     private boolean pressedArrowLast = false;
     private boolean pressedShiftLast = false;
 
+    private boolean copied = false;
+
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltipLow(ItemTooltipEvent event) {
         if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
@@ -1573,6 +1579,9 @@ public class NEUEventListener {
                     String comparator = GuiEnchantColour.getColourOpIndex(colourOps, 1);
                     String comparison = GuiEnchantColour.getColourOpIndex(colourOps, 2);
                     String colourCode = GuiEnchantColour.getColourOpIndex(colourOps, 3);
+                    String modifier = GuiEnchantColour.getColourOpIndex(colourOps, 4);
+
+                    int modifierI = GuiEnchantColour.getIntModifier(modifier);
 
                     if(enchantName.length() == 0) continue;
                     if(comparator.length() == 0) continue;
@@ -1663,18 +1672,40 @@ public class NEUEventListener {
                             }
                         }
                         if(matches) {
+                            String enchantText = matcher.group(2);
+                            StringBuilder extraModifiersBuilder = new StringBuilder();
+
+                            if((modifierI & GuiEnchantColour.BOLD_MODIFIER) != 0) {
+                                extraModifiersBuilder.append(EnumChatFormatting.BOLD);
+                            }
+                            if((modifierI & GuiEnchantColour.ITALIC_MODIFIER) != 0) {
+                                extraModifiersBuilder.append(EnumChatFormatting.ITALIC);
+                            }
+                            if((modifierI & GuiEnchantColour.UNDERLINE_MODIFIER) != 0) {
+                                extraModifiersBuilder.append(EnumChatFormatting.UNDERLINE);
+                            }
+                            if((modifierI & GuiEnchantColour.OBFUSCATED_MODIFIER) != 0) {
+                                extraModifiersBuilder.append(EnumChatFormatting.OBFUSCATED);
+                            }
+                            if((modifierI & GuiEnchantColour.STRIKETHROUGH_MODIFIER) != 0) {
+                                extraModifiersBuilder.append(EnumChatFormatting.STRIKETHROUGH);
+                            }
+
+                            String extraMods = extraModifiersBuilder.toString();
+
                             if(!colourCode.equals("z")) {
-                                line = line.replace("\u00A79"+matcher.group(2), "\u00A7"+colourCode+matcher.group(2));
-                                line = line.replace("\u00A79\u00A7d\u00A7l"+matcher.group(2), "\u00A7"+colourCode+
-                                        EnumChatFormatting.BOLD+matcher.group(2));
+                                line = line.replace("\u00A79"+enchantText,
+                                        "\u00A7"+colourCode+extraMods+enchantText);
+                                line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText,
+                                        "\u00A7"+colourCode+extraMods+enchantText);
                             } else {
                                 int offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
-                                        "\\u00A79"+matcher.group(2)+".*", ""));
-                                line = line.replace("\u00A79"+matcher.group(2), Utils.chromaString(matcher.group(2), offset/12f+index, false));
+                                        "\\u00A79"+enchantText+".*", ""));
+                                line = line.replace("\u00A79"+enchantText, Utils.chromaString(enchantText, offset/12f+index, false));
 
                                 offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
-                                        "\\u00A79\\u00A7d\\u00A7l"+matcher.group(2)+".*", ""));
-                                line = line.replace("\u00A79\u00A7d\u00A7l"+matcher.group(2), Utils.chromaString(matcher.group(2),
+                                        "\\u00A79\\u00A7d\\u00A7l"+enchantText+".*", ""));
+                                line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
                                         offset/12f+index, true));
                             }
                         }
@@ -1924,8 +1955,8 @@ public class NEUEventListener {
                 }
             }
         }*/
-        if(!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || !neu.config.hidden.dev) return;
-        if(event.toolTip.size()>0&&event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
+        if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && neu.config.hidden.dev &&
+                event.toolTip.size()>0&&event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
             event.toolTip.remove(event.toolTip.size()-1);
 
             StringBuilder sb = new StringBuilder();
@@ -1954,8 +1985,60 @@ public class NEUEventListener {
             }
             event.toolTip.add(sb.toString());
             if(Keyboard.isKeyDown(Keyboard.KEY_H)) {
-                StringSelection selection = new StringSelection(sb.toString());
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+                if(!copied) {
+                    copied = true;
+                    StringSelection selection = new StringSelection(sb.toString());
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+                }
+            } else {
+                copied = false;
+            }
+        } else if(NotEnoughUpdates.INSTANCE.packDevEnabled) {
+            event.toolTip.add("");
+            event.toolTip.add(EnumChatFormatting.AQUA+"NEU Pack Dev Info:");
+            event.toolTip.add("Press "+EnumChatFormatting.GOLD+"[KEY]"+EnumChatFormatting.GRAY+" to copy line");
+
+            String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
+
+            boolean k = Keyboard.isKeyDown(Keyboard.KEY_K);
+            boolean m = Keyboard.isKeyDown(Keyboard.KEY_M);
+            boolean n = Keyboard.isKeyDown(Keyboard.KEY_N);
+
+            event.toolTip.add(EnumChatFormatting.AQUA+"Internal Name: "+EnumChatFormatting.GRAY+internal+EnumChatFormatting.GOLD+" [K]");
+            if(!copied && k) {
+                MiscUtils.copyToClipboard(internal);
+            }
+
+            if(event.itemStack.getTagCompound() != null) {
+                NBTTagCompound tag = event.itemStack.getTagCompound();
+
+                if (tag.hasKey("SkullOwner", 10)) {
+                    GameProfile gameprofile = NBTUtil.readGameProfileFromNBT(tag.getCompoundTag("SkullOwner"));
+
+                    if(gameprofile != null) {
+                        event.toolTip.add(EnumChatFormatting.AQUA+"Skull UUID: "+EnumChatFormatting.GRAY+gameprofile.getId()+EnumChatFormatting.GOLD+" [M]");
+                        if(!copied && m) {
+                            MiscUtils.copyToClipboard(gameprofile.getId().toString());
+                        }
+
+                        Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> map = Minecraft.getMinecraft().getSkinManager().loadSkinFromCache(gameprofile);
+
+                        if (map.containsKey(MinecraftProfileTexture.Type.SKIN)) {
+                            MinecraftProfileTexture profTex = map.get(MinecraftProfileTexture.Type.SKIN);
+                            event.toolTip.add(EnumChatFormatting.AQUA+"Skull Texture Link: "+EnumChatFormatting.GRAY+profTex.getUrl()+EnumChatFormatting.GOLD+" [N]");
+
+                            if(!copied && n) {
+                                MiscUtils.copyToClipboard(profTex.getUrl());
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(k || m || n) {
+                copied = true;
+            } else {
+                copied = false;
             }
         }
     }

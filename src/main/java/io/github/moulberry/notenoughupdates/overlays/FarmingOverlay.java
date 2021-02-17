@@ -37,6 +37,8 @@ public class FarmingOverlay extends TextOverlay {
     private float xpGainHourLast = -1;
     private float xpGainHour = -1;
 
+    private int xpGainTimer = 0;
+
     private String skillType = "Farming";
 
     public FarmingOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
@@ -58,6 +60,7 @@ public class FarmingOverlay extends TextOverlay {
         if(!NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingOverlay) {
             counter = -1;
             overlayStrings = null;
+            dicerHeld = false;
             return;
         }
 
@@ -77,6 +80,9 @@ public class FarmingOverlay extends TextOverlay {
 
                 if(ea.hasKey("mined_crops", 99)) {
                     counter = ea.getInteger("mined_crops");
+                    counterQueue.add(0, counter);
+                } else if(ea.hasKey("farmed_cultivating", 99)) {
+                    counter = ea.getInteger("farmed_cultivating");
                     counterQueue.add(0, counter);
                 }
             }
@@ -100,15 +106,31 @@ public class FarmingOverlay extends TextOverlay {
                 float delta = totalXp - lastTotalXp;
 
                 if(delta > 0 && delta < 1000) {
+                    xpGainTimer = 3;
+
                     xpGainQueue.add(0, delta);
-                    while (xpGainQueue.size() > 20) {
+                    while(xpGainQueue.size() > 30) {
                         xpGainQueue.removeLast();
                     }
 
                     float totalGain = 0;
                     for(float f : xpGainQueue) totalGain += f;
 
-                    xpGainHour = totalGain*(60*60)/xpGainQueue.size();
+                    xpGainHour = totalGain * (60 * 60) / xpGainQueue.size();
+
+                    isFarming = true;
+                } else if(xpGainTimer > 0) {
+                    xpGainTimer--;
+
+                    xpGainQueue.add(0, 0f);
+                    while(xpGainQueue.size() > 30) {
+                        xpGainQueue.removeLast();
+                    }
+
+                    float totalGain = 0;
+                    for(float f : xpGainQueue) totalGain += f;
+
+                    xpGainHour = totalGain * (60 * 60) / xpGainQueue.size();
 
                     isFarming = true;
                 } else if(delta <= 0) {

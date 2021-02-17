@@ -19,6 +19,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -96,6 +97,8 @@ public class PetInfoOverlay extends TextOverlay {
     private float xpGainHourLast = -1;
     private float xpGainHour = -1;
 
+    private int xpAddTimer = 0;
+
     public static void clearPet() {
         if(currentPet != null) {
             petList.computeIfAbsent(currentPet.petType + ";" + currentPet.rarity.petId, k->new HashSet<>()).add(currentPet);
@@ -131,7 +134,7 @@ public class PetInfoOverlay extends TextOverlay {
         Set<Pet> itemMatches = new HashSet<>();
         for(Pet pet : pets) {
             if((searchItem == null && pet.petItem == null) ||
-                    (searchItem.equals(pet.petItem))) {
+                    (searchItem != null && searchItem.equals(pet.petItem))) {
                 itemMatches.add(pet);
             }
         }
@@ -528,11 +531,17 @@ public class PetInfoOverlay extends TextOverlay {
         }
 
         xpGainHourLast = xpGainHour;
-        if(totalGain > 0) {
+        if(xpAddTimer > 0 || totalGain > 0) {
+            if(totalGain > 0) {
+                xpAddTimer = 10;
+            } else {
+                xpAddTimer--;
+            }
+
             currentPet.petLevel.totalXp += totalGain;
 
             xpGainQueue.add(0, totalGain);
-            while(xpGainQueue.size() > 20) {
+            while(xpGainQueue.size() > 30) {
                 xpGainQueue.removeLast();
             }
 
@@ -556,7 +565,7 @@ public class PetInfoOverlay extends TextOverlay {
             if(s.contains(".")) {
                 return NumberFormat.getNumberInstance().format((int)f) + '.' + s.split("\\.")[1];
             } else if(s.contains(",")) {
-                return NumberFormat.getNumberInstance().format((int)f) + ',' + s.split("\\.")[1];
+                return NumberFormat.getNumberInstance().format((int)f) + ',' + s.split(",")[1];
             } else {
                 return s;
             }
@@ -611,6 +620,8 @@ public class PetInfoOverlay extends TextOverlay {
             }
         }
     }
+    
+    private static final Pattern AUTOPET_EQUIP = Pattern.compile("\u00a7cAutopet \u00a7eequipped your \u00a77\\[Lvl (\\d+)] \u00a7(.{2,})\u00a7e! \u00a7a\u00a7lVIEW RULE\u00a7r");
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onChatReceived(ClientChatReceivedEvent event) {
@@ -618,7 +629,45 @@ public class PetInfoOverlay extends TextOverlay {
         if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && (config.petOverlay.enablePetInfo || config.treecap.enableMonkeyCheck || config.notifications.showWrongPetMsg)) {
             if(event.type == 0) {
                 String chatMessage = Utils.cleanColour(event.message.getUnformattedText());
-                if(chatMessage.toLowerCase().startsWith("you summoned your")) {
+
+                if(event.message.getFormattedText().contains("Autopet")) System.out.println(event.message.getFormattedText());
+                Matcher autopetMatcher = AUTOPET_EQUIP.matcher(event.message.getFormattedText());
+                if(autopetMatcher.matches()) {
+                    try {
+                        lastLevelHovered = Integer.parseInt(autopetMatcher.group(1));
+                    } catch(NumberFormatException ignored) {}
+
+                    String petStringMatch = autopetMatcher.group(2);
+                    char colChar = petStringMatch.charAt(0);
+                    EnumChatFormatting col = EnumChatFormatting.RESET;
+                    for(EnumChatFormatting formatting : EnumChatFormatting.values()) {
+                        if(formatting.toString().equals("\u00a7"+colChar)) {
+                            col = formatting;
+                            break;
+                        }
+
+                    }
+                    Rarity rarity = Rarity.COMMON;
+                    if(col != EnumChatFormatting.RESET) {
+                        rarity = Rarity.getRarityFromColor(col);
+                    }
+
+                    String pet = Utils.cleanColour(petStringMatch.substring(1)).trim().toUpperCase();
+                    if(petList.containsKey(pet + ";" + rarity.petId)) {
+                        Set<Pet> pets = petList.get(pet + ";" + rarity.petId);
+
+                        if(pets.size() == 1) {
+                            currentPet = pets.iterator().next();
+                        } else {
+                            currentPet = getClosestPet(pet, rarity.petId, lastItemHovered, lastLevelHovered);
+                        }
+                    } else {
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"[NEU] Can't find pet \u00a7" + petStringMatch +
+                                " are you sure API key is correct? Try doing /api new and rejoining hypixel."));
+                    }
+
+
+                } else if(chatMessage.toLowerCase().startsWith("you summoned your")) {
                     clearPet();
 
                     String pet = chatMessage.trim().toUpperCase().replace("YOU SUMMONED YOUR ", "").replace("!", "").replace(" ", "_");
@@ -633,6 +682,9 @@ public class PetInfoOverlay extends TextOverlay {
                         } else {
                             currentPet = getClosestPet(pet, rarity.petId, lastItemHovered, lastLevelHovered);
                         }
+                    } else {
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"[NEU] Can't find pet " + pet + ";" + rarity.petId +
+                                " are you sure API key is correct? Try doing /api new and rejoining hypixel."));
                     }
                 } else if(chatMessage.toLowerCase().startsWith("you despawned your")) {
                     clearPet();

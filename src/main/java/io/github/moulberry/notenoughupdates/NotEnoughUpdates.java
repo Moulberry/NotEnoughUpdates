@@ -668,6 +668,52 @@ public class NotEnoughUpdates {
         }
     });
 
+    private static final String[] devFailStrings = {"No.", "I said no.", "You aren't allowed to use this.",
+            "Are you sure you want to use this? Type 'Yes' in chat.", "Lmao you thought", "Ok please stop",
+            "What do you want from me?", "This command almost certainly does nothing useful for you",
+            "Ok, this is the last message, after this it will repeat", "No.", "Dammit. I thought that would work. Uhh...",
+            "\u00a7dFrom \u00a7c[ADMIN] Minikloon\u00a77: If you use that command again, I'll have to ban you",
+            "Ok, this is actually the last message, use the command again and you'll crash I promise"};
+    private int devFailIndex = 0;
+    SimpleCommand devTestCommand = new SimpleCommand("neudevtest", new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(!Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("Moulberry")) {
+                if(devFailIndex >= devFailStrings.length) {
+                    throw new Error("L") {
+                        @Override
+                        public void printStackTrace() {
+                            throw new Error("Double L");
+                        }
+                    };
+                }
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+devFailStrings[devFailIndex++]));
+                return;
+            }
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Executing dubious code"));
+            /*Minecraft.getMinecraft().thePlayer.rotationYaw = 0;
+            Minecraft.getMinecraft().thePlayer.rotationPitch = 0;
+            Minecraft.getMinecraft().thePlayer.setPosition(
+                    Math.floor(Minecraft.getMinecraft().thePlayer.posX) + Float.parseFloat(args[0]),
+                    Minecraft.getMinecraft().thePlayer.posY,
+                    Minecraft.getMinecraft().thePlayer.posZ);*/
+            //Hot reload me yay!
+        }
+    });
+
+    public boolean packDevEnabled = false;
+    SimpleCommand packDevCommand = new SimpleCommand("neupackdev", new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            packDevEnabled = !packDevEnabled;
+            if(packDevEnabled) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Enabled pack developer mode."));
+            } else {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"Disabled pack developer mode."));
+            }
+        }
+    });
+
     SimpleCommand dnCommand = new SimpleCommand("dn", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
@@ -888,8 +934,6 @@ public class NotEnoughUpdates {
 
         String uuid = Minecraft.getMinecraft().getSession().getPlayerID();
         if(uuid.equalsIgnoreCase("ea9b1c5a-bf68-4fa2-9492-2d4e69693228")) throw new RuntimeException("Ding-dong, racism is wrong.");
-        if(uuid.equalsIgnoreCase("1f4bc571-783a-490a-8ef6-54d18bb72c7c")) throw new RuntimeException("Oops misclicked");
-        if(uuid.equalsIgnoreCase("784747a0-3ac9-4ad6-bc75-8cf1bc9d7080")) throw new RuntimeException("Oops did it again");
 
         neuDir = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         neuDir.mkdirs();
@@ -945,6 +989,8 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
         ClientCommandHandler.instance.registerCommand(dhCommand);
         ClientCommandHandler.instance.registerCommand(dnCommand);
+        ClientCommandHandler.instance.registerCommand(devTestCommand);
+        ClientCommandHandler.instance.registerCommand(packDevCommand);
         if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
         ClientCommandHandler.instance.registerCommand(peekCommand);
         ClientCommandHandler.instance.registerCommand(tutorialCommand);

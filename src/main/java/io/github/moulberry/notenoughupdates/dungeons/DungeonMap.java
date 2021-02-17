@@ -1149,6 +1149,7 @@ public class DungeonMap {
                 }
             }
         }
+        actualPlayers.add(Minecraft.getMinecraft().thePlayer.getName());
 
         playerEntityMapPositions.clear();
         if(usePlayerPositions) {

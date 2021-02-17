@@ -14,6 +14,9 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.model.IBakedModel;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -46,6 +49,11 @@ public class CustomItemEffects {
     public long aoteUseMillis = 0;
 
     public long lastUsedHyperion = 0;
+
+    private boolean heldBonemerang = false;
+
+    public final Set<EntityLivingBase> bonemeragedEntities = new HashSet<>();
+    public boolean bonemerangBreak = false;
 
     public int aoteTeleportationMillis = 0;
     public Vector3f aoteTeleportationCurr = null;
@@ -150,84 +158,150 @@ public class CustomItemEffects {
     }
 
     @SubscribeEvent
-    public void onOverlayDrawn(RenderGameOverlayEvent event) {
-        if(NotEnoughUpdates.INSTANCE.config.builderWand.enableWandOverlay &&
-                Minecraft.getMinecraft().objectMouseOver != null &&
-                Minecraft.getMinecraft().objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK &&
-                ((event.type == null && Loader.isModLoaded("labymod")) ||
-                event.type == RenderGameOverlayEvent.ElementType.CROSSHAIRS)) {
+    public void onGameTick(TickEvent.ClientTickEvent event) {
+        if(event.phase != TickEvent.Phase.END) return;
 
-            IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(
-                    Minecraft.getMinecraft().objectMouseOver.getBlockPos().offset(
-                            Minecraft.getMinecraft().objectMouseOver.sideHit, 1));
-            if(hover.getBlock() == Blocks.air) {
-                ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
-                String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
+        heldBonemerang = false;
+        bonemerangBreak = false;
+        bonemeragedEntities.clear();
+        if(Minecraft.getMinecraft().thePlayer == null) return;
+        if(Minecraft.getMinecraft().theWorld == null) return;
 
-                if(heldInternal != null && heldInternal.equals("BUILDERS_WAND")) {
-                    ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+        ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
 
-                    HashSet<BlockPos> candidatesOld = new HashSet<>();
-                    TreeMap<Float, Set<BlockPos>> candidatesOldSorted = new TreeMap<>();
+        String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
+        if(internal != null && internal.equals("BONE_BOOMERANG")) {
+            heldBonemerang = true;
 
-                    IBlockState match = Minecraft.getMinecraft().theWorld.getBlockState(Minecraft.getMinecraft().objectMouseOver.getBlockPos());
-                    Item matchItem = Item.getItemFromBlock(match.getBlock());
-                    if(matchItem != null) {
-                        ItemStack matchStack =  new ItemStack(matchItem, 1,
-                                match.getBlock().getDamageValue(Minecraft.getMinecraft().theWorld, Minecraft.getMinecraft().objectMouseOver.getBlockPos()));
+            EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
+            float stepSize = 0.15f;
+            float bonemerangDistance = 15;
 
-                        getBuildersWandCandidates(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().objectMouseOver, event.partialTicks,
-                                candidatesOld, candidatesOldSorted, 999-MAX_BUILDERS_BLOCKS);
+            Vector3f position = new Vector3f((float)p.posX, (float)p.posY + p.getEyeHeight(), (float)p.posZ);
+            Vec3 look = p.getLook(0);
 
-                        boolean usingDirtWand = false;
-                        int itemCount;
-                        if(match.getBlock() == Blocks.dirt && matchStack.getItemDamage() == 0 && hasDirtWand()) {
-                            itemCount = candidatesOld.size();
-                            usingDirtWand = true;
-                        } else {
-                            itemCount = countItemsInInventoryAndStorage(matchStack);
-                        }
+            Vector3f step = new Vector3f((float)look.xCoord, (float)look.yCoord, (float)look.zCoord);
+            step.scale(stepSize / step.length());
 
-                        if(candidatesOld.size() > MAX_BUILDERS_BLOCKS) {
-                            Utils.drawStringCentered(EnumChatFormatting.RED.toString()+candidatesOld.size()+"/"+MAX_BUILDERS_BLOCKS,
-                                    Minecraft.getMinecraft().fontRendererObj,
-                                    scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
-                        } else {
-                            String pre = EnumChatFormatting.GREEN.toString();
-                            if(itemCount < candidatesOld.size()) {
-                                pre = EnumChatFormatting.RED.toString();
-                            }
-                            Utils.drawStringCentered(pre+Math.min(candidatesOld.size(), itemCount)+"/"+
-                                            Math.min(candidatesOld.size(), MAX_BUILDERS_BLOCKS),
-                                    Minecraft.getMinecraft().fontRendererObj,
-                                    scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
-                        }
+            for(int i=0; i<Math.floor(bonemerangDistance/stepSize)-2; i++) {
+                AxisAlignedBB bb = new AxisAlignedBB(position.x - 0.75f, position.y - 0.1, position.z - 0.75f,
+                        position.x + 0.75f, position.y + 0.25, position.z + 0.75);
 
-                        String itemCountS = EnumChatFormatting.DARK_GRAY+"x"+EnumChatFormatting.RESET+itemCount;
-                        int itemCountLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(itemCountS);
+                BlockPos blockPos = new BlockPos(position.x, position.y, position.z);
 
-                        if(NotEnoughUpdates.INSTANCE.config.builderWand.wandBlockCount) {
-                            if(usingDirtWand) {
-                                Utils.drawItemStack(new ItemStack(Items.gold_nugget), scaledResolution.getScaledWidth()/2 - (itemCountLen+16)/2,
-                                        scaledResolution.getScaledHeight()/2+10+4);
-                                Minecraft.getMinecraft().fontRendererObj.drawString(itemCountS,
-                                        scaledResolution.getScaledWidth()/2f - (itemCountLen+16)/2f+11, scaledResolution.getScaledHeight()/2f+10+8,
-                                        -1,
-                                        true);
-                            } else {
-                                Utils.drawItemStack(matchStack, scaledResolution.getScaledWidth()/2 - (itemCountLen+16)/2,
-                                        scaledResolution.getScaledHeight()/2+10+4);
-                                Minecraft.getMinecraft().fontRendererObj.drawString(itemCountS,
-                                        scaledResolution.getScaledWidth()/2f - (itemCountLen+16)/2f+16, scaledResolution.getScaledHeight()/2f+10+8,
-                                        -1,
-                                        true);
-                            }
-
-                        }
-
-                        GlStateManager.color(1, 1, 1, 1);
+                if(!Minecraft.getMinecraft().theWorld.isAirBlock(blockPos) &&
+                        Minecraft.getMinecraft().theWorld.getBlockState(blockPos).getBlock().isFullCube()) {
+                    if(NotEnoughUpdates.INSTANCE.config.bonemerangOverlay.showBreak) {
+                        bonemerangBreak = true;
                     }
+                    break;
+                }
 
+                if(NotEnoughUpdates.INSTANCE.config.bonemerangOverlay.highlightTargeted) {
+                    List<Entity> entities = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABBExcludingEntity(Minecraft.getMinecraft().thePlayer, bb);
+                    for(Entity entity : entities) {
+                        if(entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand)) {
+                            if(!bonemeragedEntities.contains(entity)) {
+                                bonemeragedEntities.add((EntityLivingBase)entity);
+                            }
+                        }
+                    }
+                }
+
+                position.translate(step.x, step.y, step.z);
+            }
+        }
+
+
+    }
+
+    @SubscribeEvent
+    public void onOverlayDrawn(RenderGameOverlayEvent.Post event) {
+        if(((event.type == null && Loader.isModLoaded("labymod")) ||
+                event.type == RenderGameOverlayEvent.ElementType.CROSSHAIRS)) {
+            if(heldBonemerang) {
+                if(bonemerangBreak) {
+                    ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+                    Utils.drawStringCentered(EnumChatFormatting.RED+"Bonemerang will break!",
+                            Minecraft.getMinecraft().fontRendererObj,
+                            scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
+                }
+            } else if(NotEnoughUpdates.INSTANCE.config.builderWand.enableWandOverlay &&
+                    Minecraft.getMinecraft().objectMouseOver != null &&
+                    Minecraft.getMinecraft().objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+
+                IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(
+                        Minecraft.getMinecraft().objectMouseOver.getBlockPos().offset(
+                                Minecraft.getMinecraft().objectMouseOver.sideHit, 1));
+                if(hover.getBlock() == Blocks.air) {
+                    ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
+                    String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
+
+                    if(heldInternal != null && heldInternal.equals("BUILDERS_WAND")) {
+                        ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+
+                        HashSet<BlockPos> candidatesOld = new HashSet<>();
+                        TreeMap<Float, Set<BlockPos>> candidatesOldSorted = new TreeMap<>();
+
+                        IBlockState match = Minecraft.getMinecraft().theWorld.getBlockState(Minecraft.getMinecraft().objectMouseOver.getBlockPos());
+                        Item matchItem = Item.getItemFromBlock(match.getBlock());
+                        if(matchItem != null) {
+                            ItemStack matchStack =  new ItemStack(matchItem, 1,
+                                    match.getBlock().getDamageValue(Minecraft.getMinecraft().theWorld, Minecraft.getMinecraft().objectMouseOver.getBlockPos()));
+
+                            getBuildersWandCandidates(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().objectMouseOver, event.partialTicks,
+                                    candidatesOld, candidatesOldSorted, 999-MAX_BUILDERS_BLOCKS);
+
+                            boolean usingDirtWand = false;
+                            int itemCount;
+                            if(match.getBlock() == Blocks.dirt && matchStack.getItemDamage() == 0 && hasDirtWand()) {
+                                itemCount = candidatesOld.size();
+                                usingDirtWand = true;
+                            } else {
+                                itemCount = countItemsInInventoryAndStorage(matchStack);
+                            }
+
+                            if(candidatesOld.size() > MAX_BUILDERS_BLOCKS) {
+                                Utils.drawStringCentered(EnumChatFormatting.RED.toString()+candidatesOld.size()+"/"+MAX_BUILDERS_BLOCKS,
+                                        Minecraft.getMinecraft().fontRendererObj,
+                                        scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
+                            } else {
+                                String pre = EnumChatFormatting.GREEN.toString();
+                                if(itemCount < candidatesOld.size()) {
+                                    pre = EnumChatFormatting.RED.toString();
+                                }
+                                Utils.drawStringCentered(pre+Math.min(candidatesOld.size(), itemCount)+"/"+
+                                                Math.min(candidatesOld.size(), MAX_BUILDERS_BLOCKS),
+                                        Minecraft.getMinecraft().fontRendererObj,
+                                        scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
+                            }
+
+                            String itemCountS = EnumChatFormatting.DARK_GRAY+"x"+EnumChatFormatting.RESET+itemCount;
+                            int itemCountLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(itemCountS);
+
+                            if(NotEnoughUpdates.INSTANCE.config.builderWand.wandBlockCount) {
+                                if(usingDirtWand) {
+                                    Utils.drawItemStack(new ItemStack(Items.gold_nugget), scaledResolution.getScaledWidth()/2 - (itemCountLen+16)/2,
+                                            scaledResolution.getScaledHeight()/2+10+4);
+                                    Minecraft.getMinecraft().fontRendererObj.drawString(itemCountS,
+                                            scaledResolution.getScaledWidth()/2f - (itemCountLen+16)/2f+11, scaledResolution.getScaledHeight()/2f+10+8,
+                                            -1,
+                                            true);
+                                } else {
+                                    Utils.drawItemStack(matchStack, scaledResolution.getScaledWidth()/2 - (itemCountLen+16)/2,
+                                            scaledResolution.getScaledHeight()/2+10+4);
+                                    Minecraft.getMinecraft().fontRendererObj.drawString(itemCountS,
+                                            scaledResolution.getScaledWidth()/2f - (itemCountLen+16)/2f+16, scaledResolution.getScaledHeight()/2f+10+8,
+                                            -1,
+                                            true);
+                                }
+
+                            }
+
+                            GlStateManager.color(1, 1, 1, 1);
+                        }
+
+                    }
                 }
             }
         }

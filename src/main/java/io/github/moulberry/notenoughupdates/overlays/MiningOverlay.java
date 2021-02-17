@@ -2,14 +2,19 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
+import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
+import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.inventory.ContainerChest;
+import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.WorldSettings;
@@ -32,6 +37,72 @@ public class MiningOverlay extends TextOverlay {
     @Override
     public void update() {
         overlayStrings = null;
+
+        /*if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+            ContainerChest container = (ContainerChest) chest.inventorySlots;
+            String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
+
+
+            long currentTime = System.currentTimeMillis();
+            if(currentTime - lastSkymallSync > 60*1000) {
+                if(CapeManager.getInstance().lastJsonSync != null) {
+                    JsonObject obj = CapeManager.getInstance().lastJsonSync;
+                    if(obj.has("skymall") && obj.get("skymall").isJsonPrimitive()) {
+                        activeSkymall = obj.get("skymall").getAsString();
+                    }
+                }
+            }
+
+            if(containerName.equals("Heart of the Mountain") && container.getLowerChestInventory().getSizeInventory() > 10) {
+                System.out.println("HOTM Container");
+                ItemStack stack = container.getLowerChestInventory().getStackInSlot(10);
+                if(stack != null && stack.getDisplayName().equals(GREEN+"Sky Mall")) {
+                    NotEnoughUpdates.INSTANCE.config.hidden.skymallActive = false;
+
+                    String[] lines = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+
+                    for(String line : lines) {
+                        if(line.equals("\u00a7aYour Current Effect")) {
+                            System.out.println("Current effect");
+                            NotEnoughUpdates.INSTANCE.config.hidden.skymallActive = true;
+                        } else if(NotEnoughUpdates.INSTANCE.config.hidden.skymallActive) {
+                            String prevActiveSkymall = activeSkymall;
+                            System.out.println("Setting");
+                            if(line.contains("Gain \u00a7a+100 \u00a76\u2E15 Mining Speed")) {
+                                activeSkymall = "mining_speed";
+                            } else if(line.contains("Gain \u00a7a+50 \u00a76\u2618 Mining Fortune")) {
+                                activeSkymall = "mining_fortune";
+                            } else if(line.contains("Gain \u00a7a+15% \u00a77Powder from mining")) {
+                                activeSkymall = "powder";
+                            } else if(line.contains("Reduce Pickaxe Ability cooldown")) {
+                                activeSkymall = "pickaxe_ability";
+                            } else if(line.contains("10x \u00a77chance to find Goblins")) {
+                                activeSkymall = "goblin";
+                            } else if(line.contains("Gain \u00a7a5x \u00a79Titanium \u00a77drops")) {
+                                activeSkymall = "titanium";
+                            } else {
+                                System.out.println("Unknown");
+                                activeSkymall = "unknown";
+                            }
+                            if(!activeSkymall.equals(prevActiveSkymall)) {
+                                System.out.println("Maybe sending to server");
+                                if(currentTime - lastSkymallSync > 60*1000) {
+                                    lastSkymallSync = currentTime;
+                                    System.out.println("Sending to server");
+                                    NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("skymall?"+activeSkymall, (jsonObject) -> {
+                                        System.out.println("Success!");
+                                    }, () -> {
+                                        System.out.println("Error!");
+                                    });
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }*/
 
         if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay) return;
         if(SBInfo.getInstance().getLocation() == null) return;

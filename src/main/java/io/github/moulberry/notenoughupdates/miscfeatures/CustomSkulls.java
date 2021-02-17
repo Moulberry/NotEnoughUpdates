@@ -103,6 +103,8 @@ public class CustomSkulls implements IResourceManagerReloadListener {
                         CustomSkull skull = new CustomSkull();
                         skull.texture = loc;
 
+                        Minecraft.getMinecraft().getTextureManager().deleteTexture(skull.texture);
+
                         customSkulls.put(entry.getKey(), skull);
                     }
                 }
@@ -118,7 +120,6 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
             Minecraft.getMinecraft().getTextureManager().loadTickableTexture(atlas, textureMap);
         } catch(Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -217,7 +218,10 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
     public boolean renderSkull(float xOffset, float yOffset, float zOffset, EnumFacing placedDirection,
                                float rotationDeg, int skullType, GameProfile skullOwner, int damage) {
-        if(skullOwner == null || placedDirection != EnumFacing.UP || skullType != 3) {
+        if(placedDirection != EnumFacing.UP || skullType != 3) {
+            return false;
+        }
+        if(skullOwner == null || skullOwner.getId() == null) {
             return false;
         }
 

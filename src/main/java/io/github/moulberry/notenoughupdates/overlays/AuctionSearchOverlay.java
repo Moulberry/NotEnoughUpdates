@@ -71,6 +71,7 @@ public class AuctionSearchOverlay {
     };
 
     public static boolean shouldReplace() {
+        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return false;
         if(!NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.enableSearchOverlay) return false;
 
         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiEditSign)) {
@@ -159,8 +160,10 @@ public class AuctionSearchOverlay {
 
                     String itemName = Utils.trimIgnoreColour(stack.getDisplayName().replaceAll("\\[.+]", ""));
                     if(itemName.contains("Enchanted Book") && str.contains(";")) {
-                        itemName = EnumChatFormatting.BLUE+WordUtils.capitalizeFully(str.split(";")[0].replace("_", " "));
+                        String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+                        itemName = lore[0].trim();
                     }
+
                     Minecraft.getMinecraft().fontRendererObj.drawString(Minecraft.getMinecraft().fontRendererObj.trimStringToWidth(itemName, 165),
                             width/2-74, topY+35+num*22+1, 0xdddddd, true);
 
@@ -422,7 +425,11 @@ public class AuctionSearchOverlay {
                             if(mouseX >= width/2-96 && mouseX <= width/2+96 && mouseY >= topY+30+num*22 && mouseY <= topY+30+num*22+20) {
                                 searchString = Utils.cleanColour(stack.getDisplayName().replaceAll("\\[.+]", "")).trim();
                                 if(searchString.contains("Enchanted Book") && str.contains(";")) {
-                                    searchString = WordUtils.capitalizeFully(str.split(";")[0].replace("_", " "));
+                                    String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+                                    String[] split = Utils.cleanColour(lore[0]).trim().split(" ");
+                                    split[split.length-1] = "";
+
+                                    searchString = StringUtils.join(split, " ").trim();
                                 }
 
                                 JsonObject essenceCosts = Constants.ESSENCECOSTS;

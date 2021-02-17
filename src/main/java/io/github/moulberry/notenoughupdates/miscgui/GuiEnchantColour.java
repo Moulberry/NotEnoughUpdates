@@ -6,8 +6,10 @@ import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -24,19 +26,26 @@ public class GuiEnchantColour extends GuiScreen {
 
     private int guiLeft;
     private int guiTop;
-    private final int xSize = 176;
+    private final int xSize = 217;
     private int ySize = 0;
 
     private List<String> getEnchantColours() {
         return NotEnoughUpdates.INSTANCE.config.hidden.enchantColours;
     }
 
-    public static final Splitter splitter = Splitter.on(":").limit(4);
+    public static final Splitter splitter = Splitter.on(":").limit(5);
 
     private HashMap<Integer, String> comparators = new HashMap<>();
+    private HashMap<Integer, String> modifiers = new HashMap<>();
     private List<GuiElementTextField[]> guiElementTextFields = new ArrayList<>();
 
     private LerpingInteger scroll = new LerpingInteger(0, 100);
+
+    public static int BOLD_MODIFIER = 0b1;
+    public static int ITALIC_MODIFIER = 0b10;
+    public static int OBFUSCATED_MODIFIER = 0b100;
+    public static int UNDERLINE_MODIFIER = 0b1000;
+    public static int STRIKETHROUGH_MODIFIER = 0b10000;
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
@@ -66,10 +75,10 @@ public class GuiEnchantColour extends GuiScreen {
         Utils.drawTexturedRect(guiLeft, guiTop+ySize-32, xSize, 32, 0, 1, 46/78f, 1, GL11.GL_NEAREST);
 
         fontRendererObj.drawString("Ench Name", guiLeft+10, guiTop+7, 4210752);
-        fontRendererObj.drawString("CMP", guiLeft+71, guiTop+7, 4210752);
-        fontRendererObj.drawString("LVL", guiLeft+96, guiTop+7, 4210752);
-        fontRendererObj.drawString("COL", guiLeft+121, guiTop+7, 4210752);
-        fontRendererObj.drawString("DEL", guiLeft+146, guiTop+7, 4210752);
+        fontRendererObj.drawString("CMP", guiLeft+86, guiTop+7, 4210752);
+        fontRendererObj.drawString("LVL", guiLeft+111, guiTop+7, 4210752);
+        fontRendererObj.drawString("COL", guiLeft+136, guiTop+7, 4210752);
+        fontRendererObj.drawString("DEL", guiLeft+161, guiTop+7, 4210752);
 
         Utils.drawStringCentered("Add Ench Colour", fontRendererObj, guiLeft+xSize/2, guiTop+ySize-20, false, 4210752);
 
@@ -84,18 +93,20 @@ public class GuiEnchantColour extends GuiScreen {
             String comparator = getColourOpIndex(colourOps, 1);
             String comparison = getColourOpIndex(colourOps, 2);
             String colourCode = getColourOpIndex(colourOps, 3);
+            String modifier = getColourOpIndex(colourOps, 4);
+            modifiers.put(yIndex, modifier);
 
             if(colourCode.length() > 1) colourCode = String.valueOf(colourCode.toLowerCase().charAt(0));
             if(comparator.length() > 1) comparator = String.valueOf(comparator.toLowerCase().charAt(0));
 
-            Utils.drawStringCentered(comparator, fontRendererObj, guiLeft+81, guiTop+33+25*yIndex, false, 4210752);
+            Utils.drawStringCentered(comparator, fontRendererObj, guiLeft+96, guiTop+33+25*yIndex, false, 4210752);
 
             if(guiElementTextFields.size() <= yIndex) {
                 guiElementTextFields.add(new GuiElementTextField[3]);
             }
             if(guiElementTextFields.get(yIndex)[0] == null) {
                 guiElementTextFields.get(yIndex)[0] = new GuiElementTextField(enchantName, GuiElementTextField.SCALE_TEXT);
-                guiElementTextFields.get(yIndex)[0].setSize(56, 20);
+                guiElementTextFields.get(yIndex)[0].setSize(75, 20);
             }
             if(guiElementTextFields.get(yIndex)[1] == null) {
                 guiElementTextFields.get(yIndex)[1] = new GuiElementTextField(comparison,
@@ -111,9 +122,23 @@ public class GuiEnchantColour extends GuiScreen {
             comparators.put(yIndex, comparator);
             guiElementTextFields.get(yIndex)[2].setText(colourCode);
 
-            guiElementTextFields.get(yIndex)[0].render(guiLeft+10, guiTop+23+25*yIndex);
-            guiElementTextFields.get(yIndex)[1].render(guiLeft+96, guiTop+23+25*yIndex);
-            guiElementTextFields.get(yIndex)[2].render(guiLeft+121, guiTop+23+25*yIndex);
+            guiElementTextFields.get(yIndex)[0].render(guiLeft+7, guiTop+23+25*yIndex);
+            guiElementTextFields.get(yIndex)[1].render(guiLeft+110, guiTop+23+25*yIndex);
+            guiElementTextFields.get(yIndex)[2].render(guiLeft+135, guiTop+23+25*yIndex);
+
+            int modifierI = getIntModifier(modifier);
+            if((modifierI & GuiEnchantColour.BOLD_MODIFIER) != 0) {
+                Minecraft.getMinecraft().fontRendererObj.drawString("\u00a7l\u2713", guiLeft+181, guiTop+23+25*yIndex-2,  0xff202020, true);
+            }
+            if((modifierI & GuiEnchantColour.ITALIC_MODIFIER) != 0) {
+                Minecraft.getMinecraft().fontRendererObj.drawString("\u00a7l\u2713", guiLeft+181, guiTop+23+25*yIndex+10,  0xff202020, true);
+            }
+            if((modifierI & GuiEnchantColour.UNDERLINE_MODIFIER) != 0) {
+                Minecraft.getMinecraft().fontRendererObj.drawString("\u00a7l\u2713", guiLeft+196, guiTop+23+25*yIndex-2,  0xff202020, true);
+            }
+            if((modifierI & GuiEnchantColour.STRIKETHROUGH_MODIFIER) != 0) {
+                Minecraft.getMinecraft().fontRendererObj.drawString("\u00a7l\u2713", guiLeft+196, guiTop+23+25*yIndex+10,  0xff202020, true);
+            }
 
             yIndex++;
         }
@@ -139,9 +164,8 @@ public class GuiEnchantColour extends GuiScreen {
                     } else if(yIndex+addOffset > NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.size()) {
                         addOffset = NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.size()-yIndex;
                     }
-                    System.out.println(addOffset);
                     NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.add(yIndex+addOffset,
-                            getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex)));
+                            getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex), modifiers.get(yIndex)));
                     if(addOffset != 0) {
                         GuiElementTextField[] guiElementTextFieldArray = guiElementTextFields.remove(yIndex);
                         guiElementTextFields.add(yIndex+addOffset, guiElementTextFieldArray);
@@ -152,7 +176,7 @@ public class GuiEnchantColour extends GuiScreen {
         }
     }
 
-    public String getEnchantOpString(GuiElementTextField[] tfs, String comparator) {
+    public String getEnchantOpString(GuiElementTextField[] tfs, String comparator, String modifiers) {
         StringBuilder enchantOp = new StringBuilder();
         enchantOp.append(tfs[0].getText());
         enchantOp.append(":");
@@ -161,6 +185,8 @@ public class GuiEnchantColour extends GuiScreen {
         enchantOp.append(tfs[1].getText());
         enchantOp.append(":");
         enchantOp.append(tfs[2].getText());
+        enchantOp.append(":");
+        enchantOp.append(modifiers);
         return enchantOp.toString();
     }
 
@@ -179,14 +205,22 @@ public class GuiEnchantColour extends GuiScreen {
         }
     }
 
+    public static int getIntModifier(String modifier) {
+        try {
+            return Integer.parseInt(modifier);
+        } catch(NumberFormatException e) {
+            return 0;
+        }
+    }
+
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         for(int yIndex=0; yIndex<guiElementTextFields.size(); yIndex++) {
             for(int i=0; i<3; i++) {
-                int x = guiLeft+10;
-                if(i == 1) x+=86;
-                else if(i == 2) x+=111;
+                int x = guiLeft+7;
+                if(i == 1) x+=103;
+                else if(i == 2) x+=128;
 
                 if(mouseX > x && mouseX < x+guiElementTextFields.get(yIndex)[i].getWidth()) {
                     if(mouseY > guiTop+23+25*yIndex && mouseY < guiTop+23+25*yIndex+20) {
@@ -194,16 +228,51 @@ public class GuiEnchantColour extends GuiScreen {
                         if(mouseButton == 1) {
                             NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.remove(yIndex);
                             NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.add(yIndex,
-                                    getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex)));
+                                    getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex), modifiers.get(yIndex)));
                         }
                         continue;
                     }
                 }
                 guiElementTextFields.get(yIndex)[i].otherComponentClick();
             }
-            comparators.computeIfAbsent(yIndex, k->">");
+            comparators.putIfAbsent(yIndex, ">");
+            modifiers.putIfAbsent(yIndex, "0");
+            if(mouseX >= guiLeft+180 && mouseX <= guiLeft+210 &&
+                    mouseY >= guiTop+23+25*yIndex && mouseY <= guiTop+23+25*yIndex+20) {
+                int modifierI = getIntModifier(modifiers.get(yIndex));
+                int selectedModifier = -1;
+
+                if(mouseX < guiLeft+195) {
+                    if(mouseY < guiTop+23+25*yIndex+10) {
+                        selectedModifier = BOLD_MODIFIER;
+                    } else {
+                        selectedModifier = ITALIC_MODIFIER;
+                    }
+                } else {
+                    if(mouseY < guiTop+23+25*yIndex+10) {
+                        selectedModifier = UNDERLINE_MODIFIER;
+                    } else {
+                        selectedModifier = STRIKETHROUGH_MODIFIER;
+                    }
+                }
+
+                if(selectedModifier != -1) {
+                    int modifierMasked = (modifierI & selectedModifier);
+                    int modifierMaskedInverted = selectedModifier - modifierMasked;
+
+                    int modifierInverted = (-1) - selectedModifier;
+
+                    int finalModifier = (modifierI & modifierInverted) | modifierMaskedInverted;
+
+                    modifiers.put(yIndex, ""+finalModifier);
+
+                    NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.remove(yIndex);
+                    NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.add(yIndex,
+                            getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex), modifiers.get(yIndex)));
+                }
+            }
             if(mouseY > guiTop+23+25*yIndex && mouseY < guiTop+23+25*yIndex+20) {
-                if(mouseX > guiLeft+71 && mouseX < guiLeft+71+20) {
+                if(mouseX > guiLeft+86 && mouseX < guiLeft+86+20) {
                     switch (comparators.get(yIndex)) {
                         case ">":
                             comparators.put(yIndex, "="); break;
@@ -214,17 +283,18 @@ public class GuiEnchantColour extends GuiScreen {
                     }
                     NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.remove(yIndex);
                     NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.add(yIndex,
-                            getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex)));
-                } else if(mouseX > guiLeft+146 && mouseX < guiLeft+146+20) {
+                            getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex), modifiers.get(yIndex)));
+                } else if(mouseX > guiLeft+160 && mouseX < guiLeft+160+20) {
                     NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.remove(yIndex);
                     guiElementTextFields.remove(yIndex);
                     comparators.remove(yIndex);
+                    modifiers.remove(yIndex);
                 }
             }
         }
-        if(mouseX >= guiLeft+42 && mouseX <= guiLeft+42+88) {
+        if(mouseX >= guiLeft+57 && mouseX <= guiLeft+xSize-57) {
             if(mouseY >= guiTop+ySize-30 && mouseY <= guiTop+ySize-10) {
-                NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.add("[a-zA-Z\\- ]+:>:5:9");
+                NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.add("[a-zA-Z\\- ]+:>:5:9:0");
             }
         }
     }
@@ -242,6 +312,8 @@ public class GuiEnchantColour extends GuiScreen {
                     return "5";
                 case 3:
                     return "9";
+                case 4:
+                    return "0";
             }
         }
         return null;

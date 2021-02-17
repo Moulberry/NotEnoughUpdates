@@ -1357,7 +1357,7 @@ public class GuiProfileViewer extends GuiScreen {
                     Minecraft.getMinecraft().fontRendererObj.drawString(display, -halfDisplayLen-28, 0, 0, true);
 
                     ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
-                    GlStateManager.scale(-3.5f, 3.5f, 1);
+                    GlStateManager.scale(3.5f, 3.5f, 1);
                     GlStateManager.enableDepth();
                     Utils.drawItemStack(stack, 0, 0);
                     GlStateManager.scale(-1/3.5f, 1/3.5f, 1);

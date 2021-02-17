@@ -242,6 +242,13 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
+            name = "Bonemerang Overlay",
+            desc = "Bonemerang Overlay"
+    )
+    public BonemerangOverlay bonemerangOverlay = new BonemerangOverlay();
+
+    @Expose
+    @Category(
             name = "Accessory Bag Overlay",
             desc = "Accessory Bag Overlay"
     )
@@ -315,7 +322,7 @@ public class NEUConfig extends Config {
         @ConfigEditorDropdown(
                 values = {"Off", "Commas", "Shortened"}
         )
-        public int damageCommas = 1;
+        public int damageIndicatorStyle = 1;
     }
 
     public static class Notifications {
@@ -1366,6 +1373,24 @@ public class NEUConfig extends Config {
         public String dungBatColour = "0:255:12:255:0";
     }
 
+    public static class BonemerangOverlay {
+        @Expose
+        @ConfigOption(
+                name = "Highlight Targeted Entities",
+                desc = "Highlight entities that will be hit by your bonemerang"
+        )
+        @ConfigEditorBoolean
+        public boolean highlightTargeted = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Break Warning",
+                desc = "Show a warning below your crosshair if the bonemerang will break on a block"
+        )
+        @ConfigEditorBoolean
+        public boolean showBreak = true;
+    }
+
     public static class AccessoryBag {
         @Expose
         @ConfigOption(
@@ -1508,13 +1533,13 @@ public class NEUConfig extends Config {
         @Expose public ArrayList<String> eventFavourites = new ArrayList<>();
         @Expose public ArrayList<String> quickCommands = createDefaultQuickCommands();
         @Expose public ArrayList<String> enchantColours = Lists.newArrayList(
-                      "[a-zA-Z\\- ]+:\u003e:9:6",
-                                "[a-zA-Z\\- ]+:\u003e:6:c",
-                                "[a-zA-Z\\- ]+:\u003e:5:5",
-                                "Experience:\u003e:3:5",
-                                "Life Steal:\u003e:3:5",
-                                "Scavenger:\u003e:3:5",
-                                "Looting:\u003e:3:5");
+                      "[a-zA-Z\\- ]+:\u003e:9:6:0",
+                                "[a-zA-Z\\- ]+:\u003e:6:c:0",
+                                "[a-zA-Z\\- ]+:\u003e:5:5:0",
+                                "Experience:\u003e:3:5:0",
+                                "Life Steal:\u003e:3:5:0",
+                                "Scavenger:\u003e:3:5:0",
+                                "Looting:\u003e:3:5:0");
     }
 
     public static class DungeonMap {

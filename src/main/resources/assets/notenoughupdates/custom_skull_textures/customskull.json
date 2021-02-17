@@ -1,7 +1,0 @@
-{
-    "comment": "custom models override textures, remove the 'model' part below to make it use the elephant texture",
-    "f69ba621-a8b6-31a7-8de1-dc7ade140e1d": {
-		"model": "australia/moul_hat",
-		"texture": "australia/elephant"
-	}
-}

@@ -92,6 +92,7 @@ public class DwarvenMinesWaypoints {
 
     private long dynamicMillis = 0;
     private String dynamicLocation = null;
+    private String dynamicName = null;
     private final Pattern ghastRegex = Pattern.compile("\u00A7r\u00A7eFind the \u00A7r\u00A76Powder Ghast\u00A7r\u00A7e near the \u00A7r\u00A7b(.+)!");
     private final Pattern fallenStarRegex = Pattern.compile("\u00A7r\u00A75Fallen Star \u00A7r\u00A7ehas crashed at \u00A7r\u00A7b(.+)\u00A7r\u00A7e!");
 
@@ -100,11 +101,13 @@ public class DwarvenMinesWaypoints {
         Matcher matcherGhast = ghastRegex.matcher(event.message.getFormattedText());
         if(matcherGhast.find()) {
             dynamicLocation = Utils.cleanColour(matcherGhast.group(1).trim());
+            dynamicName = EnumChatFormatting.GOLD+"Powder Ghast";
             dynamicMillis = System.currentTimeMillis();
         } else {
             Matcher matcherStar = fallenStarRegex.matcher(event.message.getFormattedText());
             if(matcherStar.find()) {
                 dynamicLocation = Utils.cleanColour(matcherStar.group(1).trim());
+                dynamicName = EnumChatFormatting.DARK_PURPLE+"Fallen Star";
                 dynamicMillis = System.currentTimeMillis();
             }
         }
@@ -185,12 +188,11 @@ public class DwarvenMinesWaypoints {
 
         int locWaypoint = NotEnoughUpdates.INSTANCE.config.mining.locWaypoints;
 
-        if(dynamicLocation != null &&
+        if(dynamicLocation != null && dynamicName != null &&
                 System.currentTimeMillis() - dynamicMillis < 30*1000) {
             for(Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
                 if(entry.getKey().equals(dynamicLocation)) {
-                    renderWayPoint(EnumChatFormatting.GOLD+"Powder Ghast",
-                            new Vector3f(entry.getValue()).translate(0, 15, 0), event.partialTicks);
+                    renderWayPoint(dynamicName, new Vector3f(entry.getValue()).translate(0, 15, 0), event.partialTicks);
                     break;
                 }
             }

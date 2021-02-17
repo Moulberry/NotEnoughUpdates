@@ -43,7 +43,7 @@ public class CapeManager {
     private boolean allAvailable = false;
     private HashSet<String> availableCapes = new HashSet<>();
 
-    private JsonObject lastJsonSync = null;
+    public JsonObject lastJsonSync = null;
 
     private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
             "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative", "void", "ironmoon", "krusty", "furf" };

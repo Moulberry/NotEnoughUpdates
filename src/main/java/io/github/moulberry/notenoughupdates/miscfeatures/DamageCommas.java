@@ -2,7 +2,6 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
@@ -21,7 +20,7 @@ public class DamageCommas {
     }
 
     public static IChatComponent replaceName(IChatComponent name) {
-        if(NotEnoughUpdates.INSTANCE.config.misc.damageCommas == 0) return name;
+        if(NotEnoughUpdates.INSTANCE.config.misc.damageIndicatorStyle == 0) return name;
 
         String formatted = name.getFormattedText();
         int hashCode = formatted.hashCode();
@@ -35,7 +34,7 @@ public class DamageCommas {
         if(formatted.length() >= 7 && formatted.startsWith("\u00A7f\u2727") &&
                 formatted.endsWith("\u2727\u00a7r")) {
 
-            if(NotEnoughUpdates.INSTANCE.config.misc.damageCommas == 2) {
+            if(NotEnoughUpdates.INSTANCE.config.misc.damageIndicatorStyle == 2) {
                 String numbers = Utils.cleanColour(formatted.substring(3, formatted.length()-3)).trim().replaceAll("[^0-9]", "");
                 try {
                     int damage = Integer.parseInt(numbers);
@@ -116,7 +115,7 @@ public class DamageCommas {
                 int damage = Integer.parseInt(damageS);
 
                 String damageFormatted;
-                if(NotEnoughUpdates.INSTANCE.config.misc.damageCommas == 2 && damage > 999) {
+                if(NotEnoughUpdates.INSTANCE.config.misc.damageIndicatorStyle == 2 && damage > 999) {
                     damageFormatted = Utils.shortNumberFormat(damage, 0);
                 } else {
                     damageFormatted = NumberFormat.getIntegerInstance().format(damage);
