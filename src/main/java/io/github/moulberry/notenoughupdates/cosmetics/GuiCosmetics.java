@@ -16,6 +16,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 import java.awt.*;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.*;
 
@@ -271,17 +272,37 @@ public class GuiCosmetics extends GuiScreen {
                                 null, true);
 
                         lastCapeEquip = System.currentTimeMillis();
-                        if(wantToEquipCape == null) {
-                            NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType=null&accessToken="+
-                                    Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> { System.out.println(jsonObject); }, () -> {
-                                System.out.println("change cape error");
-                            });
-                        } else {
-                            NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType="+wantToEquipCape+"&accessToken="+
-                                    Minecraft.getMinecraft().getSession().getToken(), (jsonObject) -> { System.out.println(jsonObject); }, () -> {
-                                System.out.println("change cape error");
-                            });
+
+                        try {
+                            String userName = Minecraft.getMinecraft().thePlayer.getName();
+                            String accessToken =  Minecraft.getMinecraft().getSession().getToken();
+                            Random r1 = new Random();
+                            Random r2 = new Random(System.identityHashCode(new Object()));
+                            BigInteger random1Bi = new BigInteger(128, r1);
+                            BigInteger random2Bi = new BigInteger(128, r2);
+                            BigInteger serverBi = random1Bi.xor(random2Bi);
+                            String serverId = serverBi.toString(16);
+                            Minecraft.getMinecraft().getSessionService().joinServer(Minecraft.getMinecraft().getSession().getProfile(), accessToken, serverId);
+
+                            //System.out.println("Joined with serverId="+serverId);
+
+                            if(wantToEquipCape == null) {
+                                NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType=null&serverId="+
+                                        serverId+"&username="+userName, (jsonObject) -> { System.out.println(jsonObject); }, () -> {
+                                            System.out.println("Change cape error");
+                                        });
+                            } else {
+                                NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType="+wantToEquipCape+"&serverId="+
+                                        serverId+"&username="+userName, (jsonObject) -> { System.out.println(jsonObject); }, () -> {
+                                    System.out.println("Change cape error");
+                                });
+                            }
+                        } catch(Exception e) {
+                            System.out.println("Exception while generating mojang shared secret");
+                            e.printStackTrace();
                         }
+
+
                     }
                 }
             }

@@ -135,7 +135,7 @@ public class HypixelApi {
     }
 
     public String generateApiUrl(String apiKey, String method, HashMap<String, String> args) {
-        StringBuilder url = new StringBuilder("https://api.hypixel.net/" + method + (apiKey != null ? ("?key=" + apiKey) : ""));
+        StringBuilder url = new StringBuilder("https://api.hypixel.net/" + method + (apiKey != null ? ("?key=" + apiKey.replace(" ", "")) : ""));
         boolean first = true;
         for(Map.Entry<String, String> entry : args.entrySet()) {
             if(first && apiKey == null) {

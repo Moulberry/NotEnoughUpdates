@@ -29,6 +29,8 @@ public class ConfigProcessor {
         public final int subcategoryId;
         public GuiOptionEditor editor;
 
+        public int accordionId = -1;
+
         private final Field field;
         private final Object container;
 
@@ -87,10 +89,9 @@ public class ConfigProcessor {
                 processedConfig.put(categoryField.getName(), cat);
 
                 for(Field optionField : categoryObj.getClass().getDeclaredFields()) {
-                    boolean optionExposePresent = optionField.isAnnotationPresent(Expose.class);
                     boolean optionPresent = optionField.isAnnotationPresent(ConfigOption.class);
 
-                    if(optionExposePresent && optionPresent) {
+                    if(optionPresent) {
                         ConfigOption optionAnnotation = optionField.getAnnotation(ConfigOption.class);
                         ProcessedOption option = new ProcessedOption(
                                 optionAnnotation.name(),
@@ -99,6 +100,10 @@ public class ConfigProcessor {
                                 optionField,
                                 categoryObj
                         );
+                        if(optionField.isAnnotationPresent(ConfigAccordionId.class)) {
+                            ConfigAccordionId annotation = optionField.getAnnotation(ConfigAccordionId.class);
+                            option.accordionId = annotation.id();
+                        }
 
                         GuiOptionEditor editor = null;
                         Class<?> optionType = optionField.getType();
@@ -109,6 +114,11 @@ public class ConfigProcessor {
                         if(optionType.isAssignableFrom(boolean.class) &&
                                 optionField.isAnnotationPresent(ConfigEditorBoolean.class)) {
                             editor = new GuiOptionEditorBoolean(option);
+                        }
+                        if(optionType.isAssignableFrom(boolean.class) &&
+                                optionField.isAnnotationPresent(ConfigEditorAccordion.class)) {
+                            ConfigEditorAccordion configEditorAnnotation = optionField.getAnnotation(ConfigEditorAccordion.class);
+                            editor = new GuiOptionEditorAccordion(option, configEditorAnnotation.id());
                         }
                         if(optionType.isAssignableFrom(int.class)) {
                             if(optionField.isAnnotationPresent(ConfigEditorDropdown.class)) {
@@ -154,8 +164,6 @@ public class ConfigProcessor {
                         }
                         option.editor = editor;
                         cat.options.put(optionField.getName(), option);
-                    } else if(optionExposePresent || optionPresent) {
-                        //System.err.printf("Failed to load config option %s. Both @Expose and @ConfigOption must be present.\n", optionField.getName());
                     }
                 }
             } else if(exposePresent || categoryPresent) {

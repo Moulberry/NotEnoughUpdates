@@ -1,9 +1,12 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockCrops;
+import net.minecraft.block.BlockPackedIce;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -46,6 +49,9 @@ public class CustomItemEffects {
 
     private static final int MAX_BUILDERS_BLOCKS = 241;
 
+    private HashSet<BlockPos> zapperBlocks = new HashSet<>();
+    private boolean zapperDirty = false;
+
     public long aoteUseMillis = 0;
 
     public long lastUsedHyperion = 0;
@@ -69,14 +75,16 @@ public class CustomItemEffects {
     public void onTick(TickEvent.RenderTickEvent event) {
         if(Minecraft.getMinecraft().thePlayer == null) return;
 
+        zapperDirty = true;
+
         long currentTime = System.currentTimeMillis();
         int delta = (int)(currentTime - lastMillis);
         lastMillis = currentTime;
 
         if(delta <= 0) return;
 
-        if(aoteTeleportationMillis > NotEnoughUpdates.INSTANCE.config.smoothAOTE.smoothTpMillis*2) {
-            aoteTeleportationMillis = NotEnoughUpdates.INSTANCE.config.smoothAOTE.smoothTpMillis*2;
+        if(aoteTeleportationMillis > NotEnoughUpdates.INSTANCE.config.itemOverlays.smoothTpMillis*2) {
+            aoteTeleportationMillis = NotEnoughUpdates.INSTANCE.config.itemOverlays.smoothTpMillis*2;
         }
         if(aoteTeleportationMillis < 0) aoteTeleportationMillis = 0;
 
@@ -139,11 +147,11 @@ public class CustomItemEffects {
                     }
                 }
 
-                if(NotEnoughUpdates.INSTANCE.config.smoothAOTE.smoothTpMillis <= 0
+                if(NotEnoughUpdates.INSTANCE.config.itemOverlays.smoothTpMillis <= 0
                         || Minecraft.getMinecraft().gameSettings.thirdPersonView != 0) return;
 
-                boolean aote = NotEnoughUpdates.INSTANCE.config.smoothAOTE.enableSmoothAOTE && internal.equals("ASPECT_OF_THE_END");
-                boolean hyp = NotEnoughUpdates.INSTANCE.config.smoothAOTE.enableSmoothHyperion && shadowWarp;
+                boolean aote = NotEnoughUpdates.INSTANCE.config.itemOverlays.enableSmoothAOTE && internal.equals("ASPECT_OF_THE_END");
+                boolean hyp = NotEnoughUpdates.INSTANCE.config.itemOverlays.enableSmoothHyperion && shadowWarp;
                 if(aote || hyp) {
                     aoteUseMillis = System.currentTimeMillis();
                     if(aoteTeleportationCurr == null) {
@@ -191,13 +199,13 @@ public class CustomItemEffects {
 
                 if(!Minecraft.getMinecraft().theWorld.isAirBlock(blockPos) &&
                         Minecraft.getMinecraft().theWorld.getBlockState(blockPos).getBlock().isFullCube()) {
-                    if(NotEnoughUpdates.INSTANCE.config.bonemerangOverlay.showBreak) {
+                    if(NotEnoughUpdates.INSTANCE.config.itemOverlays.showBreak) {
                         bonemerangBreak = true;
                     }
                     break;
                 }
 
-                if(NotEnoughUpdates.INSTANCE.config.bonemerangOverlay.highlightTargeted) {
+                if(NotEnoughUpdates.INSTANCE.config.itemOverlays.highlightTargeted) {
                     List<Entity> entities = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABBExcludingEntity(Minecraft.getMinecraft().thePlayer, bb);
                     for(Entity entity : entities) {
                         if(entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand)) {
@@ -226,7 +234,7 @@ public class CustomItemEffects {
                             Minecraft.getMinecraft().fontRendererObj,
                             scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
                 }
-            } else if(NotEnoughUpdates.INSTANCE.config.builderWand.enableWandOverlay &&
+            } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay &&
                     Minecraft.getMinecraft().objectMouseOver != null &&
                     Minecraft.getMinecraft().objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
 
@@ -279,7 +287,7 @@ public class CustomItemEffects {
                             String itemCountS = EnumChatFormatting.DARK_GRAY+"x"+EnumChatFormatting.RESET+itemCount;
                             int itemCountLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(itemCountS);
 
-                            if(NotEnoughUpdates.INSTANCE.config.builderWand.wandBlockCount) {
+                            if(NotEnoughUpdates.INSTANCE.config.itemOverlays.wandBlockCount) {
                                 if(usingDirtWand) {
                                     Utils.drawItemStack(new ItemStack(Items.gold_nugget), scaledResolution.getScaledWidth()/2 - (itemCountLen+16)/2,
                                             scaledResolution.getScaledHeight()/2+10+4);
@@ -379,6 +387,31 @@ public class CustomItemEffects {
         return false;
     }
 
+    private static final List<BlockPos> zapperOffsets = new ArrayList<>();
+    static {
+        zapperOffsets.add(new BlockPos(0, 0, -1));
+        zapperOffsets.add(new BlockPos(0, 0, 1));
+        zapperOffsets.add(new BlockPos(-1, 0, 0));
+        zapperOffsets.add(new BlockPos(1, 0, 0));
+        zapperOffsets.add(new BlockPos(0, 1, 0));
+        zapperOffsets.add(new BlockPos(0, -1, 0));
+    }
+    private static final HashSet<Block> cropBlocksZapper = new HashSet<>();
+    private static final HashSet<Block> otherBannedBlocksZapper = new HashSet<>();
+    static {
+        cropBlocksZapper.add(Blocks.wheat);
+        cropBlocksZapper.add(Blocks.carrots);
+        cropBlocksZapper.add(Blocks.potatoes);
+        cropBlocksZapper.add(Blocks.pumpkin);
+        cropBlocksZapper.add(Blocks.pumpkin_stem);
+        cropBlocksZapper.add(Blocks.melon_block);
+        cropBlocksZapper.add(Blocks.melon_stem);
+        cropBlocksZapper.add(Blocks.cactus);
+        cropBlocksZapper.add(Blocks.reeds);
+
+        otherBannedBlocksZapper.add(Blocks.farmland);
+    }
+
     @SubscribeEvent
     public void renderBlockOverlay(DrawBlockHighlightEvent event) {
         if(aoteTeleportationCurr != null && aoteTeleportationMillis > 0) {
@@ -392,7 +425,72 @@ public class CustomItemEffects {
             double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)event.partialTicks;
             double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double)event.partialTicks;
 
-            if(NotEnoughUpdates.INSTANCE.config.treecap.enableTreecapOverlay &&
+            if(heldInternal.equals("BLOCK_ZAPPER")) {
+                boolean privateIs = SBInfo.getInstance().getLocation() == null || SBInfo.getInstance().getLocation().equals("dynamic");
+                if (!privateIs || !NotEnoughUpdates.INSTANCE.config.itemOverlays.enableZapperOverlay ||
+                        event.target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+                    zapperBlocks.clear();
+                    return;
+                }
+                if(zapperDirty) {
+                    zapperDirty = false;
+
+                    zapperBlocks.clear();
+                    LinkedList<BlockPos> returnablePositions = new LinkedList<>();
+
+                    BlockPos pos = event.target.getBlockPos();
+                    IBlockState firstBlockState = Minecraft.getMinecraft().theWorld.getBlockState(pos);
+                    Block block = firstBlockState.getBlock();
+
+                    BlockPos above = pos.add(0, 1, 0);
+                    Block aboveBlock = Minecraft.getMinecraft().theWorld.getBlockState(above).getBlock();
+
+                    if(!cropBlocksZapper.contains(aboveBlock) && !cropBlocksZapper.contains(block) &&
+                            !otherBannedBlocksZapper.contains(block) && !block.hasTileEntity(firstBlockState) &&
+                            block.getBlockHardness(Minecraft.getMinecraft().theWorld, pos) >= 0) {
+                        for(int i=0; i<164; i++) {
+                            zapperBlocks.add(pos);
+                            returnablePositions.remove(pos);
+
+                            List<BlockPos> availableNeighbors = new ArrayList<>();
+
+                            for(BlockPos offset : zapperOffsets) {
+                                BlockPos newPos = pos.add(offset);
+
+                                if(zapperBlocks.contains(newPos)) continue;
+
+                                IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(newPos);
+                                if(state != null && state.getBlock() == block) {
+                                    above = newPos.add(0, 1, 0);
+                                    aboveBlock = Minecraft.getMinecraft().theWorld.getBlockState(above).getBlock();
+                                    if(!cropBlocksZapper.contains(aboveBlock)) {
+                                        availableNeighbors.add(newPos);
+                                    }
+                                }
+                            }
+
+                            if(availableNeighbors.size() >= 2) {
+                                returnablePositions.add(pos);
+                                pos = availableNeighbors.get(0);
+                            } else if(availableNeighbors.size() == 1) {
+                                pos = availableNeighbors.get(0);
+                            } else if(returnablePositions.isEmpty()) {
+                                break;
+                            } else {
+                                i--;
+                                pos = returnablePositions.getLast();
+                            }
+                        }
+                    }
+                }
+                for(BlockPos pos : zapperBlocks) {
+                    Block block = Minecraft.getMinecraft().theWorld.getBlockState(pos).getBlock();
+                    drawFilledBoundingBox(block.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, pos)
+                                    .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2),
+                            1f, NotEnoughUpdates.INSTANCE.config.itemOverlays.zapperOverlayColour);
+                }
+
+            } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableTreecapOverlay &&
                     (heldInternal.equals("JUNGLE_AXE") || heldInternal.equals("TREECAPITATOR_AXE"))) {
                 int maxWood = 10;
                 if(heldInternal.equals("TREECAPITATOR_AXE")) maxWood = 35;
@@ -452,7 +550,7 @@ public class CustomItemEffects {
 
                                 drawFilledBoundingBox(block.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, candidate)
                                         .expand(0.001D, 0.001D, 0.001D).offset(-d0, -d1, -d2),
-                                        random ? 0.5f : 1f, NotEnoughUpdates.INSTANCE.config.treecap.treecapOverlayColour);
+                                        random ? 0.5f : 1f, NotEnoughUpdates.INSTANCE.config.itemOverlays.treecapOverlayColour);
                             }
                         }
                     }
@@ -461,7 +559,7 @@ public class CustomItemEffects {
                     GlStateManager.enableTexture2D();
                     GlStateManager.disableBlend();
                 }
-            } else if(NotEnoughUpdates.INSTANCE.config.builderWand.enableWandOverlay) {
+            } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay) {
                 if(heldInternal.equals("BUILDERS_WAND")) {
                     int maxBlocks = MAX_BUILDERS_BLOCKS;
                     if (event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
@@ -489,7 +587,7 @@ public class CustomItemEffects {
                                     itemCount = countItemsInInventoryAndStorage(matchStack);
                                 }
 
-                                String special = (candidatesOld.size() <= itemCount) ? NotEnoughUpdates.INSTANCE.config.builderWand.wandOverlayColour :
+                                String special = (candidatesOld.size() <= itemCount) ? NotEnoughUpdates.INSTANCE.config.itemOverlays.wandOverlayColour :
                                         "0:255:255:0:0";
 
                                 if(candidatesOld.size() <= maxBlocks) {
@@ -530,7 +628,7 @@ public class CustomItemEffects {
                         GlStateManager.disableTexture2D();
                         GlStateManager.depthMask(false);
 
-                        String special = NotEnoughUpdates.INSTANCE.config.builderWand.wandOverlayColour;
+                        String special = NotEnoughUpdates.INSTANCE.config.itemOverlays.wandOverlayColour;
 
                         AxisAlignedBB bb = Blocks.dirt.getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, hover);
                         drawBlock((int)bb.minX, (int)bb.minY, (int)bb.minZ+1, Blocks.dirt.getDefaultState(),

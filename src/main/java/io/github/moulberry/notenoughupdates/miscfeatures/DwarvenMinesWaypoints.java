@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -120,6 +121,10 @@ public class DwarvenMinesWaypoints {
         if(SBInfo.getInstance().getLocation() == null) return;
         if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
 
+
+        NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+        if(hidden == null) return;
+
         if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
@@ -130,20 +135,20 @@ public class DwarvenMinesWaypoints {
                     ItemStack stack = lower.getStackInSlot(i);
                     if(stack == null) continue;
                     if(stack.getDisplayName().equals(EnumChatFormatting.YELLOW+"Commission Milestones")) {
-                        NotEnoughUpdates.INSTANCE.config.hidden.commissionMilestone = 5;
+                        hidden.commissionMilestone = 5;
                         String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
                         for(String line : lore) {
                             String clean = Utils.cleanColour(line);
                             if(clean.equals("Tier I Rewards:")) {
-                                NotEnoughUpdates.INSTANCE.config.hidden.commissionMilestone = 0;
+                                hidden.commissionMilestone = 0;
                             } else if(clean.equals("Tier II Rewards:")) {
-                                NotEnoughUpdates.INSTANCE.config.hidden.commissionMilestone = 1;
+                                hidden.commissionMilestone = 1;
                             } else if(clean.equals("Tier III Rewards:")) {
-                                NotEnoughUpdates.INSTANCE.config.hidden.commissionMilestone = 2;
+                                hidden.commissionMilestone = 2;
                             } else if(clean.equals("Tier IV Rewards:")) {
-                                NotEnoughUpdates.INSTANCE.config.hidden.commissionMilestone = 3;
+                                hidden.commissionMilestone = 3;
                             } else if(clean.equals("Tier V Rewards:")) {
-                                NotEnoughUpdates.INSTANCE.config.hidden.commissionMilestone = 4;
+                                hidden.commissionMilestone = 4;
                             }
                         }
                         return;
@@ -230,20 +235,25 @@ public class DwarvenMinesWaypoints {
         }
         if(commissionFinished) {
             for(Emissary emissary : Emissary.values()) {
-                if(NotEnoughUpdates.INSTANCE.config.hidden.commissionMilestone >= emissary.minMilestone) {
 
-                    EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-                    double dX = emissary.loc.x + 0.5f - p.posX;
-                    double dY = emissary.loc.y + 0.188f - p.posY;
-                    double dZ = emissary.loc.z + 0.5f - p.posZ;
+                NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+                if(hidden != null) {
+                    if(hidden.commissionMilestone >= emissary.minMilestone) {
 
-                    double distSq = dX*dX + dY*dY + dZ*dZ;
-                    if(distSq >= 12*12) {
-                        renderWayPoint(EnumChatFormatting.GOLD+emissary.name,
-                                new Vector3f(emissary.loc).translate(0.5f, 2.488f, 0.5f),
-                                event.partialTicks);
+                        EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
+                        double dX = emissary.loc.x + 0.5f - p.posX;
+                        double dY = emissary.loc.y + 0.188f - p.posY;
+                        double dZ = emissary.loc.z + 0.5f - p.posZ;
+
+                        double distSq = dX*dX + dY*dY + dZ*dZ;
+                        if(distSq >= 12*12) {
+                            renderWayPoint(EnumChatFormatting.GOLD+emissary.name,
+                                    new Vector3f(emissary.loc).translate(0.5f, 2.488f, 0.5f),
+                                    event.partialTicks);
+                        }
                     }
                 }
+
             }
         }
     }

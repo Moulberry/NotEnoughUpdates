@@ -77,13 +77,13 @@ public class DungeonWin {
     }
 
     public static void displayWin() {
-        if(NotEnoughUpdates.INSTANCE.config.dungeonWin.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeonWin.enableDungeonWin) return;
+        if(NotEnoughUpdates.INSTANCE.config.dungeons.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeons.enableDungeonWin) return;
         startTime = System.currentTimeMillis();
         confetti.clear();
     }
 
     public static void tick() {
-        if(NotEnoughUpdates.INSTANCE.config.dungeonWin.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeonWin.enableDungeonWin) return;
+        if(NotEnoughUpdates.INSTANCE.config.dungeons.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeons.enableDungeonWin) return;
         if(System.currentTimeMillis() - startTime > 5000) return;
         int deltaTime = (int)(System.currentTimeMillis() - startTime);
 
@@ -142,7 +142,7 @@ public class DungeonWin {
     public static void onChatMessage(ClientChatReceivedEvent e) {
         if(e.type == 2) return;
 
-        if(NotEnoughUpdates.INSTANCE.config.dungeonWin.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeonWin.enableDungeonWin) return;
+        if(NotEnoughUpdates.INSTANCE.config.dungeons.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeons.enableDungeonWin) return;
         long currentTime = System.currentTimeMillis();
         String unformatted = Utils.cleanColour(e.message.getUnformattedText());
         if(e.message.getFormattedText().startsWith(EnumChatFormatting.RESET+"   ")) {
@@ -196,8 +196,8 @@ public class DungeonWin {
     }
 
     public static void render(float partialTicks) {
-        if(NotEnoughUpdates.INSTANCE.config.dungeonWin.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeonWin.enableDungeonWin) return;
-        int maxTime = Math.min(30000, NotEnoughUpdates.INSTANCE.config.dungeonWin.dungeonWinMillis);
+        if(NotEnoughUpdates.INSTANCE.config.dungeons.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeons.enableDungeonWin) return;
+        int maxTime = Math.min(30000, NotEnoughUpdates.INSTANCE.config.dungeons.dungeonWinMillis);
         if(System.currentTimeMillis() - startTime > maxTime) return;
         int deltaTime = (int)(System.currentTimeMillis() - startTime);
 

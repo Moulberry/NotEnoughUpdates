@@ -53,7 +53,7 @@ public class ItemCooldowns {
     }
 
     public static long getTreecapCooldownWithPet(){
-        if (NotEnoughUpdates.INSTANCE.config.treecap.enableMonkeyCheck && PetInfoOverlay.currentPet != null) {
+        if (NotEnoughUpdates.INSTANCE.config.itemOverlays.enableMonkeyCheck && PetInfoOverlay.currentPet != null) {
             PetInfoOverlay.Pet pet = PetInfoOverlay.currentPet;
             if (pet.petLevel != null &&
                 pet.petType.equalsIgnoreCase("monkey") &&

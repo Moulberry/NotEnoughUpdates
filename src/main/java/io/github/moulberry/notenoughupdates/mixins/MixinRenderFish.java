@@ -34,7 +34,7 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
 
     @Inject(method = "doRender(Lnet/minecraft/entity/projectile/EntityFishHook;DDDFF)V", at=@At(value = "HEAD"), cancellable = true)
     public void render(EntityFishHook entity, double x, double y, double z, float entityYaw, float partialTicks, CallbackInfo ci) {
-        if(!NotEnoughUpdates.INSTANCE.config.rodColours.enableRodColours || entity == null) return;
+        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableRodColours || entity == null) return;
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(entity.angler.getHeldItem());
         if (NotEnoughUpdates.INSTANCE.isOnSkyblock() && internalname != null && entity.angler != null &&
@@ -103,9 +103,9 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
 
                 String specialColour;
                 if (entity.angler.getUniqueID().equals(Minecraft.getMinecraft().thePlayer.getUniqueID())) {
-                    specialColour = NotEnoughUpdates.INSTANCE.config.rodColours.ownRodColour;
+                    specialColour = NotEnoughUpdates.INSTANCE.config.itemOverlays.ownRodColour;
                 } else {
-                    specialColour = NotEnoughUpdates.INSTANCE.config.rodColours.otherRodColour;
+                    specialColour = NotEnoughUpdates.INSTANCE.config.itemOverlays.otherRodColour;
                 }
                 int colourI = SpecialColour.specialToChromaRGB(specialColour);
 

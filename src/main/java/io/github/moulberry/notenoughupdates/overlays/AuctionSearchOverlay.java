@@ -134,6 +134,7 @@ public class AuctionSearchOverlay {
 
         Minecraft.getMinecraft().fontRendererObj.drawString("Enter Query:", width/2-100, topY-10, 0xdddddd, true);
 
+        textField.setFocus(true);
         textField.setText(searchString);
         textField.setSize(149, 20);
         textField.setCustomBorderColour(0xffffff);

@@ -59,6 +59,8 @@ public class CustomSkulls implements IResourceManagerReloadListener {
     private ResourceLocation configuration = new ResourceLocation("notenoughupdates:custom_skull_textures/customskull.json");
     protected final TextureMap textureMap = new TextureMap("custom_skull_textures");
 
+    public static ItemCameraTransforms.TransformType mostRecentTransformType = ItemCameraTransforms.TransformType.NONE;
+
     protected final Map<ResourceLocation, TextureAtlasSprite> sprites = Maps.<ResourceLocation, TextureAtlasSprite>newHashMap();
 
     private final FaceBakery faceBakery = new FaceBakery();
@@ -118,7 +120,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
                 }
             }
 
-            Minecraft.getMinecraft().getTextureManager().loadTickableTexture(atlas, textureMap);
+            Minecraft.getMinecraft().getTextureManager().loadTexture(atlas, textureMap);
         } catch(Exception e) {
         }
     }
@@ -230,17 +232,29 @@ public class CustomSkulls implements IResourceManagerReloadListener {
             return false;
         }
 
-        if(skull.modelBaked != null) {
+        if(skull.modelBaked != null && skull.model != null) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(atlas);
             GlStateManager.pushMatrix();
             GlStateManager.disableCull();
+            GlStateManager.enableLighting();
 
             GlStateManager.translate(xOffset + 0.5F, yOffset, zOffset + 0.5F);
 
             GlStateManager.enableRescaleNormal();
             GlStateManager.enableAlpha();
-            GlStateManager.scale(1, 1, -1);
-            GlStateManager.translate(-0.5f, 0.25f, -0.5f);
+
+            GlStateManager.rotate(rotationDeg, 0, 1, 0);
+
+            GlStateManager.translate(0, 0.25f, 0);
+
+            if(xOffset == -0.5 && yOffset == 0 && zOffset == -0.5 && rotationDeg == 180) {
+                skull.model.getAllTransforms().applyTransform(ItemCameraTransforms.TransformType.HEAD);
+            } else {
+                skull.model.getAllTransforms().applyTransform(mostRecentTransformType);
+            }
+
+            GlStateManager.translate(-0.5f, 0, -0.5f);
+
             renderModel(skull.modelBaked, 0xffffffff);
             GlStateManager.popMatrix();
         } else if(skull.texture != null) {

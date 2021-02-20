@@ -23,7 +23,6 @@ public class FarmingOverlay extends TextOverlay {
     private long lastUpdate = -1;
     private int counterLast = -1;
     private int counter = -1;
-    private boolean dicerHeld = false;
     private float cropsPerSecondLast = 0;
     private float cropsPerSecond = 0;
     private LinkedList<Integer> counterQueue = new LinkedList<>();
@@ -60,7 +59,6 @@ public class FarmingOverlay extends TextOverlay {
         if(!NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingOverlay) {
             counter = -1;
             overlayStrings = null;
-            dicerHeld = false;
             return;
         }
 
@@ -92,9 +90,6 @@ public class FarmingOverlay extends TextOverlay {
             skillType = "Alchemy";
         } else {
             skillType = "Farming";
-        }
-        if(internalname != null && (internalname.equals("MELON_DICER") || internalname.equals("PUMPKIN_DICER"))) {
-            dicerHeld = true;
         }
 
         skillInfoLast = skillInfo;
@@ -156,7 +151,7 @@ public class FarmingOverlay extends TextOverlay {
             cropsPerSecond = (first - last)/3f;
         }
 
-        if(counter != -1 || dicerHeld) {
+        if(counter != -1) {
             overlayStrings = new ArrayList<>();
         } else {
             overlayStrings = null;
@@ -168,7 +163,7 @@ public class FarmingOverlay extends TextOverlay {
     public void updateFrequent() {
         super.updateFrequent();
 
-        if(counter < 0 && !dicerHeld) {
+        if(counter < 0) {
             overlayStrings = null;
         } else {
             HashMap<Integer, String> lineMap = new HashMap<>();

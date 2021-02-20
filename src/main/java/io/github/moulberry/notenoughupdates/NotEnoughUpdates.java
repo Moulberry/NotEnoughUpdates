@@ -690,6 +690,7 @@ public class NotEnoughUpdates {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+devFailStrings[devFailIndex++]));
                 return;
             }
+            if(args.length == 1 && args[0].equalsIgnoreCase("dev")) NotEnoughUpdates.INSTANCE.config.hidden.dev = true;
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Executing dubious code"));
             /*Minecraft.getMinecraft().thePlayer.rotationYaw = 0;
             Minecraft.getMinecraft().thePlayer.rotationPitch = 0;
@@ -876,6 +877,23 @@ public class NotEnoughUpdates {
 
     SimpleCommand cosmeticsCommand = new SimpleCommand("neucosmetics", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
+            if(Loader.isModLoaded("optifine") &&
+                    new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
+                try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+
+                    String line;
+                    while((line = reader.readLine()) != null) {
+                        if(line.contains("ofFastRender:true")) {
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                                    "NEU cosmetics do not work with OF Fast Render. Go to Video > Performance to disable it."));
+                            return;
+                        }
+                    }
+                } catch(Exception e) {
+                }
+            }
+
             openGui = new GuiCosmetics();
         }
     });
@@ -972,6 +990,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new FuelBar());
         MinecraftForge.EVENT_BUS.register(XPInformation.getInstance());
         MinecraftForge.EVENT_BUS.register(OverlayManager.petInfoOverlay);
+        MinecraftForge.EVENT_BUS.register(OverlayManager.timersOverlay);
 
         if(Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
             ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());

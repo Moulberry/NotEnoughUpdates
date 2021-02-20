@@ -16,7 +16,6 @@ import io.github.moulberry.notenoughupdates.util.ProfileApiSyncer;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.util.XPInformation;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
@@ -302,26 +301,28 @@ public class PetInfoOverlay extends TextOverlay {
             }
 
             String etaStr = null;
-            float remaining = currentPet.petLevel.currentLevelRequirement - currentPet.petLevel.levelXp;
-            if(remaining > 0) {
-                if(xpGain < 1000) {
-                    etaStr = EnumChatFormatting.AQUA+"Until L"+(int)(currentPet.petLevel.level+1)+": " +
-                            EnumChatFormatting.YELLOW+"N/A";
-                } else {
-                    etaStr = EnumChatFormatting.AQUA+"Until L"+(int)(currentPet.petLevel.level+1)+": " +
-                            EnumChatFormatting.YELLOW + Utils.prettyTime((long)(remaining)*1000*60*60/(long)xpGain);
-                }
-            }
-
             String etaMaxStr = null;
-            float remainingMax = currentPet.petLevel.maxXP - currentPet.petLevel.totalXp;
-            if(remaining > 0) {
-                if(xpGain < 1000) {
-                    etaMaxStr = EnumChatFormatting.AQUA+"Until L100: " +
-                            EnumChatFormatting.YELLOW+"N/A";
-                } else {
-                    etaMaxStr = EnumChatFormatting.AQUA+"Until L100: " +
-                            EnumChatFormatting.YELLOW + Utils.prettyTime((long)(remainingMax)*1000*60*60/(long)xpGain);
+            if(currentPet.petLevel.level < 100) {
+                float remaining = currentPet.petLevel.currentLevelRequirement - currentPet.petLevel.levelXp;
+                if(remaining > 0) {
+                    if(xpGain < 1000) {
+                        etaStr = EnumChatFormatting.AQUA+"Until L"+(int)(currentPet.petLevel.level+1)+": " +
+                                EnumChatFormatting.YELLOW+"N/A";
+                    } else {
+                        etaStr = EnumChatFormatting.AQUA+"Until L"+(int)(currentPet.petLevel.level+1)+": " +
+                                EnumChatFormatting.YELLOW + Utils.prettyTime((long)(remaining)*1000*60*60/(long)xpGain);
+                    }
+                }
+
+                float remainingMax = currentPet.petLevel.maxXP - currentPet.petLevel.totalXp;
+                if(remaining > 0) {
+                    if(xpGain < 1000) {
+                        etaMaxStr = EnumChatFormatting.AQUA+"Until L100: " +
+                                EnumChatFormatting.YELLOW+"N/A";
+                    } else {
+                        etaMaxStr = EnumChatFormatting.AQUA+"Until L100: " +
+                                EnumChatFormatting.YELLOW + Utils.prettyTime((long)(remainingMax)*1000*60*60/(long)xpGain);
+                    }
                 }
             }
 
@@ -352,15 +353,14 @@ public class PetInfoOverlay extends TextOverlay {
     }
 
     public void update() {
-        if(!NotEnoughUpdates.INSTANCE.config.petOverlay.enablePetInfo && !NotEnoughUpdates.INSTANCE.config.treecap.enableMonkeyCheck
-                && !NotEnoughUpdates.INSTANCE.config.notifications.showWrongPetMsg) {
+        if(!NotEnoughUpdates.INSTANCE.config.petOverlay.enablePetInfo && !NotEnoughUpdates.INSTANCE.config.itemOverlays.enableMonkeyCheck) {
             overlayStrings = null;
             return;
         }
 
         NEUConfig config = NotEnoughUpdates.INSTANCE.config;
         int updateTime = 60000;
-        if((config.treecap.enableMonkeyCheck || config.notifications.showWrongPetMsg) && !config.petOverlay.enablePetInfo)
+        if((config.itemOverlays.enableMonkeyCheck) && !config.petOverlay.enablePetInfo)
             updateTime = 300000;
 
         if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
@@ -509,6 +509,8 @@ public class PetInfoOverlay extends TextOverlay {
         float totalGain = 0;
 
         for(Map.Entry<String, XPInformation.SkillInfo> entry : skillInfoMap.entrySet()) {
+            if(entry.getValue().level == 50 && entry.getValue().fromApi) continue;
+
             float skillXp = entry.getValue().totalXp;
             if(skillInfoMapLast.containsKey(entry.getKey())) {
                 float skillXpLast = skillInfoMapLast.get(entry.getKey());
@@ -585,7 +587,7 @@ public class PetInfoOverlay extends TextOverlay {
 
     private HashMap<String, String> itemMap = null;
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onTooltip(ItemTooltipEvent event) {
         for(String line : event.toolTip) {
             if(line.startsWith("\u00a7o\u00a77[Lvl ")) {
@@ -626,7 +628,7 @@ public class PetInfoOverlay extends TextOverlay {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onChatReceived(ClientChatReceivedEvent event) {
         NEUConfig config = NotEnoughUpdates.INSTANCE.config;
-        if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && (config.petOverlay.enablePetInfo || config.treecap.enableMonkeyCheck || config.notifications.showWrongPetMsg)) {
+        if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && (config.petOverlay.enablePetInfo || config.itemOverlays.enableMonkeyCheck)) {
             if(event.type == 0) {
                 String chatMessage = Utils.cleanColour(event.message.getUnformattedText());
 
@@ -652,7 +654,9 @@ public class PetInfoOverlay extends TextOverlay {
                         rarity = Rarity.getRarityFromColor(col);
                     }
 
-                    String pet = Utils.cleanColour(petStringMatch.substring(1)).trim().toUpperCase();
+                    String pet = Utils.cleanColour(petStringMatch.substring(1))
+                            .replaceAll("[^\\w ]", "").trim()
+                            .replace(" ", "_").toUpperCase();
                     if(petList.containsKey(pet + ";" + rarity.petId)) {
                         Set<Pet> pets = petList.get(pet + ";" + rarity.petId);
 
@@ -663,14 +667,16 @@ public class PetInfoOverlay extends TextOverlay {
                         }
                     } else {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"[NEU] Can't find pet \u00a7" + petStringMatch +
-                                " are you sure API key is correct? Try doing /api new and rejoining hypixel."));
+                                EnumChatFormatting.RED + " are you sure API key is correct? Try doing /api new and rejoining hypixel."));
                     }
 
 
                 } else if(chatMessage.toLowerCase().startsWith("you summoned your")) {
                     clearPet();
 
-                    String pet = chatMessage.trim().toUpperCase().replace("YOU SUMMONED YOUR ", "").replace("!", "").replace(" ", "_");
+                    String pet = chatMessage.trim().toUpperCase().replace("YOU SUMMONED YOUR ", "")
+                            .replaceAll("[^\\w ]", "").trim()
+                            .replace(" ", "_");
                     Rarity rarity = event.message.getSiblings().size() == 3 ? Rarity.getRarityFromColor(event.message.getSiblings().get(1).getChatStyle().getColor()) : Rarity.COMMON;
 
                     if(petList.containsKey(pet + ";" + rarity.petId)) {
@@ -683,8 +689,8 @@ public class PetInfoOverlay extends TextOverlay {
                             currentPet = getClosestPet(pet, rarity.petId, lastItemHovered, lastLevelHovered);
                         }
                     } else {
-                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"[NEU] Can't find pet " + pet + ";" + rarity.petId +
-                                " are you sure API key is correct? Try doing /api new and rejoining hypixel."));
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"[NEU] Can't find pet " + pet+";"+rarity.petId +
+                                EnumChatFormatting.RED + " are you sure API key is correct? Try doing /api new and rejoining hypixel."));
                     }
                 } else if(chatMessage.toLowerCase().startsWith("you despawned your")) {
                     clearPet();

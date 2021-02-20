@@ -718,6 +718,10 @@ public class CalendarOverlay {
             }
         }
 
+        if(event.id.equals("dark_auction")) {
+            timeUntil -= 30*1000;
+        }
+
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledResolution.getScaledWidth();

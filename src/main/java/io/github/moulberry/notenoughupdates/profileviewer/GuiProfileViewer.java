@@ -1350,6 +1350,7 @@ public class GuiProfileViewer extends GuiScreen {
                     int displayLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(display);
                     int halfDisplayLen = displayLen/2;
 
+                    GlStateManager.pushMatrix();
                     GlStateManager.translate(x, y, 0);
 
                     drawRect(-halfDisplayLen-1-28, -1, halfDisplayLen+1-28, 8, new Color(0, 0, 0, 100).getRGB());
@@ -1357,11 +1358,11 @@ public class GuiProfileViewer extends GuiScreen {
                     Minecraft.getMinecraft().fontRendererObj.drawString(display, -halfDisplayLen-28, 0, 0, true);
 
                     ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
-                    GlStateManager.scale(3.5f, 3.5f, 1);
                     GlStateManager.enableDepth();
+                    GlStateManager.translate(-55, 0, 0);
+                    GlStateManager.scale(3.5f, 3.5f, 1);
                     Utils.drawItemStack(stack, 0, 0);
-                    GlStateManager.scale(-1/3.5f, 1/3.5f, 1);
-                    GlStateManager.translate(-x, -y, 0);
+                    GlStateManager.popMatrix();
                     break;
                 }
             }
@@ -2526,6 +2527,11 @@ public class GuiProfileViewer extends GuiScreen {
                 } else {
                     Arrays.fill(entityPlayer.inventory.armorInventory, null);
                 }
+            }
+            System.out.println(entityPlayer.getUniqueID().toString());
+            if(entityPlayer.getUniqueID().toString().equals("ae6193ab-494a-4719-b6e7-d50392c8f012")) {
+                entityPlayer.inventory.armorInventory[3] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(
+                        NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SMALL_BACKPACK"));
             }
         }
 

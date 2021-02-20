@@ -9,12 +9,14 @@ import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
 import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
 import io.github.moulberry.notenoughupdates.overlays.*;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class NEUConfig extends Config {
@@ -38,7 +40,7 @@ public class NEUConfig extends Config {
         if(Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper) {
             GuiScreenElementWrapper wrapper = (GuiScreenElementWrapper) Minecraft.getMinecraft().currentScreen;
             if(wrapper.element instanceof NEUConfigEditor) {
-                activeConfigCategory = ((NEUConfigEditor)wrapper.element).getSelectedCategory();
+                activeConfigCategory = ((NEUConfigEditor)wrapper.element).getSelectedCategoryName();
             }
         }
         final String activeConfigCategoryF = activeConfigCategory;
@@ -92,7 +94,7 @@ public class NEUConfig extends Config {
     @Expose
     @Category(
             name = "Item List",
-            desc = "Modify the item list which shows when opening an inventory"
+            desc = "Item List"
     )
     public Itemlist itemlist = new Itemlist();
 
@@ -112,17 +114,10 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Price Info (Auction)",
-            desc = "Price Info (Auction)"
+            name = "Item Overlays",
+            desc = "Item Overlays"
     )
-    public PriceInfoAuc priceInfoAuc = new PriceInfoAuc();
-
-    @Expose
-    @Category(
-            name = "Price Info (Bazaar)",
-            desc = "Price Info (Bazaar)"
-    )
-    public PriceInfoBaz priceInfoBaz = new PriceInfoBaz();
+    public ItemOverlays itemOverlays = new ItemOverlays();
 
     @Expose
     @Category(
@@ -133,18 +128,10 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Dungeon Profit",
-            desc = "Dungeon Profit"
+            name = "Dungeons",
+            desc = "Dungeons"
     )
-    public DungeonProfit dungeonProfit = new DungeonProfit();
-
-
-    @Expose
-    @Category(
-            name = "Dungeon Solvers",
-            desc = "Dungeon Solvers"
-    )
-    public DungeonSolvers dungeonSolvers = new DungeonSolvers();
+    public Dungeons dungeons = new Dungeons();
 
 
     @Expose
@@ -191,40 +178,10 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Treecap Overlay",
-            desc = "Treecap Overlay"
-    )
-    public Treecap treecap = new Treecap();
-
-    @Expose
-    @Category(
             name = "Pet Overlay",
             desc = "Pet Overlay"
     )
     public PetOverlay petOverlay = new PetOverlay();
-
-    @Expose
-    @Category(
-            name = "Builders Wand Overlay",
-            desc = "Builders Wand Overlay"
-    )
-    public BuilderWand builderWand = new BuilderWand();
-
-
-    @Expose
-    @Category(
-            name = "Dungeon Map",
-            desc = "Dungeon Map"
-    )
-    public DungeonMapOpen dungeonMapOpen = new DungeonMapOpen();
-
-    @Expose
-    @Category(
-            name = "Smooth AOTE",
-            desc = "Smooth AOTE"
-    )
-    public SmoothAOTE smoothAOTE = new SmoothAOTE();
-
 
     @Expose
     @Category(
@@ -235,38 +192,10 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Dungeon Block Overlay",
-            desc = "Dungeon Block Overlay"
-    )
-    public DungeonBlock dungeonBlock = new DungeonBlock();
-
-    @Expose
-    @Category(
-            name = "Bonemerang Overlay",
-            desc = "Bonemerang Overlay"
-    )
-    public BonemerangOverlay bonemerangOverlay = new BonemerangOverlay();
-
-    @Expose
-    @Category(
             name = "Accessory Bag Overlay",
             desc = "Accessory Bag Overlay"
     )
     public AccessoryBag accessoryBag = new AccessoryBag();
-
-    @Expose
-    @Category(
-            name = "Custom Rod Colours",
-            desc = "Custom Rod Colours"
-    )
-    public RodColours rodColours = new RodColours();
-
-    @Expose
-    @Category(
-            name = "Dungeon Win Overlay",
-            desc = "Dungeon Win Overlay"
-    )
-    public DungeonWin dungeonWin = new DungeonWin();
 
     @Expose
     @Category(
@@ -336,11 +265,20 @@ public class NEUConfig extends Config {
 
         @Expose
         @ConfigOption(
+                name = "RAM Warning",
+                desc = "Warning when game starts with lots of RAM allocated\n"+
+                        "\u00a7cBefore disabling this, please seriously read the message. If you complain about FPS issues without listening to the warning, that's your fault."
+        )
+        @ConfigEditorBoolean
+        public boolean doRamNotif = true;
+
+        /*@Expose
+        @ConfigOption(
                 name = "Wrong Pet",
                 desc = "Gives a notification in chat whenever you're using a pet that doesnt match the same xp you're gathering."
         )
         @ConfigEditorBoolean
-        public boolean showWrongPetMsg = false;
+        public boolean showWrongPetMsg = false;*/
     }
 
     public static class Itemlist {
@@ -502,6 +440,42 @@ public class NEUConfig extends Config {
     }
 
     public static class TooltipTweaks {
+        @ConfigOption(
+                name = "Tooltip Price Information",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 0)
+        public boolean priceInfoAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Price Info (Auc)",
+                desc = "\u00a7rSelect what price information you would like to see on auctionable item tooltips\n" +
+                            "\u00a7eDrag text to rearrange"
+        )
+        @ConfigEditorDraggableList(
+                exampleText = {"\u00a7eLowest BIN",
+                        "\u00a7eAH Price",
+                        "\u00a7eAH Sales",
+                        "\u00a7eRaw Craft Cost",
+                        "\u00a7eAVG Lowest BIN",
+                        "\u00a7eDungeon Costs"}
+        )
+        @ConfigAccordionId(id = 0)
+        public List<Integer> priceInfoAuc = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 5));
+
+        @Expose
+        @ConfigOption(
+                name = "Price Info (Baz)",
+                desc = "\u00a7rSelect what price information you would like to see on bazaar item tooltips\n" +
+                        "\u00a7eDrag text to rearrange"
+        )
+        @ConfigEditorDraggableList(
+                exampleText = {"\u00a7eBuy", "\u00a7eSell", "\u00a7eBuy (Insta)", "\u00a7eSell (Insta)", "\u00a7eRaw Craft Cost"}
+        )
+        @ConfigAccordionId(id = 0)
+        public List<Integer> priceInfoBaz = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
+
         @Expose
         @ConfigOption(
                 name = "Price Info (Inv)",
@@ -547,128 +521,207 @@ public class NEUConfig extends Config {
         public int tooltipBorderOpacity = 200;
     }
 
-    public static class PriceInfoAuc {
-        @Expose
+    public static class ItemOverlays {
         @ConfigOption(
-                name = "Line 1",
-                desc = "Set the price information displayed on Line #1"
+                name = "Treecapitator Overlay",
+                desc = ""
         )
-        @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
-        )
-        public int line1 = 1;
+        @ConfigEditorAccordion(id = 0)
+        public boolean treecapAccordion = false;
 
         @Expose
         @ConfigOption(
-                name = "Line 2",
-                desc = "Set the price information displayed on Line #2"
+                name = "Enable Treecap Overlay",
+                desc = "Show which blocks will be broken when using a Jungle Axe or Treecapitator"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
-        )
-        public int line2 = 2;
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean enableTreecapOverlay = true;
 
         @Expose
         @ConfigOption(
-                name = "Line 3",
-                desc = "Set the price information displayed on Line #3"
+                name = "Overlay Colour",
+                desc = "Change the colour of the overlay"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
-        )
-        public int line3 = 3;
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String treecapOverlayColour = "00:50:64:224:208";
 
         @Expose
         @ConfigOption(
-                name = "Line 4",
-                desc = "Set the price information displayed on Line #4"
+                name = "Enable Monkey Pet Check",
+                desc = "Will check use the API to check what pet you're using\nto determine the cooldown based off of if you have monkey pet."
         )
-        @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean enableMonkeyCheck = true;
+
+        @ConfigOption(
+                name = "Builder's Wand Overlay",
+                desc = ""
         )
-        public int line4 = 4;
+        @ConfigEditorAccordion(id = 1)
+        public boolean wandAccordion = false;
 
         @Expose
         @ConfigOption(
-                name = "Line 5",
-                desc = "Set the price information displayed on Line #5"
+                name = "Enable Wand Overlay",
+                desc = "Show which blocks will be placed when using the Builder's Wand"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
-        )
-        public int line5 = 6;
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean enableWandOverlay = true;
 
         @Expose
         @ConfigOption(
-                name = "Line 6",
-                desc = "Set the price information displayed on Line #6"
+                name = "Wand Block Count",
+                desc = "Shows the total count of a block in your inventory"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Lowest BIN", "AH Price", "AH Sales", "Raw Craft Cost", "AVG Lowest BIN", "Dungeon Costs"}
-        )
-        public int line6 = 0;
-    }
-
-    public static class PriceInfoBaz {
-        @Expose
-        @ConfigOption(
-                name = "Line 1",
-                desc = "Set the price information displayed on Line #1"
-        )
-        @ConfigEditorDropdown(
-                values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
-        )
-        public int line1 = 1;
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean wandBlockCount = true;
 
         @Expose
         @ConfigOption(
-                name = "Line 2",
-                desc = "Set the price information displayed on Line #2"
+                name = "Overlay Colour",
+                desc = "Change the colour of the ghost block outline"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 1)
+        public String wandOverlayColour = "00:50:64:224:208";
+
+        @ConfigOption(
+                name = "Block Zapper Overlay",
+                desc = ""
         )
-        public int line2 = 2;
+        @ConfigEditorAccordion(id = 5)
+        public boolean zapperAccordion = false;
 
         @Expose
         @ConfigOption(
-                name = "Line 3",
-                desc = "Set the price information displayed on Line #3"
+                name = "Enable Zapper Overlay",
+                desc = "Show which blocks will be destroyed when using the Block Zapper"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
-        )
-        public int line3 = 3;
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 5)
+        public boolean enableZapperOverlay = true;
 
         @Expose
         @ConfigOption(
-                name = "Line 4",
-                desc = "Set the price information displayed on Line #4"
+                name = "Overlay Colour",
+                desc = "Change the colour of the ghost block outline"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 5)
+        public String zapperOverlayColour = "0:102:171:5:0";
+
+        @ConfigOption(
+                name = "Smooth AOTE",
+                desc = ""
         )
-        public int line4 = 4;
+        @ConfigEditorAccordion(id = 2)
+        public boolean aoteAccordion = false;
 
         @Expose
         @ConfigOption(
-                name = "Line 5",
-                desc = "Set the price information displayed on Line #5"
+                name = "Enable Smooth AOTE",
+                desc = "Teleport smoothly to your destination when using AOTE"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
-        )
-        public int line5 = 5;
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean enableSmoothAOTE = true;
 
         @Expose
         @ConfigOption(
-                name = "Line 6",
-                desc = "Set the price information displayed on Line #6"
+                name = "Enable Smooth Hyperion",
+                desc = "Teleport smoothly to your destination when using Hyperion"
         )
-        @ConfigEditorDropdown(
-                values = {"", "Buy", "Sell", "Buy (Insta)", "Sell (Insta)", "Raw Craft Cost"}
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean enableSmoothHyperion = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Smooth TP Time",
+                desc = "Change the amount of time (milliseconds) taken to teleport"
         )
-        public int line6 = 0;
+        @ConfigEditorSlider(
+                minValue = 0,
+                maxValue = 500,
+                minStep = 25
+        )
+        @ConfigAccordionId(id = 2)
+        public int smoothTpMillis = 175;
+
+        @Expose
+        @ConfigOption(
+                name = "Disable Hyperion Particles",
+                desc = "Remove the explosion effect when using a hyperion"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean disableHyperionParticles = true;
+
+        @ConfigOption(
+                name = "Bonemerang Overlay",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 3)
+        public boolean bonemerangAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Highlight Targeted Entities",
+                desc = "Highlight entities that will be hit by your bonemerang"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 3)
+        public boolean highlightTargeted = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Break Warning",
+                desc = "Show a warning below your crosshair if the bonemerang will break on a block"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 3)
+        public boolean showBreak = true;
+
+        @ConfigOption(
+                name = "Custom Rod Colours",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 4)
+        public boolean rodAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Enable Rod Colours",
+                desc = "Change the colour of your and other players' rod lines\n" +
+                        "Also fixes the position of the rod line"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 4)
+        public boolean enableRodColours = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Own Rod Colour",
+                desc = "Change the colour of your own rod lines"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 4)
+        public String ownRodColour = "0:255:0:0:0";
+
+
+        @Expose
+        @ConfigOption(
+                name = "Other Rod Colour",
+                desc = "Change the colour of other players' rod lines"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 4)
+        public String otherRodColour = "0:255:0:0:0";
     }
 
     public static class SkillOverlays {
@@ -720,7 +773,43 @@ public class NEUConfig extends Config {
         public int farmingStyle = 0;
     }
 
-    public static class DungeonProfit {
+    public static class Dungeons {
+        @ConfigOption(
+                name = "Dungeon Map",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 0)
+        public boolean dungeonMapAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Edit Dungeon Map",
+                desc = "The NEU dungeon map has it's own editor (/neumap).\n" +
+                        "Click the button on the left to open it"
+        )
+        @ConfigEditorButton(
+                runnableId = 0,
+                buttonText = "Edit"
+        )
+        @ConfigAccordionId(id = 0)
+        public int editDungeonMap = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Show Own Head As Marker",
+                desc = "If you have the \"Head\" icon style selected, don't replace your green marker with a head"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean showOwnHeadAsMarker = false;
+
+        @ConfigOption(
+                name = "Dungeon Profit",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 1)
+        public boolean dungeonProfitAccordion = false;
+
         @Expose
         @ConfigOption(
                 name = "Profit Type",
@@ -729,6 +818,7 @@ public class NEUConfig extends Config {
         @ConfigEditorDropdown(
                 values = {"Lowest BIN", "24 AVG Lowest Bin", "Auction AVG"}
         )
+        @ConfigAccordionId(id = 1)
         public int profitType = 0;
 
         @Expose
@@ -742,10 +832,137 @@ public class NEUConfig extends Config {
         @ConfigEditorDropdown(
                 values = {"Overlay", "GUI Title", "Lore", "Off"}
         )
+        @ConfigAccordionId(id = 1)
         public int profitDisplayLoc = 0;
-    }
-    public static class DungeonSolvers {
 
+
+        @ConfigOption(
+                name = "Dungeon Win Overlay",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 3)
+        public boolean dungeonWinAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Enable Dungeon Win",
+                desc = "Show a fancy win screen and stats when completing a dungeon"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 3)
+        public boolean enableDungeonWin = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Dungeon Win Time",
+                desc = "Change the amount of time (milliseconds) that the win screen shows for"
+        )
+        @ConfigEditorSlider(
+                minValue = 0,
+                maxValue = 20000,
+                minStep = 500
+        )
+        @ConfigAccordionId(id = 3)
+        public int dungeonWinMillis = 8000;
+
+        @ConfigOption(
+                name = "Dungeon Block Overlay",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 2)
+        public boolean dungeonBlocksAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Enable Block Overlay",
+                desc = "Change the colour of certain blocks / entities while inside dungeons, but keeps the normal texture outside of dungeons"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean enableDungBlockOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Show Overlay Everywhere",
+                desc = "Show the dungeon block overlay even when not inside dungeons. Should only be used for testing."
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean dungeonBlocksEverywhere = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Slow Update",
+                desc = "Updates the colour every second instead of every tick.\n" +
+                        "\u00A7cWARNING: This will cause all texture animations (eg. flowing water) to update slowly.\n" +
+                        "This should only be used on low-end machines"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean slowDungeonBlocks = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Cracked Bricks",
+                desc = "Change the colour of: Cracked Bricks"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 2)
+        public String dungCrackedColour = "0:255:7:255:217";
+
+        @Expose
+        @ConfigOption(
+                name = "Dispensers",
+                desc = "Change the colour of: Dispensers"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 2)
+        public String dungDispenserColour = "0:255:255:76:0";
+
+        @Expose
+        @ConfigOption(
+                name = "Levers",
+                desc = "Change the colour of: Levers"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 2)
+        public String dungLeverColour = "0:252:24:249:255";
+
+        @Expose
+        @ConfigOption(
+                name = "Tripwire String",
+                desc = "Change the colour of: Tripwire String"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 2)
+        public String dungTripWireColour = "0:255:255:0:0";
+
+        @Expose
+        @ConfigOption(
+                name = "Normal Chests",
+                desc = "Change the colour of: Normal Chests"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 2)
+        public String dungChestColour = "0:255:0:163:36";
+
+        @Expose
+        @ConfigOption(
+                name = "Trapped Chests",
+                desc = "Change the colour of: Trapped Chests"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 2)
+        public String dungTrappedChestColour = "0:255:0:163:36";
+
+        @Expose
+        @ConfigOption(
+                name = "Bats",
+                desc = "Change the colour of: Bats"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 2)
+        public String dungBatColour = "0:255:12:255:0";
     }
 
     public static class EnchSolvers {
@@ -849,6 +1066,134 @@ public class NEUConfig extends Config {
     }
 
     public static class Mining {
+        @ConfigOption(
+                name = "Waypoints",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 0)
+        public boolean waypointsAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Mines Waypoints",
+                desc = "Show waypoints in the Dwarven mines to the various locations\n" +
+                        "Use \"Commissions Only\" to only show active commission locations"
+        )
+        @ConfigEditorDropdown(
+                values = {"Hide", "Commissions Only", "Always"},
+                initialIndex = 1
+        )
+        @ConfigAccordionId(id = 0)
+        public int locWaypoints = 1;
+
+        @Expose
+        @ConfigOption(
+                name = "Emissary Waypoints",
+                desc = "Show waypoints in the Dwarven mines to emissaries\n" +
+                        "Use \"Commission End\" to only show after finishing commissions"
+        )
+        @ConfigEditorDropdown(
+                values = {"Hide", "Commission End", "Always"},
+                initialIndex = 1
+        )
+        @ConfigAccordionId(id = 0)
+        public int emissaryWaypoints = 1;
+
+        @ConfigOption(
+                name = "Drill Fuel Bar",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 1)
+        public boolean drillAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Drill Fuel Bar",
+                desc = "Show a fancy drill fuel bar when holding a drill in mining areas"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean drillFuelBar = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Fuel Bar Width",
+                desc = "Change the width of the drill fuel bar"
+        )
+        @ConfigEditorSlider(
+                minValue = 50,
+                maxValue = 400,
+                minStep = 10
+        )
+        @ConfigAccordionId(id = 1)
+        public int drillFuelBarWidth = 200;
+
+        @Expose
+        @ConfigOption(
+                name = "Fuel Bar Position",
+                desc = "Set the position of the drill fuel bar"
+        )
+        @ConfigEditorButton(
+                runnableId = 2,
+                buttonText = "Edit"
+        )
+        @ConfigAccordionId(id = 1)
+        public Position drillFuelBarPosition = new Position(0, -100, true, false);
+
+        @ConfigOption(
+                name = "Dwarven Overlay",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 2)
+        public boolean overlayAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Dwarven Overlay",
+                desc = "Show an overlay with useful information on the screen while in Dwarven Mines"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean dwarvenOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Dwarven Text",
+                desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
+                        "\u00a7rGo to the Dwarven Mines to show this overlay with useful information"
+        )
+        @ConfigEditorDraggableList(
+                exampleText = {"\u00a73Goblin Slayer: \u00a7626.5%\n\u00a73Lucky Raffle: \u00a7c0.0%",
+                        "\u00a73Mithril Powder: \u00a726,243",
+                        "\u00a73Forge 1) \u00a79Diamonite\u00a77: \u00a7aReady!",
+                        "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY"}
+        )
+        @ConfigAccordionId(id = 2)
+        public List<Integer> dwarvenText = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
+
+        @Expose
+        @ConfigOption(
+                name = "Overlay Position",
+                desc = "Change the position of the Dwarven Mines information overlay (commisions, powder & forge statuses)"
+        )
+        @ConfigEditorButton(
+                runnableId = 1,
+                buttonText = "Edit"
+        )
+        @ConfigAccordionId(id = 2)
+        public Position overlayPosition = new Position(10, 100);
+
+        @Expose
+        @ConfigOption(
+                name = "Overlay Style",
+                desc = "Change the style of the Dwarven Mines information overlay"
+        )
+        @ConfigEditorDropdown(
+                values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+        )
+        @ConfigAccordionId(id = 2)
+        public int overlayStyle = 0;
+
         @Expose
         @ConfigOption(
                 name = "Puzzler Solver",
@@ -865,7 +1210,6 @@ public class NEUConfig extends Config {
         @ConfigEditorBoolean
         public boolean titaniumAlert = true;
 
-
         @Expose
         @ConfigOption(
                 name = "Don't Mine Stone",
@@ -881,105 +1225,6 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         public boolean revealMistCreepers = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Mines Waypoints",
-                desc = "Show waypoints in the Dwarven mines to the various locations\n" +
-                        "Use \"Commissions Only\" to only show active commission locations"
-        )
-        @ConfigEditorDropdown(
-                values = {"Hide", "Commissions Only", "Always"},
-                initialIndex = 1
-        )
-        public int locWaypoints = 1;
-
-        @Expose
-        @ConfigOption(
-                name = "Emissary Waypoints",
-                desc = "Show waypoints in the Dwarven mines to emissaries\n" +
-                        "Use \"Commission End\" to only show after finishing commissions"
-        )
-        @ConfigEditorDropdown(
-                values = {"Hide", "Commission End", "Always"},
-                initialIndex = 1
-        )
-        public int emissaryWaypoints = 1;
-
-        @Expose
-        @ConfigOption(
-                name = "Drill Fuel Bar",
-                desc = "Show a fancy drill fuel bar when holding a drill in mining areas"
-        )
-        @ConfigEditorBoolean
-        public boolean drillFuelBar = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Fuel Bar Width",
-                desc = "Change the width of the drill fuel bar"
-        )
-        @ConfigEditorSlider(
-                minValue = 50,
-                maxValue = 400,
-                minStep = 10
-        )
-        public int drillFuelBarWidth = 200;
-
-        @Expose
-        @ConfigOption(
-                name = "Fuel Bar Position",
-                desc = "Set the position of the drill fuel bar"
-        )
-        @ConfigEditorButton(
-                runnableId = 2,
-                buttonText = "Edit"
-        )
-        public Position drillFuelBarPosition = new Position(0, -100, true, false);
-
-
-        @Expose
-        @ConfigOption(
-                name = "Dwarven Overlay",
-                desc = "Show an overlay with useful information on the screen while in Dwarven Mines"
-        )
-        @ConfigEditorBoolean
-        public boolean dwarvenOverlay = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Dwarven Text",
-                desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
-                        "\u00a7rGo to the Dwarven Mines to show this overlay with useful information"
-        )
-        @ConfigEditorDraggableList(
-                exampleText = {"\u00a73Goblin Slayer: \u00a7626.5%\n\u00a73Lucky Raffle: \u00a7c0.0%",
-                "\u00a73Mithril Powder: \u00a726,243",
-                "\u00a73Forge 1) \u00a79Diamonite\u00a77: \u00a7aReady!",
-                "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY"}
-        )
-        public List<Integer> dwarvenText = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
-
-        @Expose
-        @ConfigOption(
-                name = "Overlay Position",
-                desc = "Change the position of the Dwarven Mines information overlay (commisions, powder & forge statuses)"
-        )
-        @ConfigEditorButton(
-                runnableId = 1,
-                buttonText = "Edit"
-        )
-        public Position overlayPosition = new Position(10, 100);
-
-        @Expose
-        @ConfigOption(
-                name = "Overlay Style",
-                desc = "Change the style of the Dwarven Mines information overlay"
-        )
-        @ConfigEditorDropdown(
-                values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
-        )
-        public int overlayStyle = 0;
     }
 
     public static class NeuAuctionHouse {
@@ -1122,33 +1367,6 @@ public class NEUConfig extends Config {
         public boolean customTradePriceStyle = true;
     }
 
-    public static class Treecap {
-        @Expose
-        @ConfigOption(
-                name = "Enable Treecap Overlay",
-                desc = "Show which blocks will be broken when using a Jungle Axe or Treecapitator"
-        )
-        @ConfigEditorBoolean
-        public boolean enableTreecapOverlay = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Overlay Colour",
-                desc = "Change the colour of the overlay"
-        )
-        @ConfigEditorColour
-        public String treecapOverlayColour = "00:50:64:224:208";
-
-        @Expose
-        @ConfigOption(
-                name = "Enable Monkey Pet Check",
-                desc = "Will check use the API to check what pet you're using\nto determine the cooldown based off of if you have monkey pet."
-        )
-        @ConfigEditorBoolean
-
-        public boolean enableMonkeyCheck = true;
-    }
-
     public static class PetOverlay {
         @Expose
         @ConfigOption(
@@ -1206,54 +1424,6 @@ public class NEUConfig extends Config {
         public int petInfoOverlayStyle = 0;
     }
 
-    public static class BuilderWand {
-        @Expose
-        @ConfigOption(
-                name = "Enable Wand Overlay",
-                desc = "Show which blocks will be placed when using the Builder's Wand"
-        )
-        @ConfigEditorBoolean
-        public boolean enableWandOverlay = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Wand Block Count",
-                desc = "Shows the total count of a block in your inventory"
-        )
-        @ConfigEditorBoolean
-        public boolean wandBlockCount = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Overlay Colour",
-                desc = "Change the colour of the ghost block outline"
-        )
-        @ConfigEditorColour
-        public String wandOverlayColour = "00:50:64:224:208";
-    }
-
-    public static class DungeonMapOpen {
-        @Expose
-        @ConfigOption(
-                name = "Edit Dungeon Map",
-                desc = "The NEU dungeon map has it's own editor (/neumap).\n" +
-                        "Click the button on the left to open it"
-        )
-        @ConfigEditorButton(
-                runnableId = 0,
-                buttonText = "Edit"
-        )
-        public int editDungeonMap = 0;
-
-        @Expose
-        @ConfigOption(
-                name = "Show Own Head As Marker",
-                desc = "If you have the \"Head\" icon style selected, don't replace your green marker with a head"
-        )
-        @ConfigEditorBoolean
-        public boolean showOwnHeadAsMarker = false;
-    }
-
     public static class AuctionHouseSearch {
         @Expose
         @ConfigOption(
@@ -1289,108 +1459,6 @@ public class NEUConfig extends Config {
         public boolean escFullClose = true;
     }
 
-    public static class DungeonBlock {
-        @Expose
-        @ConfigOption(
-                name = "Enable Block Overlay",
-                desc = "Change the colour of certain blocks / entities while inside dungeons, but keeps the normal texture outside of dungeons"
-        )
-        @ConfigEditorBoolean
-        public boolean enableDungBlockOverlay = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Show Overlay Everywhere",
-                desc = "Show the dungeon block overlay even when not inside dungeons. Should only be used for testing."
-        )
-        @ConfigEditorBoolean
-        public boolean dungeonBlocksEverywhere = false;
-
-        @Expose
-        @ConfigOption(
-                name = "Slow Update",
-                desc = "Updates the colour every second instead of every tick.\n" +
-                        "\u00A7cWARNING: This will cause all texture animations (eg. flowing water) to update slowly.\n" +
-                        "This should only be used on low-end machines"
-        )
-        @ConfigEditorBoolean
-        public boolean slowDungeonBlocks = false;
-
-        @Expose
-        @ConfigOption(
-                name = "Cracked Bricks",
-                desc = "Change the colour of: Cracked Bricks"
-        )
-        @ConfigEditorColour
-        public String dungCrackedColour = "0:255:7:255:217";
-
-        @Expose
-        @ConfigOption(
-                name = "Dispensers",
-                desc = "Change the colour of: Dispensers"
-        )
-        @ConfigEditorColour
-        public String dungDispenserColour = "0:255:255:76:0";
-
-        @Expose
-        @ConfigOption(
-                name = "Levers",
-                desc = "Change the colour of: Levers"
-        )
-        @ConfigEditorColour
-        public String dungLeverColour = "0:252:24:249:255";
-
-        @Expose
-        @ConfigOption(
-                name = "Tripwire String",
-                desc = "Change the colour of: Tripwire String"
-        )
-        @ConfigEditorColour
-        public String dungTripWireColour = "0:255:255:0:0";
-
-        @Expose
-        @ConfigOption(
-                name = "Normal Chests",
-                desc = "Change the colour of: Normal Chests"
-        )
-        @ConfigEditorColour
-        public String dungChestColour = "0:255:0:163:36";
-
-        @Expose
-        @ConfigOption(
-                name = "Trapped Chests",
-                desc = "Change the colour of: Trapped Chests"
-        )
-        @ConfigEditorColour
-        public String dungTrappedChestColour = "0:255:0:163:36";
-
-        @Expose
-        @ConfigOption(
-                name = "Bats",
-                desc = "Change the colour of: Bats"
-        )
-        @ConfigEditorColour
-        public String dungBatColour = "0:255:12:255:0";
-    }
-
-    public static class BonemerangOverlay {
-        @Expose
-        @ConfigOption(
-                name = "Highlight Targeted Entities",
-                desc = "Highlight entities that will be hit by your bonemerang"
-        )
-        @ConfigEditorBoolean
-        public boolean highlightTargeted = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Break Warning",
-                desc = "Show a warning below your crosshair if the bonemerang will break on a block"
-        )
-        @ConfigEditorBoolean
-        public boolean showBreak = true;
-    }
-
     public static class AccessoryBag {
         @Expose
         @ConfigOption(
@@ -1399,95 +1467,6 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         public boolean enableOverlay = true;
-    }
-
-    public static class SmoothAOTE {
-        @Expose
-        @ConfigOption(
-                name = "Enable Smooth AOTE",
-                desc = "Teleport smoothly to your destination when using AOTE"
-        )
-        @ConfigEditorBoolean
-        public boolean enableSmoothAOTE = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Enable Smooth Hyperion",
-                desc = "Teleport smoothly to your destination when using Hyperion"
-        )
-        @ConfigEditorBoolean
-        public boolean enableSmoothHyperion = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Smooth TP Time",
-                desc = "Change the amount of time (milliseconds) taken to teleport"
-        )
-        @ConfigEditorSlider(
-                minValue = 0,
-                maxValue = 500,
-                minStep = 25
-        )
-        public int smoothTpMillis = 175;
-
-
-        @Expose
-        @ConfigOption(
-                name = "Disable Hyperion Particles",
-                desc = "Remove the explosion effect when using a hyperion"
-        )
-        @ConfigEditorBoolean
-        public boolean disableHyperionParticles = true;
-    }
-
-    public static class RodColours {
-        @Expose
-        @ConfigOption(
-                name = "Enable Rod Colours",
-                desc = "Change the colour of your and other players' rod lines\n" +
-                        "Also fixes the position of the rod line"
-        )
-        @ConfigEditorBoolean
-        public boolean enableRodColours = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Own Rod Colour",
-                desc = "Change the colour of your own rod lines"
-        )
-        @ConfigEditorColour
-        public String ownRodColour = "0:255:0:0:0";
-
-
-        @Expose
-        @ConfigOption(
-                name = "Other Rod Colour",
-                desc = "Change the colour of other players' rod lines"
-        )
-        @ConfigEditorColour
-        public String otherRodColour = "0:255:0:0:0";
-    }
-
-    public static class DungeonWin {
-        @Expose
-        @ConfigOption(
-                name = "Enable Dungeon Win",
-                desc = "Show a fancy win screen and stats when completing a dungeon"
-        )
-        @ConfigEditorBoolean
-        public boolean enableDungeonWin = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Dungeon Win Time",
-                desc = "Change the amount of time (milliseconds) that the win screen shows for"
-        )
-        @ConfigEditorSlider(
-                minValue = 0,
-                maxValue = 20000,
-                minStep = 500
-        )
-        public int dungeonWinMillis = 8000;
     }
 
     public static class ApiKey {
@@ -1514,8 +1493,28 @@ public class NEUConfig extends Config {
         return arr;
     }
 
-    public static class Hidden {
+    public HiddenProfileSpecific getProfileSpecific() {
+        if(SBInfo.getInstance().currentProfile == null) {
+            return null;
+        }
+        return hidden.profileSpecific.computeIfAbsent(SBInfo.getInstance().currentProfile, k-> new HiddenProfileSpecific());
+    }
+
+    public static class HiddenProfileSpecific {
+        @Expose public long godPotionDrunk = 0;
+        @Expose public long puzzlerCompleted = 0;
+        @Expose public long firstCakeAte = 0;
+        @Expose public long fetchurCompleted = 0;
+        @Expose public long commissionsCompleted = 0;
+        @Expose public long experimentsCompleted = 0;
+        @Expose public long cookieBuffRemaining = 0;
+
         @Expose public int commissionMilestone = 0;
+    }
+
+    public static class Hidden {
+        @Expose public HashMap<String, HiddenProfileSpecific> profileSpecific = new HashMap<>();
+
         @Expose public boolean enableItemEditing = false;
         @Expose public boolean cacheRenderedItempane = true;
         @Expose public boolean autoupdate = true;
@@ -1523,7 +1522,6 @@ public class NEUConfig extends Config {
         @Expose public String overlayQuickCommand = "";
         @Expose public boolean dev = false;
         @Expose public boolean loadedModBefore = false;
-        @Expose public boolean doRamNotif = true;
         @Expose public String selectedCape = null;
         @Expose public int compareMode = 0;
         @Expose public int sortMode = 0;

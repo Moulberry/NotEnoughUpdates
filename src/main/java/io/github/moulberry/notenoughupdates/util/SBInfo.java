@@ -5,11 +5,13 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
+import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.scoreboard.Score;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.util.IChatComponent;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -31,6 +33,9 @@ public class SBInfo {
 
     private static final Pattern timePattern = Pattern.compile(".+(am|pm)");
 
+    public IChatComponent footer;
+    public IChatComponent header;
+
     public String location = "";
     public String date = "";
     public String time = "";
@@ -50,6 +55,8 @@ public class SBInfo {
     private long lastLocRaw = -1;
     private long joinedWorld = -1;
     private JsonObject locraw = null;
+
+    public String currentProfile = null;
 
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
@@ -120,6 +127,14 @@ public class SBInfo {
         }
 
         try {
+            for(NetworkPlayerInfo info : Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap()) {
+                String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
+                final String profilePrefix = "\u00a7r\u00a7e\u00a7lProfile: \u00a7r\u00a7a";
+                if(name.startsWith(profilePrefix)) {
+                    currentProfile = Utils.cleanColour(name.substring(profilePrefix.length()));
+                }
+            }
+
             Scoreboard scoreboard = Minecraft.getMinecraft().thePlayer.getWorldScoreboard();
 
             ScoreObjective sidebarObjective = scoreboard.getObjectiveInDisplaySlot(1); //§707/14/20

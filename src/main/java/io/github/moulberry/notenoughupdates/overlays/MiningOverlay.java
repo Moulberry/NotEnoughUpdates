@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.inventory.ContainerChest;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.util.EnumChatFormatting;
@@ -23,6 +24,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static net.minecraft.util.EnumChatFormatting.*;
 
@@ -32,10 +35,54 @@ public class MiningOverlay extends TextOverlay {
         super(position, dummyStrings, styleSupplier);
     }
 
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
+    private static Map<String, Integer> commissionMaxes = new HashMap<>();
     public static Map<String, Float> commissionProgress = new LinkedHashMap<>();
 
     @Override
     public void update() {
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+            ContainerChest container = (ContainerChest) chest.inventorySlots;
+            IInventory lower = container.getLowerChestInventory();
+            String containerName = lower.getDisplayName().getUnformattedText();
+
+            if(containerName.equals("Commissions") && lower.getSizeInventory() >= 18) {
+                for(int i=9; i<18; i++) {
+                    ItemStack stack = lower.getStackInSlot(i);
+                    if(stack != null && stack.hasTagCompound()) {
+                        String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+                        String name = null;
+                        int numberValue = -1;
+                        for(String line : lore) {
+                            if(line.startsWith("\u00a77\u00a79")) {
+                                String textAfter = line.substring(4);
+                                if(!textAfter.contains("\u00a7") && !textAfter.equals("Rewards") && !textAfter.equals("Progress")) {
+                                    name = textAfter;
+                                }
+                            }
+                            if(name != null) {
+                                String clean = Utils.cleanColour(line).trim();
+                                if(clean.isEmpty()) {
+                                    break;
+                                } else {
+                                    Matcher matcher = NUMBER_PATTERN.matcher(clean);
+                                    if(matcher.find()) {
+                                        try {
+                                            numberValue = Integer.parseInt(matcher.group());
+                                        } catch(NumberFormatException ignored) {}
+                                    }
+                                }
+                            }
+                        }
+                        if(name != null && numberValue > 0) {
+                            commissionMaxes.put(name, numberValue);
+                        }
+                    }
+                }
+            }
+        }
+
         overlayStrings = null;
 
         /*if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
@@ -176,10 +223,14 @@ public class MiningOverlay extends TextOverlay {
                 } else if(entry.getValue() >= 0.25) {
                     col = GOLD;
                 }
+                if(true && commissionMaxes.containsKey(entry.getKey())) {
+                    int max = commissionMaxes.get(entry.getKey());
+                    commissionsStrings.add(DARK_AQUA+entry.getKey() + ": " + col+Math.round(entry.getValue()*max)+"/"+max);
+                } else {
+                    String valS = Utils.floatToString(entry.getValue()*100, 1);
 
-                String valS = Utils.floatToString(entry.getValue()*100, 1);
-
-                commissionsStrings.add(DARK_AQUA+entry.getKey() + ": " + col+valS+"%");
+                    commissionsStrings.add(DARK_AQUA+entry.getKey() + ": " + col+valS+"%");
+                }
             }
         }
         /*boolean hasAny = false;

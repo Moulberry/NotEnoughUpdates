@@ -27,6 +27,7 @@ public class XPInformation {
         public float totalXp;
         public float currentXp;
         public float currentXpMax;
+        public boolean fromApi = false;
     }
 
     private HashMap<String, SkillInfo> skillInfoMap = new HashMap<>();
@@ -68,7 +69,7 @@ public class XPInformation {
                     JsonArray levelingArray = leveling.getAsJsonArray("leveling_xp");
                     for(int i=0; i<levelingArray.size(); i++) {
                         float cap = levelingArray.get(i).getAsFloat();
-                        if(maxXp <= cap) {
+                        if(maxXp > 0 && maxXp <= cap) {
                             break;
                         }
 
@@ -101,6 +102,7 @@ public class XPInformation {
             info.currentXpMax = skillInfo.get("maxxp_skill_"+skill).getAsFloat();
             info.level = (int)level;
             info.currentXp = (level%1)*info.currentXpMax;
+            info.fromApi = true;
 
             skillInfoMap.put(skill.toLowerCase(), info);
         }

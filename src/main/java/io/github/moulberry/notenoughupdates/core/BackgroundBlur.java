@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.core;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
@@ -28,6 +29,7 @@ public class BackgroundBlur {
 
     private static HashMap<Float, Framebuffer> blurOutput = new HashMap<>();
     private static HashMap<Float, Long> lastBlurUse = new HashMap<>();
+    private static long lastBlur = 0;
     private static HashSet<Float> requestedBlurs = new HashSet<>();
 
     private static int fogColour = 0;
@@ -47,14 +49,14 @@ public class BackgroundBlur {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onScreenRender(RenderGameOverlayEvent.Pre event) {
-        if(shouldBlur && event.type == RenderGameOverlayEvent.ElementType.ALL) {
+    public static void processBlurs() {
+        if(shouldBlur) {
             shouldBlur = false;
 
             long currentTime = System.currentTimeMillis();
 
             for(float blur : requestedBlurs) {
+                lastBlur = currentTime;
                 lastBlurUse.put(blur, currentTime);
 
                 int width = Minecraft.getMinecraft().displayWidth;
@@ -84,6 +86,13 @@ public class BackgroundBlur {
             blurOutput.keySet().removeAll(remove);
 
             requestedBlurs.clear();
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onScreenRender(RenderGameOverlayEvent.Pre event) {
+        if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
+            processBlurs();
         }
     }
 
@@ -146,9 +155,6 @@ public class BackgroundBlur {
             Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
         }
 
-        /*if(blurShaderHorz == null) {
-
-        }*/
         try {
             blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
                     Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
@@ -172,9 +178,9 @@ public class BackgroundBlur {
 
             GL11.glPushMatrix();
             /*GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, Minecraft.getMinecraft().getFramebuffer().framebufferObject);
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, blurOutputVert.framebufferObject);
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, output.framebufferObject);
             GL30.glBlitFramebuffer(0, 0, width, height,
-                    0, 0, width, height,
+                    0, 0, output.framebufferWidth, output.framebufferHeight,
                     GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);*/
 
             blurShaderHorz.loadShader(0);
@@ -186,22 +192,31 @@ public class BackgroundBlur {
         }
     }
 
+    public static void renderBlurredBackground(float blurStrength, int screenWidth, int screenHeight,
+                                               int x, int y, int blurWidth, int blurHeight) {
+        renderBlurredBackground(blurStrength, screenWidth, screenHeight, x, y, blurWidth, blurHeight, false);
+    }
+
     /**
      * Renders a subsection of the blurred framebuffer on to the corresponding section of the screen.
      * Essentially, this method will "blur" the background inside the bounds specified by [x->x+blurWidth, y->y+blurHeight]
      */
     public static void renderBlurredBackground(float blurStrength, int screenWidth, int screenHeight,
-                                               int x, int y, int blurWidth, int blurHeight) {
+                                               int x, int y, int blurWidth, int blurHeight, boolean forcedUpdate) {
+        if(!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
         if(blurStrength < 0.5) return;
         requestedBlurs.add(blurStrength);
 
-        if(!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
+        long currentTime = System.currentTimeMillis();
+        if(currentTime - lastBlur > 300) {
+            shouldBlur = true;
+            if(currentTime - lastBlur > 400 && forcedUpdate) return;
+        }
 
         if(blurOutput.isEmpty()) return;
 
         Framebuffer fb = blurOutput.get(blurStrength);
         if(fb == null) {
-            System.out.println("Blur not found:"+blurStrength);
             fb = blurOutput.values().iterator().next();
         }
 

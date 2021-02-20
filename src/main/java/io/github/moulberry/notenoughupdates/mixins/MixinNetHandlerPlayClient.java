@@ -7,10 +7,7 @@ import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C13PacketPlayerAbilities;
-import net.minecraft.network.play.server.S03PacketTimeUpdate;
-import net.minecraft.network.play.server.S23PacketBlockChange;
-import net.minecraft.network.play.server.S2FPacketSetSlot;
-import net.minecraft.network.play.server.S39PacketPlayerAbilities;
+import net.minecraft.network.play.server.*;
 import org.lwjgl.opengl.Display;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,7 +24,7 @@ public class MixinNetHandlerPlayClient {
     public void handlePlayerPosLook_setPositionAndRotation(EntityPlayer player, double x, double y, double z, float yaw, float pitch) {
         if(CustomItemEffects.INSTANCE.aoteTeleportationCurr != null) {
             CustomItemEffects.INSTANCE.aoteTeleportationMillis +=
-                    Math.max(0, Math.min(300, NotEnoughUpdates.INSTANCE.config.smoothAOTE.smoothTpMillis));
+                    Math.max(0, Math.min(300, NotEnoughUpdates.INSTANCE.config.itemOverlays.smoothTpMillis));
         }
         player.setPositionAndRotation(x, y, z, yaw, pitch);
     }
@@ -54,6 +51,12 @@ public class MixinNetHandlerPlayClient {
             C13PacketPlayerAbilities abilities = (C13PacketPlayerAbilities) packet;
             FlyFix.onSendAbilities(abilities);
         }
+    }
+
+    @Inject(method="handlePlayerListHeaderFooter", at=@At("HEAD"))
+    public void handlePlayerListHeaderFooter(S47PacketPlayerListHeaderFooter packetIn, CallbackInfo ci) {
+        SBInfo.getInstance().header = packetIn.getHeader().getFormattedText().length() == 0 ? null : packetIn.getHeader();
+        SBInfo.getInstance().footer = packetIn.getFooter().getFormattedText().length() == 0 ? null : packetIn.getFooter();
     }
 
 

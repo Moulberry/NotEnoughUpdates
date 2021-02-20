@@ -118,7 +118,7 @@ public class SBGamemodes {
     }
 
     public static Gamemode getGamemode() {
-        String currentProfile = NotEnoughUpdates.INSTANCE.manager.getCurrentProfile();
+        String currentProfile = SBInfo.getInstance().currentProfile;
 
         if(currentProfile == null || currentProfile.isEmpty()) return null;
 

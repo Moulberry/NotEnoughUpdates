@@ -21,8 +21,8 @@ public abstract class MixinTileEntitySpecialRenderer {
                     location.getResourcePath().equals("textures/entity/chest/normal_double.png") ||
                     location.getResourcePath().equals("textures/entity/chest/trapped.png") ||
                     location.getResourcePath().equals("textures/entity/chest/trapped_double.png")) {
-                String colour = location.getResourcePath().contains("trapped") ? NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungTrappedChestColour :
-                        NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungChestColour;
+                String colour = location.getResourcePath().contains("trapped") ? NotEnoughUpdates.INSTANCE.config.dungeons.dungTrappedChestColour :
+                        NotEnoughUpdates.INSTANCE.config.dungeons.dungChestColour;
                 if(DungeonBlocks.bindModifiedTexture(location,
                         SpecialColour.specialToChromaRGB(colour))) {
                     info.cancel();

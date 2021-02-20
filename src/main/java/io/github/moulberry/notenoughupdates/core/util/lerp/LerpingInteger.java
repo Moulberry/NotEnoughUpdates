@@ -54,6 +54,10 @@ public class LerpingInteger {
         this.lastMillis = System.currentTimeMillis();
     }
 
+    public void setTimeToReachTarget(int timeToReachTarget) {
+        this.timeToReachTarget = timeToReachTarget;
+    }
+
     public void setTarget(int targetValue) {
         this.targetValue = targetValue;
     }

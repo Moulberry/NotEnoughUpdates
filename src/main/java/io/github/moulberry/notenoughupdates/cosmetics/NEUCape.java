@@ -61,6 +61,7 @@ public class NEUCape {
     public static float targetDist = 1/20f;
 
     private EntityPlayer currentPlayer;
+    private boolean keepCurrentPlayer = false;
 
     private String shaderName = "cape";
 
@@ -364,6 +365,8 @@ public class NEUCape {
         GlStateManager.enableTexture2D();
         GlStateManager.enableDepth();
         GlStateManager.disableCull();
+        GlStateManager.disableLighting();
+        GlStateManager.color(1, 1, 1, 1);
 
         if(shaderName.equals("mcworld_cape")) {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
@@ -393,12 +396,13 @@ public class NEUCape {
         lastRender = System.currentTimeMillis();
     }
 
-    private boolean notRendering = false;
     public void onTick(TickEvent.ClientTickEvent event, EntityPlayer player) {
         if(player == null) return;
+        if(Minecraft.getMinecraft().isGamePaused()) return;
 
         if(System.currentTimeMillis() - lastRender < 500) {
-            if(currentPlayer == null) {
+            if(currentPlayer == null || !keepCurrentPlayer) {
+                keepCurrentPlayer = true;
                 currentPlayer = player;
             } else if(currentPlayer != player) {
                 return;
@@ -415,12 +419,8 @@ public class NEUCape {
                 }
             }
             updateCape(player);
-
-            notRendering = false;
         } else {
-            currentPlayer = null;
-
-            notRendering = true;
+            keepCurrentPlayer = false;
         }
     }
 
@@ -490,8 +490,6 @@ public class NEUCape {
         }
     }
 
-    TexLoc tl = new TexLoc(10, 75, Keyboard.KEY_M);
-
     private double deltaAngleAccum;
     private double oldPlayerAngle;
     private int crouchTicks = 0;
@@ -514,19 +512,6 @@ public class NEUCape {
             }
         }
 
-        if(notRendering) {
-            for (int y = 0; y < nodes.size(); y++) {
-                for (int x = 0; x < nodes.get(y).size(); x++) {
-                    CapeNode node = nodes.get(y).get(x);
-                    if(!node.fixed) {
-                        Vector3f.add(node.position, capeTranslation, node.position);
-                        node.lastPosition.set(node.position);
-                        node.renderPosition.set(node.position);
-                    }
-                }
-            }
-        }
-
         double playerAngle = Math.toRadians(player.renderYawOffset);
         double deltaAngle = playerAngle - oldPlayerAngle;
         if(deltaAngle > Math.PI) {
@@ -542,8 +527,6 @@ public class NEUCape {
         float dZ = (float)Math.sin(playerAngle+Math.PI/2f);
 
         float factor = (float)(deltaAngleAccum*deltaAngleAccum);
-
-        tl.handleKeyboardInput();
 
         float capeTransLength = capeTranslation.length();
 
@@ -715,10 +698,35 @@ public class NEUCape {
 
     private void renderCape(EntityPlayer player, float partialRenderTick) {
         ensureCapeNodesCreated(player);
-        if(System.currentTimeMillis() - lastRender > 500) {
-            updateCape(player);
-        }
+
+        Vector3f avgPositionFixedBefore = avgFixedRenderPosition();
         updateFixedCapeNodesPartial(player, partialRenderTick);
+        Vector3f avgPositionFixed = avgFixedRenderPosition();
+        Vector3f delta = Vector3f.sub(avgPositionFixed, avgPositionFixedBefore, null);
+
+        if(delta.lengthSquared() > 9) {
+            updateFixedCapeNodes(player);
+
+            for(int y=0; y<nodes.size(); y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    CapeNode node = nodes.get(y).get(x);
+                    if(!node.fixed) {
+                        Vector3f.add(node.renderPosition, delta, node.renderPosition);
+                        node.position.set(node.renderPosition);
+                        node.lastPosition.set(node.renderPosition);
+                    } else {
+                        node.lastPosition.set(node.position);
+                    }
+                }
+            }
+
+            for(int y=0; y<nodes.size(); y++) {
+                for(int x=0; x<nodes.get(y).size(); x++) {
+                    nodes.get(y).get(x).renderNode();
+                }
+            }
+            return;
+        }
 
         for(int y=0; y<nodes.size(); y++) {
             for(int x=0; x<nodes.get(y).size(); x++) {
@@ -728,22 +736,22 @@ public class NEUCape {
 
                 if(node.fixed) continue;
 
-                Vector3f avgPositionFixed = avgFixedRenderPosition();
-
                 Vector3f newPosition = new Vector3f();
                 newPosition.x = node.lastPosition.x + (node.position.x - node.lastPosition.x) * partialRenderTick;
                 newPosition.y = node.lastPosition.y + (node.position.y - node.lastPosition.y) * partialRenderTick;
                 newPosition.z = node.lastPosition.z + (node.position.z - node.lastPosition.z) * partialRenderTick;
 
                 int length = node.oldRenderPosition.length;
+
                 int fps = Minecraft.getDebugFPS();
                 if(fps < 50) {
                     length = 2;
                 } else if(fps < 100) {
-                    length = 2+(int)((fps-50)/50f*3);
+                    length = 2 + (int)((fps-50)/50f*3);
                 }
 
                 if(node.oldRenderPosition[length-1] == null) {
+                    Arrays.fill(node.oldRenderPosition, Vector3f.sub(newPosition, avgPositionFixed, null));
                     node.renderPosition = newPosition;
                 } else {
                     Vector3f accum = new Vector3f();
@@ -751,7 +759,7 @@ public class NEUCape {
                         Vector3f.add(accum, node.oldRenderPosition[i], accum);
                         Vector3f.add(accum, avgPositionFixed, accum);
                     }
-                    accum.scale(1/(float)length);
+                    accum.scale(1/(float)(length));
 
                     float blendFactor = 0.5f+0.3f*y/(float)(nodes.size()-1); //0.5/0.5 -> 0.8/0.2 //0-1
                     accum.scale(blendFactor);
@@ -760,11 +768,13 @@ public class NEUCape {
                     node.renderPosition = accum;
                 }
 
-                for(int i=node.oldRenderPosition.length-1; i>=0; i--) {
-                    if(i > 0) {
-                        node.oldRenderPosition[i] = node.oldRenderPosition[i-1];
-                    } else {
-                        node.oldRenderPosition[i] = Vector3f.sub(node.renderPosition, avgPositionFixed, null);
+                if(!Minecraft.getMinecraft().isGamePaused()) {
+                    for(int i=node.oldRenderPosition.length-1; i>=0; i--) {
+                        if(i > 0) {
+                            node.oldRenderPosition[i] = node.oldRenderPosition[i-1];
+                        } else {
+                            node.oldRenderPosition[i] = Vector3f.sub(node.renderPosition, avgPositionFixed, null);
+                        }
                     }
                 }
             }

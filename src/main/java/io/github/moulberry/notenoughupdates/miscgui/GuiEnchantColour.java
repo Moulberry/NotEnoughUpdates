@@ -80,7 +80,7 @@ public class GuiEnchantColour extends GuiScreen {
         fontRendererObj.drawString("COL", guiLeft+136, guiTop+7, 4210752);
         fontRendererObj.drawString("DEL", guiLeft+161, guiTop+7, 4210752);
 
-        Utils.drawStringCentered("Add Ench Colour", fontRendererObj, guiLeft+xSize/2, guiTop+ySize-20, false, 4210752);
+        Utils.drawStringCentered("Add Ench Colour", fontRendererObj, guiLeft+xSize/2+1, guiTop+ySize-20, false, 4210752);
 
         int yIndex = 0;
         for(String str : enchantColours) {

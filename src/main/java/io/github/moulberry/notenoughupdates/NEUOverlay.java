@@ -1732,7 +1732,7 @@ public class NEUOverlay extends Gui {
             BackgroundBlur.renderBlurredBackground(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor,
                     width, height,
                     leftSide+getBoxPadding()-5, getBoxPadding()-5,
-                    paneWidth-getBoxPadding()*2+10, height-getBoxPadding()*2+10);
+                    paneWidth-getBoxPadding()*2+10, height-getBoxPadding()*2+10, true);
             Gui.drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,
                     leftSide+getBoxPadding()-5+paneWidth-getBoxPadding()*2+10,
                     getBoxPadding()-5+height-getBoxPadding()*2+10, 0xc8101010);

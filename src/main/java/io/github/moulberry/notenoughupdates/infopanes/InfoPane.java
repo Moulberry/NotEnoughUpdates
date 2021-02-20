@@ -42,7 +42,7 @@ public abstract class InfoPane extends Gui  {
         BackgroundBlur.renderBlurredBackground(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor,
                 width, height,
                 boxLeft, overlay.getBoxPadding()-5,
-                boxRight-boxLeft, height-overlay.getBoxPadding()*2+10);
+                boxRight-boxLeft, height-overlay.getBoxPadding()*2+10, true);
         drawRect(boxLeft, overlay.getBoxPadding() - 5, boxRight,
                 height - overlay.getBoxPadding() + 5, bg.getRGB());
     }

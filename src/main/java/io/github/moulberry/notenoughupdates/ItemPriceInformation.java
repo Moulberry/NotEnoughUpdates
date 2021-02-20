@@ -28,14 +28,7 @@ public class ItemPriceInformation {
         NumberFormat format = NumberFormat.getInstance(Locale.US);
 
         if(bazaarItem) {
-            int[] lines = {
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line1,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line2,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line3,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line4,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line5,
-                    NotEnoughUpdates.INSTANCE.config.priceInfoBaz.line6
-            };
+            List<Integer> lines = NotEnoughUpdates.INSTANCE.config.tooltipTweaks.priceInfoBaz;
 
             boolean added = false;
 
@@ -51,8 +44,6 @@ public class ItemPriceInformation {
             for(int lineId : lines) {
                 switch (lineId) {
                     case 0:
-                        continue;
-                    case 1:
                         if(bazaarInfo.has("avg_buy")) {
                             if(!added) {
                                 tooltip.add("");
@@ -64,7 +55,7 @@ public class ItemPriceInformation {
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarBuyPrice)+" coins");
                         }
                         break;
-                    case 2:
+                    case 1:
                         if(bazaarInfo.has("avg_sell")) {
                             if(!added) {
                                 tooltip.add("");
@@ -76,7 +67,7 @@ public class ItemPriceInformation {
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarSellPrice)+" coins");
                         }
                         break;
-                    case 3:
+                    case 2:
                         if(bazaarInfo.has("curr_buy")) {
                             if(!added) {
                                 tooltip.add("");
@@ -88,7 +79,7 @@ public class ItemPriceInformation {
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantBuyPrice)+" coins");
                         }
                         break;
-                    case 4:
+                    case 3:
                         if(bazaarInfo.has("curr_sell")) {
                             if(!added) {
                                 tooltip.add("");
@@ -100,7 +91,7 @@ public class ItemPriceInformation {
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(bazaarInstantSellPrice)+" coins");
                         }
                         break;
-                    case 5:
+                    case 4:
                         if(craftCost.fromRecipe) {
                             if(!added) {
                                 tooltip.add("");
@@ -115,22 +106,13 @@ public class ItemPriceInformation {
 
             return added;
         } else if(auctionItem) {
-            int[] lines = {
-                NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line1,
-                NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line2,
-                NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line3,
-                NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line4,
-                NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line5,
-                NotEnoughUpdates.INSTANCE.config.priceInfoAuc.line6
-            };
+            List<Integer> lines = NotEnoughUpdates.INSTANCE.config.tooltipTweaks.priceInfoAuc;
 
             boolean added = false;
 
             for(int lineId : lines) {
                 switch (lineId) {
                     case 0:
-                        continue;
-                    case 1:
                         if(lowestBin > 0) {
                             if(!added) {
                                 tooltip.add("");
@@ -140,7 +122,7 @@ public class ItemPriceInformation {
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBin)+" coins");
                         }
                         break;
-                    case 2:
+                    case 1:
                         if(auctionInfo != null) {
                             if(!added) {
                                 tooltip.add("");
@@ -159,7 +141,7 @@ public class ItemPriceInformation {
 
                         }
                         break;
-                    case 3:
+                    case 2:
                         if(auctionInfo != null) {
                             if(!added) {
                                 tooltip.add("");
@@ -176,7 +158,7 @@ public class ItemPriceInformation {
                             }
                         }
                         break;
-                    case 4:
+                    case 3:
                         if(craftCost.fromRecipe) {
                             if(!added) {
                                 tooltip.add("");
@@ -186,7 +168,7 @@ public class ItemPriceInformation {
                                         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format((int)craftCost.craftCost)+" coins");
                         }
                         break;
-                    case 5:
+                    case 4:
                         if(lowestBinAvg > 0) {
                             if(!added) {
                                 tooltip.add("");
@@ -196,7 +178,7 @@ public class ItemPriceInformation {
                                     EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+format.format(lowestBinAvg)+" coins");
                         }
                         break;
-                    case 6:
+                    case 5:
                         if(Constants.ESSENCECOSTS == null) break;
                         JsonObject essenceCosts = Constants.ESSENCECOSTS;
                         if(!essenceCosts.has(internalname)) {

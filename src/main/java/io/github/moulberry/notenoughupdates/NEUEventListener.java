@@ -185,7 +185,7 @@ public class NEUEventListener {
             longUpdate = true;
             lastLongUpdate = currentTime;
         }
-        if(!neu.config.dungeonBlock.slowDungeonBlocks) {
+        if(!neu.config.dungeons.slowDungeonBlocks) {
             DungeonBlocks.tick();
         }
         DungeonWin.tick();
@@ -254,7 +254,7 @@ public class NEUEventListener {
             NotEnoughUpdates.profileViewer.putNameUuid(Minecraft.getMinecraft().thePlayer.getName(),
                     Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
 
-            if(neu.config.dungeonBlock.slowDungeonBlocks) {
+            if(neu.config.dungeons.slowDungeonBlocks) {
                 DungeonBlocks.tick();
             }
 
@@ -287,7 +287,7 @@ public class NEUEventListener {
                         displayUpdateMessageIfOutOfDate();
                     }
 
-                    if(neu.config.hidden.doRamNotif) {
+                    if(neu.config.notifications.doRamNotif) {
                         long maxMemoryMB = Runtime.getRuntime().maxMemory()/1024L/1024L;
                         if(maxMemoryMB > 4100) {
                             notificationDisplayMillis = System.currentTimeMillis();
@@ -295,9 +295,9 @@ public class NEUEventListener {
                             notificationLines.add(EnumChatFormatting.DARK_RED+"Too much memory allocated!");
                             notificationLines.add(String.format(EnumChatFormatting.DARK_GRAY+"NEU has detected %03dMB of memory allocated to Minecraft!", maxMemoryMB));
                             notificationLines.add(EnumChatFormatting.DARK_GRAY+"It is recommended to allocated between 2-4GB of memory");
-                            notificationLines.add(EnumChatFormatting.DARK_GRAY+"More than 4GB WILL cause FPS issues, EVEN if you have 16GB+ available");
+                            notificationLines.add(EnumChatFormatting.DARK_GRAY+"More than 4GB MAY cause FPS issues, EVEN if you have 16GB+ available");
                             notificationLines.add("");
-                            notificationLines.add(EnumChatFormatting.DARK_GRAY+"For more information, visit #ram-info in discord.gg/spr6ESn");
+                            notificationLines.add(EnumChatFormatting.DARK_GRAY+"For more information, visit #ram-info in discord.gg/moulberry");
                         }
                     }
 
@@ -884,9 +884,9 @@ public class NEUEventListener {
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
-        if(neu.config.dungeonProfit.profitDisplayLoc == 3) return;
+        if(neu.config.dungeons.profitDisplayLoc == 3) return;
 
-        if(gui instanceof GuiChest && neu.config.dungeonProfit.profitDisplayLoc != 2) {
+        if(gui instanceof GuiChest && neu.config.dungeons.profitDisplayLoc != 2) {
             try {
                 int xSize = (int) Utils.getField(GuiContainer.class, gui, "xSize", "field_146999_f");
                 int ySize = (int) Utils.getField(GuiContainer.class, gui, "ySize", "field_147000_g");
@@ -933,7 +933,7 @@ public class NEUEventListener {
                             if(bazaarPrice > 0) {
                                 worth = bazaarPrice;
                             } else {
-                                switch(neu.config.dungeonProfit.profitType) {
+                                switch(neu.config.dungeons.profitType) {
                                     case 1:
                                         worth = neu.manager.auctionManager.getItemAvgBin(internal);
                                         break;
@@ -1025,7 +1025,7 @@ public class NEUEventListener {
                         plStringBIN = prefix + "-" + format.format(-profitLossBIN) + " coins";
                     }
 
-                    if(neu.config.dungeonProfit.profitDisplayLoc == 1 && !valueStringBIN2.equals(missingItem)) {
+                    if(neu.config.dungeons.profitDisplayLoc == 1 && !valueStringBIN2.equals(missingItem)) {
                         int w = Minecraft.getMinecraft().fontRendererObj.getStringWidth(plStringBIN);
                         GlStateManager.disableLighting();
                         GlStateManager.translate(0, 0, 200);
@@ -1729,7 +1729,7 @@ public class NEUEventListener {
                 }
             }
 
-            if(neu.config.dungeonProfit.profitDisplayLoc == 2 && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            if(neu.config.dungeons.profitDisplayLoc == 2 && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
                 if(line.contains(EnumChatFormatting.GREEN+"Open Reward Chest")) {
                     dungeonProfit = true;
                 } else if(index == 7 && dungeonProfit) {
@@ -1771,7 +1771,7 @@ public class NEUEventListener {
                             if(bazaarPrice > 0) {
                                 worth = bazaarPrice;
                             } else {
-                                switch(neu.config.dungeonProfit.profitType) {
+                                switch(neu.config.dungeons.profitType) {
                                     case 1:
                                         worth = neu.manager.auctionManager.getItemAvgBin(internal);
                                         break;
@@ -1885,6 +1885,16 @@ public class NEUEventListener {
 
         event.toolTip.clear();
         event.toolTip.addAll(newTooltip);
+
+        HashMap<String, List<String>> loreBuckets = new HashMap<>();
+
+        List<String> hypixelOrder = new ArrayList<>();
+
+        hypixelOrder.add("attributes");
+        hypixelOrder.add("enchants");
+        hypixelOrder.add("ability");
+        hypixelOrder.add("reforge_bonus");
+        hypixelOrder.add("rarity");
 
         if(neu.config.tooltipTweaks.showPriceInfoInvItem) {
             ItemPriceInformation.addToTooltip(event.toolTip, internalname, event.itemStack);

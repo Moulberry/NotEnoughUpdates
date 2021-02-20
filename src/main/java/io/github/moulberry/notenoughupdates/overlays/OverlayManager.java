@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.common.collect.Lists;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 
 import java.util.ArrayList;
@@ -14,9 +15,18 @@ public class OverlayManager {
     public static MiningOverlay miningOverlay;
     public static FarmingOverlay farmingOverlay;
     public static PetInfoOverlay petInfoOverlay;
+    public static TimersOverlay timersOverlay;
     public static final List<TextOverlay> textOverlays = new ArrayList<>();
 
     static {
+        textOverlays.add(timersOverlay = new TimersOverlay(new Position(50, 100), ArrayList::new, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.mining.overlayStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        }));
+
         List<String> miningDummy = Lists.newArrayList("\u00a73Goblin Slayer: \u00a7626.5%\n\u00a73Lucky Raffle: \u00a7c0.0%",
                 "\u00a73Mithril Powder: \u00a726,243",
                 "\u00a73Forge 1) \u00a79Diamonite\u00a77: \u00a7aReady!",

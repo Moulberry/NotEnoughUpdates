@@ -42,8 +42,8 @@ public class DungeonBlocks {
     }
 
     public static boolean isOverriding() {
-        return OpenGlHelper.isFramebufferEnabled() && NotEnoughUpdates.INSTANCE.config.dungeonBlock.enableDungBlockOverlay &&
-                (NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungeonBlocksEverywhere ||
+        return OpenGlHelper.isFramebufferEnabled() && NotEnoughUpdates.INSTANCE.config.dungeons.enableDungBlockOverlay &&
+                (NotEnoughUpdates.INSTANCE.config.dungeons.dungeonBlocksEverywhere ||
                 (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon")));
     }
 
@@ -141,15 +141,15 @@ public class DungeonBlocks {
 
     static {
         dynamicPreloadMap.put(new ResourceLocation("textures/entity/bat.png"),
-                NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungBatColour);
+                NotEnoughUpdates.INSTANCE.config.dungeons.dungBatColour);
         dynamicPreloadMap.put(new ResourceLocation("textures/entity/chest/normal.png"),
-                NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungChestColour);
+                NotEnoughUpdates.INSTANCE.config.dungeons.dungChestColour);
         dynamicPreloadMap.put(new ResourceLocation("textures/entity/chest/normal_double.png"),
-                NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungChestColour);
+                NotEnoughUpdates.INSTANCE.config.dungeons.dungChestColour);
         dynamicPreloadMap.put(new ResourceLocation("textures/entity/chest/trapped.png"),
-                NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungTrappedChestColour);
+                NotEnoughUpdates.INSTANCE.config.dungeons.dungTrappedChestColour);
         dynamicPreloadMap.put(new ResourceLocation("textures/entity/chest/trapped_double.png"),
-                NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungTrappedChestColour);
+                NotEnoughUpdates.INSTANCE.config.dungeons.dungTrappedChestColour);
     }
 
     public static void tick() {
@@ -192,13 +192,13 @@ public class DungeonBlocks {
 
             HashMap<TextureAtlasSprite, Integer> spriteMap = new HashMap<>();
             spriteMap.put(Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/stonebrick_cracked"),
-                    SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungCrackedColour));
+                    SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeons.dungCrackedColour));
             spriteMap.put(Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/dispenser_front_horizontal"),
-                    SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungDispenserColour));
+                    SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeons.dungDispenserColour));
             spriteMap.put(Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/lever"),
-                    SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungLeverColour));
+                    SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeons.dungLeverColour));
             spriteMap.put(Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/trip_wire"),
-                    SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeonBlock.dungTripWireColour));
+                    SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeons.dungTripWireColour));
 
             for(Map.Entry<TextureAtlasSprite, Integer> entry : spriteMap.entrySet()) {
                 if(((entry.getValue() >> 24) & 0xFF) < 10) continue;

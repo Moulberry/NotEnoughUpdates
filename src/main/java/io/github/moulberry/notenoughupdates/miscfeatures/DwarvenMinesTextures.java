@@ -31,11 +31,6 @@ import java.util.*;
 
 public class DwarvenMinesTextures {
 
-    /*private static final HashSet<BlockPos> blocks = new HashSet<>();
-    private static final HashSet<ChunkCoordIntPair> ignoredChunks = new HashSet<>();
-    private static final HashMap<ChunkCoordIntPair, HashMap<ChunkCoordIntPair, Set<BlockPos>>> ignoredBlocks = new HashMap<>();
-    private static final HashMap<ChunkCoordIntPair, HashMap<ChunkCoordIntPair, Set<BlockPos>>> whitelistBlocks = new HashMap<>();*/
-
     private static class IgnoreColumn {
         boolean always;
         int minY;

@@ -6,6 +6,7 @@ import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
@@ -25,9 +26,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -105,16 +103,8 @@ public class NEUManager {
         this.currentProfile = currentProfile;
     }
 
-    public void setCurrentProfileBackup(String currentProfile) {
-        this.currentProfileBackup = currentProfile;
-    }
-
     public String getCurrentProfile() {
-        if(currentProfile == null || currentProfile.length() == 0) {
-            return currentProfileBackup;
-        } else {
-            return currentProfile;
-        }
+        return SBInfo.getInstance().currentProfile;
     }
 
     public void saveItemRenameConfig() {
@@ -606,11 +596,11 @@ public class NEUManager {
      */
     public <T> Map<String, T> subMapWithKeysThatAreSuffixes(String prefix, NavigableMap<String, T> map) {
         if ("".equals(prefix)) return map;
-        String lastKey = createLexicographicallyNextStringOfTheSameLenght(prefix);
+        String lastKey = createLexicographicallyNextStringOfTheSameLength(prefix);
         return map.subMap(prefix, true, lastKey, false);
     }
 
-    String createLexicographicallyNextStringOfTheSameLenght(String input) {
+    public String createLexicographicallyNextStringOfTheSameLength(String input) {
         final int lastCharPosition = input.length()-1;
         String inputWithoutLastChar = input.substring(0, lastCharPosition);
         char lastChar = input.charAt(lastCharPosition) ;

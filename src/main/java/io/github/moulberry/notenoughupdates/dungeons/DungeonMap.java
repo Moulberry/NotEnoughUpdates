@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemMap;
@@ -88,6 +89,7 @@ public class DungeonMap {
     private Map<String, MapPosition> playerMarkerMapPositions = new HashMap<>();
     private Set<MapPosition> rawPlayerMarkerMapPositions = new HashSet<>();
     private Map<String, MapPosition> playerMarkerMapPositionsLast = new HashMap<>();
+    private HashMap<String, Integer> playerIdMap = new HashMap<>();
 
     private Map<String, ResourceLocation> playerSkinMap = new HashMap<>();
     
@@ -655,7 +657,7 @@ public class DungeonMap {
                         pixelWidth = pixelHeight = 12;
                     }
                     GlStateManager.color(1, 1, 1, 1);
-                    if((!NotEnoughUpdates.INSTANCE.config.dungeonMapOpen.showOwnHeadAsMarker ||
+                    if((!NotEnoughUpdates.INSTANCE.config.dungeons.showOwnHeadAsMarker ||
                             playerMarkerMapPositions.size() <= 1 || minU != 1/4f) &&
                             NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerHeads >= 1 &&
                             playerSkinMap.containsKey(entry.getKey())) {
@@ -818,6 +820,7 @@ public class DungeonMap {
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
         GlStateManager.enableDepth();
+        GlStateManager.disableLighting();
     }
 
 
@@ -1013,8 +1016,10 @@ public class DungeonMap {
         if(colourMap[0].length != 128) return;
         this.colourMap = colourMap;
 
+        boolean searchForPlayers = false;
         if(System.currentTimeMillis() - lastClearCache > 1000) {
             roomMap.clear();
+            searchForPlayers = true;
             startRoomX = -1;
             startRoomY = -1;
             connectorSize = -1;
@@ -1140,58 +1145,66 @@ public class DungeonMap {
             }
         }
 
-        for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-            if(player instanceof AbstractClientPlayer && actualPlayers.contains(player.getName())) {
-                AbstractClientPlayer aplayer = (AbstractClientPlayer) player;
-                ResourceLocation skin = aplayer.getLocationSkin();
-                if(skin != DefaultPlayerSkin.getDefaultSkin(aplayer.getUniqueID())) {
-                    playerSkinMap.put(player.getName(), skin);
+        actualPlayers.add(Minecraft.getMinecraft().thePlayer.getName());
+        if(searchForPlayers) {
+            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                if(player instanceof AbstractClientPlayer && actualPlayers.contains(player.getName())) {
+                    AbstractClientPlayer aplayer = (AbstractClientPlayer) player;
+                    ResourceLocation skin = aplayer.getLocationSkin();
+                    if(skin != DefaultPlayerSkin.getDefaultSkin(aplayer.getUniqueID())) {
+                        playerSkinMap.put(player.getName(), skin);
+                        playerIdMap.put(player.getName(), player.getEntityId());
+                    }
                 }
             }
         }
-        actualPlayers.add(Minecraft.getMinecraft().thePlayer.getName());
 
         playerEntityMapPositions.clear();
         if(usePlayerPositions) {
-            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-                if(actualPlayers.contains(player.getName())) {
-                    float roomX = (float)player.posX / (roomSizeBlocks+1);
-                    float roomY = (float)player.posZ / (roomSizeBlocks+1);
+            for(String playerName : actualPlayers) {
+                if(playerIdMap.containsKey(playerName)) {
+                    Entity entity = Minecraft.getMinecraft().theWorld.getEntityByID(playerIdMap.get(playerName));
+                    if(entity instanceof EntityPlayer) {
+                        EntityPlayer player = (EntityPlayer) entity;
 
-                    float playerRoomOffsetX = (float) Math.floor(roomX);
-                    float playerConnOffsetX = (float) Math.floor(roomX);
-                    float playerRoomOffsetY = (float) Math.floor(roomY);
-                    float playerConnOffsetY = (float) Math.floor(roomY);
+                        float roomX = (float)player.posX / (roomSizeBlocks+1);
+                        float roomY = (float)player.posZ / (roomSizeBlocks+1);
 
-                    float roomXInBlocks = (float)player.posX % (roomSizeBlocks+1);
-                    if(roomXInBlocks < 2) { //0,1
-                        playerConnOffsetX -= 2/5f-roomXInBlocks/5f;
-                    } else if(roomXInBlocks > roomSizeBlocks-2) { //31,30,29
-                        playerRoomOffsetX++;
-                        playerConnOffsetX += (roomXInBlocks - (roomSizeBlocks-2))/5f;
-                    } else {
-                        playerRoomOffsetX += (roomXInBlocks-2) / (roomSizeBlocks-4);
+                        float playerRoomOffsetX = (float) Math.floor(roomX);
+                        float playerConnOffsetX = (float) Math.floor(roomX);
+                        float playerRoomOffsetY = (float) Math.floor(roomY);
+                        float playerConnOffsetY = (float) Math.floor(roomY);
+
+                        float roomXInBlocks = (float)player.posX % (roomSizeBlocks+1);
+                        if(roomXInBlocks < 2) { //0,1
+                            playerConnOffsetX -= 2/5f-roomXInBlocks/5f;
+                        } else if(roomXInBlocks > roomSizeBlocks-2) { //31,30,29
+                            playerRoomOffsetX++;
+                            playerConnOffsetX += (roomXInBlocks - (roomSizeBlocks-2))/5f;
+                        } else {
+                            playerRoomOffsetX += (roomXInBlocks-2) / (roomSizeBlocks-4);
+                        }
+
+                        float roomYInBlocks = (float)player.posZ % (roomSizeBlocks+1);
+                        if(roomYInBlocks < 2) { //0,1
+                            playerConnOffsetY -= 2/5f-roomYInBlocks/5f;
+                        } else if(roomYInBlocks > roomSizeBlocks-2) { //31,30,29
+                            playerRoomOffsetY++;
+                            playerConnOffsetY += (roomYInBlocks - (roomSizeBlocks-2))/5f;
+                        } else {
+                            playerRoomOffsetY += (roomYInBlocks-2) / (roomSizeBlocks-4);
+                        }
+
+                        playerRoomOffsetX -= startRoomX/(roomSize+connectorSize);
+                        playerRoomOffsetY -= startRoomY/(roomSize+connectorSize);
+                        playerConnOffsetX -= startRoomX/(roomSize+connectorSize);
+                        playerConnOffsetY -= startRoomY/(roomSize+connectorSize);
+
+                        MapPosition pos = new MapPosition(playerRoomOffsetX, playerConnOffsetX, playerRoomOffsetY, playerConnOffsetY);
+                        pos.rotation = (player.prevRotationYawHead + (player.rotationYawHead-player.prevRotationYawHead)*partialTicks) % 360;
+                        if(pos.rotation < 0) pos.rotation += 360;
+                        playerEntityMapPositions.put(player.getName(), pos);
                     }
-
-                    float roomYInBlocks = (float)player.posZ % (roomSizeBlocks+1);
-                    if(roomYInBlocks < 2) { //0,1
-                        playerConnOffsetY -= 2/5f-roomYInBlocks/5f;
-                    } else if(roomYInBlocks > roomSizeBlocks-2) { //31,30,29
-                        playerRoomOffsetY++;
-                        playerConnOffsetY += (roomYInBlocks - (roomSizeBlocks-2))/5f;
-                    } else {
-                        playerRoomOffsetY += (roomYInBlocks-2) / (roomSizeBlocks-4);
-                    }
-
-                    playerRoomOffsetX -= startRoomX/(roomSize+connectorSize);
-                    playerRoomOffsetY -= startRoomY/(roomSize+connectorSize);
-                    playerConnOffsetX -= startRoomX/(roomSize+connectorSize);
-                    playerConnOffsetY -= startRoomY/(roomSize+connectorSize);
-
-                    MapPosition pos = new MapPosition(playerRoomOffsetX, playerConnOffsetX, playerRoomOffsetY, playerConnOffsetY);
-                    pos.rotation = (player.prevRotationYawHead + (player.rotationYawHead-player.prevRotationYawHead)*partialTicks) % 360;
-                    if(pos.rotation < 0) pos.rotation += 360;
-                    playerEntityMapPositions.put(player.getName(), pos);
                 }
             }
         }
