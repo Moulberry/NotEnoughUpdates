@@ -108,6 +108,8 @@ public abstract class TextOverlay {
         return new Vector2f(x, y);
     }
 
+    protected void renderLine(String line, Vector2f position) {}
+
     private void render(List<String> strings) {
         if(strings == null) return;
 
@@ -144,20 +146,26 @@ public abstract class TextOverlay {
                 yOff += 3;
             } else {
                 for(String s2 : s.split("\n")) {
+                    Vector2f pos = new Vector2f(x+paddingX, y+paddingY+yOff);
+                    renderLine(s2, pos);
+
+                    int xPad = (int)pos.x;
+                    int yPad = (int)pos.y;
+
                     if(style == TextOverlayStyle.FULL_SHADOW) {
                         String clean = Utils.cleanColourNotModifiers(s2);
                         for(int xO=-2; xO<=2; xO++) {
                             for(int yO=-2; yO<=2; yO++) {
                                 if(Math.abs(xO) != Math.abs(yO)) {
                                     Minecraft.getMinecraft().fontRendererObj.drawString(clean,
-                                            x+paddingX+xO/2f, y+paddingY+yOff+yO/2f,
+                                            xPad+xO/2f, yPad+yO/2f,
                                             new Color(0, 0, 0, 200/Math.max(Math.abs(xO), Math.abs(yO))).getRGB(), false);
                                 }
                             }
                         }
                     }
                     Minecraft.getMinecraft().fontRendererObj.drawString(s2,
-                            x+paddingX, y+paddingY+yOff, 0xffffff, style == TextOverlayStyle.MC_SHADOW);
+                            xPad, yPad, 0xffffff, style == TextOverlayStyle.MC_SHADOW);
 
                     yOff += 10;
                 }

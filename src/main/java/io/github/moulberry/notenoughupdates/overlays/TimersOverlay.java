@@ -10,6 +10,8 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
@@ -21,6 +23,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.util.vector.Vector2f;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -30,6 +33,8 @@ import java.util.regex.Pattern;
 import static net.minecraft.util.EnumChatFormatting.*;
 
 public class TimersOverlay extends TextOverlay {
+
+    private static final Pattern PATTERN_ACTIVE_EFFECTS = Pattern.compile("\u00a77You have \u00a7r\u00a7e(\\d+) \u00a7r\u00a77active effects.");
 
     public TimersOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
         super(position, dummyStrings, styleSupplier);
@@ -84,7 +89,71 @@ public class TimersOverlay extends TextOverlay {
         }
     }
 
-    private static final Pattern PATTERN_ACTIVE_EFFECTS = Pattern.compile("\u00a77You have \u00a7r\u00a7e(\\d+) \u00a7r\u00a77active effects.");
+    @Override
+    protected Vector2f getSize(List<String> strings) {
+        return super.getSize(strings).translate(12, 0);
+    }
+
+    private static final ItemStack CAKES_ICON = new ItemStack(Items.cake);
+    private static final ItemStack PUZZLER_ICON = new ItemStack(Items.book);
+    private static ItemStack[] FETCHUR_ICONS = null;
+    private static final ItemStack COMMISSIONS_ICON = new ItemStack(Items.iron_pickaxe);
+    private static final ItemStack EXPERIMENTS_ICON = new ItemStack(Items.enchanted_book);
+    private static final ItemStack COOKIE_ICON = new ItemStack(Items.cookie);
+
+    @Override
+    protected void renderLine(String line, Vector2f position) {
+        ItemStack icon = null;
+
+        String clean = Utils.cleanColour(line);
+        String beforeColon = clean.split(":")[0];
+        switch(beforeColon) {
+            case "Cakes": icon = CAKES_ICON; break;
+            case "Puzzler": icon = PUZZLER_ICON; break;
+            case "Godpot": icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("GOD_POTION")); break;
+            case "Fetchur": {
+                if(FETCHUR_ICONS == null) {
+                    FETCHUR_ICONS = new ItemStack[] {
+                            new ItemStack(Blocks.wool, 50, 14),
+                            new ItemStack(Blocks.glass, 20, 4),
+                            new ItemStack(Items.compass, 1, 0),
+                            new ItemStack(Items.prismarine_crystals, 20, 0),
+                            new ItemStack(Items.fireworks, 1, 0),
+                            NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("CHEAP_COFFEE")),
+                            new ItemStack(Items.oak_door, 1, 0),
+                            new ItemStack(Items.rabbit_foot, 3, 0),
+                            NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SUPERBOOM_TNT")),
+                            new ItemStack(Blocks.pumpkin, 1, 0),
+                            new ItemStack(Items.flint_and_steel, 1, 0),
+                            new ItemStack(Blocks.quartz_ore, 50, 0),
+                            new ItemStack(Items.ender_pearl, 16, 0)
+                    };
+                }
+                long currentTime = System.currentTimeMillis();
+
+                long fetchurIndex = (currentTime-18000000)/86400000 % 13 - 4;
+                if(fetchurIndex < 0) fetchurIndex += 13;
+
+                icon = FETCHUR_ICONS[(int)fetchurIndex];
+                break;
+            }
+            case "Commissions": icon = COMMISSIONS_ICON; break;
+            case "Experiments": icon = EXPERIMENTS_ICON; break;
+            case "Cookie Buff": icon = COOKIE_ICON; break;
+        }
+
+        if(icon != null) {
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(position.x, position.y, 0);
+            GlStateManager.scale(0.5f, 0.5f, 1f);
+            Utils.drawItemStack(icon, 0, 0);
+            GlStateManager.popMatrix();
+
+            position.x += 12;
+        }
+
+        super.renderLine(line, position);
+    }
 
     @Override
     public void update() {
@@ -130,7 +199,7 @@ public class TimersOverlay extends TextOverlay {
         }
 
         boolean foundCookieBuffText = false;
-        if(SBInfo.getInstance().footer != null) {
+        if(SBInfo.getInstance().getLocation() != null && !SBInfo.getInstance().getLocation().equals("dungeon") && SBInfo.getInstance().footer != null) {
             String formatted = SBInfo.getInstance().footer.getFormattedText();
             for(String line : formatted.split("\n")) {
                 Matcher activeEffectsMatcher = PATTERN_ACTIVE_EFFECTS.matcher(line);
@@ -159,7 +228,7 @@ public class TimersOverlay extends TextOverlay {
                             }
                             if("ydhms".contains(""+c)) {
                                 try {
-                                    int val = Integer.parseInt(number.toString());
+                                    long val = Integer.parseInt(number.toString());
                                     switch(c) {
                                         case 'y': hidden.cookieBuffRemaining += val*365*24*60*60*1000; break;
                                         case 'd': hidden.cookieBuffRemaining += val*24*60*60*1000; break;
@@ -185,154 +254,76 @@ public class TimersOverlay extends TextOverlay {
             }
         }
 
-        overlayStrings = new ArrayList<>();
+        if(!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay) {
+            overlayStrings = null;
+            return;
+        }
+
+        HashMap<Integer, String> map = new HashMap<>();
 
         long cakeEnd = hidden.firstCakeAte + 1000*60*60*48 - currentTime;
         if(cakeEnd < 0) {
-            overlayStrings.add(DARK_AQUA+"Cakes: "+YELLOW+"Ready!");
+            map.put(0, DARK_AQUA+"Cakes: "+YELLOW+"Inactive!");
+            map.put(0+7, DARK_AQUA+"Cakes: "+YELLOW+"Inactive!");
         } else {
-            overlayStrings.add(DARK_AQUA+"Cakes: "+YELLOW+Utils.prettyTime(cakeEnd));
+            map.put(0+7, DARK_AQUA+"Cakes: "+YELLOW+Utils.prettyTime(cakeEnd));
+        }
+
+        if(hidden.cookieBuffRemaining <= 0) {
+            map.put(1, DARK_AQUA+"Cookie Buff: "+YELLOW+"Inactive!");
+            map.put(1+7, DARK_AQUA+"Cookie Buff: "+YELLOW+"Inactive!");
+        } else {
+            map.put(1+7, DARK_AQUA+"Cookie Buff: "+YELLOW+Utils.prettyTime(hidden.cookieBuffRemaining));
+        }
+
+        long godpotEnd = hidden.godPotionDrunk + 1000*60*60*24 - currentTime;
+        if(godpotEnd < 0) {
+            if(!hideGodpot) {
+                map.put(2, DARK_AQUA+"Godpot: "+YELLOW+"Inactive!");
+                map.put(2+7, DARK_AQUA+"Godpot: "+YELLOW+"Inactive!");
+            }
+        } else {
+            map.put(2+7, DARK_AQUA+"Godpot: "+YELLOW+Utils.prettyTime(godpotEnd));
         }
 
         long puzzlerEnd = hidden.puzzlerCompleted + 1000*60*60*24 - currentTime;
         if(puzzlerEnd < 0) {
-            overlayStrings.add(DARK_AQUA+"Puzzler: "+YELLOW+"Ready!");
+            map.put(3, DARK_AQUA+"Puzzler: "+YELLOW+"Ready!");
+            map.put(3+7, DARK_AQUA+"Puzzler: "+YELLOW+"Ready!");
         } else {
-            overlayStrings.add(DARK_AQUA+"Puzzler: "+YELLOW+Utils.prettyTime(puzzlerEnd));
-        }
-
-        if(!hideGodpot) {
-            long godpotEnd = hidden.godPotionDrunk + 1000*60*60*24 - currentTime;
-            if(godpotEnd < 0) {
-                overlayStrings.add(DARK_AQUA+"Godpot: "+YELLOW+"Inactive!");
-            } else {
-                overlayStrings.add(DARK_AQUA+"Godpot: "+YELLOW+Utils.prettyTime(puzzlerEnd));
-            }
+            map.put(3+7, DARK_AQUA+"Puzzler: "+YELLOW+Utils.prettyTime(puzzlerEnd));
         }
 
         long midnightReset = (currentTime-18000000)/86400000*86400000+18000000;
         long fetchurComplete = hidden.fetchurCompleted;
         if(fetchurComplete < midnightReset) {
-            overlayStrings.add(DARK_AQUA+"Fetchur: "+YELLOW+"Ready!");
+            map.put(4, DARK_AQUA+"Fetchur: "+YELLOW+"Ready!");
+            map.put(4+7, DARK_AQUA+"Fetchur: "+YELLOW+"Ready!");
         } else {
-            overlayStrings.add(DARK_AQUA+"Fetchur: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
+            map.put(4+7, DARK_AQUA+"Fetchur: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
         }
 
         if(hidden.commissionsCompleted < midnightReset) {
-            overlayStrings.add(DARK_AQUA+"Commissions: "+YELLOW+"Ready!");
+            map.put(5, DARK_AQUA+"Commissions: "+YELLOW+"Ready!");
+            map.put(5+7, DARK_AQUA+"Commissions: "+YELLOW+"Ready!");
         } else {
-            overlayStrings.add(DARK_AQUA+"Commissions: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
+            map.put(5+7, DARK_AQUA+"Commissions: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
         }
 
         if(hidden.experimentsCompleted < midnightReset) {
-            overlayStrings.add(DARK_AQUA+"Experiments: "+YELLOW+"Ready!");
+            map.put(6, DARK_AQUA+"Experiments: "+YELLOW+"Ready!");
+            map.put(6+7, DARK_AQUA+"Experiments: "+YELLOW+"Ready!");
         } else {
-            overlayStrings.add(DARK_AQUA+"Experiments: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
+            map.put(6+7, DARK_AQUA+"Experiments: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
         }
 
-        if(hidden.cookieBuffRemaining <= 0) {
-            overlayStrings.add(DARK_AQUA+"Cookie Buff: "+YELLOW+"Inactive!");
-        } else {
-            overlayStrings.add(DARK_AQUA+"Cookie Buff: "+YELLOW+Utils.prettyTime(hidden.cookieBuffRemaining));
-        }
-
-        /*List<NetworkPlayerInfo> players = playerOrdering.sortedCopy(Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap());
-        Minecraft.getMinecraft().thePlayer.sendQueue.
-        for(NetworkPlayerInfo info : players) {
-            String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
-            if(name.contains("Mithril Powder:")) {
-                mithrilPowder = DARK_AQUA+Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
-            }
-            if(name.equals(RESET.toString()+BLUE+BOLD+"Forges"+RESET)) {
-                commissions = false;
-                forges = true;
-                continue;
-            } else if(name.equals(RESET.toString()+BLUE+BOLD+"Commissions"+RESET)) {
-                commissions = true;
-                forges = false;
-                continue;
-            }
-            String clean = StringUtils.cleanColour(name);
-            if(forges && clean.startsWith(" ")) {
-                char firstChar = clean.trim().charAt(0);
-                if(firstChar < '0' || firstChar > '9') {
-                    forges = false;
-                } else {
-                    if(name.contains("LOCKED")) continue;
-                    if(name.contains("EMPTY")) {
-                        forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
-                    } else {
-                        forgeStrings.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
-                    }
-                }
-            } else if(commissions && clean.startsWith(" ")) {
-                String[] split = clean.trim().split(": ");
-                if(split.length == 2) {
-                    if(split[1].endsWith("%")) {
-                        try {
-                            float progress = Float.parseFloat(split[1].replace("%", ""))/100;
-                            progress = LerpUtils.clampZeroOne(progress);
-                            commissionProgress.put(split[0], progress);
-                        } catch(Exception ignored) {}
-                    } else {
-                        commissionProgress.put(split[0], 1.0f);
-                    }
-                }
-            } else {
-                commissions = false;
-                forges = false;
-            }
-        }*/
-
-        /*boolean hasAny = false;
-        if(NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay) {
-            overlayStrings.addAll(commissionsStrings);
-            hasAny = true;
-        }
-        if(NotEnoughUpdates.INSTANCE.config.mining.powderOverlay) {
-            if(mithrilPowder != null) {
-                if(hasAny) overlayStrings.add(null);
-                overlayStrings.add(DARK_AQUA+mithrilPowder);
-                hasAny = true;
+        overlayStrings = new ArrayList<>();
+        for(int index : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText) {
+            if(map.containsKey(index)) {
+                overlayStrings.add(map.get(index));
             }
         }
-        if(NotEnoughUpdates.INSTANCE.config.mining.forgeOverlay) {
-            if(hasAny) overlayStrings.add(null);
-            overlayStrings.addAll(forgeStrings);
-        }*/
-
-        /*for(int index : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText) {
-            switch(index) {
-                case 0:
-                    overlayStrings.addAll(commissionsStrings); break;
-                case 1:
-                    overlayStrings.add(mithrilPowder); break;
-                case 2:
-                    overlayStrings.addAll(forgeStrings); break;
-                case 3:
-                    overlayStrings.addAll(forgeStringsEmpty); break;
-            }
-        }
-
-        if(overlayStrings.isEmpty()) overlayStrings = null;*/
+        if(overlayStrings.isEmpty()) overlayStrings = null;
     }
-
-    private static final Ordering<NetworkPlayerInfo> playerOrdering = Ordering.from(new PlayerComparator());
-
-    @SideOnly(Side.CLIENT)
-    static class PlayerComparator implements Comparator<NetworkPlayerInfo> {
-        private PlayerComparator() { }
-
-        public int compare(NetworkPlayerInfo o1, NetworkPlayerInfo o2) {
-            ScorePlayerTeam team1 = o1.getPlayerTeam();
-            ScorePlayerTeam team2 = o2.getPlayerTeam();
-            return ComparisonChain.start().compareTrueFirst(
-                    o1.getGameType() != WorldSettings.GameType.SPECTATOR,
-                    o2.getGameType() != WorldSettings.GameType.SPECTATOR)
-                            .compare(team1 != null ? team1.getRegisteredName() : "", team2 != null ? team2.getRegisteredName() : "")
-                            .compare(o1.getGameProfile().getName(), o2.getGameProfile().getName()).result();
-        }
-    }
-
 
 }

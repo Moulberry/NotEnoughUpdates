@@ -66,14 +66,11 @@ public class NEUConfig extends Config {
                 return;
             case 4:
                 editOverlay(activeConfigCategory, OverlayManager.petInfoOverlay, petOverlay.petInfoPosition);
-                /*Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
-                        NotEnoughUpdates.INSTANCE.config.petOverlay.petInfoPosition,
-                        150, 22, () -> {
-                }, () -> {
-                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
-                ));*/
                 return;
+            case 5:
+                editOverlay(activeConfigCategory, OverlayManager.timersOverlay, miscOverlays.todoPosition);
+                return;
+
         }
     }
 
@@ -125,6 +122,13 @@ public class NEUConfig extends Config {
             desc = "Skill Overlays"
     )
     public SkillOverlays skillOverlays = new SkillOverlays();
+
+    @Expose
+    @Category(
+            name = "Misc Overlays",
+            desc = "Misc Overlays"
+    )
+    public MiscOverlays miscOverlays = new MiscOverlays();
 
     @Expose
     @Category(
@@ -965,6 +969,74 @@ public class NEUConfig extends Config {
         public String dungBatColour = "0:255:12:255:0";
     }
 
+    public static class MiscOverlays {
+        @ConfigOption(
+                name = "Todo Overlay",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 0)
+        public boolean todoAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Enable Todo Overlay",
+                desc = "Show an overlay that reminds you to do important tasks"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean todoOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Todo Text",
+                desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
+                        "\u00a7rIf you want to see the time until something is available, click \"Add\" and then the respective timer"
+        )
+        @ConfigEditorDraggableList(
+                exampleText = {
+                        "\u00a73Cakes: \u00a7eInactive!",
+                        "\u00a73Cookie Buff: \u00a7eInactive!",
+                        "\u00a73Godpot: \u00a7eInactive!",
+                        "\u00a73Puzzler: \u00a7eReady!",
+                        "\u00a73Fetchur: \u00a7eReady!",
+                        "\u00a73Commissions: \u00a7eReady!",
+                        "\u00a73Experiments: \u00a7eReady!",
+                        "\u00a73Cakes: \u00a7e1d21h",
+                        "\u00a73Cookie Buff: \u00a7e2d23h",
+                        "\u00a73Godpot: \u00a7e19h",
+                        "\u00a73Puzzler: \u00a7e13h",
+                        "\u00a73Fetchur: \u00a7e3h38m",
+                        "\u00a73Commissions: \u00a7e3h38m",
+                        "\u00a73Experiments: \u00a7e3h38m"}
+        )
+        @ConfigAccordionId(id = 0)
+        public List<Integer> todoText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
+
+        @Expose
+        @ConfigOption(
+                name = "Todo Position",
+                desc = "Change the position of the Todo overlay"
+        )
+        @ConfigEditorButton(
+                runnableId = 5,
+                buttonText = "Edit"
+        )
+        @ConfigAccordionId(id = 0)
+        public Position todoPosition = new Position(100, 0);
+
+
+        @Expose
+        @ConfigOption(
+                name = "Todo Style",
+                desc = "Change the style of the todo overlay"
+        )
+        @ConfigEditorDropdown(
+                values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+        )
+        @ConfigAccordionId(id = 0)
+        public int todoStyle = 0;
+    }
+
     public static class EnchSolvers {
         @Expose
         @ConfigOption(
@@ -1501,13 +1573,13 @@ public class NEUConfig extends Config {
     }
 
     public static class HiddenProfileSpecific {
-        @Expose public long godPotionDrunk = 0;
-        @Expose public long puzzlerCompleted = 0;
-        @Expose public long firstCakeAte = 0;
-        @Expose public long fetchurCompleted = 0;
-        @Expose public long commissionsCompleted = 0;
-        @Expose public long experimentsCompleted = 0;
-        @Expose public long cookieBuffRemaining = 0;
+        @Expose public long godPotionDrunk = 0L;
+        @Expose public long puzzlerCompleted = 0L;
+        @Expose public long firstCakeAte = 0L;
+        @Expose public long fetchurCompleted = 0L;
+        @Expose public long commissionsCompleted = 0L;
+        @Expose public long experimentsCompleted = 0L;
+        @Expose public long cookieBuffRemaining = 0L;
 
         @Expose public int commissionMilestone = 0;
     }

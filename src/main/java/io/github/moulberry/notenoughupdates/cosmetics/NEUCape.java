@@ -345,7 +345,7 @@ public class NEUCape {
     public void onRenderPlayer(RenderPlayerEvent.Post e) {
         EntityPlayer player = e.entityPlayer;
 
-        if(currentPlayer != null && currentPlayer != player) return;
+        if(currentPlayer != null && keepCurrentPlayer && currentPlayer != player) return;
 
         if(player.getActivePotionEffect(Potion.invisibility) != null) return;
         if(player.isSpectator() || player.isInvisible()) return;
@@ -605,6 +605,20 @@ public class NEUCape {
             crouchTicks = 0;
         }
 
+        Vector3f avgPosition = avgFixedPosition();
+        for(int y=0; y<nodes.size(); y++) {
+            for(int x=0; x<nodes.get(y).size(); x++) {
+                CapeNode node = nodes.get(y).get(x);
+
+                Vector3f delta = Vector3f.sub(node.position, avgPosition, null);
+
+                if(delta.lengthSquared() > 5*5) {
+                    Vector3f norm = delta.normalise(null);
+                    node.position = Vector3f.add(avgPosition, norm, null);
+                }
+            }
+        }
+
         oldPlayerAngle = playerAngle;
 
         for(int y=0; y<nodes.size(); y++) {
@@ -686,6 +700,24 @@ public class NEUCape {
                 CapeNode node = nodes.get(y).get(x);
                 if(node.fixed) {
                     Vector3f.add(accum, node.renderPosition, accum);
+                    numFixed++;
+                }
+            }
+        }
+        if(numFixed != 0) {
+            accum.scale(1f/numFixed);
+        }
+        return accum;
+    }
+
+    private Vector3f avgFixedPosition() {
+        Vector3f accum = new Vector3f();
+        int numFixed = 0;
+        for(int y=0; y<nodes.size(); y++) {
+            for(int x=0; x<nodes.get(y).size(); x++) {
+                CapeNode node = nodes.get(y).get(x);
+                if(node.fixed) {
+                    Vector3f.add(accum, node.position, accum);
                     numFixed++;
                 }
             }

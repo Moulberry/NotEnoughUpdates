@@ -219,6 +219,9 @@ public class PetInfoOverlay extends TextOverlay {
                     pet.petLevel = GuiProfileViewer.getPetLevel(petsJson.get("pet_levels").getAsJsonArray(), rarity.petOffset, petObj.get("exp").getAsFloat());
                     JsonElement heldItem = petObj.get("heldItem");
                     pet.petItem = heldItem.isJsonNull() ? null : heldItem.getAsString();
+                    if(rarity != Rarity.MYTHIC && pet.petItem != null && pet.petItem.equals("PET_ITEM_TIER_BOOST")) {
+                        rarity = Rarity.values()[rarity.ordinal()+1];
+                    }
                     JsonObject petTypes = petsJson.get("pet_types").getAsJsonObject();
                     pet.petXpType = petTypes.has(pet.petType) ? petTypes.get(pet.petType.toUpperCase()).getAsString().toLowerCase() : "unknown";
 

@@ -19,8 +19,29 @@ public class OverlayManager {
     public static final List<TextOverlay> textOverlays = new ArrayList<>();
 
     static {
-        textOverlays.add(timersOverlay = new TimersOverlay(new Position(50, 100), ArrayList::new, () -> {
-            int style = NotEnoughUpdates.INSTANCE.config.mining.overlayStyle;
+        List<String> todoDummy = Lists.newArrayList(
+                "\u00a73Cakes: \u00a7eInactive!",
+                "\u00a73Cookie Buff: \u00a7eInactive!",
+                "\u00a73Godpot: \u00a7eInactive!",
+                "\u00a73Puzzler: \u00a7eReady!",
+                "\u00a73Fetchur: \u00a7eReady!",
+                "\u00a73Commissions: \u00a7eReady!",
+                "\u00a73Experiments: \u00a7eReady!",
+                "\u00a73Cakes: \u00a7e1d21h",
+                "\u00a73Cookie Buff: \u00a7e2d23h",
+                "\u00a73Godpot: \u00a7e19h",
+                "\u00a73Puzzler: \u00a7e13h",
+                "\u00a73Fetchur: \u00a7e3h38m",
+                "\u00a73Commissions: \u00a7e3h38m",
+                "\u00a73Experiments: \u00a7e3h38m");
+        textOverlays.add(timersOverlay = new TimersOverlay(NotEnoughUpdates.INSTANCE.config.miscOverlays.todoPosition, () -> {
+            List<String> strings = new ArrayList<>();
+            for(int i : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText) {
+                if(i >= 0 && i < todoDummy.size()) strings.add(todoDummy.get(i));
+            }
+            return strings;
+        }, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.miscOverlays.todoStyle;
             if(style >= 0 && style < TextOverlayStyle.values().length) {
                 return TextOverlayStyle.values()[style];
             }

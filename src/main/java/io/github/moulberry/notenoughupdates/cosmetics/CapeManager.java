@@ -23,6 +23,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -47,8 +48,8 @@ public class CapeManager {
     public JsonObject lastJsonSync = null;
 
     private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
-            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative", "void", "ironmoon", "krusty", "furf", "soldier" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false, false, true, false, true, true };
+            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative", "void", "ironmoon", "krusty", "furf", "soldier", "dsm" };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false, false, true, false, true, true, true };
 
     public static CapeManager getInstance() {
         return INSTANCE;
@@ -197,7 +198,7 @@ public class CapeManager {
     }
 
     @SubscribeEvent
-    public void onWorldLoad(WorldEvent.Load event) {
+    public void onWorldLoad(WorldEvent.Unload event) {
         if(playerMap != null) playerMap.clear();
     }
 
@@ -231,15 +232,11 @@ public class CapeManager {
         if(playerMap == null) {
             playerMap = HashBiMap.create(Minecraft.getMinecraft().theWorld.playerEntities.size());
         }
-        HashSet<String> contains = new HashSet<>();
+        playerMap.clear();
         for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
             String uuid = player.getUniqueID().toString().replace("-", "");
-            contains.add(uuid);
-            if(!playerMap.containsValue(player) && !playerMap.containsKey(uuid)) {
-                playerMap.put(uuid, player);
-            }
+            playerMap.put(uuid, player);
         }
-        playerMap.keySet().retainAll(contains);
     }
 
     @SubscribeEvent
