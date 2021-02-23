@@ -284,8 +284,6 @@ public class GuiCosmetics extends GuiScreen {
                             String serverId = serverBi.toString(16);
                             Minecraft.getMinecraft().getSessionService().joinServer(Minecraft.getMinecraft().getSession().getProfile(), accessToken, serverId);
 
-                            //System.out.println("Joined with serverId="+serverId);
-
                             if(wantToEquipCape == null) {
                                 NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType=null&serverId="+
                                         serverId+"&username="+userName, (jsonObject) -> { System.out.println(jsonObject); }, () -> {

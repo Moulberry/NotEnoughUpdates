@@ -18,5 +18,9 @@ public class LerpUtils {
         return sigmoidA*sigmoid(sigmoidStr*(f-0.5f))-sigmoidB;
     }
 
+    public static float lerp(float a, float b, float amount) {
+        return b + (a - b) * clampZeroOne(amount);
+    }
+
 
 }

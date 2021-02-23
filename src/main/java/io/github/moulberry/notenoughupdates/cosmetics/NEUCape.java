@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
+import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -9,6 +10,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.BlockPos;
@@ -424,11 +426,51 @@ public class NEUCape {
         }
     }
 
+    private static double interpolateRotation(float a, float b, float amount) {
+        double f;
+
+        for (f = b - a; f < -180.0F; f += 360.0F) {;}
+
+        while (f >= 180.0F) {
+            f -= 360.0F;
+        }
+
+        return a + amount * f;
+    }
+
+    private double getPlayerRenderAngle(EntityPlayer player, float partialRenderTick) {
+        double angle = interpolateRotation(player.prevRenderYawOffset, player.renderYawOffset, partialRenderTick);
+
+        if(player.isRiding() && player.ridingEntity instanceof EntityLivingBase && player.ridingEntity.shouldRiderSit()) {
+
+            EntityLivingBase entitylivingbase = (EntityLivingBase) player.ridingEntity;
+            double head = interpolateRotation(player.prevRotationYawHead, player.rotationYawHead, partialRenderTick);
+            angle = interpolateRotation(entitylivingbase.prevRenderYawOffset, entitylivingbase.renderYawOffset, partialRenderTick);
+            double wrapped = MathHelper.wrapAngleTo180_double(head - angle);
+
+            if(wrapped < -85.0F) {
+                wrapped = -85.0F;
+            }
+
+            if(wrapped >= 85.0F) {
+                wrapped = 85.0F;
+            }
+
+            angle = head - wrapped;
+
+            if(wrapped * wrapped > 2500.0F) {
+                angle += wrapped * 0.2F;
+            }
+        }
+
+        return Math.toRadians(angle);
+    }
+
     private Vector3f updateFixedCapeNodes(EntityPlayer player) {
         double pX = player.posX % 7789;//player.lastTickPosX + (player.posX - player.lastTickPosX) * partialRenderTick;
         double pY = player.posY;//player.lastTickPosY + (player.posY - player.lastTickPosY) * partialRenderTick;
         double pZ = player.posZ % 7789;//player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialRenderTick;
-        double angle = Math.toRadians(player.renderYawOffset);
+        double angle = getPlayerRenderAngle(player, 0);
 
         double vertOffset2 = vertOffset + (player.isSneaking() ? -0.22f : 0) + (player.getCurrentArmor(2) != null ? 0.06f : 0);
         double shoulderWidth2 = shoulderWidth + (player.getCurrentArmor(2) != null ? 0.08f : 0);
@@ -470,7 +512,7 @@ public class NEUCape {
         double pX = (player.lastTickPosX + (player.posX - player.lastTickPosX) * partialRenderTick) % 7789;
         double pY = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialRenderTick;
         double pZ = (player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialRenderTick) % 7789;
-        double angle = Math.toRadians(player.renderYawOffset);
+        double angle = getPlayerRenderAngle(player, partialRenderTick);
 
         double vertOffset2 = vertOffset + (player.isSneaking() ? -0.22f : 0) + (player.getCurrentArmor(2) != null ? 0.06f : 0);
         double shoulderWidth2 = shoulderWidth + (player.getCurrentArmor(2) != null ? 0.08f : 0);
@@ -512,7 +554,7 @@ public class NEUCape {
             }
         }
 
-        double playerAngle = Math.toRadians(player.renderYawOffset);
+        double playerAngle = getPlayerRenderAngle(player, 0);
         double deltaAngle = playerAngle - oldPlayerAngle;
         if(deltaAngle > Math.PI) {
             deltaAngle = 2*Math.PI - deltaAngle;

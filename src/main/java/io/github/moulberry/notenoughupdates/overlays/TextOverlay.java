@@ -57,7 +57,7 @@ public abstract class TextOverlay {
 
     public void renderDummy() {
         List<String> dummyStrings = this.dummyStrings.get();
-        render(dummyStrings);
+        render(dummyStrings, true);
     }
 
     public void render() {
@@ -65,7 +65,7 @@ public abstract class TextOverlay {
             updateFrequent();
             shouldUpdateFrequent = false;
         }
-        render(overlayStrings);
+        render(overlayStrings, false);
     }
 
     protected Vector2f getSize(List<String> strings) {
@@ -108,9 +108,9 @@ public abstract class TextOverlay {
         return new Vector2f(x, y);
     }
 
-    protected void renderLine(String line, Vector2f position) {}
+    protected void renderLine(String line, Vector2f position, boolean dummy) {}
 
-    private void render(List<String> strings) {
+    private void render(List<String> strings, boolean dummy) {
         if(strings == null) return;
 
         Vector2f size = getSize(strings);
@@ -147,7 +147,7 @@ public abstract class TextOverlay {
             } else {
                 for(String s2 : s.split("\n")) {
                     Vector2f pos = new Vector2f(x+paddingX, y+paddingY+yOff);
-                    renderLine(s2, pos);
+                    renderLine(s2, pos, dummy);
 
                     int xPad = (int)pos.x;
                     int yPad = (int)pos.y;

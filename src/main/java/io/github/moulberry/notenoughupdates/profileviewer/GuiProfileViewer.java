@@ -1304,7 +1304,7 @@ public class GuiProfileViewer extends GuiScreen {
                     5/256f, 29/256f, !rightHovered?0:32/256f, !rightHovered?32/256f:64/256f, GL11.GL_NEAREST);
         }
 
-        for(int i=petsPage*20; i<Math.min(petsPage*20+20, sortedPets.size()); i++) {
+        for(int i=petsPage*20; i<Math.min(petsPage*20+20, Math.min(sortedPetsStack.size(), sortedPets.size())); i++) {
             JsonObject pet = sortedPets.get(i);
             ItemStack stack = sortedPetsStack.get(i);
             if(pet != null) {
