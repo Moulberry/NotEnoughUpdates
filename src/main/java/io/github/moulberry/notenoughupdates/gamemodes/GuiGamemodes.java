@@ -43,6 +43,12 @@ public class GuiGamemodes extends GuiScreen {
 
     @Override
     public void updateScreen() {
+        if(this.currentProfile == null) {
+            Minecraft.getMinecraft().displayGuiScreen(null);
+            Minecraft.getMinecraft().thePlayer.addChatMessage(
+                    new ChatComponentText(EnumChatFormatting.RED+"Couldn't detect current profile. Maybe try later?"));
+        }
+
         if(currentGamemode == null) {
             currentGamemode = SBGamemodes.getGamemode();
             if(currentGamemode == null) {

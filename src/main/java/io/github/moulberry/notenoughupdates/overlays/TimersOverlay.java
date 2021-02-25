@@ -102,7 +102,7 @@ public class TimersOverlay extends TextOverlay {
     private static final ItemStack COOKIE_ICON = new ItemStack(Items.cookie);
 
     @Override
-    protected void renderLine(String line, Vector2f position) {
+    protected void renderLine(String line, Vector2f position, boolean dummy) {
         ItemStack icon = null;
 
         String clean = Utils.cleanColour(line);
@@ -152,7 +152,7 @@ public class TimersOverlay extends TextOverlay {
             position.x += 12;
         }
 
-        super.renderLine(line, position);
+        super.renderLine(line, position, dummy);
     }
 
     @Override

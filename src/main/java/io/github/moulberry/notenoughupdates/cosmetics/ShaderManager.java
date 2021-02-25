@@ -151,7 +151,6 @@ public class ShaderManager {
             }
             return source.toString();
         } catch(IOException e) {
-            e.printStackTrace();
         }
         return "";
     }

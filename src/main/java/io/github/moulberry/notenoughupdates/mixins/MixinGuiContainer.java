@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.mixins;
 import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
 import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiChest;
@@ -134,6 +135,9 @@ public abstract class MixinGuiContainer extends GuiScreen {
             if(EnchantingSolvers.onStackClick(slotIn.getStack(), $this.inventorySlots.windowId,
                     slotId, clickedButton, clickType)) {
                 ci.cancel();
+            } else {
+                PetInfoOverlay.onStackClick(slotIn.getStack(), $this.inventorySlots.windowId,
+                        slotId, clickedButton, clickType);
             }
         }
         if(slotIn != null && BetterContainers.isOverriding() && (BetterContainers.isBlankStack(slotIn.getStack()) ||

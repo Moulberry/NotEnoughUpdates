@@ -370,7 +370,7 @@ public class ProfileViewer {
                             JsonObject bzInfo = manager.auctionManager.getBazaarInfo(internalname);
 
                             int auctionPrice;
-                            if(bzInfo != null) {
+                            if(bzInfo != null && bzInfo.has("curr_sell")) {
                                 auctionPrice = (int)bzInfo.get("curr_sell").getAsFloat();
                             } else {
                                 auctionPrice = (int)manager.auctionManager.getItemAvgBin(internalname);
@@ -398,7 +398,7 @@ public class ProfileViewer {
                                                 JsonObject bzInfo2 = manager.auctionManager.getBazaarInfo(internalname2);
 
                                                 int auctionPrice2;
-                                                if(bzInfo2 != null) {
+                                                if(bzInfo2 != null && bzInfo.has("curr_sell")) {
                                                     auctionPrice2 = (int)bzInfo2.get("curr_sell").getAsFloat();
                                                 } else {
                                                     auctionPrice2 = (int)manager.auctionManager.getItemAvgBin(internalname2);

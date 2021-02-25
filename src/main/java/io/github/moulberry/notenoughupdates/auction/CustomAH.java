@@ -1566,7 +1566,8 @@ public class CustomAH extends Gui {
                             latestBid = currentAucId;
                             latestBidMillis = System.currentTimeMillis();
                             //reset timer to 2m if below
-                            if(manager.auctionManager.getAuctionItems().get(currentAucId).end -
+                            if(manager.auctionManager.getAuctionItems().get(currentAucId) != null &&
+                                    manager.auctionManager.getAuctionItems().get(currentAucId).end -
                                     System.currentTimeMillis() < 2*60*1000) {
                                 manager.auctionManager.getAuctionItems().get(currentAucId).end =
                                         System.currentTimeMillis() + 2*60*1000;
