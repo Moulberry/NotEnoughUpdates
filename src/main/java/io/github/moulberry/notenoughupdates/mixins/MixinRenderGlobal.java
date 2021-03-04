@@ -79,4 +79,32 @@ public class MixinRenderGlobal {
         }
     }
 
+    //drawBlockDamageTexture
+    @ModifyVariable(method="drawBlockDamageTexture", at=@At(value="STORE"), ordinal = 0)
+    public double drawBlockDamageTexture_d0(double d0) {
+        Vector3f currentPosition = CustomItemEffects.INSTANCE.getCurrentPosition();
+        if(currentPosition != null) {
+            return currentPosition.x;
+        }
+        return d0;
+    }
+
+    @ModifyVariable(method="drawBlockDamageTexture", at=@At(value="STORE"), ordinal = 1)
+    public double drawBlockDamageTexture_d1(double d1) {
+        Vector3f currentPosition = CustomItemEffects.INSTANCE.getCurrentPosition();
+        if(currentPosition != null) {
+            return currentPosition.y;
+        }
+        return d1;
+    }
+
+    @ModifyVariable(method="drawBlockDamageTexture", at=@At(value="STORE"), ordinal = 2)
+    public double drawBlockDamageTexture_d2(double d2) {
+        Vector3f currentPosition = CustomItemEffects.INSTANCE.getCurrentPosition();
+        if(currentPosition != null) {
+            return currentPosition.z;
+        }
+        return d2;
+    }
+
 }
