@@ -27,7 +27,7 @@ public class HypixelApi {
     private static final int FAILS_BEFORE_SWITCH = 3;
     private int currentUrl = 0;
     private long lastPrimaryUrl = 0;
-    private final String[] myApiURLs = {"https://moulberry.codes/"};//, "http://moulberry.codes/", "http://51.79.51.21/"};//, "http://51.75.78.252/" };
+    private final String[] myApiURLs = {"http://51.79.51.21/"};//, "http://moulberry.codes/", "/"};//, "http://51.75.78.252/" };
     private final Integer[] myApiSuccesses = {0, 0, 0, 0};
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer) {

@@ -1328,6 +1328,14 @@ public class NEUConfig extends Config {
                 minStep = 1f
         )
         public int ahNotification = 5;
+
+        @Expose
+        @ConfigOption(
+                name = "Price Filtering in NEU AH",
+                desc = "The ability to filter the price of items and their respective average BIN values"
+        )
+        @ConfigEditorBoolean
+        public boolean priceFiltering = false;
     }
 
     public static class ImprovedSBMenu {
