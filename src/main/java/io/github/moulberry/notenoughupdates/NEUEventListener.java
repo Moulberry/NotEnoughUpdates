@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -16,6 +17,8 @@ import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
+import io.github.moulberry.notenoughupdates.mixins.GuiContainerAccessor;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.overlays.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.*;
@@ -27,6 +30,7 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
+import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
@@ -41,6 +45,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.*;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -204,7 +209,6 @@ public class NEUEventListener {
             CrystalOverlay.tick();
             DwarvenMinesTextures.tick();
             FairySouls.tick();
-            MiningStuff.tick();
             XPInformation.getInstance().tick();
             ProfileApiSyncer.getInstance().tick();
             DamageCommas.tick();
@@ -734,6 +738,8 @@ public class NEUEventListener {
         }
     }
 
+    public static boolean drawingGuiScreen = false;
+
     /**
      * Sets hoverInv and focusInv variables, representing whether the NEUOverlay should render behind the inventory when
      * (hoverInv == true) and whether mouse/kbd inputs shouldn't be sent to NEUOverlay (focusInv == true).
@@ -756,10 +762,10 @@ public class NEUEventListener {
 
             if(event.gui instanceof GuiContainer) {
                 try {
-                    int xSize = (int) Utils.getField(GuiContainer.class, event.gui, "xSize", "field_146999_f");
-                    int ySize = (int) Utils.getField(GuiContainer.class, event.gui, "ySize", "field_147000_g");
-                    int guiLeft = (int) Utils.getField(GuiContainer.class, event.gui, "guiLeft", "field_147003_i");
-                    int guiTop = (int) Utils.getField(GuiContainer.class, event.gui, "guiTop", "field_147009_r");
+                    int xSize = ((GuiContainerAccessor)event.gui).getXSize();
+                    int ySize = ((GuiContainerAccessor)event.gui).getYSize();
+                    int guiLeft = ((GuiContainerAccessor)event.gui).getGuiLeft();
+                    int guiTop = ((GuiContainerAccessor)event.gui).getGuiTop();
 
                     hoverInv = event.getMouseX() > guiLeft && event.getMouseX() < guiLeft + xSize &&
                             event.getMouseY() > guiTop && event.getMouseY() < guiTop + ySize;
@@ -797,10 +803,16 @@ public class NEUEventListener {
                 }
             }
         }
+
+        drawingGuiScreen = true;
     }
+
+    private boolean doInventoryButtons = false;
 
     @SubscribeEvent
     public void onGuiScreenDrawPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
+        doInventoryButtons = false;
+
         if(AuctionSearchOverlay.shouldReplace()) {
             AuctionSearchOverlay.render();
             event.setCanceled(true);
@@ -839,6 +851,49 @@ public class NEUEventListener {
                 }
             }
         }
+
+        if(CalendarOverlay.isEnabled() || event.isCanceled()) return;
+        if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui)
+                && event.gui instanceof GuiContainer) {
+            doInventoryButtons = true;
+
+            int zOffset = 50;
+
+            GlStateManager.translate(0, 0, zOffset);
+
+            int xSize = ((GuiContainerAccessor)event.gui).getXSize();
+            int ySize = ((GuiContainerAccessor)event.gui).getYSize();
+            int guiLeft = ((GuiContainerAccessor)event.gui).getGuiLeft();
+            int guiTop = ((GuiContainerAccessor)event.gui).getGuiTop();
+
+            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                if(!button.isActive()) continue;
+                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
+
+                int x = guiLeft+button.x;
+                int y = guiTop+button.y;
+                if(button.anchorRight) {
+                    x += xSize;
+                }
+                if(button.anchorBottom) {
+                    y += ySize;
+                }
+
+                GlStateManager.color(1, 1, 1, 1f);
+
+                GlStateManager.enableDepth();
+                GlStateManager.enableAlpha();
+                Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
+                Utils.drawTexturedRect(x, y, 18, 18,
+                        button.backgroundIndex*18/256f, (button.backgroundIndex*18+18)/256f,
+                        18/256f, 36/256f, GL11.GL_NEAREST);
+
+                if(button.icon != null && !button.icon.trim().isEmpty()) {
+                    GuiInvButtonEditor.renderIcon(button.icon, x+1, y+1);
+                }
+            }
+            GlStateManager.translate(0, 0, -zOffset);
+        }
     }
 
     private static boolean shouldRenderOverlay(Gui gui) {
@@ -854,6 +909,11 @@ public class NEUEventListener {
         return validGui;
     }
 
+    private static final ResourceLocation EDITOR = new ResourceLocation("notenoughupdates:invbuttons/editor.png");
+    private NEUConfig.InventoryButton buttonHovered = null;
+    private long buttonHoveredMillis = 0;
+    public static boolean disableCraftingText = false;
+
     /**
      * Will draw the NEUOverlay over the inventory if focusInv == false. (z-translation of 300 is so that NEUOverlay
      * will draw over Items in the inventory (which render at a z value of about 250))
@@ -861,6 +921,9 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiScreenDrawPost(GuiScreenEvent.DrawScreenEvent.Post event) {
+        drawingGuiScreen = false;
+        disableCraftingText = false;
+
         if(!(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
                 neu.manager.auctionManager.customAH.isRenderOverAuctionView())) {
             if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
@@ -870,7 +933,6 @@ public class NEUEventListener {
                     neu.overlay.render(hoverInv && focusInv);
                     GL11.glTranslatef(0, 0, -300);
                 }
-                neu.overlay.renderOverlay();
                 GlStateManager.popMatrix();
             }
         }
@@ -881,6 +943,56 @@ public class NEUEventListener {
                 AccessoryBagOverlay.renderOverlay();
             }
         }
+
+        boolean hoveringButton = false;
+        if(!doInventoryButtons) return;
+        if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) &&
+                event.gui instanceof GuiContainer) {
+            int xSize = ((GuiContainerAccessor)event.gui).getXSize();
+            int ySize = ((GuiContainerAccessor)event.gui).getYSize();
+            int guiLeft = ((GuiContainerAccessor)event.gui).getGuiLeft();
+            int guiTop = ((GuiContainerAccessor)event.gui).getGuiTop();
+
+            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                if(!button.isActive()) continue;
+                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
+
+                int x = guiLeft+button.x;
+                int y = guiTop+button.y;
+                if(button.anchorRight) {
+                    x += xSize;
+                }
+                if(button.anchorBottom) {
+                    y += ySize;
+                }
+
+                if(x-guiLeft >= 85 && x-guiLeft <= 115 && y-guiTop >= 4 && y-guiTop <= 25) {
+                    disableCraftingText = true;
+                }
+
+                if(event.mouseX >= x && event.mouseX <= x+18 &&
+                        event.mouseY >= y && event.mouseY <= y+18) {
+                    hoveringButton = true;
+                    long currentTime = System.currentTimeMillis();
+
+                    if(buttonHovered != button) {
+                        buttonHoveredMillis = currentTime;
+                        buttonHovered = button;
+                    }
+
+                    if(currentTime - buttonHoveredMillis > 600) {
+                        String command = button.command.trim();
+                        if(!command.startsWith("/")) {
+                            command = "/" + command;
+                        }
+
+                        Utils.drawHoveringText(Lists.newArrayList("\u00a77"+command), event.mouseX, event.mouseY,
+                                event.gui.width, event.gui.height, -1, Minecraft.getMinecraft().fontRendererObj);
+                    }
+                }
+            }
+        }
+        if(!hoveringButton) buttonHovered = null;
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
@@ -888,10 +1000,10 @@ public class NEUEventListener {
 
         if(gui instanceof GuiChest && neu.config.dungeons.profitDisplayLoc != 2) {
             try {
-                int xSize = (int) Utils.getField(GuiContainer.class, gui, "xSize", "field_146999_f");
-                int ySize = (int) Utils.getField(GuiContainer.class, gui, "ySize", "field_147000_g");
-                int guiLeft = (int) Utils.getField(GuiContainer.class, gui, "guiLeft", "field_147003_i");
-                int guiTop = (int) Utils.getField(GuiContainer.class, gui, "guiTop", "field_147009_r");
+                int xSize = ((GuiContainerAccessor)gui).getXSize();
+                int ySize = ((GuiContainerAccessor)gui).getYSize();
+                int guiLeft = ((GuiContainerAccessor)gui).getGuiLeft();
+                int guiTop = ((GuiContainerAccessor)gui).getGuiTop();
 
                 GuiChest eventGui = (GuiChest) gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
@@ -1083,7 +1195,7 @@ public class NEUEventListener {
      * Will also cancel the event if if NEUOverlay#mouseInput returns true.
      * @param event
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOW)
     public void onGuiScreenMouse(GuiScreenEvent.MouseInputEvent.Pre event) {
         if(!event.isCanceled()) {
             Utils.scrollTooltip(Mouse.getEventDWheel());
@@ -1118,6 +1230,53 @@ public class NEUEventListener {
                     }
                 } else {
                     neu.overlay.mouseInputInv();
+                }
+            }
+        }
+        if(event.isCanceled()) return;
+        if(!doInventoryButtons) return;
+        if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) && Mouse.getEventButton() >= 0
+                && event.gui instanceof GuiContainer) {
+            int xSize = ((GuiContainerAccessor)event.gui).getXSize();
+            int ySize = ((GuiContainerAccessor)event.gui).getYSize();
+            int guiLeft = ((GuiContainerAccessor)event.gui).getGuiLeft();
+            int guiTop = ((GuiContainerAccessor)event.gui).getGuiTop();
+
+            final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+            final int scaledWidth = scaledresolution.getScaledWidth();
+            final int scaledHeight = scaledresolution.getScaledHeight();
+            int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
+            int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
+
+            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                if(!button.isActive()) continue;
+                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
+
+                int x = guiLeft+button.x;
+                int y = guiTop+button.y;
+                if(button.anchorRight) {
+                    x += xSize;
+                }
+                if(button.anchorBottom) {
+                    y += ySize;
+                }
+
+                if(mouseX >= x && mouseX <= x+18 && mouseY >= y && mouseY <= y+18) {
+                    if(Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
+                        int clickType = NotEnoughUpdates.INSTANCE.config.inventoryButtons.clickType;
+                        if((clickType == 0 && Mouse.getEventButtonState()) || (clickType == 1 && !Mouse.getEventButtonState())) {
+                            String command = button.command.trim();
+                            if(!command.startsWith("/")) {
+                                command = "/" + command;
+                            }
+                            if(ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command) == 0) {
+                                NotEnoughUpdates.INSTANCE.sendChatMessage(command);
+                            }
+                        }
+                    } else {
+                        event.setCanceled(true);
+                    }
+                    return;
                 }
             }
         }

@@ -1,13 +1,19 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
+import io.github.moulberry.notenoughupdates.NEUEventListener;
+import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
 import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
@@ -27,6 +33,16 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Inject(method="drawSlot", at=@At("HEAD"), cancellable = true)
     public void drawSlot(Slot slot, CallbackInfo ci) {
         if(slot == null) return;
+
+        if(slot.getStack() == null && NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0, 0, 100 + Minecraft.getMinecraft().getRenderItem().zLevel);
+            GlStateManager.depthMask(false);
+            Gui.drawRect(slot.xDisplayPosition, slot.yDisplayPosition,
+                    slot.xDisplayPosition+16, slot.yDisplayPosition+16, NEUOverlay.overlayColourDark);
+            GlStateManager.depthMask(true);
+            GlStateManager.popMatrix();
+        }
 
         GuiContainer $this = (GuiContainer)(Object)this;
         ItemStack stack = slot.getStack();

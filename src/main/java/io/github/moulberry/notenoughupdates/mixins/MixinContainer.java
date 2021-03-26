@@ -17,7 +17,7 @@ public class MixinContainer {
 
     @Inject(method = "putStacksInSlots", at=@At("RETURN"))
     public void putStacksInSlots(ItemStack[] stacks, CallbackInfo ci) {
-        EnchantingSolvers.processInventoryContents();
+        EnchantingSolvers.processInventoryContents(false);
     }
 
 }

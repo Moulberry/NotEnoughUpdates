@@ -64,6 +64,8 @@ import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 public class NEUOverlay extends Gui {
 
     private static final ResourceLocation SUPERGEHEIMNISVERMOGEN = new ResourceLocation("notenoughupdates:supersecretassets/bald.png");
+    private static final ResourceLocation SEARCH_BAR = new ResourceLocation("notenoughupdates:search_bar.png");
+    private static final ResourceLocation SEARCH_BAR_GOLD = new ResourceLocation("notenoughupdates:search_bar_gold.png");
 
     private NEUManager manager;
 
@@ -116,11 +118,14 @@ public class NEUOverlay extends Gui {
     private LerpingInteger itemPaneTabOffset = new LerpingInteger(20, 50);
     private LerpingFloat infoPaneOffsetFactor = new LerpingFloat(0);
 
-    private boolean searchMode = false;
+    public boolean searchMode = false;
     private long millisLastLeftClick = 0;
     private long millisLastMouseMove = 0;
     private int lastMouseX = 0;
     private int lastMouseY = 0;
+
+    public static final int overlayColourDark = new Color(0, 0, 0, 120).getRGB();
+    public static final int overlayColourLight = new Color(255, 255, 255, 120).getRGB();
 
     boolean mouseDown = false;
 
@@ -199,14 +204,51 @@ public class NEUOverlay extends Gui {
                 FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
                 int paddingUnscaled = getPaddingUnscaled();
 
-                //Search bar background
-                drawRect((int)x, (int)y,
-                        (int)x + getWidth(), (int)y + getHeight(),
-                        searchMode ? Color.YELLOW.getRGB() : Color.WHITE.getRGB());
+                GlStateManager.color(1, 1, 1, 1);
+                if(searchMode) {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(SEARCH_BAR_GOLD);
+                } else {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(SEARCH_BAR);
+                }
 
-                drawRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
-                        (int)x - paddingUnscaled + getWidth(), (int)y - paddingUnscaled + getHeight(),
-                        Color.BLACK.getRGB());
+                int w = getWidth();
+                int h = getHeight();
+
+                for(int yIndex=0; yIndex<=2; yIndex++) {
+                    for(int xIndex=0; xIndex<=2; xIndex++) {
+                        float uMin = 0;
+                        float uMax = 4/20f;
+                        int partX = (int)x;
+                        int partW = 4;
+                        if(xIndex == 1) {
+                            partX += 4;
+                            uMin = 4/20f;
+                            uMax = 16/20f;
+                            partW = w-8;
+                        } else if(xIndex == 2) {
+                            partX += w-4;
+                            uMin = 16/20f;
+                            uMax = 20/20f;
+                        }
+
+                        float vMin = 0;
+                        float vMax = 4/20f;
+                        int partY = (int)y;
+                        int partH = 4;
+                        if(yIndex == 1) {
+                            partY += 4;
+                            vMin = 4/20f;
+                            vMax = 16/20f;
+                            partH = h-8;
+                        } else if(yIndex == 2) {
+                            partY += h-4;
+                            vMin = 16/20f;
+                            vMax = 20/20f;
+                        }
+
+                        Utils.drawTexturedRect(partX, partY, partW, partH, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
+                    }
+                }
 
                 //Search bar text
                 fr.drawString(textField.getText(), (int)x + 5,
@@ -789,6 +831,10 @@ public class NEUOverlay extends Gui {
         if(paddingUnscaled < 1) paddingUnscaled = 1;
 
         return paddingUnscaled;
+    }
+
+    public GuiTextField getTextField() {
+        return textField;
     }
 
     /**
@@ -1521,52 +1567,6 @@ public class NEUOverlay extends Gui {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    /**
-     * Renders black squares over the inventory to indicate items that do not match a specific search. (When searchMode
-     * is enabled)
-     */
-    public void renderOverlay() {
-        int width = Utils.peekGuiScale().getScaledWidth();
-        int height = Utils.peekGuiScale().getScaledHeight();
-        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
-        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
-
-        if(searchMode && textField.getText().length() > 0) {
-            if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
-                GuiContainer inv = (GuiContainer) Minecraft.getMinecraft().currentScreen;
-                int guiLeftI = (int)Utils.getField(GuiContainer.class, inv, "guiLeft", "field_147003_i");
-                int guiTopI = (int)Utils.getField(GuiContainer.class, inv, "guiTop", "field_147009_r");
-
-                GL11.glTranslatef(0, 0, 260);
-                int overlay = new Color(0, 0, 0, 100).getRGB();
-                for(Slot slot : inv.inventorySlots.inventorySlots) {
-                    boolean matches = false;
-                    for(String search : textField.getText().split("\\|")) {
-                        matches |= slot.getStack() != null && manager.doesStackMatchSearch(slot.getStack(), search.trim());
-                    }
-                    if(!matches) {
-                        drawRect(guiLeftI+slot.xDisplayPosition, guiTopI+slot.yDisplayPosition,
-                                guiLeftI+slot.xDisplayPosition+16, guiTopI+slot.yDisplayPosition+16,
-                                overlay);
-                    }
-                }
-                if(Utils.getSlotUnderMouse(inv) != null) {
-                    ItemStack stack = Utils.getSlotUnderMouse(inv).getStack();
-                    //Minecraft.getMinecraft().currentScreen.renderToolTip(stack, mouseX, mouseY);
-                    Class<?>[] params = new Class[]{ItemStack.class, int.class, int.class};
-                    Method renderToolTip = Utils.getMethod(GuiScreen.class, params, "renderToolTip", "func_146285_a");
-                    if(renderToolTip != null) {
-                        renderToolTip.setAccessible(true);
-                        try {
-                            renderToolTip.invoke(Minecraft.getMinecraft().currentScreen, stack, mouseX, mouseY);
-                        } catch(Exception e) {}
-                    }
-                }
-                GL11.glTranslatef(0, 0, -260);
-            }
-        }
-    }
-
     Shader blurShaderHorz = null;
     Framebuffer blurOutputHorz = null;
     Shader blurShaderVert = null;
@@ -1729,13 +1729,15 @@ public class NEUOverlay extends Gui {
         //Atomic reference used so that below lambda doesn't complain about non-effectively-final variable
         AtomicReference<JsonObject> tooltipToDisplay = new AtomicReference<>(null);
         if(itemPaneOffsetFactor.getValue() < 1) {
-            BackgroundBlur.renderBlurredBackground(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor,
-                    width, height,
-                    leftSide+getBoxPadding()-5, getBoxPadding()-5,
-                    paneWidth-getBoxPadding()*2+10, height-getBoxPadding()*2+10, true);
-            Gui.drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,
-                    leftSide+getBoxPadding()-5+paneWidth-getBoxPadding()*2+10,
-                    getBoxPadding()-5+height-getBoxPadding()*2+10, 0xc8101010);
+            if(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor > 0.5) {
+                BackgroundBlur.renderBlurredBackground(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor,
+                        width, height,
+                        leftSide+getBoxPadding()-5, getBoxPadding()-5,
+                        paneWidth-getBoxPadding()*2+10, height-getBoxPadding()*2+10, true);
+                Gui.drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,
+                        leftSide+getBoxPadding()-5+paneWidth-getBoxPadding()*2+10,
+                        getBoxPadding()-5+height-getBoxPadding()*2+10, 0xc8101010);
+            }
 
             drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,
                     leftSide+paneWidth-getBoxPadding()+5, height-getBoxPadding()+5, bg.getRGB());

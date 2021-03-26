@@ -8,6 +8,8 @@ import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
 import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
+import io.github.moulberry.notenoughupdates.miscgui.GuiInvButtonEditor;
+import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.overlays.*;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
@@ -70,6 +72,12 @@ public class NEUConfig extends Config {
             case 5:
                 editOverlay(activeConfigCategory, OverlayManager.timersOverlay, miscOverlays.todoPosition);
                 return;
+            case 6:
+                NotEnoughUpdates.INSTANCE.openGui = new NEUOverlayPlacements();
+                return;
+            case 7:
+                NotEnoughUpdates.INSTANCE.openGui = new GuiInvButtonEditor();
+                return;
 
         }
     }
@@ -101,6 +109,13 @@ public class NEUConfig extends Config {
             desc = "Toolbar"
     )
     public Toolbar toolbar = new Toolbar();
+
+    @Expose
+    @Category(
+            name = "Inventory Buttons",
+            desc = "Inventory Buttons"
+    )
+    public InventoryButtons inventoryButtons = new InventoryButtons();
 
     @Expose
     @Category(
@@ -394,6 +409,14 @@ public class NEUConfig extends Config {
     public static class Toolbar {
         @Expose
         @ConfigOption(
+                name = "Edit Toolbar Positions",
+                desc = "Edit the position of the QuickCommands / Search Bar"
+        )
+        @ConfigEditorButton(runnableId = 6, buttonText = "Edit")
+        public boolean positionButton = true;
+
+        @Expose
+        @ConfigOption(
                 name = "Show Quick Commands",
                 desc = "Show QuickCommands\u2122 in the NEU toolbar"
         )
@@ -441,6 +464,34 @@ public class NEUConfig extends Config {
                 values = {"Mouse Up", "Mouse Down"}
         )
         public int quickCommandsClickType = 0;
+    }
+
+    public static class InventoryButtons {
+        @Expose
+        @ConfigOption(
+                name = "Open Button Editor",
+                desc = "Open button editor GUI (/neubuttons)"
+        )
+        @ConfigEditorButton(runnableId = 7, buttonText = "Open")
+        public boolean openEditorButton = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Always Hide \"Crafting\" Text",
+                desc = "Hide crafting text in inventory, even when no button is there"
+        )
+        @ConfigEditorBoolean
+        public boolean hideCrafting = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Button Click Type",
+                desc = "Change the click type needed to trigger commands"
+        )
+        @ConfigEditorDropdown(
+                values = {"Mouse Down", "Mouse Up"}
+        )
+        public int clickType = 0;
     }
 
     public static class TooltipTweaks {
@@ -1035,6 +1086,15 @@ public class NEUConfig extends Config {
         )
         @ConfigAccordionId(id = 0)
         public int todoStyle = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Todo Icons",
+                desc = "Add little item icons next to the lines in the todo overlay"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean todoIcons = true;
     }
 
     public static class EnchSolvers {
@@ -1045,14 +1105,6 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         public boolean enableEnchantingSolvers = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Prevent Misclicks",
-                desc = "Prevent accidentally failing the Chronomatron and Ultrasequencer experiments"
-        )
-        @ConfigEditorBoolean
-        public boolean preventMisclicks = true;
 
         @Expose
         @ConfigOption(
@@ -1282,21 +1334,6 @@ public class NEUConfig extends Config {
         @ConfigEditorBoolean
         public boolean titaniumAlert = true;
 
-        @Expose
-        @ConfigOption(
-                name = "Don't Mine Stone",
-                desc = "Prevent mining stone blocks in mining areas"
-        )
-        @ConfigEditorBoolean
-        public boolean dontMineStone = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Reveal Mist Creepers",
-                desc = "Make the creepers in the Dwarven Mines mist visible"
-        )
-        @ConfigEditorBoolean
-        public boolean revealMistCreepers = true;
     }
 
     public static class NeuAuctionHouse {
@@ -1494,6 +1531,14 @@ public class NEUConfig extends Config {
                 values = {"Background", "No Shadow", "Shadow Only", "Full Shadow"}
         )
         public int petInfoOverlayStyle = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Show Last Pet",
+                desc = "Show 2 pets on the overlay\nUseful if training two pets at once with autopet"
+        )
+        @ConfigEditorBoolean
+        public boolean dualPets = false;
     }
 
     public static class AuctionHouseSearch {
@@ -1586,6 +1631,7 @@ public class NEUConfig extends Config {
 
     public static class Hidden {
         @Expose public HashMap<String, HiddenProfileSpecific> profileSpecific = new HashMap<>();
+        @Expose public List<InventoryButton> inventoryButtons = createDefaultInventoryButtons();
 
         @Expose public boolean enableItemEditing = false;
         @Expose public boolean cacheRenderedItempane = true;
@@ -1610,6 +1656,95 @@ public class NEUConfig extends Config {
                                 "Life Steal:\u003e:3:5:0",
                                 "Scavenger:\u003e:3:5:0",
                                 "Looting:\u003e:3:5:0");
+    }
+
+    public static List<InventoryButton> createDefaultInventoryButtons() {
+        List<InventoryButton> buttons = new ArrayList<>();
+        //Below crafting
+        buttons.add(new InventoryButton(87, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87+21, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87+21*2, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87+21*3, 63, null, true, false, false, 0, ""));
+
+        //Above crafting
+        buttons.add(new InventoryButton(87, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87+21, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87+21*2, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87+21*3, 5, null, true, false, false, 0, ""));
+
+        //Crafting square
+        buttons.add(new InventoryButton(87, 25, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87+18, 25, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87, 25+18, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87+18, 25+18, null, true, false, false, 0, ""));
+
+        //Crafting result
+        buttons.add(new InventoryButton(143, 35, null, true, false, false, 0, ""));
+
+        //Player menu area
+        buttons.add(new InventoryButton(60, 8, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(60, 60, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(26, 8, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(26, 60, null, true, false, false, 0, ""));
+
+        //Right side
+        for(int i=0; i<8; i++) {
+            int y = 2+20*i;
+            if(y < 80) {
+                buttons.add(new InventoryButton(2, 2+20*i, null, false, true, false, 0, ""));
+            } else {
+                buttons.add(new InventoryButton(2, 2+20*i-166, null, false, true, true, 0, ""));
+            }
+        }
+
+        //Top side
+        for(int i=0; i<8; i++) {
+            buttons.add(new InventoryButton(4+21*i, -19, null, false, false, false, 0, ""));
+        }
+
+        //Left side
+        for(int i=0; i<8; i++) {
+            int y = 2+20*i;
+            if(y < 80) {
+                buttons.add(new InventoryButton(-19, 2+20*i, null, false, false, false, 0, ""));
+            } else {
+                buttons.add(new InventoryButton(-19, 2+20*i-166, null, false, false, true, 0, ""));
+            }
+        }
+
+        //Bottom side
+        for(int i=0; i<8; i++) {
+            buttons.add(new InventoryButton(4+21*i, 2, null, false, false, true, 0, ""));
+        }
+        return buttons;
+    }
+
+    public static class InventoryButton {
+        @Expose public int x;
+        @Expose public int y;
+        @Expose public boolean playerInvOnly;
+
+        @Expose public boolean anchorRight;
+        @Expose public boolean anchorBottom;
+
+        @Expose public int backgroundIndex;
+        @Expose public String command;
+        @Expose public String icon;
+
+        public boolean isActive() {
+            return command.trim().length() > 0;
+        }
+
+        public InventoryButton(int x, int y, String icon, boolean playerInvOnly, boolean anchorRight, boolean anchorBottom, int backgroundIndex, String command) {
+            this.x = x;
+            this.y = y;
+            this.icon = icon;
+            this.playerInvOnly = playerInvOnly;
+            this.anchorRight = anchorRight;
+            this.anchorBottom = anchorBottom;
+            this.backgroundIndex = backgroundIndex;
+            this.command = command;
+        }
     }
 
     public static class DungeonMap {

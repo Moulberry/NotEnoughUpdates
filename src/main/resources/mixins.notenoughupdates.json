@@ -21,12 +21,13 @@
     "MixinContainer",
     "MixinWorld",
     "MixinPlayerControllerMP",
-    "MixinLayerCreeperCharge",
     "MixinEffectRenderer",
     "MixinRendererLivingEntity",
     "GuiEditSignAccessor",
     "MixinGuiScreen",
     "MixinTileEntitySkullRenderer",
-    "MixinItemCameraTransforms"
+    "MixinItemCameraTransforms",
+    "GuiContainerAccessor",
+    "MixinGuiInventory"
   ]
 }

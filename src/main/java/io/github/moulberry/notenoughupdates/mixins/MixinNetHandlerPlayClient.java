@@ -31,7 +31,7 @@ public class MixinNetHandlerPlayClient {
 
     @Inject(method="handleSetSlot", at=@At("HEAD"))
     public void handleSetSlot(S2FPacketSetSlot packetIn, CallbackInfo ci) {
-        EnchantingSolvers.processInventoryContents();
+        EnchantingSolvers.processInventoryContents(false);
     }
 
     @Inject(method="handleBlockChange", at=@At("HEAD"))
@@ -45,13 +45,13 @@ public class MixinNetHandlerPlayClient {
         FlyFix.onReceiveAbilities(packetIn);
     }
 
-    @Inject(method="addToSendQueue", at=@At("HEAD"))
+    /*@Inject(method="addToSendQueue", at=@At("HEAD"))
     public void addToSendQueue(Packet packet, CallbackInfo ci) {
         if(packet instanceof C13PacketPlayerAbilities) {
             C13PacketPlayerAbilities abilities = (C13PacketPlayerAbilities) packet;
             FlyFix.onSendAbilities(abilities);
         }
-    }
+    }*/
 
     @Inject(method="handlePlayerListHeaderFooter", at=@At("HEAD"))
     public void handlePlayerListHeaderFooter(S47PacketPlayerListHeaderFooter packetIn, CallbackInfo ci) {
