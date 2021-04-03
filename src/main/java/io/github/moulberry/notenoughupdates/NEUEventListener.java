@@ -209,6 +209,7 @@ public class NEUEventListener {
             CrystalOverlay.tick();
             DwarvenMinesTextures.tick();
             FairySouls.tick();
+            Relics.tick();
             XPInformation.getInstance().tick();
             ProfileApiSyncer.getInstance().tick();
             DamageCommas.tick();

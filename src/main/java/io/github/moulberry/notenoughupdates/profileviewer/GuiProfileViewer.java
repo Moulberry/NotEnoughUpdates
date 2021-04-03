@@ -2131,6 +2131,9 @@ public class GuiProfileViewer extends GuiScreen {
         float fairySouls = Utils.getElementAsFloat(Utils.getElement(profileInfo, "fairy_souls_collected"), 0);
         Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE+"Fairy Souls", EnumChatFormatting.WHITE.toString()+(int)fairySouls+"/220",
                 guiLeft+xStart, guiTop+yStartBottom, 76);
+
+        // TODO: add relic info
+
         if(skillInfo != null) {
             float totalSkillLVL = 0;
             float totalTrueSkillLVL = 0;

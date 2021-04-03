@@ -1008,7 +1008,8 @@ public class NotEnoughUpdates {
             } catch(Exception e) { }
         }
 
-        FairySouls.load(new File(neuDir, "collected_fairy_souls.json"), gson);
+        FairySouls.load(neuDir, gson);
+        Relics.load(neuDir, gson);
 
         if(config == null) {
             config = new NEUConfig();
@@ -1027,6 +1028,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new SunTzu());
         MinecraftForge.EVENT_BUS.register(new MiningStuff());
         MinecraftForge.EVENT_BUS.register(new FairySouls());
+        MinecraftForge.EVENT_BUS.register(new Relics());
         MinecraftForge.EVENT_BUS.register(new CrystalOverlay());
         MinecraftForge.EVENT_BUS.register(new ItemCooldowns());
         MinecraftForge.EVENT_BUS.register(new DwarvenMinesTextures());
@@ -1071,6 +1073,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(dungeonWinTest);
         ClientCommandHandler.instance.registerCommand(calendarCommand);
         ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommand());
+        ClientCommandHandler.instance.registerCommand(new Relics.RelicsCommand());
 
         BackgroundBlur.registerListener();
 
@@ -1103,7 +1106,8 @@ public class NotEnoughUpdates {
                 writer.write(gson.toJson(config));
             }
 
-            FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson);
+            FairySouls.save(neuDir, gson);
+            Relics.save(neuDir, gson);
         } catch(IOException ignored) {}
     }
 
