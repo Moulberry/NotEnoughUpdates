@@ -325,6 +325,7 @@ public abstract class WaypointBeacons {
                             if (!waypointData.enabled) {
                                 print(EnumChatFormatting.RED+
                                         waypointData.pluralName + " must be enabled first");
+                                return;
                             }
 
                             if (!WaypointBeacons.markClosestRelicFound(waypointData)) {
