@@ -322,6 +322,11 @@ public abstract class WaypointBeacons {
                             }
                             return;
                         case "markfound":
+                            if (!waypointData.enabled) {
+                                print(EnumChatFormatting.RED+
+                                        waypointData.pluralName + " must be enabled first");
+                            }
+
                             if (!WaypointBeacons.markClosestRelicFound(waypointData)) {
                                 print(EnumChatFormatting.RED+
                                         "A " + waypointData.singularName + " was not found nearby");
