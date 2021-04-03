@@ -10,14 +10,16 @@ public class WaypointBeaconData {
     public Boolean enabled = false;
     public String singularName = "UNDEFINED";
     public String pluralName = "UNDEFINED";
+    public String guideTitle = "UNDEFINED";
     public HashMap<String, Set<Integer>> foundWaypoints = new HashMap<>();
     public List<BlockPos> currentWaypointList = null;
     public List<BlockPos> currentWaypointListClose = null;
 
     private WaypointBeaconData() {}
 
-    public WaypointBeaconData(String singularName, String pluralName) {
+    public WaypointBeaconData(String singularName, String pluralName, String guideTitle) {
         this.singularName = singularName;
         this.pluralName = pluralName;
+        this.guideTitle = guideTitle;
     }
 }

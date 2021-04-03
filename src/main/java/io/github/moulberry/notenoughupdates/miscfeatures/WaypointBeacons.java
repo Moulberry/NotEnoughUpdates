@@ -344,7 +344,7 @@ public abstract class WaypointBeacons {
         private static void printHelp(String commandName, WaypointBeaconData waypointData) {
             print("");
             print(EnumChatFormatting.DARK_PURPLE.toString()+EnumChatFormatting.BOLD+
-                    "     NEU " + waypointData.singularName + " Waypoint Guide");
+                    "     " + waypointData.guideTitle);
             print(EnumChatFormatting.LIGHT_PURPLE+
                     "Shows waypoints for every " + waypointData.singularName + " in your world");
             print(EnumChatFormatting.LIGHT_PURPLE+

@@ -23,7 +23,10 @@ public class Relics extends WaypointBeacons {
 
     private static String foundWaypointsFileName = "collected_relics.json";
 
-    private static WaypointBeaconData waypointData = new WaypointBeaconData("relic", "relics");
+    private static WaypointBeaconData waypointData =
+            new WaypointBeaconData("relic",
+                    "relics",
+                    "NEU Relic Waypoint Guide");
 
     @SubscribeEvent
     public void onWorldUnload(WorldEvent.Unload event) {
