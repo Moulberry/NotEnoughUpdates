@@ -10,6 +10,7 @@ import net.minecraft.block.BlockPackedIce;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.*;
@@ -408,6 +409,9 @@ public class CustomItemEffects {
         cropBlocksZapper.add(Blocks.melon_stem);
         cropBlocksZapper.add(Blocks.cactus);
         cropBlocksZapper.add(Blocks.reeds);
+        cropBlocksZapper.add(Blocks.nether_wart);
+        cropBlocksZapper.add(Blocks.tallgrass);
+        cropBlocksZapper.add(Blocks.double_plant);
 
         otherBannedBlocksZapper.add(Blocks.farmland);
     }
@@ -436,6 +440,7 @@ public class CustomItemEffects {
                     zapperDirty = false;
 
                     zapperBlocks.clear();
+
                     LinkedList<BlockPos> returnablePositions = new LinkedList<>();
 
                     BlockPos pos = event.target.getBlockPos();

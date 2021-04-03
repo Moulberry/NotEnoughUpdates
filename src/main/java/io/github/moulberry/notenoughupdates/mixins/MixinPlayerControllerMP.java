@@ -20,10 +20,10 @@ public class MixinPlayerControllerMP {
     @Inject(method="clickBlock", at=@At("HEAD"), cancellable = true)
     public void clickBlock(BlockPos loc, EnumFacing face, CallbackInfoReturnable<Boolean> cir) {
         ItemCooldowns.blockClicked(loc);
-        if(MiningStuff.blockClicked(loc)) {
+        /*if(MiningStuff.blockClicked(loc)) {
             cir.setReturnValue(false);
             ((PlayerControllerMP)(Object)this).resetBlockRemoving();
-        }
+        }*/
     }
 
 }

@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.util.Constants;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
@@ -15,6 +16,10 @@ import java.util.Locale;
 public class ItemPriceInformation {
 
     public static boolean addToTooltip(List<String> tooltip, String internalname, ItemStack stack) {
+        return addToTooltip(tooltip, internalname, stack, true);
+    }
+
+    public static boolean addToTooltip(List<String> tooltip, String internalname, ItemStack stack, boolean useStackSize) {
         JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
         JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
         float lowestBinAvg = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAvgBin(internalname);
@@ -35,7 +40,7 @@ public class ItemPriceInformation {
             boolean shiftPressed = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT);
 
             int stackMultiplier = 1;
-            int shiftStackMultiplier = 64;
+            int shiftStackMultiplier = useStackSize && stack.stackSize > 1 ? stack.stackSize : 64;
             if(shiftPressed) {
                 stackMultiplier = shiftStackMultiplier;
             }

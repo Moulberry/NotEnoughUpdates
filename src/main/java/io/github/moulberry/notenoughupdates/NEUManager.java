@@ -17,6 +17,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.network.play.client.C0DPacketCloseWindow;
 import net.minecraft.util.ResourceLocation;
+import org.apache.commons.io.FileUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 
@@ -26,6 +27,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -57,10 +60,10 @@ public class NEUManager {
     private String currentProfileBackup = "";
     public final HypixelApi hypixelApi = new HypixelApi();
 
-    private ResourceLocation wkZip = new ResourceLocation("notenoughupdates:wkhtmltox.zip");
     private Map<String, ItemStack> itemstackCache = new HashMap<>();
 
-    //private static final String AUCTIONS_PRICE_URL = "https://moulberry.github.io/files/auc_avg_jsons/average_3day.json.gz";
+    private ExecutorService repoLoaderES = Executors.newSingleThreadExecutor();
+
     private static final String GIT_COMMITS_URL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
 
     private HashMap<String, Set<String>> usagesMap = new HashMap<>();
@@ -87,15 +90,6 @@ public class NEUManager {
         itemRenameJson = getJsonFromFile(itemRenameFile);
         if(itemRenameJson == null) {
             itemRenameJson = new JsonObject();
-        }
-
-        File wkShell = new File(configLocation, "wkhtmltox/bin/wkhtmltoimage");
-        if(!wkShell.exists()) {
-            try {
-                InputStream is = Minecraft.getMinecraft().getResourceManager().getResource(wkZip).getInputStream();
-                unzip(is, configLocation);
-            } catch (IOException e) {
-            }
         }
     }
 
@@ -163,7 +157,7 @@ public class NEUManager {
 
         }*/
 
-        Thread thread = new Thread(() -> {
+        repoLoaderES.submit(() -> {
             JDialog dialog = null;
             try {
                 if(NotEnoughUpdates.INSTANCE.config.hidden.autoupdate) {
@@ -211,12 +205,23 @@ public class NEUManager {
                     } catch (IOException e) {
                         return;
                     }
+
+
                     URL url = new URL(dlUrl);
                     URLConnection urlConnection = url.openConnection();
                     urlConnection.setConnectTimeout(15000);
-                    urlConnection.setReadTimeout(20000);
-                    try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
-                         FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
+                    urlConnection.setReadTimeout(30000);
+
+                    try(InputStream is = urlConnection.getInputStream()) {
+                        FileUtils.copyInputStreamToFile(is, itemsZip);
+                    } catch (IOException e) {
+                        dialog.dispose();
+                        e.printStackTrace();
+                        System.err.println("Failed to download NEU Repo! Please report this issue to the mod creator");
+                        return;
+                    }
+                    /*try (BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
+                            FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)) {
                         byte dataBuffer[] = new byte[1024];
                         int bytesRead;
                         while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
@@ -225,7 +230,7 @@ public class NEUManager {
                     } catch (IOException e) {
                         dialog.dispose();
                         return;
-                    }
+                    }*/
 
                     pane.setMessage("Unzipping NEU Master Archive.");
                     dialog.pack();
@@ -242,6 +247,8 @@ public class NEUManager {
                         } catch (IOException e) {
                         }
                     }
+
+                    Constants.reload();
                 }
             } catch(Exception e) {
                 e.printStackTrace();
@@ -249,19 +256,25 @@ public class NEUManager {
                 if(dialog != null) dialog.dispose();
             }
 
+            System.err.println("First load");
+
             File items = new File(repoLocation, "items");
             if(items.exists()) {
                 File[] itemFiles = new File(repoLocation, "items").listFiles();
                 if(itemFiles != null) {
                     for(File f : itemFiles) {
                         String internalname = f.getName().substring(0, f.getName().length()-5);
-                        if(!getItemInformation().keySet().contains(internalname)) {
-                            loadItem(internalname);
+                        synchronized(itemMap) {
+                            if(!itemMap.keySet().contains(internalname)) {
+                                loadItem(internalname);
+                            }
                         }
                     }
                 }
             }
         });
+
+        System.err.println("Second load");
 
         File items = new File(repoLocation, "items");
         if(items.exists()) {
@@ -269,11 +282,14 @@ public class NEUManager {
             if(itemFiles != null) {
                 for(File f : itemFiles) {
                     String internalname = f.getName().substring(0, f.getName().length()-5);
-                    loadItem(internalname);
+                    synchronized(itemMap) {
+                        if(!itemMap.keySet().contains(internalname)) {
+                            loadItem(internalname);
+                        }
+                    }
                 }
             }
         }
-        thread.start();
     }
 
     /**
@@ -301,56 +317,69 @@ public class NEUManager {
             itemMap.put(internalName, json);
 
             if(json.has("recipe")) {
-                JsonObject recipe = json.get("recipe").getAsJsonObject();
+                synchronized(usagesMap) {
+                    JsonObject recipe = json.get("recipe").getAsJsonObject();
 
-                String[] x = {"1","2","3"};
-                String[] y = {"A","B","C"};
-                for(int i=0; i<9; i++) {
-                    String name = y[i/3]+x[i%3];
-                    String itemS = recipe.get(name).getAsString();
-                    if(itemS != null && itemS.split(":").length == 2) {
-                        itemS = itemS.split(":")[0];
-                    }
+                    String[] x = {"1","2","3"};
+                    String[] y = {"A","B","C"};
+                    for(int i=0; i<9; i++) {
+                        String name = y[i/3]+x[i%3];
+                        String itemS = recipe.get(name).getAsString();
+                        if(itemS != null && itemS.split(":").length == 2) {
+                            itemS = itemS.split(":")[0];
+                        }
 
-                    if(!usagesMap.containsKey(itemS)) {
-                        usagesMap.put(itemS, new HashSet<>());
+                        if(!usagesMap.containsKey(itemS)) {
+                            usagesMap.put(itemS, new HashSet<>());
+                        }
+                        usagesMap.get(itemS).add(internalName);
                     }
-                    usagesMap.get(itemS).add(internalName);
                 }
             }
 
             if(json.has("displayname")) {
-                int wordIndex=0;
-                for(String str : json.get("displayname").getAsString().split(" ")) {
-                    str = clean(str);
-                    if(!titleWordMap.containsKey(str)) {
-                        titleWordMap.put(str, new HashMap<>());
-                    }
-                    if(!titleWordMap.get(str).containsKey(internalName)) {
-                        titleWordMap.get(str).put(internalName, new ArrayList<>());
-                    }
-                    titleWordMap.get(str).get(internalName).add(wordIndex);
-                    wordIndex++;
-                }
-            }
-
-            if(json.has("lore")) {
-                int wordIndex=0;
-                for(JsonElement element : json.get("lore").getAsJsonArray()) {
-                    for(String str : element.getAsString().split(" ")) {
+                synchronized(titleWordMap) {
+                    int wordIndex=0;
+                    for(String str : json.get("displayname").getAsString().split(" ")) {
                         str = clean(str);
-                        if(!loreWordMap.containsKey(str)) {
-                            loreWordMap.put(str, new HashMap<>());
+                        if(!titleWordMap.containsKey(str)) {
+                            titleWordMap.put(str, new HashMap<>());
                         }
-                        if(!loreWordMap.get(str).containsKey(internalName)) {
-                            loreWordMap.get(str).put(internalName, new ArrayList<>());
+                        if(!titleWordMap.get(str).containsKey(internalName)) {
+                            titleWordMap.get(str).put(internalName, new ArrayList<>());
                         }
-                        loreWordMap.get(str).get(internalName).add(wordIndex);
+                        titleWordMap.get(str).get(internalName).add(wordIndex);
                         wordIndex++;
                     }
                 }
             }
+
+            if(json.has("lore")) {
+                synchronized(loreWordMap) {
+                    int wordIndex=0;
+                    for(JsonElement element : json.get("lore").getAsJsonArray()) {
+                        for(String str : element.getAsString().split(" ")) {
+                            str = clean(str);
+                            if(!loreWordMap.containsKey(str)) {
+                                loreWordMap.put(str, new HashMap<>());
+                            }
+                            if(!loreWordMap.get(str).containsKey(internalName)) {
+                                loreWordMap.get(str).put(internalName, new ArrayList<>());
+                            }
+                            loreWordMap.get(str).get(internalName).add(wordIndex);
+                            wordIndex++;
+                        }
+                    }
+                }
+            }
         } catch(Exception e) {
+            synchronized(loreWordMap) {
+                System.out.println("loreWordMap is : " + loreWordMap);
+            }
+            synchronized(titleWordMap) {
+                System.out.println("titleWordMap is : " + titleWordMap);
+            }
+            System.out.println("internalName is : " + internalName);
             e.printStackTrace();
         }
     }
@@ -1037,7 +1066,7 @@ public class NEUManager {
     /**
      * Modified from https://www.journaldev.com/960/java-unzip-file-example
      */
-    private static void unzip(InputStream src, File dest) {
+    public static void unzip(InputStream src, File dest) {
         //buffer for read and write data to file
         byte[] buffer = new byte[1024];
         try {

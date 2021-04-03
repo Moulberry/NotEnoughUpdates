@@ -48,8 +48,11 @@ public class CapeManager {
     public JsonObject lastJsonSync = null;
 
     private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
-            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative", "void", "ironmoon", "krusty", "furf", "soldier", "dsm" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true, true, false, false, false, true, true, true, false, false, true, false, true, true, true };
+            "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative",
+            "void", "ironmoon", "krusty", "furf", "soldier", "dsm", "zera", "tunnel", "alexxoffi", "parallax", "jakethybro", "planets" };
+    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true,
+            true, false, false, false, true, true, true, false,
+            false, true, false, true, true, true, true, false, true, true, true, false };
 
     public static CapeManager getInstance() {
         return INSTANCE;

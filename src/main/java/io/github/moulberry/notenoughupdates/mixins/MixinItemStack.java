@@ -28,6 +28,10 @@ public class MixinItemStack {
     @Inject(method="getDisplayName",at=@At("HEAD"), cancellable=true)
     public void getDisplayName(CallbackInfoReturnable<String> returnable) {
         try {
+            if(stackTagCompound == null || !stackTagCompound.hasKey("ExtraAttributes", 10)) {
+                return;
+            }
+
             String customName = NotEnoughUpdates.INSTANCE.manager.itemRenameJson
                     .get(stackTagCompound.getCompoundTag("ExtraAttributes").getString("uuid")).getAsString();
             if(customName != null && !customName.equals("")) {

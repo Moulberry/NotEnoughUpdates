@@ -31,6 +31,10 @@ public class CapeNode {
     public Vector3f sideNormal = null;
     public boolean fixed = false;
 
+    public static final int DRAW_MASK_FRONT = 0b1;
+    public static final int DRAW_MASK_BACK = 0b10;
+    public static final int DRAW_MASK_SIDES = 0b100;
+
     public HashMap<NEUCape.Offset, CapeNode> neighbors = new HashMap<>();
 
     public float texU = 0;
@@ -279,6 +283,10 @@ public class CapeNode {
     }
 
     public void renderNode() {
+        renderNode(DRAW_MASK_FRONT | DRAW_MASK_BACK | DRAW_MASK_SIDES);
+    }
+
+    public void renderNode(int mask) {
         CapeNode nodeLeft = getNeighbor(new NEUCape.Offset(NEUCape.Direction.LEFT, 1));
         CapeNode nodeUp = getNeighbor(new NEUCape.Offset(NEUCape.Direction.UP, 1));
         CapeNode nodeDown = getNeighbor(new NEUCape.Offset(NEUCape.Direction.DOWN, 1));
@@ -290,36 +298,42 @@ public class CapeNode {
 
         if(nodeDown != null && nodeRight != null && nodeDownRight != null) {
             //Back
-            worldrenderer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            for(CapeNode node : new CapeNode[]{this, nodeDown, nodeRight, nodeDownRight}) {
-                Vector3f nodeNorm = node.normal();
-                worldrenderer.pos(node.renderPosition.x, node.renderPosition.y, node.renderPosition.z)
-                        .tex(1-node.texU, node.texV)
-                        .normal(-nodeNorm.x, -nodeNorm.y, -nodeNorm.z).endVertex();
+            if((mask & DRAW_MASK_BACK) != 0) {
+                worldrenderer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+                for(CapeNode node : new CapeNode[]{this, nodeDown, nodeRight, nodeDownRight}) {
+                    Vector3f nodeNorm = node.normal();
+                    worldrenderer.pos(node.renderPosition.x, node.renderPosition.y, node.renderPosition.z)
+                            .tex(1-node.texU, node.texV)
+                            .normal(-nodeNorm.x, -nodeNorm.y, -nodeNorm.z).endVertex();
+                }
+                tessellator.draw();
             }
-            tessellator.draw();
 
             //Front (Offset by normal)
-            worldrenderer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            for(CapeNode node : new CapeNode[]{this, nodeDown, nodeRight, nodeDownRight}) {
-                Vector3f nodeNorm = node.normal();
-                worldrenderer.pos(node.renderPosition.x+nodeNorm.x*0.05f, node.renderPosition.y+nodeNorm.y*0.05f, node.renderPosition.z+nodeNorm.z*0.05f)
-                        .tex(node.texU, node.texV)
-                        .normal(nodeNorm.x, nodeNorm.y, nodeNorm.z).endVertex();
+            if((mask & DRAW_MASK_FRONT) != 0) {
+                worldrenderer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+                for(CapeNode node : new CapeNode[]{nodeDownRight, nodeDown, nodeRight, this}) {
+                    Vector3f nodeNorm = node.normal();
+                    worldrenderer.pos(node.renderPosition.x+nodeNorm.x*0.05f, node.renderPosition.y+nodeNorm.y*0.05f, node.renderPosition.z+nodeNorm.z*0.05f)
+                            .tex(node.texU, node.texV)
+                            .normal(nodeNorm.x, nodeNorm.y, nodeNorm.z).endVertex();
+                }
+                tessellator.draw();
             }
-            tessellator.draw();
         }
 
-        if(nodeLeft == null || nodeRight == null) {
-            //Render left/right edge
-            if(nodeDown != null) {
-                renderEdge(nodeDown, true);
+        if((mask & DRAW_MASK_SIDES) != 0) {
+            if(nodeLeft == null || nodeRight == null) {
+                //Render left/right edge
+                if(nodeDown != null) {
+                    renderEdge(nodeDown, true);
+                }
             }
-        }
-        if(nodeUp == null || nodeDown == null) {
-            //Render up/down edge
-            if(nodeRight != null) {
-                renderEdge(nodeRight, false);
+            if(nodeUp == null || nodeDown == null) {
+                //Render up/down edge
+                if(nodeRight != null) {
+                    renderEdge(nodeRight, false);
+                }
             }
         }
     }
