@@ -2129,7 +2129,7 @@ public class GuiProfileViewer extends GuiScreen {
 
 
         float fairySouls = Utils.getElementAsFloat(Utils.getElement(profileInfo, "fairy_souls_collected"), 0);
-        Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE+"Fairy Souls", EnumChatFormatting.WHITE.toString()+(int)fairySouls+"/220",
+        Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE+"Fairy Souls", EnumChatFormatting.WHITE.toString()+(int)fairySouls+"/222",
                 guiLeft+xStart, guiTop+yStartBottom, 76);
         if(skillInfo != null) {
             float totalSkillLVL = 0;
