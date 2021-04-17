@@ -18,10 +18,7 @@ import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
-import io.github.moulberry.notenoughupdates.miscgui.CalendarOverlay;
-import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
-import io.github.moulberry.notenoughupdates.miscgui.HelpGUI;
-import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
+import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
 import io.github.moulberry.notenoughupdates.overlays.FuelBar;
@@ -35,6 +32,7 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.util.XPInformation;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiInventory;
@@ -119,6 +117,32 @@ public class NotEnoughUpdates {
                     openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
                 }
                 overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
+            }
+        }
+    });
+
+    SimpleCommand nullzeeSphereCommand = new SimpleCommand("neuzeesphere", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(args.length != 1) {
+                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"Usage: /neuzeesphere [on/off] or /neuzeesphere (radius) or /neuzeesphere setCenter"));
+                return;
+            }
+            if(args[0].equalsIgnoreCase("on")) {
+                NullzeeSphere.enabled = true;
+            } else if(args[0].equalsIgnoreCase("off")) {
+                NullzeeSphere.enabled = false;
+            } else if(args[0].equalsIgnoreCase("setCenter")) {
+                EntityPlayerSP p = ((EntityPlayerSP)sender);
+                NullzeeSphere.centerPos = new BlockPos(p.posX, p.posY, p.posZ);
+                NullzeeSphere.overlayVBO = null;
+            } else {
+                try {
+                    float radius = Float.parseFloat(args[0]);
+                    NullzeeSphere.size = radius;
+                    NullzeeSphere.overlayVBO = null;
+                } catch(Exception e) {
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"Can't parse radius: " + args[0]));
+                }
             }
         }
     });
@@ -215,6 +239,12 @@ public class NotEnoughUpdates {
         }
     });
 
+    SimpleCommand buttonsCommand = new SimpleCommand("neubuttons", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            openGui = new GuiInvButtonEditor();
+        }
+    });
+
     SimpleCommand enchantColourCommand = new SimpleCommand("neuec", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             openGui = new GuiEnchantColour();
@@ -250,6 +280,13 @@ public class NotEnoughUpdates {
                 }
             }
             Constants.reload();
+
+            configFile = new File(neuDir, "configNew.json");
+            if(configFile.exists()) {
+                try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
+                    config = gson.fromJson(reader, NEUConfig.class);
+                } catch(Exception e) { }
+            }
         }
     });
 
@@ -690,7 +727,14 @@ public class NotEnoughUpdates {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+devFailStrings[devFailIndex++]));
                 return;
             }
-            if(args.length == 1 && args[0].equalsIgnoreCase("dev")) NotEnoughUpdates.INSTANCE.config.hidden.dev = true;
+            if(args.length == 1 && args[0].equalsIgnoreCase("dev")) {
+                NotEnoughUpdates.INSTANCE.config.hidden.dev = true;
+                return;
+            }
+            if(args.length == 1 && args[0].equalsIgnoreCase("saveconfig")) {
+                saveConfig();
+                return;
+            }
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Executing dubious code"));
             /*Minecraft.getMinecraft().thePlayer.rotationYaw = 0;
             Minecraft.getMinecraft().thePlayer.rotationPitch = 0;
@@ -991,15 +1035,18 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(XPInformation.getInstance());
         MinecraftForge.EVENT_BUS.register(OverlayManager.petInfoOverlay);
         MinecraftForge.EVENT_BUS.register(OverlayManager.timersOverlay);
+        MinecraftForge.EVENT_BUS.register(new NullzeeSphere());
 
         if(Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
             ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());
         }
 
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
+        ClientCommandHandler.instance.registerCommand(nullzeeSphereCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);
         ClientCommandHandler.instance.registerCommand(gamemodesCommand);
+        ClientCommandHandler.instance.registerCommand(buttonsCommand);
         ClientCommandHandler.instance.registerCommand(resetRepoCommand);
         ClientCommandHandler.instance.registerCommand(reloadRepoCommand);
         ClientCommandHandler.instance.registerCommand(itemRenameCommand);

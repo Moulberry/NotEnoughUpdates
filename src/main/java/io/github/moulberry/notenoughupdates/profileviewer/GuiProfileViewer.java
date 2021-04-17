@@ -840,7 +840,7 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (Total)  ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(secrets, 0), x, miscTopY+20, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (/Run)  ",
-                    EnumChatFormatting.WHITE.toString()+(Math.round(secrets/Math.max(1, totalRunsF5)*100)/100f), x, miscTopY+30, sectionWidth);
+                    EnumChatFormatting.WHITE.toString()+(Math.round(secrets/Math.max(1, totalRuns)*100)/100f), x, miscTopY+30, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Mob Kills (Total)  ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(mobKills, 0), x, miscTopY+40, sectionWidth);
 
@@ -2528,7 +2528,6 @@ public class GuiProfileViewer extends GuiScreen {
                     Arrays.fill(entityPlayer.inventory.armorInventory, null);
                 }
             }
-            System.out.println(entityPlayer.getUniqueID().toString());
             if(entityPlayer.getUniqueID().toString().equals("ae6193ab-494a-4719-b6e7-d50392c8f012")) {
                 entityPlayer.inventory.armorInventory[3] = NotEnoughUpdates.INSTANCE.manager.jsonToStack(
                         NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SMALL_BACKPACK"));

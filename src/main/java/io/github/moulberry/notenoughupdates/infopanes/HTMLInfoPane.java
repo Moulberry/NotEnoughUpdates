@@ -19,11 +19,15 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
@@ -42,6 +46,8 @@ public class HTMLInfoPane extends TextInfoPane {
     private BufferedImage imageTemp = null;
     private int imageHeight = 0;
     private int imageWidth = 0;
+
+    private static boolean hasAttemptedDownload = false;
 
     /**
      * Creates a wiki model and sets the configuration to work with hypixel-skyblock wikia.
@@ -140,6 +146,9 @@ public class HTMLInfoPane extends TextInfoPane {
         return str.replace(" ", "\\ ");
     }
 
+    private static final ExecutorService wkDownloadES = Executors.newSingleThreadExecutor();
+    private static final ExecutorService rendererES = Executors.newCachedThreadPool();
+
     /**
      * Uses the wkhtmltoimage command-line tool to generate an image from the HTML code. This
      * generation is done asynchronously as sometimes it can take up to 10 seconds for more
@@ -149,8 +158,68 @@ public class HTMLInfoPane extends TextInfoPane {
         super(overlay, manager, name, "");
         this.title = name;
 
+        String osId;
+        if(SystemUtils.IS_OS_WINDOWS) {
+            osId = "win";
+        } else if(SystemUtils.IS_OS_MAC) {
+            osId = "mac";
+        } else if(SystemUtils.IS_OS_LINUX) {
+            osId = "linux";
+        } else {
+            text = EnumChatFormatting.RED+"Unsupported operating system.";
+            return;
+        }
+
         File cssFile = new File(manager.configLocation, "wikia.css");
-        File wkHtmlToImage = new File(manager.configLocation, "wkhtmltox/bin/wkhtmltoimage");
+        File wkHtmlToImage = new File(manager.configLocation, "wkhtmltox-"+osId+"/bin/wkhtmltoimage");
+
+        //Use old binary folder
+        if(new File(manager.configLocation, "wkhtmltox/bin/wkhtmltoimage").exists() && SystemUtils.IS_OS_WINDOWS) {
+            wkHtmlToImage = new File(manager.configLocation, "wkhtmltox/bin/wkhtmltoimage");
+        }
+
+        Runtime runtime = Runtime.getRuntime();
+        String[] chmodCommand = new String[]{ "chmod", "-R", "777", new File(manager.configLocation, "wkhtmltox-"+osId).getAbsolutePath() };
+        try {
+            Process p = runtime.exec(chmodCommand);
+            p.waitFor();
+        } catch(IOException | InterruptedException e) {}
+
+        if(!wkHtmlToImage.exists()) {
+            if(hasAttemptedDownload) {
+                text = EnumChatFormatting.RED+"Downloading web renderer failed? Or still downloading? Not sure what to do";
+                return;
+            } else {
+                hasAttemptedDownload = true;
+                Utils.recursiveDelete(new File(manager.configLocation, "wkhtmltox-"+osId));
+                wkDownloadES.submit(() -> {
+                    try {
+                        File itemsZip = new File(manager.configLocation, "wkhtmltox-"+osId+".zip");
+                        if(!itemsZip.exists()) {
+                            URL url = new URL("https://moulberry.codes/wkhtmltox/wkhtmltox-"+osId+".zip");
+                            URLConnection urlConnection = url.openConnection();
+                            urlConnection.setConnectTimeout(15000);
+                            urlConnection.setReadTimeout(60000);
+
+                            FileUtils.copyInputStreamToFile(urlConnection.getInputStream(), itemsZip);
+                        }
+
+                        try(InputStream is = new FileInputStream(itemsZip)) {
+                            manager.unzip(is, manager.configLocation);
+                        }
+
+                        itemsZip.delete();
+                        itemsZip.deleteOnExit();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                text = EnumChatFormatting.YELLOW+"Downloading web renderer... try again soon";
+                return;
+            }
+        }
+
         File input = new File(manager.configLocation, "tmp/input.html");
         String outputFileName = filename.replaceAll("(?i)\\u00A7.", "")
                 .replaceAll("[^a-zA-Z0-9_\\-]", "_");
@@ -179,7 +248,7 @@ public class HTMLInfoPane extends TextInfoPane {
         } else {
             html = "<div id=\"mw-content-text\" lang=\"en\" dir=\"ltr\" class=\"mw-content-ltr mw-content-text\">"+html+"</div>";
             html = "<div id=\"WikiaArticle\" class=\"WikiaArticle\">"+html+"</div>";
-            html = "<link rel=\"stylesheet\" href=\"file:///"+cssFile.getAbsolutePath()+"\">\n"+html;
+            html = "<link rel=\"stylesheet\" href=\"file:///"+cssFile.getAbsolutePath().replaceAll("^/", "")+"\">\n"+html;
 
             try(PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(input), StandardCharsets.UTF_8)), false)) {
@@ -187,16 +256,12 @@ public class HTMLInfoPane extends TextInfoPane {
                 out.println(encodeNonAscii(html));
             } catch(IOException e) {}
 
-
-            ExecutorService ste = Executors.newSingleThreadExecutor();
             try {
                 text = EnumChatFormatting.GRAY+"Rendering webpage (" + name + EnumChatFormatting.RESET+
                         EnumChatFormatting.GRAY+"), please wait...";
 
-                Runtime runtime = Runtime.getRuntime();
-
                 String[] wkCommand = new String[]{ wkHtmlToImage.getAbsolutePath(), "--width", ""+IMAGE_WIDTH*ZOOM_FACTOR,
-                        "--transparent", "--zoom", ""+ZOOM_FACTOR, input.getAbsolutePath(), output.getAbsolutePath()};
+                        "--transparent", "--allow", manager.configLocation.getAbsolutePath(), "--zoom", ""+ZOOM_FACTOR, input.getAbsolutePath(), output.getAbsolutePath()};
                 Process p = runtime.exec(wkCommand);
                 /*Process p = runtime.exec(spaceEscape(wkHtmlToImage.getAbsolutePath()) + " --width "+
                         IMAGE_WIDTH*ZOOM_FACTOR+" --transparent --zoom "+ZOOM_FACTOR + " " + spaceEscape(input.getAbsolutePath()) +
@@ -207,7 +272,7 @@ public class HTMLInfoPane extends TextInfoPane {
                 /*Process p2 = runtime.exec("\""+wkHtmlToImage.getAbsolutePath() + "\" --width "+
                         (IMAGE_WIDTH+EXT_WIDTH)*ZOOM_FACTOR+" --transparent --zoom "+ZOOM_FACTOR+" \"" + input.getAbsolutePath() +
                         "\" \"" + outputExt.getAbsolutePath() + "\"");*/
-                ste.submit(() -> {
+                rendererES.submit(() -> {
                     try {
                         if(p.waitFor(15, TimeUnit.SECONDS)) {
                             //if(p2.waitFor(5, TimeUnit.SECONDS)) {
@@ -260,8 +325,6 @@ public class HTMLInfoPane extends TextInfoPane {
             } catch(IOException e) {
                 e.printStackTrace();
                 text = EnumChatFormatting.RED+"Failed to exec webpage renderer.";
-            } finally {
-                ste.shutdown();
             }
         }
     }

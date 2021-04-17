@@ -103,6 +103,11 @@ public class TimersOverlay extends TextOverlay {
 
     @Override
     protected void renderLine(String line, Vector2f position, boolean dummy) {
+        if(!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoIcons) {
+            return;
+        }
+        GlStateManager.enableDepth();
+
         ItemStack icon = null;
 
         String clean = Utils.cleanColour(line);
@@ -115,7 +120,7 @@ public class TimersOverlay extends TextOverlay {
                 if(FETCHUR_ICONS == null) {
                     FETCHUR_ICONS = new ItemStack[] {
                             new ItemStack(Blocks.wool, 50, 14),
-                            new ItemStack(Blocks.glass, 20, 4),
+                            new ItemStack(Blocks.stained_glass, 20, 4),
                             new ItemStack(Items.compass, 1, 0),
                             new ItemStack(Items.prismarine_crystals, 20, 0),
                             new ItemStack(Items.fireworks, 1, 0),
