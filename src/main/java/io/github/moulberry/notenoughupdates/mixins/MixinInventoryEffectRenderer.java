@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 
 @Mixin({InventoryEffectRenderer.class})
-public class MixinInventoryEffectRenderer {
+public abstract class MixinInventoryEffectRenderer {
 
     @ModifyVariable(method="updateActivePotionEffects", at=@At(value="STORE"))
     public boolean hasVisibleEffect_updateActivePotionEffects(boolean hasVisibleEffect) {

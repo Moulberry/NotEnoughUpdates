@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(NetHandlerPlayClient.class)
-public class MixinNetHandlerPlayClient {
+public abstract class MixinNetHandlerPlayClient {
     private static final String TARGET = "Lnet/minecraft/entity/player/EntityPlayer;" +
             "setPositionAndRotation(DDDFF)V";
     @Redirect(method="handlePlayerPosLook", at=@At(value="INVOKE", target=TARGET))
