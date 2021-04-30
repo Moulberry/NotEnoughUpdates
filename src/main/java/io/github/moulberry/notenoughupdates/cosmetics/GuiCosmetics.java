@@ -269,7 +269,7 @@ public class GuiCosmetics extends GuiScreen {
                 if(mouseY > guiTop+sizeY+5 && mouseY < guiTop+sizeY+25) {
                     if(System.currentTimeMillis() - lastCapeEquip > 20*1000) {
                         CapeManager.INSTANCE.setCape(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
-                                null, true);
+                                wantToEquipCape, true);
 
                         lastCapeEquip = System.currentTimeMillis();
 

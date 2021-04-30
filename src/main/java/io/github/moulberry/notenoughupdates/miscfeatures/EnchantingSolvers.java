@@ -311,8 +311,7 @@ public class EnchantingSolvers {
 
                         if(chronomatronReplayIndex < chronomatronOrder.size()) {
                             String chronomatronCurrent = chronomatronOrder.get(chronomatronReplayIndex);
-                            if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks ||
-                                    chronomatronCurrent.equals(displayName)) {
+                            if(true) {
                                 chronomatronReplayIndex++;
                                 Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
                                         2, mode, Minecraft.getMinecraft().thePlayer);
@@ -334,9 +333,7 @@ public class EnchantingSolvers {
                             return true;
                         }
                         long currentTime = System.currentTimeMillis();
-                        if(currentTime - millisLastClick > 150 &&
-                                (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks ||
-                                current.containerIndex == slotId)) {
+                        if(currentTime - millisLastClick > 150) {
                             ultrasequencerReplayIndex++;
                             Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
                                     2, mode, Minecraft.getMinecraft().thePlayer);
@@ -354,7 +351,9 @@ public class EnchantingSolvers {
         return false;
     }
 
-    public static void processInventoryContents() {
+    public static void processInventoryContents(boolean fromTick) {
+        if(currentSolver != SolverType.CHRONOMATRON && !fromTick) return;
+
         if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
             return;
         }
@@ -536,7 +535,7 @@ public class EnchantingSolvers {
             return;
         }
 
-        processInventoryContents();
+        processInventoryContents(true);
     }
 
 }

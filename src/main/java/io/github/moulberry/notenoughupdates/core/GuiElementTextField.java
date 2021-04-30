@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.core;
 
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
@@ -462,14 +463,21 @@ public class GuiElementTextField {
 
         String selectedText = textField.getSelectedText();
         if(!selectedText.isEmpty()) {
+            System.out.println("Start");
             int leftIndex = Math.min(textField.getCursorPosition()+prependText.length(), textField.getSelectionEnd()+prependText.length());
             int rightIndex = Math.max(textField.getCursorPosition()+prependText.length(), textField.getSelectionEnd()+prependText.length());
 
             float texX = 0;
             int texY = 0;
             boolean sectionSignPrev = false;
+            boolean ignoreNext = false;
             boolean bold = false;
             for(int i=0; i<textNoColor.length(); i++) {
+                if(ignoreNext) {
+                    ignoreNext = false;
+                    continue;
+                }
+
                 char c = textNoColor.charAt(i);
                 if(sectionSignPrev) {
                     if(c != 'k' && c != 'K'
@@ -478,9 +486,13 @@ public class GuiElementTextField {
                             && c != 'o' && c != 'O') {
                         bold = c == 'l' || c == 'L';
                     }
+                    sectionSignPrev = false;
+                    if(i < prependText.length()) continue;
                 }
-                sectionSignPrev = false;
-                if(c == '\u00B6') sectionSignPrev = true;
+                if(c == '\u00B6') {
+                    sectionSignPrev = true;
+                    if(i < prependText.length()) continue;
+                }
 
                 if(c == '\n') {
                     if(i >= leftIndex && i < rightIndex) {
@@ -497,6 +509,7 @@ public class GuiElementTextField {
 
                 //String c2 = bold ? EnumChatFormatting.BOLD.toString() : "" + c;
 
+                System.out.println("Adding len for char:"+c+":"+Integer.toHexString(c));
                 int len = Minecraft.getMinecraft().fontRendererObj.getStringWidth(String.valueOf(c));
                 if(bold) len++;
                 if(i >= leftIndex && i < rightIndex) {

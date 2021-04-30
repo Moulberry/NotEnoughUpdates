@@ -104,26 +104,6 @@ public class MiningStuff {
         }
     }
 
-    public static void tick() {
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
-        if(Minecraft.getMinecraft().theWorld == null) return;
-
-        for(Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {
-            if(entity instanceof EntityCreeper) {
-                EntityCreeper creeper = (EntityCreeper) entity;
-                if(creeper.isInvisible() && creeper.getPowered()) {
-
-                    BlockPos below = creeper.getPosition().down();
-                    IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(below);
-                    if(state != null && state.getBlock() == Blocks.stained_glass) {
-                        creeper.setInvisible(!NotEnoughUpdates.INSTANCE.config.mining.revealMistCreepers);
-                    }
-                }
-            }
-        }
-    }
-
     @SubscribeEvent
     public void renderWorldLast(RenderWorldLastEvent event) {
         if(overlayLoc == null) return;
@@ -184,21 +164,6 @@ public class MiningStuff {
 
             overlayLoc = pos;
         }
-    }
-
-    public static boolean blockClicked(BlockPos loc) {
-        if(loc.equals(overlayLoc)) {
-            overlayLoc = null;
-        }
-        IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(loc);
-        if(NotEnoughUpdates.INSTANCE.config.mining.dontMineStone &&
-                state != null && SBInfo.getInstance().getLocation() != null &&
-                SBInfo.getInstance().getLocation().startsWith("mining_") &&
-                (state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.STONE ||
-                        state.getBlock() == Blocks.cobblestone)) {
-            return true;
-        }
-        return false;
     }
 
 }
