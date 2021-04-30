@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(EffectRenderer.class)
-public class MixinEffectRenderer {
+public abstract class MixinEffectRenderer {
 
     @Redirect(method="renderParticles", at=@At(
             value = "INVOKE",

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin({ItemStack.class})
-public class MixinItemStack {
+public abstract class MixinItemStack {
 
     @Inject(method="hasEffect", at=@At("HEAD"), cancellable = true)
     public void hasEffect(CallbackInfoReturnable cir) {

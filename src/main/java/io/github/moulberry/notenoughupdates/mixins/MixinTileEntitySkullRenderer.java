@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(TileEntitySkullRenderer.class)
-public class MixinTileEntitySkullRenderer {
+public abstract class MixinTileEntitySkullRenderer {
 
     @Inject(method="renderSkull", at=@At("HEAD"), cancellable = true)
     public void renderSkull(float xOffset, float yOffset, float zOffset, EnumFacing placedDirection,

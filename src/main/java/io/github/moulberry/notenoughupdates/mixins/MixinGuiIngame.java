@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin({GuiIngame.class})
-public class MixinGuiIngame {
+public abstract class MixinGuiIngame {
 
     private static final String TARGET = "Lnet/minecraft/scoreboard/ScorePlayerTeam;" +
             "formatPlayerName(Lnet/minecraft/scoreboard/Team;Ljava/lang/String;)Ljava/lang/String;";

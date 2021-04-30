@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 @Mixin(EntityRenderer.class)
-public class MixinEntityRenderer {
+public abstract class MixinEntityRenderer {
 
     //orientCamera
     @ModifyVariable(method="orientCamera", at=@At(value="STORE"), ordinal = 0)

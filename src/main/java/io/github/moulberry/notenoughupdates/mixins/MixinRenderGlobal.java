@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(RenderGlobal.class)
-public class MixinRenderGlobal {
+public abstract class MixinRenderGlobal {
 
     //setupTerrain
     @ModifyVariable(method="setupTerrain", at=@At(value="STORE"), ordinal = 4)

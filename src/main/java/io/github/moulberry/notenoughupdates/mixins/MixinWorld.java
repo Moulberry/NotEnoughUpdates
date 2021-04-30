@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(World.class)
-public class MixinWorld {
+public abstract class MixinWorld {
     @Inject(method="spawnParticle(IZDDDDDD[I)V", at=@At("HEAD"), cancellable = true)
     public void spawnParticle(int particleID, boolean p_175720_2_, double xCood, double yCoord, double zCoord,
                               double xOffset, double yOffset, double zOffset, int[] p_175720_15_, CallbackInfo ci) {

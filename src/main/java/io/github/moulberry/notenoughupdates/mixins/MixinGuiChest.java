@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin({GuiChest.class})
-public class MixinGuiChest {
+public abstract class MixinGuiChest {
 
     private static final String TARGET = "Lnet/minecraft/client/renderer/texture/TextureManager;" +
             "bindTexture(Lnet/minecraft/util/ResourceLocation;)V";
