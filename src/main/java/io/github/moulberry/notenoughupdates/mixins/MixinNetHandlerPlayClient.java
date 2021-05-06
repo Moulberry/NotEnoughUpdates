@@ -6,6 +6,7 @@ import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.Packet;
+import net.minecraft.network.play.client.C0EPacketClickWindow;
 import net.minecraft.network.play.client.C13PacketPlayerAbilities;
 import net.minecraft.network.play.server.*;
 import org.lwjgl.opengl.Display;
@@ -29,9 +30,25 @@ public class MixinNetHandlerPlayClient {
         player.setPositionAndRotation(x, y, z, yaw, pitch);
     }
 
-    @Inject(method="handleSetSlot", at=@At("HEAD"))
+    @Inject(method="handleSetSlot", at=@At("RETURN"))
     public void handleSetSlot(S2FPacketSetSlot packetIn, CallbackInfo ci) {
         EnchantingSolvers.processInventoryContents(false);
+        StorageManager.getInstance().setSlotPacket(packetIn);
+    }
+
+    @Inject(method="handleOpenWindow", at=@At("RETURN"))
+    public void handleOpenWindow(S2DPacketOpenWindow packetIn, CallbackInfo ci) {
+        StorageManager.getInstance().openWindowPacket(packetIn);
+    }
+
+    @Inject(method="handleCloseWindow", at=@At("RETURN"))
+    public void handleCloseWindow(S2EPacketCloseWindow packetIn, CallbackInfo ci) {
+        StorageManager.getInstance().closeWindowPacket(packetIn);
+    }
+
+    @Inject(method="handleWindowItems", at=@At("RETURN"))
+    public void handleOpenWindow(S30PacketWindowItems packetIn, CallbackInfo ci) {
+        StorageManager.getInstance().setItemsPacket(packetIn);
     }
 
     @Inject(method="handleBlockChange", at=@At("HEAD"))
@@ -45,13 +62,12 @@ public class MixinNetHandlerPlayClient {
         FlyFix.onReceiveAbilities(packetIn);
     }
 
-    /*@Inject(method="addToSendQueue", at=@At("HEAD"))
+    @Inject(method="addToSendQueue", at=@At("HEAD"))
     public void addToSendQueue(Packet packet, CallbackInfo ci) {
-        if(packet instanceof C13PacketPlayerAbilities) {
-            C13PacketPlayerAbilities abilities = (C13PacketPlayerAbilities) packet;
-            FlyFix.onSendAbilities(abilities);
+        if(packet instanceof C0EPacketClickWindow) {
+            StorageManager.getInstance().clientSendWindowClick((C0EPacketClickWindow)packet);
         }
-    }*/
+    }
 
     @Inject(method="handlePlayerListHeaderFooter", at=@At("HEAD"))
     public void handlePlayerListHeaderFooter(S47PacketPlayerListHeaderFooter packetIn, CallbackInfo ci) {

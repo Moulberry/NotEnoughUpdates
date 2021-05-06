@@ -1,9 +1,8 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
+import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
@@ -35,6 +34,8 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -49,6 +50,8 @@ public class PetInfoOverlay extends TextOverlay {
     private static final Pattern PET_CONTAINER_PAGE = Pattern.compile("\\((\\d)/(\\d)\\) Pets");
     private static final Pattern PET_NAME_PATTERN = Pattern.compile("\u00a77\\[Lvl \\d+] \u00a7(.+)");
     private static final Pattern XP_LINE_PATTERN = Pattern.compile("-------------------- (\\d+(?:,\\d+)*(?:\\.\\d+)?)/(\\d+(?:\\.\\d+)?[B|M|k]?)");
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public PetInfoOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
         super(position, dummyStrings, styleSupplier);
@@ -93,16 +96,18 @@ public class PetInfoOverlay extends TextOverlay {
 
     private static long lastXpGain = 0;
 
-    private static HashMap<Integer, Pet> petMap = new HashMap<>();
-    private static int selectedPet = -1;
-    private static int selectedPet2 = -1;
-    private static long lastPetSelect = -1;
-    //public static Pet currentPet = null;
-    //public static HashMap<String, Set<Pet>> petList = new HashMap<>();
+    public static class PetConfig {
+        public HashMap<Integer, Pet> petMap = new HashMap<>();
 
-    public static int tamingLevel = 1;
-    public static float beastMultiplier = 0;
-    public static boolean setActivePet = false;
+        private int selectedPet = -1;
+        private int selectedPet2 = -1;
+
+        public int tamingLevel = 1;
+        public float beastMultiplier = 0;
+    }
+
+    private static long lastPetSelect = -1;
+    private static PetConfig config = new PetConfig();
 
     private static long lastUpdate = 0;
     private static float levelXpLast = 0;
@@ -115,35 +120,52 @@ public class PetInfoOverlay extends TextOverlay {
 
     private int xpAddTimer = 0;
 
+    public static void loadConfig(File file) {
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            config = GSON.fromJson(reader, PetConfig.class);
+        } catch(Exception ignored) {}
+        if(config == null) {
+            config = new PetConfig();
+        }
+    }
+
+    public static void saveConfig(File file) {
+        try {
+            file.createNewFile();
+            try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+                writer.write(GSON.toJson(config));
+            }
+        } catch(Exception ignored) {}
+    }
+
     public static void clearPet() {
-        selectedPet = -1;
-        selectedPet2 = -1;
+        config.selectedPet = -1;
+        config.selectedPet2 = -1;
     }
 
     public static void setCurrentPet(int index) {
-        selectedPet2 = selectedPet;
+        config.selectedPet2 = config.selectedPet;
         xpGainHourSecondPet = xpGainHour;
         xpGainHourLast = xpGainHour;
         xpGainQueue.clear();
-        selectedPet = index;
+        config.selectedPet = index;
     }
 
     public static Pet getCurrentPet() {
-        return petMap.get(selectedPet);
+        return config.petMap.get(config.selectedPet);
     }
 
     public static Pet getCurrentPet2() {
         if(!NotEnoughUpdates.INSTANCE.config.petOverlay.dualPets) return null;
-        if(selectedPet == selectedPet2) return null;
-        return petMap.get(selectedPet2);
+        if(config.selectedPet == config.selectedPet2) return null;
+        return config.petMap.get(config.selectedPet2);
     }
 
-    public float getLevelPercent() {
+    public float getLevelPercent(Pet pet) {
         DecimalFormat df = new DecimalFormat("#.#", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
-        Pet pet = getCurrentPet();
         if(pet == null) return 0;
         try {
-            return Float.parseFloat(df.format(getCurrentPet().petLevel.levelPercentage * 100f));
+            return Float.parseFloat(df.format(pet.petLevel.levelPercentage * 100f));
         } catch(Exception ignored) {
             return 0;
         }
@@ -151,7 +173,7 @@ public class PetInfoOverlay extends TextOverlay {
 
     private static int getIdForPet(Pet pet) {
         System.out.println("getting for id");
-        for(Map.Entry<Integer, Pet> entry : petMap.entrySet()) {
+        for(Map.Entry<Integer, Pet> entry : config.petMap.entrySet()) {
             if(entry.getValue() == pet) {
                 return entry.getKey();
             }
@@ -171,7 +193,7 @@ public class PetInfoOverlay extends TextOverlay {
 
     private static Pet getClosestPet(String petType, int petId, String petItem, float petLevel) {
         Set<Pet> pets = new HashSet<>();
-        for(Pet pet : petMap.values()) {
+        for(Pet pet : config.petMap.values()) {
             if(pet.petType.equals(petType) && pet.rarity.petId == petId) {
                 pets.add(pet);
             }
@@ -247,13 +269,13 @@ public class PetInfoOverlay extends TextOverlay {
                     int mk = stats.get("mythos_kills").getAsInt();
                     float petXpBoost = mk > 10000 ? 1f : mk > 7500 ? 0.9f : mk > 5000 ? 0.8f : mk > 2500 ? 0.7f :
                             mk > 1000 ? 0.6f : mk > 500 ? 0.5f : mk > 250 ? 0.4f : mk > 100 ? 0.3f : mk > 25 ? 0.2f : 0.1f;
-                    beastMultiplier = petXpBoost * currentBeastRarity.beastcreatMultiplyer;
+                    config.beastMultiplier = petXpBoost * currentBeastRarity.beastcreatMultiplyer;
                 } else {
-                    beastMultiplier = 0.1f * currentBeastRarity.beastcreatMultiplyer;
+                    config.beastMultiplier = 0.1f * currentBeastRarity.beastcreatMultiplyer;
                 }
             }
         }
-        if(skillInfo != null) tamingLevel = skillInfo.get("level_skill_taming").getAsInt();
+        if(skillInfo != null) config.tamingLevel = skillInfo.get("level_skill_taming").getAsInt();
         //JsonObject petObject = profile.getPetsInfo(profile.getLatestProfile());
         /*JsonObject petsJson = Constants.PETS;
         if(petsJson != null) {
@@ -334,11 +356,11 @@ public class PetInfoOverlay extends TextOverlay {
 
         String lvlStringShort = EnumChatFormatting.AQUA + "" + roundFloat(levelXp) + "/" +
                 roundFloat(currentPet.petLevel.currentLevelRequirement)
-                + EnumChatFormatting.YELLOW + " (" + getLevelPercent() + "%)";
+                + EnumChatFormatting.YELLOW + " (" + getLevelPercent(currentPet) + "%)";
 
         String lvlString = EnumChatFormatting.AQUA + "" + Utils.shortNumberFormat(levelXp, 0) + "/" +
                 Utils.shortNumberFormat(currentPet.petLevel.currentLevelRequirement, 0)
-                + EnumChatFormatting.YELLOW + " (" + getLevelPercent() + "%)";
+                + EnumChatFormatting.YELLOW + " (" + getLevelPercent(currentPet) + "%)";
 
         float xpGain;
         if(!secondPet) {
@@ -441,12 +463,10 @@ public class PetInfoOverlay extends TextOverlay {
             return;
         }
 
-        NEUConfig config = NotEnoughUpdates.INSTANCE.config;
         int updateTime = 60000;
 
         if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
-            ProfileApiSyncer.getInstance().requestResync("petinfo", updateTime, () -> {
-            }, PetInfoOverlay::getAndSetPet);
+            ProfileApiSyncer.getInstance().requestResync("petinfo", updateTime, () -> {}, PetInfoOverlay::getAndSetPet);
         }
 
         Pet currentPet = getCurrentPet();
@@ -526,6 +546,11 @@ public class PetInfoOverlay extends TextOverlay {
     }
 
     public static Pet getPetFromStack(String name, String[] lore) {
+        if(Constants.PETS == null || Constants.PETS.get("pet_levels") == null || Constants.PETS.get("pet_levels") instanceof JsonNull) {
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a7cInvalid PET constants. Please run /neuresetrepo and restart game in order to fix. If that doesn't fix it, please join discord.gg/moulberry and post in #neu-support-1"));
+            return null;
+        }
+
         String petType = null;
         Rarity rarity = null;
         String heldItem = null;
@@ -640,7 +665,7 @@ public class PetInfoOverlay extends TextOverlay {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest && NEUEventListener.inventoryLoaded) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
             IInventory lower = container.getLowerChestInventory();
@@ -675,12 +700,12 @@ public class PetInfoOverlay extends TextOverlay {
                     if(!hasItem) return;
 
                     Set<Integer> clear = new HashSet<>();
-                    for(int i : petMap.keySet()) {
+                    for(int i : config.petMap.keySet()) {
                         if(i >= maxPage*28) {
                             clear.add(i);
                         }
                     }
-                    petMap.keySet().removeAll(clear);
+                    config.petMap.keySet().removeAll(clear);
 
                     Set<Integer> removeSet = new HashSet<>();
                     long currentTime = System.currentTimeMillis();
@@ -698,7 +723,7 @@ public class PetInfoOverlay extends TextOverlay {
                                 if(stackNext == null || !stackNext.hasTagCompound()) {
                                     int old = removeMap.getOrDefault(petIndex, 0);
                                     if(old >= 20) {
-                                        petMap.remove(petIndex);
+                                        config.petMap.remove(petIndex);
                                     } else {
                                         removeSet.add(petIndex);
                                         removeMap.put(petIndex, old+1);
@@ -709,18 +734,18 @@ public class PetInfoOverlay extends TextOverlay {
                             String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
                             Pet pet = getPetFromStack(stack.getDisplayName(), lore);
                             if(pet != null) {
-                                petMap.put(petIndex, pet);
+                                config.petMap.put(petIndex, pet);
 
                                 if(currentTime - lastPetSelect > 500) {
                                     boolean foundDespawn = false;
                                     for(String line : lore) {
                                         if(line.equals("\u00a77\u00a7cClick to despawn ")) {
-                                            selectedPet = petIndex;
+                                            config.selectedPet = petIndex;
                                             foundDespawn = true;
                                             break;
                                         }
                                     }
-                                    if(!foundDespawn && selectedPet == petIndex) {
+                                    if(!foundDespawn && config.selectedPet == petIndex) {
                                         clearPet();
                                     }
                                 }
@@ -876,13 +901,10 @@ public class PetInfoOverlay extends TextOverlay {
                     lastPetSelect = System.currentTimeMillis();
 
                     if(isRemoving) {
-                        System.out.println("removing");
-                        System.out.println("new:"+newSelected+":OLD:"+selectedPet);
-                        if(newSelected == selectedPet) {
+                        if(newSelected == config.selectedPet) {
                             clearPet();
-                        } else if(selectedPet > newSelected) {
-                            System.out.println("decrementing");
-                            selectedPet--;
+                        } else if(config.selectedPet > newSelected) {
+                            config.selectedPet--;
                         }
                     } else {
                         setCurrentPet(newSelected);
@@ -890,7 +912,7 @@ public class PetInfoOverlay extends TextOverlay {
                         String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
                         Pet pet = getPetFromStack(stack.getDisplayName(), lore);
                         if(pet != null) {
-                            petMap.put(selectedPet, pet);
+                            config.petMap.put(config.selectedPet, pet);
                         }
                     }
 
@@ -907,9 +929,9 @@ public class PetInfoOverlay extends TextOverlay {
         if(validXpTypes == null) validXpTypes = Lists.newArrayList("mining","foraging","enchanting","farming","combat","fishing","alchemy");
         if(!validXpTypes.contains(xpType.toLowerCase())) return 0;
 
-        float tamingPercent = 1.0f + (tamingLevel / 100f);
+        float tamingPercent = 1.0f + (config.tamingLevel / 100f);
         xp = xp * tamingPercent;
-        xp = xp + (xp * beastMultiplier / 100f);
+        xp = xp + (xp * config.beastMultiplier / 100f);
         if(pet.petXpType != null && !pet.petXpType.equalsIgnoreCase(xpType)) {
             xp = xp / 3f;
 
@@ -1095,7 +1117,7 @@ public class PetInfoOverlay extends TextOverlay {
                             .replace(" ", "_").toUpperCase();
 
                     setCurrentPet(getClosestPetIndex(pet, rarity.petId, "", lastLevelHovered));
-                    if(selectedPet == -1) {
+                    if(PetInfoOverlay.config.selectedPet == -1) {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"[NEU] Can't find pet \u00a7" + petStringMatch +
                                 EnumChatFormatting.RED + " try revisiting all pages of /pets."));
                     }

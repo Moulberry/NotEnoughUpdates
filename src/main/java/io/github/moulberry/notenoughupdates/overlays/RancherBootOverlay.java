@@ -1,10 +1,7 @@
 package io.github.moulberry.notenoughupdates.overlays;
 
-import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.core.util.GuiElementSlider;
-import io.github.moulberry.notenoughupdates.mixins.GuiEditSignAccessor;
-import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -35,7 +32,7 @@ public class RancherBootOverlay {
 
         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiEditSign)) return false;
 
-        TileEntitySign tes = ((GuiEditSignAccessor)Minecraft.getMinecraft().currentScreen).getTileSign();
+        TileEntitySign tes = ((GuiEditSign)Minecraft.getMinecraft().currentScreen).tileSign;
 
         if(tes == null) return false;
         if(tes.getPos().getY() != 0) return false;

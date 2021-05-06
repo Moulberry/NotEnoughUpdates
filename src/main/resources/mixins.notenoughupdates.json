@@ -23,11 +23,17 @@
     "MixinPlayerControllerMP",
     "MixinEffectRenderer",
     "MixinRendererLivingEntity",
-    "GuiEditSignAccessor",
     "MixinGuiScreen",
     "MixinTileEntitySkullRenderer",
     "MixinItemCameraTransforms",
-    "GuiContainerAccessor",
-    "MixinGuiInventory"
+    "MixinGuiInventory",
+    "MixinLayerArmorBase",
+    "MixinTextureManager",
+    "MixinLayerCustomHead",
+    "MixinMouseHelper",
+    "MixinAbstractClientPlayer",
+    "MixinInventoryPlayer",
+    "MixinItemRenderer",
+    "MixinEntityPlayerSP"
   ]
 }

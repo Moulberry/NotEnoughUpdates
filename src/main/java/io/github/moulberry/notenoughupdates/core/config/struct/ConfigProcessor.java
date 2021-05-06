@@ -107,6 +107,11 @@ public class ConfigProcessor {
 
                         GuiOptionEditor editor = null;
                         Class<?> optionType = optionField.getType();
+                        if(optionType.isAssignableFrom(int.class) &&
+                                optionField.isAnnotationPresent(ConfigEditorKeybind.class)) {
+                            ConfigEditorKeybind configEditorAnnotation = optionField.getAnnotation(ConfigEditorKeybind.class);
+                            editor = new GuiOptionEditorKeybind(option, (int)option.get(), configEditorAnnotation.defaultKey());
+                        }
                         if(optionField.isAnnotationPresent(ConfigEditorButton.class)) {
                             ConfigEditorButton configEditorAnnotation = optionField.getAnnotation(ConfigEditorButton.class);
                             editor = new GuiOptionEditorButton(option, configEditorAnnotation.runnableId(), configEditorAnnotation.buttonText(), config);

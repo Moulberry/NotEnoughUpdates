@@ -761,6 +761,7 @@ public class APIManager {
             ci.vanillaItem = isVanillaItem(internalname);
 
             JsonObject auctionInfo = getItemAuctionInfo(internalname);
+            float lowestBin = getLowestBin(internalname);
             JsonObject bazaarInfo = getBazaarInfo(internalname);
 
             if(bazaarInfo != null && bazaarInfo.get("curr_buy") != null) {
@@ -768,7 +769,11 @@ public class APIManager {
                 ci.craftCost = bazaarInstantBuyPrice;
             }
             //Don't use auction prices for vanilla items cuz people like to transfer money, messing up the cost of vanilla items.
-            if(auctionInfo != null && !ci.vanillaItem) {
+            if(lowestBin > 0 && !ci.vanillaItem) {
+                if(ci.craftCost < 0 || lowestBin < ci.craftCost) {
+                    ci.craftCost = lowestBin;
+                }
+            } else if(auctionInfo != null && !ci.vanillaItem) {
                 float auctionPrice = auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat();
                 if(ci.craftCost < 0 || auctionPrice < ci.craftCost) {
                     ci.craftCost = auctionPrice;

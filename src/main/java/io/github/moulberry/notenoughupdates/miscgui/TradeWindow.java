@@ -56,23 +56,15 @@ public class TradeWindow {
     private static int lastBackpackY;
 
 
-    public static boolean hypixelTradeWindowActive() {
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return false;
-        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
-        if(guiScreen instanceof GuiChest) {
-            GuiChest eventGui = (GuiChest) guiScreen;
-            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
-            String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            return containerName.trim().startsWith("You     ");
-        }
-        return false;
+    public static boolean hypixelTradeWindowActive(String containerName) {
+        return containerName != null && containerName.trim().startsWith("You     ");
     }
 
-    public static boolean tradeWindowActive() {
-        if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return false;
+    public static boolean tradeWindowActive(String containerName) {
+        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return false;
         if(!NotEnoughUpdates.INSTANCE.config.tradeMenu.enableCustomTrade) return false;
 
-        if(hypixelTradeWindowActive()) {
+        if(hypixelTradeWindowActive(containerName)) {
             return true;
         }
 

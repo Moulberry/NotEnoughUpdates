@@ -14,6 +14,7 @@ import io.github.moulberry.notenoughupdates.overlays.*;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.util.ArrayList;
@@ -117,6 +118,14 @@ public class NEUConfig extends Config {
     )
     public InventoryButtons inventoryButtons = new InventoryButtons();
 
+
+    @Expose
+    @Category(
+            name = "Slot Locking",
+            desc = "Slot Locking"
+    )
+    public SlotLocking slotLocking = new SlotLocking();
+
     @Expose
     @Category(
             name = "Tooltip Tweaks",
@@ -144,6 +153,13 @@ public class NEUConfig extends Config {
             desc = "Misc Overlays"
     )
     public MiscOverlays miscOverlays = new MiscOverlays();
+
+    @Expose
+    @Category(
+            name = "Storage GUI",
+            desc = "Storage GUI"
+    )
+    public StorageGUI storageGUI = new StorageGUI();
 
     @Expose
     @Category(
@@ -494,6 +510,22 @@ public class NEUConfig extends Config {
         public int clickType = 0;
     }
 
+    public static class SlotLocking {
+        @ConfigOption(
+                name = "Enable Slot Locking",
+                desc = "Allows you to lock slots and create slot pairings"
+        )
+        public boolean enableSlotLocking = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Slot Lock Key",
+                desc = ""
+        )
+        @ConfigEditorKeybind(defaultKey = Keyboard.KEY_L)
+        public int backpackScrollKey = Keyboard.KEY_L;
+    }
+
     public static class TooltipTweaks {
         @ConfigOption(
                 name = "Tooltip Price Information",
@@ -768,7 +800,6 @@ public class NEUConfig extends Config {
         @ConfigAccordionId(id = 4)
         public String ownRodColour = "0:255:0:0:0";
 
-
         @Expose
         @ConfigOption(
                 name = "Other Rod Colour",
@@ -777,6 +808,31 @@ public class NEUConfig extends Config {
         @ConfigEditorColour
         @ConfigAccordionId(id = 4)
         public String otherRodColour = "0:255:0:0:0";
+
+        @ConfigOption(
+                name = "Minion Crystal Radius Overlay",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 5)
+        public boolean crystalAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Enable Crystal Overlay",
+                desc = "Show a block overlay for the effective radius of minion crystals (farming, mining, etc)"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 5)
+        public boolean enableCrystalOverlay = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Always Show Crystal Overlay",
+                desc = "Show the crystal overlay, even when a minion crystal is not being held"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 5)
+        public boolean alwaysShowCrystal = false;
     }
 
     public static class SkillOverlays {
@@ -1026,7 +1082,7 @@ public class NEUConfig extends Config {
                 desc = ""
         )
         @ConfigEditorAccordion(id = 0)
-        public boolean todoAccordion = false;
+        public boolean todoAccordion = true;
 
         @Expose
         @ConfigOption(
@@ -1035,7 +1091,7 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 0)
-        public boolean todoOverlay = true;
+        public boolean todoOverlay = false;
 
         @Expose
         @ConfigOption(
@@ -1097,6 +1153,169 @@ public class NEUConfig extends Config {
         public boolean todoIcons = true;
     }
 
+    public static class StorageGUI {
+        @ConfigOption(
+                name = "Storage Overlay",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 1)
+        public boolean storageOverlayAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Enable Storage GUI",
+                desc = "Show a custom storage overlay when accessing /storage." +
+                        "Makes switching between pages much easier and also allows for searching through all storages"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean enableStorageGUI = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Storage Height",
+                desc = "Change the height of the storage preview section. Increasing this allows more storages to be seen at once"
+        )
+        @ConfigEditorSlider(
+                minValue = 104,
+                maxValue = 312,
+                minStep = 26
+        )
+        @ConfigAccordionId(id = 1)
+        public int storageHeight = 208;
+
+        @Expose
+        @ConfigOption(
+                name = "Storage Style",
+                desc = "Change the visual style of the overlay"
+        )
+        @ConfigEditorDropdown(
+                values = {"Transparent", "Minecraft", "Dark", "Custom"}
+        )
+        @ConfigAccordionId(id = 1)
+        public int displayStyle = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Enderchest Preview",
+                desc = "Preview Enderchest pages when hovering over the selector on the left side"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean enderchestPreview = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Backpack Preview",
+                desc = "Preview Backpacks when hovering over the selector on the left side"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean backpackPreview = true;
+
+        @ConfigOption(
+                name = "Inventory Backpacks",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 0)
+        public boolean inventorySlotAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Inventory Backpacks",
+                desc = "Add a \"10th slot\" to your inventory which allows you to quickly access your backpacks"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean showInvBackpack = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Backpack Side",
+                desc = "Set which side of the hotbar the backpack slot shows"
+        )
+        @ConfigEditorDropdown(
+                values = {"Left", "Right"}
+        )
+        @ConfigAccordionId(id = 0)
+        public int backpackHotbarSide = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Backpack Peeking",
+                desc = "When the backpack is selected, show it's contents on your screen"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean showInvBackpackPreview = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Backpack Opacity%",
+                desc = "Change the opacity of the backpack preview background"
+        )
+        @ConfigEditorSlider(
+                minValue = 0,
+                maxValue = 100,
+                minStep = 5
+        )
+        @ConfigAccordionId(id = 0)
+        public int backpackOpacity = 50;
+
+        @Expose
+        @ConfigOption(
+                name = "Backpack Scroll Key",
+                desc = "Change the key which needs to be pressed in order to allow backpacks to be scrolled between"
+        )
+        @ConfigEditorKeybind(defaultKey = Keyboard.KEY_LSHIFT)
+        @ConfigAccordionId(id = 0)
+        public int backpackScrollKey = Keyboard.KEY_LSHIFT;
+
+        @Expose
+        @ConfigOption(
+                name = "Arrow Key Backpacks",
+                desc = "Use arrow keys [LEFT],[RIGHT] to move between backpacks and [DOWN] to navigate backpack even when the slot is not selected. Keys are customizable below"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean arrowKeyBackpacks = false;
+
+        @ConfigOption(
+                name = "Arrow Key Backpack Keybinds",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 2)
+        @ConfigAccordionId(id = 0)
+        public boolean backpackArrowAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Backpack Left",
+                desc = "Select the backpack to the left"
+        )
+        @ConfigEditorKeybind(defaultKey = Keyboard.KEY_LEFT)
+        @ConfigAccordionId(id = 2)
+        public int arrowLeftKey = Keyboard.KEY_LEFT;
+
+        @Expose
+        @ConfigOption(
+                name = "Backpack Right",
+                desc = "Select the backpack to the right"
+        )
+        @ConfigEditorKeybind(defaultKey = Keyboard.KEY_RIGHT)
+        @ConfigAccordionId(id = 2)
+        public int arrowRightKey = Keyboard.KEY_RIGHT;
+
+        @Expose
+        @ConfigOption(
+                name = "Backpack Open",
+                desc = "Open the selected backpack"
+        )
+        @ConfigEditorKeybind(defaultKey = Keyboard.KEY_DOWN)
+        @ConfigAccordionId(id = 2)
+        public int arrowDownKey = Keyboard.KEY_DOWN;
+    }
+
     public static class EnchSolvers {
         @Expose
         @ConfigOption(
@@ -1105,6 +1324,14 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         public boolean enableEnchantingSolvers = true;
+
+        /*@Expose
+        @ConfigOption(
+                name = "Prevent Misclicks",
+                desc = "Prevent accidentally failing the Chronomatron and Ultrasequencer experiments"
+        )
+        @ConfigEditorBoolean
+        public boolean preventMisclicks = true;*/
 
         @Expose
         @ConfigOption(
@@ -1290,10 +1517,11 @@ public class NEUConfig extends Config {
                 exampleText = {"\u00a73Goblin Slayer: \u00a7626.5%\n\u00a73Lucky Raffle: \u00a7c0.0%",
                         "\u00a73Mithril Powder: \u00a726,243",
                         "\u00a73Forge 1) \u00a79Diamonite\u00a77: \u00a7aReady!",
-                        "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY"}
+                        "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY",
+                        "\u00a73Pickaxe CD: \u00a7a78s"}
         )
         @ConfigAccordionId(id = 2)
-        public List<Integer> dwarvenText = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
+        public List<Integer> dwarvenText = new ArrayList<>(Arrays.asList(0, 1, 4, 2, 3));
 
         @Expose
         @ConfigOption(
@@ -1334,6 +1562,30 @@ public class NEUConfig extends Config {
         @ConfigEditorBoolean
         public boolean titaniumAlert = true;
 
+
+        @Expose
+        @ConfigOption(
+                name = "Dwarven Mines Textures",
+                desc = "Allows texture packs to retexture blocks in the Dwarven Mines. If you don't have a texturepack that does this, you should leave this off"
+        )
+        @ConfigEditorBoolean
+        public boolean dwarvenTextures = false;
+
+        /*@Expose
+        @ConfigOption(
+                name = "Don't Mine Stone",
+                desc = "Prevent mining stone blocks in mining areas"
+        )
+        @ConfigEditorBoolean
+        public boolean dontMineStone = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Reveal Mist Creepers",
+                desc = "Make the creepers in the Dwarven Mines mist visible"
+        )
+        @ConfigEditorBoolean
+        public boolean revealMistCreepers = true;*/
     }
 
     public static class NeuAuctionHouse {
@@ -1602,7 +1854,7 @@ public class NEUConfig extends Config {
         arr.add("/warp hub:Warp Hub:eyJ0aW1lc3RhbXAiOjE1NTkyMTU0MTY5MDksInByb2ZpbGVJZCI6IjQxZDNhYmMyZDc0OTQwMGM5MDkwZDU0MzRkMDM4MzFiIiwicHJvZmlsZU5hbWUiOiJNZWdha2xvb24iLCJzaWduYXR1cmVSZXF1aXJlZCI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2Q3Y2M2Njg3NDIzZDA1NzBkNTU2YWM1M2UwNjc2Y2I1NjNiYmRkOTcxN2NkODI2OWJkZWJlZDZmNmQ0ZTdiZjgifX19");
         arr.add("/warp dungeon_hub:Dungeon Hub:eyJ0aW1lc3RhbXAiOjE1Nzg0MDk0MTMxNjksInByb2ZpbGVJZCI6IjQxZDNhYmMyZDc0OTQwMGM5MDkwZDU0MzRkMDM4MzFiIiwicHJvZmlsZU5hbWUiOiJNZWdha2xvb24iLCJzaWduYXR1cmVSZXF1aXJlZCI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzliNTY4OTViOTY1OTg5NmFkNjQ3ZjU4NTk5MjM4YWY1MzJkNDZkYjljMWIwMzg5YjhiYmViNzA5OTlkYWIzM2QiLCJtZXRhZGF0YSI6eyJtb2RlbCI6InNsaW0ifX19fQ==");
         arr.add("/craft:Crafting Table:CRAFTING_TABLE");
-        arr.add("/enderchest:Ender Chest:ENDER_CHEST");
+        arr.add("/storage:Storage:CHEST");
         arr.add("/wardrobe:Wardrobe:LEATHER_CHESTPLATE");
         arr.add("/pets:Pets:BONE");
         arr.add("neuah:NEU Auction House:GOLD_BLOCK");

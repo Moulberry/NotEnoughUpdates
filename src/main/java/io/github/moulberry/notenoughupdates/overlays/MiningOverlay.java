@@ -8,6 +8,7 @@ import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
+import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -40,7 +41,7 @@ public class MiningOverlay extends TextOverlay {
     public static Map<String, Float> commissionProgress = new LinkedHashMap<>();
 
     @Override
-    public void update() {
+    public void updateFrequent() {
         if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
@@ -55,12 +56,6 @@ public class MiningOverlay extends TextOverlay {
                         String name = null;
                         int numberValue = -1;
                         for(String line : lore) {
-                            if(line.startsWith("\u00a77\u00a79")) {
-                                String textAfter = line.substring(4);
-                                if(!textAfter.contains("\u00a7") && !textAfter.equals("Rewards") && !textAfter.equals("Progress")) {
-                                    name = textAfter;
-                                }
-                            }
                             if(name != null) {
                                 String clean = Utils.cleanColour(line).trim();
                                 if(clean.isEmpty()) {
@@ -74,6 +69,12 @@ public class MiningOverlay extends TextOverlay {
                                     }
                                 }
                             }
+                            if(line.startsWith("\u00a77\u00a79")) {
+                                String textAfter = line.substring(4);
+                                if(!textAfter.contains("\u00a7") && !textAfter.equals("Rewards") && !textAfter.equals("Progress")) {
+                                    name = textAfter;
+                                }
+                            }
                         }
                         if(name != null && numberValue > 0) {
                             commissionMaxes.put(name, numberValue);
@@ -82,7 +83,10 @@ public class MiningOverlay extends TextOverlay {
                 }
             }
         }
+    }
 
+    @Override
+    public void update() {
         overlayStrings = null;
 
         /*if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
@@ -250,6 +254,13 @@ public class MiningOverlay extends TextOverlay {
             overlayStrings.addAll(forgeStrings);
         }*/
 
+        String pickaxeCooldown;
+        if(ItemCooldowns.pickaxeUseCooldownMillisRemaining <= 0) {
+            pickaxeCooldown = DARK_AQUA+"Pickaxe CD: \u00a7aReady";
+        } else {
+            pickaxeCooldown = DARK_AQUA+"Pickaxe CD: \u00a7a" + (ItemCooldowns.pickaxeUseCooldownMillisRemaining/1000) + "s";
+        }
+
         for(int index : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText) {
             switch(index) {
                 case 0:
@@ -260,6 +271,8 @@ public class MiningOverlay extends TextOverlay {
                     overlayStrings.addAll(forgeStrings); break;
                 case 3:
                     overlayStrings.addAll(forgeStringsEmpty); break;
+                case 4:
+                    overlayStrings.add(pickaxeCooldown); break;
             }
         }
 
