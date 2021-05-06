@@ -3,6 +3,8 @@ package io.github.moulberry.notenoughupdates;
 import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
+import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
+import io.github.moulberry.notenoughupdates.miscgui.GuiItemCustomize;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
@@ -73,8 +75,6 @@ public class NEUManager {
     public File configLocation;
     public File repoLocation;
     public File configFile;
-    public File itemRenameFile;
-    public JsonObject itemRenameJson;
 
     public NEUManager(NotEnoughUpdates neu, File configLocation) {
         this.neu = neu;
@@ -85,12 +85,6 @@ public class NEUManager {
 
         this.repoLocation = new File(configLocation, "repo");
         repoLocation.mkdir();
-
-        this.itemRenameFile = new File(configLocation, "itemRename.json");
-        itemRenameJson = getJsonFromFile(itemRenameFile);
-        if(itemRenameJson == null) {
-            itemRenameJson = new JsonObject();
-        }
     }
 
     public void setCurrentProfile(String currentProfile) {
@@ -99,10 +93,6 @@ public class NEUManager {
 
     public String getCurrentProfile() {
         return SBInfo.getInstance().currentProfile;
-    }
-
-    public void saveItemRenameConfig() {
-        try { writeJson(itemRenameJson, itemRenameFile); } catch(IOException ignored) {}
     }
 
     /**

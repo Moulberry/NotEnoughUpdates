@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 public class GuiElementTextField {
 
+    public static final int DISABLE_BG = 0b1000000;
     public static final int SCALE_TEXT = 0b100000;
     public static final int NUM_ONLY = 0b10000;
     public static final int NO_SPACE = 0b01000;
@@ -35,6 +36,7 @@ public class GuiElementTextField {
     private int y;
 
     private String prependText = "";
+    private int customTextColour = 0xffffffff;
 
     private final GuiTextField textField = new GuiTextField(0, Minecraft.getMinecraft().fontRendererObj,
             0 , 0, 0, 0);
@@ -61,6 +63,10 @@ public class GuiElementTextField {
 
     public void setCustomBorderColour(int colour) {
         this.customBorderColour = colour;
+    }
+
+    public void setCustomTextColour(int colour) {
+        this.customTextColour = colour;
     }
 
     public String getText() {
@@ -142,7 +148,7 @@ public class GuiElementTextField {
 
         int lineNum = Math.round(((yComp - (searchBarYSize-8)/2))/extraSize);
 
-        Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6])(?!\\u00B6)");
+        Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6]|$)(?!\\u00B6)");
         String text = renderText;
         String textNoColour = renderText;
         if((options & COLOUR) != 0) {
@@ -150,7 +156,11 @@ public class GuiElementTextField {
                 Matcher matcher = patternControlCode.matcher(text);
                 if(!matcher.find() || matcher.groupCount() < 1) break;
                 String code = matcher.group(1);
-                text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+                if(code.isEmpty()) {
+                    text = matcher.replaceFirst("\u00A7r\u00B6");
+                } else {
+                    text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+                }
             }
         }
         while(true) {
@@ -168,7 +178,6 @@ public class GuiElementTextField {
                 currentLine++;
             }
         }
-
 
         String textNC = textNoColour.substring(0, cursorIndex);
         int colorCodes = org.apache.commons.lang3.StringUtils.countMatches(textNC, "\u00B6");
@@ -223,7 +232,7 @@ public class GuiElementTextField {
     public void keyTyped(char typedChar, int keyCode) {
         if(focus) {
             if((options & MULTILINE) != 0) { //Carriage return
-                Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6\n])(?!\\u00B6)");
+                Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6\n]|$)(?!\\u00B6)");
 
                 String text = textField.getText();
                 String textNoColour = textField.getText();
@@ -231,7 +240,11 @@ public class GuiElementTextField {
                     Matcher matcher = patternControlCode.matcher(text);
                     if(!matcher.find() || matcher.groupCount() < 1) break;
                     String code = matcher.group(1);
-                    text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+                    if(code.isEmpty()) {
+                        text = matcher.replaceFirst("\u00A7r\u00B6");
+                    } else {
+                        text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+                    }
                 }
                 while(true) {
                     Matcher matcher = patternControlCode.matcher(textNoColour);
@@ -389,18 +402,20 @@ public class GuiElementTextField {
         if(customBorderColour != -1) {
             borderColour = customBorderColour;
         }
-        //bar background
-        Gui.drawRect(x - paddingUnscaled,
-                y - paddingUnscaled,
-                x + searchBarXSize + paddingUnscaled,
-                bottomTextBox + paddingUnscaled, borderColour);
-        Gui.drawRect(x,
-                y,
-                x + searchBarXSize,
-                bottomTextBox, Color.BLACK.getRGB());
+        if((options & DISABLE_BG) == 0) {
+            //bar background
+            Gui.drawRect(x - paddingUnscaled,
+                    y - paddingUnscaled,
+                    x + searchBarXSize + paddingUnscaled,
+                    bottomTextBox + paddingUnscaled, borderColour);
+            Gui.drawRect(x,
+                    y,
+                    x + searchBarXSize,
+                    bottomTextBox, Color.BLACK.getRGB());
+        }
 
         //bar text
-        Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6\n])(?!\\u00B6)");
+        Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6\n]|$)(?!\\u00B6)");
 
         String text = renderText;
         String textNoColor = renderText;
@@ -409,7 +424,11 @@ public class GuiElementTextField {
                 Matcher matcher = patternControlCode.matcher(text);
                 if(!matcher.find() || matcher.groupCount() < 1) break;
                 String code = matcher.group(1);
-                text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+                if(code.isEmpty()) {
+                    text = matcher.replaceFirst("\u00A7r\u00B6");
+                } else {
+                    text = matcher.replaceFirst("\u00A7"+code+"\u00B6"+code);
+                }
             }
         }
         while(true) {
@@ -433,10 +452,10 @@ public class GuiElementTextField {
 
                 TextRenderUtils.drawStringCenteredScaledMaxWidth(texts[yOffI], Minecraft.getMinecraft().fontRendererObj, x+searchBarXSize/2f,
                         y+searchBarYSize/2f+yOff, false,
-                        searchBarXSize-2, Color.WHITE.getRGB());
+                        searchBarXSize-2, customTextColour);
             } else {
                 Minecraft.getMinecraft().fontRendererObj.drawString(StringUtils.trimToWidth(texts[yOffI], searchBarXSize-10), x + 5,
-                        y+(searchBarYSize-8)/2+yOff, Color.WHITE.getRGB());
+                        y+(searchBarYSize-8)/2+yOff, customTextColour);
             }
         }
 

@@ -12,20 +12,30 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ItemCooldowns {
 
     private static Map<ItemStack, Float> durabilityOverrideMap = new HashMap<>();
-    private static long pickaxeUseCooldownMillisRemaining = -1;
+    public static long pickaxeUseCooldownMillisRemaining = -1;
     private static long treecapitatorCooldownMillisRemaining = -1;
     private static long lastMillis = 0;
 
+    public static long pickaxeCooldown = -1;
+
     public static TreeMap<Long, BlockPos> blocksClicked = new TreeMap<>();
+
+    private static int tickCounter = 0;
 
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {
-        if(event.phase == TickEvent.Phase.END) {
+        if(event.phase == TickEvent.Phase.END && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+            if(tickCounter++ >= 20*10) {
+                tickCounter = 0;
+                pickaxeCooldown = -1;
+            }
+
             long currentTime = System.currentTimeMillis();
 
             Long key;
@@ -48,8 +58,10 @@ public class ItemCooldowns {
     }
 
     @SubscribeEvent
-    public void onWorldUnload(WorldEvent.Unload event) {
+    public void onWorldUnload(WorldEvent.Load event) {
         blocksClicked.clear();
+        pickaxeCooldown = -1;
+        pickaxeUseCooldownMillisRemaining = 60*1000;
     }
 
     public static long getTreecapCooldownWithPet(){
@@ -95,15 +107,42 @@ public class ItemCooldowns {
     private static Pattern PICKAXE_ABILITY_REGEX = Pattern.compile("\\u00a7r\\u00a7aYou used your " +
             "\\u00a7r\\u00a7..+ \\u00a7r\\u00a7aPickaxe Ability!\\u00a7r");
 
+    private static Pattern PICKAXE_COOLDOWN_LORE_REGEX = Pattern.compile("\\u00a78Cooldown: \\u00a7a(\\d+)s");
+
+    private static void updatePickaxeCooldown() {
+        if(pickaxeCooldown == -1) {
+            for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
+                if(stack != null && stack.hasTagCompound()) {
+                    String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
+                    if(internalname != null && (internalname.endsWith("_PICKAXE") || internalname.contains("_DRILL_"))) {
+                        for(String line : NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound())) {
+                            Matcher matcher = PICKAXE_COOLDOWN_LORE_REGEX.matcher(line);
+                            if(matcher.find()) {
+                                try {
+                                    pickaxeCooldown = Integer.parseInt(matcher.group(1));
+                                    return;
+                                } catch(Exception ignored) {}
+                            }
+                        }
+                    }
+                }
+            }
+            pickaxeCooldown = 120;
+        }
+    }
+
+
     @SubscribeEvent
     public void onChatMessage(ClientChatReceivedEvent event) {
         if(PICKAXE_ABILITY_REGEX.matcher(event.message.getFormattedText()).matches()) {
-            pickaxeUseCooldownMillisRemaining = 120*1000;
+            updatePickaxeCooldown();
+            pickaxeUseCooldownMillisRemaining = pickaxeCooldown*1000;
         }
     }
 
     public static float getDurabilityOverride(ItemStack stack) {
         if(Minecraft.getMinecraft().theWorld == null) return -1;
+        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return -1;
 
         if(durabilityOverrideMap.containsKey(stack)) {
             return durabilityOverrideMap.get(stack);
@@ -116,15 +155,17 @@ public class ItemCooldowns {
         }
 
         if(internalname.endsWith("_PICKAXE") || internalname.contains("_DRILL_")) {
+            updatePickaxeCooldown();
+
             if(pickaxeUseCooldownMillisRemaining < 0) {
                 durabilityOverrideMap.put(stack, -1f);
                 return -1;
             }
 
-            if(pickaxeUseCooldownMillisRemaining > 120*1000) {
+            if(pickaxeUseCooldownMillisRemaining > pickaxeCooldown*1000) {
                 return stack.getItemDamage();
             }
-            float dura = (float)(pickaxeUseCooldownMillisRemaining/(120.0*1000.0));
+            float dura = (float)(pickaxeUseCooldownMillisRemaining/(pickaxeCooldown*1000.0));
             durabilityOverrideMap.put(stack, dura);
             return dura;
         } else if(internalname.equals("TREECAPITATOR_AXE") || internalname.equals("JUNGLE_AXE")) {

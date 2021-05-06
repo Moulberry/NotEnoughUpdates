@@ -1,13 +1,19 @@
 buildscript {
+
     repositories {
         jcenter()
-        maven { url = "https://files.minecraftforge.net/maven" }
+        maven {
+            name 'JitPack'
+            url 'https://jitpack.io'
+        }
+        maven { url = "https://maven.minecraftforge.net/" }
         maven { url = "https://repo.spongepowered.org/maven" }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
-		classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
-		classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
+        classpath "com.github.Skytils:ForgeGradle:86b23926f3"
+        classpath "com.github.Skytils:mixingradle:d75e32e743"
+		classpath 'com.github.LxGaming:MixinGradle:0.6-SNAPSHOT'
+		classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
     }
 }
 
@@ -41,8 +47,7 @@ repositories {
 
 dependencies {
     compile('org.spongepowered:mixin:0.7.11-SNAPSHOT')
-	//compile('org.kohsuke:github-api:1.108')
-    //compile('org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r')
+    annotationProcessor('org.spongepowered:mixin:0.7.11-SNAPSHOT')
 	compile('com.fasterxml.jackson.core:jackson-core:2.10.2')
     compile('info.bliki.wiki:bliki-core:3.1.0')
 	implementation name: 'Morus-1.0'
@@ -58,7 +63,8 @@ jar {
 		'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
 		'MixinConfigs': "mixins.${modid}.json",
 		'FMLCorePluginContainsFMLMod': true,
-		"ForceLoadAsMod": true
+		"ForceLoadAsMod": true,
+        "FMLAT": 'notenoughupdates_at.cfg'
     )
 }
 
@@ -96,22 +102,8 @@ reobf {
 	}
 }
 
-
-task runClientFix {
-	doLast {
-		String fileName = "${archivesBaseName}-${version}-${mixinClassifier}.jar"
-		ant.move file: "${buildDir}/libs/${fileName}", tofile: "${projectDir}/run/mods/${fileName}"
-		ant.delete file: "${buildDir}/libs/${archivesBaseName}-${version}.jar"
-	}
-}
-
-runClient {
-	standardInput = System.in
-}
-
 build.dependsOn(shadowJar)
 runClient.dependsOn(build)
-runClient.dependsOn(runClientFix)
 
 processResources
 {
@@ -126,4 +118,15 @@ processResources
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'
     }
+
+    rename '(.+_at.cfg)', 'META-INF/$1'
 }
+
+task moveResources {
+    doLast {
+        ant.move file: "${buildDir}/resources/main",
+            todir: "${buildDir}/classes/java"
+    }
+}
+moveResources.dependsOn processResources
+classes.dependsOn moveResources

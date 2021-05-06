@@ -1,7 +1,6 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
-import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
+import io.github.moulberry.notenoughupdates.miscfeatures.ItemCustomizeManager;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -16,9 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class MixinItemStack {
 
     @Inject(method="hasEffect", at=@At("HEAD"), cancellable = true)
-    public void hasEffect(CallbackInfoReturnable cir) {
+    public void hasEffect(CallbackInfoReturnable<Boolean> cir) {
         if(Utils.getHasEffectOverride()) {
             cir.setReturnValue(false);
+            return;
         }
     }
 
@@ -32,28 +32,31 @@ public class MixinItemStack {
                 return;
             }
 
-            String customName = NotEnoughUpdates.INSTANCE.manager.itemRenameJson
-                    .get(stackTagCompound.getCompoundTag("ExtraAttributes").getString("uuid")).getAsString();
-            if(customName != null && !customName.equals("")) {
-                String prefix = EnumChatFormatting.RESET.toString();
-                if (stackTagCompound != null && stackTagCompound.hasKey("display", 10)) {
-                    NBTTagCompound nbttagcompound = stackTagCompound.getCompoundTag("display");
+            ItemCustomizeManager.ItemData data = ItemCustomizeManager.getDataForItem((ItemStack)(Object)this);
 
-                    if (nbttagcompound.hasKey("Name", 8)) {
-                        String name = nbttagcompound.getString("Name");
-                        char[] chars = name.toCharArray();
+            if(data != null && data.customName != null) {
+                String customName = data.customName;
+                if(customName != null && !customName.equals("")) {
+                    String prefix = EnumChatFormatting.RESET.toString();
+                    if (stackTagCompound != null && stackTagCompound.hasKey("display", 10)) {
+                        NBTTagCompound nbttagcompound = stackTagCompound.getCompoundTag("display");
 
-                        int i;
-                        for(i=0; i<chars.length; i+=2) {
-                            if(chars[i] != '\u00a7'){
-                                break;
+                        if (nbttagcompound.hasKey("Name", 8)) {
+                            String name = nbttagcompound.getString("Name");
+                            char[] chars = name.toCharArray();
+
+                            int i;
+                            for(i=0; i<chars.length; i+=2) {
+                                if(chars[i] != '\u00a7'){
+                                    break;
+                                }
                             }
-                        }
 
-                        prefix = name.substring(0, i);
+                            prefix = name.substring(0, i);
+                        }
                     }
+                    returnable.setReturnValue(prefix+customName);
                 }
-                returnable.setReturnValue(prefix+customName);
             }
         } catch(Exception e) { }
     }

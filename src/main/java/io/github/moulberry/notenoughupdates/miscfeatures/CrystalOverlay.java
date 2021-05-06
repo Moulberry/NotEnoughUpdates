@@ -129,6 +129,7 @@ public class CrystalOverlay {
     private static ExecutorService es = Executors.newSingleThreadExecutor();
 
     public static void tick() {
+        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
         if(Minecraft.getMinecraft().theWorld == null) return;
 
         EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
@@ -136,22 +137,27 @@ public class CrystalOverlay {
 
         long currentTime = System.currentTimeMillis();
 
-        if(currentTime - displayMillis > 10*1000) {
-            crystals.clear();
-            displayMillis = -1;
-        }
+        if(NotEnoughUpdates.INSTANCE.config.itemOverlays.alwaysShowCrystal) {
+            displayMillis = currentTime;
+        } else {
+            if(currentTime - displayMillis > 10*1000) {
+                crystals.clear();
+                displayMillis = -1;
+            }
 
-        ItemStack held = p.getHeldItem();
-        String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-        if(internal != null) {
-            if(internal.endsWith("_CRYSTAL") && !internal.equals("POWER_CRYSTAL")) {
-                displayMillis = System.currentTimeMillis();
+            ItemStack held = p.getHeldItem();
+            String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
+            if(internal != null) {
+                if(internal.endsWith("_CRYSTAL") && !internal.equals("POWER_CRYSTAL")) {
+                    displayMillis = currentTime;
+                }
+            }
+
+            if(displayMillis < 0) {
+                return;
             }
         }
 
-        if(displayMillis < 0) {
-            return;
-        }
 
         Set<CrystalType> foundTypes = new HashSet<>();
         for(Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {
@@ -198,6 +204,8 @@ public class CrystalOverlay {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
+
         if(displayMillis < 0) {
             return;
         }
@@ -248,6 +256,8 @@ public class CrystalOverlay {
 
     @SubscribeEvent
     public void onRenderLast(RenderWorldLastEvent event) {
+        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
+
         if(displayMillis < 0) {
             return;
         }

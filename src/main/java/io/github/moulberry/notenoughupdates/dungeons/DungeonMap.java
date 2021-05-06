@@ -1042,7 +1042,7 @@ public class DungeonMap {
                 String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
                 line = Utils.cleanColour(line);
 
-                if(line.contains("(F1)") || line.contains("(E)")) {
+                if(line.contains("(F1)") || line.contains("(E)") || line.contains("(M1)")) {
                     isFloorOne = true;
                     break;
                 }

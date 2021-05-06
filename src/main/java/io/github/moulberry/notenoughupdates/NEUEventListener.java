@@ -17,7 +17,6 @@ import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
-import io.github.moulberry.notenoughupdates.mixins.GuiContainerAccessor;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.overlays.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
@@ -157,11 +156,56 @@ public class NEUEventListener {
     private final ExecutorService itemPreloader = Executors.newFixedThreadPool(10);
     private final List<ItemStack> toPreload = new ArrayList<>();
 
+    private int inventoryLoadedTicks = 0;
+    private String loadedInvName = "";
+    public static boolean inventoryLoaded = false;
+
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if(event.phase != TickEvent.Phase.START) return;
         if(Minecraft.getMinecraft().theWorld == null) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
+
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+            ContainerChest cc = (ContainerChest) chest.inventorySlots;
+
+            if(!loadedInvName.equals(cc.getLowerChestInventory().getDisplayName().getUnformattedText())) {
+                loadedInvName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+                inventoryLoaded = false;
+                inventoryLoadedTicks = 3;
+            }
+
+            if(!inventoryLoaded) {
+                if(cc.getLowerChestInventory().getStackInSlot(cc.getLowerChestInventory().getSizeInventory()-1) != null) {
+                    inventoryLoaded = true;
+                } else {
+                    for(ItemStack stack : chest.inventorySlots.getInventory()) {
+                        if(stack != null) {
+                            if(--inventoryLoadedTicks <= 0) {
+                                inventoryLoaded = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            inventoryLoaded = false;
+            inventoryLoadedTicks = 3;
+        }
+
+        if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD1) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD4) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD9)) {
+            ChatComponentText component = new ChatComponentText("\u00a7cYou are permanently banned from this server!");
+            component.appendText("\n");
+            component.appendText("\n\u00a77Reason: \u00a7rSuspicious account activity/Other");
+            component.appendText("\n\u00a77Find out more: \u00a7b\u00a7nhttps://www.hypixel.net/appeal");
+            component.appendText("\n");
+            component.appendText("\n\u00a77Ban ID: \u00a7r#49871982");
+            component.appendText("\n\u00a77Sharing your Ban ID may affect the processing of your appeal!");
+            Minecraft.getMinecraft().getNetHandler().getNetworkManager().closeChannel(component);
+            return;
+        }
 
         if(neu.hasSkyblockScoreboard()) {
             if(!preloadedItems) {
@@ -194,17 +238,8 @@ public class NEUEventListener {
             DungeonBlocks.tick();
         }
         DungeonWin.tick();
-        FlyFix.tick();
-
 
         if(longUpdate) {
-            /*for(Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {
-                if(entity instanceof EntityArmorStand) {
-                    EntityArmorStand stand = (EntityArmorStand) entity;
-                    stand.setInvisible(false);
-                    stand.getDataWatcher().updateObject(10, (byte)(stand.getDataWatcher().getWatchableObjectByte(10) & 0b1111111101111));
-                }
-            }*/
 
             CrystalOverlay.tick();
             DwarvenMinesTextures.tick();
@@ -212,40 +247,13 @@ public class NEUEventListener {
             XPInformation.getInstance().tick();
             ProfileApiSyncer.getInstance().tick();
             DamageCommas.tick();
+            ItemCustomizeManager.tick();
             BackgroundBlur.markDirty();
+            NPCRetexturing.getInstance().tick();
 
             if(neu.hasSkyblockScoreboard()) {
                 for(TextOverlay overlay : OverlayManager.textOverlays) {
                     overlay.tick();
-                }
-            }
-            if(TradeWindow.hypixelTradeWindowActive()) {
-                for(int i=0; i<16; i++) {
-                    int x = i % 4;
-                    int y = i / 4;
-                    int containerIndex = y*9+x+5;
-
-                    GuiContainer chest = ((GuiContainer)Minecraft.getMinecraft().currentScreen);
-
-                    ItemStack stack = chest.inventorySlots.getInventory().get(containerIndex);
-                    if(stack != null && BAD_ITEM_REGEX.matcher(Utils.cleanColour(stack.getDisplayName())).find()) {
-                        Minecraft.getMinecraft().ingameGUI.displayTitle(
-                                null, null,
-                                4, 200, 4);
-                        Minecraft.getMinecraft().ingameGUI.displayTitle(
-                                null,
-                                EnumChatFormatting.RED+"WARNING: GLITCHED ITEM DETECTED IN TRADE WINDOW. CANCELLING TRADE",
-                                -1, -1, -1);
-                        Minecraft.getMinecraft().ingameGUI.displayTitle(
-                                EnumChatFormatting.RED+"YOU ARE TRADING WITH A SCAMMER!",
-                                null,
-                                -1, -1, -1);
-                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
-                                "WARNING: The person you are trading with just tried to give you a glitched item.\n" +
-                                "The item is NOT worth what they say it is worth.\n" +
-                                "Report this scammer immediately and ignore them!"));
-                        break;
-                    }
                 }
             }
 
@@ -471,6 +479,8 @@ public class NEUEventListener {
         }
     }
 
+    public static long lastGuiClosed = 0;
+
     /**
      * When opening a GuiContainer, will reset the overlay and load the config.
      * When closing a GuiContainer, will save the config.
@@ -492,8 +502,14 @@ public class NEUEventListener {
             CalendarOverlay.setEnabled(false);
         }
 
+        if(Minecraft.getMinecraft().currentScreen != null) {
+            lastGuiClosed = System.currentTimeMillis();
+        }
+
         neu.manager.auctionManager.customAH.lastGuiScreenSwitch = System.currentTimeMillis();
         BetterContainers.reset();
+        inventoryLoaded = false;
+        inventoryLoadedTicks = 3;
 
         if(event.gui == null && neu.manager.auctionManager.customAH.isRenderOverAuctionView() &&
                 !(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)) {
@@ -762,10 +778,10 @@ public class NEUEventListener {
 
             if(event.gui instanceof GuiContainer) {
                 try {
-                    int xSize = ((GuiContainerAccessor)event.gui).getXSize();
-                    int ySize = ((GuiContainerAccessor)event.gui).getYSize();
-                    int guiLeft = ((GuiContainerAccessor)event.gui).getGuiLeft();
-                    int guiTop = ((GuiContainerAccessor)event.gui).getGuiTop();
+                    int xSize = ((GuiContainer)event.gui).xSize;
+                    int ySize = ((GuiContainer)event.gui).ySize;
+                    int guiLeft = ((GuiContainer)event.gui).guiLeft;
+                    int guiTop = ((GuiContainer)event.gui).guiTop;
 
                     hoverInv = event.getMouseX() > guiLeft && event.getMouseX() < guiLeft + xSize &&
                             event.getMouseY() > guiTop && event.getMouseY() < guiTop + ySize;
@@ -824,8 +840,25 @@ public class NEUEventListener {
             return;
         }
 
-        if(TradeWindow.tradeWindowActive() ||
-                event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+        String containerName = null;
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+        if(guiScreen instanceof GuiChest) {
+            GuiChest eventGui = (GuiChest) guiScreen;
+            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+            containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        }
+
+        boolean tradeWindowActive = TradeWindow.tradeWindowActive(containerName);
+        boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
+        boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
+
+        if(storageOverlayActive) {
+            StorageOverlay.getInstance().render();
+            event.setCanceled(true);
+            return;
+        }
+
+        if(tradeWindowActive || customAhActive) {
             event.setCanceled(true);
 
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
@@ -836,17 +869,17 @@ public class NEUEventListener {
             Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
 
             if(event.mouseX < width*neu.overlay.getWidthMult()/3 || event.mouseX > width-width*neu.overlay.getWidthMult()/3) {
-                if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+                if(customAhActive) {
                     neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
-                } else {
+                } else if(tradeWindowActive) {
                     TradeWindow.render(event.mouseX, event.mouseY);
                 }
                 neu.overlay.render(false);
             } else {
                 neu.overlay.render(false);
-                if(event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+                if(customAhActive) {
                     neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
-                } else {
+                } else if(tradeWindowActive) {
                     TradeWindow.render(event.mouseX, event.mouseY);
                 }
             }
@@ -861,10 +894,10 @@ public class NEUEventListener {
 
             GlStateManager.translate(0, 0, zOffset);
 
-            int xSize = ((GuiContainerAccessor)event.gui).getXSize();
-            int ySize = ((GuiContainerAccessor)event.gui).getYSize();
-            int guiLeft = ((GuiContainerAccessor)event.gui).getGuiLeft();
-            int guiTop = ((GuiContainerAccessor)event.gui).getGuiTop();
+            int xSize = ((GuiContainer)event.gui).xSize;
+            int ySize = ((GuiContainer)event.gui).ySize;
+            int guiLeft = ((GuiContainer)event.gui).guiLeft;
+            int guiTop = ((GuiContainer)event.gui).guiTop;
 
             for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
                 if(!button.isActive()) continue;
@@ -924,8 +957,19 @@ public class NEUEventListener {
         drawingGuiScreen = false;
         disableCraftingText = false;
 
-        if(!(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
-                neu.manager.auctionManager.customAH.isRenderOverAuctionView())) {
+        String containerName = null;
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+        if(guiScreen instanceof GuiChest) {
+            GuiChest eventGui = (GuiChest) guiScreen;
+            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+            containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        }
+
+        boolean tradeWindowActive = TradeWindow.tradeWindowActive(containerName);
+        boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
+        boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
+
+        if(!(tradeWindowActive || storageOverlayActive || customAhActive)) {
             if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
                 GlStateManager.pushMatrix();
                 if(!focusInv) {
@@ -948,10 +992,10 @@ public class NEUEventListener {
         if(!doInventoryButtons) return;
         if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) &&
                 event.gui instanceof GuiContainer) {
-            int xSize = ((GuiContainerAccessor)event.gui).getXSize();
-            int ySize = ((GuiContainerAccessor)event.gui).getYSize();
-            int guiLeft = ((GuiContainerAccessor)event.gui).getGuiLeft();
-            int guiTop = ((GuiContainerAccessor)event.gui).getGuiTop();
+            int xSize = ((GuiContainer)event.gui).xSize;
+            int ySize = ((GuiContainer)event.gui).ySize;
+            int guiLeft = ((GuiContainer)event.gui).guiLeft;
+            int guiTop = ((GuiContainer)event.gui).guiTop;
 
             for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
                 if(!button.isActive()) continue;
@@ -1000,10 +1044,10 @@ public class NEUEventListener {
 
         if(gui instanceof GuiChest && neu.config.dungeons.profitDisplayLoc != 2) {
             try {
-                int xSize = ((GuiContainerAccessor)gui).getXSize();
-                int ySize = ((GuiContainerAccessor)gui).getYSize();
-                int guiLeft = ((GuiContainerAccessor)gui).getGuiLeft();
-                int guiTop = ((GuiContainerAccessor)gui).getGuiTop();
+                int xSize = ((GuiContainer)gui).xSize;
+                int ySize = ((GuiContainer)gui).ySize;
+                int guiLeft = ((GuiContainer)gui).guiLeft;
+                int guiTop = ((GuiContainer)gui).guiTop;
 
                 GuiChest eventGui = (GuiChest) gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
@@ -1210,18 +1254,44 @@ public class NEUEventListener {
             event.setCanceled(true);
             return;
         }
-        if(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
-                neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+
+
+        final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+        final int scaledWidth = scaledresolution.getScaledWidth();
+        final int scaledHeight = scaledresolution.getScaledHeight();
+        int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
+        int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
+
+        String containerName = null;
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+        if(guiScreen instanceof GuiChest) {
+            GuiChest eventGui = (GuiChest) guiScreen;
+            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+            containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        }
+
+        boolean tradeWindowActive = TradeWindow.tradeWindowActive(containerName);
+        boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
+        boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
+
+        if(storageOverlayActive) {
+            if(StorageOverlay.getInstance().mouseInput(mouseX, mouseY)) {
+                event.setCanceled(true);
+            }
+            return;
+        }
+
+        if(tradeWindowActive || customAhActive) {
             event.setCanceled(true);
-            if(event.gui instanceof CustomAHGui ||
-                    neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+            if(customAhActive) {
                 neu.manager.auctionManager.customAH.handleMouseInput();
-            } else {
+            } else if(tradeWindowActive) {
                 TradeWindow.handleMouseInput();
             }
             neu.overlay.mouseInput();
             return;
         }
+
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
             if(!neu.config.accessoryBag.enableOverlay || !AccessoryBagOverlay.mouseClick()) {
                 if(!(hoverInv && focusInv)) {
@@ -1237,16 +1307,10 @@ public class NEUEventListener {
         if(!doInventoryButtons) return;
         if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) && Mouse.getEventButton() >= 0
                 && event.gui instanceof GuiContainer) {
-            int xSize = ((GuiContainerAccessor)event.gui).getXSize();
-            int ySize = ((GuiContainerAccessor)event.gui).getYSize();
-            int guiLeft = ((GuiContainerAccessor)event.gui).getGuiLeft();
-            int guiTop = ((GuiContainerAccessor)event.gui).getGuiTop();
-
-            final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-            final int scaledWidth = scaledresolution.getScaledWidth();
-            final int scaledHeight = scaledresolution.getScaledHeight();
-            int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
-            int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
+            int xSize = ((GuiContainer)event.gui).xSize;
+            int ySize = ((GuiContainer)event.gui).ySize;
+            int guiLeft = ((GuiContainer)event.gui).guiLeft;
+            int guiTop = ((GuiContainer)event.gui).guiTop;
 
             for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
                 if(!button.isActive()) continue;
@@ -1303,17 +1367,33 @@ public class NEUEventListener {
             return;
         }
 
-        if(TradeWindow.tradeWindowActive() || event.gui instanceof CustomAHGui ||
-                neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
-            if(event.gui instanceof CustomAHGui ||
-                    neu.manager.auctionManager.customAH.isRenderOverAuctionView()) {
+        String containerName = null;
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+        if(guiScreen instanceof GuiChest) {
+            GuiChest eventGui = (GuiChest) guiScreen;
+            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+            containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        }
+
+        boolean tradeWindowActive = TradeWindow.tradeWindowActive(containerName);
+        boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
+        boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
+
+        if(storageOverlayActive) {
+            event.setCanceled(true);
+            StorageOverlay.getInstance().keyboardInput();
+            return;
+        }
+
+        if(tradeWindowActive || customAhActive) {
+            if(customAhActive) {
                 if(neu.manager.auctionManager.customAH.keyboardInput()) {
                     event.setCanceled(true);
                     Minecraft.getMinecraft().dispatchKeypresses();
                 } else if(neu.overlay.keyboardInput(focusInv)) {
                     event.setCanceled(true);
                 }
-            } else {
+            } else if(tradeWindowActive) {
                 TradeWindow.keyboardInput();
                 if(Keyboard.getEventKey() != Keyboard.KEY_ESCAPE) {
                     event.setCanceled(true);

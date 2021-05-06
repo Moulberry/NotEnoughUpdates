@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -67,40 +68,26 @@ public class BetterContainers {
     }
 
     public static void bindHook(TextureManager textureManager, ResourceLocation location) {
-        if(isChestOpen()) {
-            Container container = ((GuiChest)Minecraft.getMinecraft().currentScreen).inventorySlots;
-            if(container instanceof ContainerChest) {
-                usingCached = true;
-                IInventory lower = ((ContainerChest)container).getLowerChestInventory();
-                int size = lower.getSizeInventory();
-                for(int index=0; index<size; index++) {
-                    if(lower.getStackInSlot(index) != null) {
-                        for(int index2=0; index2<size; index2++) {
-                            itemCache.put(index2, lower.getStackInSlot(index2));
-                        }
-                        usingCached = false;
-                        break;
-                    }
-                }
-            }
-
-            if((texture != null && loaded && lastClickedSlot != getClickedSlot()) ||
-                    lastUsingCached != getUsingCache() ||
-                    (texture == null && !loaded)) {
+        if(isChestOpen() && NEUEventListener.inventoryLoaded) {
+            if((texture != null && lastClickedSlot != getClickedSlot()) ||
+                    lastUsingCached != getUsingCache() || !loaded) {
                 lastUsingCached = getUsingCache();
                 lastClickedSlot = getClickedSlot();
                 generateTex(location);
             }
             if(texture != null && loaded) {
-                if(!usingCached) lastRenderMillis = System.currentTimeMillis();
                 lastRenderMillis = System.currentTimeMillis();
 
                 GlStateManager.color(1, 1, 1, 1);
-
                 textureManager.loadTexture(rl, texture);
                 textureManager.bindTexture(rl);
                 return;
             }
+        } else if(System.currentTimeMillis() - lastRenderMillis < 200 && texture != null) {
+            GlStateManager.color(1, 1, 1, 1);
+            textureManager.loadTexture(rl, texture);
+            textureManager.bindTexture(rl);
+            return;
         }
         GlStateManager.enableBlend();
         textureManager.bindTexture(location);
@@ -120,7 +107,7 @@ public class BetterContainers {
     }
 
     public static boolean isOverriding() {
-        return isChestOpen() && ((loaded && texture != null)) && !isBlacklistedInventory();
+        return isChestOpen() && ((loaded && texture != null) || System.currentTimeMillis() - lastRenderMillis < 200) && !isBlacklistedInventory();
     }
 
     public static boolean isBlankStack(ItemStack stack) {
@@ -166,7 +153,7 @@ public class BetterContainers {
 
     private static void generateTex(ResourceLocation location) {
         if(!hasItem()) return;
-        texture = null;
+
         loaded = true;
         Container container = ((GuiChest)Minecraft.getMinecraft().currentScreen).inventorySlots;
 
@@ -300,19 +287,25 @@ public class BetterContainers {
                         }
                     }
                 }
-                texture = new DynamicTexture(bufferedImageNew);
+                if(texture != null) {
+                    bufferedImageNew.getRGB(0, 0, bufferedImageNew.getWidth(), bufferedImageNew.getHeight(),
+                            texture.getTextureData(), 0, bufferedImageNew.getWidth());
+                    texture.updateDynamicTexture();
+                } else {
+                    texture = new DynamicTexture(bufferedImageNew);
+                }
+                return;
             } catch(Exception e) {
                 e.printStackTrace();
             }
         }
+        texture = null;
     }
 
     public static void reset() {
-        texture = null;
         loaded = false;
         clickedSlot = -1;
         clickedSlotMillis = 0;
-        textColour = 4210752;
     }
 
     private static boolean isChestOpen() {

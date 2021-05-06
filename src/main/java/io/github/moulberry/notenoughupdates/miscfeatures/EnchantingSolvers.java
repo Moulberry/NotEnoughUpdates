@@ -311,12 +311,19 @@ public class EnchantingSolvers {
 
                         if(chronomatronReplayIndex < chronomatronOrder.size()) {
                             String chronomatronCurrent = chronomatronOrder.get(chronomatronReplayIndex);
-                            if(true) {
+                            /*if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks ||
+                                    chronomatronCurrent.equals(displayName)) {
                                 chronomatronReplayIndex++;
                                 Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
                                         2, mode, Minecraft.getMinecraft().thePlayer);
                                 millisLastClick = currentTime;
+                            }*/
+                            if(chronomatronCurrent.equals(displayName)) {
+                                chronomatronReplayIndex++;
                             }
+                            Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
+                                    2, mode, Minecraft.getMinecraft().thePlayer);
+                            millisLastClick = currentTime;
                         }
                         return true;
                     }
@@ -333,8 +340,18 @@ public class EnchantingSolvers {
                             return true;
                         }
                         long currentTime = System.currentTimeMillis();
-                        if(currentTime - millisLastClick > 150) {
+                        /*if(currentTime - millisLastClick > 150 &&
+                                (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks ||
+                                current.containerIndex == slotId)) {
                             ultrasequencerReplayIndex++;
+                            Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
+                                    2, mode, Minecraft.getMinecraft().thePlayer);
+                            millisLastClick = currentTime;
+                        }*/
+                        if(currentTime - millisLastClick > 150) {
+                            if(current.containerIndex == slotId) {
+                                ultrasequencerReplayIndex++;
+                            }
                             Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
                                     2, mode, Minecraft.getMinecraft().thePlayer);
                             millisLastClick = currentTime;

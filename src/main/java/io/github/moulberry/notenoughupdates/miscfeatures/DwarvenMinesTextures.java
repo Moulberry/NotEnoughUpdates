@@ -50,6 +50,7 @@ public class DwarvenMinesTextures {
     private static boolean error = false;
 
     public static int retexture(BlockPos pos) {
+        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenTextures) return 0;
         if(error) return 0;
         if(Minecraft.getMinecraft().theWorld == null) return 0;
 
@@ -220,6 +221,8 @@ public class DwarvenMinesTextures {
     //Don't render clay - mesaPlateau_F
 
     public static void tick() {
+        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenTextures) return;
+
         time = System.currentTimeMillis();
         Set<ChunkCoordIntPair> remove = new HashSet<>();
         for(Map.Entry<ChunkCoordIntPair, Long> entry : lastRetextureCheck.entrySet()) {

@@ -9,6 +9,7 @@ import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
+import io.github.moulberry.notenoughupdates.core.util.MiscUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.cosmetics.GuiCosmetics;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonMap;
@@ -32,6 +33,7 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.util.XPInformation;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -42,7 +44,6 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
-import net.minecraft.event.HoverEvent;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.ScoreObjective;
@@ -62,7 +63,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
-import org.apache.commons.lang3.text.translate.UnicodeUnescaper;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
@@ -147,7 +147,7 @@ public class NotEnoughUpdates {
         }
     });
 
-    SimpleCommand itemRenameCommand = new SimpleCommand("neurename", new SimpleCommand.ProcessCommandRunnable() {
+    /*SimpleCommand itemRenameCommand = new SimpleCommand("neurename", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(args.length == 0) {
                 args = new String[]{"help"};
@@ -230,7 +230,7 @@ public class NotEnoughUpdates {
 
             }
         }
-    });
+    });*/
 
     SimpleCommand gamemodesCommand = new SimpleCommand("neugamemodes", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -559,6 +559,7 @@ public class NotEnoughUpdates {
                 builder.append("[API Key]").append("[").append(!config.apiKey.apiKey.isEmpty()).append("]").append("\n");
                 builder.append("[On Skyblock]").append("[").append(hasSkyblockScoreboard).append("]").append("\n");
                 builder.append("[Mod Version]").append("[").append(Loader.instance().getIndexedModList().get(MODID).getSource().getName()).append("]").append("\n");
+                builder.append("[SB Profile]").append("[").append(SBInfo.getInstance().currentProfile).append("]").append("\n");
                 builder.append("# Repo Stats").append("\n");
                 builder.append("[Last Commit]").append("[").append(manager.latestRepoCommit).append("]").append("\n");
                 builder.append("[Loaded Items]").append("[").append(manager.getItemInformation().size()).append("]").append("\n");
@@ -709,7 +710,7 @@ public class NotEnoughUpdates {
             "Are you sure you want to use this? Type 'Yes' in chat.", "Lmao you thought", "Ok please stop",
             "What do you want from me?", "This command almost certainly does nothing useful for you",
             "Ok, this is the last message, after this it will repeat", "No.", "Dammit. I thought that would work. Uhh...",
-            "\u00a7dFrom \u00a7c[ADMIN] Minikloon\u00a77: If you use that command again, I'll have to ban you",
+            "\u00a7dFrom \u00a7c[ADMIN] Minikloon\u00a77: If you use that command again, I'll have to ban you", "",
             "Ok, this is actually the last message, use the command again and you'll crash I promise"};
     private int devFailIndex = 0;
     SimpleCommand devTestCommand = new SimpleCommand("neudevtest", new SimpleCommand.ProcessCommandRunnable() {
@@ -723,6 +724,19 @@ public class NotEnoughUpdates {
                             throw new Error("Double L");
                         }
                     };
+                }
+                if(devFailIndex == devFailStrings.length-2) {
+                    devFailIndex++;
+
+                    ChatComponentText component = new ChatComponentText("\u00a7cYou are permanently banned from this server!");
+                    component.appendText("\n");
+                    component.appendText("\n\u00a77Reason: \u00a7rI told you not to run the command - Moulberry");
+                    component.appendText("\n\u00a77Find out more: \u00a7b\u00a7nhttps://www.hypixel.net/appeal");
+                    component.appendText("\n");
+                    component.appendText("\n\u00a77Ban ID: \u00a7r#49871982");
+                    component.appendText("\n\u00a77Sharing your Ban ID may affect the processing of your appeal!");
+                    Minecraft.getMinecraft().getNetHandler().getNetworkManager().closeChannel(component);
+                    return;
                 }
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+devFailStrings[devFailIndex++]));
                 return;
@@ -750,6 +764,28 @@ public class NotEnoughUpdates {
     SimpleCommand packDevCommand = new SimpleCommand("neupackdev", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
+            if(args.length == 1 && args[0].equalsIgnoreCase("getnpc")) {
+                double distSq = 25;
+                EntityPlayer closestNPC = null;
+                EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
+                for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                    if(player instanceof AbstractClientPlayer && p != player && player.getUniqueID().version() != 4) {
+                        double dSq = player.getDistanceSq(p.posX, p.posY, p.posZ);
+                        if(dSq < distSq) {
+                            distSq = dSq;
+                            closestNPC = player;
+                        }
+                    }
+                }
+
+                if(closestNPC == null) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"No NPCs found within 5 blocks :("));
+                } else {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Copied entity texture id to clipboard"));
+                    MiscUtils.copyToClipboard(((AbstractClientPlayer)closestNPC).getLocationSkin().getResourcePath().replace("skins/", ""));
+                }
+                return;
+            }
             packDevEnabled = !packDevEnabled;
             if(packDevEnabled) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Enabled pack developer mode."));
@@ -942,6 +978,26 @@ public class NotEnoughUpdates {
         }
     });
 
+    SimpleCommand customizeCommand = new SimpleCommand("neucustomize", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
+
+            if(held == null) {
+                sender.addChatMessage(new ChatComponentText("\u00a7cYou can't customize your hand..."));
+                return;
+            }
+
+            String heldUUID = manager.getUUIDForItem(held);
+
+            if(heldUUID == null) {
+                sender.addChatMessage(new ChatComponentText("\u00a7cHeld item does not have UUID, cannot be customized"));
+                return;
+            }
+
+            openGui = new GuiItemCustomize(held, heldUUID);
+        }
+    });
+
     SimpleCommand.ProcessCommandRunnable settingsRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             if(args.length > 0) {
@@ -992,6 +1048,8 @@ public class NotEnoughUpdates {
      */
     @EventHandler
     public void preinit(FMLPreInitializationEvent event) {
+        //if(!Minecraft.getMinecraft().getSession().getUsername().equalsIgnoreCase("moulberry")) throw new RuntimeException("moulbeBad");
+
         INSTANCE = this;
 
         String uuid = Minecraft.getMinecraft().getSession().getPlayerID();
@@ -1008,7 +1066,10 @@ public class NotEnoughUpdates {
             } catch(Exception e) { }
         }
 
+        ItemCustomizeManager.loadCustomization(new File(neuDir, "itemCustomization.json"));
+        StorageManager.getInstance().loadConfig(new File(neuDir, "storageItems.json"));
         FairySouls.load(new File(neuDir, "collected_fairy_souls.json"), gson);
+        PetInfoOverlay.loadConfig(new File(neuDir, "petCache.json"));
 
         if(config == null) {
             config = new NEUConfig();
@@ -1036,9 +1097,13 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(OverlayManager.petInfoOverlay);
         MinecraftForge.EVENT_BUS.register(OverlayManager.timersOverlay);
         MinecraftForge.EVENT_BUS.register(new NullzeeSphere());
+        MinecraftForge.EVENT_BUS.register(InventoryStorageSelector.getInstance());
+        MinecraftForge.EVENT_BUS.register(SlotLocking.getInstance());
 
         if(Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
             ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());
+            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(NPCRetexturing.getInstance());
+            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(new ItemCustomizeManager.ReloadListener());
         }
 
         ClientCommandHandler.instance.registerCommand(collectionLogCommand);
@@ -1049,12 +1114,13 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(buttonsCommand);
         ClientCommandHandler.instance.registerCommand(resetRepoCommand);
         ClientCommandHandler.instance.registerCommand(reloadRepoCommand);
-        ClientCommandHandler.instance.registerCommand(itemRenameCommand);
+        //ClientCommandHandler.instance.registerCommand(itemRenameCommand);
         ClientCommandHandler.instance.registerCommand(joinDungeonCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileCommand);
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
         ClientCommandHandler.instance.registerCommand(dhCommand);
         ClientCommandHandler.instance.registerCommand(dnCommand);
+        ClientCommandHandler.instance.registerCommand(customizeCommand);
         ClientCommandHandler.instance.registerCommand(devTestCommand);
         ClientCommandHandler.instance.registerCommand(packDevCommand);
         if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
@@ -1091,7 +1157,7 @@ public class NotEnoughUpdates {
                 }
                 tmp.delete();
             }
-            saveConfig();
+            //saveConfig();
         }));
     }
 
@@ -1102,9 +1168,12 @@ public class NotEnoughUpdates {
             try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
                 writer.write(gson.toJson(config));
             }
+        } catch(Exception ignored) {}
 
-            FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson);
-        } catch(IOException ignored) {}
+        try { ItemCustomizeManager.saveCustomization(new File(neuDir, "itemCustomization.json")); } catch(Exception ignored) {}
+        try { StorageManager.getInstance().saveConfig(new File(neuDir, "storageItems.json")); } catch(Exception ignored) {}
+        try { FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson); } catch(Exception ignored) {}
+        try { PetInfoOverlay.saveConfig(new File(neuDir, "petCache.json")); } catch(Exception ignored) {}
     }
 
     /**
@@ -1167,6 +1236,11 @@ public class NotEnoughUpdates {
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
+        if(Minecraft.getMinecraft().thePlayer == null) {
+            openGui = null;
+            currChatMessage = null;
+            return;
+        }
         long currentTime = System.currentTimeMillis();
 
         if (openGui != null) {

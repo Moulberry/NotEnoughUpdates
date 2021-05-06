@@ -371,14 +371,15 @@ public class NEUConfigEditor extends GuiElement {
             ConfigProcessor.ProcessedCategory cat = currentConfigEditing.get(getSelectedCategory());
             int optionWidthDefault = innerRight-innerLeft-20;
             GlStateManager.enableDepth();
-            Set<Integer> activeAccordions = new HashSet<>();
+            HashMap<Integer, Integer> activeAccordions = new HashMap<>();
             for(ConfigProcessor.ProcessedOption option : getOptionsInCategory(cat).values()) {
                 int optionWidth = optionWidthDefault;
                 if(option.accordionId >= 0) {
-                    if(!activeAccordions.contains(option.accordionId)) {
+                    if(!activeAccordions.containsKey(option.accordionId)) {
                         continue;
                     }
-                    optionWidth = optionWidthDefault - 2*innerPadding;
+                    int accordionDepth = activeAccordions.get(option.accordionId);
+                    optionWidth = optionWidthDefault - (2*innerPadding)*(accordionDepth+1);
                 }
 
                 GuiOptionEditor editor = option.editor;
@@ -388,7 +389,11 @@ public class NEUConfigEditor extends GuiElement {
                 if(editor instanceof GuiOptionEditorAccordion) {
                     GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
                     if(accordion.getToggled()) {
-                        activeAccordions.add(accordion.getAccordionId());
+                        int accordionDepth = 0;
+                        if(option.accordionId >= 0) {
+                            accordionDepth = activeAccordions.get(option.accordionId)+1;
+                        }
+                        activeAccordions.put(accordion.getAccordionId(), accordionDepth);
                     }
                 }
                 int optionHeight = editor.getHeight();
@@ -413,14 +418,15 @@ public class NEUConfigEditor extends GuiElement {
 
             GlStateManager.translate(0, 0, 10);
             GlStateManager.enableDepth();
-            Set<Integer> activeAccordions = new HashSet<>();
+            HashMap<Integer, Integer> activeAccordions = new HashMap<>();
             for(ConfigProcessor.ProcessedOption option : getOptionsInCategory(cat).values()) {
                 int optionWidth = optionWidthDefault;
                 if(option.accordionId >= 0) {
-                    if(!activeAccordions.contains(option.accordionId)) {
+                    if(!activeAccordions.containsKey(option.accordionId)) {
                         continue;
                     }
-                    optionWidth = optionWidthDefault - 2*innerPadding;
+                    int accordionDepth = activeAccordions.get(option.accordionId);
+                    optionWidth = optionWidthDefault - (2*innerPadding)*(accordionDepth+1);
                 }
 
                 GuiOptionEditor editor = option.editor;
@@ -430,7 +436,11 @@ public class NEUConfigEditor extends GuiElement {
                 if(editor instanceof GuiOptionEditorAccordion) {
                     GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
                     if(accordion.getToggled()) {
-                        activeAccordions.add(accordion.getAccordionId());
+                        int accordionDepth = 0;
+                        if(option.accordionId >= 0) {
+                            accordionDepth = activeAccordions.get(option.accordionId)+1;
+                        }
+                        activeAccordions.put(accordion.getAccordionId(), accordionDepth);
                     }
                 }
                 int optionHeight = editor.getHeight();
@@ -561,10 +571,10 @@ public class NEUConfigEditor extends GuiElement {
                 int optionY = -newTarget;
                 if(getSelectedCategory() != null && getCurrentConfigEditing() != null && getCurrentConfigEditing().containsKey(getSelectedCategory())) {
                     ConfigProcessor.ProcessedCategory cat = getCurrentConfigEditing().get(getSelectedCategory());
-                    Set<Integer> activeAccordions = new HashSet<>();
+                    HashMap<Integer, Integer> activeAccordions = new HashMap<>();
                     for(ConfigProcessor.ProcessedOption option : getOptionsInCategory(cat).values()) {
                         if(option.accordionId >= 0) {
-                            if(!activeAccordions.contains(option.accordionId)) {
+                            if(!activeAccordions.containsKey(option.accordionId)) {
                                 continue;
                             }
                         }
@@ -574,11 +584,15 @@ public class NEUConfigEditor extends GuiElement {
                             continue;
                         }
                         if(editor instanceof GuiOptionEditorAccordion) {
-                            GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
-                            if(accordion.getToggled()) {
-                                activeAccordions.add(accordion.getAccordionId());
-                            }
+                    GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
+                    if(accordion.getToggled()) {
+                        int accordionDepth = 0;
+                        if(option.accordionId >= 0) {
+                            accordionDepth = activeAccordions.get(option.accordionId)+1;
                         }
+                        activeAccordions.put(accordion.getAccordionId(), accordionDepth);
+                    }
+                }
                         optionY += editor.getHeight() + 5;
 
                         if(optionY > 0) {
@@ -627,14 +641,15 @@ public class NEUConfigEditor extends GuiElement {
         int optionY = -optionsScroll.getValue();
         if(getSelectedCategory() != null && getCurrentConfigEditing() != null && getCurrentConfigEditing().containsKey(getSelectedCategory())) {
             int optionWidthDefault = innerRight-innerLeft-20;
-            ConfigProcessor.ProcessedCategory cat = getCurrentConfigEditing().get(getSelectedCategory());Set<Integer> activeAccordions = new HashSet<>();
+            ConfigProcessor.ProcessedCategory cat = getCurrentConfigEditing().get(getSelectedCategory());HashMap<Integer, Integer> activeAccordions = new HashMap<>();
             for(ConfigProcessor.ProcessedOption option : getOptionsInCategory(cat).values()) {
                 int optionWidth = optionWidthDefault;
                 if(option.accordionId >= 0) {
-                    if(!activeAccordions.contains(option.accordionId)) {
+                    if(!activeAccordions.containsKey(option.accordionId)) {
                         continue;
                     }
-                    optionWidth = optionWidthDefault - 2*innerPadding;
+                    int accordionDepth = activeAccordions.get(option.accordionId);
+                    optionWidth = optionWidthDefault - (2*innerPadding)*(accordionDepth+1);
                 }
 
                 GuiOptionEditor editor = option.editor;
@@ -644,7 +659,11 @@ public class NEUConfigEditor extends GuiElement {
                 if(editor instanceof GuiOptionEditorAccordion) {
                     GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
                     if(accordion.getToggled()) {
-                        activeAccordions.add(accordion.getAccordionId());
+                        int accordionDepth = 0;
+                        if(option.accordionId >= 0) {
+                            accordionDepth = activeAccordions.get(option.accordionId)+1;
+                        }
+                        activeAccordions.put(accordion.getAccordionId(), accordionDepth);
                     }
                 }
                 if(editor.mouseInputOverlay((innerLeft+innerRight-optionWidth)/2-5, innerTop+5+optionY, optionWidth, mouseX, mouseY)) {
@@ -660,26 +679,31 @@ public class NEUConfigEditor extends GuiElement {
             if(getSelectedCategory() != null && getCurrentConfigEditing() != null && getCurrentConfigEditing().containsKey(getSelectedCategory())) {
                 int optionWidthDefault = innerRight-innerLeft-20;
                 ConfigProcessor.ProcessedCategory cat = getCurrentConfigEditing().get(getSelectedCategory());
-                Set<Integer> activeAccordions = new HashSet<>();
+                HashMap<Integer, Integer> activeAccordions = new HashMap<>();
                 for(ConfigProcessor.ProcessedOption option : getOptionsInCategory(cat).values()) {
                     int optionWidth = optionWidthDefault;
                     if(option.accordionId >= 0) {
-                        if(!activeAccordions.contains(option.accordionId)) {
-                            continue;
-                        }
-                        optionWidth = optionWidthDefault - 2*innerPadding;
+                    if(!activeAccordions.containsKey(option.accordionId)) {
+                        continue;
                     }
+                    int accordionDepth = activeAccordions.get(option.accordionId);
+                    optionWidth = optionWidthDefault - (2*innerPadding)*(accordionDepth+1);
+                }
 
                     GuiOptionEditor editor = option.editor;
                     if(editor == null) {
                         continue;
                     }
                     if(editor instanceof GuiOptionEditorAccordion) {
-                        GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
-                        if(accordion.getToggled()) {
-                            activeAccordions.add(accordion.getAccordionId());
+                    GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
+                    if(accordion.getToggled()) {
+                        int accordionDepth = 0;
+                        if(option.accordionId >= 0) {
+                            accordionDepth = activeAccordions.get(option.accordionId)+1;
                         }
+                        activeAccordions.put(accordion.getAccordionId(), accordionDepth);
                     }
+                }
                     if(editor.mouseInput((innerLeft+innerRight-optionWidth)/2-5, innerTop+5+optionY, optionWidth, mouseX, mouseY)) {
                         return true;
                     }
@@ -713,10 +737,10 @@ public class NEUConfigEditor extends GuiElement {
 
         if(getSelectedCategory() != null && getCurrentConfigEditing() != null && getCurrentConfigEditing().containsKey(getSelectedCategory())) {
             ConfigProcessor.ProcessedCategory cat = getCurrentConfigEditing().get(getSelectedCategory());
-            Set<Integer> activeAccordions = new HashSet<>();
+            HashMap<Integer, Integer> activeAccordions = new HashMap<>();
             for(ConfigProcessor.ProcessedOption option : getOptionsInCategory(cat).values()) {
                 if(option.accordionId >= 0) {
-                    if(!activeAccordions.contains(option.accordionId)) {
+                    if(!activeAccordions.containsKey(option.accordionId)) {
                         continue;
                     }
                 }
@@ -728,7 +752,11 @@ public class NEUConfigEditor extends GuiElement {
                 if(editor instanceof GuiOptionEditorAccordion) {
                     GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
                     if(accordion.getToggled()) {
-                        activeAccordions.add(accordion.getAccordionId());
+                        int accordionDepth = 0;
+                        if(option.accordionId >= 0) {
+                            accordionDepth = activeAccordions.get(option.accordionId)+1;
+                        }
+                        activeAccordions.put(accordion.getAccordionId(), accordionDepth);
                     }
                 }
                 if(editor.keyboardInput()) {

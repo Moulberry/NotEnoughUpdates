@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
-import io.github.moulberry.notenoughupdates.mixins.GuiEditSignAccessor;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -19,10 +18,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.C0DPacketCloseWindow;
 import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -84,7 +81,7 @@ public class AuctionSearchOverlay {
         if(lastContainer == null) return false;
         if(!lastContainer.equals("Auctions Browser") && !lastContainer.startsWith("Auctions: ")) return false;
 
-        TileEntitySign tes = ((GuiEditSignAccessor)Minecraft.getMinecraft().currentScreen).getTileSign();
+        TileEntitySign tes = ((GuiEditSign)Minecraft.getMinecraft().currentScreen).tileSign;
 
         if(tes == null) return false;
         if(tes.getPos().getY() != 0) return false;
@@ -207,7 +204,7 @@ public class AuctionSearchOverlay {
         }
 
 
-        TileEntitySign tes = ((GuiEditSignAccessor)Minecraft.getMinecraft().currentScreen).getTileSign();
+        TileEntitySign tes = ((GuiEditSign)Minecraft.getMinecraft().currentScreen).tileSign;
 
         String search = searchString.trim();
         if(searchStringExtra != null && !searchStringExtra.isEmpty()) {

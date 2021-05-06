@@ -32,8 +32,8 @@ public class GuiElementColour extends GuiElement {
 
     private int x;
     private int y;
-    private final int xSize = 119;
-    private final int ySize = 89;
+    private int xSize = 119;
+    private int ySize = 89;
 
     private float wheelAngle = 0;
     private float wheelRadius = 0;
@@ -44,9 +44,16 @@ public class GuiElementColour extends GuiElement {
     private Runnable closeCallback;
     private String colour;
 
+    private final boolean opacitySlider;
+    private final boolean valueSlider;
+
     public GuiElementColour(int x, int y, String initialColour, Consumer<String> colourChangedCallback,
                             Runnable closeCallback) {
+        this(x, y, initialColour, colourChangedCallback, closeCallback, true, true);
+    }
 
+    public GuiElementColour(int x, int y, String initialColour, Consumer<String> colourChangedCallback,
+                            Runnable closeCallback, boolean opacitySlider, boolean valueSlider) {
         final ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
         this.y = Math.max(10, Math.min(scaledResolution.getScaledHeight()-ySize-10, y));
@@ -60,6 +67,12 @@ public class GuiElementColour extends GuiElement {
         Color c = new Color(colour);
         float[] hsv = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
         updateAngleAndRadius(hsv);
+
+        this.opacitySlider = opacitySlider;
+        this.valueSlider = valueSlider;
+
+        if(!valueSlider) xSize -= 15;
+        if(!opacitySlider) xSize -= 15;
     }
 
     public void updateAngleAndRadius(float[] hsv) {
@@ -127,19 +140,29 @@ public class GuiElementColour extends GuiElement {
         int selx = (int)(Math.cos(Math.toRadians(wheelAngle))*selradius);
         int sely = (int)(Math.sin(Math.toRadians(wheelAngle))*selradius);
 
-        Minecraft.getMinecraft().getTextureManager().bindTexture(colour_selector_bar_alpha);
-        GlStateManager.color(1, 1, 1, 1);
-        RenderUtils.drawTexturedRect(x+5+64+5+10+5, y+5, 10, 64, GL11.GL_NEAREST);
+        int valueOffset = 0;
+        if(valueSlider) {
+            valueOffset = 15;
 
-        Minecraft.getMinecraft().getTextureManager().loadTexture(colourPickerBarValueLocation, new DynamicTexture(bufferedImageValue));
-        Minecraft.getMinecraft().getTextureManager().bindTexture(colourPickerBarValueLocation);
-        GlStateManager.color(1, 1, 1, 1);
-        RenderUtils.drawTexturedRect(x+5+64+5, y+5, 10, 64, GL11.GL_NEAREST);
+            Minecraft.getMinecraft().getTextureManager().loadTexture(colourPickerBarValueLocation, new DynamicTexture(bufferedImageValue));
+            Minecraft.getMinecraft().getTextureManager().bindTexture(colourPickerBarValueLocation);
+            GlStateManager.color(1, 1, 1, 1);
+            RenderUtils.drawTexturedRect(x+5+64+5, y+5, 10, 64, GL11.GL_NEAREST);
+        }
 
-        Minecraft.getMinecraft().getTextureManager().loadTexture(colourPickerBarOpacityLocation, new DynamicTexture(bufferedImageOpacity));
-        Minecraft.getMinecraft().getTextureManager().bindTexture(colourPickerBarOpacityLocation);
-        GlStateManager.color(1, 1, 1, 1);
-        RenderUtils.drawTexturedRect(x+5+64+5+10+5, y+5, 10, 64, GL11.GL_NEAREST);
+        int opacityOffset = 0;
+        if(opacitySlider) {
+            opacityOffset = 15;
+
+            Minecraft.getMinecraft().getTextureManager().bindTexture(colour_selector_bar_alpha);
+            GlStateManager.color(1, 1, 1, 1);
+            RenderUtils.drawTexturedRect(x+5+64+5+valueOffset, y+5, 10, 64, GL11.GL_NEAREST);
+            
+            Minecraft.getMinecraft().getTextureManager().loadTexture(colourPickerBarOpacityLocation, new DynamicTexture(bufferedImageOpacity));
+            Minecraft.getMinecraft().getTextureManager().bindTexture(colourPickerBarOpacityLocation);
+            GlStateManager.color(1, 1, 1, 1);
+            RenderUtils.drawTexturedRect(x+5+64+5+valueOffset, y+5, 10, 64, GL11.GL_NEAREST);
+        }
 
         int chromaSpeed = ChromaColour.getSpeed(colour);
         int currentColourChroma = ChromaColour.specialToChromaRGB(colour);
@@ -147,35 +170,35 @@ public class GuiElementColour extends GuiElement {
         float hsvChroma[] = Color.RGBtoHSB(cChroma.getRed(), cChroma.getGreen(), cChroma.getBlue(), null);
 
         if(chromaSpeed > 0) {
-            Gui.drawRect(x+5+64+5+10+5+10+5+1, y+5+1,
-                    x+5+64+5+10+5+10+5+10-1, y+5+64-1,
+            Gui.drawRect(x+5+64+valueOffset+opacityOffset+5+1, y+5+1,
+                    x+5+64+valueOffset+opacityOffset+5+10-1, y+5+64-1,
                     Color.HSBtoRGB(hsvChroma[0], 0.8f, 0.8f));
         } else {
-            Gui.drawRect(x+5+64+5+10+5+10+5+1, y+5+27+1,
-                    x+5+64+5+10+5+10+5+10-1, y+5+37-1,
+            Gui.drawRect(x+5+64+valueOffset+opacityOffset+5+1, y+5+27+1,
+                    x+5+64+valueOffset+opacityOffset+5+10-1, y+5+37-1,
                     Color.HSBtoRGB((hsvChroma[0]+(System.currentTimeMillis()-ChromaColour.startTime)/1000f)%1, 0.8f, 0.8f));
         }
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(colour_selector_bar);
         GlStateManager.color(1, 1, 1, 1);
-        RenderUtils.drawTexturedRect(x+5+64+5, y+5, 10, 64, GL11.GL_NEAREST);
-        RenderUtils.drawTexturedRect(x+5+64+5+10+5, y+5, 10, 64, GL11.GL_NEAREST);
+        if(valueSlider) RenderUtils.drawTexturedRect(x+5+64+5, y+5, 10, 64, GL11.GL_NEAREST);
+        if(opacitySlider) RenderUtils.drawTexturedRect(x+5+64+5+valueOffset, y+5, 10, 64, GL11.GL_NEAREST);
 
         if(chromaSpeed > 0) {
-            RenderUtils.drawTexturedRect(x+5+64+5+10+5+10+5, y+5, 10, 64, GL11.GL_NEAREST);
+            RenderUtils.drawTexturedRect(x+5+64+valueOffset+opacityOffset+5, y+5, 10, 64, GL11.GL_NEAREST);
         } else {
             Minecraft.getMinecraft().getTextureManager().bindTexture(colour_selector_chroma);
-            RenderUtils.drawTexturedRect(x+5+64+5+10+5+10+5, y+5+27, 10, 10, GL11.GL_NEAREST);
+            RenderUtils.drawTexturedRect(x+5+64+valueOffset+opacityOffset+5, y+5+27, 10, 10, GL11.GL_NEAREST);
         }
 
-        Gui.drawRect(x+5+64+5, y+5+64-(int)(64*hsv[2]),
-                x+5+64+5+10, y+5+64-(int)(64*hsv[2])+1, 0xFF000000);
-        Gui.drawRect(x+5+64+5+10+5, y+5+64-c.getAlpha()/4,
-                x+5+64+5+10+5+10, y+5+64-c.getAlpha()/4-1, 0xFF000000);
+        if(valueSlider) Gui.drawRect(x+5+64+5, y+5+64-(int)(64*hsv[2]),
+                x+5+64+valueOffset, y+5+64-(int)(64*hsv[2])+1, 0xFF000000);
+        if(opacitySlider) Gui.drawRect(x+5+64+5+valueOffset, y+5+64-c.getAlpha()/4,
+                x+5+64+valueOffset+opacityOffset, y+5+64-c.getAlpha()/4-1, 0xFF000000);
         if(chromaSpeed > 0) {
-            Gui.drawRect(x+5+64+5+10+5+10+5,
+            Gui.drawRect(x+5+64+valueOffset+opacityOffset+5,
                     y+5+64-(int)(chromaSpeed/255f*64),
-                    x+5+64+5+10+5+10+5+10,
+                    x+5+64+valueOffset+opacityOffset+5+10,
                     y+5+64-(int)(chromaSpeed/255f*64)+1, 0xFF000000);
         }
 
@@ -191,14 +214,16 @@ public class GuiElementColour extends GuiElement {
         TextRenderUtils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+Math.round(hsv[2]*100)+"",
                 Minecraft.getMinecraft().fontRendererObj,
                 x+5+64+5+5-(Math.round(hsv[2]*100)==100?1:0), y+5+64+5+5, true, 13, -1);
-        TextRenderUtils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+Math.round(c.getAlpha()/255f*100)+"",
-                Minecraft.getMinecraft().fontRendererObj,
-                x+5+64+5+15+5, y+5+64+5+5, true, 13, -1);
+        if(opacitySlider) {
+            TextRenderUtils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+Math.round(c.getAlpha()/255f*100)+"",
+                    Minecraft.getMinecraft().fontRendererObj,
+                    x+5+64+5+15+5, y+5+64+5+5, true, 13, -1);
+        }
         if(chromaSpeed > 0) {
             TextRenderUtils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+
                             (int)ChromaColour.getSecondsForSpeed(chromaSpeed)+"s",
                     Minecraft.getMinecraft().fontRendererObj,
-                    x+5+64+5+30+6, y+5+64+5+5, true, 13, -1);
+                    x+5+64+5+valueOffset+15+6, y+5+64+5+5, true, 13, -1);
         }
 
         hexField.setSize(48, 10);
@@ -250,20 +275,27 @@ public class GuiElementColour extends GuiElement {
                 int xValue = mouseX - (x+5+64+5);
                 int y = mouseY - this.y - 5;
 
+                int opacityOffset = opacitySlider ? 15 : 0;
+                int valueOffset = valueSlider ? 15 : 0;
+
                 if(y > -5 && y <= 69) {
-                    if(xValue > 0 && xValue < 10) {
-                        clickedComponent = 1;
+                    if(valueSlider) {
+                        if(xValue > 0 && xValue < 10) {
+                            clickedComponent = 1;
+                        }
                     }
 
-                    int xOpacity = mouseX - (x+5+64+5+10+5);
+                    if(opacitySlider) {
+                        int xOpacity = mouseX - (x+5+64+5+valueOffset);
 
-                    if(xOpacity > 0 && xOpacity < 10) {
-                        clickedComponent = 2;
+                        if(xOpacity > 0 && xOpacity < 10) {
+                            clickedComponent = 2;
+                        }
                     }
                 }
 
                 int chromaSpeed = ChromaColour.getSpeed(colour);
-                int xChroma = mouseX - (x+5+64+5+10+5+10+5);
+                int xChroma = mouseX - (x+5+64+valueOffset+opacityOffset+5);
                 if(xChroma > 0 && xChroma < 10) {
                     if(chromaSpeed > 0) {
                         if(y > -5 && y <= 69) {

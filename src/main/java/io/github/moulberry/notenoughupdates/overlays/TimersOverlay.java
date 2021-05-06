@@ -162,6 +162,11 @@ public class TimersOverlay extends TextOverlay {
 
     @Override
     public void update() {
+        if(true) {
+            overlayStrings = null;
+            return;
+        }
+
         long currentTime = System.currentTimeMillis();
 
         NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();

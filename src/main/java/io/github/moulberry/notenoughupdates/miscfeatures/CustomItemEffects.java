@@ -209,7 +209,7 @@ public class CustomItemEffects {
                 if(NotEnoughUpdates.INSTANCE.config.itemOverlays.highlightTargeted) {
                     List<Entity> entities = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABBExcludingEntity(Minecraft.getMinecraft().thePlayer, bb);
                     for(Entity entity : entities) {
-                        if(entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand)) {
+                        if(entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand) && !entity.isInvisible()) {
                             if(!bonemeragedEntities.contains(entity)) {
                                 bonemeragedEntities.add((EntityLivingBase)entity);
                             }

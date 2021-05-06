@@ -1112,11 +1112,15 @@ public class NEUOverlay extends Gui {
                 float cost1 = manager.auctionManager.getLowestBin(o1.get("internalname").getAsString());
                 float cost2 = manager.auctionManager.getLowestBin(o2.get("internalname").getAsString());
 
-                if(cost1 == -1) cost1 = manager.auctionManager.getCraftCost(o1.get("internalname").getAsString()).craftCost;
-                if(cost2 == -1) cost2 = manager.auctionManager.getCraftCost(o2.get("internalname").getAsString()).craftCost;
+                float craftCost1 = manager.auctionManager.getCraftCost(o1.get("internalname").getAsString()).craftCost;
+                float craftCost2 = manager.auctionManager.getCraftCost(o2.get("internalname").getAsString()).craftCost;
 
-                if(cost1 < cost2) return mult;
-                if(cost1 > cost2) return -mult;
+                float diff = (cost1 - craftCost1) - (cost2 - craftCost2);
+
+                if(diff > 0) return mult;
+                if(diff < 0) return -mult;
+                /*if(cost1 < cost2) return mult;
+                if(cost1 > cost2) return -mult;*/
             }
 
             String i1 = o1.get("internalname").getAsString();

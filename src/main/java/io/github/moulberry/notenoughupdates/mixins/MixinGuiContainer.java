@@ -6,6 +6,8 @@ import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
 import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
+import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
+import io.github.moulberry.notenoughupdates.miscgui.StorageOverlay;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -26,9 +28,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mixin(GuiContainer.class)
 public abstract class MixinGuiContainer extends GuiScreen {
+
+    @Inject(method="drawSlot", at=@At("RETURN"))
+    public void drawSlotRet(Slot slotIn, CallbackInfo ci) {
+        SlotLocking.getInstance().drawSlot(slotIn);
+    }
 
     @Inject(method="drawSlot", at=@At("HEAD"), cancellable = true)
     public void drawSlot(Slot slot, CallbackInfo ci) {
@@ -56,34 +66,36 @@ public abstract class MixinGuiContainer extends GuiScreen {
 
         RenderHelper.enableGUIStandardItemLighting();
 
-        if(stack == null && System.currentTimeMillis() - BetterContainers.lastRenderMillis < 300 && $this instanceof GuiChest) {
-            Container container = ((GuiChest)$this).inventorySlots;
-            if(container instanceof ContainerChest) {
-                IInventory lower = ((ContainerChest)container).getLowerChestInventory();
-                int size = lower.getSizeInventory();
-                if(slot.slotNumber < size) {
-                    boolean found = false;
-                    for(int index=0; index<size; index++) {
-                        if(lower.getStackInSlot(index) != null) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if(!found) {
-                        stack = BetterContainers.itemCache.get(slot.slotNumber);
-                    }
-                }
-
-            }
-        }
-
         if(BetterContainers.isOverriding() && !BetterContainers.shouldRenderStack(stack)) {
             ci.cancel();
         }
     }
 
+    @Inject(method="isMouseOverSlot", at=@At("HEAD"), cancellable = true)
+    public void isMouseOverSlot(Slot slotIn, int mouseX, int mouseY, CallbackInfoReturnable<Boolean> cir) {
+        StorageOverlay.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
+    }
+
+    @Redirect(method="drawScreen", at=@At(value="INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;drawGradientRect(IIIIII)V"))
+    public void drawScreen_drawGradientRect(GuiContainer container, int left, int top, int right, int bottom, int startColor, int endColor) {
+        if(startColor == 0x80ffffff && endColor == 0x80ffffff &&
+                theSlot != null && SlotLocking.getInstance().isSlotLocked(theSlot)) {
+            int col = 0x80ff8080;
+            drawGradientRect(left, top, right, bottom, col, col);
+        } else {
+            drawGradientRect(left, top, right, bottom, startColor, endColor);
+        }
+    }
+
     @Shadow
     private Slot theSlot;
+
+    @Inject(method="drawScreen", at=@At("RETURN"))
+    public void drawScreen(CallbackInfo ci) {
+        if(theSlot != null && SlotLocking.getInstance().isSlotLocked(theSlot)) {
+            theSlot = null;
+        }
+    }
 
     private static final String TARGET_GETSTACK = "Lnet/minecraft/inventory/Slot;getStack()Lnet/minecraft/item/ItemStack;";
     @Redirect(method="drawScreen", at=@At(value="INVOKE", target=TARGET_GETSTACK))
@@ -147,6 +159,24 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Inject(method="handleMouseClick", at=@At(value="HEAD"), cancellable = true)
     public void handleMouseClick(Slot slotIn, int slotId, int clickedButton, int clickType, CallbackInfo ci) {
         GuiContainer $this = (GuiContainer)(Object)this;
+
+        AtomicBoolean ret = new AtomicBoolean(false);
+        SlotLocking.getInstance().onWindowClick(slotIn, slotId, clickedButton, clickType, (tuple) -> {
+            ci.cancel();
+
+            if(tuple == null) {
+                ret.set(true);
+            } else {
+                int newSlotId = tuple.getLeft();
+                int newClickedButton = tuple.getMiddle();
+                int newClickedType = tuple.getRight();
+
+                ret.set(true);
+                $this.mc.playerController.windowClick($this.inventorySlots.windowId, newSlotId, newClickedButton, newClickedType, $this.mc.thePlayer);
+            }
+        });
+        if(ret.get()) return;
+
         if(slotIn != null && slotIn.getStack() != null) {
             if(EnchantingSolvers.onStackClick(slotIn.getStack(), $this.inventorySlots.windowId,
                     slotId, clickedButton, clickType)) {
