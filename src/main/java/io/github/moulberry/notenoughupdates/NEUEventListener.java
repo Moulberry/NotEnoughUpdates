@@ -32,6 +32,8 @@ import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
@@ -240,7 +242,6 @@ public class NEUEventListener {
         DungeonWin.tick();
 
         if(longUpdate) {
-
             CrystalOverlay.tick();
             DwarvenMinesTextures.tick();
             FairySouls.tick();
@@ -260,9 +261,6 @@ public class NEUEventListener {
             NotEnoughUpdates.INSTANCE.overlay.redrawItems();
             CapeManager.onTickSlow();
 
-            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-                NotEnoughUpdates.profileViewer.putNameUuid(player.getName(), player.getUniqueID().toString().replace("-", ""));
-            }
             NotEnoughUpdates.profileViewer.putNameUuid(Minecraft.getMinecraft().thePlayer.getName(),
                     Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
 
@@ -286,9 +284,6 @@ public class NEUEventListener {
 
             if(neu.hasSkyblockScoreboard()) {
                 SBInfo.getInstance().tick();
-                if(Loader.isModLoaded("morus")) {
-                    MorusIntegration.getInstance().tick();
-                }
                 lastSkyblockScoreboard = currentTime;
                 if(!joinedSB) {
                     joinedSB = true;
@@ -702,7 +697,7 @@ public class NEUEventListener {
      * 2) When a /viewrecipe command fails (i.e. player does not have recipe unlocked, will open the custom recipe GUI)
      * 3) Replaces lobby join notifications when streamer mode is active
      */
-    @SubscribeEvent(priority = EventPriority.LOW)
+    @SubscribeEvent(priority = EventPriority.LOW, receiveCanceled = true)
     public void onGuiChat(ClientChatReceivedEvent e) {
         if(e.type == 2) {
             e.message = processChatComponent(e.message);
@@ -1380,9 +1375,10 @@ public class NEUEventListener {
         boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
 
         if(storageOverlayActive) {
-            event.setCanceled(true);
-            StorageOverlay.getInstance().keyboardInput();
-            return;
+            if(StorageOverlay.getInstance().keyboardInput()) {
+                event.setCanceled(true);
+                return;
+            }
         }
 
         if(tradeWindowActive || customAhActive) {

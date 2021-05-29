@@ -1,18 +1,23 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
+import com.google.common.collect.Lists;
 import io.github.moulberry.notenoughupdates.core.*;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingFloat;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.miscfeatures.ItemCustomizeManager;
+import io.github.moulberry.notenoughupdates.util.GuiTextures;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -21,6 +26,7 @@ import org.lwjgl.opengl.GL11;
 import java.awt.*;
 import java.io.*;
 import java.net.URL;
+import java.util.List;
 
 public class GuiItemCustomize extends GuiScreen {
 
@@ -28,7 +34,7 @@ public class GuiItemCustomize extends GuiScreen {
 
     private final ItemStack stack;
     private final String itemUUID;
-    private final GuiElementTextField textFieldRename = new GuiElementTextField("", 178, 20, GuiElementTextField.COLOUR);
+    private final GuiElementTextField textFieldRename = new GuiElementTextField("", 158, 20, GuiElementTextField.COLOUR);
     private final GuiElementBoolean enchantGlintButton;
 
     private int renderHeight = 0;
@@ -108,6 +114,25 @@ public class GuiItemCustomize extends GuiScreen {
 
         if(!this.textFieldRename.getText().isEmpty()) {
             data.customName = this.textFieldRename.getText();
+
+            NBTTagCompound stackTagCompound = stack.getTagCompound();
+            if (stackTagCompound != null && stackTagCompound.hasKey("display", 10)) {
+                NBTTagCompound nbttagcompound = stackTagCompound.getCompoundTag("display");
+
+                if (nbttagcompound.hasKey("Name", 8)) {
+                    String name = nbttagcompound.getString("Name");
+                    char[] chars = name.toCharArray();
+
+                    int i;
+                    for(i=0; i<chars.length; i+=2) {
+                        if(chars[i] != '\u00a7'){
+                            break;
+                        }
+                    }
+
+                    data.customNamePrefix = name.substring(0, i);
+                }
+            }
         }
 
         ItemCustomizeManager.putItemData(itemUUID, data);
@@ -129,13 +154,15 @@ public class GuiItemCustomize extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
 
+        List<String> tooltipToDisplay = null;
+
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
         int xCenter = scaledResolution.getScaledWidth()/2;
         int yTopStart = (scaledResolution.getScaledHeight()-renderHeight)/2;
         int yTop = yTopStart;
 
-        RenderUtils.drawFloatingRectDark(xCenter-100, yTop-9, 200, renderHeight);
+        RenderUtils.drawFloatingRectDark(xCenter-100, yTop-9, 200, renderHeight+11);
 
         RenderUtils.drawFloatingRectDark(xCenter-90, yTop-5, 180, 14);
         Utils.renderShadowedString("\u00a75\u00a7lNEU Item Customizer",  xCenter, yTop-1, 180);
@@ -143,14 +170,61 @@ public class GuiItemCustomize extends GuiScreen {
         yTop += 14;
 
         if(!textFieldRename.getFocus() && textFieldRename.getText().isEmpty()) {
-            textFieldRename.setOptions(0);
+            textFieldRename.setOptions(GuiElementTextField.SCISSOR_TEXT);
             textFieldRename.setPrependText("\u00a77Enter Custom Name...");
         } else {
-            textFieldRename.setOptions(GuiElementTextField.COLOUR);
+            textFieldRename.setOptions(GuiElementTextField.COLOUR | GuiElementTextField.SCISSOR_TEXT);
             textFieldRename.setPrependText("");
         }
 
-        textFieldRename.render(xCenter-textFieldRename.getWidth()/2, yTop);
+        if(!textFieldRename.getFocus()) {
+            textFieldRename.setSize(158, 20);
+        } else {
+            int textSize = fontRendererObj.getStringWidth(textFieldRename.getTextDisplay())+10;
+            textFieldRename.setSize(Math.max(textSize, 158), 20);
+        }
+
+        textFieldRename.render(xCenter-textFieldRename.getWidth()/2-10, yTop);
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.help);
+        GlStateManager.color(1, 1, 1, 1);
+        int helpX = xCenter+textFieldRename.getWidth()/2-10;
+        Utils.drawTexturedRect(helpX, yTop, 20, 20, GL11.GL_LINEAR);
+
+        if(mouseX >= helpX && mouseX <= helpX+20 && mouseY >= yTop && mouseY <= yTop+20) {
+            tooltipToDisplay = Lists.newArrayList(
+                    EnumChatFormatting.AQUA+"Set a custom name for the item",
+                    EnumChatFormatting.GREEN+"",
+                    EnumChatFormatting.GREEN+"Type \"&&\" to use colour codes",
+                    EnumChatFormatting.GREEN+"Type \"**\" for \u272A",
+                    EnumChatFormatting.GREEN+"",
+                    EnumChatFormatting.GREEN+"Available colour codes:",
+                    Utils.chromaString("\u00B6z = Chroma"),
+                    EnumChatFormatting.DARK_BLUE+"\u00B61 = Dark Blue",
+                    EnumChatFormatting.DARK_GREEN+"\u00B62 = Dark Green",
+                    EnumChatFormatting.DARK_AQUA+"\u00B63 = Dark Aqua",
+                    EnumChatFormatting.DARK_RED+"\u00B64 = Dark Red",
+                    EnumChatFormatting.DARK_PURPLE+"\u00B65 = Dark Purple",
+                    EnumChatFormatting.GOLD+"\u00B66 = Gold",
+                    EnumChatFormatting.GRAY+"\u00B67 = Gray",
+                    EnumChatFormatting.DARK_GRAY+"\u00B68 = Dark Gray",
+                    EnumChatFormatting.BLUE+"\u00B69 = Blue",
+                    EnumChatFormatting.GREEN+"\u00B6a = Green",
+                    EnumChatFormatting.AQUA+"\u00B6b = Aqua",
+                    EnumChatFormatting.RED+"\u00B6c = Red",
+                    EnumChatFormatting.LIGHT_PURPLE+"\u00B6d = Purple",
+                    EnumChatFormatting.YELLOW+"\u00B6e = Yellow",
+                    EnumChatFormatting.WHITE+"\u00B6f = White",
+                    "",
+                    EnumChatFormatting.GREEN+"Available formatting codes:",
+                    EnumChatFormatting.GRAY+"\u00B6k = "+EnumChatFormatting.OBFUSCATED+"Obfuscated",
+                    EnumChatFormatting.GRAY+"\u00B6l = "+EnumChatFormatting.BOLD+"Bold",
+                    EnumChatFormatting.GRAY+"\u00B6m = "+EnumChatFormatting.STRIKETHROUGH+"Strikethrough",
+                    EnumChatFormatting.GRAY+"\u00B6n = "+EnumChatFormatting.UNDERLINE+"Underline",
+                    EnumChatFormatting.GRAY+"\u00B6o = "+EnumChatFormatting.ITALIC+"Italic"
+            );
+        }
+
         yTop += 25;
 
         RenderUtils.drawFloatingRectDark(xCenter-90, yTop, 180, 110);
@@ -246,6 +320,10 @@ public class GuiItemCustomize extends GuiScreen {
             editor.render();
         }
 
+        if(tooltipToDisplay != null) {
+            Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fontRendererObj);
+        }
+
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -268,6 +346,8 @@ public class GuiItemCustomize extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        Keyboard.enableRepeatEvents(true);
+
         if(textFieldRename.getFocus()) {
             if(keyCode == Keyboard.KEY_ESCAPE) {
                 textFieldRename.setFocus(false);
@@ -313,7 +393,7 @@ public class GuiItemCustomize extends GuiScreen {
         int xCenter = scaledResolution.getScaledWidth()/2;
         int yTop = (scaledResolution.getScaledHeight()-renderHeight)/2;
 
-        if(mouseX >= xCenter-textFieldRename.getWidth()/2 && mouseX <= xCenter+textFieldRename.getWidth()/2 &&
+        if(mouseX >= xCenter-textFieldRename.getWidth()/2-10 && mouseX <= xCenter+textFieldRename.getWidth()/2-10 &&
                 mouseY >= yTop+14 && mouseY <= yTop+14+textFieldRename.getHeight()) {
             textFieldRename.mouseClicked(mouseX, mouseY, mouseButton);
         } else {

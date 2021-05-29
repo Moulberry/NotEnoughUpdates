@@ -175,6 +175,8 @@ public class DungeonWin {
         }
         if(currentTime - lastDungeonFinish > 100 && currentTime - lastDungeonFinish < 10000) {
             if(hideChat) {
+                if(text.size() > 50) text.clear();
+
                 e.setCanceled(true);
                 if(unformatted.contains("\u25AC")) {
                     hideChat = false;

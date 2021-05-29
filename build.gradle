@@ -10,8 +10,7 @@ buildscript {
         maven { url = "https://repo.spongepowered.org/maven" }
     }
     dependencies {
-        classpath "com.github.Skytils:ForgeGradle:86b23926f3"
-        classpath "com.github.Skytils:mixingradle:d75e32e743"
+        classpath "com.github.asbyth:ForgeGradle:86b2392"
 		classpath 'com.github.LxGaming:MixinGradle:0.6-SNAPSHOT'
 		classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
     }

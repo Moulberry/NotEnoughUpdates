@@ -60,8 +60,8 @@ public class ItemCooldowns {
     @SubscribeEvent
     public void onWorldUnload(WorldEvent.Load event) {
         blocksClicked.clear();
+        if(pickaxeCooldown > 0) pickaxeUseCooldownMillisRemaining = 60*1000;
         pickaxeCooldown = -1;
-        pickaxeUseCooldownMillisRemaining = 60*1000;
     }
 
     public static long getTreecapCooldownWithPet(){
@@ -127,14 +127,14 @@ public class ItemCooldowns {
                     }
                 }
             }
-            pickaxeCooldown = 120;
+            pickaxeCooldown = 0;
         }
     }
 
 
     @SubscribeEvent
     public void onChatMessage(ClientChatReceivedEvent event) {
-        if(PICKAXE_ABILITY_REGEX.matcher(event.message.getFormattedText()).matches()) {
+        if(pickaxeCooldown != 0 && PICKAXE_ABILITY_REGEX.matcher(event.message.getFormattedText()).matches()) {
             updatePickaxeCooldown();
             pickaxeUseCooldownMillisRemaining = pickaxeCooldown*1000;
         }

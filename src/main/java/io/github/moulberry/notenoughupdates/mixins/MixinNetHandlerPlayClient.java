@@ -3,19 +3,19 @@ package io.github.moulberry.notenoughupdates.mixins;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C0EPacketClickWindow;
-import net.minecraft.network.play.client.C13PacketPlayerAbilities;
 import net.minecraft.network.play.server.*;
-import org.lwjgl.opengl.Display;
+import net.minecraft.util.EnumParticleTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(NetHandlerPlayClient.class)
 public class MixinNetHandlerPlayClient {
@@ -28,6 +28,19 @@ public class MixinNetHandlerPlayClient {
                     Math.max(0, Math.min(300, NotEnoughUpdates.INSTANCE.config.itemOverlays.smoothTpMillis));
         }
         player.setPositionAndRotation(x, y, z, yaw, pitch);
+    }
+
+    @Redirect(method="handleParticles", at=@At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/multiplayer/WorldClient;spawnParticle(Lnet/minecraft/util/EnumParticleTypes;ZDDDDDD[I)V"
+    ))
+    public void handleParticles(WorldClient world, EnumParticleTypes particleTypes, boolean isLongDistance,
+                                double xCoord, double yCoord, double zCoord,
+                                double xOffset, double yOffset, double zOffset, int[] params) {
+        boolean override = FishingHelper.getInstance().onSpawnParticle(particleTypes, xCoord, yCoord, zCoord, xOffset, yOffset, zOffset);
+        if(!override) {
+            world.spawnParticle(particleTypes, isLongDistance, xCoord, yCoord, zCoord, xOffset, yOffset, zOffset, params);
+        }
     }
 
     @Inject(method="handleSetSlot", at=@At("RETURN"))
@@ -49,6 +62,14 @@ public class MixinNetHandlerPlayClient {
     @Inject(method="handleWindowItems", at=@At("RETURN"))
     public void handleOpenWindow(S30PacketWindowItems packetIn, CallbackInfo ci) {
         StorageManager.getInstance().setItemsPacket(packetIn);
+    }
+
+    @Inject(method="handleRespawn", at=@At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/network/PacketThreadUtil;checkThreadAndEnqueue(Lnet/minecraft/network/Packet;Lnet/minecraft/network/INetHandler;Lnet/minecraft/util/IThreadListener;)V",
+            shift = At.Shift.AFTER))
+    public void handleOpenWindow(S07PacketRespawn packetIn, CallbackInfo ci) {
+        FancyPortals.onRespawnPacket(packetIn);
     }
 
     @Inject(method="handleBlockChange", at=@At("HEAD"))

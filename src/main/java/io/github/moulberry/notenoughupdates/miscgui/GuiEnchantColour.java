@@ -1,9 +1,13 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -29,15 +33,13 @@ public class GuiEnchantColour extends GuiScreen {
     private final int xSize = 217;
     private int ySize = 0;
 
-    private List<String> getEnchantColours() {
-        return NotEnoughUpdates.INSTANCE.config.hidden.enchantColours;
-    }
-
     public static final Splitter splitter = Splitter.on(":").limit(5);
 
     private HashMap<Integer, String> comparators = new HashMap<>();
     private HashMap<Integer, String> modifiers = new HashMap<>();
     private List<GuiElementTextField[]> guiElementTextFields = new ArrayList<>();
+
+    private List<String> enchantNamesPretty = null;
 
     private LerpingInteger scroll = new LerpingInteger(0, 100);
 
@@ -46,6 +48,27 @@ public class GuiEnchantColour extends GuiScreen {
     public static int OBFUSCATED_MODIFIER = 0b100;
     public static int UNDERLINE_MODIFIER = 0b1000;
     public static int STRIKETHROUGH_MODIFIER = 0b10000;
+
+    private List<String> getEnchantNamesPretty() {
+        if(enchantNamesPretty == null) {
+            JsonObject enchantsJson = Constants.ENCHANTS;
+            if(!enchantsJson.has("enchants_pretty")) {
+                return Lists.newArrayList("ERROR");
+            } else {
+                JsonArray pretty = enchantsJson.getAsJsonArray("enchants_pretty");
+
+                enchantNamesPretty = new ArrayList<>();
+                for(int i=0; i<pretty.size(); i++) {
+                    enchantNamesPretty.add(pretty.get(i).getAsString());
+                }
+            }
+        }
+        return enchantNamesPretty;
+    }
+
+    private List<String> getEnchantColours() {
+        return NotEnoughUpdates.INSTANCE.config.hidden.enchantColours;
+    }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {

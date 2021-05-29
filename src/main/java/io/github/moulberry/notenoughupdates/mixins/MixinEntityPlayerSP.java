@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.item.EntityItem;
@@ -16,6 +17,10 @@ public class MixinEntityPlayerSP {
 
     @Inject(method="dropOneItem", at=@At("HEAD"), cancellable = true)
     public void dropOneItem(CallbackInfoReturnable<EntityItem> ci) {
+        if(SBInfo.getInstance().isInDungeon) {
+            return;
+        }
+
         int slot = Minecraft.getMinecraft().thePlayer.inventory.currentItem;
         if(SlotLocking.getInstance().isSlotIndexLocked(slot)) {
             ci.cancel();

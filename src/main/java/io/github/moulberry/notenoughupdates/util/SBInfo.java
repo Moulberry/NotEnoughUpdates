@@ -55,6 +55,7 @@ public class SBInfo {
     private long lastLocRaw = -1;
     private long joinedWorld = -1;
     private JsonObject locraw = null;
+    public boolean isInDungeon = false;
 
     public String currentProfile = null;
 
@@ -134,10 +135,14 @@ public class SBInfo {
                     currentProfile = Utils.cleanColour(name.substring(profilePrefix.length()));
                 }
             }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
 
+        try {
             Scoreboard scoreboard = Minecraft.getMinecraft().thePlayer.getWorldScoreboard();
 
-            ScoreObjective sidebarObjective = scoreboard.getObjectiveInDisplaySlot(1); //§707/14/20
+            ScoreObjective sidebarObjective = scoreboard.getObjectiveInDisplaySlot(1);
 
             List<Score> scores = new ArrayList<>(scoreboard.getSortedScores(sidebarObjective));
 
@@ -147,8 +152,14 @@ public class SBInfo {
                 ScorePlayerTeam scoreplayerteam1 = scoreboard.getPlayersTeam(score.getPlayerName());
                 String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
                 line = Utils.cleanDuplicateColourCodes(line);
+
+                if(Utils.cleanColour(line).contains("Dungeon Cleared: ")) {
+                    isInDungeon = true;
+                }
+
                 lines.add(line);
             }
+
             if(lines.size() >= 5) {
                 date = Utils.cleanColour(lines.get(1)).trim();
                 //§74:40am

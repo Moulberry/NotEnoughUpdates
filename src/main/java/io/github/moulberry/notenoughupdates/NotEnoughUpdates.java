@@ -73,9 +73,11 @@ import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
@@ -706,6 +708,7 @@ public class NotEnoughUpdates {
         }
     });
 
+    private ScheduledExecutorService devES = Executors.newSingleThreadScheduledExecutor();
     private static final String[] devFailStrings = {"No.", "I said no.", "You aren't allowed to use this.",
             "Are you sure you want to use this? Type 'Yes' in chat.", "Lmao you thought", "Ok please stop",
             "What do you want from me?", "This command almost certainly does nothing useful for you",
@@ -716,7 +719,8 @@ public class NotEnoughUpdates {
     SimpleCommand devTestCommand = new SimpleCommand("neudevtest", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("Moulberry")) {
+            if(!Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("Moulberry") &&
+                    !Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("LucyCoconut")) {
                 if(devFailIndex >= devFailStrings.length) {
                     throw new Error("L") {
                         @Override
@@ -741,12 +745,65 @@ public class NotEnoughUpdates {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+devFailStrings[devFailIndex++]));
                 return;
             }
+            /*if(args.length == 1) {
+                DupePOC.doDupe(args[0]);
+                return;
+            }*/
+            if(args.length == 2 && args[0].equalsIgnoreCase("pt")) {
+                EnumParticleTypes t = EnumParticleTypes.valueOf(args[1]);
+                FishingHelper.type = t;
+            }
             if(args.length == 1 && args[0].equalsIgnoreCase("dev")) {
                 NotEnoughUpdates.INSTANCE.config.hidden.dev = true;
                 return;
             }
             if(args.length == 1 && args[0].equalsIgnoreCase("saveconfig")) {
                 saveConfig();
+                return;
+            }
+            if(args.length == 1 && args[0].equalsIgnoreCase("center")) {
+                double x = Math.floor(Minecraft.getMinecraft().thePlayer.posX) + 0.5f;
+                double z = Math.floor(Minecraft.getMinecraft().thePlayer.posZ) + 0.5f;
+                Minecraft.getMinecraft().thePlayer.setPosition(x, Minecraft.getMinecraft().thePlayer.posY, z);
+                return;
+            }
+            if(args.length == 1 && args[0].equalsIgnoreCase("pansc")) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Taking panorama screenshot"));
+
+                AtomicInteger perspective = new AtomicInteger(0);
+                FancyPortals.perspectiveId = 0;
+
+                EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
+                p.prevRotationYaw = p.rotationYaw = 0;
+                p.prevRotationPitch = p.rotationPitch = 90;
+                devES.schedule(new Runnable() {
+                    @Override
+                    public void run() {
+                        Minecraft.getMinecraft().addScheduledTask(() -> {
+                            ScreenShotHelper.saveScreenshot(new File("C:/Users/James/Desktop/"), "pansc-"+perspective.get()+".png",
+                                    Minecraft.getMinecraft().displayWidth, Minecraft.getMinecraft().displayHeight,
+                                    Minecraft.getMinecraft().getFramebuffer());
+                        });
+                        if(perspective.incrementAndGet() >= 6) {
+                            FancyPortals.perspectiveId = -1;
+                            return;
+                        }
+                        devES.schedule(() -> {
+                            FancyPortals.perspectiveId = perspective.get();
+                            if(FancyPortals.perspectiveId == 5) {
+                                p.prevRotationYaw = p.rotationYaw = 0;
+                                p.prevRotationPitch = p.rotationPitch = -90;
+                            } else if(FancyPortals.perspectiveId >= 1 && FancyPortals.perspectiveId <= 4) {
+                                float yaw = 90*FancyPortals.perspectiveId-180;
+                                if(yaw > 180) yaw -= 360;
+                                p.prevRotationYaw = p.rotationYaw = yaw;
+                                p.prevRotationPitch = p.rotationPitch = 0;
+                            }
+                            devES.schedule(this, 3000L, TimeUnit.MILLISECONDS);
+                        }, 100L, TimeUnit.MILLISECONDS);
+                    }
+                }, 3000L, TimeUnit.MILLISECONDS);
+
                 return;
             }
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Executing dubious code"));
@@ -1070,6 +1127,7 @@ public class NotEnoughUpdates {
         StorageManager.getInstance().loadConfig(new File(neuDir, "storageItems.json"));
         FairySouls.load(new File(neuDir, "collected_fairy_souls.json"), gson);
         PetInfoOverlay.loadConfig(new File(neuDir, "petCache.json"));
+        SlotLocking.getInstance().loadConfig(new File(neuDir, "slotLocking.json"));
 
         if(config == null) {
             config = new NEUConfig();
@@ -1093,12 +1151,14 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(new DwarvenMinesTextures());
         MinecraftForge.EVENT_BUS.register(new DwarvenMinesWaypoints());
         MinecraftForge.EVENT_BUS.register(new FuelBar());
+        //MinecraftForge.EVENT_BUS.register(new FancyPortals());
         MinecraftForge.EVENT_BUS.register(XPInformation.getInstance());
         MinecraftForge.EVENT_BUS.register(OverlayManager.petInfoOverlay);
         MinecraftForge.EVENT_BUS.register(OverlayManager.timersOverlay);
         MinecraftForge.EVENT_BUS.register(new NullzeeSphere());
         MinecraftForge.EVENT_BUS.register(InventoryStorageSelector.getInstance());
         MinecraftForge.EVENT_BUS.register(SlotLocking.getInstance());
+        MinecraftForge.EVENT_BUS.register(FishingHelper.getInstance());
 
         if(Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
             ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());
@@ -1174,6 +1234,7 @@ public class NotEnoughUpdates {
         try { StorageManager.getInstance().saveConfig(new File(neuDir, "storageItems.json")); } catch(Exception ignored) {}
         try { FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson); } catch(Exception ignored) {}
         try { PetInfoOverlay.saveConfig(new File(neuDir, "petCache.json")); } catch(Exception ignored) {}
+        try { SlotLocking.getInstance().saveConfig(new File(neuDir, "slotLocking.json")); } catch(Exception ignored) {}
     }
 
     /**

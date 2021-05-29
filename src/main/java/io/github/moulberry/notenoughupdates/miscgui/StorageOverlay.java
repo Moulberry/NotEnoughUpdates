@@ -1008,7 +1008,13 @@ public class StorageOverlay extends GuiElement {
     @Override
     public boolean keyboardInput() {
         if(Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
-            Minecraft.getMinecraft().thePlayer.closeScreen();
+            clearSearch();
+            return false;
+        }
+        if(Keyboard.getEventKey() == Minecraft.getMinecraft().gameSettings.keyBindScreenshot.getKeyCode()) {
+            return false;
+        }
+        if(Keyboard.getEventKey() == Minecraft.getMinecraft().gameSettings.keyBindFullscreen.getKeyCode()) {
             return false;
         }
 
@@ -1021,6 +1027,6 @@ public class StorageOverlay extends GuiElement {
             }
         }
 
-        return false;
+        return true;
     }
 }
