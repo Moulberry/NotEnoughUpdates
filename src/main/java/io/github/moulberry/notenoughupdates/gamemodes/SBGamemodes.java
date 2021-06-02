@@ -81,7 +81,7 @@ public class SBGamemodes {
     }
 
     public enum IronmanMode {
-        NORMAL("Normal", "Normal"),
+        NORMAL("Normal"),
         IRONMAN(EnumChatFormatting.WHITE+"Ironman\n" +
                 "You are NOT allowed to trade or use the auction house.",
                 "You   ", "Auction House", "Auctions Browser", "Auction View"),

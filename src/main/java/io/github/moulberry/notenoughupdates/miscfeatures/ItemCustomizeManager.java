@@ -49,6 +49,7 @@ public class ItemCustomizeManager {
 
     public static class ItemData {
         public String customName = null;
+        public String customNamePrefix = "";
         public boolean overrideEnchantGlint = false;
         public boolean enchantGlintValue;
 

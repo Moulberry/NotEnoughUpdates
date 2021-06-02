@@ -217,13 +217,13 @@ public class GuiElementColour extends GuiElement {
         if(opacitySlider) {
             TextRenderUtils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+Math.round(c.getAlpha()/255f*100)+"",
                     Minecraft.getMinecraft().fontRendererObj,
-                    x+5+64+5+15+5, y+5+64+5+5, true, 13, -1);
+                    x+5+64+5+valueOffset+5, y+5+64+5+5, true, 13, -1);
         }
         if(chromaSpeed > 0) {
             TextRenderUtils.drawStringCenteredScaledMaxWidth(EnumChatFormatting.GRAY.toString()+
                             (int)ChromaColour.getSecondsForSpeed(chromaSpeed)+"s",
                     Minecraft.getMinecraft().fontRendererObj,
-                    x+5+64+5+valueOffset+15+6, y+5+64+5+5, true, 13, -1);
+                    x+5+64+5+valueOffset+opacityOffset+6, y+5+64+5+5, true, 13, -1);
         }
 
         hexField.setSize(48, 10);

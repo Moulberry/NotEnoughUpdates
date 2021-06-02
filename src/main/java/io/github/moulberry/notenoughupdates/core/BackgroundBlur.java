@@ -157,7 +157,7 @@ public class BackgroundBlur {
 
         try {
             blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                    Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
+                    output, blurOutputHorz);
             blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
             blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
         } catch(Exception e) { }
@@ -177,11 +177,11 @@ public class BackgroundBlur {
             blurShaderVert.getShaderManager().getShaderUniform("Radius").set(blurFactor);
 
             GL11.glPushMatrix();
-            /*GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, Minecraft.getMinecraft().getFramebuffer().framebufferObject);
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, Minecraft.getMinecraft().getFramebuffer().framebufferObject);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, output.framebufferObject);
             GL30.glBlitFramebuffer(0, 0, width, height,
                     0, 0, output.framebufferWidth, output.framebufferHeight,
-                    GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);*/
+                    GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
 
             blurShaderHorz.loadShader(0);
             blurShaderVert.loadShader(0);

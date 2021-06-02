@@ -11,6 +11,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Mixin({ItemStack.class})
 public class MixinItemStack {
 
@@ -37,25 +40,13 @@ public class MixinItemStack {
             if(data != null && data.customName != null) {
                 String customName = data.customName;
                 if(customName != null && !customName.equals("")) {
-                    String prefix = EnumChatFormatting.RESET.toString();
-                    if (stackTagCompound != null && stackTagCompound.hasKey("display", 10)) {
-                        NBTTagCompound nbttagcompound = stackTagCompound.getCompoundTag("display");
+                    customName = Utils.chromaStringByColourCode(customName);
 
-                        if (nbttagcompound.hasKey("Name", 8)) {
-                            String name = nbttagcompound.getString("Name");
-                            char[] chars = name.toCharArray();
-
-                            int i;
-                            for(i=0; i<chars.length; i+=2) {
-                                if(chars[i] != '\u00a7'){
-                                    break;
-                                }
-                            }
-
-                            prefix = name.substring(0, i);
-                        }
+                    if(data.customNamePrefix != null) {
+                        customName = data.customNamePrefix + customName;
                     }
-                    returnable.setReturnValue(prefix+customName);
+
+                    returnable.setReturnValue(customName);
                 }
             }
         } catch(Exception e) { }

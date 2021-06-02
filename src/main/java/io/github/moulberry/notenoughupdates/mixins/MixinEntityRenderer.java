@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
+import io.github.moulberry.notenoughupdates.miscfeatures.FancyPortals;
 import io.github.moulberry.notenoughupdates.miscgui.InventoryStorageSelector;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -9,16 +10,60 @@ import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.ForgeHooksClient;
+import org.lwjgl.util.Display;
+import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityRenderer.class)
-public class MixinEntityRenderer {
+public abstract class MixinEntityRenderer {
 
+    @Shadow protected abstract float getFOVModifier(float partialTicks, boolean useFOVSetting);
+
+    @Shadow private Minecraft mc;
+
+    @Shadow private float farPlaneDistance;
+
+    @Shadow protected abstract void orientCamera(float partialTicks);
+
+    @Redirect(method="renderWorldPass", at=@At(
+            value="INVOKE",
+            target = "Lorg/lwjgl/util/glu/Project;gluPerspective(FFFF)V",
+            remap = false)
+    )
+    public void perspective(float f1, float f2, float f3, float f4) {
+        if(!FancyPortals.overridePerspective()) {
+            Project.gluPerspective(f1, f2, f3, f4);
+        }
+    }
+
+    @Inject(method="updateCameraAndRender", at=@At("RETURN"))
+    public void onUpdateCameraAndRender(float partialTicks, long nanoTime, CallbackInfo ci) {
+        if(Minecraft.getMinecraft().getRenderViewEntity() == null) return;
+
+        if(FancyPortals.shouldRenderWorldOverlay()) {
+            GlStateManager.matrixMode(5889);
+            GlStateManager.loadIdentity();
+            Project.gluPerspective(getFOVModifier(partialTicks, true),
+                    (float)mc.displayWidth / (float)this.mc.displayHeight, 0.05F,
+                    farPlaneDistance * MathHelper.SQRT_2);
+            GlStateManager.matrixMode(5888);
+            GlStateManager.loadIdentity();
+            orientCamera(partialTicks);
+
+            FancyPortals.onUpdateCameraAndRender(partialTicks, nanoTime);
+
+            Minecraft.getMinecraft().entityRenderer.setupOverlayRendering();
+        }
+    }
 
     @Redirect(method="renderWorldPass", at=@At(
             value="INVOKE",

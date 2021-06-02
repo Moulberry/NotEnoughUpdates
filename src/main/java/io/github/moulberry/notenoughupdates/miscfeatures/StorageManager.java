@@ -173,7 +173,7 @@ public class StorageManager {
 
     private String lastSearch = "";
 
-    private boolean[] storagePresent = new boolean[27];
+    private boolean[] storagePresent = null;
 
     //TODO: Replace with /storage {id} when hypixel becomes not lazy
     public int desiredStoragePage = -1;
@@ -414,6 +414,10 @@ public class StorageManager {
                 setItemSlot(packet.func_149173_d()-9, packet.func_149174_e());
             }
         } else if(onStorageMenu) {
+            if(storagePresent == null) {
+                storagePresent = new boolean[27];
+            }
+
             int slot = packet.func_149173_d();
             ItemStack stack = packet.func_149174_e();
 
@@ -532,6 +536,8 @@ public class StorageManager {
     }
 
     public void searchDisplay(String searchStr) {
+        if(storagePresent == null) return;
+
         synchronized(storageConfig.displayToStorageIdMap) {
             storageConfig.displayToStorageIdMap.clear();
 

@@ -13,7 +13,9 @@ public class KeybindHelper {
             return "Button "+(keyCode+101);
         } else {
             String keyName = Keyboard.getKeyName(keyCode);
-            if(keyName.equalsIgnoreCase("LMENU")) {
+            if(keyName == null) {
+                keyName = "???";
+            } else if(keyName.equalsIgnoreCase("LMENU")) {
                 keyName = "LALT";
             } else if(keyName.equalsIgnoreCase("RMENU")) {
                 keyName = "RALT";

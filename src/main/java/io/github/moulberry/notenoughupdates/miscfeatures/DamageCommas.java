@@ -13,6 +13,7 @@ public class DamageCommas {
 
     private static final HashMap<Integer, ChatComponentText> replacementMap = new HashMap<>();
 
+    //From [MVP++] HY7:
     private static final EnumChatFormatting[] colours = {EnumChatFormatting.RED, EnumChatFormatting.GOLD, EnumChatFormatting.YELLOW, EnumChatFormatting.WHITE};
 
     public static void tick() {
@@ -31,8 +32,8 @@ public class DamageCommas {
             return component;
         }
 
-        if(formatted.length() >= 7 && formatted.startsWith("\u00A7f\u2727") &&
-                formatted.endsWith("\u2727\u00a7r")) {
+        if(formatted.length() >= 7 && (formatted.startsWith("\u00A7f\u2727") || formatted.startsWith("\u00A7f\u2694")) &&
+                (formatted.endsWith("\u2727\u00a7r") || formatted.endsWith("\u2694\u00a7r"))) {
 
             if(NotEnoughUpdates.INSTANCE.config.misc.damageIndicatorStyle == 2) {
                 String numbers = Utils.cleanColour(formatted.substring(3, formatted.length()-3)).trim().replaceAll("[^0-9]", "");

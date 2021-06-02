@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.miscfeatures.FishingHelper;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -34,7 +35,13 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
 
     @Inject(method = "doRender(Lnet/minecraft/entity/projectile/EntityFishHook;DDDFF)V", at=@At(value = "HEAD"), cancellable = true)
     public void render(EntityFishHook entity, double x, double y, double z, float entityYaw, float partialTicks, CallbackInfo ci) {
-        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableRodColours || entity == null) return;
+        if(NotEnoughUpdates.INSTANCE.config.fishing.hideOtherPlayerAll &&
+                entity != null && entity.angler != Minecraft.getMinecraft().thePlayer) {
+            ci.cancel();
+            return;
+        }
+
+        if(!NotEnoughUpdates.INSTANCE.config.fishing.enableRodColours || entity == null) return;
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(entity.angler.getHeldItem());
         if (NotEnoughUpdates.INSTANCE.isOnSkyblock() && internalname != null && entity.angler != null &&
@@ -46,17 +53,21 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
                 GlStateManager.translate((float)x, (float)y, (float)z);
                 GlStateManager.enableRescaleNormal();
                 GlStateManager.scale(0.5F, 0.5F, 0.5F);
-                this.bindEntityTexture(entity);
-                Tessellator tessellator = Tessellator.getInstance();
-                WorldRenderer worldrenderer = tessellator.getWorldRenderer();
                 GlStateManager.rotate(180.0F - this.renderManager.playerViewY, 0.0F, 1.0F, 0.0F);
                 GlStateManager.rotate(-this.renderManager.playerViewX, 1.0F, 0.0F, 0.0F);
+                this.bindEntityTexture(entity);
+
+                Tessellator tessellator = Tessellator.getInstance();
+                WorldRenderer worldrenderer = tessellator.getWorldRenderer();
                 worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
                 worldrenderer.pos(-0.5D, -0.5D, 0.0D).tex(0.0625D, 0.1875D).normal(0.0F, 1.0F, 0.0F).endVertex();
                 worldrenderer.pos(0.5D, -0.5D, 0.0D).tex(0.125D, 0.1875D).normal(0.0F, 1.0F, 0.0F).endVertex();
                 worldrenderer.pos(0.5D, 0.5D, 0.0D).tex(0.125D, 0.125D).normal(0.0F, 1.0F, 0.0F).endVertex();
                 worldrenderer.pos(-0.5D, 0.5D, 0.0D).tex(0.0625D, 0.125D).normal(0.0F, 1.0F, 0.0F).endVertex();
                 tessellator.draw();
+
+                FishingHelper.getInstance().onRenderBobber(entity);
+
                 GlStateManager.disableRescaleNormal();
                 GlStateManager.popMatrix();
 
@@ -103,9 +114,9 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
 
                 String specialColour;
                 if (entity.angler.getUniqueID().equals(Minecraft.getMinecraft().thePlayer.getUniqueID())) {
-                    specialColour = NotEnoughUpdates.INSTANCE.config.itemOverlays.ownRodColour;
+                    specialColour = NotEnoughUpdates.INSTANCE.config.fishing.ownRodColour;
                 } else {
-                    specialColour = NotEnoughUpdates.INSTANCE.config.itemOverlays.otherRodColour;
+                    specialColour = NotEnoughUpdates.INSTANCE.config.fishing.otherRodColour;
                 }
                 int colourI = SpecialColour.specialToChromaRGB(specialColour);
 

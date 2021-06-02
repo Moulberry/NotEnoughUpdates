@@ -194,6 +194,28 @@ public class Utils {
         return chromaString(str, 0, false);
     }
 
+    private static final Pattern CHROMA_REPLACE_PATTERN = Pattern.compile("\u00a7z(.+?)(?=\u00a7|$)");
+
+    public static String chromaStringByColourCode(String str) {
+        if(str.contains("\u00a7z")) {
+            Matcher matcher = CHROMA_REPLACE_PATTERN.matcher(str);
+
+            StringBuffer sb = new StringBuffer();
+
+            while(matcher.find()) {
+                matcher.appendReplacement(sb,
+                        Utils.chromaString(matcher.group(1))
+                                .replace("\\", "\\\\")
+                                .replace("$", "\\$")
+                );
+            }
+            matcher.appendTail(sb);
+
+            str = sb.toString();
+        }
+        return str;
+    }
+
     private static long startTime = 0;
     public static String chromaString(String str, float offset, boolean bold) {
         str = cleanColour(str);
