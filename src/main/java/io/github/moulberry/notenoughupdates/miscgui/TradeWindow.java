@@ -2,13 +2,11 @@ package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.util.SBAIntegration;
-import io.github.moulberry.notenoughupdates.util.TexLoc;
+import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
+import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.ContainerChest;
@@ -552,7 +550,13 @@ public class TradeWindow {
             int y = 104+18*(index / 9);
             if(index < 9) y = 180;
 
-            Utils.drawItemStack(stack, guiLeft+x, guiTop+y);
+            chest.drawSlot(new Slot(Minecraft.getMinecraft().thePlayer.inventory, index, guiLeft+x, guiTop+y));
+            //Utils.drawItemStack(stack, guiLeft+x, guiTop+y);
+
+            int col = 0x80ffffff;
+            if(SlotLocking.getInstance().isSlotIndexLocked(index)) {
+                col = 0x80ff8080;
+            }
 
             if(mouseX > guiLeft+x-1 && mouseX < guiLeft+x+18) {
                 if(mouseY > guiTop+y-1 && mouseY < guiTop+y+18) {
@@ -562,7 +566,7 @@ public class TradeWindow {
                     GlStateManager.disableDepth();
                     GlStateManager.colorMask(true, true, true, false);
                     Utils.drawGradientRect(guiLeft+x, guiTop+y,
-                            guiLeft+x + 16, guiTop+y + 16, -2130706433, -2130706433);
+                            guiLeft+x + 16, guiTop+y + 16, col, col);
                     GlStateManager.colorMask(true, true, true, true);
                     GlStateManager.enableLighting();
                     GlStateManager.enableDepth();
@@ -890,37 +894,9 @@ public class TradeWindow {
             }
         }
 
-        if(stackToRender == null && !SBAIntegration.isFreezeBackpack()) lastBackpack = null;
-        if(SBAIntegration.isFreezeBackpack()) {
-            if(lastBackpack != null) {
-                SBAIntegration.setActiveBackpack(lastBackpack, lastBackpackX, lastBackpackY);
-                GlStateManager.translate(0, 0, 100);
-                SBAIntegration.renderActiveBackpack(mouseX, mouseY, Minecraft.getMinecraft().fontRendererObj);
-                GlStateManager.translate(0, 0, -100);
-            }
-        } else {
-            if(stackToRender != null) {
-                String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stackToRender);
-                boolean renderedBackpack;
-                if(internalname != null && (internalname.endsWith("BACKPACK") || internalname.equals("NEW_YEAR_CAKE_BAG"))) {
-                    lastBackpack = stackToRender;
-                    lastBackpackX = mouseX;
-                    lastBackpackY = mouseY;
-                    renderedBackpack = SBAIntegration.setActiveBackpack(lastBackpack, lastBackpackX, lastBackpackY);
-                    if(renderedBackpack) {
-                        GlStateManager.translate(0, 0, 100);
-                        renderedBackpack = SBAIntegration.renderActiveBackpack(mouseX, mouseY, Minecraft.getMinecraft().fontRendererObj);
-                        GlStateManager.translate(0, 0, -100);
-                    }
-                } else {
-                    renderedBackpack = false;
-                }
-                if(!renderedBackpack) {
-                    lastBackpack = null;
-                    tooltipToDisplay = stackToRender.getTooltip(Minecraft.getMinecraft().thePlayer,
-                            Minecraft.getMinecraft().gameSettings.advancedItemTooltips);
-                }
-            }
+        if(stackToRender != null) {
+            tooltipToDisplay = stackToRender.getTooltip(Minecraft.getMinecraft().thePlayer,
+                    Minecraft.getMinecraft().gameSettings.advancedItemTooltips);
         }
 
         if(tooltipToDisplay != null) {
@@ -956,9 +932,12 @@ public class TradeWindow {
                 if(mouseX > guiLeft+x && mouseX < guiLeft+x+16) {
                     if(mouseY > guiTop+y && mouseY < guiTop+y+16) {
                         Slot slot = chest.inventorySlots.getSlotFromInventory(Minecraft.getMinecraft().thePlayer.inventory, index);
-                        Minecraft.getMinecraft().playerController.windowClick(
-                                chest.inventorySlots.windowId,
-                                slot.slotNumber, 2, 3, Minecraft.getMinecraft().thePlayer);
+                        if(!NotEnoughUpdates.INSTANCE.config.slotLocking.lockSlotsInTrade ||
+                                !SlotLocking.getInstance().isSlotLocked(slot)) {
+                            Minecraft.getMinecraft().playerController.windowClick(
+                                    chest.inventorySlots.windowId,
+                                    slot.slotNumber, 2, 3, Minecraft.getMinecraft().thePlayer);
+                        }
                         return;
                     }
                 }
@@ -1032,6 +1011,39 @@ public class TradeWindow {
     }
 
     public static boolean keyboardInput() {
+        if(NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotLocking &&
+                NotEnoughUpdates.INSTANCE.config.slotLocking.lockSlotsInTrade &&
+                !Keyboard.isRepeatEvent() &&
+                KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockKey)) {
+            ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+            int width = scaledResolution.getScaledWidth();
+            int height = scaledResolution.getScaledHeight();
+
+            int mouseX = Mouse.getEventX() * width / Minecraft.getMinecraft().displayWidth;
+            int mouseY = height - Mouse.getEventY() * height / Minecraft.getMinecraft().displayHeight - 1;
+
+            int index=0;
+            for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
+                if(stack == null) {
+                    index++;
+                    continue;
+                }
+
+                int x = 8+18*(index % 9);
+                int y = 104+18*(index / 9);
+                if(index < 9) y = 180;
+
+                if(mouseX > guiLeft+x && mouseX < guiLeft+x+16) {
+                    if(mouseY > guiTop+y && mouseY < guiTop+y+16) {
+                        SlotLocking.getInstance().toggleLock(index);
+                        return true;
+                    }
+                }
+
+                index++;
+            }
+        }
+
         return Keyboard.getEventKey() != Keyboard.KEY_ESCAPE;
     }
 

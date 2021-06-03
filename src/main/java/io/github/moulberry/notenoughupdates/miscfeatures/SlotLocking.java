@@ -8,6 +8,9 @@ import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.ISound;
+import net.minecraft.client.audio.PositionedSound;
+import net.minecraft.client.audio.SoundCategory;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -18,6 +21,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -96,9 +100,11 @@ public class SlotLocking {
 
     private LockedSlot[] getDataForProfile() {
         if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() || !NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotLocking) return null;
-        if(SBInfo.getInstance().currentProfile == null) return null;
 
-        SlotLockProfile profile = config.profileData.computeIfAbsent(SBInfo.getInstance().currentProfile,
+        String profileName = SBInfo.getInstance().currentProfile;
+        if(profileName == null) profileName = "generic";
+
+        SlotLockProfile profile = config.profileData.computeIfAbsent(profileName,
                 k->new SlotLockProfile());
 
         if(profile.currentProfile < 0) profile.currentProfile = 0;
@@ -166,6 +172,28 @@ public class SlotLocking {
                         lockedSlots[slotNum].locked = !lockedSlots[slotNum].locked;
                         lockedSlots[slotNum].boundTo = -1;
 
+                        if(NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSound) {
+                            float vol = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSoundVol/100f;
+                            if(vol > 0) {
+                                if(vol > 1) vol = 1;
+                                final float volF = vol;
+                                final boolean locked = lockedSlots[slotNum].locked;
+
+                                ISound sound = new PositionedSound(new ResourceLocation("random.orb")) {{
+                                    volume = volF;
+                                    pitch = locked ? 0.943f : 0.1f;
+                                    repeat = false;
+                                    repeatDelay = 0;
+                                    attenuationType = ISound.AttenuationType.NONE;
+                                }};
+
+                                float oldLevel = Minecraft.getMinecraft().gameSettings.getSoundLevel(SoundCategory.PLAYERS);
+                                Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.PLAYERS, 1);
+                                Minecraft.getMinecraft().getSoundHandler().playSound(sound);
+                                Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.PLAYERS, oldLevel);
+                            }
+                        }
+
                         if(isHotbar && lockedSlots[slotNum].locked) {
                             for(int i = 9; i <= 39; i++) {
                                 if(lockedSlots[i] != null && lockedSlots[i].boundTo == slotNum) {
@@ -220,6 +248,7 @@ public class SlotLocking {
                                 if(lockedSlots[pairingNum] == null) {
                                     lockedSlots[pairingNum] = new LockedSlot();
                                 }
+
                                 lockedSlots[pairingNum].boundTo = slotNum;
                                 lockedSlots[pairingNum].locked = false;
 
@@ -241,6 +270,47 @@ public class SlotLocking {
         }
     }
 
+    public void toggleLock(int lockIndex) {
+        LockedSlot[] lockedSlots = getDataForProfile();
+
+        if(lockedSlots != null) {
+            if(lockedSlots[lockIndex] == null) {
+                lockedSlots[lockIndex] = new LockedSlot();
+            }
+            lockedSlots[lockIndex].locked = !lockedSlots[lockIndex].locked;
+            lockedSlots[lockIndex].boundTo = -1;
+
+            if(NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSound) {
+                float vol = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSoundVol/100f;
+                if(vol > 0) {
+                    if(vol > 1) vol = 1;
+                    final float volF = vol;
+                    final boolean locked = lockedSlots[lockIndex].locked;
+
+                    ISound sound = new PositionedSound(new ResourceLocation("random.orb")) {{
+                        volume = volF;
+                        pitch = locked ? 0.943f : 0.1f;
+                        repeat = false;
+                        repeatDelay = 0;
+                        attenuationType = ISound.AttenuationType.NONE;
+                    }};
+
+                    float oldLevel = Minecraft.getMinecraft().gameSettings.getSoundLevel(SoundCategory.PLAYERS);
+                    Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.PLAYERS, 1);
+                    Minecraft.getMinecraft().getSoundHandler().playSound(sound);
+                    Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.PLAYERS, oldLevel);
+                }
+            }
+
+            if(lockIndex < 9 && lockedSlots[lockIndex].locked) {
+                for(int i = 9; i <= 39; i++) {
+                    if(lockedSlots[i] != null && lockedSlots[i].boundTo == lockIndex) {
+                        lockedSlots[i].boundTo = -1;
+                    }
+                }
+            }
+        }
+    }
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void drawScreenEvent(GuiScreenEvent.DrawScreenEvent.Post event) {

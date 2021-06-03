@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.PositionedSound;
 import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.client.audio.SoundCategory;
 import net.minecraft.client.particle.EntityFX;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
@@ -144,7 +145,7 @@ public class FishingHelper {
                         }
 
                         int averageMS = totalMS / pingDelayList.size();
-                        pingDelayTicks = (int)Math.ceil(averageMS/50f);
+                        pingDelayTicks = (int)Math.floor(averageMS/50f);
                     }
                 }
 
@@ -347,23 +348,49 @@ public class FishingHelper {
                                             if(newDistance <= 0.2f + 0.1f*pingDelayTicks) {
                                                 if(NotEnoughUpdates.INSTANCE.config.fishing.incomingFishHookedSounds &&
                                                         hookedWarningStateTicks <= 0) {
-                                                    Minecraft.getMinecraft().getSoundHandler().playSound(
-                                                            PositionedSoundRecord.create(new ResourceLocation("note.pling"), 2f));
+                                                    float vol = NotEnoughUpdates.INSTANCE.config.fishing.incomingFishHookedSoundsVol/100f;
+                                                    if(vol > 0) {
+                                                        if(vol > 1) vol = 1;
+                                                        final float volF = vol;
+
+                                                        ISound sound = new PositionedSound(new ResourceLocation("note.pling")) {{
+                                                            volume = volF;
+                                                            pitch = 2f;
+                                                            repeat = false;
+                                                            repeatDelay = 0;
+                                                            attenuationType = ISound.AttenuationType.NONE;
+                                                        }};
+
+                                                        float oldLevel = Minecraft.getMinecraft().gameSettings.getSoundLevel(SoundCategory.RECORDS);
+                                                        Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.RECORDS, 1);
+                                                        Minecraft.getMinecraft().getSoundHandler().playSound(sound);
+                                                        Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.RECORDS, oldLevel);
+                                                    }
                                                 }
 
                                                 hookedWarningStateTicks = 12;
                                             } else if(newDistance >= 0.4f + 0.1f*pingDelayTicks) {
                                                 if(NotEnoughUpdates.INSTANCE.config.fishing.incomingFishIncSounds &&
                                                         buildupSoundDelay <= 0) {
-                                                    ISound sound = new PositionedSound(new ResourceLocation("note.pling")) {{
-                                                        volume = 0.1f;
-                                                        pitch = calculatePitchFromDistance((float)newDistance - (0.3f+0.1f*pingDelayTicks));
-                                                        repeat = false;
-                                                        repeatDelay = 0;
-                                                        attenuationType = ISound.AttenuationType.NONE;
-                                                    }};
-                                                    Minecraft.getMinecraft().getSoundHandler().playSound(sound);
-                                                    buildupSoundDelay = 4;
+                                                    float vol = NotEnoughUpdates.INSTANCE.config.fishing.incomingFishIncSoundsVol/100f;
+                                                    if(vol > 0) {
+                                                        if(vol > 1) vol = 1;
+                                                        final float volF = vol;
+
+                                                        ISound sound = new PositionedSound(new ResourceLocation("note.pling")) {{
+                                                            volume = volF;
+                                                            pitch = calculatePitchFromDistance((float)newDistance - (0.3f+0.1f*pingDelayTicks));
+                                                            repeat = false;
+                                                            repeatDelay = 0;
+                                                            attenuationType = ISound.AttenuationType.NONE;
+                                                        }};
+
+                                                        float oldLevel = Minecraft.getMinecraft().gameSettings.getSoundLevel(SoundCategory.RECORDS);
+                                                        Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.RECORDS, 1);
+                                                        Minecraft.getMinecraft().getSoundHandler().playSound(sound);
+                                                        Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.RECORDS, oldLevel);
+                                                        buildupSoundDelay = 4;
+                                                    }
                                                 }
                                             }
                                         }

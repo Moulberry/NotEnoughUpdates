@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
+import io.github.moulberry.notenoughupdates.collectionlog.GuiCollectionLog;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
@@ -17,7 +18,6 @@ import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
-import io.github.moulberry.notenoughupdates.infopanes.CollectionLogInfoPane;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
@@ -36,8 +36,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.settings.KeyBinding;
@@ -73,7 +71,6 @@ import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -104,24 +101,14 @@ public class NotEnoughUpdates {
     public GuiScreen openGui = null;
     public long lastOpenedGui = 0;
 
-    SimpleCommand collectionLogCommand = new SimpleCommand("neucl", new SimpleCommand.ProcessCommandRunnable() {
+    SimpleCommand.ProcessCommandRunnable collectionLogRun = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(true) {
-                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                        "This feature has been disabled temporarily."));
-                return;
-            }
-            if(!OpenGlHelper.isFramebufferEnabled()) {
-                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                        "This feature requires FBOs to work. Try disabling Optifine's 'Fast Render'."));
-            } else {
-                if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {
-                    openGui = new GuiInventory(Minecraft.getMinecraft().thePlayer);
-                }
-                overlay.displayInformationPane(new CollectionLogInfoPane(overlay, manager));
-            }
+            openGui = new GuiCollectionLog();
         }
-    });
+    };
+
+    SimpleCommand collectionLogCommand = new SimpleCommand("neucl", collectionLogRun);
+    SimpleCommand collectionLogCommand2 = new SimpleCommand("collectionlog", collectionLogRun);
 
     SimpleCommand nullzeeSphereCommand = new SimpleCommand("neuzeesphere", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -1166,7 +1153,8 @@ public class NotEnoughUpdates {
             ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(new ItemCustomizeManager.ReloadListener());
         }
 
-        ClientCommandHandler.instance.registerCommand(collectionLogCommand);
+        //ClientCommandHandler.instance.registerCommand(collectionLogCommand);
+        //ClientCommandHandler.instance.registerCommand(collectionLogCommand2);
         ClientCommandHandler.instance.registerCommand(nullzeeSphereCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);

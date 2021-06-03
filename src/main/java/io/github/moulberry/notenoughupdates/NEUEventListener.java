@@ -45,6 +45,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
+import net.minecraft.network.play.client.C12PacketUpdateSign;
 import net.minecraft.util.*;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.*;
@@ -241,6 +242,17 @@ public class NEUEventListener {
         }
         DungeonWin.tick();
 
+        String containerName = null;
+        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+            containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+
+            if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
+                GuiCustomEnchant.getInstance().tick();
+            }
+        }
+
         if(longUpdate) {
             CrystalOverlay.tick();
             DwarvenMinesTextures.tick();
@@ -271,10 +283,7 @@ public class NEUEventListener {
             neu.updateSkyblockScoreboard();
             CapeManager.getInstance().tick();
 
-            if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
-                GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
-                ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
-                String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if(containerName != null) {
                 if(!containerName.trim().startsWith("Accessory Bag")) {
                     AccessoryBagOverlay.resetCache();
                 }
@@ -629,7 +638,7 @@ public class NEUEventListener {
         }
     }
 
-    @SubscribeEvent
+    /*@SubscribeEvent
     public void onPlayerInteract(EntityInteractEvent event) {
         if(!event.isCanceled() && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
                 Minecraft.getMinecraft().thePlayer.isSneaking() &&
@@ -645,7 +654,7 @@ public class NEUEventListener {
                 }
             }
         }
-    }
+    }*/
 
     private IChatComponent processChatComponent(IChatComponent chatComponent) {
         IChatComponent newComponent;
@@ -843,6 +852,12 @@ public class NEUEventListener {
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
         }
 
+        if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
+            GuiCustomEnchant.getInstance().render(event.renderPartialTicks);
+            event.setCanceled(true);
+            return;
+        }
+
         boolean tradeWindowActive = TradeWindow.tradeWindowActive(containerName);
         boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
         boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
@@ -958,6 +973,10 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        }
+
+        if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
+            return;
         }
 
         boolean tradeWindowActive = TradeWindow.tradeWindowActive(containerName);
@@ -1250,7 +1269,6 @@ public class NEUEventListener {
             return;
         }
 
-
         final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
         final int scaledWidth = scaledresolution.getScaledWidth();
         final int scaledHeight = scaledresolution.getScaledHeight();
@@ -1263,6 +1281,12 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        }
+
+        if(GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
+                GuiCustomEnchant.getInstance().mouseInput(mouseX, mouseY)) {
+            event.setCanceled(true);
+            return;
         }
 
         boolean tradeWindowActive = TradeWindow.tradeWindowActive(containerName);
@@ -1368,6 +1392,12 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        }
+
+        if(GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
+                GuiCustomEnchant.getInstance().keyboardInput()) {
+            event.setCanceled(true);
+            return;
         }
 
         boolean tradeWindowActive = TradeWindow.tradeWindowActive(containerName);

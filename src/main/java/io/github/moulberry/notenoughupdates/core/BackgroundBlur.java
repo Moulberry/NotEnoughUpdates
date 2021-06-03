@@ -27,7 +27,19 @@ import java.util.Set;
 
 public class BackgroundBlur {
 
-    private static HashMap<Float, Framebuffer> blurOutput = new HashMap<>();
+    private static class OutputStuff {
+        public Framebuffer framebuffer;
+        public Shader blurShaderHorz = null;
+        public Shader blurShaderVert = null;
+
+        public OutputStuff(Framebuffer framebuffer, Shader blurShaderHorz, Shader blurShaderVert) {
+            this.framebuffer = framebuffer;
+            this.blurShaderHorz = blurShaderHorz;
+            this.blurShaderVert = blurShaderVert;
+        }
+    }
+
+    private static HashMap<Float, OutputStuff> blurOutput = new HashMap<>();
     private static HashMap<Float, Long> lastBlurUse = new HashMap<>();
     private static long lastBlur = 0;
     private static HashSet<Float> requestedBlurs = new HashSet<>();
@@ -62,14 +74,21 @@ public class BackgroundBlur {
                 int width = Minecraft.getMinecraft().displayWidth;
                 int height = Minecraft.getMinecraft().displayHeight;
 
-                Framebuffer output = blurOutput.computeIfAbsent(blur, k -> {
+                OutputStuff output = blurOutput.computeIfAbsent(blur, k -> {
                     Framebuffer fb = new Framebuffer(width, height, false);
                     fb.setFramebufferFilter(GL11.GL_NEAREST);
-                    return fb;
+                    return new OutputStuff(fb, null, null);
                 });
 
-                output.framebufferWidth = output.framebufferTextureWidth = width;
-                output.framebufferHeight = output.framebufferTextureHeight = height;
+                if(output.framebuffer.framebufferWidth != width || output.framebuffer.framebufferHeight != height) {
+                    output.framebuffer.createBindFramebuffer(width, height);
+                    if(output.blurShaderHorz != null) {
+                        output.blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
+                    }
+                    if(output.blurShaderVert != null) {
+                        output.blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
+                    }
+                }
 
                 blurBackground(output, blur);
             }
@@ -81,6 +100,14 @@ public class BackgroundBlur {
                 }
             }
             remove.remove((float)NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor);
+
+            for(Map.Entry<Float, OutputStuff> entry : blurOutput.entrySet()) {
+                if(remove.contains(entry.getKey())) {
+                    entry.getValue().framebuffer.deleteFramebuffer();
+                    entry.getValue().blurShaderHorz.deleteShader();
+                    entry.getValue().blurShaderVert.deleteShader();
+                }
+            }
 
             lastBlurUse.keySet().removeAll(remove);
             blurOutput.keySet().removeAll(remove);
@@ -104,8 +131,6 @@ public class BackgroundBlur {
         fogColour |= (int)(event.blue*255) & 0xFF;
     }
 
-    private static Shader blurShaderHorz = null;
-    private static Shader blurShaderVert = null;
     private static Framebuffer blurOutputHorz = null;
 
     /**
@@ -129,7 +154,7 @@ public class BackgroundBlur {
     }
 
     private static double lastBgBlurFactor = -1;
-    private static void blurBackground(Framebuffer output, float blurFactor) {
+    private static void blurBackground(OutputStuff output, float blurFactor) {
         if(!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
 
         int width = Minecraft.getMinecraft().displayWidth;
@@ -151,40 +176,43 @@ public class BackgroundBlur {
         }
         if(blurOutputHorz.framebufferWidth != width || blurOutputHorz.framebufferHeight != height) {
             blurOutputHorz.createBindFramebuffer(width, height);
-            blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
             Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
         }
 
-        try {
-            blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                    output, blurOutputHorz);
-            blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
-            blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-        } catch(Exception e) { }
-        try {
-            blurShaderVert = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
-                    blurOutputHorz, output);
-            blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
-            blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-        } catch(Exception e) { }
-        if(blurShaderHorz != null && blurShaderVert != null) {
-            if(blurShaderHorz.getShaderManager().getShaderUniform("Radius") == null) {
+        if(output.blurShaderHorz == null) {
+            try {
+                output.blurShaderHorz = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
+                        output.framebuffer, blurOutputHorz);
+                output.blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
+                output.blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
+            } catch(Exception e) { }
+        }
+        if(output.blurShaderVert == null) {
+            try {
+                output.blurShaderVert = new Shader(Minecraft.getMinecraft().getResourceManager(), "blur",
+                        blurOutputHorz, output.framebuffer);
+                output.blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
+                output.blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
+            } catch(Exception e) { }
+        }
+        if(output.blurShaderHorz != null && output.blurShaderVert != null) {
+            if(output.blurShaderHorz.getShaderManager().getShaderUniform("Radius") == null) {
                 //Corrupted shader?
                 return;
             }
 
-            blurShaderHorz.getShaderManager().getShaderUniform("Radius").set(blurFactor);
-            blurShaderVert.getShaderManager().getShaderUniform("Radius").set(blurFactor);
+            output.blurShaderHorz.getShaderManager().getShaderUniform("Radius").set(blurFactor);
+            output.blurShaderVert.getShaderManager().getShaderUniform("Radius").set(blurFactor);
 
             GL11.glPushMatrix();
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, Minecraft.getMinecraft().getFramebuffer().framebufferObject);
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, output.framebufferObject);
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, output.framebuffer.framebufferObject);
             GL30.glBlitFramebuffer(0, 0, width, height,
-                    0, 0, output.framebufferWidth, output.framebufferHeight,
+                    0, 0, output.framebuffer.framebufferWidth, output.framebuffer.framebufferHeight,
                     GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
 
-            blurShaderHorz.loadShader(0);
-            blurShaderVert.loadShader(0);
+            output.blurShaderHorz.loadShader(0);
+            output.blurShaderVert.loadShader(0);
             GlStateManager.enableDepth();
             GL11.glPopMatrix();
 
@@ -215,9 +243,9 @@ public class BackgroundBlur {
 
         if(blurOutput.isEmpty()) return;
 
-        Framebuffer fb = blurOutput.get(blurStrength);
-        if(fb == null) {
-            fb = blurOutput.values().iterator().next();
+        OutputStuff out = blurOutput.get(blurStrength);
+        if(out == null) {
+            out = blurOutput.values().iterator().next();
         }
 
         float uMin = x/(float)screenWidth;
@@ -227,10 +255,10 @@ public class BackgroundBlur {
 
         GlStateManager.depthMask(false);
         Gui.drawRect(x, y, x+blurWidth, y+blurHeight, fogColour);
-        fb.bindFramebufferTexture();
+        out.framebuffer.bindFramebufferTexture();
         GlStateManager.color(1f, 1f, 1f, 1f);
         RenderUtils.drawTexturedRect(x, y, blurWidth, blurHeight, uMin, uMax, vMin, vMax);
-        fb.unbindFramebufferTexture();
+        out.framebuffer.unbindFramebufferTexture();
         GlStateManager.depthMask(true);
     }
 

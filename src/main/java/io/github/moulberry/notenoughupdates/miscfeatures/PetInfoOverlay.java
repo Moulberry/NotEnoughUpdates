@@ -172,7 +172,6 @@ public class PetInfoOverlay extends TextOverlay {
     }
 
     private static int getIdForPet(Pet pet) {
-        System.out.println("getting for id");
         for(Map.Entry<Integer, Pet> entry : config.petMap.entrySet()) {
             if(entry.getValue() == pet) {
                 return entry.getKey();

@@ -95,6 +95,13 @@ public class NEUManager {
         return SBInfo.getInstance().currentProfile;
     }
 
+    public <T> T getJsonFromFile(File file, Class<T> clazz) {
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            T obj = gson.fromJson(reader, clazz);
+            return obj;
+        } catch(Exception e) { return null; }
+    }
+
     /**
      * Parses a file in to a JsonObject.
      */
@@ -237,16 +244,12 @@ public class NEUManager {
                         } catch (IOException e) {
                         }
                     }
-
-                    Constants.reload();
                 }
             } catch(Exception e) {
                 e.printStackTrace();
             } finally {
                 if(dialog != null) dialog.dispose();
             }
-
-            System.err.println("First load");
 
             File items = new File(repoLocation, "items");
             if(items.exists()) {
@@ -262,9 +265,13 @@ public class NEUManager {
                     }
                 }
             }
-        });
 
-        System.err.println("Second load");
+            try {
+                Constants.reload();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        });
 
         File items = new File(repoLocation, "items");
         if(items.exists()) {
@@ -279,6 +286,12 @@ public class NEUManager {
                     }
                 }
             }
+        }
+
+        try {
+            Constants.reload();
+        } catch(Exception e) {
+            e.printStackTrace();
         }
     }
 

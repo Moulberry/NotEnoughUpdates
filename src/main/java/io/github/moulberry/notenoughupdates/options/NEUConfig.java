@@ -564,6 +564,34 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorKeybind(defaultKey = Keyboard.KEY_L)
         public int slotLockKey = Keyboard.KEY_L;
+
+        @Expose
+        @ConfigOption(
+                name = "Lock Slots in Trade",
+                desc = "Prevents trading locked items in the custom trade windows"
+        )
+        @ConfigEditorBoolean
+        public boolean lockSlotsInTrade = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Slot Lock Sound",
+                desc = "Play a ding when locking/unlocking slots"
+        )
+        @ConfigEditorBoolean
+        public boolean slotLockSound = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Slot Lock Sound Vol.",
+                desc = "Set the volume of the ding sound"
+        )
+        @ConfigEditorSlider(
+                minValue = 0,
+                maxValue = 100,
+                minStep = 1
+        )
+        public float slotLockSoundVol = 20;
     }
 
     public static class TooltipTweaks {
@@ -1209,7 +1237,7 @@ public class NEUConfig extends Config {
         @ConfigAccordionId(id = 1)
         public boolean enderchestPreview = true;
 
-        //@Expose
+        @Expose
         @ConfigOption(
                 name = "Backpack Preview",
                 desc = "THIS FEATURE IS CURRENTLY DISABLED BECAUSE HYPIXEL IS TOO LAZY TO ADD A SINGLE COMMAND LMFAO"//"Preview Backpacks when hovering over the selector on the left side"
@@ -1642,12 +1670,46 @@ public class NEUConfig extends Config {
 
         @Expose
         @ConfigOption(
-                name = "Approaching Sound",
+                name = "Approach Sound",
                 desc = "Play low-pitched ding sounds while the yellow '!' is visible"
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 3)
         public boolean incomingFishIncSounds = false;
+
+        @ConfigOption(
+                name = "Volumes",
+                desc = ""
+        )
+        @ConfigAccordionId(id = 3)
+        @ConfigEditorAccordion(id = 5)
+        public boolean incomingFishVolumeAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Hooked Sound Vol.",
+                desc = "Set the volume of the hooked sound"
+        )
+        @ConfigEditorSlider(
+                minValue = 0,
+                maxValue = 100,
+                minStep = 1
+        )
+        @ConfigAccordionId(id = 5)
+        public float incomingFishHookedSoundsVol = 25;
+
+        @Expose
+        @ConfigOption(
+                name = "Approach Sound Vol.",
+                desc = "Set the volume of the approaching sound"
+        )
+        @ConfigEditorSlider(
+                minValue = 0,
+                maxValue = 100,
+                minStep = 1
+        )
+        @ConfigAccordionId(id = 5)
+        public float incomingFishIncSoundsVol = 10;
 
         @ConfigOption(
                 name = "Fishing Particles",
@@ -1677,7 +1739,7 @@ public class NEUConfig extends Config {
         @ConfigOption(
                 name = "Particle Type",
                 desc = "Change the type of the particle that is spawned\n" +
-                        "Particle types with (RGB) support custom colours" +
+                        "Particle types with (RGB) support custom colours\n" +
                         "Set to 'NONE' to disable particles"
         )
         @ConfigEditorDropdown(
@@ -1708,7 +1770,7 @@ public class NEUConfig extends Config {
         @ConfigOption(
                 name = "Particle Type",
                 desc = "Change the type of the particle that is spawned\n" +
-                        "Particle types with (RGB) support custom colours" +
+                        "Particle types with (RGB) support custom colours\n" +
                         "Set to 'NONE' to disable particles"
         )
         @ConfigEditorDropdown(

@@ -1,10 +1,7 @@
 package io.github.moulberry.notenoughupdates.util;
 
 import com.google.common.base.Splitter;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
@@ -43,12 +40,16 @@ import org.lwjgl.util.glu.Project;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Proxy;
 import java.nio.FloatBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
@@ -848,14 +849,18 @@ public class Utils {
         drawHoveringText(textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font, true);
     }
 
-    public static JsonObject getConstant(String constant) {
+    public static JsonObject getConstant(String constant, Gson gson) {
+        return getConstant(constant, gson, JsonObject.class);
+    }
+
+    public static <T> T getConstant(String constant, Gson gson, Class<T> clazz) {
         File repo = NotEnoughUpdates.INSTANCE.manager.repoLocation;
         if(repo.exists()) {
             File jsonFile = new File(repo, "constants/"+constant+".json");
-            try {
-                return NotEnoughUpdates.INSTANCE.manager.getJsonFromFile(jsonFile);
-            } catch (Exception ignored) {
-            }
+            try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8))) {
+                T obj = gson.fromJson(reader, clazz);
+                return obj;
+            } catch(Exception e) { return null; }
         }
         return null;
     }
