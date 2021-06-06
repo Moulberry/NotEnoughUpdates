@@ -183,7 +183,6 @@ public class PetInfoOverlay extends TextOverlay {
     private static int getClosestPetIndex(String petType, int petId, String petItem, float petLevel) {
         Pet pet = getClosestPet(petType, petId, petItem, petLevel);
         if(pet == null) {
-            System.out.println("null pet");
             return -1;
         } else {
             return getIdForPet(pet);
@@ -914,10 +913,7 @@ public class PetInfoOverlay extends TextOverlay {
                             config.petMap.put(config.selectedPet, pet);
                         }
                     }
-
                 }
-
-                System.out.println(mouseButtonClicked + ":" + mode);
             }
         }
     }

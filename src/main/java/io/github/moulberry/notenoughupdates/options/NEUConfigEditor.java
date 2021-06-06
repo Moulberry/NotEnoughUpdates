@@ -584,15 +584,15 @@ public class NEUConfigEditor extends GuiElement {
                             continue;
                         }
                         if(editor instanceof GuiOptionEditorAccordion) {
-                    GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
-                    if(accordion.getToggled()) {
-                        int accordionDepth = 0;
-                        if(option.accordionId >= 0) {
-                            accordionDepth = activeAccordions.get(option.accordionId)+1;
+                            GuiOptionEditorAccordion accordion = (GuiOptionEditorAccordion) editor;
+                            if(accordion.getToggled()) {
+                                int accordionDepth = 0;
+                                if(option.accordionId >= 0) {
+                                    accordionDepth = activeAccordions.get(option.accordionId)+1;
+                                }
+                                activeAccordions.put(accordion.getAccordionId(), accordionDepth);
+                            }
                         }
-                        activeAccordions.put(accordion.getAccordionId(), accordionDepth);
-                    }
-                }
                         optionY += editor.getHeight() + 5;
 
                         if(optionY > 0) {

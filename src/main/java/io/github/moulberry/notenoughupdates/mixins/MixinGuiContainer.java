@@ -31,6 +31,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mixin(GuiContainer.class)
@@ -70,6 +71,11 @@ public abstract class MixinGuiContainer extends GuiScreen {
         if(BetterContainers.isOverriding() && !BetterContainers.shouldRenderStack(stack)) {
             ci.cancel();
         }
+    }
+
+    @Redirect(method="mouseReleased", at=@At(value = "INVOKE", target = "Ljava/util/Set;isEmpty()Z"))
+    public boolean mouseReleased_isEmpty(Set<?> set) {
+        return set.size() <= 1;
     }
 
     @Inject(method="isMouseOverSlot", at=@At("HEAD"), cancellable = true)

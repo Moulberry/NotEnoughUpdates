@@ -112,6 +112,9 @@ public class GuiElementTextField {
 
     public void setFocus(boolean focus) {
         this.focus = focus;
+        if(!focus) {
+            textField.setCursorPosition(textField.getCursorPosition());
+        }
     }
     public boolean getFocus() {
         return focus;

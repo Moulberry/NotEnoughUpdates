@@ -160,10 +160,10 @@ public class NEUConfig extends Config {
     public MiscOverlays miscOverlays = new MiscOverlays();
 
     @Expose
-    /*@Category(
+    @Category(
             name = "Storage GUI",
             desc = "Storage GUI"
-    )*/
+    )
     public StorageGUI storageGUI = new StorageGUI();
 
     @Expose
@@ -308,6 +308,18 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorButton(runnableId = 8, buttonText = "Open")
         public boolean editEnchantColoursButton = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Chroma Text Speed",
+                desc = "Change the speed of chroma text for items names (/neucustomize) and enchant colours (/neuec) with the chroma colour code (&z)"
+        )
+        @ConfigEditorSlider(
+                minValue = 10,
+                maxValue = 500,
+                minStep = 10
+        )
+        public int chromaSpeed = 100;
     }
 
     public static class Notifications {
@@ -1197,8 +1209,8 @@ public class NEUConfig extends Config {
         @Expose
         @ConfigOption(
                 name = "Enable Storage GUI",
-                desc = "THIS FEATURE IS CURRENTLY DISABLED BECAUSE HYPIXEL IS TOO LAZY TO ADD A SINGLE COMMAND LMFAO"/*"Show a custom storage overlay when accessing /storage." +
-                        "Makes switching between pages much easier and also allows for searching through all storages"*/
+                desc = "Show a custom storage overlay when accessing /storage." +
+                        "Makes switching between pages much easier and also allows for searching through all storages"
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1)
@@ -1240,11 +1252,20 @@ public class NEUConfig extends Config {
         @Expose
         @ConfigOption(
                 name = "Backpack Preview",
-                desc = "THIS FEATURE IS CURRENTLY DISABLED BECAUSE HYPIXEL IS TOO LAZY TO ADD A SINGLE COMMAND LMFAO"//"Preview Backpacks when hovering over the selector on the left side"
+                desc = "Preview Backpacks when hovering over the selector on the left side"
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1)
         public boolean backpackPreview = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Compact Vertically",
+                desc = "Remove the space between backpacks when there is a size discrepancy"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean masonryMode = false;
 
         @ConfigOption(
                 name = "Inventory Backpacks",

@@ -553,10 +553,14 @@ public class SlotLocking {
     }
 
     public LockedSlot getLockedSlotIndex(int index) {
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() || !NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotLocking) return null;
+        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() || !NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotLocking) {
+            return null;
+        }
 
         LockedSlot[] lockedSlots = getDataForProfile();
-        if(lockedSlots == null) return null;
+        if(lockedSlots == null) {
+            return null;
+        }
         return getLockedSlot(lockedSlots, index);
     }
 

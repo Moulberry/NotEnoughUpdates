@@ -1,14 +1,14 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.common.collect.Lists;
-import com.google.gson.stream.JsonWriter;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.GlScissorStack;
 import io.github.moulberry.notenoughupdates.core.GuiElement;
 import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
+import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
-import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
+import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -16,10 +16,12 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.init.Blocks;
-import net.minecraft.inventory.Container;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
@@ -29,18 +31,24 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GLSync;
+import org.lwjgl.util.vector.Vector2f;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class StorageOverlay extends GuiElement {
 
     private static final int CHEST_TOP_OFFSET = 17;
     private static final int CHEST_SLOT_SIZE = 18;
     private static final int CHEST_BOTTOM_OFFSET = 215;
+
+    private Framebuffer framebuffer = null;
+
+    private Set<Vector2f> enchantGlintRenderLocations = new HashSet<>();
 
     public static final ResourceLocation STORAGE_PREVIEW_TEXTURES[] = new ResourceLocation[4];
     private static final ResourceLocation STORAGE_TEXTURES[] = new ResourceLocation[4];
@@ -90,6 +98,8 @@ public class StorageOverlay extends GuiElement {
     private int desiredHeightMX = -1;
     private int desiredHeightMY = -1;
 
+    private boolean dirty = false;
+
     private int scrollGrabOffset = -1;
 
     private LerpingInteger scroll = new LerpingInteger(0, 200);
@@ -101,6 +111,10 @@ public class StorageOverlay extends GuiElement {
 
             return getPageCoords(coords).y+scroll.getValue()-getStorageViewSize()-14;
         }
+    }
+
+    public void markDirty() {
+        dirty = true;
     }
 
     private void scrollToY(int y) {
@@ -250,6 +264,115 @@ public class StorageOverlay extends GuiElement {
         boolean mouseInsideStorages = mouseY > guiTop+3 && mouseY < guiTop+3+storageViewSize;
 
         //Storages
+        boolean doItemRender = true;
+        boolean doRenderFramebuffer = false;
+        int startY = getPageCoords(0).y;
+        if(OpenGlHelper.isFramebufferEnabled()) {
+            int h;
+            synchronized(StorageManager.getInstance().storageConfig.displayToStorageIdMap) {
+                int lastDisplayId = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
+                int coords = (int)Math.ceil(lastDisplayId/3f)*3+3;
+
+                h = getPageCoords(coords).y+scroll.getValue();
+            }
+            int w = sizeX;
+
+            //Render from framebuffer
+            if(framebuffer != null) {
+                GlScissorStack.push(0, guiTop+3, width, guiTop+3+storageViewSize, scaledResolution);
+                GlStateManager.enableDepth();
+                GlStateManager.translate(0, startY, 107.0001f);
+                framebuffer.bindFramebufferTexture();
+                GlStateManager.color(1, 1, 1, 1);
+
+                Utils.drawTexturedRect(0, 0, w, h, 0, 1, 1, 0, GL11.GL_NEAREST);
+                renderEnchOverlay(enchantGlintRenderLocations);
+
+                GlStateManager.translate(0, -startY, -107.0001f);
+                GlScissorStack.pop(scaledResolution);
+            }
+
+            if(dirty || framebuffer == null) {
+                dirty = false;
+
+                int fw = w*scaledResolution.getScaleFactor();
+                int fh = h*scaledResolution.getScaleFactor();
+
+                if(framebuffer == null) {
+                    framebuffer = new Framebuffer(fw, fh, true);
+                } else if(framebuffer.framebufferWidth != fw || framebuffer.framebufferHeight != fh) {
+                    framebuffer.createBindFramebuffer(fw, fh);
+                }
+                framebuffer.framebufferClear();
+                framebuffer.bindFramebuffer(true);
+
+                GlStateManager.matrixMode(GL11.GL_PROJECTION);
+                GlStateManager.loadIdentity();
+                GlStateManager.ortho(0.0D, w, h, 0.0D, 1000.0D, 3000.0D);
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(-guiLeft, -guiTop-startY, 0);
+
+                doRenderFramebuffer = true;
+            } else {
+                doItemRender = false;
+            }
+        }
+
+        if(doItemRender) {
+            enchantGlintRenderLocations.clear();
+            for(Map.Entry<Integer, Integer> entry : StorageManager.getInstance().storageConfig.displayToStorageIdMap.entrySet()) {
+                int displayId = entry.getKey();
+                int storageId = entry.getValue();
+
+                IntPair coords = getPageCoords(displayId);
+                int storageX = coords.x;
+                int storageY = coords.y;
+
+                if(!doRenderFramebuffer) {
+                    if(coords.y-11 > 3+storageViewSize || coords.y+90 < 3) continue;
+                }
+
+                StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
+                if(page != null && page.rows > 0) {
+                    int rows = page.rows;
+
+                    for(int k=0; k<rows*9; k++) {
+                        ItemStack stack = page.items[k];
+
+                        if(stack == null) continue;
+
+                        int itemX = storageX+1+18*(k%9);
+                        int itemY = storageY+1+18*(k/9);
+
+                        if(doRenderFramebuffer) {
+                            Utils.drawItemStackWithoutGlint(stack, itemX, itemY);
+                            if(stack.hasEffect() || stack.getItem() == Items.enchanted_book) {
+                                enchantGlintRenderLocations.add(new Vector2f(itemX, itemY-startY));
+                            }
+                        } else {
+                            Utils.drawItemStack(stack, itemX, itemY);
+                        }
+                    }
+
+                    GlStateManager.disableLighting();
+                    GlStateManager.enableDepth();
+                }
+            }
+        }
+
+        if(OpenGlHelper.isFramebufferEnabled() && doRenderFramebuffer) {
+            GlStateManager.popMatrix();
+            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
+
+            GlStateManager.matrixMode(GL11.GL_PROJECTION);
+            GlStateManager.loadIdentity();
+            GlStateManager.ortho(0.0D, scaledResolution.getScaledWidth_double(), scaledResolution.getScaledHeight_double(),
+                    0.0D, 1000.0D, 3000.0D);
+            GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+        }
+
         GlScissorStack.push(0, guiTop+3, width, guiTop+3+storageViewSize, scaledResolution);
         for(Map.Entry<Integer, Integer> entry : StorageManager.getInstance().storageConfig.displayToStorageIdMap.entrySet()) {
             int displayId = entry.getKey();
@@ -261,13 +384,29 @@ public class StorageOverlay extends GuiElement {
 
             if(coords.y-11 > 3+storageViewSize || coords.y+90 < 3) continue;
 
+            StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
+
+            String pageTitle;
             if(storageId < 9) {
-                fontRendererObj.drawString("Ender Chest Page "+(storageId+1), storageX, storageY-11, textColour);
+                pageTitle = "Ender Chest Page " + (storageId + 1);
+            } else if(page.customTitle != null && !page.customTitle.isEmpty()) {
+                pageTitle = page.customTitle;
+            } else if(page != null && page.backpackDisplayStack != null) {
+                pageTitle = page.backpackDisplayStack.getDisplayName();
             } else {
-                fontRendererObj.drawString("Backpack Slot "+(storageId-8), storageX, storageY-11, textColour);
+                pageTitle = "Backpack Slot "+(storageId-8);
+            }
+            int titleLen = fontRendererObj.getStringWidth(pageTitle);
+            fontRendererObj.drawString(pageTitle, storageX, storageY-11, textColour);
+
+            if(mouseX >= storageX && mouseX <= storageX+titleLen+15 &&
+                    mouseY >= storageY-14 && mouseY <= storageY+1) {
+                Minecraft.getMinecraft().getTextureManager().bindTexture(storageTexture);
+                GlStateManager.color(1, 1, 1, 1);
+                Utils.drawTexturedRect(storageX+titleLen, storageY-14, 15, 15,
+                        24/600f, 39/600f, 250/400f, 265/ 400f, GL11.GL_NEAREST);
             }
 
-            StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
             if(page == null) {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(storageTexture);
                 GlStateManager.color(1, 1, 1, 1);
@@ -312,7 +451,12 @@ public class StorageOverlay extends GuiElement {
                     ItemStack stack = page.items[k];
                     int itemX = storageX+1+18*(k%9);
                     int itemY = storageY+1+18*(k/9);
-                    Utils.drawItemStack(stack, itemX, itemY);
+
+                    /*if(doItemRender || frameBufferItemRender) {
+                        GlStateManager.colorMask(true, true, true, true);
+                        Utils.drawItemStack(stack, itemX, itemY);
+                        GlStateManager.colorMask(false, false, false, false);
+                    }*/
 
                     if(!searchBar.getText().isEmpty()) {
                         if(stack == null || !NotEnoughUpdates.INSTANCE.manager.doesStackMatchSearch(stack, searchBar.getText())) {
@@ -364,6 +508,31 @@ public class StorageOverlay extends GuiElement {
                 } else {
                     Gui.drawRect(storageX, storageY, storageX+storageW, storageY+storageH, 0x30000000);
                 }
+
+                if(StorageManager.getInstance().desiredStoragePage == storageId && StorageManager.getInstance().onStorageMenu) {
+                    Utils.drawStringCenteredScaledMaxWidth("Please click again to load...", fontRendererObj,
+                            storageX+81-1, storageY+storageH/2-5, false, 150, 0x111111);
+                    Utils.drawStringCenteredScaledMaxWidth("Please click again to load...", fontRendererObj,
+                            storageX+81+1, storageY+storageH/2-5, false, 150, 0x111111);
+                    Utils.drawStringCenteredScaledMaxWidth("Please click again to load...", fontRendererObj,
+                            storageX+81, storageY+storageH/2-5-1, false, 150, 0x111111);
+                    Utils.drawStringCenteredScaledMaxWidth("Please click again to load...", fontRendererObj,
+                            storageX+81, storageY+storageH/2-5+1, false, 150, 0x111111);
+                    Utils.drawStringCenteredScaledMaxWidth("Please click again to load...", fontRendererObj,
+                            storageX+81, storageY+storageH/2-5, false, 150, 0xffdf00);
+
+                    Utils.drawStringCenteredScaledMaxWidth("Use /neustwhy for more info", fontRendererObj,
+                            storageX+81-1, storageY+storageH/2+5, false, 150, 0x111111);
+                    Utils.drawStringCenteredScaledMaxWidth("Use /neustwhy for more info", fontRendererObj,
+                            storageX+81+1, storageY+storageH/2+5, false, 150, 0x111111);
+                    Utils.drawStringCenteredScaledMaxWidth("Use /neustwhy for more info", fontRendererObj,
+                            storageX+81, storageY+storageH/2+5-1, false, 150, 0x111111);
+                    Utils.drawStringCenteredScaledMaxWidth("Use /neustwhy for more info", fontRendererObj,
+                            storageX+81, storageY+storageH/2+5+1, false, 150, 0x111111);
+                    Utils.drawStringCenteredScaledMaxWidth("Use /neustwhy for more info", fontRendererObj,
+                            storageX+81, storageY+storageH/2+5, false, 150, 0xffdf00);
+                }
+
                 GlStateManager.enableDepth();
             }
         }
@@ -384,7 +553,6 @@ public class StorageOverlay extends GuiElement {
             int itemX = 181+18*i;
             int itemY = storageViewSize+76;
 
-            //Utils.drawItemStack(playerItems[i], itemX, itemY);
             GlStateManager.pushMatrix();
             GlStateManager.translate(181-8, storageViewSize+18-(inventoryStartIndex/9*18+31), 0);
             guiChest.drawSlot(containerChest.inventorySlots.get(inventoryStartIndex+i));
@@ -539,6 +707,8 @@ public class StorageOverlay extends GuiElement {
                     vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.backpackPreview ? 1 : 0; break;
                 case 4:
                     vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.enderchestPreview ? 1 : 0; break;
+                case 5:
+                    vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode ? 1 : 0; break;
             }
 
             Utils.drawTexturedRect(buttonX, buttonY, 16, 16, minU, maxU, (vIndex*16)/256f, (vIndex*16+16)/256f, GL11.GL_NEAREST);
@@ -596,6 +766,14 @@ public class StorageOverlay extends GuiElement {
                                 "Off"
                         );
                         break;
+                    case 5:
+                        tooltipToDisplay = createTooltip(
+                                "Compact Vertically",
+                                NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode ? 0 : 1,
+                                "On",
+                                "Off"
+                        );
+                        break;
                 }
             }
         }
@@ -622,11 +800,12 @@ public class StorageOverlay extends GuiElement {
             if(page != null && page.rows > 0) {
                 int rows = page.rows;
 
+                GlStateManager.translate(0, 0, 100);
+                GlStateManager.disableDepth();
                 BackgroundBlur.renderBlurredBackground(7, width, height, mouseX+2, mouseY+2, 172, 10+18*rows);
                 Utils.drawGradientRect(mouseX+2, mouseY+2, mouseX+174, mouseY+12+18*rows, 0xc0101010, 0xd0101010);
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(storagePreviewTexture);
-                GlStateManager.translate(0, 0, 100);
                 GlStateManager.color(1, 1, 1, 1);
                 Utils.drawTexturedRect(mouseX, mouseY, 176, 7, 0, 1, 0, 7/32f, GL11.GL_NEAREST);
                 for(int i=0; i<rows; i++) {
@@ -637,9 +816,12 @@ public class StorageOverlay extends GuiElement {
                 for(int i=0; i<rows*9; i++) {
                     ItemStack stack = page.items[i];
                     if(stack != null) {
+                        GlStateManager.enableDepth();
                         Utils.drawItemStack(stack, mouseX+8+18*(i%9), mouseY+8+18*(i/9));
+                        GlStateManager.disableDepth();
                     }
                 }
+                GlStateManager.enableDepth();
                 GlStateManager.translate(0, 0, -100);
             } else {
                 Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY,  width, height, -1, Minecraft.getMinecraft().fontRendererObj);
@@ -681,10 +863,17 @@ public class StorageOverlay extends GuiElement {
     public IntPair getPageCoords(int displayId) {
         if(displayId < 0) displayId = 0;
 
-        int y = -scroll.getValue()+17+104*(displayId/3);
+        int y;
+        if(NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode) {
+            y = -scroll.getValue()+18+108*(displayId/3);
+        } else {
+            y = -scroll.getValue()+17+104*(displayId/3);
+        }
         for(int i=0; i<=displayId-3; i += 3) {
             int maxRows = 1;
             for(int j=i; j<i+3; j++) {
+                if(NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode && displayId%3 != j%3) continue;
+
                 if(!StorageManager.getInstance().storageConfig.displayToStorageIdMap.containsKey(j)) {
                     continue;
                 }
@@ -783,6 +972,7 @@ public class StorageOverlay extends GuiElement {
                 if(mouseX > guiLeft+pageCoords.x && mouseX < guiLeft+pageCoords.x+162 &&
                         mouseY > guiTop+pageCoords.y && mouseY < guiTop+pageCoords.y+rows*18) {
                     if(currentPage >= 0 && entry.getValue() == currentPage) {
+                        dirty = true;
                         return false;
                     } else {
                         if(Mouse.getEventButtonState() && Mouse.getEventButton() == 0 &&
@@ -866,7 +1056,11 @@ public class StorageOverlay extends GuiElement {
                 case 4:
                     NotEnoughUpdates.INSTANCE.config.storageGUI.enderchestPreview =
                             !NotEnoughUpdates.INSTANCE.config.storageGUI.enderchestPreview; break;
+                case 5:
+                    NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode =
+                            !NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode; break;
             }
+            dirty = true;
         }
 
         if(mouseX >= guiLeft+10 && mouseX <= guiLeft+171 &&
@@ -1019,14 +1213,91 @@ public class StorageOverlay extends GuiElement {
         }
 
         if(Keyboard.getEventKeyState()) {
+            if(NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotLocking &&
+                    KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockKey)) {
+                if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) return true;
+                GuiContainer container = (GuiContainer) Minecraft.getMinecraft().currentScreen;
+
+                ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+                int width = scaledResolution.getScaledWidth();
+                int height = scaledResolution.getScaledHeight();
+                int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+                int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
+
+                for(Slot slot : container.inventorySlots.inventorySlots) {
+                    if(slot != null &&
+                            slot.inventory == Minecraft.getMinecraft().thePlayer.inventory &&
+                            container.isMouseOverSlot(slot, mouseX, mouseY)) {
+                        SlotLocking.getInstance().toggleLock(slot.getSlotIndex());
+                        return true;
+                    }
+                }
+            }
+
             String prevText = searchBar.getText();
             searchBar.setFocus(true);
             searchBar.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
             if(!prevText.equals(searchBar.getText())) {
                 StorageManager.getInstance().searchDisplay(searchBar.getText());
+                dirty = true;
             }
         }
 
         return true;
     }
+
+    private static final ResourceLocation RES_ITEM_GLINT = new ResourceLocation("textures/misc/enchanted_item_glint.png");
+    private void renderEnchOverlay(Set<Vector2f> locations) {
+        float f = (float)(Minecraft.getSystemTime() % 3000L) / 3000.0F / 8.0F;
+        float f1 = (float)(Minecraft.getSystemTime() % 4873L) / 4873.0F / 8.0F;
+        Minecraft.getMinecraft().getTextureManager().bindTexture(RES_ITEM_GLINT);
+
+        GL11.glPushMatrix();
+        for(Vector2f loc : locations) {
+            GlStateManager.pushMatrix();
+            GlStateManager.enableRescaleNormal();
+            GlStateManager.enableAlpha();
+            GlStateManager.alphaFunc(516, 0.1F);
+            GlStateManager.enableBlend();
+
+            GlStateManager.disableLighting();
+
+            GlStateManager.translate(loc.x, loc.y, 0);
+
+            GlStateManager.depthMask(false);
+            GlStateManager.depthFunc(GL11.GL_EQUAL);
+            GlStateManager.blendFunc(GL11.GL_SRC_COLOR, GL11.GL_ONE);
+            GL11.glBlendFunc(GL11.GL_SRC_COLOR, GL11.GL_ONE);
+            GlStateManager.matrixMode(5890);
+            GlStateManager.pushMatrix();
+            GlStateManager.scale(8.0F, 8.0F, 8.0F);
+            GlStateManager.translate(f, 0.0F, 0.0F);
+            GlStateManager.rotate(-50.0F, 0.0F, 0.0F, 1.0F);
+
+            GlStateManager.color(0x80/255f, 0x40/255f, 0xCC/255f, 1);
+            Utils.drawTexturedRectNoBlend(0, 0, 16, 16, 0, 1/16f, 0, 1/16f, GL11.GL_NEAREST);
+
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.scale(8.0F, 8.0F, 8.0F);
+            GlStateManager.translate(-f1, 0.0F, 0.0F);
+            GlStateManager.rotate(10.0F, 0.0F, 0.0F, 1.0F);
+
+            GlStateManager.color(0x80/255f, 0x40/255f, 0xCC/255f, 1);
+            Utils.drawTexturedRectNoBlend(0, 0, 16, 16, 0, 1/16f, 0, 1/16f, GL11.GL_NEAREST);
+
+            GlStateManager.popMatrix();
+            GlStateManager.matrixMode(5888);
+            GlStateManager.blendFunc(770, 771);
+            GlStateManager.depthFunc(515);
+            GlStateManager.depthMask(true);
+
+            GlStateManager.popMatrix();
+        }
+        GlStateManager.disableRescaleNormal();
+        GL11.glPopMatrix();
+
+        GlStateManager.bindTexture(0);
+    }
+
 }

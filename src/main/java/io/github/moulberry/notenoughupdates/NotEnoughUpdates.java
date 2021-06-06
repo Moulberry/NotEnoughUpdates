@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -220,6 +221,19 @@ public class NotEnoughUpdates {
             }
         }
     });*/
+
+    SimpleCommand stWhyCommand = new SimpleCommand("neustwhy", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            NEUEventListener.displayNotification(Lists.newArrayList(
+                              "\u00a7eStorage Viewer",
+                            "\u00a77Currently, the storage viewer requires you to click twice",
+                            "\u00a77in order to switch between pages. This is because Hypixel",
+                            "\u00a77has not yet added a shortcut command to go to any enderchest/",
+                            "\u00a77storage page.",
+                            "\u00a77While it is possible to send the second click",
+                            "\u00a77automatically, doing so violates Hypixel's new mod rules."), true);
+        }
+    });
 
     SimpleCommand gamemodesCommand = new SimpleCommand("neugamemodes", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -1159,6 +1173,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);
         ClientCommandHandler.instance.registerCommand(gamemodesCommand);
+        ClientCommandHandler.instance.registerCommand(stWhyCommand);
         ClientCommandHandler.instance.registerCommand(buttonsCommand);
         ClientCommandHandler.instance.registerCommand(resetRepoCommand);
         ClientCommandHandler.instance.registerCommand(reloadRepoCommand);
@@ -1339,8 +1354,9 @@ public class NotEnoughUpdates {
                     }
                 }
             }
+
+            hasSkyblockScoreboard = false;
         }
 
-        hasSkyblockScoreboard = false;
     }
 }

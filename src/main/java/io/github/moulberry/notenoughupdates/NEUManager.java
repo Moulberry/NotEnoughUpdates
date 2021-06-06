@@ -690,6 +690,8 @@ public class NEUManager {
                             internalname += ";3"; break;
                         case "LEGENDARY":
                             internalname += ";4"; break;
+                        case "MYTHIC":
+                            internalname += ";5"; break;
                     }
                 }
             }
@@ -1304,6 +1306,8 @@ public class NEUManager {
                                 tier = "EPIC"; break;
                             case "EPIC":
                                 tier = "LEGENDARY"; break;
+                            case "LEGENDARY":
+                                tier = "MYTHIC"; break;
                         }
                     }
                 }

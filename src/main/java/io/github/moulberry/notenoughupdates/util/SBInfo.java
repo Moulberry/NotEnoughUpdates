@@ -51,7 +51,8 @@ public class SBInfo {
 
     private long lastManualLocRaw = -1;
     private long lastLocRaw = -1;
-    private long joinedWorld = -1;
+    public long joinedWorld = -1;
+    public long unloadedWorld = -1;
     private JsonObject locraw = null;
     public boolean isInDungeon = false;
 
@@ -71,12 +72,17 @@ public class SBInfo {
     }
 
     @SubscribeEvent
-    public void onWorldChange(WorldEvent.Load event) {
+    public void onWorldLoad(WorldEvent.Load event) {
         lastLocRaw = -1;
         locraw = null;
         mode = null;
         joinedWorld = System.currentTimeMillis();
         lastOpenContainerName = null;
+    }
+
+    @SubscribeEvent
+    public void onWorldUnload(WorldEvent.Unload event) {
+        unloadedWorld = System.currentTimeMillis();
     }
 
     private static final Pattern JSON_BRACKET_PATTERN = Pattern.compile("\\{.+}");

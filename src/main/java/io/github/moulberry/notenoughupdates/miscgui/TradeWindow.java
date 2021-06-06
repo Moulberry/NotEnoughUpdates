@@ -95,6 +95,26 @@ public class TradeWindow {
                 new Color(64, 64, 64, 255).getRGB());
     }
 
+    private static int getPrice(String internalname) {
+        int pricePer = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
+        if(pricePer == -1) {
+            JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
+            if(bazaarInfo != null && bazaarInfo.has("avg_buy")) {
+                pricePer = (int)bazaarInfo.get("avg_buy").getAsFloat();
+            }
+        }
+        if(pricePer == -1) {
+            JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
+            if(info != null && !NotEnoughUpdates.INSTANCE.manager.auctionManager.isVanillaItem(internalname) &&
+                    info.has("price") && info.has("count")) {
+                int auctionPricePer = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
+
+                pricePer = auctionPricePer;
+            }
+        }
+        return pricePer;
+    }
+
     private static int processTopItems(ItemStack stack, Map<Integer, Set<String>> topItems,
                                        Map<String, ItemStack> topItemsStack, Map<String, Integer> topItemsCount) {
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
@@ -149,19 +169,7 @@ public class TradeWindow {
                 } catch(Exception ignored) {}
             }
         } else {
-            JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
-            int pricePer = -1;
-            if(info != null && !NotEnoughUpdates.INSTANCE.manager.auctionManager.isVanillaItem(internalname) &&
-                     info.has("price") && info.has("count")) {
-                int auctionPricePer = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
-
-                pricePer = auctionPricePer;
-            } else {
-                JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
-                if(bazaarInfo != null && bazaarInfo.has("avg_buy")) {
-                    pricePer = (int)bazaarInfo.get("avg_buy").getAsFloat();
-                }
-            }
+            int pricePer = getPrice(internalname);
             if(pricePer > 0) {
                 topItemsStack.putIfAbsent(internalname, stack);
 
@@ -252,19 +260,7 @@ public class TradeWindow {
                             NBTTagCompound nbt = items.getCompoundTagAt(k).getCompoundTag("tag");
                             String internalname2 = NotEnoughUpdates.INSTANCE.manager.getInternalnameFromNBT(nbt);
                             if(internalname2 != null) {
-                                JsonObject info2 = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname2);
-
-                                int pricePer2 = -1;
-                                if(info2 != null && info2.has("price") && info2.has("count")) {
-                                    int auctionPricePer2 = (int)(info2.get("price").getAsFloat() / info2.get("count").getAsFloat());
-
-                                    pricePer2 = auctionPricePer2;
-                                } else {
-                                    JsonObject bazaarInfo2 = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname2);
-                                    if(bazaarInfo2 != null && bazaarInfo2.has("avg_buy")) {
-                                        pricePer2 = (int)bazaarInfo2.get("avg_buy").getAsFloat();
-                                    }
-                                }
+                                int pricePer2 = getPrice(internalname2);
                                 if(pricePer2 > 0) {
                                     int count2 = items.getCompoundTagAt(k).getByte("Count");
                                     price += pricePer2 * count2;
@@ -350,18 +346,8 @@ public class TradeWindow {
                     list.add(containerIndex);
                 }
             } else {
-                JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
-                int price = -1;
-                if(info != null && info.has("price") && info.has("count")) {
-                    int auctionPricePer = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
-
-                    price = auctionPricePer * stack.stackSize;
-                } else {
-                    JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
-                    if(bazaarInfo != null && bazaarInfo.has("avg_buy")) {
-                        price = (int)bazaarInfo.get("avg_buy").getAsFloat() * stack.stackSize;
-                    }
-                }
+                int price = getPrice(internalname);
+                if(price == -1) price = 0;
 
                 price += getBackpackValue(stack);
 

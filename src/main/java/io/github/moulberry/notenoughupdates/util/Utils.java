@@ -1,12 +1,15 @@
 package io.github.moulberry.notenoughupdates.util;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.gson.*;
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.audio.SoundHandler;
@@ -20,8 +23,14 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.model.IBakedModel;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.EnumCreatureAttribute;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -154,6 +163,7 @@ public class Utils {
         try {
             itemRender.renderItemAndEffectIntoGUI(stack, x, y);
         } catch(Exception e) {e.printStackTrace();} //Catch exceptions to ensure that hasEffectOverride is set back to false.
+        itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRendererObj, stack, x, y, null);
         hasEffectOverride = false;
         itemRender.zLevel = 0;
         RenderHelper.disableStandardItemLighting();
@@ -224,11 +234,15 @@ public class Utils {
         long currentTimeMillis = System.currentTimeMillis();
         if(startTime == 0) startTime = currentTimeMillis;
 
+        int chromaSpeed = NotEnoughUpdates.INSTANCE.config.misc.chromaSpeed;
+        if(chromaSpeed < 10) chromaSpeed = 10;
+        if(chromaSpeed > 5000) chromaSpeed = 5000;
+
         StringBuilder rainbowText = new StringBuilder();
         int len = 0;
         for(int i=0; i<str.length(); i++) {
             char c = str.charAt(i);
-            int index = ((int)(offset+len/12f-(currentTimeMillis-startTime)/100))%rainbow.length;
+            int index = ((int)(offset+len/12f-(currentTimeMillis-startTime)/chromaSpeed))%rainbow.length;
             len += Minecraft.getMinecraft().fontRendererObj.getCharWidth(c);
             if(bold) len++;
 
@@ -291,6 +305,45 @@ public class Utils {
         }
 
         return "";
+    }
+
+    public static List<String> getRawTooltip(ItemStack stack) {
+        List<String> list = Lists.<String>newArrayList();
+        String s = stack.getDisplayName();
+
+        if (stack.hasDisplayName()) {
+            s = EnumChatFormatting.ITALIC + s;
+        }
+
+        s = s + EnumChatFormatting.RESET;
+
+        if (!stack.hasDisplayName() && stack.getItem() == Items.filled_map) {
+            s = s + " #" + stack.getItemDamage();
+        }
+
+        list.add(s);
+
+        if (stack.hasTagCompound()) {
+            if (stack.getTagCompound().hasKey("display", 10)) {
+                NBTTagCompound nbttagcompound = stack.getTagCompound().getCompoundTag("display");
+
+                if (nbttagcompound.hasKey("color", 3)) {
+                    list.add(EnumChatFormatting.ITALIC + StatCollector.translateToLocal("item.dyed"));
+                }
+
+                if (nbttagcompound.getTagId("Lore") == 9) {
+                    NBTTagList nbttaglist1 = nbttagcompound.getTagList("Lore", 8);
+
+                    if (nbttaglist1.tagCount() > 0) {
+                        for (int j1 = 0; j1 < nbttaglist1.tagCount(); ++j1) {
+                            list.add(EnumChatFormatting.DARK_PURPLE + "" + EnumChatFormatting.ITALIC + nbttaglist1.getStringTagAt(j1));
+                        }
+                    }
+                }
+            }
+        }
+
+        return list;
     }
 
     public static String floatToString(float f, int decimals) {
@@ -473,6 +526,7 @@ public class Utils {
     public static void drawTexturedRect(float x, float y, float width, float height, float uMin, float uMax, float vMin, float vMax, int filter) {
         GlStateManager.enableTexture2D();
         GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, filter);
