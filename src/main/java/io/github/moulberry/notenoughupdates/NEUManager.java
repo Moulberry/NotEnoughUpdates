@@ -3,8 +3,6 @@ package io.github.moulberry.notenoughupdates;
 import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
-import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
-import io.github.moulberry.notenoughupdates.miscgui.GuiItemCustomize;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
@@ -66,7 +64,7 @@ public class NEUManager {
 
     private ExecutorService repoLoaderES = Executors.newSingleThreadExecutor();
 
-    private static final String GIT_COMMITS_URL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
+    private static String GIT_COMMITS_URL;
 
     private HashMap<String, Set<String>> usagesMap = new HashMap<>();
 
@@ -80,6 +78,7 @@ public class NEUManager {
         this.neu = neu;
         this.configLocation = configLocation;
         this.auctionManager = new APIManager(this);
+        GIT_COMMITS_URL = neu.config.hidden.repoCommitsURL;
 
         gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -188,8 +187,7 @@ public class NEUManager {
                     Utils.recursiveDelete(repoLocation);
                     repoLocation.mkdirs();
 
-                    //TODO: Store hard-coded value somewhere else
-                    String dlUrl = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
+                    String dlUrl = neu.config.hidden.repoURL;
 
                     pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
                     dialog.pack();
@@ -1169,7 +1167,7 @@ public class NEUManager {
         return true;
     }
 
-    public boolean uploadItemJson(String internalname, String itemid, String displayname, String[] lore, String crafttext, String infoType, String[] info,
+    /*public boolean uploadItemJson(String internalname, String itemid, String displayname, String[] lore, String crafttext, String infoType, String[] info,
                                  String clickcommand, int damage, NBTTagCompound nbttag) {
         JsonObject json = createItemJson(internalname, itemid, displayname, lore, crafttext, infoType, info, clickcommand, damage, nbttag);
         if(json == null) {
@@ -1180,11 +1178,11 @@ public class NEUManager {
         String newBranchName = UUID.randomUUID().toString().substring(0, 8) + "-" + internalname + "-" + username;
         String prTitle = internalname + "-" + username;
         String prBody = "Internal name: " + internalname + "\nSubmitted by: " + username;
-        String file = "items/"+internalname+".json";
+        String file = "items/"+internalname+".json";*/
         /*if(!neuio.createNewRequest(newBranchName, prTitle, prBody, file, gson.toJson(json))) {
             return false;
         }*/
-
+        /*
         try {
             writeJsonDefaultDir(json, internalname+".json");
         } catch(IOException e) {
@@ -1193,7 +1191,7 @@ public class NEUManager {
 
         loadItem(internalname);
         return true;
-    }
+    }*/
 
     public void writeJson(JsonObject json, File file) throws IOException {
         file.createNewFile();

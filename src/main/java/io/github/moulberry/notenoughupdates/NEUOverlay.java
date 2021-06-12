@@ -71,7 +71,7 @@ public class NEUOverlay extends Gui {
     private NEUManager manager;
 
     private String mobRegex = ".*?((_MONSTER)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
-    private String petRegex = ".*?;[0-4]$";
+    private String petRegex = ".*?;[0-5]$";
 
     private ResourceLocation[] sortIcons = new ResourceLocation[] {
         sort_all, sort_mob, sort_pet, sort_tool, sort_armor, sort_accessory
@@ -1044,7 +1044,8 @@ public class NEUOverlay extends Gui {
         EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
         EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
-        EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+        EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
+        EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
     };
 
     /**
@@ -1055,7 +1056,8 @@ public class NEUOverlay extends Gui {
      * 2 = RARE
      * 3 = EPIC
      * 4 = LEGENDARY
-     * 5 = SPECIAL
+     * 5 = MYTHIC
+     * 6 = SPECIAL
      */
     public int getRarity(JsonArray lore) {
         for(int i=lore.size()-1; i>=0; i--) {
@@ -1272,6 +1274,14 @@ public class NEUOverlay extends Gui {
                     break;
                 case "spinaxx":
                     searchedItems.add(CustomItems.SPINAXX);
+                    break;
+                case "ironm00n":
+                case "ironmoon":
+                    searchedItems.add(CustomItems.IRONM00N);
+                    break;
+                case "credits":
+                case "credit":
+                    searchedItems.add(CustomItems.CREDITS);
                     break;
             }
 
