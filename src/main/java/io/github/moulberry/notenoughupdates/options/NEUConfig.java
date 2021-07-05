@@ -1146,13 +1146,6 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorDraggableList(
                 exampleText = {
-                        "\u00a73Cakes: \u00a7eInactive!",
-                        "\u00a73Cookie Buff: \u00a7eInactive!",
-                        "\u00a73Godpot: \u00a7eInactive!",
-                        "\u00a73Puzzler: \u00a7eReady!",
-                        "\u00a73Fetchur: \u00a7eReady!",
-                        "\u00a73Commissions: \u00a7eReady!",
-                        "\u00a73Experiments: \u00a7eReady!",
                         "\u00a73Cakes: \u00a7e1d21h",
                         "\u00a73Cookie Buff: \u00a7e2d23h",
                         "\u00a73Godpot: \u00a7e19h",
@@ -1163,6 +1156,182 @@ public class NEUConfig extends Config {
         )
         @ConfigAccordionId(id = 0)
         public List<Integer> todoText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
+
+        @ConfigOption(
+                name = "Show Only If Soon",
+                desc = ""
+        )
+        @ConfigAccordionId(id = 0)
+        @ConfigEditorAccordion(id = 1)
+        public boolean TodoAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Experimentation Display",
+                desc = "Change the way the experimentation timer displays\n" +
+                        "Only when ready, When very Soon, When soon, When kinda soon or always."
+        )
+        @ConfigAccordionId(id =1)
+        @ConfigEditorDropdown(
+                values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
+        )
+        public int experimentationDisplay = 0;
+
+
+        @Expose
+        @ConfigOption(
+                name = "Puzzler Reset Display",
+                desc = "Change the way the puzzler reset timer displays\n" +
+                        "Only when ready, When very Soon, When soon, When kinda soon or always."
+        )
+        @ConfigAccordionId(id =1)
+        @ConfigEditorDropdown(
+                values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
+        )
+        public int puzzlerDisplay = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Fetchur Reset Display",
+                desc = "Change the way the fetchur reset timer displays\n" +
+                        "Only when ready, When very Soon, When soon, When kinda soon or always."
+        )
+        @ConfigAccordionId(id =1)
+        @ConfigEditorDropdown(
+                values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
+        )
+        public int fetchurDisplay = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Commission timer Display",
+                desc = "Change the way the Commission timer displays\n" +
+                        "Only when ready, When very Soon, When soon, When kinda soon or always."
+        )
+        @ConfigAccordionId(id =1)
+        @ConfigEditorDropdown(
+                values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
+        )
+        public int commissionDisplay = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Cake Buff Display",
+                desc = "Change the way the cake buff timer displays\n" +
+                        "Only when ready, When very Soon, When soon, When kinda soon or always."
+        )
+        @ConfigAccordionId(id =1)
+        @ConfigEditorDropdown(
+                values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
+        )
+        public int cakesDisplay = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Cookie Buff Display",
+                desc = "Change the way the cookie buff displays\n" +
+                        "Only when ready, When very Soon, When soon, When kinda soon or always."
+        )
+        @ConfigAccordionId(id =1)
+        @ConfigEditorDropdown(
+                values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
+        )
+        public int cookieBuffDisplay = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "God Pot Display",
+                desc = "Change the way the god pot displays\n" +
+                        "Only when ready, When very Soon, When soon, When kinda soon or always."
+        )
+        @ConfigAccordionId(id =1)
+        @ConfigEditorDropdown(
+                values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
+        )
+        public int godpotDisplay = 0;
+
+        @ConfigOption(
+                name = "Colours",
+                desc = ""
+        )
+
+        @ConfigEditorAccordion(id = 2)
+        @ConfigAccordionId(id = 0)
+        public boolean TodoColourAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Ready colour",
+                desc = "Change the colour of when the timer is ready"
+
+        )
+        @ConfigEditorDropdown(
+                values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+        )
+        @ConfigEditorAccordion(id = 2)
+        public int readyColour = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Gone colour",
+                desc = "Change the colour of when the timer is gone"
+
+        )
+        @ConfigEditorDropdown(
+                values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+        )
+        @ConfigEditorAccordion(id = 2)
+        public int goneColour = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Very soon colour",
+                desc = "Change the colour of when the timer is almost ready/gone"
+
+        )
+        @ConfigEditorDropdown(
+                values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+        )
+        @ConfigEditorAccordion(id = 2)
+        public int verySoonColour = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Soon Colour",
+                desc = "Change the colour of when the timer is soon ready/gone"
+
+        )
+        @ConfigEditorDropdown(
+                values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+        )
+        @ConfigEditorAccordion(id = 2)
+        public int soonColour = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Kinda Soon Colour",
+                desc = "Change the colour of when the timer is kinda soon ready/gone"
+
+        )
+        @ConfigEditorDropdown(
+                values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+        )
+        @ConfigEditorAccordion(id = 2)
+        public int kindaSoonColour = 0;
+
+
+        @Expose
+        @ConfigOption(
+                name = "Default Colour",
+                desc = "Change the default colour of the timers"
+
+        )
+
+        @ConfigEditorDropdown(
+                values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+        )
+        @ConfigEditorAccordion(id = 2)
+        public int defaultColour = 0;
 
         @Expose
         @ConfigOption(
@@ -2138,7 +2307,7 @@ public class NEUConfig extends Config {
     }
 
     public static class HiddenProfileSpecific {
-        @Expose public long godPotionDrunk = 0L;
+        @Expose public long godPotionDuration = 0L;
         @Expose public long puzzlerCompleted = 0L;
         @Expose public long firstCakeAte = 0L;
         @Expose public long fetchurCompleted = 0L;
