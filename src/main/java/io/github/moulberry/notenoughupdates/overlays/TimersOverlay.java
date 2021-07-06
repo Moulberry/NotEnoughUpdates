@@ -393,7 +393,7 @@ public class TimersOverlay extends TextOverlay {
 
         //Experiment Display
         if(hidden.experimentsCompleted < midnightReset) {
-            map.put(6, DARK_AQUA+"Experiments: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour]+"Ready!"+Utils.prettyTime(timeDiffMidnightNow));
+            map.put(6, DARK_AQUA+"Experiments: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour]+"Ready!");
         } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
                 (hidden.experimentsCompleted < (midnightReset-TimeEnums.HALFANHOUR.time))){
             map.put(6, DARK_AQUA+"Experiments: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour]+Utils.prettyTime(timeDiffMidnightNow));
