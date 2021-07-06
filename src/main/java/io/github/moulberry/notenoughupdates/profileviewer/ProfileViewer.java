@@ -64,6 +64,7 @@ public class ProfileViewer {
         skillToSkillDisplayMap.put("slayer_zombie", Utils.createItemStack(Items.rotten_flesh, EnumChatFormatting.GOLD+"Rev Slayer"));
         skillToSkillDisplayMap.put("slayer_spider", Utils.createItemStack(Items.spider_eye, EnumChatFormatting.GOLD+"Tara Slayer"));
         skillToSkillDisplayMap.put("slayer_wolf", Utils.createItemStack(Items.bone, EnumChatFormatting.GOLD+"Sven Slayer"));
+        skillToSkillDisplayMap.put("slayer_enderman", Utils.createItemStack(Items.ender_pearl, EnumChatFormatting.GOLD+"Ender Slayer"));
     }
 
     private static final ItemStack CAT_FARMING = Utils.createItemStack(Items.golden_hoe, EnumChatFormatting.YELLOW+"Farming");
@@ -653,6 +654,8 @@ public class ProfileViewer {
             float experience_slayer_zombie = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.xp"), 0);
             float experience_slayer_spider = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.xp"), 0);
             float experience_slayer_wolf = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.xp"), 0);
+            float experience_slayer_enderman = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.enderman.xp"), 0);
+
 
             float totalSkillXP = experience_skill_taming + experience_skill_mining + experience_skill_foraging
                     + experience_skill_enchanting + experience_skill_carpentry + experience_skill_farming
@@ -681,6 +684,7 @@ public class ProfileViewer {
             skillInfo.addProperty("experience_slayer_zombie", experience_slayer_zombie);
             skillInfo.addProperty("experience_slayer_spider", experience_slayer_spider);
             skillInfo.addProperty("experience_slayer_wolf", experience_slayer_wolf);
+            skillInfo.addProperty("experience_slayer_enderman", experience_slayer_enderman);
 
             JsonArray levelingArray = Utils.getElement(leveling, "leveling_xp").getAsJsonArray();
             int farmingCap = getCap(leveling, "farming") + (int)Utils.getElementAsFloat(
@@ -706,6 +710,8 @@ public class ProfileViewer {
                     experience_slayer_spider, 9,true);
             Level level_slayer_wolf = getLevel(Utils.getElement(leveling, "slayer_xp.wolf").getAsJsonArray(),
                     experience_slayer_wolf, 9,true);
+            Level level_slayer_enderman = getLevel(Utils.getElement(leveling, "slayer_xp.enderman").getAsJsonArray(),
+                    experience_slayer_enderman, 9,true);
 
             skillInfo.addProperty("level_skill_taming", level_skill_taming.level);
             skillInfo.addProperty("level_skill_mining", level_skill_mining.level);
@@ -723,6 +729,7 @@ public class ProfileViewer {
             skillInfo.addProperty("level_slayer_zombie", level_slayer_zombie.level);
             skillInfo.addProperty("level_slayer_spider", level_slayer_spider.level);
             skillInfo.addProperty("level_slayer_wolf", level_slayer_wolf.level);
+            skillInfo.addProperty("level_slayer_enderman", level_slayer_enderman.level);
 
             skillInfo.addProperty("maxed_skill_taming", level_skill_taming.maxed);
             skillInfo.addProperty("maxed_skill_mining", level_skill_mining.maxed);
@@ -740,6 +747,7 @@ public class ProfileViewer {
             skillInfo.addProperty("maxed_slayer_zombie", level_slayer_zombie.maxed);
             skillInfo.addProperty("maxed_slayer_spider", level_slayer_spider.maxed);
             skillInfo.addProperty("maxed_slayer_wolf", level_slayer_wolf.maxed);
+            skillInfo.addProperty("maxed_slayer_enderman", level_slayer_enderman.maxed);
 
             skillInfo.addProperty("maxxp_skill_taming", level_skill_taming.maxXpForLevel);
             skillInfo.addProperty("maxxp_skill_mining", level_skill_mining.maxXpForLevel);
@@ -757,6 +765,7 @@ public class ProfileViewer {
             skillInfo.addProperty("maxxp_slayer_zombie", level_slayer_zombie.maxXpForLevel);
             skillInfo.addProperty("maxxp_slayer_spider", level_slayer_spider.maxXpForLevel);
             skillInfo.addProperty("maxxp_slayer_wolf", level_slayer_wolf.maxXpForLevel);
+            skillInfo.addProperty("maxxp_slayer_enderman", level_slayer_enderman.maxXpForLevel);
 
             return skillInfo;
         }

@@ -2166,25 +2166,37 @@ public class GuiProfileViewer extends GuiScreen {
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*5, 76);
 
 
+        //Slayer values
         float zombie_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.boss_kills_tier_2"), 0);
         float zombie_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.boss_kills_tier_3"), 0);
-        float spider_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.boss_kills_tier_2"), 0);
-        float spider_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.boss_kills_tier_3"), 0);
+        float zombie_boss_kills_tier_4 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.boss_kills_tier_4"), 0);
         float wolf_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.boss_kills_tier_2"), 0);
         float wolf_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.boss_kills_tier_3"), 0);
+        float spider_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.boss_kills_tier_2"), 0);
+        float spider_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.boss_kills_tier_3"), 0);
+        float enderman_boss_kills_tier_2 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.enderman.boss_kills_tier_2"), 0);
+        float enderman_boss_kills_tier_3 = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.enderman.boss_kills_tier_3"), 0);
+
 
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T3", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_2,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T3", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_2,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_4,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*2, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T4", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_3,
-                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*3, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T3", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_2,
-                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*4, 76);
+                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*3, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T4", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_3,
-                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*5, 76);
+                guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*4, 76);
+
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T3", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_2,
+                guiLeft+xStart+xOffset*2, guiTop+yStartBottom+yOffset*0, 76);
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Sven T4", EnumChatFormatting.WHITE.toString()+(int)wolf_boss_kills_tier_3,
+                guiLeft+xStart+xOffset*2, guiTop+yStartBottom+yOffset*1, 76);
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Voidgloom Seraph T3", EnumChatFormatting.WHITE.toString()+(int)enderman_boss_kills_tier_2,
+                guiLeft+xStart+xOffset*2, guiTop+yStartBottom+yOffset*2, 76);
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Voidgloom Seraph T4", EnumChatFormatting.WHITE.toString()+(int)enderman_boss_kills_tier_3,
+                guiLeft+xStart+xOffset*2, guiTop+yStartBottom+yOffset*3, 76);
 
         float pet_milestone_ores_mined = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.pet_milestone_ores_mined"), 0);
         float pet_milestone_sea_creatures_killed = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.pet_milestone_sea_creatures_killed"), 0);
