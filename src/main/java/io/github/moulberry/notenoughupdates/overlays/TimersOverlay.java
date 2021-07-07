@@ -206,11 +206,13 @@ public class TimersOverlay extends TextOverlay {
         }
 
         boolean foundCookieBuffText = false;
+        boolean foundGodPotText = false;
         if(SBInfo.getInstance().getLocation() != null && !SBInfo.getInstance().getLocation().equals("dungeon") && SBInfo.getInstance().footer != null) {
             String formatted = SBInfo.getInstance().footer.getFormattedText();
             for(String line : formatted.split("\n")) {
                 Matcher activeEffectsMatcher = PATTERN_ACTIVE_EFFECTS.matcher(line);
                 if(activeEffectsMatcher.matches()) {
+                    foundGodPotText = true;
                     String[] godpotRemaingTimeUnformatted= activeEffectsMatcher.group(1).split(":");
                     long godPotDuration = 0;
                     try {
@@ -232,6 +234,7 @@ public class TimersOverlay extends TextOverlay {
 
                         }
                     } catch(Exception ignored){}
+
                     hidden.godPotionDuration = godPotDuration;
 
                 } else if(line.contains("\u00a7d\u00a7lCookie Buff")) {
@@ -279,6 +282,11 @@ public class TimersOverlay extends TextOverlay {
             }
         }
 
+        if(!foundGodPotText){
+            hidden.godPotionDuration = 0;
+        }
+
+
         if(!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay) {
             overlayStrings = null;
             return;
@@ -319,6 +327,7 @@ public class TimersOverlay extends TextOverlay {
         } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.ALWAYS.ordinal()){
             map.put(1, DARK_AQUA+"Cookie Buff: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour]+Utils.prettyTime(hidden.cookieBuffRemaining));
         }
+
 
         long godpotEnd = hidden.godPotionDuration;
         //Godpot Display
