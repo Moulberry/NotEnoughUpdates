@@ -117,23 +117,25 @@ public class InventoryStorageSelector {
             return;
         }
 
-        if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.backpackHotkey)) {
-            Minecraft.getMinecraft().thePlayer.inventory.currentItem = 0;
-            isOverridingSlot = true;
-        } else if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowLeftKey)) {
-            selectedIndex--;
+        if(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowKeyBackpacks) {
+            if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.backpackHotkey)) {
+                Minecraft.getMinecraft().thePlayer.inventory.currentItem = 0;
+                isOverridingSlot = true;
+            } else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowLeftKey)) {
+                selectedIndex--;
 
-            int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
-            if(selectedIndex > max) selectedIndex = max;
-            if(selectedIndex < 0) selectedIndex = 0;
-        } else if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowRightKey)) {
-            selectedIndex++;
+                int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size() - 1;
+                if (selectedIndex > max) selectedIndex = max;
+                if (selectedIndex < 0) selectedIndex = 0;
+            } else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowRightKey)) {
+                selectedIndex++;
 
-            int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
-            if(selectedIndex > max) selectedIndex = max;
-            if(selectedIndex < 0) selectedIndex = 0;
-        } else if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowDownKey)) {
-            sendToPage(selectedIndex);
+                int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size() - 1;
+                if (selectedIndex > max) selectedIndex = max;
+                if (selectedIndex < 0) selectedIndex = 0;
+            } else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowDownKey)) {
+                sendToPage(selectedIndex);
+            }
         }
 
         if(isSlotSelected()) {
