@@ -167,35 +167,35 @@ public class TimersOverlay extends TextOverlay {
         long currentTime = System.currentTimeMillis();
 
         NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
-        if(hidden == null) return;
+        if (hidden == null) return;
 
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
             IInventory lower = container.getLowerChestInventory();
             String containerName = lower.getDisplayName().getUnformattedText();
 
-            if(containerName.equals("Commissions") && lower.getSizeInventory() >= 18) {
-                if(hidden.commissionsCompleted == 0) {
+            if (containerName.equals("Commissions") && lower.getSizeInventory() >= 18) {
+                if (hidden.commissionsCompleted == 0) {
                     hidden.commissionsCompleted = currentTime;
                 }
-                for(int i=9; i<18; i++) {
+                for (int i = 9; i < 18; i++) {
                     ItemStack stack = lower.getStackInSlot(i);
-                    if(stack != null && stack.hasTagCompound()) {
+                    if (stack != null && stack.hasTagCompound()) {
                         String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
-                        for(String line : lore) {
-                            if(line.contains("(Daily")) {
+                        for (String line : lore) {
+                            if (line.contains("(Daily")) {
                                 hidden.commissionsCompleted = 0;
                                 break;
                             }
                         }
                     }
                 }
-            } else if(containerName.equals("Experimentation Table") && lower.getSizeInventory() >= 36) {
+            } else if (containerName.equals("Experimentation Table") && lower.getSizeInventory() >= 36) {
                 ItemStack stack = lower.getStackInSlot(31);
-                if(stack != null) {
-                    if(stack.getItem() == Items.blaze_powder) {
-                        if(hidden.experimentsCompleted == 0) {
+                if (stack != null) {
+                    if (stack.getItem() == Items.blaze_powder) {
+                        if (hidden.experimentsCompleted == 0) {
                             hidden.experimentsCompleted = currentTime;
                         }
                     } else {
@@ -207,13 +207,13 @@ public class TimersOverlay extends TextOverlay {
 
         boolean foundCookieBuffText = false;
         boolean foundGodPotText = false;
-        if(SBInfo.getInstance().getLocation() != null && !SBInfo.getInstance().getLocation().equals("dungeon") && SBInfo.getInstance().footer != null) {
+        if (SBInfo.getInstance().getLocation() != null && !SBInfo.getInstance().getLocation().equals("dungeon") && SBInfo.getInstance().footer != null) {
             String formatted = SBInfo.getInstance().footer.getFormattedText();
-            for(String line : formatted.split("\n")) {
+            for (String line : formatted.split("\n")) {
                 Matcher activeEffectsMatcher = PATTERN_ACTIVE_EFFECTS.matcher(line);
-                if(activeEffectsMatcher.matches()) {
+                if (activeEffectsMatcher.matches()) {
                     foundGodPotText = true;
-                    String[] godpotRemaingTimeUnformatted= activeEffectsMatcher.group(1).split(":");
+                    String[] godpotRemaingTimeUnformatted = activeEffectsMatcher.group(1).split(":");
                     long godPotDuration = 0;
                     try {
                         int i = 0;
@@ -233,38 +233,49 @@ public class TimersOverlay extends TextOverlay {
                             godPotDuration = godPotDuration + (long) Integer.parseInt(godpotRemaingTimeUnformatted[i]) * 1000;
 
                         }
-                    } catch(Exception ignored){}
+                    } catch (Exception ignored) {
+                    }
 
                     hidden.godPotionDuration = godPotDuration;
 
-                } else if(line.contains("\u00a7d\u00a7lCookie Buff")) {
+                } else if (line.contains("\u00a7d\u00a7lCookie Buff")) {
                     foundCookieBuffText = true;
-                } else if(foundCookieBuffText) {
+                } else if (foundCookieBuffText) {
                     String cleanNoSpace = line.replaceAll("(\u00a7.| )", "");
 
                     hidden.cookieBuffRemaining = 0;
                     StringBuilder number = new StringBuilder();
-                    for(int i=0; i<cleanNoSpace.length(); i++) {
+                    for (int i = 0; i < cleanNoSpace.length(); i++) {
                         char c = cleanNoSpace.charAt(i);
 
-                        if(c >= '0' && c <= '9') {
+                        if (c >= '0' && c <= '9') {
                             number.append(c);
                         } else {
-                            if(number.length() == 0) {
+                            if (number.length() == 0) {
                                 hidden.cookieBuffRemaining = 0;
                                 break;
                             }
-                            if("ydhms".contains(""+c)) {
+                            if ("ydhms".contains("" + c)) {
                                 try {
                                     long val = Integer.parseInt(number.toString());
-                                    switch(c) {
-                                        case 'y': hidden.cookieBuffRemaining += val*365*24*60*60*1000; break;
-                                        case 'd': hidden.cookieBuffRemaining += val*24*60*60*1000; break;
-                                        case 'h': hidden.cookieBuffRemaining += val*60*60*1000; break;
-                                        case 'm': hidden.cookieBuffRemaining += val*60*1000; break;
-                                        case 's': hidden.cookieBuffRemaining += val*1000; break;
+                                    switch (c) {
+                                        case 'y':
+                                            hidden.cookieBuffRemaining += val * 365 * 24 * 60 * 60 * 1000;
+                                            break;
+                                        case 'd':
+                                            hidden.cookieBuffRemaining += val * 24 * 60 * 60 * 1000;
+                                            break;
+                                        case 'h':
+                                            hidden.cookieBuffRemaining += val * 60 * 60 * 1000;
+                                            break;
+                                        case 'm':
+                                            hidden.cookieBuffRemaining += val * 60 * 1000;
+                                            break;
+                                        case 's':
+                                            hidden.cookieBuffRemaining += val * 1000;
+                                            break;
                                     }
-                                } catch(NumberFormatException e) {
+                                } catch (NumberFormatException e) {
                                     hidden.cookieBuffRemaining = 0;
                                     break;
                                 }
@@ -282,69 +293,72 @@ public class TimersOverlay extends TextOverlay {
             }
         }
 
-        if(!foundGodPotText){
+        if (!foundGodPotText) {
             hidden.godPotionDuration = 0;
         }
 
 
-        if(!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay) {
+        if (!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay) {
             overlayStrings = null;
             return;
         }
 
         HashMap<Integer, String> map = new HashMap<>();
 
-        long cakeEnd = hidden.firstCakeAte + 1000*60*60*48 - currentTime;
+        long cakeEnd = hidden.firstCakeAte + 1000 * 60 * 60 * 48 - currentTime;
 
         //Cake Display
-        if(cakeEnd <= 0) {
-            map.put(0, DARK_AQUA+"Cakes: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.goneColour]+"Inactive!");
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cakesDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-                cakeEnd < TimeEnums.HOUR.time){
-            map.put(0, DARK_AQUA+"Cakes: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour]+Utils.prettyTime(cakeEnd));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cakesDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-                cakeEnd < TimeEnums.HALFDAY.time){
-            map.put(0, DARK_AQUA+"Cakes: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour]+Utils.prettyTime(cakeEnd));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cakesDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+        if (cakeEnd <= 0) {
+            map.put(0, DARK_AQUA + "Cakes: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.goneColour] + "Inactive!");
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cakesDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+                cakeEnd < TimeEnums.HOUR.time) {
+            map.put(0, DARK_AQUA + "Cakes: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] + Utils.prettyTime(cakeEnd));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cakesDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+                cakeEnd < TimeEnums.HALFDAY.time) {
+            map.put(0, DARK_AQUA + "Cakes: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] + Utils.prettyTime(cakeEnd));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cakesDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
                 cakeEnd < TimeEnums.DAY.time) {
-            map.put(0, DARK_AQUA+"Cakes: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour]+Utils.prettyTime(cakeEnd));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cakesDisplay >= DISPLAYTYPE.ALWAYS.ordinal()){
-            map.put(0, DARK_AQUA+"Cakes: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour]+Utils.prettyTime(cakeEnd));
+            map.put(0, DARK_AQUA + "Cakes: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(cakeEnd));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cakesDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+            map.put(0, DARK_AQUA + "Cakes: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(cakeEnd));
         }
 
         //CookieBuff Display
-        if(hidden.cookieBuffRemaining <= 0) {
-            map.put(1, DARK_AQUA+"Cookie Buff: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.goneColour]+"Inactive!");
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-                hidden.cookieBuffRemaining < TimeEnums.HOUR.time){
-            map.put(1, DARK_AQUA+"Cookie Buff: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour]+Utils.prettyTime(hidden.cookieBuffRemaining));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-                hidden.cookieBuffRemaining < TimeEnums.HALFDAY.time){
-            map.put(1, DARK_AQUA+"Cookie Buff: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour]+Utils.prettyTime(hidden.cookieBuffRemaining));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+        if (hidden.cookieBuffRemaining <= 0) {
+            map.put(1, DARK_AQUA + "Cookie Buff: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.goneColour] + "Inactive!");
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+                hidden.cookieBuffRemaining < TimeEnums.HOUR.time) {
+            map.put(1, DARK_AQUA + "Cookie Buff: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] + Utils.prettyTime(hidden.cookieBuffRemaining));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+                hidden.cookieBuffRemaining < TimeEnums.HALFDAY.time) {
+            map.put(1, DARK_AQUA + "Cookie Buff: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] + Utils.prettyTime(hidden.cookieBuffRemaining));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
                 hidden.cookieBuffRemaining < TimeEnums.DAY.time) {
-            map.put(1, DARK_AQUA+"Cookie Buff: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour]+Utils.prettyTime(hidden.cookieBuffRemaining));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.ALWAYS.ordinal()){
-            map.put(1, DARK_AQUA+"Cookie Buff: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour]+Utils.prettyTime(hidden.cookieBuffRemaining));
+            map.put(1, DARK_AQUA + "Cookie Buff: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(hidden.cookieBuffRemaining));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+            map.put(1, DARK_AQUA + "Cookie Buff: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(hidden.cookieBuffRemaining));
         }
 
 
         long godpotEnd = hidden.godPotionDuration;
         //Godpot Display
-        if(hidden.godPotionDuration <= 0) {
-            map.put(2, DARK_AQUA+"Godpot: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.goneColour]+"Inactive!");
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-                hidden.godPotionDuration < TimeEnums.HOUR.time){
-            map.put(2, DARK_AQUA+"Godpot: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour]+Utils.prettyTime(hidden.godPotionDuration));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-                hidden.godPotionDuration < TimeEnums.HALFDAY.time){
-            map.put(2, DARK_AQUA+"Godpot: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour]+Utils.prettyTime(hidden.godPotionDuration));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
-                hidden.godPotionDuration < TimeEnums.DAY.time) {
-            map.put(2, DARK_AQUA+"Godpot: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour]+Utils.prettyTime(hidden.godPotionDuration));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.ALWAYS.ordinal()){
-            map.put(2, DARK_AQUA+"Godpotf: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour]+Utils.prettyTime(hidden.godPotionDuration));
-        }
+        //do not display in dungeons due to dungeons not having
+        if (!(SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon"))){
+            if (hidden.godPotionDuration <= 0) {
+                map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.goneColour] + "Inactive!");
+            } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+                    hidden.godPotionDuration < TimeEnums.HOUR.time) {
+                map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] + Utils.prettyTime(hidden.godPotionDuration));
+            } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+                    hidden.godPotionDuration < TimeEnums.HALFDAY.time) {
+                map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] + Utils.prettyTime(hidden.godPotionDuration));
+            } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+                    hidden.godPotionDuration < TimeEnums.DAY.time) {
+                map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(hidden.godPotionDuration));
+            } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+                map.put(2, DARK_AQUA + "Godpotf: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(hidden.godPotionDuration));
+            }
+    }
 
         long puzzlerEnd = hidden.puzzlerCompleted + 1000*60*60*24 - currentTime;
         //Puzzler Display
