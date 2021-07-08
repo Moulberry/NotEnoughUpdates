@@ -9,6 +9,7 @@ import io.github.moulberry.notenoughupdates.core.GuiElementColour;
 import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorSlider;
 import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
+import io.github.moulberry.notenoughupdates.options.seperateSections.DungeonMapConfig;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -113,7 +114,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
     }
 
     public GuiDungeonMapEditor() {
-        NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
+        DungeonMapConfig options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
         //Map Border Size
         //buttons.add(new Button(0, 6, 37, "Small", options.dmBorderSize));
         //buttons.add(new Button(1, 52, 37, "Medium", options.dmBorderSize));
@@ -140,29 +141,29 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
         try {
             //Dungeon Map
-            buttons.add(new Button(18, 20+139, 36, "Yes/No", NEUConfig.DungeonMap.class.getDeclaredField("dmEnable")));
+            buttons.add(new Button(18, 20+139, 36, "Yes/No", DungeonMapConfig.class.getDeclaredField("dmEnable")));
             //Center
-            buttons.add(new Button(19, 84+139, 36, "Player/Map", NEUConfig.DungeonMap.class.getDeclaredField("dmCenterPlayer")));
+            buttons.add(new Button(19, 84+139, 36, "Player/Map", DungeonMapConfig.class.getDeclaredField("dmCenterPlayer")));
             //Rotate
-            buttons.add(new Button(20, 20+139, 65, "Player/No Rotate", NEUConfig.DungeonMap.class.getDeclaredField("dmRotatePlayer")));
+            buttons.add(new Button(20, 20+139, 65, "Player/No Rotate", DungeonMapConfig.class.getDeclaredField("dmRotatePlayer")));
             //Icon Style
-            buttons.add(new Button(21, 84+139, 65, "Default/Heads", NEUConfig.DungeonMap.class.getDeclaredField("dmPlayerHeads")));
+            buttons.add(new Button(21, 84+139, 65, "Default/Heads", DungeonMapConfig.class.getDeclaredField("dmPlayerHeads")));
             //Check Orient
-            buttons.add(new Button(22, 20+139, 94, "Normal/Reorient", NEUConfig.DungeonMap.class.getDeclaredField("dmOrientCheck")));
+            buttons.add(new Button(22, 20+139, 94, "Normal/Reorient", DungeonMapConfig.class.getDeclaredField("dmOrientCheck")));
             //Check Center
-            buttons.add(new Button(23, 84+139, 94, "Yes/No", NEUConfig.DungeonMap.class.getDeclaredField("dmCenterCheck")));
+            buttons.add(new Button(23, 84+139, 94, "Yes/No", DungeonMapConfig.class.getDeclaredField("dmCenterCheck")));
             //Interpolation
-            buttons.add(new Button(24, 20+139, 123, "Yes/No", NEUConfig.DungeonMap.class.getDeclaredField("dmPlayerInterp")));
+            buttons.add(new Button(24, 20+139, 123, "Yes/No", DungeonMapConfig.class.getDeclaredField("dmPlayerInterp")));
             //Compatibility
-            buttons.add(new Button(25, 84+139, 123, "Normal/No SHD/No FB/SHD", NEUConfig.DungeonMap.class.getDeclaredField("dmCompat")));
+            buttons.add(new Button(25, 84+139, 123, "Normal/No SHD/No FB/SHD", DungeonMapConfig.class.getDeclaredField("dmCompat")));
 
             //Background
-            buttons.add(new Button(26, 20+139, 152, "", NEUConfig.DungeonMap.class.getDeclaredField("dmBackgroundColour")));
+            buttons.add(new Button(26, 20+139, 152, "", DungeonMapConfig.class.getDeclaredField("dmBackgroundColour")));
             //Border
-            buttons.add(new Button(27, 84+139, 152, "", NEUConfig.DungeonMap.class.getDeclaredField("dmBorderColour")));
+            buttons.add(new Button(27, 84+139, 152, "", DungeonMapConfig.class.getDeclaredField("dmBorderColour")));
 
             //Chroma Mode
-            buttons.add(new Button(28, 84+139, 181, "Normal/Scroll", NEUConfig.DungeonMap.class.getDeclaredField("dmChromaBorder")));
+            buttons.add(new Button(28, 84+139, 181, "Normal/Scroll", DungeonMapConfig.class.getDeclaredField("dmChromaBorder")));
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -302,14 +303,14 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 guiLeft+76, guiTop+209, false, 200, 0xFFB4B4B4);
 
         try {
-            drawSlider(NEUConfig.DungeonMap.class.getDeclaredField("dmBorderSize"), guiLeft+76, guiTop+45);
-            drawSlider(NEUConfig.DungeonMap.class.getDeclaredField("dmRoomSize"), guiLeft+76, guiTop+75);
-            drawSlider(NEUConfig.DungeonMap.class.getDeclaredField("dmIconScale"), guiLeft+76, guiTop+105);
+            drawSlider(DungeonMapConfig.class.getDeclaredField("dmBorderSize"), guiLeft+76, guiTop+45);
+            drawSlider(DungeonMapConfig.class.getDeclaredField("dmRoomSize"), guiLeft+76, guiTop+75);
+            drawSlider(DungeonMapConfig.class.getDeclaredField("dmIconScale"), guiLeft+76, guiTop+105);
         } catch(Exception e) {
             e.printStackTrace();
         }
 
-        NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
+        DungeonMapConfig options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
         buttons.get(18-6).text = options.dmEnable ? "Enabled" : "Disabled";
         buttons.get(19-6).text = options.dmCenterPlayer ? "Player" : "Map";
         buttons.get(20-6).text = options.dmRotatePlayer ? "Player" : "Vertical";
@@ -443,13 +444,13 @@ public class GuiDungeonMapEditor extends GuiScreen {
         if(mouseX >= guiLeft+76-48 && mouseX <= guiLeft+76+48) {
             try {
                 if(mouseY > guiTop+45-8 && mouseY < guiTop+45+8) {
-                    clickedSlider = NEUConfig.DungeonMap.class.getDeclaredField("dmBorderSize");
+                    clickedSlider = DungeonMapConfig.class.getDeclaredField("dmBorderSize");
                     return;
                 } else if(mouseY > guiTop+75-8 && mouseY < guiTop+75+8) {
-                    clickedSlider = NEUConfig.DungeonMap.class.getDeclaredField("dmRoomSize");
+                    clickedSlider = DungeonMapConfig.class.getDeclaredField("dmRoomSize");
                     return;
                 } else if(mouseY > guiTop+105-8 && mouseY < guiTop+105+8) {
-                    clickedSlider = NEUConfig.DungeonMap.class.getDeclaredField("dmIconScale");
+                    clickedSlider = DungeonMapConfig.class.getDeclaredField("dmIconScale");
                     return;
                 }
             } catch(Exception e) {
@@ -531,7 +532,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
     }
 
     private void buttonClicked(int mouseX, int mouseY, int id) {
-        NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
+        DungeonMapConfig options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
         switch (id) {
             case 0:
                 options.dmBorderSize = 0; break;
@@ -594,7 +595,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
     }
 
     private boolean isButtonPressed(int id) {
-        NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
+        DungeonMapConfig options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
 
         if(id >= 0 && id <= 2) {
             return options.dmBorderSize == id;
