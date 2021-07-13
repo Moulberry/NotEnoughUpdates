@@ -40,7 +40,7 @@ public class NEUManager {
     public final Gson gson;
     public final APIManager auctionManager;
 
-    private TreeMap<String, JsonObject> itemMap = new TreeMap<>();
+    private final TreeMap<String, JsonObject> itemMap = new TreeMap<>();
 
     private TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
     private TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
@@ -256,7 +256,7 @@ public class NEUManager {
                     for(File f : itemFiles) {
                         String internalname = f.getName().substring(0, f.getName().length()-5);
                         synchronized(itemMap) {
-                            if(!itemMap.keySet().contains(internalname)) {
+                            if(!itemMap.containsKey(internalname)) {
                                 loadItem(internalname);
                             }
                         }
@@ -278,7 +278,7 @@ public class NEUManager {
                 for(File f : itemFiles) {
                     String internalname = f.getName().substring(0, f.getName().length()-5);
                     synchronized(itemMap) {
-                        if(!itemMap.keySet().contains(internalname)) {
+                        if(!itemMap.containsKey(internalname)) {
                             loadItem(internalname);
                         }
                     }
@@ -1126,7 +1126,7 @@ public class NEUManager {
         json.addProperty("damage", damage);
         json.addProperty("nbttag", nbttag.toString());
         json.addProperty("modver", NotEnoughUpdates.VERSION);
-        json.addProperty("infoType", infoType.toString());
+        json.addProperty("infoType", infoType);
 
         if(info != null && info.length > 0) {
             JsonArray jsoninfo = new JsonArray();

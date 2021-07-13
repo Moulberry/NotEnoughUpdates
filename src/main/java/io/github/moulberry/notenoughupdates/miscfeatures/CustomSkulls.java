@@ -61,7 +61,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
     public static ItemCameraTransforms.TransformType mostRecentTransformType = ItemCameraTransforms.TransformType.NONE;
 
-    protected final Map<ResourceLocation, TextureAtlasSprite> sprites = Maps.<ResourceLocation, TextureAtlasSprite>newHashMap();
+    protected final Map<ResourceLocation, TextureAtlasSprite> sprites = Maps.newHashMap();
 
     private final FaceBakery faceBakery = new FaceBakery();
     private final ModelSkeletonHead humanoidHead = new ModelHumanoidHead();
@@ -153,7 +153,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
     }
 
     protected Set<ResourceLocation> getTextureLocations(ModelBlock modelBlock) {
-        Set<ResourceLocation> set = Sets.<ResourceLocation>newHashSet();
+        Set<ResourceLocation> set = Sets.newHashSet();
 
         for(BlockPart blockpart : modelBlock.getElements()) {
             for(BlockPartFace blockpartface : blockpart.mapFaces.values()) {

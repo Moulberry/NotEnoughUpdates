@@ -361,7 +361,7 @@ public class DungeonMap {
     }
 
     public int getRenderConnSize() {
-        int roomSizeOption = (int)Math.round(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmRoomSize);
+        int roomSizeOption = Math.round(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmRoomSize);
         if(roomSizeOption <= 0) return 3;
         return 3 + roomSizeOption;
     }

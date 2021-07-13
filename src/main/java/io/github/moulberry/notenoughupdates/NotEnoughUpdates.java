@@ -517,7 +517,7 @@ public class NotEnoughUpdates {
             Minecraft mc = Minecraft.getMinecraft();
             StringBuilder builder = new StringBuilder();
 
-            if (args.length > 0 && args[0].toLowerCase().equals("modlist")){
+            if (args.length > 0 && args[0].equalsIgnoreCase("modlist")){
                 builder.append("```md\n");
                 builder.append("# Mods Loaded").append("\n");
                 for (ModContainer modContainer : Loader.instance().getActiveModList()) {

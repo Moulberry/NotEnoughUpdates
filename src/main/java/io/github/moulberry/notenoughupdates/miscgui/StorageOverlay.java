@@ -48,10 +48,10 @@ public class StorageOverlay extends GuiElement {
 
     private Framebuffer framebuffer = null;
 
-    private Set<Vector2f> enchantGlintRenderLocations = new HashSet<>();
+    private final Set<Vector2f> enchantGlintRenderLocations = new HashSet<>();
 
-    public static final ResourceLocation STORAGE_PREVIEW_TEXTURES[] = new ResourceLocation[4];
-    private static final ResourceLocation STORAGE_TEXTURES[] = new ResourceLocation[4];
+    public static final ResourceLocation[] STORAGE_PREVIEW_TEXTURES = new ResourceLocation[4];
+    private static final ResourceLocation[] STORAGE_TEXTURES = new ResourceLocation[4];
     private static final ResourceLocation STORAGE_ICONS_TEXTURE = new ResourceLocation("notenoughupdates:storage_gui/storage_icons.png");
     private static final ResourceLocation[] LOAD_CIRCLE_SEQ = new ResourceLocation[11];
     static {
@@ -77,7 +77,7 @@ public class StorageOverlay extends GuiElement {
         return INSTANCE;
     }
 
-    private GuiElementTextField searchBar = new GuiElementTextField("", 88, 10,
+    private final GuiElementTextField searchBar = new GuiElementTextField("", 88, 10,
                     GuiElementTextField.SCALE_TEXT | GuiElementTextField.DISABLE_BG);
 
     private int guiLeft;
@@ -102,7 +102,7 @@ public class StorageOverlay extends GuiElement {
 
     private int scrollGrabOffset = -1;
 
-    private LerpingInteger scroll = new LerpingInteger(0, 200);
+    private final LerpingInteger scroll = new LerpingInteger(0, 200);
 
     private int getMaximumScroll() {
         synchronized(StorageManager.getInstance().storageConfig.displayToStorageIdMap) {
@@ -641,8 +641,9 @@ public class StorageOverlay extends GuiElement {
         } else {
             for(int i=0; i<9; i++) {
                 StorageManager.StoragePage page = StorageManager.getInstance().getPage(i, false);
-                int itemX = 10+(i%9)*18;
-                int itemY = storageViewSize+24+(i/9)*18;
+                // We can abuse the prior for loop
+                int itemX = 10 + i % 9 * 18;
+                int itemY = storageViewSize + 24;
 
                 ItemStack stack;
                 if(page != null && page.backpackDisplayStack != null) {
@@ -651,15 +652,13 @@ public class StorageOverlay extends GuiElement {
                     stack = StorageManager.LOCKED_ENDERCHEST_STACK;
                 }
 
-                if(stack != null) {
-                    Utils.drawItemStack(stack, itemX, itemY);
+                Utils.drawItemStack(stack, itemX, itemY);
 
-                    if(mouseX >= guiLeft+itemX && mouseX < guiLeft+itemX+18 && mouseY >= guiTop+itemY && mouseY < guiTop+itemY+18) {
-                        itemHoverX = itemX;
-                        itemHoverY = itemY;
-                        if(NotEnoughUpdates.INSTANCE.config.storageGUI.enderchestPreview) slotPreview = i;
-                        tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().gameSettings.advancedItemTooltips);
-                    }
+                if(mouseX >= guiLeft+itemX && mouseX < guiLeft+itemX+18 && mouseY >= guiTop+itemY && mouseY < guiTop+itemY+18) {
+                    itemHoverX = itemX;
+                    itemHoverY = itemY;
+                    if(NotEnoughUpdates.INSTANCE.config.storageGUI.enderchestPreview) slotPreview = i;
+                    tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().gameSettings.advancedItemTooltips);
                 }
             }
             for(int i=0; i<18; i++) {
@@ -843,7 +842,7 @@ public class StorageOverlay extends GuiElement {
             }
         }
 
-        List list = Lists.newArrayList(options);
+        List<String> list = Lists.newArrayList(options);
         list.add(0, "");
         list.add(0, EnumChatFormatting.GREEN+title);
         return list;
@@ -1072,8 +1071,9 @@ public class StorageOverlay extends GuiElement {
 
                     StorageManager.StoragePage page = StorageManager.getInstance().getPage(i, false);
                     if(page != null) {
-                        int itemX = 10+(i%9)*18;
-                        int itemY = storageViewSize+24+(i/9)*18;
+                        // We can abuse the prior for loop
+                        int itemX = 10 + i * 18;
+                        int itemY = storageViewSize + 24;
 
                         if(mouseX >= guiLeft+itemX && mouseX < guiLeft+itemX+18 &&
                                 mouseY >= guiTop+itemY && mouseY < guiTop+itemY+18) {

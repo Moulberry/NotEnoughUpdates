@@ -2020,17 +2020,15 @@ public class GuiProfileViewer extends GuiScreen {
     private String niceUuid(String uuidStr) {
         if(uuidStr.length()!=32) return uuidStr;
 
-        StringBuilder niceAucId = new StringBuilder();
-        niceAucId.append(uuidStr, 0, 8);
-        niceAucId.append("-");
-        niceAucId.append(uuidStr, 8, 12);
-        niceAucId.append("-");
-        niceAucId.append(uuidStr, 12, 16);
-        niceAucId.append("-");
-        niceAucId.append(uuidStr, 16, 20);
-        niceAucId.append("-");
-        niceAucId.append(uuidStr, 20, 32);
-        return niceAucId.toString();
+        return uuidStr.substring(0, 8) +
+                "-" +
+                uuidStr.substring(8, 12) +
+                "-" +
+                uuidStr.substring(12, 16) +
+                "-" +
+                uuidStr.substring(16, 20) +
+                "-" +
+                uuidStr.substring(20, 32);
     }
 
     public EntityOtherPlayerMP getEntityPlayer() {
@@ -2371,16 +2369,14 @@ public class GuiProfileViewer extends GuiScreen {
 
                         playerName = EnumChatFormatting.GRAY.toString() + name;
                         if(rankName != null) {
-                            StringBuilder sb = new StringBuilder();
-                            sb.append("\u00A7"+rankColor);
-                            sb.append("[");
-                            sb.append(rankName);
-                            sb.append(rankPlusColor);
-                            sb.append(rankPlus);
-                            sb.append("\u00A7"+rankColor);
-                            sb.append("] ");
-                            sb.append(name);
-                            playerName = sb.toString();
+                            playerName = "\u00A7" + rankColor +
+                                    "[" +
+                                    rankName +
+                                    rankPlusColor +
+                                    rankPlus +
+                                    "\u00A7" + rankColor +
+                                    "] " +
+                                    name;
                         }
                     }
                 }
@@ -2737,9 +2733,9 @@ public class GuiProfileViewer extends GuiScreen {
         RenderHelper.enableStandardItemLighting();
         GlStateManager.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(25, 1.0F, 0.0F, 0.0F);
-        ent.renderYawOffset = (float)Math.atan((double)(mouseX / 40.0F)) * 20.0F;
-        ent.rotationYaw = (float)Math.atan((double)(mouseX / 40.0F)) * 40.0F;
-        ent.rotationPitch = -((float)Math.atan((double)(mouseY / 40.0F))) * 20.0F;
+        ent.renderYawOffset = (float)Math.atan(mouseX / 40.0F) * 20.0F;
+        ent.rotationYaw = (float)Math.atan(mouseX / 40.0F) * 40.0F;
+        ent.rotationPitch = -((float)Math.atan(mouseY / 40.0F)) * 20.0F;
         ent.rotationYawHead = ent.rotationYaw;
         ent.prevRotationYawHead = ent.rotationYaw;
         RenderManager rendermanager = Minecraft.getMinecraft().getRenderManager();

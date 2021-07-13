@@ -308,7 +308,7 @@ public class Utils {
     }
 
     public static List<String> getRawTooltip(ItemStack stack) {
-        List<String> list = Lists.<String>newArrayList();
+        List<String> list = Lists.newArrayList();
         String s = stack.getDisplayName();
 
         if (stack.hasDisplayName()) {
@@ -860,10 +860,10 @@ public class Utils {
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        worldrenderer.pos((double)right, (double)top, 0).color(f1, f2, f3, f).endVertex();
-        worldrenderer.pos((double)left, (double)top, 0).color(f1, f2, f3, f).endVertex();
-        worldrenderer.pos((double)left, (double)bottom, 0).color(f5, f6, f7, f4).endVertex();
-        worldrenderer.pos((double)right, (double)bottom, 0).color(f5, f6, f7, f4).endVertex();
+        worldrenderer.pos(right, top, 0).color(f1, f2, f3, f).endVertex();
+        worldrenderer.pos(left, top, 0).color(f1, f2, f3, f).endVertex();
+        worldrenderer.pos(left, bottom, 0).color(f5, f6, f7, f4).endVertex();
+        worldrenderer.pos(right, bottom, 0).color(f5, f6, f7, f4).endVertex();
         tessellator.draw();
         GlStateManager.shadeModel(7424);
         GlStateManager.disableBlend();
@@ -888,10 +888,10 @@ public class Utils {
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        worldrenderer.pos((double)right, (double)top, 0).color(f5, f6, f7, f4).endVertex();
-        worldrenderer.pos((double)left, (double)top, 0).color(f1, f2, f3, f).endVertex();
-        worldrenderer.pos((double)left, (double)bottom, 0).color(f1, f2, f3, f).endVertex();
-        worldrenderer.pos((double)right, (double)bottom, 0).color(f5, f6, f7, f4).endVertex();
+        worldrenderer.pos(right, top, 0).color(f5, f6, f7, f4).endVertex();
+        worldrenderer.pos(left, top, 0).color(f1, f2, f3, f).endVertex();
+        worldrenderer.pos(left, bottom, 0).color(f1, f2, f3, f).endVertex();
+        worldrenderer.pos(right, bottom, 0).color(f5, f6, f7, f4).endVertex();
         tessellator.draw();
         GlStateManager.shadeModel(7424);
         GlStateManager.disableBlend();
@@ -975,11 +975,7 @@ public class Utils {
                 lastColourCode = i;
             } else if(lastColourCode == i-1) {
                 int colIndex = "0123456789abcdef".indexOf(c);
-                if(colIndex >= 0) {
-                    currentColour = colIndex;
-                } else {
-                    currentColour = 0;
-                }
+                currentColour = Math.max(colIndex, 0);
             } else if("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0){
                 if(currentColour > 0) {
                     mostCommon[currentColour]++;
@@ -1218,10 +1214,10 @@ public class Utils {
         GlStateManager.disableTexture2D();
         GlStateManager.color(f, f1, f2, f3);
         worldrenderer.begin(7, DefaultVertexFormats.POSITION);
-        worldrenderer.pos((double)left, (double)bottom, 0.0D).endVertex();
-        worldrenderer.pos((double)right, (double)bottom, 0.0D).endVertex();
-        worldrenderer.pos((double)right, (double)top, 0.0D).endVertex();
-        worldrenderer.pos((double)left, (double)top, 0.0D).endVertex();
+        worldrenderer.pos(left, bottom, 0.0D).endVertex();
+        worldrenderer.pos(right, bottom, 0.0D).endVertex();
+        worldrenderer.pos(right, top, 0.0D).endVertex();
+        worldrenderer.pos(left, top, 0.0D).endVertex();
         tessellator.draw();
         GlStateManager.enableTexture2D();
     }

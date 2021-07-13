@@ -200,17 +200,15 @@ public class GuiEnchantColour extends GuiScreen {
     }
 
     public String getEnchantOpString(GuiElementTextField[] tfs, String comparator, String modifiers) {
-        StringBuilder enchantOp = new StringBuilder();
-        enchantOp.append(tfs[0].getText());
-        enchantOp.append(":");
-        enchantOp.append(comparator);
-        enchantOp.append(":");
-        enchantOp.append(tfs[1].getText());
-        enchantOp.append(":");
-        enchantOp.append(tfs[2].getText());
-        enchantOp.append(":");
-        enchantOp.append(modifiers);
-        return enchantOp.toString();
+        return tfs[0].getText() +
+                ":" +
+                comparator +
+                ":" +
+                tfs[1].getText() +
+                ":" +
+                tfs[2].getText() +
+                ":" +
+                modifiers;
     }
 
     @Override

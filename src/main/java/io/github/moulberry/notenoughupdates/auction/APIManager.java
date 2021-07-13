@@ -215,17 +215,15 @@ public class APIManager {
     private String niceAucId(String aucId) {
         if(aucId.length()!=32) return aucId;
 
-        StringBuilder niceAucId = new StringBuilder();
-        niceAucId.append(aucId, 0, 8);
-        niceAucId.append("-");
-        niceAucId.append(aucId, 8, 12);
-        niceAucId.append("-");
-        niceAucId.append(aucId, 12, 16);
-        niceAucId.append("-");
-        niceAucId.append(aucId, 16, 20);
-        niceAucId.append("-");
-        niceAucId.append(aucId, 20, 32);
-        return niceAucId.toString();
+        return aucId.substring(0, 8) +
+                "-" +
+                aucId.substring(8, 12) +
+                "-" +
+                aucId.substring(12, 16) +
+                "-" +
+                aucId.substring(16, 20) +
+                "-" +
+                aucId.substring(20, 32);
     }
 
     public Set<String> getLowestBinKeySet() {

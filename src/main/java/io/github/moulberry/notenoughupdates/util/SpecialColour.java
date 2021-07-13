@@ -11,13 +11,11 @@ public class SpecialColour {
     private static final int RADIX = 10;
 
     public static String special(int chromaSpeed, int alpha, int r, int g, int b) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(Integer.toString(chromaSpeed, RADIX)).append(":");
-        sb.append(Integer.toString(alpha, RADIX)).append(":");
-        sb.append(Integer.toString(r, RADIX)).append(":");
-        sb.append(Integer.toString(g, RADIX)).append(":");
-        sb.append(Integer.toString(b, RADIX));
-        return sb.toString();
+        return Integer.toString(chromaSpeed, RADIX) + ":" +
+                Integer.toString(alpha, RADIX) + ":" +
+                Integer.toString(r, RADIX) + ":" +
+                Integer.toString(g, RADIX) + ":" +
+                Integer.toString(b, RADIX);
     }
 
     private static int[] decompose(String csv) {

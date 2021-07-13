@@ -103,9 +103,9 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
                 double d13 = entity.prevPosX + (entity.posX - entity.prevPosX) * (double)partialTicks;
                 double d5 = entity.prevPosY + (entity.posY - entity.prevPosY) * (double)partialTicks + 0.25D;
                 double d7 = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * (double)partialTicks;
-                double d9 = (double)((float)(playerVecX - d13));
+                double d9 = (float)(playerVecX - d13);
                 double d11 = (double)((float)(playerVecY - d5)) + startY;
-                double d12 = (double)((float)(playerVecZ - d7));
+                double d12 = (float)(playerVecZ - d7);
                 GlStateManager.disableTexture2D();
                 GlStateManager.disableLighting();
                 GlStateManager.enableBlend();
