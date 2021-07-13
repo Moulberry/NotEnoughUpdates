@@ -912,8 +912,7 @@ public class Utils {
         if(repo.exists()) {
             File jsonFile = new File(repo, "constants/"+constant+".json");
             try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8))) {
-                T obj = gson.fromJson(reader, clazz);
-                return obj;
+                return gson.fromJson(reader, clazz);
             } catch(Exception e) { return null; }
         }
         return null;

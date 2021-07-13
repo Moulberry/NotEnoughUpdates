@@ -107,9 +107,8 @@ public class TradeWindow {
             JsonObject info = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
             if(info != null && !NotEnoughUpdates.INSTANCE.manager.auctionManager.isVanillaItem(internalname) &&
                     info.has("price") && info.has("count")) {
-                int auctionPricePer = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
 
-                pricePer = auctionPricePer;
+                pricePer = (int)(info.get("price").getAsFloat() / info.get("count").getAsFloat());
             }
         }
         return pricePer;

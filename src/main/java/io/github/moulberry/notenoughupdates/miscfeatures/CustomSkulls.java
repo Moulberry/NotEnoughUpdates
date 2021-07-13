@@ -212,9 +212,8 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
         for(int j = quads.size(); i < j; ++i) {
             BakedQuad bakedquad = quads.get(i);
-            int k = color;
 
-            net.minecraftforge.client.model.pipeline.LightUtil.renderQuadColor(renderer, bakedquad, k);
+            net.minecraftforge.client.model.pipeline.LightUtil.renderQuadColor(renderer, bakedquad, color);
         }
     }
 

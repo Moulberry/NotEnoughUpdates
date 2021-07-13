@@ -103,9 +103,8 @@ public class AccessoryBagOverlay {
 
             if(currentTab == TAB_OPTIMIZER) {
                 int x = guiLeft+xSize+3;
-                int y = guiTop;
 
-                if(mouseY > y+92 && mouseY < y+103) {
+                if(mouseY > guiTop +92 && mouseY < guiTop +103) {
                     if(mouseX > x+5 && mouseX < x+75) {
                         mainWeapon = (int)Math.floor((mouseX-x-5)/70f*9);
                         if(mainWeapon < 1) {
@@ -119,13 +118,13 @@ public class AccessoryBagOverlay {
                 if(mouseX > x+5 && mouseX < x+35 || mouseX > x+45 && mouseX < x+75) {
                     boolean set = mouseX > x+5 && mouseX < x+35;
 
-                    if(mouseY > y+32 && mouseY < y+43) {
+                    if(mouseY > guiTop +32 && mouseY < guiTop +43) {
                         forceCC = set;
-                    } else if(mouseY > y+52 && mouseY < y+63) {
+                    } else if(mouseY > guiTop +52 && mouseY < guiTop +63) {
                         forceAS = set;
-                    } else if(mouseY > y+72 && mouseY < y+83) {
+                    } else if(mouseY > guiTop +72 && mouseY < guiTop +83) {
                         useGodPot = set;
-                    } else if(mouseY > y+92 && mouseY < y+103) {
+                    } else if(mouseY > guiTop +92 && mouseY < guiTop +103) {
                         allowShaded = set;
                     }
                 }

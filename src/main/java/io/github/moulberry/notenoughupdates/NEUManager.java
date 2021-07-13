@@ -97,8 +97,7 @@ public class NEUManager {
 
     public <T> T getJsonFromFile(File file, Class<T> clazz) {
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            T obj = gson.fromJson(reader, clazz);
-            return obj;
+            return gson.fromJson(reader, clazz);
         } catch(Exception e) { return null; }
     }
 
@@ -107,8 +106,7 @@ public class NEUManager {
      */
     public JsonObject getJsonFromFile(File file) {
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            JsonObject json = gson.fromJson(reader, JsonObject.class);
-            return json;
+            return gson.fromJson(reader, JsonObject.class);
         } catch(Exception e) { return null; }
     }
 

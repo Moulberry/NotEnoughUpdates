@@ -566,7 +566,6 @@ public class CustomItemEffects {
                 }
             } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay) {
                 if(heldInternal.equals("BUILDERS_WAND")) {
-                    int maxBlocks = MAX_BUILDERS_BLOCKS;
                     if (event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                         IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos().offset(event.target.sideHit, 1));
                         if(hover.getBlock() == Blocks.air) {
@@ -595,7 +594,7 @@ public class CustomItemEffects {
                                 String special = (candidatesOld.size() <= itemCount) ? NotEnoughUpdates.INSTANCE.config.itemOverlays.wandOverlayColour :
                                         "0:255:255:0:0";
 
-                                if(candidatesOld.size() <= maxBlocks) {
+                                if(candidatesOld.size() <= MAX_BUILDERS_BLOCKS) {
                                     for(Set<BlockPos> candidatesSorted : candidatesOldSorted.values()) {
                                         for(BlockPos candidate : candidatesSorted) {
                                             match.getBlock().setBlockBoundsBasedOnState(Minecraft.getMinecraft().theWorld, candidate);

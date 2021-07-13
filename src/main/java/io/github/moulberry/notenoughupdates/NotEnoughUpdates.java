@@ -127,8 +127,7 @@ public class NotEnoughUpdates {
                 NullzeeSphere.overlayVBO = null;
             } else {
                 try {
-                    float radius = Float.parseFloat(args[0]);
-                    NullzeeSphere.size = radius;
+                    NullzeeSphere.size = Float.parseFloat(args[0]);
                     NullzeeSphere.overlayVBO = null;
                 } catch(Exception e) {
                     sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"Can't parse radius: " + args[0]));
@@ -751,8 +750,7 @@ public class NotEnoughUpdates {
                 return;
             }*/
             if(args.length == 2 && args[0].equalsIgnoreCase("pt")) {
-                EnumParticleTypes t = EnumParticleTypes.valueOf(args[1]);
-                FishingHelper.type = t;
+                FishingHelper.type = EnumParticleTypes.valueOf(args[1]);
             }
             if(args.length == 1 && args[0].equalsIgnoreCase("dev")) {
                 NotEnoughUpdates.INSTANCE.config.hidden.dev = true;

@@ -65,9 +65,8 @@ public class SBInfo {
         if(event.gui instanceof GuiChest) {
             GuiChest chest = (GuiChest) event.gui;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
-            String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
 
-            lastOpenContainerName = containerName;
+            lastOpenContainerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
         }
     }
 

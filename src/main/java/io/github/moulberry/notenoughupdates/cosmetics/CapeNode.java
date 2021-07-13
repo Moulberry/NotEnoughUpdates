@@ -113,7 +113,6 @@ public class CapeNode {
         if(!fixed) {
             velocity.y -= gravity * (resistance)/(1-resistance);
 
-            float actualResistance = resistance;
             /*BlockPos pos = new BlockPos(
                     MathHelper.floor_double(position.x),
                     MathHelper.floor_double(position.y),
@@ -123,7 +122,7 @@ public class CapeNode {
                 actualResistance = 0.8f;
             }*/
 
-            velocity.scale(1-actualResistance);
+            velocity.scale(1- resistance);
 
             Vector3f.add(position, velocity, position);
         }

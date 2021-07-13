@@ -163,7 +163,6 @@ public class SBGamemodes {
 
             try(BufferedWriter writer = new BufferedWriter(
                     new OutputStreamWriter(new FileOutputStream(gamemodeFile), StandardCharsets.UTF_8))) {
-                JsonObject obj = new JsonObject();
                 writer.write(encrypt(gson.toJson(new GamemodeWrapper(currentGamemode), GamemodeWrapper.class)));
             }
         } catch(Exception e) {
@@ -176,9 +175,8 @@ public class SBGamemodes {
                 .putLong(Minecraft.getMinecraft().thePlayer.getUniqueID().getLeastSignificantBits())
                 .putLong(Minecraft.getMinecraft().thePlayer.getUniqueID().getMostSignificantBits())
                 .array();
-        SecretKeySpec key = new SecretKeySpec(bytes, "AES");
 
-        return key;
+        return new SecretKeySpec(bytes, "AES");
     }
 
 
@@ -186,8 +184,7 @@ public class SBGamemodes {
         try {
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.ENCRYPT_MODE, getKeyFromPlayerUUID());
-            String encrypt = Base64.getEncoder().encodeToString(cipher.doFinal(value.getBytes()));
-            return encrypt;
+            return Base64.getEncoder().encodeToString(cipher.doFinal(value.getBytes()));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -247,11 +244,7 @@ public class SBGamemodes {
 
         boolean inDungeons = SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon");
 
-        if((EnumChatFormatting.YELLOW+"Break a log").equals(SBInfo.getInstance().objective)) {
-            getGamemode().locked = false;
-        } else {
-            getGamemode().locked = true;
-        }
+        getGamemode().locked = !(EnumChatFormatting.YELLOW + "Break a log").equals(SBInfo.getInstance().objective);
 
         IronmanMode ironmanMode = getGamemode().ironmanMode;
         GuiScreen gui = Minecraft.getMinecraft().currentScreen;

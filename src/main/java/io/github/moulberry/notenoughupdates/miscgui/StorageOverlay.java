@@ -275,7 +275,6 @@ public class StorageOverlay extends GuiElement {
 
                 h = getPageCoords(coords).y+scroll.getValue();
             }
-            int w = sizeX;
 
             //Render from framebuffer
             if(framebuffer != null) {
@@ -285,7 +284,7 @@ public class StorageOverlay extends GuiElement {
                 framebuffer.bindFramebufferTexture();
                 GlStateManager.color(1, 1, 1, 1);
 
-                Utils.drawTexturedRect(0, 0, w, h, 0, 1, 1, 0, GL11.GL_NEAREST);
+                Utils.drawTexturedRect(0, 0, sizeX, h, 0, 1, 1, 0, GL11.GL_NEAREST);
                 renderEnchOverlay(enchantGlintRenderLocations);
 
                 GlStateManager.translate(0, -startY, -107.0001f);
@@ -295,7 +294,7 @@ public class StorageOverlay extends GuiElement {
             if(dirty || framebuffer == null) {
                 dirty = false;
 
-                int fw = w*scaledResolution.getScaleFactor();
+                int fw = sizeX *scaledResolution.getScaleFactor();
                 int fh = h*scaledResolution.getScaleFactor();
 
                 if(framebuffer == null) {
@@ -308,7 +307,7 @@ public class StorageOverlay extends GuiElement {
 
                 GlStateManager.matrixMode(GL11.GL_PROJECTION);
                 GlStateManager.loadIdentity();
-                GlStateManager.ortho(0.0D, w, h, 0.0D, 1000.0D, 3000.0D);
+                GlStateManager.ortho(0.0D, sizeX, h, 0.0D, 1000.0D, 3000.0D);
                 GlStateManager.matrixMode(GL11.GL_MODELVIEW);
 
                 GlStateManager.pushMatrix();
@@ -1069,17 +1068,16 @@ public class StorageOverlay extends GuiElement {
                 return false;
             } else if(Mouse.getEventButtonState() && Mouse.getEventButton() == 0) {
                 for(int i=0; i<9; i++) {
-                    int storageId = i;
                     int displayId = StorageManager.getInstance().getDisplayIdForStorageId(i);
 
-                    StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
+                    StorageManager.StoragePage page = StorageManager.getInstance().getPage(i, false);
                     if(page != null) {
                         int itemX = 10+(i%9)*18;
                         int itemY = storageViewSize+24+(i/9)*18;
 
                         if(mouseX >= guiLeft+itemX && mouseX < guiLeft+itemX+18 &&
                                 mouseY >= guiTop+itemY && mouseY < guiTop+itemY+18) {
-                            StorageManager.getInstance().sendToPage(storageId);
+                            StorageManager.getInstance().sendToPage(i);
                             scrollToStorage(displayId, true);
                             return true;
                         }

@@ -95,7 +95,7 @@ public class DamageCommas {
                 builder.append(c);
             }
 
-            ChatComponentText ret = new ChatComponentText("\u00A7f\u2727"+builder.reverse().toString()+"\u2727\u00a7r");
+            ChatComponentText ret = new ChatComponentText("\u00A7f\u2727"+ builder.reverse() +"\u2727\u00a7r");
             replacementMap.put(hashCode, ret);
             return ret;
         }

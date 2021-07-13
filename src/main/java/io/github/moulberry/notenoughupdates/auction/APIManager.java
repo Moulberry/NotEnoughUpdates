@@ -765,8 +765,7 @@ public class APIManager {
             JsonObject bazaarInfo = getBazaarInfo(internalname);
 
             if(bazaarInfo != null && bazaarInfo.get("curr_buy") != null) {
-                float bazaarInstantBuyPrice = bazaarInfo.get("curr_buy").getAsFloat();
-                ci.craftCost = bazaarInstantBuyPrice;
+                ci.craftCost = bazaarInfo.get("curr_buy").getAsFloat();
             }
             //Don't use auction prices for vanilla items cuz people like to transfer money, messing up the cost of vanilla items.
             if(lowestBin > 0 && !ci.vanillaItem) {

@@ -130,8 +130,7 @@ public class HypixelApi {
 
         String response = IOUtils.toString(new GZIPInputStream(connection.getInputStream()), StandardCharsets.UTF_8);
 
-        JsonObject json = gson.fromJson(response, JsonObject.class);
-        return json;
+        return gson.fromJson(response, JsonObject.class);
     }
 
     public String generateApiUrl(String apiKey, String method, HashMap<String, String> args) {
