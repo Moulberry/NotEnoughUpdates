@@ -564,12 +564,10 @@ public class GuiProfileViewer extends GuiScreen {
                 if(petsPage > 0) {
                     petsPage--;
                 }
-                return;
             } else if(mouseX > guiLeft+100+15 && mouseX < guiLeft+100+20+12) {
                 if(sortedPets != null && petsPage < Math.ceil(sortedPets.size()/20f)-1) {
                     petsPage++;
                 }
-                return;
             }
         }
     }

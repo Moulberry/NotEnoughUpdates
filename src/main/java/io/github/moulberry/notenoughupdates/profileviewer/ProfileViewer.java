@@ -1069,7 +1069,6 @@ public class ProfileViewer {
             }
         });
 
-        return;
     }
 
     public Profile getProfileRaw(String uuid) {

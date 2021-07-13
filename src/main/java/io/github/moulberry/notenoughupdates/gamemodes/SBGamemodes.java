@@ -57,7 +57,7 @@ public class SBGamemodes {
     public enum HardcoreMode {
         NORMAL("Normal", "Normal"),
         SOFTCORE(EnumChatFormatting.RED+"Soft"+EnumChatFormatting.DARK_RED+"core\n" +
-                "You only have 1 life.\nDying will remove your hardcore status.\nDeaths to the void or \'unknown\' are exempted.",
+                "You only have 1 life.\nDying will remove your hardcore status.\nDeaths to the void or 'unknown' are exempted.",
                 "You died.", "You fell into the void"),
         HARDCORE(EnumChatFormatting.DARK_RED+"Hardcore\n" +
                 "You only have 1 life.\nDying will remove your hardcore status.");

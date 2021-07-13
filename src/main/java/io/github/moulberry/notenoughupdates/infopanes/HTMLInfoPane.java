@@ -243,7 +243,6 @@ public class HTMLInfoPane extends TextInfoPane {
             } catch(IOException e) {
                 e.printStackTrace();
                 text = EnumChatFormatting.RED+"Failed to read image.";
-                return;
             }
         } else {
             html = "<div id=\"mw-content-text\" lang=\"en\" dir=\"ltr\" class=\"mw-content-ltr mw-content-text\">"+html+"</div>";
@@ -311,7 +310,6 @@ public class HTMLInfoPane extends TextInfoPane {
                             } catch(IOException e) {
                                 e.printStackTrace();
                                 text = EnumChatFormatting.RED+"Failed to read image.";
-                                return;
                             }
                         } else {
                             if(overlay.getActiveInfoPane() != this) return;

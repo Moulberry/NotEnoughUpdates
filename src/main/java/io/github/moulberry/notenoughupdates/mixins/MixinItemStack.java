@@ -21,7 +21,6 @@ public class MixinItemStack {
     public void hasEffect(CallbackInfoReturnable<Boolean> cir) {
         if(Utils.getHasEffectOverride()) {
             cir.setReturnValue(false);
-            return;
         }
     }
 

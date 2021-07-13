@@ -981,15 +981,12 @@ public class TradeWindow {
                 if(mouseY >= guiTop+ySize-19 && mouseY <= guiTop+ySize-19+17) {
                     NotEnoughUpdates.INSTANCE.config.tradeMenu.enableCustomTrade =
                             !NotEnoughUpdates.INSTANCE.config.tradeMenu.enableCustomTrade;
-                    return;
                 } else if(mouseY >= guiTop+ySize-38 && mouseY <= guiTop+ySize-38+17) {
                     NotEnoughUpdates.INSTANCE.config.tradeMenu.customTradePrices =
                             !NotEnoughUpdates.INSTANCE.config.tradeMenu.customTradePrices;
-                    return;
                 } else if(mouseY >= guiTop+ySize-57 && mouseY <= guiTop+ySize-57+17) {
                     NotEnoughUpdates.INSTANCE.config.tradeMenu.customTradePriceStyle =
                             !NotEnoughUpdates.INSTANCE.config.tradeMenu.customTradePriceStyle;
-                    return;
                 }
             }
         }
