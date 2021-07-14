@@ -1724,7 +1724,7 @@ public class GuiProfileViewer extends GuiScreen {
             for(int i=9*4; i<jsonInv.size(); i++) {
                 JsonElement item = jsonInv.get(i);
                 if(item != null && item.isJsonObject()) {
-                    jsonInvSize = (i/9)*9;
+                    jsonInvSize = (int) (Math.ceil((i+1)/9f)*9);
                 }
             }
         }
