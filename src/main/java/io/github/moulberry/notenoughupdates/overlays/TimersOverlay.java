@@ -136,7 +136,7 @@ public class TimersOverlay extends TextOverlay {
 
                 ZonedDateTime currentTimeEST = ZonedDateTime.now(ZoneId.of("America/Atikokan"));
 
-                long fetchurIndex = currentTimeEST.getDayOfMonth()-1 % 13;
+                long fetchurIndex = (currentTimeEST.getDayOfMonth() % 13)-1;
                 if(fetchurIndex < 0) fetchurIndex += 13;
 
                 icon = FETCHUR_ICONS[(int)fetchurIndex];
