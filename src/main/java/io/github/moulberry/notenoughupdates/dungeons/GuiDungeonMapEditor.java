@@ -432,7 +432,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
         for(Button button : buttons) {
             if(mouseX >= guiLeft+button.x && mouseX <= guiLeft+button.x+48 &&
                     mouseY >= guiTop+button.y && mouseY <= guiTop+button.y+16) {
-                buttonClicked(mouseX, mouseY, button.id);
+                buttonClicked(button.id);
 
                 blurField.otherComponentClick();
                 return;
@@ -468,10 +468,11 @@ public class GuiDungeonMapEditor extends GuiScreen {
 
                 Map<String, Vec4b> decorations = new HashMap<>();
                 Vec4b vec4b = new Vec4b((byte)3, (byte)(((50)-64)*2), (byte)(((40)-64)*2), (byte)((60)*16/360));
-                decorations.put(Minecraft.getMinecraft().thePlayer.getName(), vec4b);
+                String name = Minecraft.getMinecraft().thePlayer.getName();
+                decorations.put(name, vec4b);
 
                 HashSet<String> players = new HashSet<>();
-                players.add(Minecraft.getMinecraft().thePlayer.getName());
+                players.add(name);
                 GlStateManager.color(1, 1, 1, 1);
 
                 Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
@@ -500,7 +501,8 @@ public class GuiDungeonMapEditor extends GuiScreen {
         if(activeColourEditor != null) {
             ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
             int mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
-            int mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
+            int height = realRes.getScaledHeight();
+            int mouseY = height - Mouse.getEventY() * height / this.mc.displayHeight - 1;
             activeColourEditor.mouseInput(mouseX, mouseY);
         }
     }
@@ -530,7 +532,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
         }
     }
 
-    private void buttonClicked(int mouseX, int mouseY, int id) {
+    private void buttonClicked(int id) {
         NEUConfig.DungeonMap options = NotEnoughUpdates.INSTANCE.config.dungeonMap;
         switch (id) {
             case 0:
@@ -570,16 +572,16 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 break;
             case 26: {
                     ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
-                    mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
-                    mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
+                    int mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
+                    int mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
                     activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBackgroundColour,
                             (col) -> options.dmBackgroundColour = col, () -> activeColourEditor = null);
                 }
                 break;
             case 27: {
                     ScaledResolution realRes = new ScaledResolution(Minecraft.getMinecraft());
-                    mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
-                    mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
+                    int mouseX = Mouse.getEventX() * realRes.getScaledWidth() / this.mc.displayWidth;
+                    int mouseY = realRes.getScaledHeight() - Mouse.getEventY() * realRes.getScaledHeight() / this.mc.displayHeight - 1;
                     activeColourEditor = new GuiElementColour(mouseX, mouseY, options.dmBorderColour,
                             (col) -> options.dmBorderColour = col, () -> activeColourEditor = null);
                 }

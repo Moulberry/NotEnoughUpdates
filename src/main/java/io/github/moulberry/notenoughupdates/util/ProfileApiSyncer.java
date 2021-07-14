@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.util;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -63,9 +64,10 @@ public class ProfileApiSyncer {
     }
 
     private void forceResync() {
-        if(Minecraft.getMinecraft().thePlayer == null) return;
+        EntityPlayerSP player = Minecraft.getMinecraft().thePlayer;
+        if(player == null) return;
 
-        String uuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
+        String uuid = player.getUniqueID().toString().replace("-", "");
         NotEnoughUpdates.profileViewer.getProfileReset(uuid, (profile) -> {
             for(Consumer<ProfileViewer.Profile> c : finishSyncCallbacks.values()) c.accept(profile);
             finishSyncCallbacks.clear();

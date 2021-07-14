@@ -378,11 +378,12 @@ public class AccessoryBagOverlay {
 
                 ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(internal), false);
 
-                if(missingDisplayNames.contains(stack.getDisplayName())) continue;
-                missingDisplayNames.add(stack.getDisplayName());
+                String displayName = stack.getDisplayName();
+                if(missingDisplayNames.contains(displayName)) continue;
+                missingDisplayNames.add(displayName);
 
                 if(hasDup) {
-                    stack.setStackDisplayName(stack.getDisplayName()+"*");
+                    stack.setStackDisplayName(displayName+"*");
                 }
                 missing.add(stack);
             }
@@ -395,15 +396,8 @@ public class AccessoryBagOverlay {
                     new Color(80, 80, 80).getRGB());
 
             int yIndex = 0;
-            long currentTime = System.currentTimeMillis();
-            int marqueeOffset = (int)(currentTime/500 % 100);
             for(ItemStack missingStack : missing) {
                 String s = missingStack.getDisplayName();
-
-                //int marueeOffset
-                //if(s.length()) {
-
-                //}
 
                 s = fontRenderer.trimStringToWidth(s, 70);
 

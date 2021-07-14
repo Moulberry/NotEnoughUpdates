@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -19,6 +20,7 @@ import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -990,7 +992,8 @@ public class CalendarOverlay {
 
     @SubscribeEvent
     public void onGuiDraw(GuiScreenEvent.DrawScreenEvent.Pre event) {
-        if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
+        GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
+        if(!(currentScreen instanceof GuiChest)) {
             return;
         }
 
@@ -998,9 +1001,10 @@ public class CalendarOverlay {
             return;
         }
 
-        GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+        GuiChest eventGui = (GuiChest) currentScreen;
         ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
-        String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+        IInventory lowerChestInventory = cc.getLowerChestInventory();
+        String containerName = lowerChestInventory.getDisplayName().getUnformattedText();
         if(!containerName.trim().equals("Calendar and Events")) {
             setEnabled(false);
             return;
@@ -1019,6 +1023,8 @@ public class CalendarOverlay {
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledResolution.getScaledWidth();
         int height = scaledResolution.getScaledHeight();
+        int scaleFactor = scaledResolution.getScaleFactor();
+
         guiLeft = (width - xSize)/2;
         guiTop = (height - ySize)/2;
 
@@ -1040,7 +1046,7 @@ public class CalendarOverlay {
         int specialLen = fr.getStringWidth("Special");
         fr.drawString("Special", guiLeft+139-specialLen, guiTop+30, 0xffffaa00);
 
-        ItemStack mayorStack = cc.getLowerChestInventory().getStackInSlot(46);
+        ItemStack mayorStack = lowerChestInventory.getStackInSlot(46);
         if(mayorStack != null) {
             String mayor = mayorStack.getDisplayName();
             float verticalHeight = Utils.getVerticalHeight(mayor);
@@ -1160,7 +1166,7 @@ public class CalendarOverlay {
         //Special Events
         for(int i=0; i<21; i++) {
             int itemIndex = 10+i+(i/7)*2;
-            ItemStack item = cc.getLowerChestInventory().getStackInSlot(itemIndex);
+            ItemStack item = lowerChestInventory.getStackInSlot(itemIndex);
             if(item == null) continue;
 
             String eventId = getIdForDisplayName(item.getDisplayName());
@@ -1209,9 +1215,9 @@ public class CalendarOverlay {
             int spaceLen = fr.getCharWidth(' ');
             if(displayWidth > eventTitleLen) {
                 GL11.glEnable(GL11.GL_SCISSOR_TEST);
-                GL11.glScissor((guiLeft+8+nextSLen)*scaledResolution.getScaleFactor(),
+                GL11.glScissor((guiLeft+8+nextSLen)*scaleFactor,
                         0,
-                        eventTitleLen*scaledResolution.getScaleFactor(),
+                        eventTitleLen*scaleFactor,
                         Minecraft.getMinecraft().displayHeight);
                 fr.drawString(nextEvent.display + " " + nextEvent.display,
                         guiLeft+8+nextSLen-(float)(currentTime/50.0 % (displayWidth+spaceLen)), guiTop+6, -1, false);

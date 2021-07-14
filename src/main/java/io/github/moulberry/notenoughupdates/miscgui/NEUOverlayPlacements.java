@@ -21,9 +21,7 @@ public class NEUOverlayPlacements extends GuiScreen {
     private int clickedAnchorX;
     private int clickedAnchorY;
     private MBGuiElement clickedElement;
-    private GuiButton guiButton = new GuiButton(0, 5, 5, "Reset to Default");
-
-    private boolean dropdownMenuShown = false;
+    private final GuiButton guiButton = new GuiButton(0, 5, 5, "Reset to Default");
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {

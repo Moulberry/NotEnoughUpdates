@@ -471,13 +471,10 @@ public class GuiCustomEnchant extends Gui {
 
         //Update book model state
         if (lastState != currentState) {
-            while (true) {
-                this.pageOpenRandom += (float)(this.random.nextInt(4) - this.random.nextInt(4));
+            do {
+                this.pageOpenRandom += (float) (this.random.nextInt(4) - this.random.nextInt(4));
 
-                if (this.pageOpen > this.pageOpenRandom + 1.0F || this.pageOpen < this.pageOpenRandom - 1.0F) {
-                    break;
-                }
-            }
+            } while (!(this.pageOpen > this.pageOpenRandom + 1.0F) && !(this.pageOpen < this.pageOpenRandom - 1.0F));
         }
 
         this.pageOpenLast = this.pageOpen;

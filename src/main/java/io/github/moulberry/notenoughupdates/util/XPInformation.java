@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 public class XPInformation {
 
-    private static XPInformation INSTANCE = new XPInformation();
+    private static final XPInformation INSTANCE = new XPInformation();
 
     public static XPInformation getInstance() {
         return INSTANCE;
@@ -30,14 +30,14 @@ public class XPInformation {
         public boolean fromApi = false;
     }
 
-    private HashMap<String, SkillInfo> skillInfoMap = new HashMap<>();
+    private final HashMap<String, SkillInfo> skillInfoMap = new HashMap<>();
     public HashMap<String, Float> updateWithPercentage = new HashMap<>();
 
     public int correctionCounter = 0;
 
-    private static Splitter SPACE_SPLITTER = Splitter.on("  ").omitEmptyStrings().trimResults();
-    private static Pattern SKILL_PATTERN = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d+(?:,\\d+)*(?:\\.\\d+)?)/(\\d+(?:,\\d+)*(?:\\.\\d+)?)\\)");
-    private static Pattern SKILL_PATTERN_ALT = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d\\d?(?:\\.\\d\\d?)?)%\\)");
+    private static final Splitter SPACE_SPLITTER = Splitter.on("  ").omitEmptyStrings().trimResults();
+    private static final Pattern SKILL_PATTERN = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d+(?:,\\d+)*(?:\\.\\d+)?)/(\\d+(?:,\\d+)*(?:\\.\\d+)?)\\)");
+    private static final Pattern SKILL_PATTERN_ALT = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d\\d?(?:\\.\\d\\d?)?)%\\)");
 
     public HashMap<String, SkillInfo> getSkillInfoMap() {
         return skillInfoMap;

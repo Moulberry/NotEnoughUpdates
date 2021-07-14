@@ -292,7 +292,7 @@ public class APIManager {
         }
     }
 
-    private ExecutorService es = Executors.newSingleThreadExecutor();
+    private final ExecutorService es = Executors.newSingleThreadExecutor();
     private void cleanup() {
         es.submit(() -> {
             try {
@@ -451,7 +451,7 @@ public class APIManager {
         return -1;
     }
 
-    private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
+    private final String[] romans = new String[]{"0","I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
             "XII","XIII","XIV","XV","XVI","XVII","XIX","XX"};
 
 
@@ -510,7 +510,7 @@ public class APIManager {
                         int enchantlevel = enchantments.getInteger(key);
                         String enchantLevelStr;
                         if(enchantlevel >= 1 && enchantlevel <= 20) {
-                            enchantLevelStr = romans[enchantlevel-1];
+                            enchantLevelStr = romans[enchantlevel];
                         } else {
                             enchantLevelStr = String.valueOf(enchantlevel);
                         }

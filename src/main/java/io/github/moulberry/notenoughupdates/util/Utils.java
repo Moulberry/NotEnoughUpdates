@@ -442,7 +442,7 @@ public class Utils {
         return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
     }
 
-    private static String[] rarityArr = new String[] {
+    private static final String[] rarityArr = new String[] {
             "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
     };
     public static int checkItemType(JsonArray lore, boolean contains, String... typeMatches) {
