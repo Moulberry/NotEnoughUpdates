@@ -522,7 +522,7 @@ public class ReverseWorldRenderer {
     }
 
     @SideOnly(Side.CLIENT)
-    public class State {
+    public static class State {
         private final int[] stateRawBuffer;
         private final VertexFormat stateVertexFormat;
 

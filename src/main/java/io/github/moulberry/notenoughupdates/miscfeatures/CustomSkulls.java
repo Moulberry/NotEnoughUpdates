@@ -70,7 +70,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
     private final Gson gson = new GsonBuilder().create();
 
-    private class CustomSkull {
+    private static class CustomSkull {
         private ModelBlock model;
         private IBakedModel modelBaked;
 

@@ -66,7 +66,7 @@ public class CalendarOverlay {
     private int xSize = 168;
     private int ySize = 170;
 
-    private class SBEvent {
+    private static class SBEvent {
         String id;
         String display;
         ItemStack stack;
@@ -205,11 +205,11 @@ public class CalendarOverlay {
 
                     if(daEvent > currentTime) {
                         eventMap.computeIfAbsent(daEvent, k->new HashSet<>()).add(new SBEvent("dark_auction",
-                                EnumChatFormatting.DARK_PURPLE+"Dark Auction", DA_STACK, null, MINUTE*5));
+                                EnumChatFormatting.DARK_PURPLE + "Dark Auction", DA_STACK, null, MINUTE * 5));
                     }
                     if(jfEvent > currentTime) {
                         SBEvent jf = new SBEvent("jacob_farming",
-                                EnumChatFormatting.YELLOW+"Jacob's Farming Contest", JF_STACK, null, MINUTE*20);
+                                EnumChatFormatting.YELLOW + "Jacob's Farming Contest", JF_STACK, null, MINUTE * 20);
                         if(farmingEventTypes != null && farmingEventTypes.has(""+jfEvent) &&
                                 farmingEventTypes.get(""+jfEvent).isJsonArray()) {
                             JsonArray arr =  farmingEventTypes.get(""+jfEvent).getAsJsonArray();
@@ -311,11 +311,11 @@ public class CalendarOverlay {
 
                     if(daEvent > currentTime) {
                         eventMap.computeIfAbsent(daEvent, k->new HashSet<>()).add(new SBEvent("dark_auction",
-                                EnumChatFormatting.DARK_PURPLE+"Dark Auction", DA_STACK, null, MINUTE*5));
+                                EnumChatFormatting.DARK_PURPLE + "Dark Auction", DA_STACK, null, MINUTE * 5));
                     }
                     if(jfEvent > currentTime) {
                         SBEvent jf = new SBEvent("jacob_farming",
-                                EnumChatFormatting.YELLOW+"Jacob's Farming Contest", JF_STACK, null, MINUTE*20);
+                                EnumChatFormatting.YELLOW + "Jacob's Farming Contest", JF_STACK, null, MINUTE * 20);
                         if(farmingEventTypes != null && farmingEventTypes.has(""+jfEvent) &&
                                 farmingEventTypes.get(""+jfEvent).isJsonArray()) {
                             JsonArray arr =  farmingEventTypes.get(""+jfEvent).getAsJsonArray();
@@ -347,11 +347,11 @@ public class CalendarOverlay {
 
             if(daEvent > currentTime) {
                 eventMap.computeIfAbsent(daEvent, k->new HashSet<>()).add(new SBEvent("dark_auction",
-                        EnumChatFormatting.DARK_PURPLE+"Dark Auction", DA_STACK, null, MINUTE*5));
+                        EnumChatFormatting.DARK_PURPLE + "Dark Auction", DA_STACK, null, MINUTE * 5));
             }
             if(jfEvent > currentTime) {
                 SBEvent jf = new SBEvent("jacob_farming",
-                        EnumChatFormatting.YELLOW+"Jacob's Farming Contest", JF_STACK, null, MINUTE*20);
+                        EnumChatFormatting.YELLOW + "Jacob's Farming Contest", JF_STACK, null, MINUTE * 20);
                 if(farmingEventTypes != null && farmingEventTypes.has(""+jfEvent) &&
                         farmingEventTypes.get(""+jfEvent).isJsonArray()) {
                     JsonArray arr =  farmingEventTypes.get(""+jfEvent).getAsJsonArray();

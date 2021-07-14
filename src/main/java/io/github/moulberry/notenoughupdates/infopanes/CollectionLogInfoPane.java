@@ -477,7 +477,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         framebuffer.unbindFramebufferTexture();
     }
 
-    private abstract class ItemSlotConsumer {
+    private abstract static class ItemSlotConsumer {
         public abstract void consume(int x, int y, int id);
     }
 
@@ -485,7 +485,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         int scrolledTop = top-scrollHeight.getValue();
 
         int id = 0;
-        int extraSize = overlay.ITEM_SIZE+overlay.ITEM_PADDING;
+        int extraSize = NEUOverlay.ITEM_SIZE + NEUOverlay.ITEM_PADDING;
         for(int y=scrolledTop; y<bottom; y+=extraSize) {
             for(int x=left; x<right-extraSize; x+=extraSize) {
                 if(y > top-extraSize) {

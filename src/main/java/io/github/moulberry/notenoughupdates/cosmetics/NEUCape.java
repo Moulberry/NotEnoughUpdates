@@ -435,7 +435,7 @@ public class NEUCape {
         double f;
 
         for(f = b - a; f < -180.0F; f += 360.0F) {
-            ;
+
         }
 
         while(f >= 180.0F) {

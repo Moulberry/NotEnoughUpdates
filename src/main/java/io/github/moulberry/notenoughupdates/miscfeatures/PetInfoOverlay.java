@@ -205,12 +205,10 @@ public class PetInfoOverlay extends TextOverlay {
             return pets.iterator().next();
         }
 
-        String searchItem = petItem;
-
         Set<Pet> itemMatches = new HashSet<>();
         for(Pet pet : pets) {
-            if((searchItem == null && pet.petItem == null) ||
-                    (searchItem != null && searchItem.equals(pet.petItem))) {
+            if((petItem == null && pet.petItem == null) ||
+                    (petItem != null && petItem.equals(pet.petItem))) {
                 itemMatches.add(pet);
             }
         }

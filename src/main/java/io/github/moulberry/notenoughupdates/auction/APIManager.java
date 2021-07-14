@@ -729,7 +729,7 @@ public class APIManager {
         return Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null;
     }
 
-    public class CraftInfo {
+    public static class CraftInfo {
         public boolean fromRecipe = false;
         public boolean vanillaItem = false;
         public float craftCost = -1;

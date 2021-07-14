@@ -93,7 +93,7 @@ public class DungeonMap {
 
     private Map<String, ResourceLocation> playerSkinMap = new HashMap<>();
     
-    private class RoomOffset {
+    private static class RoomOffset {
         int x;
         int y;
 
@@ -103,19 +103,19 @@ public class DungeonMap {
         }
 
         public RoomOffset left() {
-            return new RoomOffset(x-1, y);
+            return new RoomOffset(x - 1, y);
         }
 
         public RoomOffset right() {
-            return new RoomOffset(x+1, y);
+            return new RoomOffset(x + 1, y);
         }
 
         public RoomOffset up() {
-            return new RoomOffset(x, y-1);
+            return new RoomOffset(x, y - 1);
         }
 
         public RoomOffset down() {
-            return new RoomOffset(x, y+1);
+            return new RoomOffset(x, y + 1);
         }
 
         public RoomOffset[] getNeighbors() {
@@ -140,7 +140,7 @@ public class DungeonMap {
         NONE, WALL, CORRIDOR, ROOM_DIVIDER
     }
 
-    private class RoomConnection {
+    private static class RoomConnection {
         RoomConnectionType type;
         Color colour;
 

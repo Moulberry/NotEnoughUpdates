@@ -229,7 +229,7 @@ public class CustomAH extends Gui {
         }
     }
 
-    public class Category {
+    public static class Category {
         public String categoryMatch;
         public Category[] subcategories;
         public String displayName;
