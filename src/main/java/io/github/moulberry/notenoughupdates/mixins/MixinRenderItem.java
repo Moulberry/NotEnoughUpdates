@@ -33,13 +33,13 @@ public abstract class MixinRenderItem {
     private static void func_181565_a(WorldRenderer w, int x, int y, float width, int height,
                                int r, int g, int b, int a) {
         w.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        w.pos((x + 0), (y + 0), 0.0D)
+        w.pos(x, y, 0.0D)
                 .color(r, g, b, a).endVertex();
-        w.pos((x + 0), (y + height), 0.0D)
+        w.pos(x, (y + height), 0.0D)
                 .color(r, g, b, a).endVertex();
         w.pos((x + width), (y + height), 0.0D)
                 .color(r, g, b, a).endVertex();
-        w.pos((x + width), (y + 0), 0.0D)
+        w.pos((x + width), y, 0.0D)
                 .color(r, g, b, a).endVertex();
         Tessellator.getInstance().draw();
     }

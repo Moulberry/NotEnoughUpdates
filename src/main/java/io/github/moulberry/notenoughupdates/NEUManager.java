@@ -421,18 +421,18 @@ public class NEUManager {
             return searchString(stack.getDisplayName(), query);
         } else if(query.startsWith("desc:")) {
             query = query.substring(5);
-            String lore = "";
+            StringBuilder lore = new StringBuilder();
             NBTTagCompound tag = stack.getTagCompound();
             if(tag != null) {
                 NBTTagCompound display = tag.getCompoundTag("display");
                 if (display.hasKey("Lore", 9)) {
                     NBTTagList list = display.getTagList("Lore", 8);
                     for (int i = 0; i < list.tagCount(); i++) {
-                        lore += list.getStringTagAt(i) + " ";
+                        lore.append(list.getStringTagAt(i)).append(" ");
                     }
                 }
             }
-            return searchString(lore, query);
+            return searchString(lore.toString(), query);
         } else if(query.startsWith("id:")) {
             query = query.substring(3);
             String internalName = getInternalNameForItem(stack);
@@ -448,19 +448,19 @@ public class NEUManager {
             }
             result = result || searchString(stack.getDisplayName(), query);
 
-            String lore = "";
+            StringBuilder lore = new StringBuilder();
             NBTTagCompound tag = stack.getTagCompound();
             if(tag != null) {
                 NBTTagCompound display = tag.getCompoundTag("display");
                 if (display.hasKey("Lore", 9)) {
                     NBTTagList list = display.getTagList("Lore", 8);
                     for (int i = 0; i < list.tagCount(); i++) {
-                        lore += list.getStringTagAt(i) + " ";
+                        lore.append(list.getStringTagAt(i)).append(" ");
                     }
                 }
             }
 
-            result = result || searchString(lore, query);
+            result = result || searchString(lore.toString(), query);
 
             return result;
         }
@@ -566,10 +566,7 @@ public class NEUManager {
         if(!negate) {
             return results;
         } else {
-            Set<String> negatedResults = new HashSet<>();
-            for(String internalname : itemMap.keySet()) {
-                negatedResults.add(internalname);
-            }
+            Set<String> negatedResults = new HashSet<>(itemMap.keySet());
             negatedResults.removeAll(results);
             return negatedResults;
         }
@@ -921,7 +918,7 @@ public class NEUManager {
                     String itemS = recipe.get(name).getAsString();
                     int count = 1;
                     if(itemS != null && itemS.split(":").length == 2) {
-                        count = Integer.valueOf(itemS.split(":")[1]);
+                        count = Integer.parseInt(itemS.split(":")[1]);
                         itemS = itemS.split(":")[0];
                     }
                     JsonObject craft = getItemInformation().get(itemS);
@@ -960,7 +957,7 @@ public class NEUManager {
                 String itemS = recipe.get(name).getAsString();
                 int count = 1;
                 if(itemS != null && itemS.split(":").length == 2) {
-                    count = Integer.valueOf(itemS.split(":")[1]);
+                    count = Integer.parseInt(itemS.split(":")[1]);
                     itemS = itemS.split(":")[0];
                 }
                 JsonObject craft = getItemInformation().get(itemS);
@@ -1011,7 +1008,7 @@ public class NEUManager {
         }
         try (BufferedInputStream inStream = new BufferedInputStream(new URL(url+"?action=raw&templates=expand").openStream());
              FileOutputStream fileOutputStream = new FileOutputStream(f)) {
-            byte dataBuffer[] = new byte[1024];
+            byte[] dataBuffer = new byte[1024];
             int bytesRead;
             while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
@@ -1330,11 +1327,11 @@ public class NEUManager {
     }
 
     public ItemStack jsonToStack(JsonObject json) {
-        return jsonToStack(json, true);
+        return jsonToStack(json, true, true, true);
     }
 
     public ItemStack jsonToStack(JsonObject json, boolean useCache) {
-        return jsonToStack(json, useCache, true);
+        return jsonToStack(json, useCache, true, true);
     }
 
     public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {

@@ -211,7 +211,7 @@ public class AuctionSearchOverlay {
             search += " " + searchStringExtra.trim();
         }
         if(search.length() <= 15) {
-            tes.signText[0] = new ChatComponentText(search.substring(0, Math.min(search.length(), 15)));
+            tes.signText[0] = new ChatComponentText(search);
         } else {
             List<String> words = SPACE_SPLITTER.splitToList(search);
 

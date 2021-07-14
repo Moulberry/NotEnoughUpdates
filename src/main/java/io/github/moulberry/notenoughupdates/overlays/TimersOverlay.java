@@ -274,57 +274,57 @@ public class TimersOverlay extends TextOverlay {
         long cakeEnd = hidden.firstCakeAte + 1000*60*60*48 - currentTime;
         if(cakeEnd < 0) {
             map.put(0, DARK_AQUA+"Cakes: "+YELLOW+"Inactive!");
-            map.put(0+7, DARK_AQUA+"Cakes: "+YELLOW+"Inactive!");
+            map.put(7, DARK_AQUA+"Cakes: "+YELLOW+"Inactive!");
         } else {
-            map.put(0+7, DARK_AQUA+"Cakes: "+YELLOW+Utils.prettyTime(cakeEnd));
+            map.put(7, DARK_AQUA+"Cakes: "+YELLOW+Utils.prettyTime(cakeEnd));
         }
 
         if(hidden.cookieBuffRemaining <= 0) {
             map.put(1, DARK_AQUA+"Cookie Buff: "+YELLOW+"Inactive!");
-            map.put(1+7, DARK_AQUA+"Cookie Buff: "+YELLOW+"Inactive!");
+            map.put(8, DARK_AQUA+"Cookie Buff: "+YELLOW+"Inactive!");
         } else {
-            map.put(1+7, DARK_AQUA+"Cookie Buff: "+YELLOW+Utils.prettyTime(hidden.cookieBuffRemaining));
+            map.put(8, DARK_AQUA+"Cookie Buff: "+YELLOW+Utils.prettyTime(hidden.cookieBuffRemaining));
         }
 
         long godpotEnd = hidden.godPotionDrunk + 1000*60*60*24 - currentTime;
         if(godpotEnd < 0) {
             if(!hideGodpot) {
                 map.put(2, DARK_AQUA+"Godpot: "+YELLOW+"Inactive!");
-                map.put(2+7, DARK_AQUA+"Godpot: "+YELLOW+"Inactive!");
+                map.put(9, DARK_AQUA+"Godpot: "+YELLOW+"Inactive!");
             }
         } else {
-            map.put(2+7, DARK_AQUA+"Godpot: "+YELLOW+Utils.prettyTime(godpotEnd));
+            map.put(9, DARK_AQUA+"Godpot: "+YELLOW+Utils.prettyTime(godpotEnd));
         }
 
         long puzzlerEnd = hidden.puzzlerCompleted + 1000*60*60*24 - currentTime;
         if(puzzlerEnd < 0) {
             map.put(3, DARK_AQUA+"Puzzler: "+YELLOW+"Ready!");
-            map.put(3+7, DARK_AQUA+"Puzzler: "+YELLOW+"Ready!");
+            map.put(10, DARK_AQUA+"Puzzler: "+YELLOW+"Ready!");
         } else {
-            map.put(3+7, DARK_AQUA+"Puzzler: "+YELLOW+Utils.prettyTime(puzzlerEnd));
+            map.put(10, DARK_AQUA+"Puzzler: "+YELLOW+Utils.prettyTime(puzzlerEnd));
         }
 
         long midnightReset = (currentTime-18000000)/86400000*86400000+18000000;
         long fetchurComplete = hidden.fetchurCompleted;
         if(fetchurComplete < midnightReset) {
             map.put(4, DARK_AQUA+"Fetchur: "+YELLOW+"Ready!");
-            map.put(4+7, DARK_AQUA+"Fetchur: "+YELLOW+"Ready!");
+            map.put(11, DARK_AQUA+"Fetchur: "+YELLOW+"Ready!");
         } else {
-            map.put(4+7, DARK_AQUA+"Fetchur: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
+            map.put(11, DARK_AQUA+"Fetchur: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
         }
 
         if(hidden.commissionsCompleted < midnightReset) {
             map.put(5, DARK_AQUA+"Commissions: "+YELLOW+"Ready!");
-            map.put(5+7, DARK_AQUA+"Commissions: "+YELLOW+"Ready!");
+            map.put(12, DARK_AQUA+"Commissions: "+YELLOW+"Ready!");
         } else {
-            map.put(5+7, DARK_AQUA+"Commissions: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
+            map.put(12, DARK_AQUA+"Commissions: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
         }
 
         if(hidden.experimentsCompleted < midnightReset) {
             map.put(6, DARK_AQUA+"Experiments: "+YELLOW+"Ready!");
-            map.put(6+7, DARK_AQUA+"Experiments: "+YELLOW+"Ready!");
+            map.put(13, DARK_AQUA+"Experiments: "+YELLOW+"Ready!");
         } else {
-            map.put(6+7, DARK_AQUA+"Experiments: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
+            map.put(13, DARK_AQUA+"Experiments: "+YELLOW+Utils.prettyTime(midnightReset + 86400000 - currentTime));
         }
 
         overlayStrings = new ArrayList<>();
