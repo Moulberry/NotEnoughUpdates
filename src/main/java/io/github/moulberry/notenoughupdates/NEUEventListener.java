@@ -1661,9 +1661,9 @@ public class NEUEventListener {
                         out:
                         for (int i = list.tagCount(); i >= 0; i--) {
                             String line = list.getStringTagAt(i);
-                            for(int j=0; j<rarityArrC.length; j++) {
-                                for(Map.Entry<String, JsonElement> entry : enchantsObj.entrySet()) {
-                                    if(line.contains(rarityArrC[j] + " " + entry.getKey()) || line.contains(rarityArrC[j] + " DUNGEON " + entry.getKey())) {
+                            for (String s : rarityArrC) {
+                                for (Map.Entry<String, JsonElement> entry : enchantsObj.entrySet()) {
+                                    if (line.contains(s + " " + entry.getKey()) || line.contains(s + " DUNGEON " + entry.getKey())) {
                                         allItemEnchs = entry.getValue().getAsJsonArray();
                                         break out;
                                     }

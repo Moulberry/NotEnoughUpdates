@@ -120,9 +120,7 @@ public abstract class MixinRenderItem {
 
     @Inject(method="renderEffect", at=@At("HEAD"), cancellable = true)
     public void renderEffect(IBakedModel model, CallbackInfo ci) {
-        if(ItemCustomizeManager.renderEffectHook(customEnchGlint, (color) -> {
-            renderModel(model, color);
-        })) {
+        if(ItemCustomizeManager.renderEffectHook(customEnchGlint, (color) -> renderModel(model, color))) {
             ci.cancel();
         }
     }

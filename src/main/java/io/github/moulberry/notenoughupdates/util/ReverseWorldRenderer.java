@@ -80,11 +80,7 @@ public class ReverseWorldRenderer {
             ainteger[k] = k;
         }
 
-        Arrays.sort(ainteger, new Comparator<Integer>() {
-            public int compare(Integer p_compare_1_, Integer p_compare_2_) {
-                return -Floats.compare(afloat[p_compare_2_], afloat[p_compare_1_]);
-            }
-        });
+        Arrays.sort(ainteger, (p_compare_1_, p_compare_2_) -> -Floats.compare(afloat[p_compare_2_], afloat[p_compare_1_]));
         BitSet bitset = new BitSet();
         int l = this.vertexFormat.getNextOffset();
         int[] aint = new int[l];

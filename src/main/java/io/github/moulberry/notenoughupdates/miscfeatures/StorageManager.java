@@ -108,16 +108,16 @@ public class StorageManager {
             NBTTagIntArray listTag = (NBTTagIntArray) tag;
             int[] arr = listTag.getIntArray();
             JsonArray jsonArray = new JsonArray();
-            for(int i=0; i<arr.length; i++) {
-                jsonArray.add(new JsonPrimitive(arr[i]));
+            for (int j : arr) {
+                jsonArray.add(new JsonPrimitive(j));
             }
             return jsonArray;
         } else if (tag instanceof NBTTagByteArray) {
             NBTTagByteArray listTag = (NBTTagByteArray) tag;
             byte[] arr = listTag.getByteArray();
             JsonArray jsonArray = new JsonArray();
-            for(int i=0; i<arr.length; i++) {
-                jsonArray.add(new JsonPrimitive(arr[i]));
+            for (byte b : arr) {
+                jsonArray.add(new JsonPrimitive(b));
             }
             return jsonArray;
         }else if (tag instanceof NBTTagShort) {

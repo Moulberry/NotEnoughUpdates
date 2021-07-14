@@ -76,9 +76,7 @@ public class Utils {
     private static FloatBuffer modelviewMatrixOld = BufferUtils.createFloatBuffer(16);
 
     public static <T> ArrayList<T> createList(T... values) {
-        ArrayList<T> list = new ArrayList<>();
-        for(T value : values)list.add(value);
-        return list;
+        return new ArrayList<>(Arrays.asList(values));
     }
 
     public static void resetGuiScale() {
@@ -1053,7 +1051,7 @@ public class Utils {
             if (needsWrap)
             {
                 int wrappedTooltipWidth = 0;
-                List<String> wrappedTextLines = new ArrayList<String>();
+                List<String> wrappedTextLines = new ArrayList<>();
                 for (int i = 0; i < textLines.size(); i++)
                 {
                     String textLine = textLines.get(i);

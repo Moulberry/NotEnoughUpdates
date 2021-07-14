@@ -42,9 +42,7 @@ public abstract class MixinLayerArmorBase<T extends ModelBase> {
     public void renderGlint(EntityLivingBase entitylivingbaseIn, T modelbaseIn, float p_177183_3_, float p_177183_4_,
                              float partialTicks, float p_177183_6_, float p_177183_7_, float p_177183_8_, float scale, CallbackInfo ci) {
         float existed = (float)entitylivingbaseIn.ticksExisted + partialTicks;
-        if(ItemCustomizeManager.render3DGlint(customEnchGlint, existed, () -> {
-            modelbaseIn.render(entitylivingbaseIn, p_177183_3_, p_177183_4_, p_177183_6_, p_177183_7_, p_177183_8_, scale);
-        })) {
+        if(ItemCustomizeManager.render3DGlint(customEnchGlint, existed, () -> modelbaseIn.render(entitylivingbaseIn, p_177183_3_, p_177183_4_, p_177183_6_, p_177183_7_, p_177183_8_, scale))) {
             ci.cancel();
         }
     }

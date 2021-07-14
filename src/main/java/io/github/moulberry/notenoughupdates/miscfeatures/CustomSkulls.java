@@ -128,12 +128,10 @@ public class CustomSkulls implements IResourceManagerReloadListener {
     private void loadSprites() {
         final Set<ResourceLocation> set = this.getAllTextureLocations();
         set.remove(TextureMap.LOCATION_MISSING_TEXTURE);
-        IIconCreator iiconcreator = new IIconCreator() {
-            public void registerSprites(TextureMap iconRegistry) {
-                for(ResourceLocation resourcelocation : set) {
-                    TextureAtlasSprite textureatlassprite = iconRegistry.registerSprite(resourcelocation);
-                    CustomSkulls.this.sprites.put(resourcelocation, textureatlassprite);
-                }
+        IIconCreator iiconcreator = iconRegistry -> {
+            for(ResourceLocation resourcelocation : set) {
+                TextureAtlasSprite textureatlassprite = iconRegistry.registerSprite(resourcelocation);
+                CustomSkulls.this.sprites.put(resourcelocation, textureatlassprite);
             }
         };
         this.textureMap.loadSprites(Minecraft.getMinecraft().getResourceManager(), iiconcreator);

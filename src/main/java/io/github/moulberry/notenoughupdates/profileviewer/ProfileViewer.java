@@ -526,9 +526,7 @@ public class ProfileViewer {
                             latestProfile = backup;
                             if (runnable != null) runnable.run();
                         }
-                    }, () -> {
-                        updatingPlayerInfoState.set(false);
-                    }
+                    }, () -> updatingPlayerInfoState.set(false)
             );
 
             return null;

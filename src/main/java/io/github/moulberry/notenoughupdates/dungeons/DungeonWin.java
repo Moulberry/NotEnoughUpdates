@@ -167,9 +167,7 @@ public class DungeonWin {
                             TEAM_SCORE = D; break;
                     }
 
-                    SES.schedule(()-> {
-                        NotEnoughUpdates.INSTANCE.sendChatMessage("/showextrastats");
-                    }, 100L, TimeUnit.MILLISECONDS);
+                    SES.schedule(()-> NotEnoughUpdates.INSTANCE.sendChatMessage("/showextrastats"), 100L, TimeUnit.MILLISECONDS);
                 }
             }
         }

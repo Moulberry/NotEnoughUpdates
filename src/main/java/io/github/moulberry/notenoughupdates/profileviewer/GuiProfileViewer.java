@@ -1221,7 +1221,7 @@ public class GuiProfileViewer extends GuiScreen {
                             for(int j=0; j<newLore.tagCount(); j++) {
                                 String line = newLore.getStringTagAt(j);
 
-                                if(j == secondLastBlank.intValue()) {
+                                if(j == secondLastBlank) {
                                     newNewLore.appendTag(new NBTTagString(""));
                                     newNewLore.appendTag(new NBTTagString(EnumChatFormatting.GOLD+"Held Item: "+heldItemJson.get("displayname").getAsString()));
                                     int blanks = 0;
@@ -2507,21 +2507,19 @@ public class GuiProfileViewer extends GuiScreen {
 
         if(entityPlayer != null && playerLocationSkin == null) {
             try {
-                Minecraft.getMinecraft().getSkinManager().loadProfileTextures(entityPlayer.getGameProfile(), new SkinManager.SkinAvailableCallback() {
-                    public void skinAvailable(MinecraftProfileTexture.Type type, ResourceLocation location, MinecraftProfileTexture profileTexture) {
-                        switch (type) {
-                            case SKIN:
-                                playerLocationSkin = location;
-                                skinType = profileTexture.getMetadata("model");
+                Minecraft.getMinecraft().getSkinManager().loadProfileTextures(entityPlayer.getGameProfile(), (type, location1, profileTexture) -> {
+                    switch (type) {
+                        case SKIN:
+                            playerLocationSkin = location1;
+                            skinType = profileTexture.getMetadata("model");
 
-                                if(skinType == null) {
-                                    skinType = "default";
-                                }
+                            if(skinType == null) {
+                                skinType = "default";
+                            }
 
-                                break;
-                            case CAPE:
-                                playerLocationCape = location;
-                        }
+                            break;
+                        case CAPE:
+                            playerLocationCape = location1;
                     }
                 }, false);
             } catch(Exception e){}

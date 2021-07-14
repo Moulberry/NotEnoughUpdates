@@ -139,16 +139,22 @@ public class DwarvenMinesWaypoints {
                         String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
                         for(String line : lore) {
                             String clean = Utils.cleanColour(line);
-                            if(clean.equals("Tier I Rewards:")) {
-                                hidden.commissionMilestone = 0;
-                            } else if(clean.equals("Tier II Rewards:")) {
-                                hidden.commissionMilestone = 1;
-                            } else if(clean.equals("Tier III Rewards:")) {
-                                hidden.commissionMilestone = 2;
-                            } else if(clean.equals("Tier IV Rewards:")) {
-                                hidden.commissionMilestone = 3;
-                            } else if(clean.equals("Tier V Rewards:")) {
-                                hidden.commissionMilestone = 4;
+                            switch (clean) {
+                                case "Tier I Rewards:":
+                                    hidden.commissionMilestone = 0;
+                                    break;
+                                case "Tier II Rewards:":
+                                    hidden.commissionMilestone = 1;
+                                    break;
+                                case "Tier III Rewards:":
+                                    hidden.commissionMilestone = 2;
+                                    break;
+                                case "Tier IV Rewards:":
+                                    hidden.commissionMilestone = 3;
+                                    break;
+                                case "Tier V Rewards:":
+                                    hidden.commissionMilestone = 4;
+                                    break;
                             }
                         }
                         return;

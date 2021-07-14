@@ -100,9 +100,7 @@ public class NEUItemEditor extends GuiScreen {
         String damage = item.has("damage") ? item.get("damage").getAsString() : "";
         this.damage = addTextFieldWithSupplier(damage, NO_SPACE | NUM_ONLY);
 
-        rightOptions.add(new GuiElementButton("Close (discards changes)", Color.LIGHT_GRAY.getRGB(), () -> {
-            Minecraft.getMinecraft().displayGuiScreen(null);
-        }));
+        rightOptions.add(new GuiElementButton("Close (discards changes)", Color.LIGHT_GRAY.getRGB(), () -> Minecraft.getMinecraft().displayGuiScreen(null)));
         GuiElementButton button = new Object() { //Used to make the compiler shut the fuck up
             GuiElementButton b = new GuiElementButton("Save to local disk", Color.GREEN.getRGB(), new Runnable() {
                 public void run() {
@@ -139,9 +137,7 @@ public class NEUItemEditor extends GuiScreen {
             nbttag.removeTag("ench");
             nbttag.getCompoundTag("ExtraAttributes").removeTag("enchantments");
         }));
-        rightOptions.add(new GuiElementButton("Add enchant glint", Color.ORANGE.getRGB(), () -> {
-            nbttag.setTag("ench", new NBTTagList());
-        }));
+        rightOptions.add(new GuiElementButton("Add enchant glint", Color.ORANGE.getRGB(), () -> nbttag.setTag("ench", new NBTTagList())));
 
         resetScrollToTop();
     }
@@ -149,7 +145,7 @@ public class NEUItemEditor extends GuiScreen {
     public boolean save() {
         int damageI = 0;
         try {
-            damageI = Integer.valueOf(damage.get());
+            damageI = Integer.parseInt(damage.get());
         } catch(NumberFormatException e) {}
         resyncNbttag();
         String[] infoA = info.get().trim().split("\n");
@@ -163,7 +159,7 @@ public class NEUItemEditor extends GuiScreen {
     public boolean upload() {
         int damageI = 0;
         try {
-            damageI = Integer.valueOf(damage.get());
+            damageI = Integer.parseInt(damage.get());
         } catch(NumberFormatException e) {}
         resyncNbttag();
         String[] infoA = info.get().trim().split("\n");
@@ -181,7 +177,7 @@ public class NEUItemEditor extends GuiScreen {
     public Supplier<String> addTextFieldWithSupplier(String initialText, int options) {
         GuiElementTextField textField = new GuiElementTextField(initialText, options);
         this.options.add(textField);
-        return () -> textField.toString();
+        return textField::toString;
     }
 
     public void resyncNbttag() {
@@ -286,7 +282,7 @@ public class NEUItemEditor extends GuiScreen {
 
         if(stack.getItem() != null) {
             try {
-                stack.setItemDamage(Integer.valueOf(damage.get()));
+                stack.setItemDamage(Integer.parseInt(damage.get()));
             } catch(NumberFormatException e) {}
 
             resyncNbttag();
