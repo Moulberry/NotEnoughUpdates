@@ -238,13 +238,6 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Custom Music",
-            desc = "Custom Music"
-    )
-    public CustomMusicConfig customMusic = new CustomMusicConfig();
-
-    @Expose
-    @Category(
             name = "Accessory Bag Overlay",
             desc = "Accessory Bag Overlay"
     )

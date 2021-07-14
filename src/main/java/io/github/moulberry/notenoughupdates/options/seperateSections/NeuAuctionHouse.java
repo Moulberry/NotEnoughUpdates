@@ -5,7 +5,7 @@ import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditor
 import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorSlider;
 import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 
-public static class NeuAuctionHouse {
+public class NeuAuctionHouse {
     @Expose
     @ConfigOption(
             name = "Enable NeuAH",
