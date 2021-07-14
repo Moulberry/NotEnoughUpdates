@@ -1721,10 +1721,14 @@ public class GuiProfileViewer extends GuiScreen {
             jsonInvSize = (int)Math.ceil(jsonInv.size()/9f)*9;
         } else {
             jsonInvSize = 9*4;
+            float divideBy = 9f;
+            if(invName.equals("wardrobe_contents")){
+                divideBy = 36f;
+            }
             for(int i=9*4; i<jsonInv.size(); i++) {
                 JsonElement item = jsonInv.get(i);
                 if(item != null && item.isJsonObject()) {
-                    jsonInvSize = (int) (Math.ceil((i+1)/9f)*9);
+                    jsonInvSize = (int) (Math.ceil((i+1)/divideBy)*(int)divideBy);
                 }
             }
         }
