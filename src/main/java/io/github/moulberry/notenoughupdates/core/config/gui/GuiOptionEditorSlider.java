@@ -36,7 +36,7 @@ public class GuiOptionEditorSlider extends GuiOptionEditor {
                 strVal = Integer.toString(val.intValue());
             } else {
                 strVal = Float.toString(val);
-                strVal = strVal.replaceAll("(\\.\\d\\d\\d)(?:\\d)+", "$1");
+                strVal = strVal.replaceAll("(\\.\\d\\d\\d)\\d+", "$1");
                 strVal = strVal.replaceAll("0+$", "");
             }
             textField.setText(strVal);

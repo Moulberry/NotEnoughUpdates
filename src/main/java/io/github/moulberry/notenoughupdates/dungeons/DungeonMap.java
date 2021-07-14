@@ -163,7 +163,7 @@ public class DungeonMap {
         }
     }
 
-    private class Room {
+    private static class Room {
         Color colour = new Color(0, 0, 0, 0);
         int tickColour = 0;
         boolean fillCorner = false;

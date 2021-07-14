@@ -177,7 +177,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 strVal = Integer.toString((int)val);
             } else {
                 strVal = Double.toString(val);
-                strVal = strVal.replaceAll("(\\.\\d\\d\\d)(?:\\d)+", "$1");
+                strVal = strVal.replaceAll("(\\.\\d\\d\\d)\\d+", "$1");
                 strVal = strVal.replaceAll("0+$", "");
             }
             blurField.setText(strVal);

@@ -1080,74 +1080,73 @@ public class CalendarOverlay {
 
         //Daily Events
         int index = 0;
-        out:
-        for(Map.Entry<Long, Set<SBEvent>> sbEvents : eventMap.entrySet()) {
-            for(SBEvent sbEvent : sbEvents.getValue()) {
+        for (Map.Entry<Long, Set<SBEvent>> sbEvents : eventMap.entrySet()) {
+            for (SBEvent sbEvent : sbEvents.getValue()) {
                 long timeUntilMillis = sbEvents.getKey() - currentTime;
 
-                int x = guiLeft+29+17*(index%3);
-                int y = guiTop+44+17*(index/3);
+                int x = guiLeft + 29 + 17 * (index % 3);
+                int y = guiTop + 44 + 17 * (index / 3);
 
-                if(sbEvent.id.equals("spooky_festival")) {
-                    if(sbEvents.getKey() > currentTime-HOUR && (sbEvents.getKey() < spookyStart || spookyStart == 0)) {
+                if (sbEvent.id.equals("spooky_festival")) {
+                    if (sbEvents.getKey() > currentTime - HOUR && (sbEvents.getKey() < spookyStart || spookyStart == 0)) {
                         spookyStart = sbEvents.getKey();
                     }
                 }
 
-                if(index >= 21) {
-                    if(nextEvent != null) break;
-                    if(eventFavourites.isEmpty()) {
+                if (index >= 21) {
+                    if (nextEvent != null) break;
+                    if (eventFavourites.isEmpty()) {
                         nextEvent = sbEvent;
                         timeUntilNext = timeUntilMillis;
-                    } else if(eventFavourites.contains(sbEvent.id)) {
+                    } else if (eventFavourites.contains(sbEvent.id)) {
                         nextEvent = sbEvent;
                         timeUntilNext = timeUntilMillis;
                     }
                     continue;
                 }
 
-                if(firstEvent == null) {
+                if (firstEvent == null) {
                     firstEvent = sbEvent;
                     timeUntilFirst = timeUntilMillis;
                 }
 
                 String[] split = sbEvent.id.split(":");
                 boolean containsId = false;
-                for(int i=1; i<split.length; i++) {
-                    if(eventFavourites.contains(split[0]+":"+split[i])) {
+                for (int i = 1; i < split.length; i++) {
+                    if (eventFavourites.contains(split[0] + ":" + split[i])) {
                         containsId = true;
                         break;
                     }
                 }
-                if(eventFavourites.isEmpty()) {
-                    if(nextEvent == null) {
+                if (eventFavourites.isEmpty()) {
+                    if (nextEvent == null) {
                         nextEvent = sbEvent;
                         timeUntilNext = timeUntilMillis;
                     }
-                } else if(eventFavourites.contains(split[0]) || containsId) {
-                    if(nextEvent == null) {
+                } else if (eventFavourites.contains(split[0]) || containsId) {
+                    if (nextEvent == null) {
                         nextEvent = sbEvent;
                         timeUntilNext = timeUntilMillis;
                     }
 
                     GlStateManager.depthMask(false);
                     GlStateManager.translate(0, 0, -2);
-                    Gui.drawRect(x, y, x+16, y+16, 0xcfffbf49);
+                    Gui.drawRect(x, y, x + 16, y + 16, 0xcfffbf49);
                     GlStateManager.translate(0, 0, 2);
                     GlStateManager.depthMask(true);
                 }
 
-                Utils.drawItemStackWithText(sbEvent.stack, x, y, ""+(index+1));
+                Utils.drawItemStackWithText(sbEvent.stack, x, y, "" + (index + 1));
 
-                if(mouseX >= x && mouseX <= x+16) {
-                    if(mouseY >= y && mouseY <= y+16) {
+                if (mouseX >= x && mouseX <= x + 16) {
+                    if (mouseY >= y && mouseY <= y + 16) {
                         tooltipToDisplay = Utils.createList(sbEvent.display,
-                                EnumChatFormatting.GRAY+"Starts in: "+EnumChatFormatting.YELLOW+prettyTime(timeUntilMillis, false));
-                        if(sbEvent.lastsFor >= 0) {
-                            tooltipToDisplay.add( EnumChatFormatting.GRAY+"Lasts for: "+EnumChatFormatting.YELLOW+
+                                EnumChatFormatting.GRAY + "Starts in: " + EnumChatFormatting.YELLOW + prettyTime(timeUntilMillis, false));
+                        if (sbEvent.lastsFor >= 0) {
+                            tooltipToDisplay.add(EnumChatFormatting.GRAY + "Lasts for: " + EnumChatFormatting.YELLOW +
                                     prettyTime(sbEvent.lastsFor, true));
                         }
-                        if(sbEvent.desc != null) {
+                        if (sbEvent.desc != null) {
                             tooltipToDisplay.add("");
                             tooltipToDisplay.addAll(sbEvent.desc);
                         }

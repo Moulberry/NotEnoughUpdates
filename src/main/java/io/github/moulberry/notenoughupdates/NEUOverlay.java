@@ -1239,14 +1239,13 @@ public class NEUOverlay extends Gui {
                 }
             }
             searchedItems.removeAll(removeChildItems);
-            out:
-            for(Map.Entry<String, List<String>> entry : searchedItemsSubgroup.entrySet()) {
-                if(searchedItems.contains(manager.getItemInformation().get(entry.getKey()))) {
+            for (Map.Entry<String, List<String>> entry : searchedItemsSubgroup.entrySet()) {
+                if (searchedItems.contains(manager.getItemInformation().get(entry.getKey()))) {
                     continue;
                 }
-                for(String itemname : entry.getValue()) {
+                for (String itemname : entry.getValue()) {
                     JsonObject item = manager.getItemInformation().get(itemname);
-                    if(item != null) searchedItems.add(item);
+                    if (item != null) searchedItems.add(item);
                 }
             }
             switch(textField.getText().toLowerCase().trim()) {

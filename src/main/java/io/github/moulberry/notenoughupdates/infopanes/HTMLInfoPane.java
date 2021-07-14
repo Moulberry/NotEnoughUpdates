@@ -204,7 +204,7 @@ public class HTMLInfoPane extends TextInfoPane {
                         }
 
                         try(InputStream is = new FileInputStream(itemsZip)) {
-                            manager.unzip(is, manager.configLocation);
+                            NEUManager.unzip(is, manager.configLocation);
                         }
 
                         itemsZip.delete();
