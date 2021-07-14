@@ -9,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;

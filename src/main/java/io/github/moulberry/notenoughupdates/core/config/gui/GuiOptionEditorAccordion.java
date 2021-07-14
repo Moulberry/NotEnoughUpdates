@@ -1,19 +1,15 @@
 package io.github.moulberry.notenoughupdates.core.config.gui;
 
-import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.struct.ConfigProcessor;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
-
-import static io.github.moulberry.notenoughupdates.util.GuiTextures.button_tex;
 
 public class GuiOptionEditorAccordion extends GuiOptionEditor {
 

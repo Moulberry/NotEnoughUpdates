@@ -2,7 +2,6 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.common.collect.Lists;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 
 import java.util.ArrayList;

@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
-import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;

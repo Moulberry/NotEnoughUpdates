@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.util;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;

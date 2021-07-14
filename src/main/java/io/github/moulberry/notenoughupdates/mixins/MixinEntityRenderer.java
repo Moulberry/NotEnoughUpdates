@@ -2,17 +2,13 @@ package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
 import io.github.moulberry.notenoughupdates.miscfeatures.FancyPortals;
-import io.github.moulberry.notenoughupdates.miscgui.InventoryStorageSelector;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.ForgeHooksClient;
-import org.lwjgl.util.Display;
 import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;

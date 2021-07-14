@@ -1,17 +1,14 @@
 package io.github.moulberry.notenoughupdates.core.config.gui;
 
-import io.github.moulberry.notenoughupdates.core.ChromaColour;
 import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.struct.ConfigProcessor;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraftforge.client.ClientCommandHandler;
 import org.lwjgl.input.Mouse;
 
 import static io.github.moulberry.notenoughupdates.util.GuiTextures.button_tex;
-import static io.github.moulberry.notenoughupdates.util.GuiTextures.button_white;
 
 public class GuiOptionEditorButton extends GuiOptionEditor {
 

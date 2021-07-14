@@ -1,15 +1,12 @@
 package io.github.moulberry.notenoughupdates.core.config.gui;
 
 import io.github.moulberry.notenoughupdates.core.ChromaColour;
-import io.github.moulberry.notenoughupdates.core.GlScissorStack;
-import io.github.moulberry.notenoughupdates.core.GuiElementBoolean;
 import io.github.moulberry.notenoughupdates.core.GuiElementColour;
 import io.github.moulberry.notenoughupdates.core.config.struct.ConfigProcessor;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
 
 import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 

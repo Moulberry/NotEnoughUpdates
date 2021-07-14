@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.core.config;
 
-import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 

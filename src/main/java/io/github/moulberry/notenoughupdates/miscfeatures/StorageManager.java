@@ -19,7 +19,6 @@ import net.minecraft.network.play.server.S2DPacketOpenWindow;
 import net.minecraft.network.play.server.S2EPacketCloseWindow;
 import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraft.network.play.server.S30PacketWindowItems;
-import org.lwjgl.input.Keyboard;
 
 import java.io.*;
 import java.lang.reflect.Type;

@@ -1,7 +1,6 @@
 package io.github.moulberry.notenoughupdates.gamemodes;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;

@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.infopanes;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;

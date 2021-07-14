@@ -1,13 +1,7 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
-import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
-import io.github.moulberry.notenoughupdates.util.ReverseWorldRenderer;
-import io.github.moulberry.notenoughupdates.util.TexLoc;
-import io.github.moulberry.notenoughupdates.util.Utils;
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -17,16 +11,11 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.potion.Potion;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Vec3;
-import net.minecraft.world.gen.NoiseGeneratorSimplex;
 import net.minecraftforge.client.event.RenderPlayerEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Vector2f;
@@ -34,8 +23,6 @@ import org.lwjgl.util.vector.Vector3f;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.security.Key;
 import java.util.*;
 
 public class NEUCape {
