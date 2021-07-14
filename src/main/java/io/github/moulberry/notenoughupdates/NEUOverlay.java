@@ -1189,11 +1189,11 @@ public class NEUOverlay extends Gui {
             return internalname.matches(petRegex) && item.get("displayname").getAsString().contains("[");
         } else if(getSortMode() == SORT_MODE_TOOL) {
             return checkItemType(item.get("lore").getAsJsonArray(),
-                    "SWORD", "BOW", "AXE", "PICKAXE", "FISHING ROD", "WAND", "SHOVEL", "HOE") >= 0;
+                    "SWORD", "BOW", "AXE", "PICKAXE", "FISHING ROD", "WAND", "SHOVEL", "HOE", "DUNGEON SWORD", "DUNGEON BOW") >= 0;
         } else if(getSortMode() == SORT_MODE_ARMOR) {
-            return checkItemType(item.get("lore").getAsJsonArray(), "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS") >= 0;
+            return checkItemType(item.get("lore").getAsJsonArray(), "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS", "DUNGEON HELMET", "DUNGEON CHESTPLATE", "DUNGEON LEGGINGS", "DUNGEON BOOTS") >= 0;
         } else if(getSortMode() == SORT_MODE_ACCESSORY) {
-            return checkItemType(item.get("lore").getAsJsonArray(), "ACCESSORY") >= 0;
+            return checkItemType(item.get("lore").getAsJsonArray(), "ACCESSORY", "HATCCESSORY", "DUNGEON ACCESSORY") >= 0;
         }
         return true;
     }
