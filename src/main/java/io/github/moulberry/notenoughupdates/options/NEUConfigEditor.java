@@ -57,16 +57,16 @@ public class NEUConfigEditor extends GuiElement {
     private final LerpingInteger optionsScroll = new LerpingInteger(0, 150);
     private final LerpingInteger categoryScroll = new LerpingInteger(0, 150);
 
-    private LinkedHashMap<String, ConfigProcessor.ProcessedCategory> processedConfig;
-    private TreeMap<String, Set<ConfigProcessor.ProcessedOption>> searchOptionMap = new TreeMap<>();
-    private HashMap<ConfigProcessor.ProcessedOption, ConfigProcessor.ProcessedCategory> categoryForOption = new HashMap<>();
+    private final LinkedHashMap<String, ConfigProcessor.ProcessedCategory> processedConfig;
+    private final TreeMap<String, Set<ConfigProcessor.ProcessedOption>> searchOptionMap = new TreeMap<>();
+    private final HashMap<ConfigProcessor.ProcessedOption, ConfigProcessor.ProcessedCategory> categoryForOption = new HashMap<>();
 
     private Set<ConfigProcessor.ProcessedCategory> searchedCategories = null;
     private Map<ConfigProcessor.ProcessedCategory, Set<Integer>> searchedAccordions = null;
     private Set<ConfigProcessor.ProcessedOption> searchedOptions = null;
 
-    private LerpingInteger minimumSearchSize = new LerpingInteger(0, 150);
-    private GuiElementTextField searchField = new GuiElementTextField("", 0, 20, 0);
+    private final LerpingInteger minimumSearchSize = new LerpingInteger(0, 150);
+    private final GuiElementTextField searchField = new GuiElementTextField("", 0, 20, 0);
 
     public NEUConfigEditor(Config config) {
         this(config, null);
@@ -124,8 +124,7 @@ public class NEUConfigEditor extends GuiElement {
         LinkedHashMap<String, ConfigProcessor.ProcessedOption> newMap = new LinkedHashMap<>(cat.options);
 
         if(searchedOptions != null) {
-            Set<ConfigProcessor.ProcessedOption> retain = new HashSet<>();
-            retain.addAll(searchedOptions);
+            Set<ConfigProcessor.ProcessedOption> retain = new HashSet<>(searchedOptions);
 
             if(searchedAccordions != null) {
                 Set<Integer> visibleAccordions = searchedAccordions.get(cat);
@@ -214,46 +213,57 @@ public class NEUConfigEditor extends GuiElement {
         long currentTime = System.currentTimeMillis();
         long delta = currentTime - openedMillis;
 
-        ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+        Minecraft mc = Minecraft.getMinecraft();
+
+        ScaledResolution scaledResolution = new ScaledResolution(mc);
         int width = scaledResolution.getScaledWidth();
         int height = scaledResolution.getScaledHeight();
-        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
-        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
+        int scaleFactor = scaledResolution.getScaleFactor();
+
+        int mouseX = Mouse.getX() * width / mc.displayWidth;
+        int mouseY = height - Mouse.getY() * height / mc.displayHeight - 1;
 
         float opacityFactor = LerpUtils.sigmoidZeroOne(delta/500f);
         RenderUtils.drawGradientRect(0, 0, 0, width, height,
                 (int)(0x80*opacityFactor) << 24 | 0x101010,
                 (int)(0x90*opacityFactor) << 24 | 0x101010);
 
-        int xSize = Math.min(scaledResolution.getScaledWidth()-100/scaledResolution.getScaleFactor(), 500);
-        int ySize = Math.min(scaledResolution.getScaledHeight()-100/scaledResolution.getScaleFactor(), 400);
+        int modifiedScaleFactor = 100/scaleFactor;
+        int xSize = Math.min(width-modifiedScaleFactor, 500);
+        int ySize = Math.min(height-modifiedScaleFactor, 400);
 
-        int x = (scaledResolution.getScaledWidth() - xSize)/2;
-        int y = (scaledResolution.getScaledHeight() - ySize)/2;
+        int x = (width - xSize)/2;
+        int y = (height - ySize)/2;
 
-        int adjScaleFactor = Math.max(2, scaledResolution.getScaleFactor());
+        int adjScaleFactor = Math.max(2, scaleFactor);
 
-        int openingXSize = xSize;
-        int openingYSize = ySize;
+        int openingXSize;
+        int openingYSize;
+
         if(delta < 150) {
             openingXSize = (int)(delta*xSize/150);
             openingYSize = 5;
         } else if(delta < 300) {
+            openingXSize = xSize;
             openingYSize = 5 + (int)(delta-150)*(ySize-5)/150;
+        } else {
+            openingXSize = xSize;
+            openingYSize = ySize;
         }
+
         RenderUtils.drawFloatingRectDark(
-                (scaledResolution.getScaledWidth() - openingXSize)/2,
-                (scaledResolution.getScaledHeight() - openingYSize)/2,
+                (width - openingXSize)/2,
+                (height - openingYSize)/2,
                 openingXSize, openingYSize);
         GlScissorStack.clear();
-        GlScissorStack.push((scaledResolution.getScaledWidth() - openingXSize)/2,
-                (scaledResolution.getScaledHeight() - openingYSize)/2,
-                (scaledResolution.getScaledWidth() + openingXSize)/2,
-                (scaledResolution.getScaledHeight() + openingYSize)/2, scaledResolution);
+        GlScissorStack.push((width - openingXSize)/2,
+                (height - openingYSize)/2,
+                (width + openingXSize)/2,
+                (height + openingYSize)/2, scaledResolution);
 
         RenderUtils.drawFloatingRectDark(x+5, y+5, xSize-10, 20, false);
 
-        FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+        FontRenderer fr = mc.fontRendererObj;
         TextRenderUtils.drawStringCenteredScaledMaxWidth("NotEnoughUpdates by "+EnumChatFormatting.DARK_PURPLE+"Moulberry",
                 fr, x+xSize/2, y+15, false, 200, 0xa0a0a0);
 
@@ -271,7 +281,7 @@ public class NEUConfigEditor extends GuiElement {
         Gui.drawRect(innerLeft+1, innerBottom-1, innerRight-1, innerBottom, 0xff28282E); //Bottom
         Gui.drawRect(innerLeft+1, innerTop+1, innerRight-1, innerBottom-1, 0x6008080E); //Middle
 
-        GlScissorStack.push(0, innerTop+1, scaledResolution.getScaledWidth(),
+        GlScissorStack.push(0, innerTop+1, width,
                 innerBottom-1, scaledResolution);
 
         float catBarSize = 1;
@@ -492,17 +502,19 @@ public class NEUConfigEditor extends GuiElement {
     }
 
     public boolean mouseInput(int mouseX, int mouseY) {
-        ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+        Minecraft mc = Minecraft.getMinecraft();
+        ScaledResolution scaledResolution = new ScaledResolution(mc);
         int width = scaledResolution.getScaledWidth();
         int height = scaledResolution.getScaledHeight();
+        int scaleFactor = scaledResolution.getScaleFactor();
 
-        int xSize = Math.min(width-100/scaledResolution.getScaleFactor(), 500);
-        int ySize = Math.min(height-100/scaledResolution.getScaleFactor(), 400);
+        int xSize = Math.min(width-100/scaleFactor, 500);
+        int ySize = Math.min(height-100/scaleFactor, 400);
 
-        int x = (scaledResolution.getScaledWidth() - xSize)/2;
-        int y = (scaledResolution.getScaledHeight() - ySize)/2;
+        int x = (width - xSize)/2;
+        int y = (height - ySize)/2;
 
-        int adjScaleFactor = Math.max(2, scaledResolution.getScaleFactor());
+        int adjScaleFactor = Math.max(2, scaleFactor);
 
         int innerPadding = 20/adjScaleFactor;
         int innerTop = y+49+innerPadding;
@@ -515,7 +527,7 @@ public class NEUConfigEditor extends GuiElement {
                     mouseY >= innerTop-(20+innerPadding)/2-9 && mouseY <= innerTop-(20+innerPadding)/2+9);
 
             if(minimumSearchSize.getValue() > 1) {
-                int strLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(searchField.getText())+10;
+                int strLen = mc.fontRendererObj.getStringWidth(searchField.getText())+10;
                 int len = Math.max(strLen, minimumSearchSize.getValue());
 
                 if(mouseX >= innerRight-25-len && mouseX <= innerRight-25 &&
@@ -718,10 +730,11 @@ public class NEUConfigEditor extends GuiElement {
     public boolean keyboardInput() {
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledResolution.getScaledWidth();
+        int scaleFactor = scaledResolution.getScaleFactor();
 
-        int xSize = Math.min(width-100/scaledResolution.getScaleFactor(), 500);
+        int xSize = Math.min(width-100/scaleFactor, 500);
 
-        int adjScaleFactor = Math.max(2, scaledResolution.getScaleFactor());
+        int adjScaleFactor = Math.max(2, scaleFactor);
 
         int innerPadding = 20/adjScaleFactor;
         int innerWidth = xSize-154-innerPadding*2;

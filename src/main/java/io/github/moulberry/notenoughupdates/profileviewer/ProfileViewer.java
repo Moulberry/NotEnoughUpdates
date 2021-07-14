@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.profileviewer;
 
-import com.google.common.base.Splitter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -9,7 +8,6 @@ import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -17,12 +15,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -430,9 +426,9 @@ public class ProfileViewer {
             if(networth == 0) return -1;
 
             //System.out.println(profileId);
-            for(Map.Entry<String, Long> entry : mostExpensiveInternal.entrySet()) {
-                //System.out.println(entry.getKey() + ":" + entry.getValue());
-            }
+            /*for(Map.Entry<String, Long> entry : mostExpensiveInternal.entrySet()) {
+                System.out.println(entry.getKey() + ":" + entry.getValue());
+            }*/
 
             networth = (int)(networth*1.3f);
 
@@ -994,9 +990,9 @@ public class ProfileViewer {
         }
     }
 
-    private HashMap<String, JsonObject> nameToHypixelProfile = new HashMap<>();
-    private HashMap<String, JsonObject> uuidToHypixelProfile = new HashMap<>();
-    private HashMap<String, Profile> uuidToProfileMap = new HashMap<>();
+    private final HashMap<String, JsonObject> nameToHypixelProfile = new HashMap<>();
+    private final HashMap<String, JsonObject> uuidToHypixelProfile = new HashMap<>();
+    private final HashMap<String, Profile> uuidToProfileMap = new HashMap<>();
 
     public void getHypixelProfile(String name, Consumer<JsonObject> callback) {
         String nameF = name.toLowerCase();
@@ -1091,7 +1087,7 @@ public class ProfileViewer {
     }
 
     private static JsonObject resourceCollection = null;
-    private static AtomicBoolean updatingResourceCollection = new AtomicBoolean(false);
+    private static final AtomicBoolean updatingResourceCollection = new AtomicBoolean(false);
     public static JsonObject getResourceCollectionInformation() {
         if(resourceCollection != null) return resourceCollection;
         if(updatingResourceCollection.get()) return null;
@@ -1105,9 +1101,7 @@ public class ProfileViewer {
                     if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
                         resourceCollection = jsonObject.get("collections").getAsJsonObject();
                     }
-                }, () -> {
-                    updatingResourceCollection.set(false);
-                }
+                }, () -> updatingResourceCollection.set(false)
         );
 
         return null;
