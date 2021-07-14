@@ -30,8 +30,8 @@ public class ItemCooldowns {
 
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {
-        if(event.phase == TickEvent.Phase.END && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
-            if(tickCounter++ >= 20*10) {
+        if (event.phase == TickEvent.Phase.END && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+            if (tickCounter++ >= 20 * 10) {
                 tickCounter = 0;
                 pickaxeCooldown = -1;
             }
@@ -39,7 +39,7 @@ public class ItemCooldowns {
             long currentTime = System.currentTimeMillis();
 
             Long key;
-            while((key = blocksClicked.floorKey(currentTime - 1500)) != null) {
+            while ((key = blocksClicked.floorKey(currentTime - 1500)) != null) {
                 blocksClicked.remove(key);
             }
 
@@ -48,10 +48,10 @@ public class ItemCooldowns {
 
             durabilityOverrideMap.clear();
 
-            if(pickaxeUseCooldownMillisRemaining >= 0) {
+            if (pickaxeUseCooldownMillisRemaining >= 0) {
                 pickaxeUseCooldownMillisRemaining -= millisDelta;
             }
-            if(treecapitatorCooldownMillisRemaining >= 0) {
+            if (treecapitatorCooldownMillisRemaining >= 0) {
                 treecapitatorCooldownMillisRemaining -= millisDelta;
             }
         }
@@ -60,16 +60,16 @@ public class ItemCooldowns {
     @SubscribeEvent
     public void onWorldUnload(WorldEvent.Load event) {
         blocksClicked.clear();
-        if(pickaxeCooldown > 0) pickaxeUseCooldownMillisRemaining = 60*1000;
+        if (pickaxeCooldown > 0) pickaxeUseCooldownMillisRemaining = 60 * 1000;
         pickaxeCooldown = -1;
     }
 
-    public static long getTreecapCooldownWithPet(){
+    public static long getTreecapCooldownWithPet() {
         PetInfoOverlay.Pet pet = PetInfoOverlay.getCurrentPet();
         if (NotEnoughUpdates.INSTANCE.config.itemOverlays.enableMonkeyCheck && pet != null) {
             if (pet.petLevel != null &&
-                pet.petType.equalsIgnoreCase("monkey") &&
-                pet.rarity.equals(PetInfoOverlay.Rarity.LEGENDARY)
+                    pet.petType.equalsIgnoreCase("monkey") &&
+                    pet.rarity.equals(PetInfoOverlay.Rarity.LEGENDARY)
             ) {
                 return 2000 - (int) (2000 * (0.005 * (int) pet.petLevel.level));
             }
@@ -85,9 +85,9 @@ public class ItemCooldowns {
     public static void processBlockChangePacket(S23PacketBlockChange packetIn) {
         BlockPos pos = packetIn.getBlockPosition();
 
-        if(blocksClicked.containsValue(pos)) {
+        if (blocksClicked.containsValue(pos)) {
             IBlockState oldState = Minecraft.getMinecraft().theWorld.getBlockState(pos);
-            if(oldState.getBlock() != packetIn.getBlockState().getBlock()) {
+            if (oldState.getBlock() != packetIn.getBlockState().getBlock()) {
                 onBlockMined(pos);
             }
         }
@@ -96,8 +96,8 @@ public class ItemCooldowns {
     public static void onBlockMined(BlockPos pos) {
         ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-        if(internalname != null) {
-            if(treecapitatorCooldownMillisRemaining < 0 &&
+        if (internalname != null) {
+            if (treecapitatorCooldownMillisRemaining < 0 &&
                     (internalname.equals("TREECAPITATOR_AXE") || internalname.equals("JUNGLE_AXE"))) {
                 treecapitatorCooldownMillisRemaining = getTreecapCooldownWithPet();
             }
@@ -110,18 +110,19 @@ public class ItemCooldowns {
     private static Pattern PICKAXE_COOLDOWN_LORE_REGEX = Pattern.compile("\\u00a78Cooldown: \\u00a7a(\\d+)s");
 
     private static void updatePickaxeCooldown() {
-        if(pickaxeCooldown == -1) {
-            for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
-                if(stack != null && stack.hasTagCompound()) {
+        if (pickaxeCooldown == -1) {
+            for (ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
+                if (stack != null && stack.hasTagCompound()) {
                     String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
-                    if(internalname != null && (internalname.endsWith("_PICKAXE") || internalname.contains("_DRILL_"))) {
-                        for(String line : NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound())) {
+                    if (internalname != null && (internalname.endsWith("_PICKAXE") || internalname.contains("_DRILL_"))) {
+                        for (String line : NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound())) {
                             Matcher matcher = PICKAXE_COOLDOWN_LORE_REGEX.matcher(line);
-                            if(matcher.find()) {
+                            if (matcher.find()) {
                                 try {
                                     pickaxeCooldown = Integer.parseInt(matcher.group(1));
                                     return;
-                                } catch(Exception ignored) {}
+                                } catch (Exception ignored) {
+                                }
                             }
                         }
                     }
@@ -134,50 +135,50 @@ public class ItemCooldowns {
 
     @SubscribeEvent
     public void onChatMessage(ClientChatReceivedEvent event) {
-        if(pickaxeCooldown != 0 && PICKAXE_ABILITY_REGEX.matcher(event.message.getFormattedText()).matches()) {
+        if (pickaxeCooldown != 0 && PICKAXE_ABILITY_REGEX.matcher(event.message.getFormattedText()).matches()) {
             updatePickaxeCooldown();
-            pickaxeUseCooldownMillisRemaining = pickaxeCooldown*1000;
+            pickaxeUseCooldownMillisRemaining = pickaxeCooldown * 1000;
         }
     }
 
     public static float getDurabilityOverride(ItemStack stack) {
-        if(Minecraft.getMinecraft().theWorld == null) return -1;
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return -1;
+        if (Minecraft.getMinecraft().theWorld == null) return -1;
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return -1;
 
-        if(durabilityOverrideMap.containsKey(stack)) {
+        if (durabilityOverrideMap.containsKey(stack)) {
             return durabilityOverrideMap.get(stack);
         }
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
-        if(internalname == null) {
+        if (internalname == null) {
             durabilityOverrideMap.put(stack, -1f);
             return -1;
         }
 
-        if(internalname.endsWith("_PICKAXE") || internalname.contains("_DRILL_")) {
+        if (internalname.endsWith("_PICKAXE") || internalname.contains("_DRILL_")) {
             updatePickaxeCooldown();
 
-            if(pickaxeUseCooldownMillisRemaining < 0) {
+            if (pickaxeUseCooldownMillisRemaining < 0) {
                 durabilityOverrideMap.put(stack, -1f);
                 return -1;
             }
 
-            if(pickaxeUseCooldownMillisRemaining > pickaxeCooldown*1000) {
+            if (pickaxeUseCooldownMillisRemaining > pickaxeCooldown * 1000) {
                 return stack.getItemDamage();
             }
-            float dura = (float)(pickaxeUseCooldownMillisRemaining/(pickaxeCooldown*1000.0));
+            float dura = (float) (pickaxeUseCooldownMillisRemaining / (pickaxeCooldown * 1000.0));
             durabilityOverrideMap.put(stack, dura);
             return dura;
-        } else if(internalname.equals("TREECAPITATOR_AXE") || internalname.equals("JUNGLE_AXE")) {
-            if(treecapitatorCooldownMillisRemaining < 0) {
+        } else if (internalname.equals("TREECAPITATOR_AXE") || internalname.equals("JUNGLE_AXE")) {
+            if (treecapitatorCooldownMillisRemaining < 0) {
                 durabilityOverrideMap.put(stack, -1f);
                 return -1;
             }
 
-            if(treecapitatorCooldownMillisRemaining > getTreecapCooldownWithPet()) {
+            if (treecapitatorCooldownMillisRemaining > getTreecapCooldownWithPet()) {
                 return stack.getItemDamage();
             }
-            float dura = (treecapitatorCooldownMillisRemaining/(float)getTreecapCooldownWithPet());
+            float dura = (treecapitatorCooldownMillisRemaining / (float) getTreecapCooldownWithPet());
             durabilityOverrideMap.put(stack, dura);
             return dura;
         }

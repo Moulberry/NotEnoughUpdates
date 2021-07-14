@@ -100,15 +100,16 @@ public class CalendarOverlay {
     private static long spookyStart = 0;
 
     private static long SECOND = 1000;
-    private static long MINUTE = SECOND*60;
-    private static long HOUR = MINUTE*60;
-    private static long DAY = HOUR*24;
+    private static long MINUTE = SECOND * 60;
+    private static long HOUR = MINUTE * 60;
+    private static long DAY = HOUR * 24;
 
-    private static long DA_OFFSET = 1000*60*55;
-    private static long JF_OFFSET = 1000*60*15;
+    private static long DA_OFFSET = 1000 * 60 * 55;
+    private static long JF_OFFSET = 1000 * 60 * 15;
 
     private static ItemStack DA_STACK;
     private static ItemStack JF_STACK;
+
     static {
         NBTTagCompound tag = new NBTTagCompound();
         tag.setString("event_id", "dark_auction");
@@ -126,25 +127,30 @@ public class CalendarOverlay {
         long offset = 0;
 
         StringBuilder numS = new StringBuilder();
-        for(int timeIndex=0; timeIndex<time.length(); timeIndex++) {
+        for (int timeIndex = 0; timeIndex < time.length(); timeIndex++) {
             char c = time.charAt(timeIndex);
 
-            if(c >= '0' && c <= '9') {
+            if (c >= '0' && c <= '9') {
                 numS.append(c);
             } else {
                 try {
                     int num = Integer.parseInt(numS.toString());
                     switch (c) {
                         case 'd':
-                            offset += num * DAY; continue;
+                            offset += num * DAY;
+                            continue;
                         case 'h':
-                            offset += num * HOUR; continue;
+                            offset += num * HOUR;
+                            continue;
                         case 'm':
-                            offset += num * MINUTE; continue;
+                            offset += num * MINUTE;
+                            continue;
                         case 's':
-                            offset += num * SECOND; continue;
+                            offset += num * SECOND;
+                            continue;
                     }
-                } catch(Exception ignored) {}
+                } catch (Exception ignored) {
+                }
                 numS = new StringBuilder();
             }
         }
@@ -157,9 +163,9 @@ public class CalendarOverlay {
 
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {
-        if(event.phase != TickEvent.Phase.START) return;
+        if (event.phase != TickEvent.Phase.START) return;
 
-        if(jingleIndex == 0) {
+        if (jingleIndex == 0) {
             if (NotEnoughUpdates.INSTANCE.config.calendar.eventNotificationSounds) {
                 Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
                         new ResourceLocation("notenoughupdates:calendar_notif_jingle")
@@ -168,59 +174,59 @@ public class CalendarOverlay {
                         new ResourceLocation("notenoughupdates:calendar_notif_in")
                 ));
             }
-            jingleIndex = -15*20;
-        } else if(jingleIndex >= 1) {
+            jingleIndex = -15 * 20;
+        } else if (jingleIndex >= 1) {
             if (NotEnoughUpdates.INSTANCE.config.calendar.eventNotificationSounds) {
                 Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
                         new ResourceLocation("notenoughupdates:calendar_notif_in")
                 ));
             }
-            jingleIndex = -15*20;
-        } else if(jingleIndex < -1) {
+            jingleIndex = -15 * 20;
+        } else if (jingleIndex < -1) {
             jingleIndex++;
         }
-        if(jingleIndex == -20*6-10) {
-            if(NotEnoughUpdates.INSTANCE.config.calendar.eventNotificationSounds) {
+        if (jingleIndex == -20 * 6 - 10) {
+            if (NotEnoughUpdates.INSTANCE.config.calendar.eventNotificationSounds) {
                 Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
                         new ResourceLocation("notenoughupdates:calendar_notif_out")
                 ));
             }
         }
 
-        if(farmingEventTypes == null) {
+        if (farmingEventTypes == null) {
             farmingEventTypes = NotEnoughUpdates.INSTANCE.manager.getJsonFromFile(new File(NotEnoughUpdates.INSTANCE.manager.configLocation,
                     "farmingEventTypes.json"));
-            if(farmingEventTypes == null) {
+            if (farmingEventTypes == null) {
                 farmingEventTypes = new JsonObject();
             }
         }
 
-        if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
+        if (!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
             jfFavouriteSelect = null;
-            if(eventMap.isEmpty() || eventMap.size() <= 20) {
+            if (eventMap.isEmpty() || eventMap.size() <= 20) {
                 long currentTime = System.currentTimeMillis();
-                long floorHour = (currentTime/HOUR)*HOUR;
-                for(int i=0; i<15; i++) {
-                    long daEvent = floorHour+i*HOUR+DA_OFFSET;
-                    long jfEvent = floorHour+i*HOUR+JF_OFFSET;
+                long floorHour = (currentTime / HOUR) * HOUR;
+                for (int i = 0; i < 15; i++) {
+                    long daEvent = floorHour + i * HOUR + DA_OFFSET;
+                    long jfEvent = floorHour + i * HOUR + JF_OFFSET;
 
-                    if(daEvent > currentTime) {
-                        eventMap.computeIfAbsent(daEvent, k->new HashSet<>()).add(new SBEvent("dark_auction",
+                    if (daEvent > currentTime) {
+                        eventMap.computeIfAbsent(daEvent, k -> new HashSet<>()).add(new SBEvent("dark_auction",
                                 EnumChatFormatting.DARK_PURPLE + "Dark Auction", DA_STACK, null, MINUTE * 5));
                     }
-                    if(jfEvent > currentTime) {
+                    if (jfEvent > currentTime) {
                         SBEvent jf = new SBEvent("jacob_farming",
                                 EnumChatFormatting.YELLOW + "Jacob's Farming Contest", JF_STACK, null, MINUTE * 20);
-                        if(farmingEventTypes != null && farmingEventTypes.has(""+jfEvent) &&
-                                farmingEventTypes.get(""+jfEvent).isJsonArray()) {
-                            JsonArray arr =  farmingEventTypes.get(""+jfEvent).getAsJsonArray();
+                        if (farmingEventTypes != null && farmingEventTypes.has("" + jfEvent) &&
+                                farmingEventTypes.get("" + jfEvent).isJsonArray()) {
+                            JsonArray arr = farmingEventTypes.get("" + jfEvent).getAsJsonArray();
                             jf.desc = new ArrayList<>();
-                            for(JsonElement e : arr) {
-                                jf.desc.add(EnumChatFormatting.YELLOW+"\u25CB "+e.getAsString());
+                            for (JsonElement e : arr) {
+                                jf.desc.add(EnumChatFormatting.YELLOW + "\u25CB " + e.getAsString());
                                 jf.id += ":" + e.getAsString();
                             }
                         }
-                        eventMap.computeIfAbsent(jfEvent, k->new HashSet<>()).add(jf);
+                        eventMap.computeIfAbsent(jfEvent, k -> new HashSet<>()).add(jf);
                     }
                 }
             }
@@ -232,7 +238,7 @@ public class CalendarOverlay {
         String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
 
         Matcher matcher = CALENDAR_PATTERN.matcher(Utils.cleanColour(containerName));
-        if(farmingEventTypes != null && matcher.matches()) {
+        if (farmingEventTypes != null && matcher.matches()) {
             try {
                 int year = Integer.parseInt(matcher.group(2));
                 int skyblockDays = year * 12 * 31;
@@ -242,98 +248,98 @@ public class CalendarOverlay {
                 boolean summer = month.endsWith("Summer");
                 boolean autumn = month.endsWith("Autumn");
                 boolean winter = month.endsWith("Winter");
-                if(spring || summer || autumn || winter) {
-                    if(spring) {
-                        skyblockDays += 1*31;
-                    } else if(summer) {
-                        skyblockDays += 4*31;
-                    } else if(autumn) {
-                        skyblockDays += 7*31;
+                if (spring || summer || autumn || winter) {
+                    if (spring) {
+                        skyblockDays += 1 * 31;
+                    } else if (summer) {
+                        skyblockDays += 4 * 31;
+                    } else if (autumn) {
+                        skyblockDays += 7 * 31;
                     } else {
-                        skyblockDays += 10*31;
+                        skyblockDays += 10 * 31;
                     }
-                    if(month.startsWith("Early")) {
+                    if (month.startsWith("Early")) {
                         skyblockDays -= 31;
-                    } else if(month.startsWith("Late")) {
+                    } else if (month.startsWith("Late")) {
                         skyblockDays += 31;
                     }
 
-                    long start = SKYBLOCK_START + skyblockDays*20*MINUTE;
+                    long start = SKYBLOCK_START + skyblockDays * 20 * MINUTE;
 
                     boolean changed = false;
-                    for(int i=0; i<31; i++) {
-                        ItemStack item = cc.getLowerChestInventory().getStackInSlot(1+(i%7)+(i/7)*9);
+                    for (int i = 0; i < 31; i++) {
+                        ItemStack item = cc.getLowerChestInventory().getStackInSlot(1 + (i % 7) + (i / 7) * 9);
 
                         JsonArray array = new JsonArray();
-                        if(item.getTagCompound() != null) {
+                        if (item.getTagCompound() != null) {
                             NBTTagCompound tag = item.getTagCompound();
 
-                            if(tag.hasKey("display", 10)) {
+                            if (tag.hasKey("display", 10)) {
                                 NBTTagCompound display = tag.getCompoundTag("display");
                                 if (display.hasKey("Lore", 9)) {
                                     NBTTagList list = display.getTagList("Lore", 8);
-                                    for(int j=0; j<list.tagCount(); j++) {
+                                    for (int j = 0; j < list.tagCount(); j++) {
                                         String line = list.getStringTagAt(j);
-                                        if(line.startsWith(EnumChatFormatting.YELLOW+"\u25CB")) {
+                                        if (line.startsWith(EnumChatFormatting.YELLOW + "\u25CB")) {
                                             array.add(new JsonPrimitive(Utils.cleanColour(line.substring(4))));
                                         }
                                     }
                                 }
                             }
                         }
-                        if(array.size() == 3) {
-                            String prop = String.valueOf(start + i*20*MINUTE);
-                            if(!farmingEventTypes.has(prop) || !farmingEventTypes.get(prop).isJsonArray() ||
+                        if (array.size() == 3) {
+                            String prop = String.valueOf(start + i * 20 * MINUTE);
+                            if (!farmingEventTypes.has(prop) || !farmingEventTypes.get(prop).isJsonArray() ||
                                     farmingEventTypes.get(prop).getAsJsonArray().equals(array)) {
                                 changed = true;
                             }
                             farmingEventTypes.add(prop, array);
                         }
                     }
-                    if(changed) {
+                    if (changed) {
                         File f = new File(NotEnoughUpdates.INSTANCE.manager.configLocation,
                                 "farmingEventTypes.json");
                         NotEnoughUpdates.INSTANCE.manager.writeJson(farmingEventTypes, f);
                     }
                 }
-            } catch(Exception ignored) {
+            } catch (Exception ignored) {
                 ignored.printStackTrace();
             }
         }
 
-        if(!enabled) {
+        if (!enabled) {
             jfFavouriteSelect = null;
-            if(eventMap.isEmpty() || eventMap.size() <= 20) {
+            if (eventMap.isEmpty() || eventMap.size() <= 20) {
                 long currentTime = System.currentTimeMillis();
-                long floorHour = (currentTime/HOUR)*HOUR;
-                for(int i=0; i<15; i++) {
-                    long daEvent = floorHour+i*HOUR+DA_OFFSET;
-                    long jfEvent = floorHour+i*HOUR+JF_OFFSET;
+                long floorHour = (currentTime / HOUR) * HOUR;
+                for (int i = 0; i < 15; i++) {
+                    long daEvent = floorHour + i * HOUR + DA_OFFSET;
+                    long jfEvent = floorHour + i * HOUR + JF_OFFSET;
 
-                    if(daEvent > currentTime) {
-                        eventMap.computeIfAbsent(daEvent, k->new HashSet<>()).add(new SBEvent("dark_auction",
+                    if (daEvent > currentTime) {
+                        eventMap.computeIfAbsent(daEvent, k -> new HashSet<>()).add(new SBEvent("dark_auction",
                                 EnumChatFormatting.DARK_PURPLE + "Dark Auction", DA_STACK, null, MINUTE * 5));
                     }
-                    if(jfEvent > currentTime) {
+                    if (jfEvent > currentTime) {
                         SBEvent jf = new SBEvent("jacob_farming",
                                 EnumChatFormatting.YELLOW + "Jacob's Farming Contest", JF_STACK, null, MINUTE * 20);
-                        if(farmingEventTypes != null && farmingEventTypes.has(""+jfEvent) &&
-                                farmingEventTypes.get(""+jfEvent).isJsonArray()) {
-                            JsonArray arr =  farmingEventTypes.get(""+jfEvent).getAsJsonArray();
+                        if (farmingEventTypes != null && farmingEventTypes.has("" + jfEvent) &&
+                                farmingEventTypes.get("" + jfEvent).isJsonArray()) {
+                            JsonArray arr = farmingEventTypes.get("" + jfEvent).getAsJsonArray();
                             jf.desc = new ArrayList<>();
-                            for(JsonElement e : arr) {
-                                jf.desc.add(EnumChatFormatting.YELLOW+"\u25CB "+e.getAsString());
+                            for (JsonElement e : arr) {
+                                jf.desc.add(EnumChatFormatting.YELLOW + "\u25CB " + e.getAsString());
                                 jf.id += ":" + e.getAsString();
                             }
                         }
-                        eventMap.computeIfAbsent(jfEvent, k->new HashSet<>()).add(jf);
+                        eventMap.computeIfAbsent(jfEvent, k -> new HashSet<>()).add(jf);
                     }
                 }
             }
             return;
         }
 
-        if(!containerName.trim().equals("Calendar and Events")) {
+        if (!containerName.trim().equals("Calendar and Events")) {
             setEnabled(false);
             return;
         }
@@ -341,47 +347,47 @@ public class CalendarOverlay {
         eventMap.clear();
 
         long currentTime = System.currentTimeMillis();
-        long floorHour = (currentTime/HOUR)*HOUR;
-        for(int i=0; i<15; i++) {
-            long daEvent = floorHour+i*HOUR+DA_OFFSET;
-            long jfEvent = floorHour+i*HOUR+JF_OFFSET;
+        long floorHour = (currentTime / HOUR) * HOUR;
+        for (int i = 0; i < 15; i++) {
+            long daEvent = floorHour + i * HOUR + DA_OFFSET;
+            long jfEvent = floorHour + i * HOUR + JF_OFFSET;
 
-            if(daEvent > currentTime) {
-                eventMap.computeIfAbsent(daEvent, k->new HashSet<>()).add(new SBEvent("dark_auction",
+            if (daEvent > currentTime) {
+                eventMap.computeIfAbsent(daEvent, k -> new HashSet<>()).add(new SBEvent("dark_auction",
                         EnumChatFormatting.DARK_PURPLE + "Dark Auction", DA_STACK, null, MINUTE * 5));
             }
-            if(jfEvent > currentTime) {
+            if (jfEvent > currentTime) {
                 SBEvent jf = new SBEvent("jacob_farming",
                         EnumChatFormatting.YELLOW + "Jacob's Farming Contest", JF_STACK, null, MINUTE * 20);
-                if(farmingEventTypes != null && farmingEventTypes.has(""+jfEvent) &&
-                        farmingEventTypes.get(""+jfEvent).isJsonArray()) {
-                    JsonArray arr =  farmingEventTypes.get(""+jfEvent).getAsJsonArray();
+                if (farmingEventTypes != null && farmingEventTypes.has("" + jfEvent) &&
+                        farmingEventTypes.get("" + jfEvent).isJsonArray()) {
+                    JsonArray arr = farmingEventTypes.get("" + jfEvent).getAsJsonArray();
                     jf.desc = new ArrayList<>();
-                    for(JsonElement e : arr) {
-                        jf.desc.add(EnumChatFormatting.YELLOW+"\u25CB "+e.getAsString());
+                    for (JsonElement e : arr) {
+                        jf.desc.add(EnumChatFormatting.YELLOW + "\u25CB " + e.getAsString());
                         jf.id += ":" + e.getAsString();
                     }
                 }
-                eventMap.computeIfAbsent(jfEvent, k->new HashSet<>()).add(jf);
+                eventMap.computeIfAbsent(jfEvent, k -> new HashSet<>()).add(jf);
             }
         }
 
-        String lastsForText = EnumChatFormatting.GRAY+"Event lasts for "+EnumChatFormatting.YELLOW;
-        String startsInText = EnumChatFormatting.GRAY+"Starts in: "+EnumChatFormatting.YELLOW;
-        for(int i=0; i<21; i++) {
-            int itemIndex = 10+i+(i/7)*2;
+        String lastsForText = EnumChatFormatting.GRAY + "Event lasts for " + EnumChatFormatting.YELLOW;
+        String startsInText = EnumChatFormatting.GRAY + "Starts in: " + EnumChatFormatting.YELLOW;
+        for (int i = 0; i < 21; i++) {
+            int itemIndex = 10 + i + (i / 7) * 2;
             ItemStack item = cc.getLowerChestInventory().getStackInSlot(itemIndex);
 
-            if(item != null && item.getTagCompound() != null) {
+            if (item != null && item.getTagCompound() != null) {
                 NBTTagCompound tag = item.getTagCompound();
 
-                if(tag.hasKey("display", 10)) {
+                if (tag.hasKey("display", 10)) {
                     NBTTagCompound display = tag.getCompoundTag("display");
                     if (display.hasKey("Lore", 9)) {
                         NBTTagList list = display.getTagList("Lore", 8);
 
                         String first = list.getStringTagAt(0);
-                        if(first.startsWith(startsInText)) {
+                        if (first.startsWith(startsInText)) {
                             String time = Utils.cleanColour(first.substring(startsInText.length()));
                             long eventTime = currentTime + getTimeOffset(time);
 
@@ -389,21 +395,21 @@ public class CalendarOverlay {
 
                             List<String> desc = new ArrayList<>();
                             boolean foundBreak = false;
-                            for(int index=1; index<list.tagCount(); index++) {
+                            for (int index = 1; index < list.tagCount(); index++) {
                                 String line = list.getStringTagAt(index);
-                                if(foundBreak) {
+                                if (foundBreak) {
                                     desc.add(line);
                                 } else {
-                                    if(line.startsWith(lastsForText)) {
+                                    if (line.startsWith(lastsForText)) {
                                         String lastsForS = Utils.cleanColour(line.substring(lastsForText.length()));
                                         lastsFor = getTimeOffset(lastsForS);
                                     }
-                                    if(Utils.cleanColour(line).trim().length() == 0) {
+                                    if (Utils.cleanColour(line).trim().length() == 0) {
                                         foundBreak = true;
                                     }
                                 }
                             }
-                            eventMap.computeIfAbsent(eventTime, k->new HashSet<>()).add(new SBEvent(
+                            eventMap.computeIfAbsent(eventTime, k -> new HashSet<>()).add(new SBEvent(
                                     getIdForDisplayName(item.getDisplayName()), item.getDisplayName(),
                                     item, desc, lastsFor));
                         }
@@ -434,17 +440,17 @@ public class CalendarOverlay {
         int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
         int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-        if(!enabled) {
-            if(Mouse.getEventButtonState() && NotEnoughUpdates.INSTANCE.config.calendar.showEventTimerInInventory &&
+        if (!enabled) {
+            if (Mouse.getEventButtonState() && NotEnoughUpdates.INSTANCE.config.calendar.showEventTimerInInventory &&
                     Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
                 xSize = 168;
                 ySize = 20;
 
-                guiLeft = (width - xSize)/2;
+                guiLeft = (width - xSize) / 2;
                 guiTop = 5;
 
-                if(mouseX >= guiLeft && mouseX <= guiLeft+xSize) {
-                    if(mouseY >= guiTop && mouseY <= guiTop+ySize) {
+                if (mouseX >= guiLeft && mouseX <= guiLeft + xSize) {
+                    if (mouseY >= guiTop && mouseY <= guiTop + ySize) {
                         ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neucalendar");
                     }
                 }
@@ -453,14 +459,14 @@ public class CalendarOverlay {
             return;
         }
 
-        if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
+        if (!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
             return;
         }
 
         GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
         ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
         String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-        if(!containerName.trim().equals("Calendar and Events")) {
+        if (!containerName.trim().equals("Calendar and Events")) {
             setEnabled(false);
             return;
         }
@@ -472,8 +478,8 @@ public class CalendarOverlay {
         guiLeft = (width - xSize) / 2;
         guiTop = (height - ySize) / 2;
 
-        if(Mouse.getEventButtonState()) {
-            if(jfFavouriteSelect != null) {
+        if (Mouse.getEventButtonState()) {
+            if (jfFavouriteSelect != null) {
                 FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
                 int arrowLen = fr.getStringWidth("> ");
                 int selectSizeX = 0;
@@ -488,18 +494,18 @@ public class CalendarOverlay {
                 }
                 selectSizeX += +10;
 
-                if(mouseX > jfFavouriteSelectX && mouseX < jfFavouriteSelectX + selectSizeX &&
-                    mouseY > jfFavouriteSelectY && mouseY < jfFavouriteSelectY + 18 + jfFavouriteSelect.size() * 10) {
-                    jfFavouriteSelectIndex = Math.max(0, (mouseY - jfFavouriteSelectY - 5)/10);
+                if (mouseX > jfFavouriteSelectX && mouseX < jfFavouriteSelectX + selectSizeX &&
+                        mouseY > jfFavouriteSelectY && mouseY < jfFavouriteSelectY + 18 + jfFavouriteSelect.size() * 10) {
+                    jfFavouriteSelectIndex = Math.max(0, (mouseY - jfFavouriteSelectY - 5) / 10);
 
                     List<String> eventFavourites = NotEnoughUpdates.INSTANCE.config.hidden.eventFavourites;
                     String id = null;
-                    if(jfFavouriteSelectIndex == 0) {
+                    if (jfFavouriteSelectIndex == 0) {
                         id = "jacob_farming";
-                    } else if(jfFavouriteSelectIndex-1 < jfFavouriteSelect.size()) {
-                        id = "jacob_farming:"+jfFavouriteSelect.get(jfFavouriteSelectIndex-1);
+                    } else if (jfFavouriteSelectIndex - 1 < jfFavouriteSelect.size()) {
+                        id = "jacob_farming:" + jfFavouriteSelect.get(jfFavouriteSelectIndex - 1);
                     }
-                    if(id != null) {
+                    if (id != null) {
                         if (eventFavourites.contains(id)) {
                             eventFavourites.remove(id);
                         } else {
@@ -510,9 +516,9 @@ public class CalendarOverlay {
                     jfFavouriteSelect = null;
                 }
             }
-            if(mouseY >= guiTop+26 && mouseY <= guiTop+26+141) {
-                if(mouseX >= guiLeft+151 && mouseX <= guiLeft+151+14) {
-                    if(mouseY <= guiTop+26+70) {
+            if (mouseY >= guiTop + 26 && mouseY <= guiTop + 26 + 141) {
+                if (mouseX >= guiLeft + 151 && mouseX <= guiLeft + 151 + 14) {
+                    if (mouseY <= guiTop + 26 + 70) {
                         Minecraft.getMinecraft().playerController.windowClick(cc.windowId,
                                 50, 2, 3, Minecraft.getMinecraft().thePlayer);
                     } else {
@@ -526,8 +532,8 @@ public class CalendarOverlay {
 
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-        if(Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
-            if(jfFavouriteSelect != null) {
+        if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
+            if (jfFavouriteSelect != null) {
                 jfFavouriteSelect = null;
                 event.setCanceled(true);
             }
@@ -561,34 +567,34 @@ public class CalendarOverlay {
             guiTop = (height - ySize) / 2;
 
             int keyPressed = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter() + 256 : Keyboard.getEventKey();
-            if(Keyboard.getEventKeyState()) {
-                if(jfFavouriteSelect != null) {
-                    if(keyPressed == Keyboard.KEY_DOWN) {
+            if (Keyboard.getEventKeyState()) {
+                if (jfFavouriteSelect != null) {
+                    if (keyPressed == Keyboard.KEY_DOWN) {
                         jfFavouriteSelectIndex++;
-                        jfFavouriteSelectIndex %= jfFavouriteSelect.size()+1;
-                    } else if(keyPressed == Keyboard.KEY_UP) {
+                        jfFavouriteSelectIndex %= jfFavouriteSelect.size() + 1;
+                    } else if (keyPressed == Keyboard.KEY_UP) {
                         jfFavouriteSelectIndex--;
-                        if(jfFavouriteSelectIndex < 0) jfFavouriteSelectIndex = jfFavouriteSelect.size();
-                    } else if(keyPressed == Keyboard.KEY_RIGHT || keyPressed == Keyboard.KEY_RETURN) {
+                        if (jfFavouriteSelectIndex < 0) jfFavouriteSelectIndex = jfFavouriteSelect.size();
+                    } else if (keyPressed == Keyboard.KEY_RIGHT || keyPressed == Keyboard.KEY_RETURN) {
                         List<String> eventFavourites = NotEnoughUpdates.INSTANCE.config.hidden.eventFavourites;
                         String id = null;
-                        if(jfFavouriteSelectIndex == 0) {
+                        if (jfFavouriteSelectIndex == 0) {
                             id = "jacob_farming";
-                        } else if(jfFavouriteSelectIndex-1 < jfFavouriteSelect.size()) {
-                            id = "jacob_farming:"+jfFavouriteSelect.get(jfFavouriteSelectIndex-1);
+                        } else if (jfFavouriteSelectIndex - 1 < jfFavouriteSelect.size()) {
+                            id = "jacob_farming:" + jfFavouriteSelect.get(jfFavouriteSelectIndex - 1);
                         }
-                        if(id != null) {
+                        if (id != null) {
                             if (eventFavourites.contains(id)) {
                                 eventFavourites.remove(id);
                             } else {
                                 eventFavourites.add(id);
                             }
                         }
-                    } else if(keyPressed == Keyboard.KEY_LEFT ||
+                    } else if (keyPressed == Keyboard.KEY_LEFT ||
                             keyPressed == NotEnoughUpdates.INSTANCE.manager.keybindFavourite.getKeyCode()) {
                         jfFavouriteSelect = null;
                     }
-                } else if(keyPressed == NotEnoughUpdates.INSTANCE.manager.keybindFavourite.getKeyCode()) {
+                } else if (keyPressed == NotEnoughUpdates.INSTANCE.manager.keybindFavourite.getKeyCode()) {
                     String id = null;
 
                     //Daily Events
@@ -627,7 +633,7 @@ public class CalendarOverlay {
 
                     if (id != null) {
                         String[] split = id.split(":");
-                        if(split.length > 1 && split[0].equals("jacob_farming")) {
+                        if (split.length > 1 && split[0].equals("jacob_farming")) {
                             jfFavouriteSelect = new ArrayList<>(Arrays.asList(split).subList(1, split.length));
                             jfFavouriteSelectIndex = 0;
                             jfFavouriteSelectX = mouseX;
@@ -648,11 +654,11 @@ public class CalendarOverlay {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onGuiDraw(RenderGameOverlayEvent.Post event) {
-        if(NotEnoughUpdates.INSTANCE.config.calendar.eventNotifications &&
+        if (NotEnoughUpdates.INSTANCE.config.calendar.eventNotifications &&
                 event.type == RenderGameOverlayEvent.ElementType.ALL) {
             GlStateManager.pushMatrix();
             GlStateManager.translate(0, 0, 10);
-            if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) && NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
+            if (!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) && NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
                 long currentTime = System.currentTimeMillis();
 
                 long timeUntilNext = 0;
@@ -664,28 +670,28 @@ public class CalendarOverlay {
 
                 //Daily Events
                 out:
-                for(Map.Entry<Long, Set<SBEvent>> sbEvents : eventMap.entrySet()) {
-                    for(SBEvent sbEvent : sbEvents.getValue()) {
+                for (Map.Entry<Long, Set<SBEvent>> sbEvents : eventMap.entrySet()) {
+                    for (SBEvent sbEvent : sbEvents.getValue()) {
                         long timeUntilMillis = sbEvents.getKey() - currentTime;
 
-                        if(timeUntilMillis < -10*SECOND) {
+                        if (timeUntilMillis < -10 * SECOND) {
                             continue;
                         }
 
-                        if(firstEvent == null) {
+                        if (firstEvent == null) {
                             firstEvent = sbEvent;
                             timeUntilFirst = timeUntilMillis;
                         }
 
                         String[] split = sbEvent.id.split(":");
                         boolean containsId = false;
-                        for(int i=1; i<split.length; i++) {
-                            if(eventFavourites.contains(split[0]+":"+split[i])) {
+                        for (int i = 1; i < split.length; i++) {
+                            if (eventFavourites.contains(split[0] + ":" + split[i])) {
                                 containsId = true;
                                 break;
                             }
                         }
-                        if(eventFavourites.isEmpty() || eventFavourites.contains(split[0]) || containsId) {
+                        if (eventFavourites.isEmpty() || eventFavourites.contains(split[0]) || containsId) {
                             nextEvent = sbEvent;
                             timeUntilNext = timeUntilMillis;
                             break out;
@@ -693,7 +699,7 @@ public class CalendarOverlay {
                     }
                 }
 
-                if(nextEvent != null) {
+                if (nextEvent != null) {
                     renderToast(nextEvent, timeUntilNext);
                 }
             }
@@ -703,22 +709,22 @@ public class CalendarOverlay {
     }
 
     public boolean renderToast(SBEvent event, long timeUntil) {
-        if(!NotEnoughUpdates.INSTANCE.config.calendar.eventNotifications) {
+        if (!NotEnoughUpdates.INSTANCE.config.calendar.eventNotifications) {
             return false;
         }
 
         long currentTime = System.currentTimeMillis();
-        if(currentTime - spookyStart > 0 && currentTime - spookyStart < HOUR &&
+        if (currentTime - spookyStart > 0 && currentTime - spookyStart < HOUR &&
                 NotEnoughUpdates.INSTANCE.config.calendar.spookyNightNotification) {
-            long delta = (currentTime - SKYBLOCK_START) % (20*MINUTE) - 19*50*SECOND - 10*SECOND;
-            if(delta < 500 && delta > -8500) {
+            long delta = (currentTime - SKYBLOCK_START) % (20 * MINUTE) - 19 * 50 * SECOND - 10 * SECOND;
+            if (delta < 500 && delta > -8500) {
                 event = new SBEvent("spooky_festival_7pm", "Spooky Festival 7pm", new ItemStack(Items.bone), null);
                 timeUntil = delta;
             }
         }
 
-        if(event.id.equals("dark_auction")) {
-            timeUntil -= 30*1000;
+        if (event.id.equals("dark_auction")) {
+            timeUntil -= 30 * 1000;
         }
 
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
@@ -728,20 +734,20 @@ public class CalendarOverlay {
 
         int ySize = 32;
         int xSize = 160;
-        int guiLeft = (width - xSize)/2;
+        int guiLeft = (width - xSize) / 2;
         int guiTop = 5;
 
         boolean preNotification = false;
-        long preNotificationTime = SECOND*NotEnoughUpdates.INSTANCE.config.calendar.startingSoonTime;
+        long preNotificationTime = SECOND * NotEnoughUpdates.INSTANCE.config.calendar.startingSoonTime;
 
-        if(preNotificationTime > 500 && timeUntil > 500) {
+        if (preNotificationTime > 500 && timeUntil > 500) {
             timeUntil = timeUntil - preNotificationTime;
             preNotification = true;
         }
 
-        if(timeUntil < 500 && timeUntil > -8500) {
-            if(jingleIndex == -1) {
-                if(preNotification) {
+        if (timeUntil < 500 && timeUntil > -8500) {
+            if (jingleIndex == -1) {
+                if (preNotification) {
                     jingleIndex = 1;
                 } else {
                     jingleIndex = 0;
@@ -750,33 +756,33 @@ public class CalendarOverlay {
 
             float offset;
             float factor = 0;
-            if(timeUntil > 0) {
-                factor = (timeUntil/500f);
-            } else if(timeUntil < -8000) {
-                factor = -((timeUntil+8000)/500f);
+            if (timeUntil > 0) {
+                factor = (timeUntil / 500f);
+            } else if (timeUntil < -8000) {
+                factor = -((timeUntil + 8000) / 500f);
             }
-            factor = (float)(1.06f/(1+Math.exp(-7*(factor-0.5f)))-0.03f);
-            offset = -(ySize+5)*factor;
-            float y = guiTop+offset;
+            factor = (float) (1.06f / (1 + Math.exp(-7 * (factor - 0.5f))) - 0.03f);
+            offset = -(ySize + 5) * factor;
+            float y = guiTop + offset;
 
             GlStateManager.color(1, 1, 1, 1);
             Minecraft.getMinecraft().getTextureManager().bindTexture(TOAST);
             Utils.drawTexturedRect(guiLeft, y, xSize, ySize, GL11.GL_NEAREST);
 
             GlStateManager.translate(0, y, 0);
-            Utils.drawItemStack(event.stack, guiLeft+6, 8);
+            Utils.drawItemStack(event.stack, guiLeft + 6, 8);
             GlStateManager.translate(0, -y, 0);
 
-            if(preNotification) {
-                String starting = EnumChatFormatting.YELLOW+"Event Starting in "+prettyTime(preNotificationTime, true)+"!";
+            if (preNotification) {
+                String starting = EnumChatFormatting.YELLOW + "Event Starting in " + prettyTime(preNotificationTime, true) + "!";
                 int startingWidth = fr.getStringWidth(starting);
-                fr.drawString(starting, Math.max(guiLeft+23, width/2f-startingWidth/2f), y+7, -1, false);
+                fr.drawString(starting, Math.max(guiLeft + 23, width / 2f - startingWidth / 2f), y + 7, -1, false);
             } else {
-                Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Event Starting Now!", fr, width/2, y+11, false, -1);
+                Utils.drawStringCentered(EnumChatFormatting.YELLOW + "Event Starting Now!", fr, width / 2, y + 11, false, -1);
             }
 
             int displayWidth = fr.getStringWidth(event.display);
-            fr.drawString(event.display, Math.max(guiLeft+23, width/2f-displayWidth/2f), y+17, -1, false);
+            fr.drawString(event.display, Math.max(guiLeft + 23, width / 2f - displayWidth / 2f), y + 17, -1, false);
 
 
             return true;
@@ -786,7 +792,7 @@ public class CalendarOverlay {
 
     @SubscribeEvent
     public void onGuiScreenDrawTimer(GuiScreenEvent.BackgroundDrawnEvent event) {
-        if(!drawTimerForeground) {
+        if (!drawTimerForeground) {
             drawTimer();
         }
         GlStateManager.color(1, 1, 1, 1);
@@ -795,7 +801,7 @@ public class CalendarOverlay {
 
     @SubscribeEvent
     public void onGuiScreenDrawTimer(GuiScreenEvent.DrawScreenEvent.Post event) {
-        if(drawTimerForeground) {
+        if (drawTimerForeground) {
             drawTimer();
         }
     }
@@ -803,7 +809,7 @@ public class CalendarOverlay {
     public void drawTimer() {
         GlStateManager.pushMatrix();
         GlStateManager.translate(0, 0, 10);
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer && NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiContainer && NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
             int width = scaledResolution.getScaledWidth();
             int height = scaledResolution.getScaledHeight();
@@ -825,74 +831,74 @@ public class CalendarOverlay {
 
             List<String> eventFavourites = NotEnoughUpdates.INSTANCE.config.hidden.eventFavourites;
 
-            guiLeft = (width - xSize)/2;
+            guiLeft = (width - xSize) / 2;
             guiTop = 5;
 
             //Daily Events
             out:
-            for(Map.Entry<Long, Set<SBEvent>> sbEvents : eventMap.entrySet()) {
-                for(SBEvent sbEvent : sbEvents.getValue()) {
+            for (Map.Entry<Long, Set<SBEvent>> sbEvents : eventMap.entrySet()) {
+                for (SBEvent sbEvent : sbEvents.getValue()) {
                     long timeUntilMillis = sbEvents.getKey() - currentTime;
 
-                    if(timeUntilMillis < -10*SECOND) {
+                    if (timeUntilMillis < -10 * SECOND) {
                         continue;
                     }
 
-                    if(sbEvent.id.equals("spooky_festival")) {
-                        if(sbEvents.getKey() > currentTime-HOUR && (sbEvents.getKey() < spookyStart || spookyStart == 0)) {
+                    if (sbEvent.id.equals("spooky_festival")) {
+                        if (sbEvents.getKey() > currentTime - HOUR && (sbEvents.getKey() < spookyStart || spookyStart == 0)) {
                             spookyStart = sbEvents.getKey();
                         }
                     }
 
-                    if(nextMajorEvent == null && !sbEvent.id.split(":")[0].equals("jacob_farming") &&
+                    if (nextMajorEvent == null && !sbEvent.id.split(":")[0].equals("jacob_farming") &&
                             !sbEvent.id.equals("dark_auction")) {
                         nextMajorEvent = sbEvent;
                         timeUntilMajor = timeUntilMillis;
                     }
 
-                    if(firstEvent == null) {
+                    if (firstEvent == null) {
                         firstEvent = sbEvent;
                         timeUntilFirst = timeUntilMillis;
                     }
 
                     String[] split = sbEvent.id.split(":");
                     boolean containsId = false;
-                    for(int i=1; i<split.length; i++) {
-                        if(eventFavourites.contains(split[0]+":"+split[i])) {
+                    for (int i = 1; i < split.length; i++) {
+                        if (eventFavourites.contains(split[0] + ":" + split[i])) {
                             containsId = true;
                             break;
                         }
                     }
-                    if(eventFavourites.isEmpty() || eventFavourites.contains(split[0]) || containsId) {
-                        if(nextEvent == null) {
+                    if (eventFavourites.isEmpty() || eventFavourites.contains(split[0]) || containsId) {
+                        if (nextEvent == null) {
                             nextEvent = sbEvent;
                             timeUntilNext = timeUntilMillis;
                         }
-                        if(nextFavourites.size() < 3) {
+                        if (nextFavourites.size() < 3) {
                             nextFavourites.add(sbEvent);
                             nextFavouritesTime.add(timeUntilMillis);
                         }
                     }
 
-                    if(nextFavourites.size() >= 3 && nextMajorEvent != null) {
+                    if (nextFavourites.size() >= 3 && nextMajorEvent != null) {
                         break out;
                     }
                 }
             }
 
-            if(nextEvent == null && firstEvent != null) {
+            if (nextEvent == null && firstEvent != null) {
                 String[] split = firstEvent.id.split(":");
-                if(eventFavourites.contains(split[0])) {
+                if (eventFavourites.contains(split[0])) {
                     nextEvent = firstEvent;
                     timeUntilNext = timeUntilFirst;
                 }
             }
 
-            if(nextEvent != null) {
+            if (nextEvent != null) {
                 GlStateManager.translate(0, 0, 50);
                 boolean toastRendered = renderToast(nextEvent, timeUntilNext);
                 GlStateManager.translate(0, 0, -50);
-                if(!toastRendered && !enabled && NotEnoughUpdates.INSTANCE.config.calendar.showEventTimerInInventory) {
+                if (!toastRendered && !enabled && NotEnoughUpdates.INSTANCE.config.calendar.showEventTimerInInventory) {
                     List<String> tooltipToDisplay = null;
                     FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
@@ -901,66 +907,66 @@ public class CalendarOverlay {
                     GlStateManager.disableLighting();
                     GlStateManager.disableColorMaterial();
 
-                    renderBlurredBackground(10, width, height, guiLeft+3, guiTop+3, xSize-6, ySize-6);
+                    renderBlurredBackground(10, width, height, guiLeft + 3, guiTop + 3, xSize - 6, ySize - 6);
 
                     Minecraft.getMinecraft().getTextureManager().bindTexture(DISPLAYBAR);
                     Utils.drawTexturedRect(guiLeft, guiTop, xSize, 20, GL11.GL_NEAREST);
 
-                    String nextS = EnumChatFormatting.YELLOW+"Next: ";
+                    String nextS = EnumChatFormatting.YELLOW + "Next: ";
                     int nextSLen = fr.getStringWidth(nextS);
-                    fr.drawString(nextS, guiLeft+8, guiTop+6, -1, false);
+                    fr.drawString(nextS, guiLeft + 8, guiTop + 6, -1, false);
 
-                    String until = " "+EnumChatFormatting.YELLOW+prettyTime(timeUntilNext, false);
+                    String until = " " + EnumChatFormatting.YELLOW + prettyTime(timeUntilNext, false);
                     int untilLen = fr.getStringWidth(until);
 
-                    fr.drawString(until, guiLeft+xSize-8-untilLen, guiTop+6, -1, false);
+                    fr.drawString(until, guiLeft + xSize - 8 - untilLen, guiTop + 6, -1, false);
 
-                    int eventTitleLen = xSize-16-untilLen-nextSLen;
+                    int eventTitleLen = xSize - 16 - untilLen - nextSLen;
                     int displayWidth = fr.getStringWidth(nextEvent.display);
                     int spaceLen = fr.getCharWidth(' ');
-                    if(displayWidth > eventTitleLen) {
+                    if (displayWidth > eventTitleLen) {
                         GL11.glEnable(GL11.GL_SCISSOR_TEST);
-                        GL11.glScissor((guiLeft+8+nextSLen)*scaledResolution.getScaleFactor(),
+                        GL11.glScissor((guiLeft + 8 + nextSLen) * scaledResolution.getScaleFactor(),
                                 0,
-                                eventTitleLen*scaledResolution.getScaleFactor(),
+                                eventTitleLen * scaledResolution.getScaleFactor(),
                                 Minecraft.getMinecraft().displayHeight);
                         fr.drawString(nextEvent.display + " " + nextEvent.display,
-                                guiLeft+8+nextSLen-(float)(currentTime/50.0 % (displayWidth+spaceLen)), guiTop+6, -1, false);
+                                guiLeft + 8 + nextSLen - (float) (currentTime / 50.0 % (displayWidth + spaceLen)), guiTop + 6, -1, false);
                         GL11.glDisable(GL11.GL_SCISSOR_TEST);
                     } else {
-                        if(guiLeft+xSize-8-untilLen > (width+displayWidth)/2) {
-                            Utils.drawStringCentered(nextEvent.display, fr,width/2f, guiTop+10, false, -1);
+                        if (guiLeft + xSize - 8 - untilLen > (width + displayWidth) / 2) {
+                            Utils.drawStringCentered(nextEvent.display, fr, width / 2f, guiTop + 10, false, -1);
                         } else {
-                            fr.drawString(nextEvent.display, guiLeft+8+nextSLen, guiTop+6, -1, false);
+                            fr.drawString(nextEvent.display, guiLeft + 8 + nextSLen, guiTop + 6, -1, false);
                         }
                     }
 
-                    if(mouseX > guiLeft && mouseX < guiLeft+168) {
-                        if(mouseY > guiTop && mouseY < guiTop+20) {
+                    if (mouseX > guiLeft && mouseX < guiLeft + 168) {
+                        if (mouseY > guiTop && mouseY < guiTop + 20) {
                             tooltipToDisplay = new ArrayList<>();
-                            for(int i=0; i<nextFavourites.size(); i++) {
+                            for (int i = 0; i < nextFavourites.size(); i++) {
                                 SBEvent sbEvent = nextFavourites.get(i);
                                 long timeUntil = nextFavouritesTime.get(i);
 
                                 tooltipToDisplay.add(sbEvent.display);
-                                tooltipToDisplay.add(EnumChatFormatting.GRAY+"Starts in: "+EnumChatFormatting.YELLOW+prettyTime(timeUntil, false));
-                                if(sbEvent.lastsFor >= 0) {
-                                    tooltipToDisplay.add( EnumChatFormatting.GRAY+"Lasts for: "+EnumChatFormatting.YELLOW+
+                                tooltipToDisplay.add(EnumChatFormatting.GRAY + "Starts in: " + EnumChatFormatting.YELLOW + prettyTime(timeUntil, false));
+                                if (sbEvent.lastsFor >= 0) {
+                                    tooltipToDisplay.add(EnumChatFormatting.GRAY + "Lasts for: " + EnumChatFormatting.YELLOW +
                                             prettyTime(sbEvent.lastsFor, true));
                                 }
-                                if(sbEvent.id.split(":")[0].equals("jacob_farming") && sbEvent.desc != null) {
+                                if (sbEvent.id.split(":")[0].equals("jacob_farming") && sbEvent.desc != null) {
                                     tooltipToDisplay.addAll(sbEvent.desc);
                                 }
-                                if(nextMajorEvent != null || i < nextFavourites.size()-1) {
+                                if (nextMajorEvent != null || i < nextFavourites.size() - 1) {
                                     tooltipToDisplay.add("");
                                 }
                             }
-                            if(nextMajorEvent != null) {
-                                tooltipToDisplay.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"Next Major:");
+                            if (nextMajorEvent != null) {
+                                tooltipToDisplay.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "Next Major:");
                                 tooltipToDisplay.add(nextMajorEvent.display);
-                                tooltipToDisplay.add(EnumChatFormatting.GRAY+"Starts in: "+EnumChatFormatting.YELLOW+prettyTime(timeUntilMajor, false));
-                                if(nextMajorEvent.lastsFor >= 0) {
-                                    tooltipToDisplay.add( EnumChatFormatting.GRAY+"Lasts for: "+EnumChatFormatting.YELLOW+
+                                tooltipToDisplay.add(EnumChatFormatting.GRAY + "Starts in: " + EnumChatFormatting.YELLOW + prettyTime(timeUntilMajor, false));
+                                if (nextMajorEvent.lastsFor >= 0) {
+                                    tooltipToDisplay.add(EnumChatFormatting.GRAY + "Lasts for: " + EnumChatFormatting.YELLOW +
                                             prettyTime(nextMajorEvent.lastsFor, true));
                                 }
                             }
@@ -970,7 +976,7 @@ public class CalendarOverlay {
                     }
 
                     drawTimerForeground = false;
-                    if(tooltipToDisplay != null) {
+                    if (tooltipToDisplay != null) {
                         drawTimerForeground = true;
                         GlStateManager.translate(0, 0, 100);
                         Utils.drawHoveringText(tooltipToDisplay, mouseX, Math.max(17, mouseY), width, height, -1, fr);
@@ -986,18 +992,18 @@ public class CalendarOverlay {
     private void renderBlurredBackground(float blurStrength, int screenWidth, int screenHeight,
                                          int x, int y, int blurWidth, int blurHeight) {
         BackgroundBlur.renderBlurredBackground(blurStrength, screenWidth, screenHeight, x, y, blurWidth, blurHeight);
-        Gui.drawRect(x, y, x+blurWidth, y+blurHeight, 0xc8101010);
+        Gui.drawRect(x, y, x + blurWidth, y + blurHeight, 0xc8101010);
         GlStateManager.color(1, 1, 1, 1);
     }
 
     @SubscribeEvent
     public void onGuiDraw(GuiScreenEvent.DrawScreenEvent.Pre event) {
         GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
-        if(!(currentScreen instanceof GuiChest)) {
+        if (!(currentScreen instanceof GuiChest)) {
             return;
         }
 
-        if(!enabled) {
+        if (!enabled) {
             return;
         }
 
@@ -1005,7 +1011,7 @@ public class CalendarOverlay {
         ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
         IInventory lowerChestInventory = cc.getLowerChestInventory();
         String containerName = lowerChestInventory.getDisplayName().getUnformattedText();
-        if(!containerName.trim().equals("Calendar and Events")) {
+        if (!containerName.trim().equals("Calendar and Events")) {
             setEnabled(false);
             return;
         }
@@ -1025,15 +1031,15 @@ public class CalendarOverlay {
         int height = scaledResolution.getScaledHeight();
         int scaleFactor = scaledResolution.getScaleFactor();
 
-        guiLeft = (width - xSize)/2;
-        guiTop = (height - ySize)/2;
+        guiLeft = (width - xSize) / 2;
+        guiTop = (height - ySize) / 2;
 
         Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
 
-        renderBlurredBackground(10, width, height, guiLeft+3, guiTop+3, 162, 14);
-        renderBlurredBackground(10, width, height, guiLeft+3, guiTop+26, 14, 141);
-        renderBlurredBackground(10, width, height, guiLeft+151, guiTop+26, 14, 141);
-        renderBlurredBackground(10, width, height, guiLeft+26, guiTop+26, 116, 141);
+        renderBlurredBackground(10, width, height, guiLeft + 3, guiTop + 3, 162, 14);
+        renderBlurredBackground(10, width, height, guiLeft + 3, guiTop + 26, 14, 141);
+        renderBlurredBackground(10, width, height, guiLeft + 151, guiTop + 26, 14, 141);
+        renderBlurredBackground(10, width, height, guiLeft + 26, guiTop + 26, 116, 141);
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(BACKGROUND);
         Utils.drawTexturedRect(guiLeft, guiTop, xSize, ySize, GL11.GL_NEAREST);
@@ -1042,38 +1048,41 @@ public class CalendarOverlay {
 
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
-        fr.drawString("Daily", guiLeft+29, guiTop+30, 0xffffaa00);
+        fr.drawString("Daily", guiLeft + 29, guiTop + 30, 0xffffaa00);
         int specialLen = fr.getStringWidth("Special");
-        fr.drawString("Special", guiLeft+139-specialLen, guiTop+30, 0xffffaa00);
+        fr.drawString("Special", guiLeft + 139 - specialLen, guiTop + 30, 0xffffaa00);
 
         ItemStack mayorStack = lowerChestInventory.getStackInSlot(46);
-        if(mayorStack != null) {
+        if (mayorStack != null) {
             String mayor = mayorStack.getDisplayName();
             float verticalHeight = Utils.getVerticalHeight(mayor);
-            Utils.drawStringVertical(mayor, fr, guiLeft+8, guiTop+96-verticalHeight/2,
+            Utils.drawStringVertical(mayor, fr, guiLeft + 8, guiTop + 96 - verticalHeight / 2,
                     false, -1);
         }
 
-        String calendar = EnumChatFormatting.GREEN+"Calendar";
+        String calendar = EnumChatFormatting.GREEN + "Calendar";
         float calendarHeight = Utils.getVerticalHeight(calendar);
-        Utils.drawStringVertical(calendar, fr, guiLeft+xSize-12, guiTop+60-calendarHeight/2,
+        Utils.drawStringVertical(calendar, fr, guiLeft + xSize - 12, guiTop + 60 - calendarHeight / 2,
                 false, -1);
 
-        String rewards = EnumChatFormatting.GOLD+"Rewards";
+        String rewards = EnumChatFormatting.GOLD + "Rewards";
         float rewardsHeight = Utils.getVerticalHeight(rewards);
-        Utils.drawStringVertical(rewards, fr, guiLeft+xSize-12, guiTop+132-rewardsHeight/2,
+        Utils.drawStringVertical(rewards, fr, guiLeft + xSize - 12, guiTop + 132 - rewardsHeight / 2,
                 false, -1);
 
-        if(mouseY >= guiTop+26 && mouseY <= guiTop+26+141) {
-            if(mouseX >= guiLeft+3 && mouseX <= guiLeft+3+14) {
-                if(mayorStack != null) tooltipToDisplay = mayorStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-            } else if(mouseX >= guiLeft+151 && mouseX <= guiLeft+151+14) {
-                if(mouseY <= guiTop+26+70) {
+        if (mouseY >= guiTop + 26 && mouseY <= guiTop + 26 + 141) {
+            if (mouseX >= guiLeft + 3 && mouseX <= guiLeft + 3 + 14) {
+                if (mayorStack != null)
+                    tooltipToDisplay = mayorStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+            } else if (mouseX >= guiLeft + 151 && mouseX <= guiLeft + 151 + 14) {
+                if (mouseY <= guiTop + 26 + 70) {
                     ItemStack calendarStack = cc.getLowerChestInventory().getStackInSlot(50);
-                    if(calendarStack != null) tooltipToDisplay = calendarStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                    if (calendarStack != null)
+                        tooltipToDisplay = calendarStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                 } else {
                     ItemStack rewardsStack = cc.getLowerChestInventory().getStackInSlot(45);
-                    if(rewardsStack != null) tooltipToDisplay = rewardsStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                    if (rewardsStack != null)
+                        tooltipToDisplay = rewardsStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                 }
             }
         }
@@ -1164,10 +1173,10 @@ public class CalendarOverlay {
         }
 
         //Special Events
-        for(int i=0; i<21; i++) {
-            int itemIndex = 10+i+(i/7)*2;
+        for (int i = 0; i < 21; i++) {
+            int itemIndex = 10 + i + (i / 7) * 2;
             ItemStack item = lowerChestInventory.getStackInSlot(itemIndex);
-            if(item == null) continue;
+            if (item == null) continue;
 
             String eventId = getIdForDisplayName(item.getDisplayName());
 
@@ -1175,66 +1184,66 @@ public class CalendarOverlay {
             tag.setString("event_id", eventId);
             item.setTagCompound(tag);
 
-            int x = guiLeft+89+17*(i%3);
-            int y = guiTop+44+17*(i/3);
+            int x = guiLeft + 89 + 17 * (i % 3);
+            int y = guiTop + 44 + 17 * (i / 3);
 
-            if(eventFavourites.contains(eventId)) {
+            if (eventFavourites.contains(eventId)) {
                 GlStateManager.depthMask(false);
                 GlStateManager.translate(0, 0, -2);
-                Gui.drawRect(x, y, x+16, y+16, 0xcfffbf49);
+                Gui.drawRect(x, y, x + 16, y + 16, 0xcfffbf49);
                 GlStateManager.translate(0, 0, 2);
                 GlStateManager.depthMask(true);
             }
 
-            Utils.drawItemStackWithText(item, x, y, ""+(i+1));
+            Utils.drawItemStackWithText(item, x, y, "" + (i + 1));
 
-            if(mouseX >= x && mouseX <= x+16) {
-                if(mouseY >= y && mouseY <= y+16) {
+            if (mouseX >= x && mouseX <= x + 16) {
+                if (mouseY >= y && mouseY <= y + 16) {
                     tooltipToDisplay = item.getTooltip(Minecraft.getMinecraft().thePlayer, false);
                 }
             }
         }
 
-        if(nextEvent == null) {
+        if (nextEvent == null) {
             nextEvent = firstEvent;
             timeUntilNext = timeUntilFirst;
         }
 
-        if(nextEvent != null) {
-            String nextS = EnumChatFormatting.YELLOW+"Next: ";
+        if (nextEvent != null) {
+            String nextS = EnumChatFormatting.YELLOW + "Next: ";
             int nextSLen = fr.getStringWidth(nextS);
-            fr.drawString(nextS, guiLeft+8, guiTop+6, -1, false);
+            fr.drawString(nextS, guiLeft + 8, guiTop + 6, -1, false);
 
-            String until = " "+EnumChatFormatting.YELLOW+prettyTime(timeUntilNext, false);
+            String until = " " + EnumChatFormatting.YELLOW + prettyTime(timeUntilNext, false);
             int untilLen = fr.getStringWidth(until);
 
-            fr.drawString(until, guiLeft+xSize-8-untilLen, guiTop+6, -1, false);
+            fr.drawString(until, guiLeft + xSize - 8 - untilLen, guiTop + 6, -1, false);
 
-            int eventTitleLen = xSize-16-untilLen-nextSLen;
+            int eventTitleLen = xSize - 16 - untilLen - nextSLen;
             int displayWidth = fr.getStringWidth(nextEvent.display);
             int spaceLen = fr.getCharWidth(' ');
-            if(displayWidth > eventTitleLen) {
+            if (displayWidth > eventTitleLen) {
                 GL11.glEnable(GL11.GL_SCISSOR_TEST);
-                GL11.glScissor((guiLeft+8+nextSLen)*scaleFactor,
+                GL11.glScissor((guiLeft + 8 + nextSLen) * scaleFactor,
                         0,
-                        eventTitleLen*scaleFactor,
+                        eventTitleLen * scaleFactor,
                         Minecraft.getMinecraft().displayHeight);
                 fr.drawString(nextEvent.display + " " + nextEvent.display,
-                        guiLeft+8+nextSLen-(float)(currentTime/50.0 % (displayWidth+spaceLen)), guiTop+6, -1, false);
+                        guiLeft + 8 + nextSLen - (float) (currentTime / 50.0 % (displayWidth + spaceLen)), guiTop + 6, -1, false);
                 GL11.glDisable(GL11.GL_SCISSOR_TEST);
             } else {
-                fr.drawString(nextEvent.display, guiLeft+8+nextSLen, guiTop+6, -1, false);
+                fr.drawString(nextEvent.display, guiLeft + 8 + nextSLen, guiTop + 6, -1, false);
             }
 
-            if(mouseX > guiLeft && mouseX < guiLeft+168) {
-                if(mouseY > guiTop && mouseY < guiTop+20) {
+            if (mouseX > guiLeft && mouseX < guiLeft + 168) {
+                if (mouseY > guiTop && mouseY < guiTop + 20) {
                     tooltipToDisplay = Utils.createList(nextEvent.display,
-                            EnumChatFormatting.GRAY+"Starts in: "+EnumChatFormatting.YELLOW+prettyTime(timeUntilNext, false));
-                    if(nextEvent.lastsFor >= 0) {
-                        tooltipToDisplay.add( EnumChatFormatting.GRAY+"Lasts for: "+EnumChatFormatting.YELLOW+
+                            EnumChatFormatting.GRAY + "Starts in: " + EnumChatFormatting.YELLOW + prettyTime(timeUntilNext, false));
+                    if (nextEvent.lastsFor >= 0) {
+                        tooltipToDisplay.add(EnumChatFormatting.GRAY + "Lasts for: " + EnumChatFormatting.YELLOW +
                                 prettyTime(nextEvent.lastsFor, true));
                     }
-                    if(nextEvent.desc != null) {
+                    if (nextEvent.desc != null) {
                         tooltipToDisplay.add("");
                         tooltipToDisplay.addAll(nextEvent.desc);
                     }
@@ -1244,39 +1253,39 @@ public class CalendarOverlay {
 
         GlStateManager.color(1, 1, 1, 1);
         Minecraft.getMinecraft().getTextureManager().bindTexture(help);
-        Utils.drawTexturedRect(guiLeft+xSize-18, guiTop+ySize+2, 16, 16, GL11.GL_LINEAR);
+        Utils.drawTexturedRect(guiLeft + xSize - 18, guiTop + ySize + 2, 16, 16, GL11.GL_LINEAR);
 
-        if(mouseX >= guiLeft+xSize-18 && mouseX < guiLeft+xSize-2) {
-            if(mouseY >= guiTop+ySize+2 && mouseY <= guiTop+ySize+18) {
+        if (mouseX >= guiLeft + xSize - 18 && mouseX < guiLeft + xSize - 2) {
+            if (mouseY >= guiTop + ySize + 2 && mouseY <= guiTop + ySize + 18) {
                 tooltipToDisplay = new ArrayList<>();
-                tooltipToDisplay.add(EnumChatFormatting.AQUA+"NEU Calendar Help");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"This calendar displays various skyblock events");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"'Daily' events are events that happen frequently");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"'Special' events are events that happen infrequently");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"The eventbar at the top will also show in your inventory");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"Press 'F' on an event to mark it as a favourite");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"Favourited events will show over normal events");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"Favourited events will also give a notification when it");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"is about to start and when it does start");
-                tooltipToDisplay.add(EnumChatFormatting.YELLOW+"");
-                tooltipToDisplay.add(EnumChatFormatting.DARK_GRAY+"In order to show crop types for Jacob's Farming");
-                tooltipToDisplay.add(EnumChatFormatting.DARK_GRAY+"contest, visit the full skyblock calendar and go all");
-                tooltipToDisplay.add(EnumChatFormatting.DARK_GRAY+"the way to the end of the skyblock year");
+                tooltipToDisplay.add(EnumChatFormatting.AQUA + "NEU Calendar Help");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "This calendar displays various skyblock events");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "'Daily' events are events that happen frequently");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "'Special' events are events that happen infrequently");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "The eventbar at the top will also show in your inventory");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "Press 'F' on an event to mark it as a favourite");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "Favourited events will show over normal events");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "Favourited events will also give a notification when it");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "is about to start and when it does start");
+                tooltipToDisplay.add(EnumChatFormatting.YELLOW + "");
+                tooltipToDisplay.add(EnumChatFormatting.DARK_GRAY + "In order to show crop types for Jacob's Farming");
+                tooltipToDisplay.add(EnumChatFormatting.DARK_GRAY + "contest, visit the full skyblock calendar and go all");
+                tooltipToDisplay.add(EnumChatFormatting.DARK_GRAY + "the way to the end of the skyblock year");
                 Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
                 tooltipToDisplay = null;
             }
         }
 
-        if(jfFavouriteSelect != null) {
+        if (jfFavouriteSelect != null) {
             int arrowLen = fr.getStringWidth("> ");
             int selectSizeX = 0;
-            int selectStringIndex=0;
-            for(String s : jfFavouriteSelect) {
+            int selectStringIndex = 0;
+            for (String s : jfFavouriteSelect) {
                 int sWidth = fr.getStringWidth(s);
-                if(selectStringIndex+1 == jfFavouriteSelectIndex) sWidth += arrowLen;
-                if(sWidth > selectSizeX) {
+                if (selectStringIndex + 1 == jfFavouriteSelectIndex) sWidth += arrowLen;
+                if (sWidth > selectSizeX) {
                     selectSizeX = sWidth;
                 }
                 selectStringIndex++;
@@ -1285,40 +1294,40 @@ public class CalendarOverlay {
 
             GlStateManager.translate(0, 0, 19);
 
-            Gui.drawRect(jfFavouriteSelectX+2, jfFavouriteSelectY+2, jfFavouriteSelectX+selectSizeX+2,
-                    jfFavouriteSelectY+18+jfFavouriteSelect.size()*10+2, 0xa0000000);
+            Gui.drawRect(jfFavouriteSelectX + 2, jfFavouriteSelectY + 2, jfFavouriteSelectX + selectSizeX + 2,
+                    jfFavouriteSelectY + 18 + jfFavouriteSelect.size() * 10 + 2, 0xa0000000);
 
             GlStateManager.depthFunc(GL11.GL_LESS);
             GlStateManager.translate(0, 0, 1);
-            Gui.drawRect(jfFavouriteSelectX+1, jfFavouriteSelectY+1, jfFavouriteSelectX+selectSizeX-1,
-                    jfFavouriteSelectY+18+jfFavouriteSelect.size()*10-1, 0xffc0c0c0);
-            Gui.drawRect(jfFavouriteSelectX, jfFavouriteSelectY, jfFavouriteSelectX+selectSizeX-1,
-                    jfFavouriteSelectY+18+jfFavouriteSelect.size()*10-1, 0xfff0f0f0);
-            Gui.drawRect(jfFavouriteSelectX, jfFavouriteSelectY, jfFavouriteSelectX+selectSizeX,
-                    jfFavouriteSelectY+18+jfFavouriteSelect.size()*10, 0xff909090);
+            Gui.drawRect(jfFavouriteSelectX + 1, jfFavouriteSelectY + 1, jfFavouriteSelectX + selectSizeX - 1,
+                    jfFavouriteSelectY + 18 + jfFavouriteSelect.size() * 10 - 1, 0xffc0c0c0);
+            Gui.drawRect(jfFavouriteSelectX, jfFavouriteSelectY, jfFavouriteSelectX + selectSizeX - 1,
+                    jfFavouriteSelectY + 18 + jfFavouriteSelect.size() * 10 - 1, 0xfff0f0f0);
+            Gui.drawRect(jfFavouriteSelectX, jfFavouriteSelectY, jfFavouriteSelectX + selectSizeX,
+                    jfFavouriteSelectY + 18 + jfFavouriteSelect.size() * 10, 0xff909090);
             GlStateManager.depthFunc(GL11.GL_LEQUAL);
 
-            String all = (NotEnoughUpdates.INSTANCE.config.hidden.eventFavourites.contains("jacob_farming")?
-                    EnumChatFormatting.DARK_GREEN:EnumChatFormatting.DARK_GRAY)+"All";
-            if(jfFavouriteSelectIndex == 0) {
-                fr.drawString(EnumChatFormatting.BLACK+"> "+all, jfFavouriteSelectX+5, jfFavouriteSelectY+5, 0xff000000);
+            String all = (NotEnoughUpdates.INSTANCE.config.hidden.eventFavourites.contains("jacob_farming") ?
+                    EnumChatFormatting.DARK_GREEN : EnumChatFormatting.DARK_GRAY) + "All";
+            if (jfFavouriteSelectIndex == 0) {
+                fr.drawString(EnumChatFormatting.BLACK + "> " + all, jfFavouriteSelectX + 5, jfFavouriteSelectY + 5, 0xff000000);
             } else {
-                fr.drawString(all, jfFavouriteSelectX+5, jfFavouriteSelectY+5, 0xff000000);
+                fr.drawString(all, jfFavouriteSelectX + 5, jfFavouriteSelectY + 5, 0xff000000);
             }
 
-            fr.drawString(EnumChatFormatting.BLACK+"> ", jfFavouriteSelectX+6,
-                    jfFavouriteSelectY+10*jfFavouriteSelectIndex+5, 0xff000000);
+            fr.drawString(EnumChatFormatting.BLACK + "> ", jfFavouriteSelectX + 6,
+                    jfFavouriteSelectY + 10 * jfFavouriteSelectIndex + 5, 0xff000000);
 
-            selectStringIndex=0;
-            for(String s : jfFavouriteSelect) {
-                EnumChatFormatting colour = NotEnoughUpdates.INSTANCE.config.hidden.eventFavourites.contains("jacob_farming:"+s)
+            selectStringIndex = 0;
+            for (String s : jfFavouriteSelect) {
+                EnumChatFormatting colour = NotEnoughUpdates.INSTANCE.config.hidden.eventFavourites.contains("jacob_farming:" + s)
                         ? EnumChatFormatting.DARK_GREEN : EnumChatFormatting.DARK_GRAY;
-                s = (selectStringIndex+1 == jfFavouriteSelectIndex ? EnumChatFormatting.BLACK+"> " : "") + colour + s;
-                fr.drawString(s, jfFavouriteSelectX+5, jfFavouriteSelectY+10*selectStringIndex+15, 0xff000000);
+                s = (selectStringIndex + 1 == jfFavouriteSelectIndex ? EnumChatFormatting.BLACK + "> " : "") + colour + s;
+                fr.drawString(s, jfFavouriteSelectX + 5, jfFavouriteSelectY + 10 * selectStringIndex + 15, 0xff000000);
                 selectStringIndex++;
             }
             GlStateManager.translate(0, 0, -20);
-        } else if(tooltipToDisplay != null) {
+        } else if (tooltipToDisplay != null) {
             Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
         }
 
@@ -1333,20 +1342,20 @@ public class CalendarOverlay {
         long days = (millis / 1000 / 60 / 60 / 24);
 
         String endsIn = "";
-        if(millis < 0) {
+        if (millis < 0) {
             endsIn += "Now!";
-        } else if(minutes == 0 && hours == 0 && days == 0) {
+        } else if (minutes == 0 && hours == 0 && days == 0) {
             endsIn += seconds + "s";
-        } else if(hours==0 && days==0) {
-            if(trimmed && seconds == 0) {
+        } else if (hours == 0 && days == 0) {
+            if (trimmed && seconds == 0) {
                 endsIn += minutes + "m";
             } else {
                 endsIn += minutes + "m" + seconds + "s";
             }
-        } else if(days==0) {
-            if(hours <= 6) {
-                if(trimmed && seconds == 0) {
-                    if(minutes == 0) {
+        } else if (days == 0) {
+            if (hours <= 6) {
+                if (trimmed && seconds == 0) {
+                    if (minutes == 0) {
                         endsIn += hours + "h";
                     } else {
                         endsIn += hours + "h" + minutes + "m";
@@ -1372,15 +1381,15 @@ public class CalendarOverlay {
     /**
      * Creates a projection matrix that projects from our coordinate space [0->width; 0->height] to OpenGL coordinate
      * space [-1 -> 1; 1 -> -1] (Note: flipped y-axis).
-     *
+     * <p>
      * This is so that we can render to and from the framebuffer in a way that is familiar to us, instead of needing to
      * apply scales and translations manually.
      */
     private Matrix4f createProjectionMatrix(int width, int height) {
-        Matrix4f projMatrix  = new Matrix4f();
+        Matrix4f projMatrix = new Matrix4f();
         projMatrix.setIdentity();
-        projMatrix.m00 = 2.0F / (float)width;
-        projMatrix.m11 = 2.0F / (float)(-height);
+        projMatrix.m00 = 2.0F / (float) width;
+        projMatrix.m11 = 2.0F / (float) (-height);
         projMatrix.m22 = -0.0020001999F;
         projMatrix.m33 = 1.0F;
         projMatrix.m03 = -1.0F;

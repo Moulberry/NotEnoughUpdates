@@ -11,6 +11,7 @@ import java.lang.annotation.Target;
 public @interface ConfigEditorDropdown {
 
     String[] values();
+
     int initialIndex() default 0;
 
 }

@@ -32,6 +32,7 @@ public class EnchantingSolvers {
     }
 
     private static final NBTTagCompound enchTag = new NBTTagCompound();
+
     static {
         enchTag.setTag("ench", new NBTTagList());
     }
@@ -70,22 +71,22 @@ public class EnchantingSolvers {
         chronomatronOrder.clear();
         currentSolver = SolverType.NONE;
 
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
             return;
         }
 
-        if(event.gui instanceof GuiChest) {
+        if (event.gui instanceof GuiChest) {
             GuiChest chest = (GuiChest) event.gui;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
             String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
             String lower = containerName.toLowerCase();
 
-            if(!lower.contains("stakes")) {
-                if(lower.startsWith("chronomatron")) {
+            if (!lower.contains("stakes")) {
+                if (lower.startsWith("chronomatron")) {
                     currentSolver = SolverType.CHRONOMATRON;
-                } else if(lower.startsWith("ultrasequencer")) {
+                } else if (lower.startsWith("ultrasequencer")) {
                     currentSolver = SolverType.ULTRASEQUENCER;
-                } else if(lower.startsWith("superpairs")) {
+                } else if (lower.startsWith("superpairs")) {
                     currentSolver = SolverType.SUPERPAIRS;
                 }
             }
@@ -93,45 +94,45 @@ public class EnchantingSolvers {
     }
 
     public static ItemStack overrideStack(IInventory inventory, int slotIndex, ItemStack stack) {
-        if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
+        if (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
             return null;
         }
 
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
             return null;
         }
 
-        if(stack != null && stack.getDisplayName() != null) {
-            if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+        if (stack != null && stack.getDisplayName() != null) {
+            if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
                 GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
                 ContainerChest container = (ContainerChest) chest.inventorySlots;
                 IInventory lower = container.getLowerChestInventory();
 
-                if(lower != inventory) {
+                if (lower != inventory) {
                     return null;
                 }
 
                 String displayName = stack.getDisplayName();
 
-                if(currentSolver == SolverType.CHRONOMATRON) {
-                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory()-5);
-                    if(timerStack == null) {
+                if (currentSolver == SolverType.CHRONOMATRON) {
+                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
+                    if (timerStack == null) {
                         return null;
                     }
 
                     boolean yepClock = timerStack.getItem() == Items.clock;
-                    if(yepClock && (addToChronomatron && chronomatronOrder.size() >= lastChronomatronSize+1)) {
-                        if(chronomatronReplayIndex < chronomatronOrder.size()) {
+                    if (yepClock && (addToChronomatron && chronomatronOrder.size() >= lastChronomatronSize + 1)) {
+                        if (chronomatronReplayIndex < chronomatronOrder.size()) {
                             String chronomatronCurrent = chronomatronOrder.get(chronomatronReplayIndex);
-                            if(stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass) ||
+                            if (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass) ||
                                     stack.getItem() == Item.getItemFromBlock(Blocks.stained_hardened_clay)) {
                                 long currentTime = System.currentTimeMillis();
 
                                 boolean lastSame = chronomatronReplayIndex > 0 &&
-                                        chronomatronCurrent.equals(chronomatronOrder.get(chronomatronReplayIndex-1));
+                                        chronomatronCurrent.equals(chronomatronOrder.get(chronomatronReplayIndex - 1));
 
-                                if(chronomatronCurrent.equals(displayName)) {
-                                    if(!lastSame || currentTime - millisLastClick > 300) {
+                                if (chronomatronCurrent.equals(displayName)) {
+                                    if (!lastSame || currentTime - millisLastClick > 300) {
                                         ItemStack retStack = new ItemStack(Item.getItemFromBlock(Blocks.stained_hardened_clay), 1, stack.getItemDamage());
                                         retStack.setTagCompound(enchTag);
                                         retStack.setStackDisplayName(stack.getDisplayName());
@@ -142,9 +143,9 @@ public class EnchantingSolvers {
                                         return retStack;
                                     }
                                 } else {
-                                    if(chronomatronReplayIndex+1 < chronomatronOrder.size()) {
-                                        String chronomatronNext = chronomatronOrder.get(chronomatronReplayIndex+1);
-                                        if(chronomatronNext.equals(displayName)) {
+                                    if (chronomatronReplayIndex + 1 < chronomatronOrder.size()) {
+                                        String chronomatronNext = chronomatronOrder.get(chronomatronReplayIndex + 1);
+                                        if (chronomatronNext.equals(displayName)) {
                                             ItemStack retStack = new ItemStack(Item.getItemFromBlock(Blocks.stained_glass), 1, stack.getItemDamage());
                                             retStack.setStackDisplayName(stack.getDisplayName());
                                             return retStack;
@@ -158,20 +159,20 @@ public class EnchantingSolvers {
 
                         }
                     }
-                } else if(currentSolver == SolverType.ULTRASEQUENCER) {
-                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory()-5);
-                    if(timerStack == null) {
+                } else if (currentSolver == SolverType.ULTRASEQUENCER) {
+                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
+                    if (timerStack == null) {
                         return null;
                     }
 
                     boolean yepClock = timerStack.getItem() == Items.clock;
-                    if(stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane) && stack.getItemDamage() != 15) {
-                        if(yepClock) {
-                            for(int solveIndex : ultraSequencerOrder.keySet()) {
+                    if (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane) && stack.getItemDamage() != 15) {
+                        if (yepClock) {
+                            for (int solveIndex : ultraSequencerOrder.keySet()) {
                                 UltrasequencerItem item = ultraSequencerOrder.get(solveIndex);
-                                if(item.containerIndex == slotIndex) {
+                                if (item.containerIndex == slotIndex) {
                                     ItemStack newStack = item.stack;
-                                    if(solveIndex == ultrasequencerReplayIndex) {
+                                    if (solveIndex == ultrasequencerReplayIndex) {
                                         newStack.setTagCompound(enchTag);
                                     } else {
                                         newStack.setTagCompound(null);
@@ -184,8 +185,8 @@ public class EnchantingSolvers {
                             return retStack;
                         }
                     }
-                } else if(currentSolver == SolverType.SUPERPAIRS) {
-                    if(stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass) &&
+                } else if (currentSolver == SolverType.SUPERPAIRS) {
+                    if (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass) &&
                             superpairStacks.containsKey(slotIndex)) {
                         return superpairStacks.get(slotIndex);
                     }
@@ -196,77 +197,77 @@ public class EnchantingSolvers {
     }
 
     public static boolean onStackRender(ItemStack stack, IInventory inventory, int slotIndex, int x, int y) {
-        if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
+        if (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
             return false;
         }
 
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
             return false;
         }
 
-        if(stack != null && stack.getDisplayName() != null) {
-            if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+        if (stack != null && stack.getDisplayName() != null) {
+            if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
                 GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
                 ContainerChest container = (ContainerChest) chest.inventorySlots;
                 IInventory lower = container.getLowerChestInventory();
 
-                if(lower != inventory) {
+                if (lower != inventory) {
                     return false;
                 }
 
-                if(currentSolver == SolverType.ULTRASEQUENCER) {
-                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory()-5);
-                    if(timerStack == null) {
+                if (currentSolver == SolverType.ULTRASEQUENCER) {
+                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
+                    if (timerStack == null) {
                         return false;
                     }
 
                     boolean yepClock = timerStack.getItem() == Items.clock;
-                    if(stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane) && stack.getItemDamage() != 15) {
-                        if(yepClock) {
-                            for(int solveIndex : ultraSequencerOrder.keySet()) {
+                    if (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane) && stack.getItemDamage() != 15) {
+                        if (yepClock) {
+                            for (int solveIndex : ultraSequencerOrder.keySet()) {
                                 UltrasequencerItem item = ultraSequencerOrder.get(solveIndex);
-                                if(item.containerIndex == slotIndex) {
+                                if (item.containerIndex == slotIndex) {
                                     int meta = 0;
-                                    if(solveIndex == ultrasequencerReplayIndex) {
+                                    if (solveIndex == ultrasequencerReplayIndex) {
                                         meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.seqNext;
-                                    } else if(solveIndex == ultrasequencerReplayIndex+1) {
+                                    } else if (solveIndex == ultrasequencerReplayIndex + 1) {
                                         meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.seqUpcoming;
                                     }
-                                    if(meta > 0) {
-                                        Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.stained_glass_pane), 1, meta-1), x, y);
+                                    if (meta > 0) {
+                                        Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.stained_glass_pane), 1, meta - 1), x, y);
                                     }
-                                    if(NotEnoughUpdates.INSTANCE.config.enchantingSolvers.seqNumbers &&
+                                    if (NotEnoughUpdates.INSTANCE.config.enchantingSolvers.seqNumbers &&
                                             solveIndex >= ultrasequencerReplayIndex) {
-                                        int w = Minecraft.getMinecraft().fontRendererObj.getStringWidth((solveIndex+1)+"");
+                                        int w = Minecraft.getMinecraft().fontRendererObj.getStringWidth((solveIndex + 1) + "");
                                         GlStateManager.disableDepth();
                                         GlStateManager.enableBlend();
                                         GlStateManager.disableLighting();
-                                        Utils.drawStringScaled((solveIndex+1)+"", Minecraft.getMinecraft().fontRendererObj,
-                                                x+8.5f-w/2f, y+8.5f-4, true, 0xffc0c0c0, 1f);
+                                        Utils.drawStringScaled((solveIndex + 1) + "", Minecraft.getMinecraft().fontRendererObj,
+                                                x + 8.5f - w / 2f, y + 8.5f - 4, true, 0xffc0c0c0, 1f);
                                         return true;
                                     }
                                 }
                             }
                         }
                     }
-                } else if(currentSolver == SolverType.SUPERPAIRS) {
+                } else if (currentSolver == SolverType.SUPERPAIRS) {
                     int meta = 0;
-                    if(stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass) &&
+                    if (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass) &&
                             superpairStacks.containsKey(slotIndex)) {
-                        if(possibleMatches.contains(slotIndex)) {
+                        if (possibleMatches.contains(slotIndex)) {
                             meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.supPossible;
                         } else {
                             meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.supUnmatched;
                         }
                     } else {
-                        if(powerupMatches.contains(slotIndex)) {
+                        if (powerupMatches.contains(slotIndex)) {
                             meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.supPower;
-                        } else if(successfulMatches.contains(slotIndex)) {
+                        } else if (successfulMatches.contains(slotIndex)) {
                             meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.supMatched;
                         }
                     }
-                    if(meta > 0) {
-                        Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.stained_glass_pane), 1, meta-1), x, y);
+                    if (meta > 0) {
+                        Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.stained_glass_pane), 1, meta - 1), x, y);
                     }
                 }
             }
@@ -275,38 +276,38 @@ public class EnchantingSolvers {
     }
 
     public static boolean onStackClick(ItemStack stack, int windowId, int slotId, int mouseButtonClicked, int mode) {
-        if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
+        if (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
             return false;
         }
 
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
             return false;
         }
 
-        if(stack != null && stack.getDisplayName() != null) {
+        if (stack != null && stack.getDisplayName() != null) {
             String displayName = stack.getDisplayName();
-            if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
                 GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
                 ContainerChest container = (ContainerChest) chest.inventorySlots;
                 IInventory lower = container.getLowerChestInventory();
 
-                if(currentSolver == SolverType.CHRONOMATRON) {
-                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory()-5);
-                    if(timerStack == null) {
+                if (currentSolver == SolverType.CHRONOMATRON) {
+                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
+                    if (timerStack == null) {
                         return false;
                     }
 
                     boolean yepClock = timerStack.getItem() == Items.clock;
-                    if(timerStack.getItem() == Item.getItemFromBlock(Blocks.glowstone) ||
-                            (yepClock && (!addToChronomatron || chronomatronOrder.size() < lastChronomatronSize+1))) {
+                    if (timerStack.getItem() == Item.getItemFromBlock(Blocks.glowstone) ||
+                            (yepClock && (!addToChronomatron || chronomatronOrder.size() < lastChronomatronSize + 1))) {
                         return true;
-                    } else if(yepClock) {
+                    } else if (yepClock) {
                         long currentTime = System.currentTimeMillis();
-                        if(currentTime - millisLastClick < 150) {
+                        if (currentTime - millisLastClick < 150) {
                             return true;
                         }
 
-                        if(chronomatronReplayIndex < chronomatronOrder.size()) {
+                        if (chronomatronReplayIndex < chronomatronOrder.size()) {
                             String chronomatronCurrent = chronomatronOrder.get(chronomatronReplayIndex);
                             /*if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks ||
                                     chronomatronCurrent.equals(displayName)) {
@@ -315,7 +316,7 @@ public class EnchantingSolvers {
                                         2, mode, Minecraft.getMinecraft().thePlayer);
                                 millisLastClick = currentTime;
                             }*/
-                            if(chronomatronCurrent.equals(displayName)) {
+                            if (chronomatronCurrent.equals(displayName)) {
                                 chronomatronReplayIndex++;
                             }
                             Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
@@ -324,15 +325,15 @@ public class EnchantingSolvers {
                         }
                         return true;
                     }
-                } else if(currentSolver == SolverType.ULTRASEQUENCER) {
-                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory()-5);
-                    if(timerStack == null) {
+                } else if (currentSolver == SolverType.ULTRASEQUENCER) {
+                    ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
+                    if (timerStack == null) {
                         return false;
                     }
 
-                    if(timerStack.getItem() == Items.clock) {
+                    if (timerStack.getItem() == Items.clock) {
                         UltrasequencerItem current = ultraSequencerOrder.get(ultrasequencerReplayIndex);
-                        if(current == null) {
+                        if (current == null) {
                             return true;
                         }
                         long currentTime = System.currentTimeMillis();
@@ -344,8 +345,8 @@ public class EnchantingSolvers {
                                     2, mode, Minecraft.getMinecraft().thePlayer);
                             millisLastClick = currentTime;
                         }*/
-                        if(currentTime - millisLastClick > 150) {
-                            if(current.containerIndex == slotId) {
+                        if (currentTime - millisLastClick > 150) {
+                            if (current.containerIndex == slotId) {
                                 ultrasequencerReplayIndex++;
                             }
                             Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
@@ -354,7 +355,7 @@ public class EnchantingSolvers {
                         }
                     }
                     return true;
-                } else if(currentSolver == SolverType.SUPERPAIRS) {
+                } else if (currentSolver == SolverType.SUPERPAIRS) {
                     lastSlotClicked = slotId;
                 }
             }
@@ -363,22 +364,22 @@ public class EnchantingSolvers {
     }
 
     public static void processInventoryContents(boolean fromTick) {
-        if(currentSolver != SolverType.CHRONOMATRON && !fromTick) return;
+        if (currentSolver != SolverType.CHRONOMATRON && !fromTick) return;
 
-        if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
+        if (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
             return;
         }
 
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
             return;
         }
 
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
             IInventory lower = container.getLowerChestInventory();
 
-            if(currentSolver == SolverType.CHRONOMATRON) {
+            if (currentSolver == SolverType.CHRONOMATRON) {
                 ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
                 if (timerStack == null) {
                     return;
@@ -423,49 +424,49 @@ public class EnchantingSolvers {
                 chronomatronStartSeq = true;
                 addToChronomatron = true;
             }
-            if(currentSolver == SolverType.ULTRASEQUENCER) {
+            if (currentSolver == SolverType.ULTRASEQUENCER) {
                 ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
                 if (timerStack == null) {
                     return;
                 }
-                if(timerStack.getItem() == Item.getItemFromBlock(Blocks.glowstone)) {
+                if (timerStack.getItem() == Item.getItemFromBlock(Blocks.glowstone)) {
                     ultrasequencerReplayIndex = 0;
                 }
 
                 for (int index = 0; index < lower.getSizeInventory(); index++) {
                     ItemStack stack = lower.getStackInSlot(index);
                     if (stack != null && stack.getItem() == Items.dye) {
-                        if(ultraSequencerOrder.containsKey(stack.stackSize-1)) {
-                            UltrasequencerItem ultrasequencerItem = ultraSequencerOrder.get(stack.stackSize-1);
+                        if (ultraSequencerOrder.containsKey(stack.stackSize - 1)) {
+                            UltrasequencerItem ultrasequencerItem = ultraSequencerOrder.get(stack.stackSize - 1);
                             ultrasequencerItem.containerIndex = index;
                             ultrasequencerItem.stack = stack;
                         } else {
-                            ultraSequencerOrder.put(stack.stackSize-1, new UltrasequencerItem(stack, index));
+                            ultraSequencerOrder.put(stack.stackSize - 1, new UltrasequencerItem(stack, index));
                         }
                     }
                 }
             } else {
                 ultraSequencerOrder.clear();
             }
-            if(currentSolver == SolverType.SUPERPAIRS) {
+            if (currentSolver == SolverType.SUPERPAIRS) {
                 successfulMatches.clear();
                 possibleMatches.clear();
                 powerupMatches.clear();
                 out:
                 for (int index = 0; index < lower.getSizeInventory(); index++) {
                     ItemStack stack = lower.getStackInSlot(index);
-                    if(stack == null) continue;
+                    if (stack == null) continue;
                     if (stack.getItem() != Item.getItemFromBlock(Blocks.stained_glass) &&
                             stack.getItem() != Item.getItemFromBlock(Blocks.stained_glass_pane)) {
                         superpairStacks.put(index, stack);
 
                         NBTTagCompound tag = stack.getTagCompound();
-                        if(tag != null) {
+                        if (tag != null) {
                             NBTTagCompound display = tag.getCompoundTag("display");
                             if (display.hasKey("Lore", 9)) {
                                 NBTTagList list = display.getTagList("Lore", 8);
                                 for (int i = 0; i < list.tagCount(); i++) {
-                                    if(list.getStringTagAt(i).toLowerCase().contains("powerup")) {
+                                    if (list.getStringTagAt(i).toLowerCase().contains("powerup")) {
                                         powerupMatches.add(index);
                                         continue out;
                                     }
@@ -476,20 +477,20 @@ public class EnchantingSolvers {
                         int numMatches = 0;
                         for (int index2 = 0; index2 < lower.getSizeInventory(); index2++) {
                             ItemStack stack2 = lower.getStackInSlot(index2);
-                            if(stack2 != null && stack2.getDisplayName().equals(stack.getDisplayName()) &&
+                            if (stack2 != null && stack2.getDisplayName().equals(stack.getDisplayName()) &&
                                     stack.getItem() == stack2.getItem() && stack.getItemDamage() == stack2.getItemDamage()) {
                                 numMatches++;
                             }
                         }
                         boolean oddMatches = (numMatches % 2) == 1;
 
-                        if((!oddMatches || index != lastSlotClicked) && !successfulMatches.contains(index)) {
+                        if ((!oddMatches || index != lastSlotClicked) && !successfulMatches.contains(index)) {
                             for (int index2 = 0; index2 < lower.getSizeInventory(); index2++) {
-                                if(index == index2) continue;
-                                if(oddMatches && index2 == lastSlotClicked) continue;
+                                if (index == index2) continue;
+                                if (oddMatches && index2 == lastSlotClicked) continue;
 
                                 ItemStack stack2 = lower.getStackInSlot(index2);
-                                if(stack2 != null && stack2.getDisplayName().equals(stack.getDisplayName()) &&
+                                if (stack2 != null && stack2.getDisplayName().equals(stack.getDisplayName()) &&
                                         stack.getItem() == stack2.getItem() && stack.getItemDamage() == stack2.getItemDamage()) {
                                     successfulMatches.add(index);
                                     successfulMatches.add(index2);
@@ -497,15 +498,15 @@ public class EnchantingSolvers {
                             }
                         }
                     } else {
-                        if(superpairStacks.containsKey(index) && superpairStacks.get(index) != null &&
+                        if (superpairStacks.containsKey(index) && superpairStacks.get(index) != null &&
                                 !possibleMatches.contains(index)) {
                             ItemStack stack1 = superpairStacks.get(index);
                             for (int index2 = 0; index2 < lower.getSizeInventory(); index2++) {
-                                if(index == index2) continue;
+                                if (index == index2) continue;
 
-                                if(superpairStacks.containsKey(index2) && superpairStacks.get(index2) != null) {
+                                if (superpairStacks.containsKey(index2) && superpairStacks.get(index2) != null) {
                                     ItemStack stack2 = superpairStacks.get(index2);
-                                    if(stack1.getDisplayName().equals(stack2.getDisplayName()) &&
+                                    if (stack1.getDisplayName().equals(stack2.getDisplayName()) &&
                                             stack1.getItem() == stack2.getItem() && stack1.getItemDamage() == stack2.getItemDamage()) {
                                         possibleMatches.add(index);
                                         possibleMatches.add(index2);
@@ -527,10 +528,10 @@ public class EnchantingSolvers {
 
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
-        if(NotEnoughUpdates.INSTANCE.config.enchantingSolvers.hideTooltips &&
+        if (NotEnoughUpdates.INSTANCE.config.enchantingSolvers.hideTooltips &&
                 (currentSolver == SolverType.CHRONOMATRON || currentSolver == SolverType.ULTRASEQUENCER)) {
             String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
-            if(internal == null && event.toolTip.size() > 0 && !event.toolTip.get(0).trim().replaceAll("\\(#.+\\)$", "").trim().contains(" ")) {
+            if (internal == null && event.toolTip.size() > 0 && !event.toolTip.get(0).trim().replaceAll("\\(#.+\\)$", "").trim().contains(" ")) {
                 event.toolTip.clear();
             }
         }
@@ -538,11 +539,11 @@ public class EnchantingSolvers {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
+        if (!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
             currentSolver = SolverType.NONE;
         }
 
-        if(event.phase != TickEvent.Phase.END) {
+        if (event.phase != TickEvent.Phase.END) {
             return;
         }
 

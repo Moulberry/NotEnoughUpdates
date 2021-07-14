@@ -36,30 +36,30 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Mixin(GuiContainer.class)
 public abstract class MixinGuiContainer extends GuiScreen {
 
-    @Inject(method="drawSlot", at=@At("RETURN"))
+    @Inject(method = "drawSlot", at = @At("RETURN"))
     public void drawSlotRet(Slot slotIn, CallbackInfo ci) {
         SlotLocking.getInstance().drawSlot(slotIn);
     }
 
-    @Inject(method="drawSlot", at=@At("HEAD"), cancellable = true)
+    @Inject(method = "drawSlot", at = @At("HEAD"), cancellable = true)
     public void drawSlot(Slot slot, CallbackInfo ci) {
-        if(slot == null) return;
+        if (slot == null) return;
 
-        if(slot.getStack() == null && NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+        if (slot.getStack() == null && NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
             GlStateManager.pushMatrix();
             GlStateManager.translate(0, 0, 100 + Minecraft.getMinecraft().getRenderItem().zLevel);
             GlStateManager.depthMask(false);
             Gui.drawRect(slot.xDisplayPosition, slot.yDisplayPosition,
-                    slot.xDisplayPosition+16, slot.yDisplayPosition+16, NEUOverlay.overlayColourDark);
+                    slot.xDisplayPosition + 16, slot.yDisplayPosition + 16, NEUOverlay.overlayColourDark);
             GlStateManager.depthMask(true);
             GlStateManager.popMatrix();
         }
 
-        GuiContainer $this = (GuiContainer)(Object)this;
+        GuiContainer $this = (GuiContainer) (Object) this;
         ItemStack stack = slot.getStack();
 
-        if(stack != null) {
-            if(EnchantingSolvers.onStackRender(stack, slot.inventory, slot.getSlotIndex(), slot.xDisplayPosition, slot.yDisplayPosition)) {
+        if (stack != null) {
+            if (EnchantingSolvers.onStackRender(stack, slot.inventory, slot.getSlotIndex(), slot.xDisplayPosition, slot.yDisplayPosition)) {
                 ci.cancel();
                 return;
             }
@@ -67,25 +67,25 @@ public abstract class MixinGuiContainer extends GuiScreen {
 
         RenderHelper.enableGUIStandardItemLighting();
 
-        if(BetterContainers.isOverriding() && !BetterContainers.shouldRenderStack(stack)) {
+        if (BetterContainers.isOverriding() && !BetterContainers.shouldRenderStack(stack)) {
             ci.cancel();
         }
     }
 
-    @Redirect(method="mouseReleased", at=@At(value = "INVOKE", target = "Ljava/util/Set;isEmpty()Z"))
+    @Redirect(method = "mouseReleased", at = @At(value = "INVOKE", target = "Ljava/util/Set;isEmpty()Z"))
     public boolean mouseReleased_isEmpty(Set<?> set) {
         return set.size() <= 1;
     }
 
-    @Inject(method="isMouseOverSlot", at=@At("HEAD"), cancellable = true)
+    @Inject(method = "isMouseOverSlot", at = @At("HEAD"), cancellable = true)
     public void isMouseOverSlot(Slot slotIn, int mouseX, int mouseY, CallbackInfoReturnable<Boolean> cir) {
         StorageOverlay.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
         GuiCustomEnchant.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
     }
 
-    @Redirect(method="drawScreen", at=@At(value="INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;drawGradientRect(IIIIII)V"))
+    @Redirect(method = "drawScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;drawGradientRect(IIIIII)V"))
     public void drawScreen_drawGradientRect(GuiContainer container, int left, int top, int right, int bottom, int startColor, int endColor) {
-        if(startColor == 0x80ffffff && endColor == 0x80ffffff &&
+        if (startColor == 0x80ffffff && endColor == 0x80ffffff &&
                 theSlot != null && SlotLocking.getInstance().isSlotLocked(theSlot)) {
             int col = 0x80ff8080;
             drawGradientRect(left, top, right, bottom, col, col);
@@ -97,49 +97,50 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Shadow
     private Slot theSlot;
 
-    @Inject(method="drawScreen", at=@At("RETURN"))
+    @Inject(method = "drawScreen", at = @At("RETURN"))
     public void drawScreen(CallbackInfo ci) {
-        if(theSlot != null && SlotLocking.getInstance().isSlotLocked(theSlot)) {
+        if (theSlot != null && SlotLocking.getInstance().isSlotLocked(theSlot)) {
             theSlot = null;
         }
     }
 
     private static final String TARGET_GETSTACK = "Lnet/minecraft/inventory/Slot;getStack()Lnet/minecraft/item/ItemStack;";
-    @Redirect(method="drawScreen", at=@At(value="INVOKE", target=TARGET_GETSTACK))
+
+    @Redirect(method = "drawScreen", at = @At(value = "INVOKE", target = TARGET_GETSTACK))
     public ItemStack drawScreen_getStack(Slot slot) {
-        if(theSlot != null && theSlot == slot && theSlot.getStack() != null) {
+        if (theSlot != null && theSlot == slot && theSlot.getStack() != null) {
             ItemStack newStack = EnchantingSolvers.overrideStack(theSlot.inventory, theSlot.getSlotIndex(), theSlot.getStack());
-            if(newStack != null) {
+            if (newStack != null) {
                 return newStack;
             }
         }
         return slot.getStack();
     }
 
-    @Redirect(method="drawSlot", at=@At(value="INVOKE", target=TARGET_GETSTACK))
+    @Redirect(method = "drawSlot", at = @At(value = "INVOKE", target = TARGET_GETSTACK))
     public ItemStack drawSlot_getStack(Slot slot) {
-        GuiContainer $this = (GuiContainer)(Object)this;
+        GuiContainer $this = (GuiContainer) (Object) this;
 
         ItemStack stack = slot.getStack();
 
-        if(stack != null) {
+        if (stack != null) {
             ItemStack newStack = EnchantingSolvers.overrideStack(slot.inventory, slot.getSlotIndex(), stack);
-            if(newStack != null) {
+            if (newStack != null) {
                 stack = newStack;
             }
         }
 
-        if($this instanceof GuiChest) {
-            Container container = ((GuiChest)$this).inventorySlots;
-            if(container instanceof ContainerChest) {
-                IInventory lower = ((ContainerChest)container).getLowerChestInventory();
+        if ($this instanceof GuiChest) {
+            Container container = ((GuiChest) $this).inventorySlots;
+            if (container instanceof ContainerChest) {
+                IInventory lower = ((ContainerChest) container).getLowerChestInventory();
                 int size = lower.getSizeInventory();
-                if(slot.slotNumber >= size) {
+                if (slot.slotNumber >= size) {
                     return stack;
                 }
-                if(System.currentTimeMillis() - BetterContainers.lastRenderMillis < 300 && stack == null) {
-                    for(int index=0; index<size; index++) {
-                        if(lower.getStackInSlot(index) != null) {
+                if (System.currentTimeMillis() - BetterContainers.lastRenderMillis < 300 && stack == null) {
+                    for (int index = 0; index < size; index++) {
+                        if (lower.getStackInSlot(index) != null) {
                             BetterContainers.itemCache.put(slot.slotNumber, null);
                             return null;
                         }
@@ -154,24 +155,25 @@ public abstract class MixinGuiContainer extends GuiScreen {
     }
 
     private static final String TARGET_CANBEHOVERED = "Lnet/minecraft/inventory/Slot;canBeHovered()Z";
-    @Redirect(method="drawScreen", at=@At(value="INVOKE", target=TARGET_CANBEHOVERED))
+
+    @Redirect(method = "drawScreen", at = @At(value = "INVOKE", target = TARGET_CANBEHOVERED))
     public boolean drawScreen_canBeHovered(Slot slot) {
-        if(NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
+        if (NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
                 BetterContainers.isOverriding() && BetterContainers.isBlankStack(slot.getStack())) {
             return false;
         }
         return slot.canBeHovered();
     }
 
-    @Inject(method="handleMouseClick", at=@At(value="HEAD"), cancellable = true)
+    @Inject(method = "handleMouseClick", at = @At(value = "HEAD"), cancellable = true)
     public void handleMouseClick(Slot slotIn, int slotId, int clickedButton, int clickType, CallbackInfo ci) {
-        GuiContainer $this = (GuiContainer)(Object)this;
+        GuiContainer $this = (GuiContainer) (Object) this;
 
         AtomicBoolean ret = new AtomicBoolean(false);
         SlotLocking.getInstance().onWindowClick(slotIn, slotId, clickedButton, clickType, (tuple) -> {
             ci.cancel();
 
-            if(tuple == null) {
+            if (tuple == null) {
                 ret.set(true);
             } else {
                 int newSlotId = tuple.getLeft();
@@ -182,10 +184,10 @@ public abstract class MixinGuiContainer extends GuiScreen {
                 $this.mc.playerController.windowClick($this.inventorySlots.windowId, newSlotId, newClickedButton, newClickedType, $this.mc.thePlayer);
             }
         });
-        if(ret.get()) return;
+        if (ret.get()) return;
 
-        if(slotIn != null && slotIn.getStack() != null) {
-            if(EnchantingSolvers.onStackClick(slotIn.getStack(), $this.inventorySlots.windowId,
+        if (slotIn != null && slotIn.getStack() != null) {
+            if (EnchantingSolvers.onStackClick(slotIn.getStack(), $this.inventorySlots.windowId,
                     slotId, clickedButton, clickType)) {
                 ci.cancel();
             } else {
@@ -193,11 +195,11 @@ public abstract class MixinGuiContainer extends GuiScreen {
                         slotId, clickedButton, clickType);
             }
         }
-        if(slotIn != null && BetterContainers.isOverriding() && (BetterContainers.isBlankStack(slotIn.getStack()) ||
+        if (slotIn != null && BetterContainers.isOverriding() && (BetterContainers.isBlankStack(slotIn.getStack()) ||
                 BetterContainers.isButtonStack(slotIn.getStack()))) {
             BetterContainers.clickSlot(slotIn.getSlotIndex());
 
-            if(BetterContainers.isBlankStack(slotIn.getStack())) {
+            if (BetterContainers.isBlankStack(slotIn.getStack())) {
                 $this.mc.playerController.windowClick($this.inventorySlots.windowId, slotId, 2, clickType, $this.mc.thePlayer);
                 ci.cancel();
             } else {

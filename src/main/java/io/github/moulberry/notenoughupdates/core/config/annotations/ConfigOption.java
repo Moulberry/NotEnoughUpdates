@@ -11,7 +11,9 @@ import java.lang.annotation.Target;
 public @interface ConfigOption {
 
     String name();
+
     String desc();
+
     int subcategoryId() default -1;
 
 }

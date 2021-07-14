@@ -97,7 +97,7 @@ public class NotEnoughUpdates {
     private String currChatMessage = null;
 
     //Stolen from Biscut and used for detecting whether in skyblock
-    private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK","\u7A7A\u5C9B\u751F\u5B58", "\u7A7A\u5CF6\u751F\u5B58");
+    private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK", "\u7A7A\u5C9B\u751F\u5B58", "\u7A7A\u5CF6\u751F\u5B58");
 
     public GuiScreen openGui = null;
     public long lastOpenedGui = 0;
@@ -113,24 +113,24 @@ public class NotEnoughUpdates {
 
     SimpleCommand nullzeeSphereCommand = new SimpleCommand("neuzeesphere", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(args.length != 1) {
-                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"Usage: /neuzeesphere [on/off] or /neuzeesphere (radius) or /neuzeesphere setCenter"));
+            if (args.length != 1) {
+                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Usage: /neuzeesphere [on/off] or /neuzeesphere (radius) or /neuzeesphere setCenter"));
                 return;
             }
-            if(args[0].equalsIgnoreCase("on")) {
+            if (args[0].equalsIgnoreCase("on")) {
                 NullzeeSphere.enabled = true;
-            } else if(args[0].equalsIgnoreCase("off")) {
+            } else if (args[0].equalsIgnoreCase("off")) {
                 NullzeeSphere.enabled = false;
-            } else if(args[0].equalsIgnoreCase("setCenter")) {
-                EntityPlayerSP p = ((EntityPlayerSP)sender);
+            } else if (args[0].equalsIgnoreCase("setCenter")) {
+                EntityPlayerSP p = ((EntityPlayerSP) sender);
                 NullzeeSphere.centerPos = new BlockPos(p.posX, p.posY, p.posZ);
                 NullzeeSphere.overlayVBO = null;
             } else {
                 try {
                     NullzeeSphere.size = Float.parseFloat(args[0]);
                     NullzeeSphere.overlayVBO = null;
-                } catch(Exception e) {
-                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"Can't parse radius: " + args[0]));
+                } catch (Exception e) {
+                    sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Can't parse radius: " + args[0]));
                 }
             }
         }
@@ -224,13 +224,13 @@ public class NotEnoughUpdates {
     SimpleCommand stWhyCommand = new SimpleCommand("neustwhy", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             NEUEventListener.displayNotification(Lists.newArrayList(
-                              "\u00a7eStorage Viewer",
-                            "\u00a77Currently, the storage viewer requires you to click twice",
-                            "\u00a77in order to switch between pages. This is because Hypixel",
-                            "\u00a77has not yet added a shortcut command to go to any enderchest/",
-                            "\u00a77storage page.",
-                            "\u00a77While it is possible to send the second click",
-                            "\u00a77automatically, doing so violates Hypixel's new mod rules."), true);
+                    "\u00a7eStorage Viewer",
+                    "\u00a77Currently, the storage viewer requires you to click twice",
+                    "\u00a77in order to switch between pages. This is because Hypixel",
+                    "\u00a77has not yet added a shortcut command to go to any enderchest/",
+                    "\u00a77storage page.",
+                    "\u00a77While it is possible to send the second click",
+                    "\u00a77automatically, doing so violates Hypixel's new mod rules."), true);
         }
     });
 
@@ -261,8 +261,8 @@ public class NotEnoughUpdates {
 
     SimpleCommand dungeonWinTest = new SimpleCommand("neudungeonwintest", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(args.length > 0) {
-                DungeonWin.TEAM_SCORE = new ResourceLocation("notenoughupdates:dungeon_win/"+args[0].toLowerCase()+".png");
+            if (args.length > 0) {
+                DungeonWin.TEAM_SCORE = new ResourceLocation("notenoughupdates:dungeon_win/" + args[0].toLowerCase() + ".png");
             }
 
             DungeonWin.displayWin();
@@ -272,11 +272,11 @@ public class NotEnoughUpdates {
     SimpleCommand reloadRepoCommand = new SimpleCommand("neureloadrepo", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             File items = new File(manager.repoLocation, "items");
-            if(items.exists()) {
+            if (items.exists()) {
                 File[] itemFiles = new File(manager.repoLocation, "items").listFiles();
-                if(itemFiles != null) {
-                    for(File f : itemFiles) {
-                        String internalname = f.getName().substring(0, f.getName().length()-5);
+                if (itemFiles != null) {
+                    for (File f : itemFiles) {
+                        String internalname = f.getName().substring(0, f.getName().length() - 5);
                         manager.loadItem(internalname);
                     }
                 }
@@ -284,15 +284,17 @@ public class NotEnoughUpdates {
             Constants.reload();
 
             configFile = new File(neuDir, "configNew.json");
-            if(configFile.exists()) {
-                try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
+            if (configFile.exists()) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
                     config = gson.fromJson(reader, NEUConfig.class);
-                } catch(Exception e) { }
+                } catch (Exception e) {
+                }
             }
         }
     });
 
     private static HashMap<String, String> petRarityToColourMap = new HashMap<>();
+
     static {
         petRarityToColourMap.put("UNKNOWN", EnumChatFormatting.RED.toString());
 
@@ -302,52 +304,53 @@ public class NotEnoughUpdates {
         petRarityToColourMap.put("EPIC", EnumChatFormatting.DARK_PURPLE.toString());
         petRarityToColourMap.put("LEGENDARY", EnumChatFormatting.GOLD.toString());
     }
+
     ScheduledExecutorService peekCommandExecutorService = null;
     SimpleCommand peekCommand = new SimpleCommand("peek", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             String name;
-            if(args.length == 0) {
+            if (args.length == 0) {
                 name = Minecraft.getMinecraft().thePlayer.getName();
             } else {
                 name = args[0];
             }
-            int id = new Random().nextInt(Integer.MAX_VALUE/2)+Integer.MAX_VALUE/2;
+            int id = new Random().nextInt(Integer.MAX_VALUE / 2) + Integer.MAX_VALUE / 2;
 
             Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
-                    EnumChatFormatting.YELLOW+"[PEEK] Getting player information..."), id);
+                    EnumChatFormatting.YELLOW + "[PEEK] Getting player information..."), id);
             profileViewer.getProfileByName(name, profile -> {
                 if (profile == null) {
                     Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
-                            EnumChatFormatting.RED+"[PEEK] Unknown player or api is down."), id);
+                            EnumChatFormatting.RED + "[PEEK] Unknown player or api is down."), id);
                 } else {
                     profile.resetCache();
 
-                    if(peekCommandExecutorService == null || peekCommandExecutorService.isShutdown()) {
+                    if (peekCommandExecutorService == null || peekCommandExecutorService.isShutdown()) {
                         peekCommandExecutorService = Executors.newSingleThreadScheduledExecutor();
                     } else {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                EnumChatFormatting.RED+"[PEEK] New peek command run, cancelling old one."));
+                                EnumChatFormatting.RED + "[PEEK] New peek command run, cancelling old one."));
                         peekCommandExecutorService.shutdownNow();
                         peekCommandExecutorService = Executors.newSingleThreadScheduledExecutor();
                     }
 
                     Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
-                            EnumChatFormatting.YELLOW+"[PEEK] Getting player skyblock profiles..."), id);
+                            EnumChatFormatting.YELLOW + "[PEEK] Getting player skyblock profiles..."), id);
 
                     long startTime = System.currentTimeMillis();
                     peekCommandExecutorService.schedule(new Runnable() {
                         public void run() {
-                            if(System.currentTimeMillis() - startTime > 10*1000) {
+                            if (System.currentTimeMillis() - startTime > 10 * 1000) {
 
                                 Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
-                                        EnumChatFormatting.RED+"[PEEK] Getting profile info took too long, aborting."), id);
+                                        EnumChatFormatting.RED + "[PEEK] Getting profile info took too long, aborting."), id);
                                 return;
                             }
 
                             String g = EnumChatFormatting.GRAY.toString();
 
                             JsonObject profileInfo = profile.getProfileInformation(null);
-                            if(profileInfo != null) {
+                            if (profileInfo != null) {
                                 float overallScore = 0;
 
                                 boolean isMe = name.equalsIgnoreCase("moulberry");
@@ -355,21 +358,21 @@ public class NotEnoughUpdates {
                                 PlayerStats.Stats stats = profile.getStats(null);
                                 JsonObject skill = profile.getSkillInfo(null);
 
-                                Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(EnumChatFormatting.GREEN+" "+
-                                        EnumChatFormatting.STRIKETHROUGH+"-=-" +EnumChatFormatting.RESET+EnumChatFormatting.GREEN+" "+
+                                Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(EnumChatFormatting.GREEN + " " +
+                                        EnumChatFormatting.STRIKETHROUGH + "-=-" + EnumChatFormatting.RESET + EnumChatFormatting.GREEN + " " +
                                         Utils.getElementAsString(profile.getHypixelProfile().get("displayname"), name) + "'s Info " +
-                                        EnumChatFormatting.STRIKETHROUGH+"-=-"), id);
+                                        EnumChatFormatting.STRIKETHROUGH + "-=-"), id);
 
-                                if(skill == null) {
-                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW+"Skills api disabled!"));
+                                if (skill == null) {
+                                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "Skills api disabled!"));
                                 } else {
                                     float totalSkillLVL = 0;
                                     float totalSkillCount = 0;
 
-                                    for(Map.Entry<String, JsonElement> entry : skill.entrySet()) {
-                                        if(entry.getKey().startsWith("level_skill")) {
-                                            if(entry.getKey().contains("runecrafting")) continue;
-                                            if(entry.getKey().contains("carpentry")) continue;
+                                    for (Map.Entry<String, JsonElement> entry : skill.entrySet()) {
+                                        if (entry.getKey().startsWith("level_skill")) {
+                                            if (entry.getKey().contains("runecrafting")) continue;
+                                            if (entry.getKey().contains("carpentry")) continue;
                                             totalSkillLVL += entry.getValue().getAsFloat();
                                             totalSkillCount++;
                                         }
@@ -380,9 +383,9 @@ public class NotEnoughUpdates {
                                     float spider = Utils.getElementAsFloat(skill.get("level_slayer_spider"), 0);
                                     float wolf = Utils.getElementAsFloat(skill.get("level_slayer_wolf"), 0);
 
-                                    float avgSkillLVL = totalSkillLVL/totalSkillCount;
+                                    float avgSkillLVL = totalSkillLVL / totalSkillCount;
 
-                                    if(isMe) {
+                                    if (isMe) {
                                         avgSkillLVL = 6;
                                         combat = 4;
                                         zombie = 2;
@@ -390,100 +393,100 @@ public class NotEnoughUpdates {
                                         wolf = 2;
                                     }
 
-                                    EnumChatFormatting combatPrefix = combat>20?(combat>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                    EnumChatFormatting zombiePrefix = zombie>3?(zombie>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                    EnumChatFormatting spiderPrefix = spider>3?(spider>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                    EnumChatFormatting wolfPrefix = wolf>3?(wolf>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                    EnumChatFormatting avgPrefix = avgSkillLVL>20?(avgSkillLVL>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting combatPrefix = combat > 20 ? (combat > 35 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
+                                    EnumChatFormatting zombiePrefix = zombie > 3 ? (zombie > 6 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
+                                    EnumChatFormatting spiderPrefix = spider > 3 ? (spider > 6 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
+                                    EnumChatFormatting wolfPrefix = wolf > 3 ? (wolf > 6 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
+                                    EnumChatFormatting avgPrefix = avgSkillLVL > 20 ? (avgSkillLVL > 35 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
 
-                                    overallScore += zombie*zombie/81f;
-                                    overallScore += spider*spider/81f;
-                                    overallScore += wolf*wolf/81f;
-                                    overallScore += avgSkillLVL/20f;
+                                    overallScore += zombie * zombie / 81f;
+                                    overallScore += spider * spider / 81f;
+                                    overallScore += wolf * wolf / 81f;
+                                    overallScore += avgSkillLVL / 20f;
 
-                                    int cata = (int)Utils.getElementAsFloat(skill.get("level_skill_catacombs"), 0);
-                                    EnumChatFormatting cataPrefix = cata>15?(cata>25?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    int cata = (int) Utils.getElementAsFloat(skill.get("level_skill_catacombs"), 0);
+                                    EnumChatFormatting cataPrefix = cata > 15 ? (cata > 25 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
 
-                                    overallScore += cata*cata/2000f;
+                                    overallScore += cata * cata / 2000f;
 
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                            g+"Combat: "+combatPrefix+(int)Math.floor(combat) +
-                                                    (cata > 0 ? g+" - Cata: "+cataPrefix+cata : "")+
-                                                    g+" - AVG: " + avgPrefix+(int)Math.floor(avgSkillLVL)));
+                                            g + "Combat: " + combatPrefix + (int) Math.floor(combat) +
+                                                    (cata > 0 ? g + " - Cata: " + cataPrefix + cata : "") +
+                                                    g + " - AVG: " + avgPrefix + (int) Math.floor(avgSkillLVL)));
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                            g+"Slayer: "+zombiePrefix+(int)Math.floor(zombie)+g+"-"+
-                                                    spiderPrefix+(int)Math.floor(spider)+g+"-"+wolfPrefix+(int)Math.floor(wolf)));
+                                            g + "Slayer: " + zombiePrefix + (int) Math.floor(zombie) + g + "-" +
+                                                    spiderPrefix + (int) Math.floor(spider) + g + "-" + wolfPrefix + (int) Math.floor(wolf)));
                                 }
-                                if(stats == null) {
+                                if (stats == null) {
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                            EnumChatFormatting.YELLOW+"Skills, collection and/or inventory apis disabled!"));
+                                            EnumChatFormatting.YELLOW + "Skills, collection and/or inventory apis disabled!"));
                                 } else {
-                                    int health = (int)stats.get("health");
-                                    int defence = (int)stats.get("defence");
-                                    int strength = (int)stats.get("strength");
-                                    int intelligence = (int)stats.get("intelligence");
+                                    int health = (int) stats.get("health");
+                                    int defence = (int) stats.get("defence");
+                                    int strength = (int) stats.get("strength");
+                                    int intelligence = (int) stats.get("intelligence");
 
-                                    EnumChatFormatting healthPrefix = health>800?(health>1600?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                    EnumChatFormatting defencePrefix = defence>200?(defence>600?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                    EnumChatFormatting strengthPrefix = strength>100?(strength>300?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
-                                    EnumChatFormatting intelligencePrefix = intelligence>300?(intelligence>900?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting healthPrefix = health > 800 ? (health > 1600 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
+                                    EnumChatFormatting defencePrefix = defence > 200 ? (defence > 600 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
+                                    EnumChatFormatting strengthPrefix = strength > 100 ? (strength > 300 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
+                                    EnumChatFormatting intelligencePrefix = intelligence > 300 ? (intelligence > 900 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
 
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                            g+"Stats  : "+healthPrefix+health+EnumChatFormatting.RED+"\u2764 "+
-                                                    defencePrefix+defence+EnumChatFormatting.GREEN+"\u2748 "+
-                                                    strengthPrefix+strength+EnumChatFormatting.RED+"\u2741 "+
-                                                    intelligencePrefix+intelligence+EnumChatFormatting.AQUA+"\u270e "));
+                                            g + "Stats  : " + healthPrefix + health + EnumChatFormatting.RED + "\u2764 " +
+                                                    defencePrefix + defence + EnumChatFormatting.GREEN + "\u2748 " +
+                                                    strengthPrefix + strength + EnumChatFormatting.RED + "\u2741 " +
+                                                    intelligencePrefix + intelligence + EnumChatFormatting.AQUA + "\u270e "));
                                 }
                                 float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), -1);
                                 float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
 
                                 long networth = profile.getNetWorth(null);
-                                float money = Math.max(bankBalance+purseBalance, networth);
-                                EnumChatFormatting moneyPrefix = money>50*1000*1000?
-                                        (money>200*1000*1000?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                float money = Math.max(bankBalance + purseBalance, networth);
+                                EnumChatFormatting moneyPrefix = money > 50 * 1000 * 1000 ?
+                                        (money > 200 * 1000 * 1000 ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW) : EnumChatFormatting.RED;
                                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                        g+"Purse: "+moneyPrefix+Utils.shortNumberFormat(purseBalance, 0) + g+" - Bank: " +
-                                                (bankBalance == -1 ? EnumChatFormatting.YELLOW+"N/A" : moneyPrefix+
-                                                        (isMe?"4.8b":Utils.shortNumberFormat(bankBalance, 0))) +
-                                                (networth > 0 ? g+" - Net: "+moneyPrefix+Utils.shortNumberFormat(networth, 0) : "")));
+                                        g + "Purse: " + moneyPrefix + Utils.shortNumberFormat(purseBalance, 0) + g + " - Bank: " +
+                                                (bankBalance == -1 ? EnumChatFormatting.YELLOW + "N/A" : moneyPrefix +
+                                                        (isMe ? "4.8b" : Utils.shortNumberFormat(bankBalance, 0))) +
+                                                (networth > 0 ? g + " - Net: " + moneyPrefix + Utils.shortNumberFormat(networth, 0) : "")));
 
-                                overallScore += Math.min(2, money/(100f*1000*1000));
+                                overallScore += Math.min(2, money / (100f * 1000 * 1000));
 
                                 String activePet = Utils.getElementAsString(Utils.getElement(profile.getPetsInfo(null), "active_pet.type"),
                                         "None Active");
                                 String activePetTier = Utils.getElementAsString(Utils.getElement(profile.getPetsInfo(null), "active_pet.tier"), "UNKNOWN");
 
                                 String col = petRarityToColourMap.get(activePetTier);
-                                if(col == null) col = EnumChatFormatting.LIGHT_PURPLE.toString();
+                                if (col == null) col = EnumChatFormatting.LIGHT_PURPLE.toString();
 
-                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(g+"Pet    : " +
+                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(g + "Pet    : " +
                                         col + WordUtils.capitalizeFully(activePet.replace("_", " "))));
 
                                 String overall = "Skywars Main";
-                                if(isMe) {
+                                if (isMe) {
                                     overall = Utils.chromaString("Literally the best player to exist");
-                                } else if(overallScore < 5 && (bankBalance+purseBalance) > 500*1000*1000) {
-                                    overall = EnumChatFormatting.GOLD+"Bill Gates";
-                                } else if(overallScore > 9) {
+                                } else if (overallScore < 5 && (bankBalance + purseBalance) > 500 * 1000 * 1000) {
+                                    overall = EnumChatFormatting.GOLD + "Bill Gates";
+                                } else if (overallScore > 9) {
                                     overall = Utils.chromaString("Didn't even think this score was possible");
-                                } else if(overallScore > 8) {
+                                } else if (overallScore > 8) {
                                     overall = Utils.chromaString("Mentally unstable");
-                                } else if(overallScore > 7) {
-                                    overall = EnumChatFormatting.GOLD+"Why though 0.0";
-                                } else if(overallScore > 5.5) {
-                                    overall = EnumChatFormatting.GOLD+"Bro stop playing";
-                                } else if(overallScore > 4) {
-                                    overall = EnumChatFormatting.GREEN+"Kinda sweaty";
-                                } else if(overallScore > 3) {
-                                    overall = EnumChatFormatting.YELLOW+"Alright I guess";
-                                } else if(overallScore > 2) {
-                                    overall = EnumChatFormatting.YELLOW+"Ender Non";
-                                } else if(overallScore > 1) {
-                                    overall = EnumChatFormatting.RED+"Played Skyblock";
+                                } else if (overallScore > 7) {
+                                    overall = EnumChatFormatting.GOLD + "Why though 0.0";
+                                } else if (overallScore > 5.5) {
+                                    overall = EnumChatFormatting.GOLD + "Bro stop playing";
+                                } else if (overallScore > 4) {
+                                    overall = EnumChatFormatting.GREEN + "Kinda sweaty";
+                                } else if (overallScore > 3) {
+                                    overall = EnumChatFormatting.YELLOW + "Alright I guess";
+                                } else if (overallScore > 2) {
+                                    overall = EnumChatFormatting.YELLOW + "Ender Non";
+                                } else if (overallScore > 1) {
+                                    overall = EnumChatFormatting.RED + "Played Skyblock";
                                 }
 
-                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(g+"Overall score: " +
-                                       overall + g + " (" + Math.round(overallScore*10)/10f + ")"));
+                                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(g + "Overall score: " +
+                                        overall + g + " (" + Math.round(overallScore * 10) / 10f + ")"));
 
                                 peekCommandExecutorService.shutdownNow();
                             } else {
@@ -517,7 +520,7 @@ public class NotEnoughUpdates {
             Minecraft mc = Minecraft.getMinecraft();
             StringBuilder builder = new StringBuilder();
 
-            if (args.length > 0 && args[0].equalsIgnoreCase("modlist")){
+            if (args.length > 0 && args[0].equalsIgnoreCase("modlist")) {
                 builder.append("```md\n");
                 builder.append("# Mods Loaded").append("\n");
                 for (ModContainer modContainer : Loader.instance().getActiveModList()) {
@@ -528,7 +531,8 @@ public class NotEnoughUpdates {
                 long memorySize = -1;
                 try {
                     memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
-                } catch(Exception e){}
+                } catch (Exception e) {
+                }
                 long maxMemory = Runtime.getRuntime().maxMemory();
                 long totalMemory = Runtime.getRuntime().totalMemory();
                 long freeMemory = Runtime.getRuntime().freeMemory();
@@ -543,11 +547,11 @@ public class NotEnoughUpdates {
                 builder.append("[Display]").append("[").append(String.format("%dx%d (%s)", Display.getWidth(), Display.getHeight(), GL11.glGetString(GL11.GL_VENDOR))).append("]").append("\n");
                 builder.append("[GPU]").append("[").append(GL11.glGetString(GL11.GL_RENDERER)).append("]").append("\n");
                 builder.append("[GPU Driver]").append("[").append(GL11.glGetString(GL11.GL_VERSION)).append("]").append("\n");
-                if(memorySize > 0) {
+                if (memorySize > 0) {
                     builder.append("[Maximum Memory]").append("[").append(memorySize / 1024L / 1024L).append("MB]").append("\n");
                 }
-                builder.append("[Shaders]").append("[").append((""+OpenGlHelper.areShadersSupported()).toUpperCase()).append("]").append("\n");
-                builder.append("[Framebuffers]").append("[").append((""+OpenGlHelper.isFramebufferEnabled()).toUpperCase()).append("]").append("\n");
+                builder.append("[Shaders]").append("[").append(("" + OpenGlHelper.areShadersSupported()).toUpperCase()).append("]").append("\n");
+                builder.append("[Framebuffers]").append("[").append(("" + OpenGlHelper.isFramebufferEnabled()).toUpperCase()).append("]").append("\n");
                 builder.append("# Java Stats").append("\n");
                 builder.append("[Java]").append("[").append(String.format("%s %dbit", System.getProperty("java.version"), mc.isJava64bit() ? 64 : 32)).append("]").append("\n");
                 builder.append("[Memory]").append("[").append(String.format("% 2d%% %03d/%03dMB", currentMemory * 100L / maxMemory, currentMemory / 1024L / 1024L, maxMemory / 1024L / 1024L)).append("]").append("\n");
@@ -587,20 +591,20 @@ public class NotEnoughUpdates {
 
     SimpleCommand.ProcessCommandRunnable viewProfileRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(Loader.isModLoaded("optifine") &&
+            if (Loader.isModLoaded("optifine") &&
                     new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
-                try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
+                try (InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
                     String line;
-                    while((line = reader.readLine()) != null) {
-                        if(line.contains("ofFastRender:true")) {
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("ofFastRender:true")) {
                             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                                     "Some parts of the profile viewer do not work with OF Fast Render. Go to Video > Performance to disable it."));
                             break;
                         }
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                 }
             }
             if (config.apiKey.apiKey == null || config.apiKey.apiKey.trim().isEmpty()) {
@@ -608,7 +612,7 @@ public class NotEnoughUpdates {
                         "Can't view profile, apikey is not set. Run /api new and put the result in settings."));
             } else if (args.length == 0) {
                 profileViewer.getProfileByName(Minecraft.getMinecraft().thePlayer.getName(), profile -> {
-                    if(profile == null) {
+                    if (profile == null) {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                                 "Invalid player name/api key. Maybe api is down? Try /api new."));
                     } else {
@@ -621,7 +625,7 @@ public class NotEnoughUpdates {
                         "Too many arguments. Usage: /neuprofile [name]"));
             } else {
                 profileViewer.getProfileByName(args[0], profile -> {
-                    if(profile == null) {
+                    if (profile == null) {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                                 "Invalid player name/api key. Maybe api is down? Try /api new."));
                     } else {
@@ -640,15 +644,15 @@ public class NotEnoughUpdates {
             if (!hasSkyblockScoreboard()) {
                 Minecraft.getMinecraft().thePlayer.sendChatMessage("/join " + StringUtils.join(args, " "));
             } else {
-                if(args.length != 1) {
+                if (args.length != 1) {
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                            EnumChatFormatting.RED+"Example Usage: /join f7 or /join 7"));
+                            EnumChatFormatting.RED + "Example Usage: /join f7 or /join 7"));
                 } else {
-                    String cmd = "/joindungeon catacombs " + args[0].charAt(args[0].length()-1);
+                    String cmd = "/joindungeon catacombs " + args[0].charAt(args[0].length() - 1);
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                            EnumChatFormatting.YELLOW+"Running command: "+cmd));
+                            EnumChatFormatting.YELLOW + "Running command: " + cmd));
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                            EnumChatFormatting.YELLOW+"The dungeon should start soon. If it doesn't, make sure you have a party of 5 people"));
+                            EnumChatFormatting.YELLOW + "The dungeon should start soon. If it doesn't, make sure you have a party of 5 people"));
                     Minecraft.getMinecraft().thePlayer.sendChatMessage(cmd);
                 }
             }
@@ -658,13 +662,13 @@ public class NotEnoughUpdates {
     SimpleCommand viewProfileCommand = new SimpleCommand("neuprofile", viewProfileRunnable, new SimpleCommand.TabCompleteRunnable() {
         @Override
         public List<String> tabComplete(ICommandSender sender, String[] args, BlockPos pos) {
-            if(args.length != 1) return null;
+            if (args.length != 1) return null;
 
-            String lastArg = args[args.length-1];
+            String lastArg = args[args.length - 1];
             List<String> playerMatches = new ArrayList<>();
-            for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+            for (EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
                 String playerName = player.getName();
-                if(playerName.toLowerCase().startsWith(lastArg.toLowerCase())) {
+                if (playerName.toLowerCase().startsWith(lastArg.toLowerCase())) {
                     playerMatches.add(playerName);
                 }
             }
@@ -675,7 +679,7 @@ public class NotEnoughUpdates {
     SimpleCommand viewProfileShortCommand = new SimpleCommand("pv", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!isOnSkyblock()) {
+            if (!isOnSkyblock()) {
                 Minecraft.getMinecraft().thePlayer.sendChatMessage("/pv " + StringUtils.join(args, " "));
             } else {
                 viewProfileRunnable.processCommand(sender, args);
@@ -716,9 +720,9 @@ public class NotEnoughUpdates {
     SimpleCommand devTestCommand = new SimpleCommand("neudevtest", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("Moulberry") &&
+            if (!Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("Moulberry") &&
                     !Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("LucyCoconut")) {
-                if(devFailIndex >= devFailStrings.length) {
+                if (devFailIndex >= devFailStrings.length) {
                     throw new Error("L") {
                         @Override
                         public void printStackTrace() {
@@ -726,7 +730,7 @@ public class NotEnoughUpdates {
                         }
                     };
                 }
-                if(devFailIndex == devFailStrings.length-2) {
+                if (devFailIndex == devFailStrings.length - 2) {
                     devFailIndex++;
 
                     ChatComponentText component = new ChatComponentText("\u00a7cYou are permanently banned from this server!");
@@ -739,32 +743,32 @@ public class NotEnoughUpdates {
                     Minecraft.getMinecraft().getNetHandler().getNetworkManager().closeChannel(component);
                     return;
                 }
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+devFailStrings[devFailIndex++]));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + devFailStrings[devFailIndex++]));
                 return;
             }
             /*if(args.length == 1) {
                 DupePOC.doDupe(args[0]);
                 return;
             }*/
-            if(args.length == 2 && args[0].equalsIgnoreCase("pt")) {
+            if (args.length == 2 && args[0].equalsIgnoreCase("pt")) {
                 FishingHelper.type = EnumParticleTypes.valueOf(args[1]);
             }
-            if(args.length == 1 && args[0].equalsIgnoreCase("dev")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("dev")) {
                 NotEnoughUpdates.INSTANCE.config.hidden.dev = true;
                 return;
             }
-            if(args.length == 1 && args[0].equalsIgnoreCase("saveconfig")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("saveconfig")) {
                 saveConfig();
                 return;
             }
-            if(args.length == 1 && args[0].equalsIgnoreCase("center")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("center")) {
                 double x = Math.floor(Minecraft.getMinecraft().thePlayer.posX) + 0.5f;
                 double z = Math.floor(Minecraft.getMinecraft().thePlayer.posZ) + 0.5f;
                 Minecraft.getMinecraft().thePlayer.setPosition(x, Minecraft.getMinecraft().thePlayer.posY, z);
                 return;
             }
-            if(args.length == 1 && args[0].equalsIgnoreCase("pansc")) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Taking panorama screenshot"));
+            if (args.length == 1 && args[0].equalsIgnoreCase("pansc")) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "Taking panorama screenshot"));
 
                 AtomicInteger perspective = new AtomicInteger(0);
                 FancyPortals.perspectiveId = 0;
@@ -776,22 +780,22 @@ public class NotEnoughUpdates {
                     @Override
                     public void run() {
                         Minecraft.getMinecraft().addScheduledTask(() -> {
-                            ScreenShotHelper.saveScreenshot(new File("C:/Users/James/Desktop/"), "pansc-"+perspective.get()+".png",
+                            ScreenShotHelper.saveScreenshot(new File("C:/Users/James/Desktop/"), "pansc-" + perspective.get() + ".png",
                                     Minecraft.getMinecraft().displayWidth, Minecraft.getMinecraft().displayHeight,
                                     Minecraft.getMinecraft().getFramebuffer());
                         });
-                        if(perspective.incrementAndGet() >= 6) {
+                        if (perspective.incrementAndGet() >= 6) {
                             FancyPortals.perspectiveId = -1;
                             return;
                         }
                         devES.schedule(() -> {
                             FancyPortals.perspectiveId = perspective.get();
-                            if(FancyPortals.perspectiveId == 5) {
+                            if (FancyPortals.perspectiveId == 5) {
                                 p.prevRotationYaw = p.rotationYaw = 0;
                                 p.prevRotationPitch = p.rotationPitch = -90;
-                            } else if(FancyPortals.perspectiveId >= 1 && FancyPortals.perspectiveId <= 4) {
-                                float yaw = 90*FancyPortals.perspectiveId-180;
-                                if(yaw > 180) yaw -= 360;
+                            } else if (FancyPortals.perspectiveId >= 1 && FancyPortals.perspectiveId <= 4) {
+                                float yaw = 90 * FancyPortals.perspectiveId - 180;
+                                if (yaw > 180) yaw -= 360;
                                 p.prevRotationYaw = p.rotationYaw = yaw;
                                 p.prevRotationPitch = p.rotationPitch = 0;
                             }
@@ -802,7 +806,7 @@ public class NotEnoughUpdates {
 
                 return;
             }
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Executing dubious code"));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "Executing dubious code"));
             /*Minecraft.getMinecraft().thePlayer.rotationYaw = 0;
             Minecraft.getMinecraft().thePlayer.rotationPitch = 0;
             Minecraft.getMinecraft().thePlayer.setPosition(
@@ -817,33 +821,33 @@ public class NotEnoughUpdates {
     SimpleCommand packDevCommand = new SimpleCommand("neupackdev", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(args.length == 1 && args[0].equalsIgnoreCase("getnpc")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("getnpc")) {
                 double distSq = 25;
                 EntityPlayer closestNPC = null;
                 EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-                for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-                    if(player instanceof AbstractClientPlayer && p != player && player.getUniqueID().version() != 4) {
+                for (EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
+                    if (player instanceof AbstractClientPlayer && p != player && player.getUniqueID().version() != 4) {
                         double dSq = player.getDistanceSq(p.posX, p.posY, p.posZ);
-                        if(dSq < distSq) {
+                        if (dSq < distSq) {
                             distSq = dSq;
                             closestNPC = player;
                         }
                     }
                 }
 
-                if(closestNPC == null) {
-                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"No NPCs found within 5 blocks :("));
+                if (closestNPC == null) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "No NPCs found within 5 blocks :("));
                 } else {
-                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Copied entity texture id to clipboard"));
-                    MiscUtils.copyToClipboard(((AbstractClientPlayer)closestNPC).getLocationSkin().getResourcePath().replace("skins/", ""));
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "Copied entity texture id to clipboard"));
+                    MiscUtils.copyToClipboard(((AbstractClientPlayer) closestNPC).getLocationSkin().getResourcePath().replace("skins/", ""));
                 }
                 return;
             }
             packDevEnabled = !packDevEnabled;
-            if(packDevEnabled) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Enabled pack developer mode."));
+            if (packDevEnabled) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "Enabled pack developer mode."));
             } else {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+"Disabled pack developer mode."));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Disabled pack developer mode."));
             }
         }
     });
@@ -852,7 +856,7 @@ public class NotEnoughUpdates {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
             Minecraft.getMinecraft().thePlayer.sendChatMessage("/warp dungeon_hub");
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA+"Warping to:"+EnumChatFormatting.YELLOW+" Deez Nuts lmao"));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "Warping to:" + EnumChatFormatting.YELLOW + " Deez Nuts lmao"));
         }
     });
 
@@ -882,7 +886,7 @@ public class NotEnoughUpdates {
     SimpleCommand linksCommand = new SimpleCommand("neulinks", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             File repo = manager.repoLocation;
-            if(repo.exists()) {
+            if (repo.exists()) {
                 File updateJson = new File(repo, "update.json");
                 try {
                     JsonObject update = manager.getJsonFromFile(updateJson);
@@ -911,44 +915,45 @@ public class NotEnoughUpdates {
     public Color[][] colourMap = null;
     SimpleCommand neumapCommand = new SimpleCommand("neumap", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(colourMap == null) {
-                try(BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
+            if (colourMap == null) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(
                         new ResourceLocation("notenoughupdates:maps/F1Full.json")).getInputStream(), StandardCharsets.UTF_8))) {
                     JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
 
                     colourMap = new Color[128][128];
-                    for(int x=0; x<128; x++) {
-                        for(int y=0; y<128; y++) {
+                    for (int x = 0; x < 128; x++) {
+                        for (int y = 0; y < 128; y++) {
                             colourMap[x][y] = new Color(0, 0, 0, 0);
                         }
                     }
-                    for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                    for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
                         int x = Integer.parseInt(entry.getKey().split(":")[0]);
                         int y = Integer.parseInt(entry.getKey().split(":")[1]);
 
                         colourMap[x][y] = new Color(entry.getValue().getAsInt(), true);
                     }
-                } catch(Exception ignored) { }
+                } catch (Exception ignored) {
+                }
             }
 
-            if(!config.hidden.dev) {
+            if (!config.hidden.dev) {
                 openGui = new GuiDungeonMapEditor();
                 return;
             }
 
-            if(args.length == 1 && args[0].equals("reset")) {
+            if (args.length == 1 && args[0].equals("reset")) {
                 colourMap = null;
                 return;
             }
 
-            if(args.length != 2) {
+            if (args.length != 2) {
                 openGui = new GuiDungeonMapEditor();
                 return;
             }
 
-            if(args[0].equals("save")) {
+            if (args[0].equals("save")) {
                 ItemStack stack = Minecraft.getMinecraft().thePlayer.getHeldItem();
-                if(stack != null && stack.getItem() instanceof ItemMap) {
+                if (stack != null && stack.getItem() instanceof ItemMap) {
                     ItemMap map = (ItemMap) stack.getItem();
                     MapData mapData = map.getMapData(stack, Minecraft.getMinecraft().theWorld);
 
@@ -968,33 +973,33 @@ public class NotEnoughUpdates {
                             c = new Color(MapColor.mapColorArray[j / 4].getMapColor(j & 3), true);
                         }
 
-                        json.addProperty(x+":"+y, c.getRGB());
+                        json.addProperty(x + ":" + y, c.getRGB());
                     }
 
                     try {
                         new File(manager.configLocation, "maps").mkdirs();
-                        manager.writeJson(json, new File(manager.configLocation, "maps/"+args[1]+".json"));
-                    } catch(Exception e) {
+                        manager.writeJson(json, new File(manager.configLocation, "maps/" + args[1] + ".json"));
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 
-                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN +
                             "Saved to file."));
                 }
 
                 return;
             }
 
-            if(args[0].equals("load")) {
-                JsonObject json = manager.getJsonFromFile(new File(manager.configLocation, "maps/"+args[1]+".json"));
+            if (args[0].equals("load")) {
+                JsonObject json = manager.getJsonFromFile(new File(manager.configLocation, "maps/" + args[1] + ".json"));
 
                 colourMap = new Color[128][128];
-                for(int x=0; x<128; x++) {
-                    for(int y=0; y<128; y++) {
+                for (int x = 0; x < 128; x++) {
+                    for (int y = 0; y < 128; y++) {
                         colourMap[x][y] = new Color(0, 0, 0, 0);
                     }
                 }
-                for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
                     int x = Integer.parseInt(entry.getKey().split(":")[0]);
                     int y = Integer.parseInt(entry.getKey().split(":")[1]);
 
@@ -1010,20 +1015,20 @@ public class NotEnoughUpdates {
 
     SimpleCommand cosmeticsCommand = new SimpleCommand("neucosmetics", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(Loader.isModLoaded("optifine") &&
+            if (Loader.isModLoaded("optifine") &&
                     new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
-                try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
+                try (InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
                     String line;
-                    while((line = reader.readLine()) != null) {
-                        if(line.contains("ofFastRender:true")) {
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("ofFastRender:true")) {
                             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                                     "NEU cosmetics do not work with OF Fast Render. Go to Video > Performance to disable it."));
                             return;
                         }
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                 }
             }
 
@@ -1035,14 +1040,14 @@ public class NotEnoughUpdates {
         public void processCommand(ICommandSender sender, String[] args) {
             ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
 
-            if(held == null) {
+            if (held == null) {
                 sender.addChatMessage(new ChatComponentText("\u00a7cYou can't customize your hand..."));
                 return;
             }
 
             String heldUUID = manager.getUUIDForItem(held);
 
-            if(heldUUID == null) {
+            if (heldUUID == null) {
                 sender.addChatMessage(new ChatComponentText("\u00a7cHeld item does not have UUID, cannot be customized"));
                 return;
             }
@@ -1053,7 +1058,7 @@ public class NotEnoughUpdates {
 
     SimpleCommand.ProcessCommandRunnable settingsRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(args.length > 0) {
+            if (args.length > 0) {
                 openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config, StringUtils.join(args, " ")));
             } else {
                 openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
@@ -1075,11 +1080,11 @@ public class NotEnoughUpdates {
 
     SimpleCommand neuAhCommand = new SimpleCommand("neuah", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!hasSkyblockScoreboard()) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+            if (!hasSkyblockScoreboard()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "You must be on Skyblock to use this feature."));
-            } else if(config.apiKey.apiKey == null || config.apiKey.apiKey.trim().isEmpty()) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED+
+            } else if (config.apiKey.apiKey == null || config.apiKey.apiKey.trim().isEmpty()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "Can't open NeuAH, apikey is not set. Run /api new and put the result in settings."));
             } else {
                 openGui = new CustomAHGui();
@@ -1087,7 +1092,7 @@ public class NotEnoughUpdates {
                 manager.auctionManager.customAH.clearSearch();
                 manager.auctionManager.customAH.updateSearch();
 
-                if(args.length > 0) manager.auctionManager.customAH.setSearch(StringUtils.join(args, " "));
+                if (args.length > 0) manager.auctionManager.customAH.setSearch(StringUtils.join(args, " "));
             }
         }
     });
@@ -1097,6 +1102,7 @@ public class NotEnoughUpdates {
 
     /**
      * Instantiates NEUIo, NEUManager and NEUOverlay instances. Registers keybinds and adds a shutdown hook to clear tmp folder.
+     *
      * @param event
      */
     @EventHandler
@@ -1106,17 +1112,19 @@ public class NotEnoughUpdates {
         INSTANCE = this;
 
         String uuid = Minecraft.getMinecraft().getSession().getPlayerID();
-        if(uuid.equalsIgnoreCase("ea9b1c5a-bf68-4fa2-9492-2d4e69693228")) throw new RuntimeException("Ding-dong, racism is wrong.");
+        if (uuid.equalsIgnoreCase("ea9b1c5a-bf68-4fa2-9492-2d4e69693228"))
+            throw new RuntimeException("Ding-dong, racism is wrong.");
 
         neuDir = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         neuDir.mkdirs();
 
         configFile = new File(neuDir, "configNew.json");
 
-        if(configFile.exists()) {
-            try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
+        if (configFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
                 config = gson.fromJson(reader, NEUConfig.class);
-            } catch(Exception e) { }
+            } catch (Exception e) {
+            }
         }
 
         ItemCustomizeManager.loadCustomization(new File(neuDir, "itemCustomization.json"));
@@ -1125,7 +1133,7 @@ public class NotEnoughUpdates {
         PetInfoOverlay.loadConfig(new File(neuDir, "petCache.json"));
         SlotLocking.getInstance().loadConfig(new File(neuDir, "slotLocking.json"));
 
-        if(config == null) {
+        if (config == null) {
             config = new NEUConfig();
             saveConfig();
         }
@@ -1156,10 +1164,10 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(SlotLocking.getInstance());
         MinecraftForge.EVENT_BUS.register(FishingHelper.getInstance());
 
-        if(Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
-            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());
-            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(NPCRetexturing.getInstance());
-            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(new ItemCustomizeManager.ReloadListener());
+        if (Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
+            ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());
+            ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(NPCRetexturing.getInstance());
+            ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(new ItemCustomizeManager.ReloadListener());
         }
 
         //ClientCommandHandler.instance.registerCommand(collectionLogCommand);
@@ -1181,7 +1189,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(customizeCommand);
         ClientCommandHandler.instance.registerCommand(devTestCommand);
         ClientCommandHandler.instance.registerCommand(packDevCommand);
-        if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
+        if (!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
         ClientCommandHandler.instance.registerCommand(peekCommand);
         ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
@@ -1203,14 +1211,14 @@ public class NotEnoughUpdates {
         overlay = new NEUOverlay(manager);
         profileViewer = new ProfileViewer(manager);
 
-        for(KeyBinding kb : manager.keybinds) {
+        for (KeyBinding kb : manager.keybinds) {
             ClientRegistry.registerKeyBinding(kb);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             File tmp = new File(neuDir, "tmp");
-            if(tmp.exists()) {
-                for(File tmpFile : tmp.listFiles()) {
+            if (tmp.exists()) {
+                for (File tmpFile : tmp.listFiles()) {
                     tmpFile.delete();
                 }
                 tmp.delete();
@@ -1223,16 +1231,32 @@ public class NotEnoughUpdates {
         try {
             configFile.createNewFile();
 
-            try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
                 writer.write(gson.toJson(config));
             }
-        } catch(Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
-        try { ItemCustomizeManager.saveCustomization(new File(neuDir, "itemCustomization.json")); } catch(Exception ignored) {}
-        try { StorageManager.getInstance().saveConfig(new File(neuDir, "storageItems.json")); } catch(Exception ignored) {}
-        try { FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson); } catch(Exception ignored) {}
-        try { PetInfoOverlay.saveConfig(new File(neuDir, "petCache.json")); } catch(Exception ignored) {}
-        try { SlotLocking.getInstance().saveConfig(new File(neuDir, "slotLocking.json")); } catch(Exception ignored) {}
+        try {
+            ItemCustomizeManager.saveCustomization(new File(neuDir, "itemCustomization.json"));
+        } catch (Exception ignored) {
+        }
+        try {
+            StorageManager.getInstance().saveConfig(new File(neuDir, "storageItems.json"));
+        } catch (Exception ignored) {
+        }
+        try {
+            FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson);
+        } catch (Exception ignored) {
+        }
+        try {
+            PetInfoOverlay.saveConfig(new File(neuDir, "petCache.json"));
+        } catch (Exception ignored) {
+        }
+        try {
+            SlotLocking.getInstance().saveConfig(new File(neuDir, "slotLocking.json"));
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -1240,7 +1264,7 @@ public class NotEnoughUpdates {
      * If the last chat message was sent <200 ago, will cache the message for #onTick to handle.
      */
     public void sendChatMessage(String message) {
-        if(System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN)  {
+        if (System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
             secondLastChatMessage = lastChatMessage;
             lastChatMessage = System.currentTimeMillis();
             Minecraft.getMinecraft().thePlayer.sendChatMessage(message);
@@ -1259,20 +1283,20 @@ public class NotEnoughUpdates {
         String other_link = update.get("other_link").getAsString();
 
         ChatComponentText other = null;
-        if(other_text.length() > 0) {
-            other = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+other_text+EnumChatFormatting.GRAY+"]");
+        if (other_text.length() > 0) {
+            other = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.BLUE + other_text + EnumChatFormatting.GRAY + "]");
             other.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, other_link));
         }
         ChatComponentText links = new ChatComponentText("");
         ChatComponentText separator = new ChatComponentText(
-                EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"---":"--"));
-        ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+"Discord"+EnumChatFormatting.GRAY+"]");
+                EnumChatFormatting.GRAY + EnumChatFormatting.BOLD.toString() + EnumChatFormatting.STRIKETHROUGH + (other == null ? "---" : "--"));
+        ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.BLUE + "Discord" + EnumChatFormatting.GRAY + "]");
         discord.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, discord_link));
-        ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.RED+"YouTube"+EnumChatFormatting.GRAY+"]");
+        ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.RED + "YouTube" + EnumChatFormatting.GRAY + "]");
         youtube.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, youtube_link));
-        ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.GREEN+"Release"+EnumChatFormatting.GRAY+"]");
+        ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.GREEN + "Release" + EnumChatFormatting.GRAY + "]");
         release.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, update_link));
-        ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"GitHub"+EnumChatFormatting.GRAY+"]");
+        ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.DARK_PURPLE + "GitHub" + EnumChatFormatting.GRAY + "]");
         github.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, github_link));
 
         links.appendSibling(separator);
@@ -1284,7 +1308,7 @@ public class NotEnoughUpdates {
         links.appendSibling(separator);
         links.appendSibling(github);
         links.appendSibling(separator);
-        if(other != null) {
+        if (other != null) {
             links.appendSibling(other);
             links.appendSibling(separator);
         }
@@ -1295,7 +1319,7 @@ public class NotEnoughUpdates {
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
-        if(Minecraft.getMinecraft().thePlayer == null) {
+        if (Minecraft.getMinecraft().thePlayer == null) {
             openGui = null;
             currChatMessage = null;
             return;
@@ -1303,14 +1327,14 @@ public class NotEnoughUpdates {
         long currentTime = System.currentTimeMillis();
 
         if (openGui != null) {
-            if(Minecraft.getMinecraft().thePlayer.openContainer != null) {
+            if (Minecraft.getMinecraft().thePlayer.openContainer != null) {
                 Minecraft.getMinecraft().thePlayer.closeScreen();
             }
             Minecraft.getMinecraft().displayGuiScreen(openGui);
             openGui = null;
             lastOpenedGui = System.currentTimeMillis();
         }
-        if(currChatMessage != null && currentTime - lastChatMessage > CHAT_MSG_COOLDOWN) {
+        if (currChatMessage != null && currentTime - lastChatMessage > CHAT_MSG_COOLDOWN) {
             lastChatMessage = currentTime;
             Minecraft.getMinecraft().thePlayer.sendChatMessage(currChatMessage);
             currChatMessage = null;
@@ -1318,7 +1342,7 @@ public class NotEnoughUpdates {
     }
 
     public boolean isOnSkyblock() {
-        if(!config.misc.onlyShowOnSkyblock) return true;
+        if (!config.misc.onlyShowOnSkyblock) return true;
         return hasSkyblockScoreboard();
     }
 

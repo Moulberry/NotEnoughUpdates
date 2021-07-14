@@ -39,42 +39,42 @@ public class DwarvenMinesTextures {
     private static boolean error = false;
 
     public static int retexture(BlockPos pos) {
-        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenTextures) return 0;
-        if(error) return 0;
-        if(Minecraft.getMinecraft().theWorld == null) return 0;
+        if (!NotEnoughUpdates.INSTANCE.config.mining.dwarvenTextures) return 0;
+        if (error) return 0;
+        if (Minecraft.getMinecraft().theWorld == null) return 0;
 
-        if(SBInfo.getInstance().getLocation() == null) return 0;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return 0;
+        if (SBInfo.getInstance().getLocation() == null) return 0;
+        if (!SBInfo.getInstance().getLocation().equals("mining_3")) return 0;
 
         IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(pos);
         boolean titanium = state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH;
-        if(titanium) {
+        if (titanium) {
             IBlockState plus = Minecraft.getMinecraft().theWorld.getBlockState(pos.add(1, 0, 0));
-            if(plus.getBlock() == Blocks.double_stone_slab) {
+            if (plus.getBlock() == Blocks.double_stone_slab) {
                 return 1;
             }
             IBlockState minus = Minecraft.getMinecraft().theWorld.getBlockState(pos.add(-1, 0, 0));
-            if(minus.getBlock() == Blocks.double_stone_slab) {
+            if (minus.getBlock() == Blocks.double_stone_slab) {
                 return 1;
             }
             IBlockState above = Minecraft.getMinecraft().theWorld.getBlockState(pos.add(0, 1, 0));
-            if(above.getBlock() == Blocks.stone_slab) {
+            if (above.getBlock() == Blocks.stone_slab) {
                 return 1;
             }
         }
 
-        if(titanium || (state.getBlock() == Blocks.stained_hardened_clay && state.getValue(BlockColored.COLOR) == EnumDyeColor.CYAN) ||
+        if (titanium || (state.getBlock() == Blocks.stained_hardened_clay && state.getValue(BlockColored.COLOR) == EnumDyeColor.CYAN) ||
                 (state.getBlock() == Blocks.wool && state.getValue(BlockColored.COLOR) == EnumDyeColor.GRAY)) {
 
-            if(ignoredChunks == null) {
+            if (ignoredChunks == null) {
                 try {
                     ignoredChunks = new HashSet<>();
                     ResourceLocation loc = new ResourceLocation("notenoughupdates:dwarven_data/all.json");
                     InputStream is = Minecraft.getMinecraft().getResourceManager().getResource(loc).getInputStream();
 
-                    try(BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
                         JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
-                        for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
                             String coord = entry.getKey();
                             String[] split = coord.split("_");
                             int left = Integer.parseInt(split[0]);
@@ -82,53 +82,53 @@ public class DwarvenMinesTextures {
                             ignoredChunks.add(new ChunkCoordIntPair(left, right));
                         }
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                     error = true;
                     return 1;
                 }
             }
-            if(ignoredChunks != null) {
-                ChunkCoordIntPair pair = new ChunkCoordIntPair(MathHelper.floor_float(pos.getX()/16f),
-                        MathHelper.floor_float(pos.getZ()/16f));
+            if (ignoredChunks != null) {
+                ChunkCoordIntPair pair = new ChunkCoordIntPair(MathHelper.floor_float(pos.getX() / 16f),
+                        MathHelper.floor_float(pos.getZ() / 16f));
 
                 lastRetextureCheck.put(pair, time);
 
-                if(ignoredChunks.contains(pair)) {
+                if (ignoredChunks.contains(pair)) {
                     return 1;
                 }
-                if(titanium) {
+                if (titanium) {
                     return 2;
                 }
 
-                if(!loadedChunkData.containsKey(pair)) {
+                if (!loadedChunkData.containsKey(pair)) {
                     try {
                         HashMap<ChunkCoordIntPair, IgnoreColumn> map = new HashMap<>();
                         loadedChunkData.put(pair, map);
 
-                        ResourceLocation loc = new ResourceLocation("notenoughupdates:dwarven_data/"+
-                                pair.chunkXPos+"_"+pair.chunkZPos+".json");
+                        ResourceLocation loc = new ResourceLocation("notenoughupdates:dwarven_data/" +
+                                pair.chunkXPos + "_" + pair.chunkZPos + ".json");
                         InputStream is = Minecraft.getMinecraft().getResourceManager().getResource(loc).getInputStream();
 
-                        try(BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
                             JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
-                            for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                            for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
                                 String coord = entry.getKey();
                                 String[] split = coord.split(":");
                                 int left = Integer.parseInt(split[0]);
                                 int right = Integer.parseInt(split[1]);
 
                                 IgnoreColumn ignore = null;
-                                if(entry.getValue().isJsonPrimitive()) {
+                                if (entry.getValue().isJsonPrimitive()) {
                                     JsonPrimitive prim = entry.getValue().getAsJsonPrimitive();
-                                    if(prim.isBoolean()) {
+                                    if (prim.isBoolean()) {
                                         ignore = new IgnoreColumn(true, 0, 0);
-                                    } else if(prim.isNumber()) {
+                                    } else if (prim.isNumber()) {
                                         int y = prim.getAsInt();
                                         ignore = new IgnoreColumn(false, y, y);
                                     }
-                                } else if(entry.getValue().isJsonArray()) {
+                                } else if (entry.getValue().isJsonArray()) {
                                     JsonArray arr = entry.getValue().getAsJsonArray();
-                                    if(arr.size() == 2) {
+                                    if (arr.size() == 2) {
                                         int min = arr.get(0).getAsInt();
                                         int max = arr.get(1).getAsInt();
                                         ignore = new IgnoreColumn(false, min, max);
@@ -140,26 +140,26 @@ public class DwarvenMinesTextures {
                                 }
                             }
                         }
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         loadedChunkData.put(pair, null);
                     }
                 }
-                if(loadedChunkData.get(pair) != null) {
+                if (loadedChunkData.get(pair) != null) {
                     HashMap<ChunkCoordIntPair, IgnoreColumn> map = loadedChunkData.get(pair);
 
                     int modX = pos.getX() % 16;
                     int modZ = pos.getZ() % 16;
-                    if(modX < 0) modX += 16;
-                    if(modZ < 0) modZ += 16;
+                    if (modX < 0) modX += 16;
+                    if (modZ < 0) modZ += 16;
                     ChunkCoordIntPair offset = new ChunkCoordIntPair(modX, modZ);
 
                     IgnoreColumn ignore = map.get(offset);
-                    if(ignore != null) {
-                        if(ignore.always) {
+                    if (ignore != null) {
+                        if (ignore.always) {
                             return 1;
                         } else {
                             int y = pos.getY();
-                            if(y >= ignore.minY && y <= ignore.maxY) {
+                            if (y >= ignore.minY && y <= ignore.maxY) {
                                 return 1;
                             }
                         }
@@ -210,12 +210,12 @@ public class DwarvenMinesTextures {
     //Don't render clay - mesaPlateau_F
 
     public static void tick() {
-        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenTextures) return;
+        if (!NotEnoughUpdates.INSTANCE.config.mining.dwarvenTextures) return;
 
         time = System.currentTimeMillis();
         Set<ChunkCoordIntPair> remove = new HashSet<>();
-        for(Map.Entry<ChunkCoordIntPair, Long> entry : lastRetextureCheck.entrySet()) {
-            if(time - entry.getValue() > 30*1000) {
+        for (Map.Entry<ChunkCoordIntPair, Long> entry : lastRetextureCheck.entrySet()) {
+            if (time - entry.getValue() > 30 * 1000) {
                 remove.add(entry.getKey());
             }
         }

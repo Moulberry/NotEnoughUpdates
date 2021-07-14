@@ -30,7 +30,7 @@ public class CustomItems {
             "DUCTTAPE",
             "iron_shovel",
             "You ever accidentally bury your duct tape?",
-        "No problem! Our team of experts specialise in",
+            "No problem! Our team of experts specialise in",
             "subterranean duct tape excavation. That's right:",
             "your buried duct tape problems are a thing of the past,",
             "all for the low price of $7.99 or a subscription",
@@ -43,24 +43,24 @@ public class CustomItems {
     public static JsonObject RUNE = create("RUNE", "paper", "No.", "I hate runes.");
     public static JsonObject TWOBEETWOTEE = create("2B2T", "bedrock", "Minecraft's oldest anarchy Minecraft server in Minecraft.",
             "This Minecraft anarchy server is the oldest server,",
-                "being a server since 2010 when Minecraft was a game with a server.",
-                "It is complete anarchy in Minecraft which means that there is total anarchy.",
-                "Hacking is allowed in Minecraft on this anarchy server which",
-                "is the oldest anarchy server in Minecraft, 2b2t. Hack. Steal. Cheat. Lie.",
-                "On the oldest anarchy server in Minecraft. 2b2t. The worst server in Minecraft,",
-                "where there are no rules. On the oldest anarchy server in Minecraft.",
-                "In this Minecraft anarchy server, there have been numerous Minecraft",
-                "incursions on the server, some of which I, a player on this Minecraft",
-                "anarchy server in Minecraft, have participated in. One of this server's",
-                "most infamous Minecraft players on the oldest Minecraft");
+            "being a server since 2010 when Minecraft was a game with a server.",
+            "It is complete anarchy in Minecraft which means that there is total anarchy.",
+            "Hacking is allowed in Minecraft on this anarchy server which",
+            "is the oldest anarchy server in Minecraft, 2b2t. Hack. Steal. Cheat. Lie.",
+            "On the oldest anarchy server in Minecraft. 2b2t. The worst server in Minecraft,",
+            "where there are no rules. On the oldest anarchy server in Minecraft.",
+            "In this Minecraft anarchy server, there have been numerous Minecraft",
+            "incursions on the server, some of which I, a player on this Minecraft",
+            "anarchy server in Minecraft, have participated in. One of this server's",
+            "most infamous Minecraft players on the oldest Minecraft");
     public static JsonObject LEOCTHL = create("LEOCTHL", "dragon_egg", "--- Stats below may not be entirely accurate ---",
             "17 legendary dragon pets",
-                  "24 epic dragon pets",
-                  "18 epic golem pets",
-                  "12 legendary golem pets",
-                  "39 legendary phoenix pets",
-                  "",
-                  "get flexed");
+            "24 epic dragon pets",
+            "18 epic golem pets",
+            "12 legendary golem pets",
+            "39 legendary phoenix pets",
+            "",
+            "get flexed");
 
     /**
      * SHAAAAAAAAAAAAAAAAAAME
@@ -70,9 +70,9 @@ public class CustomItems {
         JsonObject json = new JsonObject();
         json.addProperty("itemid", itemid);
         json.addProperty("internalname", internalname);
-        json.addProperty("displayname", EnumChatFormatting.RED+displayname);
+        json.addProperty("displayname", EnumChatFormatting.RED + displayname);
         JsonArray jsonlore = new JsonArray();
-        for(String line : lore) {
+        for (String line : lore) {
             jsonlore.add(new JsonPrimitive(EnumChatFormatting.GRAY + line));
         }
         json.add("lore", jsonlore);

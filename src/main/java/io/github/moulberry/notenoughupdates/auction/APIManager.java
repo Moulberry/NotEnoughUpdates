@@ -116,16 +116,16 @@ public class APIManager {
         }
 
         public ItemStack getStack() {
-            if(item_tag == null && item_tag_str != null) {
+            if (item_tag == null && item_tag_str != null) {
                 try {
                     item_tag = CompressedStreamTools.readCompressed(
                             new ByteArrayInputStream(Base64.getDecoder().decode(item_tag_str)));
                     item_tag_str = null;
-                } catch(IOException e) {
+                } catch (IOException e) {
                     return null;
                 }
             }
-            if(stack != null) {
+            if (stack != null) {
                 return stack;
             } else {
                 JsonObject item = manager.getJsonFromNBT(item_tag);
@@ -133,24 +133,24 @@ public class APIManager {
 
                 JsonObject itemDefault = manager.getItemInformation().get(item.get("internalname").getAsString());
 
-                if(stack != null && itemDefault != null) {
+                if (stack != null && itemDefault != null) {
                     ItemStack stackDefault = manager.jsonToStack(itemDefault, true);
-                    if(stack.isItemEqual(stackDefault)) {
+                    if (stack.isItemEqual(stackDefault)) {
                         //Item types are the same, compare lore
 
                         String[] stackLore = manager.getLoreFromNBT(stack.getTagCompound());
                         String[] defaultLore = manager.getLoreFromNBT(stackDefault.getTagCompound());
 
                         boolean loreMatches = stackLore != null && defaultLore != null && stackLore.length == defaultLore.length;
-                        if(loreMatches) {
-                            for(int i=0; i<stackLore.length; i++) {
-                                if(!stackLore[i].equals(defaultLore[i])) {
+                        if (loreMatches) {
+                            for (int i = 0; i < stackLore.length; i++) {
+                                if (!stackLore[i].equals(defaultLore[i])) {
                                     loreMatches = false;
                                     break;
                                 }
                             }
                         }
-                        if(loreMatches) {
+                        if (loreMatches) {
                             stack = stackDefault;
                         }
                     }
@@ -173,46 +173,46 @@ public class APIManager {
     public void tick() {
         customAH.tick();
         long currentTime = System.currentTimeMillis();
-        if(NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse &&
+        if (NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse &&
                 NotEnoughUpdates.INSTANCE.config.apiKey.apiKey != null &&
                 !NotEnoughUpdates.INSTANCE.config.apiKey.apiKey.isEmpty()) {
-            if(currentTime - lastAuctionUpdate > 60*1000) {
+            if (currentTime - lastAuctionUpdate > 60 * 1000) {
                 lastAuctionUpdate = currentTime;
                 updatePageTick();
             }
-            if(currentTime - lastShortAuctionUpdate > 10*1000) {
+            if (currentTime - lastShortAuctionUpdate > 10 * 1000) {
                 lastShortAuctionUpdate = currentTime;
                 updatePageTickShort();
                 ahNotification();
             }
-            if(currentTime - lastCleanup > 60*1000) {
+            if (currentTime - lastCleanup > 60 * 1000) {
                 lastCleanup = currentTime;
                 cleanup();
             }
-            if(currentTime - lastCustomAHSearch > 60*1000) {
+            if (currentTime - lastCustomAHSearch > 60 * 1000) {
                 lastCustomAHSearch = currentTime;
-                if(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView()) {
+                if (Minecraft.getMinecraft().currentScreen instanceof CustomAHGui || customAH.isRenderOverAuctionView()) {
                     customAH.updateSearch();
                     calculateStats();
                 }
             }
         }
-        if(currentTime - lastAuctionAvgUpdate > 5*60*1000) { //5 minutes
-            lastAuctionAvgUpdate = currentTime - 4*60*1000; //Try again in 1 minute if updateAvgPrices doesn't succeed
+        if (currentTime - lastAuctionAvgUpdate > 5 * 60 * 1000) { //5 minutes
+            lastAuctionAvgUpdate = currentTime - 4 * 60 * 1000; //Try again in 1 minute if updateAvgPrices doesn't succeed
             updateAvgPrices();
         }
-        if(currentTime - lastBazaarUpdate > 5*60*1000) { //5 minutes
+        if (currentTime - lastBazaarUpdate > 5 * 60 * 1000) { //5 minutes
             lastBazaarUpdate = currentTime;
             updateBazaar();
         }
-        if(currentTime - lastLowestBinUpdate > 2*60*1000) {
+        if (currentTime - lastLowestBinUpdate > 2 * 60 * 1000) {
             lastLowestBinUpdate = currentTime;
             updateLowestBin();
         }
     }
 
     private String niceAucId(String aucId) {
-        if(aucId.length()!=32) return aucId;
+        if (aucId.length() != 32) return aucId;
 
         return aucId.substring(0, 8) +
                 "-" +
@@ -226,18 +226,18 @@ public class APIManager {
     }
 
     public Set<String> getLowestBinKeySet() {
-        if(lowestBins == null) return new HashSet<>();
+        if (lowestBins == null) return new HashSet<>();
         HashSet<String> keys = new HashSet<>();
-        for(Map.Entry<String, JsonElement> entry : lowestBins.entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : lowestBins.entrySet()) {
             keys.add(entry.getKey());
         }
         return keys;
     }
 
     public int getLowestBin(String internalname) {
-        if(lowestBins != null && lowestBins.has(internalname)) {
+        if (lowestBins != null && lowestBins.has(internalname)) {
             JsonElement e = lowestBins.get(internalname);
-            if(e.isJsonPrimitive() && e.getAsJsonPrimitive().isNumber()) {
+            if (e.isJsonPrimitive() && e.getAsJsonPrimitive().isNumber()) {
                 return e.getAsInt();
             }
         }
@@ -246,43 +246,44 @@ public class APIManager {
 
     public void updateLowestBin() {
         manager.hypixelApi.getMyApiGZIPAsync("lowestbin.json.gz", (jsonObject) -> {
-            if(lowestBins == null) {
+            if (lowestBins == null) {
                 lowestBins = new JsonObject();
             }
-            for(Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
+            for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
                 lowestBins.add(entry.getKey(), entry.getValue());
             }
-        }, () -> {});
+        }, () -> {
+        });
     }
 
     private void ahNotification() {
         playerBidsNotified.retainAll(playerBids);
         playerBidsFinishedNotified.retainAll(playerBids);
-        if(NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.ahNotification <= 0) {
+        if (NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.ahNotification <= 0) {
             return;
         }
-        for(String aucid : playerBids) {
+        for (String aucid : playerBids) {
             Auction auc = auctionMap.get(aucid);
-            if(!playerBidsNotified.contains(aucid)) {
-                if(auc != null && auc.end - System.currentTimeMillis() < 1000*60*NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.ahNotification) {
+            if (!playerBidsNotified.contains(aucid)) {
+                if (auc != null && auc.end - System.currentTimeMillis() < 1000 * 60 * NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.ahNotification) {
                     ChatComponentText message = new ChatComponentText(
-                            EnumChatFormatting.YELLOW+"The " + auc.getStack().getDisplayName() + EnumChatFormatting.YELLOW + " you have bid on is ending soon! Click here to view.");
+                            EnumChatFormatting.YELLOW + "The " + auc.getStack().getDisplayName() + EnumChatFormatting.YELLOW + " you have bid on is ending soon! Click here to view.");
                     ChatStyle clickEvent = new ChatStyle().setChatClickEvent(
                             new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/viewauction " + niceAucId(aucid)));
-                    clickEvent.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW+"View auction")));
+                    clickEvent.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW + "View auction")));
                     message.setChatStyle(clickEvent);
                     Minecraft.getMinecraft().thePlayer.addChatMessage(message);
 
                     playerBidsNotified.add(aucid);
                 }
             }
-            if(!playerBidsFinishedNotified.contains(aucid)) {
-                if(auc != null && auc.end < System.currentTimeMillis()) {
+            if (!playerBidsFinishedNotified.contains(aucid)) {
+                if (auc != null && auc.end < System.currentTimeMillis()) {
                     ChatComponentText message = new ChatComponentText(
-                            EnumChatFormatting.YELLOW+"The " + auc.getStack().getDisplayName() + EnumChatFormatting.YELLOW + " you have bid on (might) have ended! Click here to view.");
+                            EnumChatFormatting.YELLOW + "The " + auc.getStack().getDisplayName() + EnumChatFormatting.YELLOW + " you have bid on (might) have ended! Click here to view.");
                     ChatStyle clickEvent = new ChatStyle().setChatClickEvent(
                             new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/viewauction " + niceAucId(aucid)));
-                    clickEvent.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW+"View auction")));
+                    clickEvent.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW + "View auction")));
                     message.setChatStyle(clickEvent);
                     Minecraft.getMinecraft().thePlayer.addChatMessage(message);
 
@@ -293,75 +294,78 @@ public class APIManager {
     }
 
     private final ExecutorService es = Executors.newSingleThreadExecutor();
+
     private void cleanup() {
         es.submit(() -> {
             try {
                 long currTime = System.currentTimeMillis();
                 Set<String> toRemove = new HashSet<>();
-                for(Map.Entry<String, Auction> entry : auctionMap.entrySet()) {
+                for (Map.Entry<String, Auction> entry : auctionMap.entrySet()) {
                     long timeToEnd = entry.getValue().end - currTime;
-                    if(timeToEnd < -120*1000) { //2 minutes
+                    if (timeToEnd < -120 * 1000) { //2 minutes
                         toRemove.add(entry.getKey());
                     }
                 }
                 toRemove.removeAll(playerBids);
                 remove(toRemove);
-            } catch(ConcurrentModificationException e) {
-                lastCleanup = System.currentTimeMillis() - 110*1000;
+            } catch (ConcurrentModificationException e) {
+                lastCleanup = System.currentTimeMillis() - 110 * 1000;
             }
         });
     }
 
     private void remove(Set<String> toRemove) {
-        for(String aucid : toRemove) {
+        for (String aucid : toRemove) {
             auctionMap.remove(aucid);
         }
-        for(HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
-            for(HashSet<String> aucids : extrasMap.values()) {
-                for(String aucid : toRemove) {
+        for (HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
+            for (HashSet<String> aucids : extrasMap.values()) {
+                for (String aucid : toRemove) {
                     aucids.remove(aucid);
                 }
             }
         }
-        for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
+        for (HashSet<String> aucids : internalnameToAucIdMap.values()) {
             aucids.removeAll(toRemove);
         }
     }
 
     private void updatePageTickShort() {
-        if(pagesToDownload == null || pagesToDownload.isEmpty()) return;
+        if (pagesToDownload == null || pagesToDownload.isEmpty()) return;
 
-        if(firstHypixelApiUpdate == 0 || (System.currentTimeMillis() - firstHypixelApiUpdate)%(60*1000) > 15*1000) return;
+        if (firstHypixelApiUpdate == 0 || (System.currentTimeMillis() - firstHypixelApiUpdate) % (60 * 1000) > 15 * 1000)
+            return;
 
         JsonObject disable = Constants.DISABLE;
-        if(disable != null && disable.has("auctions_new") && disable.get("auctions_new").getAsBoolean()) return;
+        if (disable != null && disable.has("auctions_new") && disable.get("auctions_new").getAsBoolean()) return;
 
-        while(!pagesToDownload.isEmpty()) {
+        while (!pagesToDownload.isEmpty()) {
             try {
                 int page = pagesToDownload.pop();
                 getPageFromAPI(page);
-            } catch(NoSuchElementException ignored) {} //Weird race condition?
+            } catch (NoSuchElementException ignored) {
+            } //Weird race condition?
         }
     }
 
     private void updatePageTick() {
         JsonObject disable = Constants.DISABLE;
-        if(disable != null && disable.has("auctions_new") && disable.get("auctions_new").getAsBoolean()) return;
+        if (disable != null && disable.has("auctions_new") && disable.get("auctions_new").getAsBoolean()) return;
 
-        if(pagesToDownload == null) {
+        if (pagesToDownload == null) {
             getPageFromAPI(0);
         }
 
         Consumer<JsonObject> process = jsonObject -> {
-            if(jsonObject.get("success").getAsBoolean()) {
+            if (jsonObject.get("success").getAsBoolean()) {
                 JsonArray new_auctions = jsonObject.get("new_auctions").getAsJsonArray();
-                for(JsonElement auctionElement : new_auctions) {
+                for (JsonElement auctionElement : new_auctions) {
                     JsonObject auction = auctionElement.getAsJsonObject();
                     //System.out.println("New auction " + auction);
                     processAuction(auction);
                 }
                 JsonArray new_bids = jsonObject.get("new_bids").getAsJsonArray();
-                for(JsonElement newBidElement : new_bids) {
+                for (JsonElement newBidElement : new_bids) {
                     JsonObject newBid = newBidElement.getAsJsonObject();
                     String newBidUUID = newBid.get("uuid").getAsString();
                     //System.out.println("new bid" + newBidUUID);
@@ -370,7 +374,7 @@ public class APIManager {
                     int bid_count = newBid.get("bid_count").getAsInt();
 
                     Auction auc = auctionMap.get(newBidUUID);
-                    if(auc != null) {
+                    if (auc != null) {
                         //System.out.println("Setting auction " + newBidUUID + " price to " + newBidAmount);
                         auc.highest_bid_amount = newBidAmount;
                         auc.end = end;
@@ -379,7 +383,7 @@ public class APIManager {
                 }
                 Set<String> toRemove = new HashSet<>();
                 JsonArray removed_auctions = jsonObject.get("removed_auctions").getAsJsonArray();
-                for(JsonElement removedAuctionsElement : removed_auctions) {
+                for (JsonElement removedAuctionsElement : removed_auctions) {
                     String removed = removedAuctionsElement.getAsString();
                     toRemove.add(removed);
                 }
@@ -390,16 +394,16 @@ public class APIManager {
         manager.hypixelApi.getMyApiGZIPAsync("auctionLast.json.gz", process, () -> System.out.println("Error downloading auction from Moulberry's jank API. :("));
 
         manager.hypixelApi.getMyApiGZIPAsync("auction.json.gz", jsonObject -> {
-                if(jsonObject.get("success").getAsBoolean()) {
-                    long apiUpdate = (long) jsonObject.get("time").getAsFloat();
-                    if (lastApiUpdate == apiUpdate) {
-                        lastAuctionUpdate -= 30 * 1000;
-                    }
-                    lastApiUpdate = apiUpdate;
-
-                    process.accept(jsonObject);
+            if (jsonObject.get("success").getAsBoolean()) {
+                long apiUpdate = (long) jsonObject.get("time").getAsFloat();
+                if (lastApiUpdate == apiUpdate) {
+                    lastAuctionUpdate -= 30 * 1000;
                 }
-            }, () -> System.out.println("Error downloading auction from Moulberry's jank API. :("));
+                lastApiUpdate = apiUpdate;
+
+                process.accept(jsonObject);
+            }
+        }, () -> System.out.println("Error downloading auction from Moulberry's jank API. :("));
 
     }
 
@@ -407,41 +411,42 @@ public class APIManager {
         try {
             uniqueItems = internalnameToAucIdMap.size();
             Set<String> aucs = new HashSet<>();
-            for(HashSet<String> aucids : internalnameToAucIdMap.values()) {
+            for (HashSet<String> aucids : internalnameToAucIdMap.values()) {
                 aucs.addAll(aucids);
             }
             internalnameTaggedAuctions = aucs.size();
             totalTags = extrasToAucIdMap.size();
             aucs = new HashSet<>();
-            for(HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
-                for(HashSet<String> aucids : extrasMap.values()) {
+            for (HashMap<Integer, HashSet<String>> extrasMap : extrasToAucIdMap.values()) {
+                for (HashSet<String> aucids : extrasMap.values()) {
                     aucs.addAll(aucids);
                 }
             }
             taggedAuctions = aucs.size();
-        } catch(Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
-    String[] rarityArr = new String[] {
-       "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
+    String[] rarityArr = new String[]{
+            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
     };
 
     public int checkItemType(String lore, boolean contains, String... typeMatches) {
         String[] split = lore.split("\n");
-        for(int i=split.length-1; i>=0; i--) {
+        for (int i = split.length - 1; i >= 0; i--) {
             String line = split[i];
-            for(String rarity : rarityArr) {
-                for(int j=0; j<typeMatches.length; j++) {
-                    if(contains) {
-                        if(line.trim().contains(rarity + " " + typeMatches[j])) {
+            for (String rarity : rarityArr) {
+                for (int j = 0; j < typeMatches.length; j++) {
+                    if (contains) {
+                        if (line.trim().contains(rarity + " " + typeMatches[j])) {
                             return j;
-                        } else if(line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
+                        } else if (line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
                             return j;
                         }
                     } else {
-                        if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
+                        if (line.trim().endsWith(rarity + " " + typeMatches[j])) {
                             return j;
-                        } else if(line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
+                        } else if (line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
                             return j;
                         }
                     }
@@ -451,15 +456,17 @@ public class APIManager {
         return -1;
     }
 
-    private final String[] romans = new String[]{"0","I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
-            "XII","XIII","XIV","XV","XVI","XVII","XIX","XX"};
+    private final String[] romans = new String[]{"0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI",
+            "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XIX", "XX"};
 
 
-    String[] categoryItemType = new String[]{"sword","fishingrod","pickaxe","axe",
-            "shovel","petitem","travelscroll","reforgestone","bow"};
+    String[] categoryItemType = new String[]{"sword", "fishingrod", "pickaxe", "axe",
+            "shovel", "petitem", "travelscroll", "reforgestone", "bow"};
     String playerUUID = null;
+
     private void processAuction(JsonObject auction) {
-        if(playerUUID == null) playerUUID = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replaceAll("-","");
+        if (playerUUID == null)
+            playerUUID = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replaceAll("-", "");
 
         String auctionUuid = auction.get("uuid").getAsString();
         String auctioneerUuid = auction.get("auctioneer").getAsString();
@@ -468,7 +475,7 @@ public class APIManager {
         int highest_bid_amount = auction.get("highest_bid_amount").getAsInt();
         int bid_count = auction.get("bids").getAsJsonArray().size();
         boolean bin = false;
-        if(auction.has("bin")) {
+        if (auction.has("bin")) {
             bin = auction.get("bin").getAsBoolean();
         }
         String sbCategory = auction.get("category").getAsString();
@@ -484,15 +491,17 @@ public class APIManager {
             try {
                 item_tag = CompressedStreamTools.readCompressed(
                         new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
-            } catch(IOException e) { return; }
+            } catch (IOException e) {
+                return;
+            }
 
             NBTTagCompound tag = item_tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
             String internalname = manager.getInternalnameFromNBT(tag);
 
             NBTTagCompound display = tag.getCompoundTag("display");
-            if(display.hasKey("Lore", 9)) {
+            if (display.hasKey("Lore", 9)) {
                 NBTTagList loreList = new NBTTagList();
-                for(String line : item_lore.split("\n")) {
+                for (String line : item_lore.split("\n")) {
                     loreList.appendTag(new NBTTagString(line));
                 }
                 display.setTag("Lore", loreList);
@@ -500,16 +509,16 @@ public class APIManager {
             tag.setTag("display", display);
             item_tag.getTagList("i", 10).getCompoundTagAt(0).setTag("tag", tag);
 
-            if(tag.hasKey("ExtraAttributes", 10)) {
+            if (tag.hasKey("ExtraAttributes", 10)) {
                 NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
 
-                if(ea.hasKey("enchantments", 10)) {
+                if (ea.hasKey("enchantments", 10)) {
                     NBTTagCompound enchantments = ea.getCompoundTag("enchantments");
-                    for(String key : enchantments.getKeySet()) {
+                    for (String key : enchantments.getKeySet()) {
                         String enchantname = key.toLowerCase().replace("ultimate_", "").replace("_", " ");
                         int enchantlevel = enchantments.getInteger(key);
                         String enchantLevelStr;
-                        if(enchantlevel >= 1 && enchantlevel <= 20) {
+                        if (enchantlevel >= 1 && enchantlevel <= 20) {
                             enchantLevelStr = romans[enchantlevel];
                         } else {
                             enchantLevelStr = String.valueOf(enchantlevel);
@@ -519,10 +528,10 @@ public class APIManager {
                 }
             }
 
-            int index=0;
-            for(String str : extras.split(" ")) {
+            int index = 0;
+            for (String str : extras.split(" ")) {
                 str = Utils.cleanColour(str).toLowerCase();
-                if(str.length() > 0) {
+                if (str.length() > 0) {
                     HashMap<Integer, HashSet<String>> extrasMap = extrasToAucIdMap.computeIfAbsent(str, k -> new HashMap<>());
                     HashSet<String> aucids = extrasMap.computeIfAbsent(index, k -> new HashSet<>());
                     aucids.add(auctionUuid);
@@ -530,19 +539,19 @@ public class APIManager {
                 index++;
             }
 
-            for(int j=0; j<bids.size(); j++) {
+            for (int j = 0; j < bids.size(); j++) {
                 JsonObject bid = bids.get(j).getAsJsonObject();
-                if(bid.get("bidder").getAsString().equalsIgnoreCase(playerUUID)) {
+                if (bid.get("bidder").getAsString().equalsIgnoreCase(playerUUID)) {
                     playerBids.add(auctionUuid);
                 }
             }
 
             int dungeonTier = -1;
-            if(checkItemType(item_lore, true, "DUNGEON") >= 0) {
+            if (checkItemType(item_lore, true, "DUNGEON") >= 0) {
                 dungeonTier = 0;
-                for(int i=0; i<item_name.length(); i++) {
+                for (int i = 0; i < item_name.length(); i++) {
                     char c = item_name.charAt(i);
-                    if(c == 0x272A) {
+                    if (c == 0x272A) {
                         dungeonTier++;
                     }
                 }
@@ -550,28 +559,28 @@ public class APIManager {
 
             //Categories
             String category = sbCategory;
-            int itemType = checkItemType(item_lore, true,"SWORD", "FISHING ROD", "PICKAXE",
+            int itemType = checkItemType(item_lore, true, "SWORD", "FISHING ROD", "PICKAXE",
                     "AXE", "SHOVEL", "PET ITEM", "TRAVEL SCROLL", "REFORGE STONE", "BOW");
-            if(itemType >= 0 && itemType < categoryItemType.length) {
+            if (itemType >= 0 && itemType < categoryItemType.length) {
                 category = categoryItemType[itemType];
             }
-            if(category.equals("consumables") && extras.contains("enchanted book")) category = "ebook";
-            if(category.equals("consumables") && extras.endsWith("potion")) category = "potion";
-            if(category.equals("misc") && extras.contains("rune")) category = "rune";
-            if(category.equals("misc") && item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";
-            if(item_lore.split("\n")[0].endsWith("Pet") ||
+            if (category.equals("consumables") && extras.contains("enchanted book")) category = "ebook";
+            if (category.equals("consumables") && extras.endsWith("potion")) category = "potion";
+            if (category.equals("misc") && extras.contains("rune")) category = "rune";
+            if (category.equals("misc") && item_lore.split("\n")[0].endsWith("Furniture")) category = "furniture";
+            if (item_lore.split("\n")[0].endsWith("Pet") ||
                     item_lore.split("\n")[0].endsWith("Mount")) category = "pet";
 
             Auction auction1 = new Auction(auctioneerUuid, end, starting_bid, highest_bid_amount,
                     bid_count, bin, category, rarity, dungeonTier, item_bytes);
 
-            if(tag.hasKey("ench")) {
+            if (tag.hasKey("ench")) {
                 auction1.enchLevel = 1;
-                if(tag.hasKey("ExtraAttributes", 10)) {
+                if (tag.hasKey("ExtraAttributes", 10)) {
                     NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
 
                     int hotpotatocount = ea.getInteger("hot_potato_count");
-                    if(hotpotatocount == 10) {
+                    if (hotpotatocount == 10) {
                         auction1.enchLevel = 2;
                     }
                 }
@@ -579,27 +588,29 @@ public class APIManager {
 
             auctionMap.put(auctionUuid, auction1);
             internalnameToAucIdMap.computeIfAbsent(internalname, k -> new HashSet<>()).add(auctionUuid);
-        } catch(Exception e) {e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void getPageFromAPI(int page) {
         //System.out.println("downloading page:"+page);
         //System.out.println("Trying to update page: " + page);
         HashMap<String, String> args = new HashMap<>();
-        args.put("page", ""+page);
+        args.put("page", "" + page);
         manager.hypixelApi.getHypixelApiAsync(null, "skyblock/auctions",
-            args, jsonObject -> {
-                    if(jsonObject == null) return;
+                args, jsonObject -> {
+                    if (jsonObject == null) return;
 
                     if (jsonObject.get("success").getAsBoolean()) {
-                        if(pagesToDownload == null) {
+                        if (pagesToDownload == null) {
                             int totalPages = jsonObject.get("totalPages").getAsInt();
                             pagesToDownload = new LinkedList<>();
-                            for(int i=0; i<totalPages+2; i++) {
+                            for (int i = 0; i < totalPages + 2; i++) {
                                 pagesToDownload.add(i);
                             }
                         }
-                        if(firstHypixelApiUpdate == 0) {
+                        if (firstHypixelApiUpdate == 0) {
                             firstHypixelApiUpdate = jsonObject.get("lastUpdated").getAsLong();
                         }
                         activeAuctions = jsonObject.get("totalAuctions").getAsInt();
@@ -611,7 +622,7 @@ public class APIManager {
 
                             processAuction(auction);
                         }
-                        processMillis = (int)(System.currentTimeMillis() - startProcess);
+                        processMillis = (int) (System.currentTimeMillis() - startProcess);
                     } else {
                         pagesToDownload.addLast(page);
                     }
@@ -621,13 +632,13 @@ public class APIManager {
 
     public void updateBazaar() {
         manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "skyblock/bazaar", new HashMap<>(), (jsonObject) -> {
-            if(!jsonObject.get("success").getAsBoolean()) return;
+            if (!jsonObject.get("success").getAsBoolean()) return;
 
             craftCost.clear();
             bazaarJson = new JsonObject();
             JsonObject products = jsonObject.get("products").getAsJsonObject();
-            for(Map.Entry<String, JsonElement> entry : products.entrySet()) {
-                if(entry.getValue().isJsonObject()) {
+            for (Map.Entry<String, JsonElement> entry : products.entrySet()) {
+                if (entry.getValue().isJsonObject()) {
                     JsonObject productInfo = new JsonObject();
 
                     JsonObject product = entry.getValue().getAsJsonObject();
@@ -635,16 +646,16 @@ public class APIManager {
                     productInfo.addProperty("avg_buy", quickStatus.get("buyPrice").getAsFloat());
                     productInfo.addProperty("avg_sell", quickStatus.get("sellPrice").getAsFloat());
 
-                    for(JsonElement element : product.get("sell_summary").getAsJsonArray()) {
-                        if(element.isJsonObject()) {
+                    for (JsonElement element : product.get("sell_summary").getAsJsonArray()) {
+                        if (element.isJsonObject()) {
                             JsonObject sellSummaryFirst = element.getAsJsonObject();
                             productInfo.addProperty("curr_sell", sellSummaryFirst.get("pricePerUnit").getAsFloat());
                             break;
                         }
                     }
 
-                    for(JsonElement element : product.get("buy_summary").getAsJsonArray()) {
-                        if(element.isJsonObject()) {
+                    for (JsonElement element : product.get("buy_summary").getAsJsonArray()) {
+                        if (element.isJsonObject()) {
                             JsonObject sellSummaryFirst = element.getAsJsonObject();
                             productInfo.addProperty("curr_buy", sellSummaryFirst.get("pricePerUnit").getAsFloat());
                             break;
@@ -662,68 +673,71 @@ public class APIManager {
             craftCost.clear();
             auctionPricesJson = jsonObject;
             lastAuctionAvgUpdate = System.currentTimeMillis();
-        }, () -> {});
-        manager.hypixelApi.getMyApiGZIPAsync("auction_averages_lbin/1day.json.gz", (jsonObject) -> auctionPricesAvgLowestBinJson = jsonObject, () -> {});
+        }, () -> {
+        });
+        manager.hypixelApi.getMyApiGZIPAsync("auction_averages_lbin/1day.json.gz", (jsonObject) -> auctionPricesAvgLowestBinJson = jsonObject, () -> {
+        });
     }
 
     public Set<String> getItemAuctionInfoKeySet() {
-        if(auctionPricesJson == null) return new HashSet<>();
+        if (auctionPricesJson == null) return new HashSet<>();
         HashSet<String> keys = new HashSet<>();
-        for(Map.Entry<String, JsonElement> entry : auctionPricesJson.entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : auctionPricesJson.entrySet()) {
             keys.add(entry.getKey());
         }
         return keys;
     }
 
     public JsonObject getItemAuctionInfo(String internalname) {
-        if(auctionPricesJson == null) return null;
+        if (auctionPricesJson == null) return null;
         JsonElement e = auctionPricesJson.get(internalname);
-        if(e == null) {
+        if (e == null) {
             return null;
         }
         return e.getAsJsonObject();
     }
 
     public float getItemAvgBin(String internalname) {
-        if(auctionPricesAvgLowestBinJson == null) return -1;
+        if (auctionPricesAvgLowestBinJson == null) return -1;
         JsonElement e = auctionPricesAvgLowestBinJson.get(internalname);
-        if(e == null) {
+        if (e == null) {
             return -1;
         }
         return Math.round(e.getAsFloat());
     }
 
     public Set<String> getBazaarKeySet() {
-        if(bazaarJson == null) return new HashSet<>();
+        if (bazaarJson == null) return new HashSet<>();
         HashSet<String> keys = new HashSet<>();
-        for(Map.Entry<String, JsonElement> entry : bazaarJson.entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : bazaarJson.entrySet()) {
             keys.add(entry.getKey());
         }
         return keys;
     }
 
     public JsonObject getBazaarInfo(String internalname) {
-        if(bazaarJson == null) return null;
+        if (bazaarJson == null) return null;
         JsonElement e = bazaarJson.get(internalname);
-        if(e == null) {
+        if (e == null) {
             return null;
         }
         return e.getAsJsonObject();
     }
 
     private static final List<String> hardcodedVanillaItems = Utils.createList(
-            "WOOD_AXE", "WOOD_HOE", "WOOD_PICKAXE","WOOD_SPADE", "WOOD_SWORD",
+            "WOOD_AXE", "WOOD_HOE", "WOOD_PICKAXE", "WOOD_SPADE", "WOOD_SWORD",
             "GOLD_AXE", "GOLD_HOE", "GOLD_PICKAXE", "GOLD_SPADE", "GOLD_SWORD",
             "ROOKIE_HOE"
     );
+
     public boolean isVanillaItem(String internalname) {
-        if(hardcodedVanillaItems.contains(internalname)) return true;
+        if (hardcodedVanillaItems.contains(internalname)) return true;
 
         //Removes trailing numbers and underscores, eg. LEAVES_2-3 -> LEAVES
         String vanillaName = internalname.split("-")[0];
-        if(manager.getItemInformation().containsKey(vanillaName)) {
+        if (manager.getItemInformation().containsKey(vanillaName)) {
             JsonObject json = manager.getItemInformation().get(vanillaName);
-            if(json != null && json.has("vanilla") && json.get("vanilla").getAsBoolean()) return true;
+            if (json != null && json.has("vanilla") && json.get("vanilla").getAsBoolean()) return true;
         }
         return Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null;
     }
@@ -742,7 +756,7 @@ public class APIManager {
      * Recursively calculates the cost of crafting an item from raw materials.
      */
     public CraftInfo getCraftCost(String internalname, int depth) {
-        if(craftCost.containsKey(internalname)) {
+        if (craftCost.containsKey(internalname)) {
             return craftCost.get(internalname);
         } else {
             CraftInfo ci = new CraftInfo();
@@ -753,52 +767,52 @@ public class APIManager {
             float lowestBin = getLowestBin(internalname);
             JsonObject bazaarInfo = getBazaarInfo(internalname);
 
-            if(bazaarInfo != null && bazaarInfo.get("curr_buy") != null) {
+            if (bazaarInfo != null && bazaarInfo.get("curr_buy") != null) {
                 ci.craftCost = bazaarInfo.get("curr_buy").getAsFloat();
             }
             //Don't use auction prices for vanilla items cuz people like to transfer money, messing up the cost of vanilla items.
-            if(lowestBin > 0 && !ci.vanillaItem) {
-                if(ci.craftCost < 0 || lowestBin < ci.craftCost) {
+            if (lowestBin > 0 && !ci.vanillaItem) {
+                if (ci.craftCost < 0 || lowestBin < ci.craftCost) {
                     ci.craftCost = lowestBin;
                 }
-            } else if(auctionInfo != null && !ci.vanillaItem) {
+            } else if (auctionInfo != null && !ci.vanillaItem) {
                 float auctionPrice = auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat();
-                if(ci.craftCost < 0 || auctionPrice < ci.craftCost) {
+                if (ci.craftCost < 0 || auctionPrice < ci.craftCost) {
                     ci.craftCost = auctionPrice;
                 }
             }
 
-            if(depth > 16) {
+            if (depth > 16) {
                 craftCost.put(internalname, ci);
                 return ci;
             }
 
             JsonObject item = manager.getItemInformation().get(internalname);
-            if(item != null && item.has("recipe")) {
+            if (item != null && item.has("recipe")) {
                 float craftPrice = 0;
                 JsonObject recipe = item.get("recipe").getAsJsonObject();
 
-                String[] x = {"1","2","3"};
-                String[] y = {"A","B","C"};
-                for(int i=0; i<9; i++) {
-                    String name = y[i/3]+x[i%3];
+                String[] x = {"1", "2", "3"};
+                String[] y = {"A", "B", "C"};
+                for (int i = 0; i < 9; i++) {
+                    String name = y[i / 3] + x[i % 3];
                     String itemS = recipe.get(name).getAsString();
-                    if(itemS == null || itemS.length() == 0) continue;
+                    if (itemS == null || itemS.length() == 0) continue;
 
                     int count = 1;
-                    if(itemS.split(":").length == 2) {
+                    if (itemS.split(":").length == 2) {
                         count = Integer.parseInt(itemS.split(":")[1]);
                         itemS = itemS.split(":")[0];
                     }
-                    if(itemS.equals(internalname)) { //if item is used a crafting component in its own recipe, return
+                    if (itemS.equals(internalname)) { //if item is used a crafting component in its own recipe, return
                         craftCost.put(internalname, ci);
                         return ci;
                     }
 
-                    float compCost = getCraftCost(itemS, depth+1).craftCost * count;
-                    if(compCost < 0) {
+                    float compCost = getCraftCost(itemS, depth + 1).craftCost * count;
+                    if (compCost < 0) {
                         //If it's a custom item without a cost, return
-                        if(!getCraftCost(itemS).vanillaItem) {
+                        if (!getCraftCost(itemS).vanillaItem) {
                             craftCost.put(internalname, ci);
                             return ci;
                         }
@@ -807,7 +821,7 @@ public class APIManager {
                     }
                 }
 
-                if(ci.craftCost < 0 || craftPrice < ci.craftCost) {
+                if (ci.craftCost < 0 || craftPrice < ci.craftCost) {
                     ci.craftCost = craftPrice;
                     ci.fromRecipe = true;
                 }
@@ -822,18 +836,18 @@ public class APIManager {
      */
     public float getCostOfEnchants(String internalname, NBTTagCompound tag) {
         float costOfEnchants = 0;
-        if(true) return 0;
+        if (true) return 0;
 
         JsonObject info = getItemAuctionInfo(internalname);
-        if(info == null || !info.has("price")) {
+        if (info == null || !info.has("price")) {
             return 0;
         }
-        if(auctionPricesJson == null || !auctionPricesJson.has("ench_prices") || !auctionPricesJson.has("ench_maximums")) {
+        if (auctionPricesJson == null || !auctionPricesJson.has("ench_prices") || !auctionPricesJson.has("ench_maximums")) {
             return 0;
         }
         JsonObject ench_prices = auctionPricesJson.getAsJsonObject("ench_prices");
         JsonObject ench_maximums = auctionPricesJson.getAsJsonObject("ench_maximums");
-        if(!ench_prices.has(internalname) || !ench_maximums.has(internalname)) {
+        if (!ench_prices.has(internalname) || !ench_maximums.has(internalname)) {
             return 0;
         }
         JsonObject iid_variables = ench_prices.getAsJsonObject(internalname);
@@ -841,18 +855,18 @@ public class APIManager {
 
         int enchants = 0;
         float price = getItemAuctionInfo(internalname).get("price").getAsFloat();
-        if(tag.hasKey("ExtraAttributes")) {
+        if (tag.hasKey("ExtraAttributes")) {
             NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
-            if(ea.hasKey("enchantments")) {
+            if (ea.hasKey("enchantments")) {
 
                 NBTTagCompound enchs = ea.getCompoundTag("enchantments");
-                for(String ench : enchs.getKeySet()) {
+                for (String ench : enchs.getKeySet()) {
                     enchants++;
                     int level = enchs.getInteger(ench);
 
-                    for(Map.Entry<String, JsonElement> entry : iid_variables.entrySet()) {
-                        if(matchEnch(ench, level, entry.getKey())) {
-                            costOfEnchants += entry.getValue().getAsJsonObject().get("A").getAsFloat()*price +
+                    for (Map.Entry<String, JsonElement> entry : iid_variables.entrySet()) {
+                        if (matchEnch(ench, level, entry.getKey())) {
+                            costOfEnchants += entry.getValue().getAsJsonObject().get("A").getAsFloat() * price +
                                     entry.getValue().getAsJsonObject().get("B").getAsFloat();
                             break;
                         }
@@ -868,25 +882,25 @@ public class APIManager {
      * eg. PROTECTION_GE6 will match -> ench_name = PROTECTION, lvl >= 6
      */
     private boolean matchEnch(String ench, int level, String id) {
-        if(!id.contains(":")) {
+        if (!id.contains(":")) {
             return false;
         }
 
         String idEnch = id.split(":")[0];
         String idLevel = id.split(":")[1];
 
-        if(!ench.equalsIgnoreCase(idEnch)) {
+        if (!ench.equalsIgnoreCase(idEnch)) {
             return false;
         }
 
-        if(String.valueOf(level).equalsIgnoreCase(idLevel)) {
+        if (String.valueOf(level).equalsIgnoreCase(idLevel)) {
             return true;
         }
 
-        if(idLevel.startsWith("LE")) {
+        if (idLevel.startsWith("LE")) {
             int idLevelI = Integer.parseInt(idLevel.substring(2));
             return level <= idLevelI;
-        } else if(idLevel.startsWith("GE")) {
+        } else if (idLevel.startsWith("GE")) {
             int idLevelI = Integer.parseInt(idLevel.substring(2));
             return level >= idLevelI;
         }

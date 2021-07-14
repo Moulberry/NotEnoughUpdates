@@ -40,11 +40,11 @@ public class NPCRetexturing implements IResourceManagerReloadListener {
     private boolean gettingSkin = false;
 
     public Skin getSkin(AbstractClientPlayer player) {
-        if(gettingSkin) return null;
+        if (gettingSkin) return null;
 
-        if(player.getUniqueID().version() == 4) return null;
+        if (player.getUniqueID().version() == 4) return null;
 
-        if(skinOverrideCache.containsKey(player)) {
+        if (skinOverrideCache.containsKey(player)) {
             return skinOverrideCache.get(player);
         }
 
@@ -52,7 +52,7 @@ public class NPCRetexturing implements IResourceManagerReloadListener {
         ResourceLocation loc = player.getLocationSkin();
         gettingSkin = false;
 
-        if(skinMap.containsKey(loc.getResourcePath())) {
+        if (skinMap.containsKey(loc.getResourcePath())) {
             Skin skin = skinMap.get(loc.getResourcePath());
             skinOverrideCache.put(player, skin);
             return skin;
@@ -70,21 +70,21 @@ public class NPCRetexturing implements IResourceManagerReloadListener {
     public void onResourceManagerReload(IResourceManager resourceManager) {
         skinMap.clear();
 
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 Minecraft.getMinecraft().getResourceManager().getResource(npcRetexturingJson).getInputStream(), StandardCharsets.UTF_8))) {
             JsonObject json = gson.fromJson(reader, JsonObject.class);
 
-            if(json == null) return;
+            if (json == null) return;
 
-            for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
-                if(entry.getValue().isJsonObject()) {
+            for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                if (entry.getValue().isJsonObject()) {
                     JsonObject val = entry.getValue().getAsJsonObject();
 
                     Skin skin = new Skin(new ResourceLocation(val.get("skin").getAsString()), val.get("skinny").getAsBoolean());
-                    skinMap.put("skins/"+entry.getKey(), skin);
+                    skinMap.put("skins/" + entry.getKey(), skin);
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
         }
     }
 

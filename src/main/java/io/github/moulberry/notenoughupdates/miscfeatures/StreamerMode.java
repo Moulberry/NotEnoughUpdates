@@ -11,15 +11,15 @@ public class StreamerMode {
 
     public static String filterLobbyNames(String line) {
         Matcher matcher = lobbyPattern.matcher(line);
-        if(matcher.find() && matcher.groupCount() == 2) {
+        if (matcher.find() && matcher.groupCount() == 2) {
             String lobbyType = matcher.group(1);
             String lobbyId = matcher.group(2);
-            long lobbyNum = Long.parseLong(lobbyId.substring(0, lobbyId.length()-1));
+            long lobbyNum = Long.parseLong(lobbyId.substring(0, lobbyId.length() - 1));
 
-            long obfLobbyNum = (lobbyNum*9182739 + 11) % 500;
-            char obfLobbyLetter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt((int)(obfLobbyNum%26));
+            long obfLobbyNum = (lobbyNum * 9182739 + 11) % 500;
+            char obfLobbyLetter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt((int) (obfLobbyNum % 26));
 
-            line = line.replaceAll("(mini|mega|m|M)([0-9]{1,3}[A-Z])", lobbyType+obfLobbyNum+obfLobbyLetter);
+            line = line.replaceAll("(mini|mega|m|M)([0-9]{1,3}[A-Z])", lobbyType + obfLobbyNum + obfLobbyLetter);
         }
         return line;
     }

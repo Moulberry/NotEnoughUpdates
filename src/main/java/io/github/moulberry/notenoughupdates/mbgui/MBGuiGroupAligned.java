@@ -24,39 +24,39 @@ public abstract class MBGuiGroupAligned extends MBGuiGroup {
     }
 
     public void recalculate() {
-        for(MBGuiElement child : children) {
+        for (MBGuiElement child : children) {
             child.recalculate();
         }
 
-        if(vertical) {
+        if (vertical) {
             height = 0;
-            for(int i=0; i<children.size(); i++) {
+            for (int i = 0; i < children.size(); i++) {
                 MBGuiElement child = children.get(i);
                 childrenPosition.put(child, new Vector2f(0, height));
                 height += child.getHeight();
-                if(i != children.size()-1) height += getPadding();
+                if (i != children.size() - 1) height += getPadding();
             }
 
             width = 0;
-            for(MBGuiElement child : children) {
+            for (MBGuiElement child : children) {
                 int childWidth = child.getWidth();
-                if(childWidth > width) {
+                if (childWidth > width) {
                     width = childWidth;
                 }
             }
         } else {
             width = 0;
-            for(int i=0; i<children.size(); i++) {
+            for (int i = 0; i < children.size(); i++) {
                 MBGuiElement child = children.get(i);
                 childrenPosition.put(child, new Vector2f(width, 0));
                 width += child.getWidth();
-                if(i != children.size()-1) width += getPadding();
+                if (i != children.size() - 1) width += getPadding();
             }
 
             height = 0;
-            for(MBGuiElement child : children) {
+            for (MBGuiElement child : children) {
                 int childHeight = child.getHeight();
-                if(childHeight > height) {
+                if (childHeight > height) {
                     height = childHeight;
                 }
             }

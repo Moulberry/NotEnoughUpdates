@@ -27,8 +27,8 @@ public class NEUConfig extends Config {
 
     private void editOverlay(String activeConfig, TextOverlay overlay, Position position) {
         Vector2f size = overlay.getDummySize();
-        int width = (int)size.x;
-        int height = (int)size.y;
+        int width = (int) size.x;
+        int height = (int) size.y;
         Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(position, width, height, () -> {
             overlay.renderDummy();
             OverlayManager.dontRenderOverlay = overlay.getClass();
@@ -41,10 +41,10 @@ public class NEUConfig extends Config {
     @Override
     public void executeRunnable(int runnableId) {
         String activeConfigCategory = null;
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper) {
             GuiScreenElementWrapper wrapper = (GuiScreenElementWrapper) Minecraft.getMinecraft().currentScreen;
-            if(wrapper.element instanceof NEUConfigEditor) {
-                activeConfigCategory = ((NEUConfigEditor)wrapper.element).getSelectedCategoryName();
+            if (wrapper.element instanceof NEUConfigEditor) {
+                activeConfigCategory = ((NEUConfigEditor) wrapper.element).getSelectedCategoryName();
             }
         }
         final String activeConfigCategoryF = activeConfigCategory;
@@ -333,7 +333,7 @@ public class NEUConfig extends Config {
         @Expose
         @ConfigOption(
                 name = "RAM Warning",
-                desc = "Warning when game starts with lots of RAM allocated\n"+
+                desc = "Warning when game starts with lots of RAM allocated\n" +
                         "\u00a7cBefore disabling this, please seriously read the message. If you complain about FPS issues without listening to the warning, that's your fault."
         )
         @ConfigEditorBoolean
@@ -617,7 +617,7 @@ public class NEUConfig extends Config {
         @ConfigOption(
                 name = "Price Info (Auc)",
                 desc = "\u00a7rSelect what price information you would like to see on auctionable item tooltips\n" +
-                            "\u00a7eDrag text to rearrange"
+                        "\u00a7eDrag text to rearrange"
         )
         @ConfigEditorDraggableList(
                 exampleText = {"\u00a7eLowest BIN",
@@ -1902,7 +1902,7 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorDropdown(
                 values = {"Dark 1", "Dark 2", "Transparent", "Light 1", "Light 2", "Light 3",
-                          "Unused 1", "Unused 2", "Unused 3", "Unused 4"}
+                        "Unused 1", "Unused 2", "Unused 3", "Unused 4"}
         )
         public int backgroundStyle = 0;
 
@@ -1913,7 +1913,7 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorDropdown(
                 values = {"Dark 1", "Dark 2", "Transparent", "Light 1", "Light 2", "Light 3",
-                          "Unused 1", "Unused 2", "Unused 3", "Unused 4"}
+                        "Unused 1", "Unused 2", "Unused 3", "Unused 4"}
         )
         public int buttonStyle = 0;
 
@@ -2130,72 +2130,98 @@ public class NEUConfig extends Config {
     }
 
     public HiddenProfileSpecific getProfileSpecific() {
-        if(SBInfo.getInstance().currentProfile == null) {
+        if (SBInfo.getInstance().currentProfile == null) {
             return null;
         }
-        return hidden.profileSpecific.computeIfAbsent(SBInfo.getInstance().currentProfile, k-> new HiddenProfileSpecific());
+        return hidden.profileSpecific.computeIfAbsent(SBInfo.getInstance().currentProfile, k -> new HiddenProfileSpecific());
     }
 
     public static class HiddenProfileSpecific {
-        @Expose public long godPotionDrunk = 0L;
-        @Expose public long puzzlerCompleted = 0L;
-        @Expose public long firstCakeAte = 0L;
-        @Expose public long fetchurCompleted = 0L;
-        @Expose public long commissionsCompleted = 0L;
-        @Expose public long experimentsCompleted = 0L;
-        @Expose public long cookieBuffRemaining = 0L;
+        @Expose
+        public long godPotionDrunk = 0L;
+        @Expose
+        public long puzzlerCompleted = 0L;
+        @Expose
+        public long firstCakeAte = 0L;
+        @Expose
+        public long fetchurCompleted = 0L;
+        @Expose
+        public long commissionsCompleted = 0L;
+        @Expose
+        public long experimentsCompleted = 0L;
+        @Expose
+        public long cookieBuffRemaining = 0L;
 
-        @Expose public int commissionMilestone = 0;
+        @Expose
+        public int commissionMilestone = 0;
     }
 
     public static class Hidden {
-        @Expose public HashMap<String, HiddenProfileSpecific> profileSpecific = new HashMap<>();
-        @Expose public List<InventoryButton> inventoryButtons = createDefaultInventoryButtons();
+        @Expose
+        public HashMap<String, HiddenProfileSpecific> profileSpecific = new HashMap<>();
+        @Expose
+        public List<InventoryButton> inventoryButtons = createDefaultInventoryButtons();
 
-        @Expose public boolean enableItemEditing = false;
-        @Expose public boolean cacheRenderedItempane = true;
-        @Expose public boolean autoupdate = true;
-        @Expose public String overlaySearchBar = "";
-        @Expose public String overlayQuickCommand = "";
-        @Expose public boolean dev = false;
-        @Expose public boolean loadedModBefore = false;
-        @Expose public String selectedCape = null;
-        @Expose public int compareMode = 0;
-        @Expose public int sortMode = 0;
-        @Expose public ArrayList<Boolean> compareAscending = Lists.newArrayList(true, true, true);
-        @Expose public ArrayList<String> favourites = new ArrayList<>();
-        @Expose public ArrayList<String> previousAuctionSearches = new ArrayList<>();
-        @Expose public ArrayList<String> eventFavourites = new ArrayList<>();
-        @Expose public ArrayList<String> quickCommands = createDefaultQuickCommands();
-        @Expose public ArrayList<String> enchantColours = Lists.newArrayList(
-                      "[a-zA-Z\\- ]+:\u003e:9:6:0",
-                                "[a-zA-Z\\- ]+:\u003e:6:c:0",
-                                "[a-zA-Z\\- ]+:\u003e:5:5:0",
-                                "Experience:\u003e:3:5:0",
-                                "Life Steal:\u003e:3:5:0",
-                                "Scavenger:\u003e:3:5:0",
-                                "Looting:\u003e:3:5:0");
+        @Expose
+        public boolean enableItemEditing = false;
+        @Expose
+        public boolean cacheRenderedItempane = true;
+        @Expose
+        public boolean autoupdate = true;
+        @Expose
+        public String overlaySearchBar = "";
+        @Expose
+        public String overlayQuickCommand = "";
+        @Expose
+        public boolean dev = false;
+        @Expose
+        public boolean loadedModBefore = false;
+        @Expose
+        public String selectedCape = null;
+        @Expose
+        public int compareMode = 0;
+        @Expose
+        public int sortMode = 0;
+        @Expose
+        public ArrayList<Boolean> compareAscending = Lists.newArrayList(true, true, true);
+        @Expose
+        public ArrayList<String> favourites = new ArrayList<>();
+        @Expose
+        public ArrayList<String> previousAuctionSearches = new ArrayList<>();
+        @Expose
+        public ArrayList<String> eventFavourites = new ArrayList<>();
+        @Expose
+        public ArrayList<String> quickCommands = createDefaultQuickCommands();
+        @Expose
+        public ArrayList<String> enchantColours = Lists.newArrayList(
+                "[a-zA-Z\\- ]+:\u003e:9:6:0",
+                "[a-zA-Z\\- ]+:\u003e:6:c:0",
+                "[a-zA-Z\\- ]+:\u003e:5:5:0",
+                "Experience:\u003e:3:5:0",
+                "Life Steal:\u003e:3:5:0",
+                "Scavenger:\u003e:3:5:0",
+                "Looting:\u003e:3:5:0");
     }
 
     public static List<InventoryButton> createDefaultInventoryButtons() {
         List<InventoryButton> buttons = new ArrayList<>();
         //Below crafting
         buttons.add(new InventoryButton(87, 63, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21, 63, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21*2, 63, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21*3, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21 * 2, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21 * 3, 63, null, true, false, false, 0, ""));
 
         //Above crafting
         buttons.add(new InventoryButton(87, 5, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21, 5, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21*2, 5, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21*3, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21 * 2, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21 * 3, 5, null, true, false, false, 0, ""));
 
         //Crafting square
         buttons.add(new InventoryButton(87, 25, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+18, 25, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87, 25+18, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+18, 25+18, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 18, 25, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87, 25 + 18, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 18, 25 + 18, null, true, false, false, 0, ""));
 
         //Crafting result
         buttons.add(new InventoryButton(143, 35, null, true, false, false, 0, ""));
@@ -2207,48 +2233,56 @@ public class NEUConfig extends Config {
         buttons.add(new InventoryButton(26, 60, null, true, false, false, 0, ""));
 
         //Right side
-        for(int i=0; i<8; i++) {
-            int y = 2+20*i;
-            if(y < 80) {
-                buttons.add(new InventoryButton(2, 2+20*i, null, false, true, false, 0, ""));
+        for (int i = 0; i < 8; i++) {
+            int y = 2 + 20 * i;
+            if (y < 80) {
+                buttons.add(new InventoryButton(2, 2 + 20 * i, null, false, true, false, 0, ""));
             } else {
-                buttons.add(new InventoryButton(2, 2+20*i-166, null, false, true, true, 0, ""));
+                buttons.add(new InventoryButton(2, 2 + 20 * i - 166, null, false, true, true, 0, ""));
             }
         }
 
         //Top side
-        for(int i=0; i<8; i++) {
-            buttons.add(new InventoryButton(4+21*i, -19, null, false, false, false, 0, ""));
+        for (int i = 0; i < 8; i++) {
+            buttons.add(new InventoryButton(4 + 21 * i, -19, null, false, false, false, 0, ""));
         }
 
         //Left side
-        for(int i=0; i<8; i++) {
-            int y = 2+20*i;
-            if(y < 80) {
-                buttons.add(new InventoryButton(-19, 2+20*i, null, false, false, false, 0, ""));
+        for (int i = 0; i < 8; i++) {
+            int y = 2 + 20 * i;
+            if (y < 80) {
+                buttons.add(new InventoryButton(-19, 2 + 20 * i, null, false, false, false, 0, ""));
             } else {
-                buttons.add(new InventoryButton(-19, 2+20*i-166, null, false, false, true, 0, ""));
+                buttons.add(new InventoryButton(-19, 2 + 20 * i - 166, null, false, false, true, 0, ""));
             }
         }
 
         //Bottom side
-        for(int i=0; i<8; i++) {
-            buttons.add(new InventoryButton(4+21*i, 2, null, false, false, true, 0, ""));
+        for (int i = 0; i < 8; i++) {
+            buttons.add(new InventoryButton(4 + 21 * i, 2, null, false, false, true, 0, ""));
         }
         return buttons;
     }
 
     public static class InventoryButton {
-        @Expose public int x;
-        @Expose public int y;
-        @Expose public boolean playerInvOnly;
+        @Expose
+        public int x;
+        @Expose
+        public int y;
+        @Expose
+        public boolean playerInvOnly;
 
-        @Expose public boolean anchorRight;
-        @Expose public boolean anchorBottom;
+        @Expose
+        public boolean anchorRight;
+        @Expose
+        public boolean anchorBottom;
 
-        @Expose public int backgroundIndex;
-        @Expose public String command;
-        @Expose public String icon;
+        @Expose
+        public int backgroundIndex;
+        @Expose
+        public String command;
+        @Expose
+        public String icon;
 
         public boolean isActive() {
             return command.trim().length() > 0;
@@ -2330,70 +2364,70 @@ public class NEUConfig extends Config {
                 desc = "Rotate the map to face the same direction as your player"
         )
         public boolean dmRotatePlayer = true;
-        
+
         @Expose
         @ConfigOption(
                 name = "Orient Checkmarks",
                 desc = "Checkmarks will always show vertically, regardless of rotation"
         )
         public boolean dmOrientCheck = true;
-        
+
         @Expose
         @ConfigOption(
                 name = "Center Checkmarks",
                 desc = "Checkmarks will show closer to the center of rooms"
         )
         public boolean dmCenterCheck = false;
-        
+
         @Expose
         @ConfigOption(
                 name = "Player Icon Style",
                 desc = "Various player icon styles"
         )
         public int dmPlayerHeads = 0;
-        
+
         @Expose
         @ConfigOption(
                 name = "Interpolate Far Players",
                 desc = "Will make players far away move smoothly"
         )
         public boolean dmPlayerInterp = true;
-        
+
         @Expose
         @ConfigOption(
                 name = "OpenGL Compatibility",
                 desc = "Compatiblity options for people with bad computers. ONLY use this if you know what you are doing, otherwise the map will look worse"
         )
         public int dmCompat = 0;
-        
+
         @Expose
         @ConfigOption(
                 name = "Background Colour",
                 desc = "Colour of the map background. Supports opacity & chroma"
         )
         public String dmBackgroundColour = "00:170:75:75:75";
-        
+
         @Expose
         @ConfigOption(
                 name = "Border Colour",
                 desc = "Colour of the map border. Supports opacity & chroma. Turn off custom borders to see"
         )
         public String dmBorderColour = "00:0:0:0:0";
-        
+
         @Expose
         @ConfigOption(
                 name = "Chroma Border Mode",
                 desc = "Applies a hue offset around the map border"
         )
         public boolean dmChromaBorder = false;
-        
+
         @Expose
         @ConfigOption(
                 name = "Background Blur Factor",
                 desc = "Changes the blur factor behind the map. Set to 0 to disable blur"
         )
         public float dmBackgroundBlur = 0;
-        
+
         @Expose
         @ConfigOption(
                 name = "Position",

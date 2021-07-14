@@ -21,7 +21,7 @@ public class RenderUtils {
     public static void drawFloatingRectDark(int x, int y, int width, int height, boolean shadow) {
         int alpha = 0xf0000000;
 
-        if(OpenGlHelper.isFramebufferEnabled()) {
+        if (OpenGlHelper.isFramebufferEnabled()) {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
             BackgroundBlur.renderBlurredBackground(15, scaledResolution.getScaledWidth(),
                     scaledResolution.getScaledHeight(), x, y, width, height, true);
@@ -32,14 +32,14 @@ public class RenderUtils {
         int main = alpha | 0x202026;
         int light = 0xff303036;
         int dark = 0xff101016;
-        Gui.drawRect(x, y, x+1, y+height, light); //Left
-        Gui.drawRect(x+1, y, x+width, y+1, light); //Top
-        Gui.drawRect(x+width-1, y+1, x+width, y+height, dark); //Right
-        Gui.drawRect(x+1, y+height-1, x+width-1, y+height, dark); //Bottom
-        Gui.drawRect(x+1, y+1, x+width-1, y+height-1, main); //Middle
-        if(shadow) {
-            Gui.drawRect(x+width, y+2, x+width+2, y+height+2, 0x70000000); //Right shadow
-            Gui.drawRect(x+2, y+height, x+width, y+height+2, 0x70000000); //Bottom shadow
+        Gui.drawRect(x, y, x + 1, y + height, light); //Left
+        Gui.drawRect(x + 1, y, x + width, y + 1, light); //Top
+        Gui.drawRect(x + width - 1, y + 1, x + width, y + height, dark); //Right
+        Gui.drawRect(x + 1, y + height - 1, x + width - 1, y + height, dark); //Bottom
+        Gui.drawRect(x + 1, y + 1, x + width - 1, y + height - 1, main); //Middle
+        if (shadow) {
+            Gui.drawRect(x + width, y + 2, x + width + 2, y + height + 2, 0x70000000); //Right shadow
+            Gui.drawRect(x + 2, y + height, x + width, y + height + 2, 0x70000000); //Bottom shadow
         }
     }
 
@@ -51,27 +51,27 @@ public class RenderUtils {
         int main = (alpha << 24) | 0xc0c0c0;
         int light = (alpha << 24) | 0xf0f0f0;
         int dark = (alpha << 24) | 0x909090;
-        Gui.drawRect(x, y, x+1, y+height, light); //Left
-        Gui.drawRect(x+1, y, x+width, y+1, light); //Top
-        Gui.drawRect(x+width-1, y+1, x+width, y+height, dark); //Right
-        Gui.drawRect(x+1, y+height-1, x+width-1, y+height, dark); //Bottom
-        Gui.drawRect(x+1, y+1, x+width-1, y+height-1, main); //Middle
-        if(shadow) {
-            Gui.drawRect(x+width, y+2, x+width+2, y+height+2, (alpha*3/5) << 24); //Right shadow
-            Gui.drawRect(x+2, y+height, x+width, y+height+2, (alpha*3/5) << 24); //Bottom shadow
+        Gui.drawRect(x, y, x + 1, y + height, light); //Left
+        Gui.drawRect(x + 1, y, x + width, y + 1, light); //Top
+        Gui.drawRect(x + width - 1, y + 1, x + width, y + height, dark); //Right
+        Gui.drawRect(x + 1, y + height - 1, x + width - 1, y + height, dark); //Bottom
+        Gui.drawRect(x + 1, y + 1, x + width - 1, y + height - 1, main); //Middle
+        if (shadow) {
+            Gui.drawRect(x + width, y + 2, x + width + 2, y + height + 2, (alpha * 3 / 5) << 24); //Right shadow
+            Gui.drawRect(x + 2, y + height, x + width, y + height + 2, (alpha * 3 / 5) << 24); //Bottom shadow
         }
     }
 
     public static void drawTexturedRect(float x, float y, float width, float height) {
-        drawTexturedRect(x, y, width, height, 0, 1, 0 , 1);
+        drawTexturedRect(x, y, width, height, 0, 1, 0, 1);
     }
 
     public static void drawTexturedRect(float x, float y, float width, float height, int filter) {
-        drawTexturedRect(x, y, width, height, 0, 1, 0 , 1, filter);
+        drawTexturedRect(x, y, width, height, 0, 1, 0, 1, filter);
     }
 
     public static void drawTexturedRect(float x, float y, float width, float height, float uMin, float uMax, float vMin, float vMax) {
-        drawTexturedRect(x, y, width, height, uMin, uMax, vMin , vMax, GL11.GL_NEAREST);
+        drawTexturedRect(x, y, width, height, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
     }
 
     public static void drawTexturedRect(float x, float y, float width, float height, float uMin, float uMax, float vMin, float vMax, int filter) {
@@ -93,13 +93,13 @@ public class RenderUtils {
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
         worldrenderer
-                .pos(x, y+height, 0.0D)
+                .pos(x, y + height, 0.0D)
                 .tex(uMin, vMax).endVertex();
         worldrenderer
-                .pos(x+width, y+height, 0.0D)
+                .pos(x + width, y + height, 0.0D)
                 .tex(uMax, vMax).endVertex();
         worldrenderer
-                .pos(x+width, y, 0.0D)
+                .pos(x + width, y, 0.0D)
                 .tex(uMax, vMin).endVertex();
         worldrenderer
                 .pos(x, y, 0.0D)
@@ -111,14 +111,14 @@ public class RenderUtils {
     }
 
     public static void drawGradientRect(int zLevel, int left, int top, int right, int bottom, int startColor, int endColor) {
-        float startAlpha = (float)(startColor >> 24 & 255) / 255.0F;
-        float startRed = (float)(startColor >> 16 & 255) / 255.0F;
-        float startGreen = (float)(startColor >> 8 & 255) / 255.0F;
-        float startBlue = (float)(startColor & 255) / 255.0F;
-        float endAlpha = (float)(endColor >> 24 & 255) / 255.0F;
-        float endRed = (float)(endColor >> 16 & 255) / 255.0F;
-        float endGreen = (float)(endColor >> 8 & 255) / 255.0F;
-        float endBlue = (float)(endColor & 255) / 255.0F;
+        float startAlpha = (float) (startColor >> 24 & 255) / 255.0F;
+        float startRed = (float) (startColor >> 16 & 255) / 255.0F;
+        float startGreen = (float) (startColor >> 8 & 255) / 255.0F;
+        float startBlue = (float) (startColor & 255) / 255.0F;
+        float endAlpha = (float) (endColor >> 24 & 255) / 255.0F;
+        float endRed = (float) (endColor >> 16 & 255) / 255.0F;
+        float endGreen = (float) (endColor >> 8 & 255) / 255.0F;
+        float endBlue = (float) (endColor & 255) / 255.0F;
 
         GlStateManager.disableTexture2D();
         GlStateManager.enableBlend();

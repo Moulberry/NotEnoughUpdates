@@ -14,24 +14,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Minecraft.class)
 public class MixinMinecraft {
 
-    @Shadow public WorldClient theWorld;
+    @Shadow
+    public WorldClient theWorld;
 
-    @Shadow public EntityRenderer entityRenderer;
+    @Shadow
+    public EntityRenderer entityRenderer;
 
-    @Inject(method="shutdownMinecraftApplet", at=@At("HEAD"))
+    @Inject(method = "shutdownMinecraftApplet", at = @At("HEAD"))
     public void shutdownMinecraftApplet(CallbackInfo ci) {
         NotEnoughUpdates.INSTANCE.saveConfig();
     }
 
-    @Inject(method="loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V", at=@At("HEAD"))
+    @Inject(method = "loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V", at = @At("HEAD"))
     public void onLoadWorld(WorldClient worldClientIn, String loadingMessage, CallbackInfo ci) {
-        if(worldClientIn != theWorld) {
+        if (worldClientIn != theWorld) {
             entityRenderer.getMapItemRenderer().clearLoadedMaps();
         }
     }
 
-    @Redirect(method="loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V",
-            at=@At(value = "INVOKE", target = "Ljava/lang/System;gc()V"))
+    @Redirect(method = "loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V",
+            at = @At(value = "INVOKE", target = "Ljava/lang/System;gc()V"))
     public void loadWorld_gc() {
     }
 

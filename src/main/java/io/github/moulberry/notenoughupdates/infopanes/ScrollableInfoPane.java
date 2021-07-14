@@ -16,18 +16,18 @@ public abstract class ScrollableInfoPane extends InfoPane {
 
     public void tick() {
         scrollHeight.tick();
-        if(scrollHeight.getValue() < 0) scrollHeight.setValue(0);
+        if (scrollHeight.getValue() < 0) scrollHeight.setValue(0);
     }
 
     @Override
     public void mouseInput(int width, int height, int mouseX, int mouseY, boolean mouseDown) {
         int dWheel = Mouse.getEventDWheel();
 
-        if(dWheel < 0) {
-            scrollHeight.setTarget(scrollHeight.getTarget()+SCROLL_AMOUNT);
+        if (dWheel < 0) {
+            scrollHeight.setTarget(scrollHeight.getTarget() + SCROLL_AMOUNT);
             scrollHeight.resetTimer();
-        } else if(dWheel > 0) {
-            scrollHeight.setTarget(scrollHeight.getTarget()-SCROLL_AMOUNT);
+        } else if (dWheel > 0) {
+            scrollHeight.setTarget(scrollHeight.getTarget() - SCROLL_AMOUNT);
             scrollHeight.resetTimer();
         }
     }

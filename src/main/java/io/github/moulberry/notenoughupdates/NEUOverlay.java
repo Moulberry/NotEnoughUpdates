@@ -72,17 +72,17 @@ public class NEUOverlay extends Gui {
     private String mobRegex = ".*?((_MONSTER)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
     private String petRegex = ".*?;[0-4]$";
 
-    private ResourceLocation[] sortIcons = new ResourceLocation[] {
-        sort_all, sort_mob, sort_pet, sort_tool, sort_armor, sort_accessory
+    private ResourceLocation[] sortIcons = new ResourceLocation[]{
+            sort_all, sort_mob, sort_pet, sort_tool, sort_armor, sort_accessory
     };
-    private ResourceLocation[] sortIconsActive = new ResourceLocation[] {
+    private ResourceLocation[] sortIconsActive = new ResourceLocation[]{
             sort_all_active, sort_mob_active, sort_pet_active, sort_tool_active, sort_armor_active, sort_accessory_active
     };
 
-    private ResourceLocation[] orderIcons = new ResourceLocation[] {
+    private ResourceLocation[] orderIcons = new ResourceLocation[]{
             order_alphabetical, order_rarity, order_value
     };
-    private ResourceLocation[] orderIconsActive = new ResourceLocation[] {
+    private ResourceLocation[] orderIconsActive = new ResourceLocation[]{
             order_alphabetical_active, order_rarity_active, order_value_active
     };
 
@@ -96,7 +96,7 @@ public class NEUOverlay extends Gui {
     public static final int ITEM_SIZE = 16;
 
     private Color bg = new Color(90, 90, 140, 50);
-    private Color fg = new Color(100,100,100, 255);
+    private Color fg = new Color(100, 100, 100, 255);
 
     private InfoPane activeInfoPane = null;
 
@@ -168,24 +168,24 @@ public class NEUOverlay extends Gui {
             public int getWidth() {
                 int paddingUnscaled = getPaddingUnscaled();
 
-                return getSearchBarXSize() + 2*paddingUnscaled;
+                return getSearchBarXSize() + 2 * paddingUnscaled;
             }
 
             public int getHeight() {
                 int paddingUnscaled = getPaddingUnscaled();
 
-                return getSearchBarYSize() + 2*paddingUnscaled;
+                return getSearchBarYSize() + 2 * paddingUnscaled;
             }
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
-                if(Mouse.getEventButtonState()) {
+                if (Mouse.getEventButtonState()) {
                     setSearchBarFocus(true);
-                    if(Mouse.getEventButton() == 1) { //Right mouse button down
+                    if (Mouse.getEventButton() == 1) { //Right mouse button down
                         textField.setText("");
                         updateSearch();
                     } else {
-                        if(System.currentTimeMillis() - millisLastLeftClick < 300) {
+                        if (System.currentTimeMillis() - millisLastLeftClick < 300) {
                             searchMode = !searchMode;
                         }
                         textField.setCursorPosition(getClickedIndex(mouseX, mouseY));
@@ -205,7 +205,7 @@ public class NEUOverlay extends Gui {
                 int paddingUnscaled = getPaddingUnscaled();
 
                 GlStateManager.color(1, 1, 1, 1);
-                if(searchMode) {
+                if (searchMode) {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(SEARCH_BAR_GOLD);
                 } else {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(SEARCH_BAR);
@@ -214,36 +214,36 @@ public class NEUOverlay extends Gui {
                 int w = getWidth();
                 int h = getHeight();
 
-                for(int yIndex=0; yIndex<=2; yIndex++) {
-                    for(int xIndex=0; xIndex<=2; xIndex++) {
+                for (int yIndex = 0; yIndex <= 2; yIndex++) {
+                    for (int xIndex = 0; xIndex <= 2; xIndex++) {
                         float uMin = 0;
-                        float uMax = 4/20f;
-                        int partX = (int)x;
+                        float uMax = 4 / 20f;
+                        int partX = (int) x;
                         int partW = 4;
-                        if(xIndex == 1) {
+                        if (xIndex == 1) {
                             partX += 4;
-                            uMin = 4/20f;
-                            uMax = 16/20f;
-                            partW = w-8;
-                        } else if(xIndex == 2) {
-                            partX += w-4;
-                            uMin = 16/20f;
-                            uMax = 20/20f;
+                            uMin = 4 / 20f;
+                            uMax = 16 / 20f;
+                            partW = w - 8;
+                        } else if (xIndex == 2) {
+                            partX += w - 4;
+                            uMin = 16 / 20f;
+                            uMax = 20 / 20f;
                         }
 
                         float vMin = 0;
-                        float vMax = 4/20f;
-                        int partY = (int)y;
+                        float vMax = 4 / 20f;
+                        int partY = (int) y;
                         int partH = 4;
-                        if(yIndex == 1) {
+                        if (yIndex == 1) {
                             partY += 4;
-                            vMin = 4/20f;
-                            vMax = 16/20f;
-                            partH = h-8;
-                        } else if(yIndex == 2) {
-                            partY += h-4;
-                            vMin = 16/20f;
-                            vMax = 20/20f;
+                            vMin = 4 / 20f;
+                            vMax = 16 / 20f;
+                            partH = h - 8;
+                        } else if (yIndex == 2) {
+                            partY += h - 4;
+                            vMin = 16 / 20f;
+                            vMax = 20 / 20f;
                         }
 
                         Utils.drawTexturedRect(partX, partY, partW, partH, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
@@ -251,35 +251,35 @@ public class NEUOverlay extends Gui {
                 }
 
                 //Search bar text
-                fr.drawString(textField.getText(), (int)x + 5,
-                        (int) y-4 + getHeight()/2, Color.WHITE.getRGB());
+                fr.drawString(textField.getText(), (int) x + 5,
+                        (int) y - 4 + getHeight() / 2, Color.WHITE.getRGB());
 
                 //Determines position of cursor. Cursor blinks on and off every 500ms.
-                if(searchBarHasFocus && System.currentTimeMillis()%1000>500) {
+                if (searchBarHasFocus && System.currentTimeMillis() % 1000 > 500) {
                     String textBeforeCursor = textField.getText().substring(0, textField.getCursorPosition());
                     int textBeforeCursorWidth = fr.getStringWidth(textBeforeCursor);
-                    drawRect((int)x + 5 + textBeforeCursorWidth,
-                            (int)y-5 + getHeight()/2,
-                            (int)x + 5 + textBeforeCursorWidth+1,
-                            (int)y-4+9 + getHeight()/2, Color.WHITE.getRGB());
+                    drawRect((int) x + 5 + textBeforeCursorWidth,
+                            (int) y - 5 + getHeight() / 2,
+                            (int) x + 5 + textBeforeCursorWidth + 1,
+                            (int) y - 4 + 9 + getHeight() / 2, Color.WHITE.getRGB());
                 }
 
                 String selectedText = textField.getSelectedText();
-                if(!selectedText.isEmpty()) {
+                if (!selectedText.isEmpty()) {
                     int selectionWidth = fr.getStringWidth(selectedText);
 
                     int leftIndex = Math.min(textField.getCursorPosition(), textField.getSelectionEnd());
                     String textBeforeSelection = textField.getText().substring(0, leftIndex);
                     int textBeforeSelectionWidth = fr.getStringWidth(textBeforeSelection);
 
-                    drawRect((int)x + 5 + textBeforeSelectionWidth,
-                            (int)y-5 + getHeight()/2,
-                            (int)x + 5 + textBeforeSelectionWidth + selectionWidth,
-                            (int)y-4+9 + getHeight()/2, Color.LIGHT_GRAY.getRGB());
+                    drawRect((int) x + 5 + textBeforeSelectionWidth,
+                            (int) y - 5 + getHeight() / 2,
+                            (int) x + 5 + textBeforeSelectionWidth + selectionWidth,
+                            (int) y - 4 + 9 + getHeight() / 2, Color.LIGHT_GRAY.getRGB());
 
                     fr.drawString(selectedText,
-                            (int)x + 5 + textBeforeSelectionWidth,
-                            (int)y-4 + getHeight()/2, Color.BLACK.getRGB());
+                            (int) x + 5 + textBeforeSelectionWidth,
+                            (int) y - 4 + getHeight() / 2, Color.BLACK.getRGB());
                 }
             }
 
@@ -293,7 +293,7 @@ public class NEUOverlay extends Gui {
         return new MBGuiElement() {
             @Override
             public int getWidth() {
-                return getSearchBarYSize()+getPaddingUnscaled()*2;
+                return getSearchBarYSize() + getPaddingUnscaled() * 2;
             }
 
             @Override
@@ -307,7 +307,7 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
-                if(Mouse.getEventButtonState()) {
+                if (Mouse.getEventButtonState()) {
                     NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config));
                 }
             }
@@ -324,11 +324,11 @@ public class NEUOverlay extends Gui {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
                 GlStateManager.color(1, 1, 1, 1);
                 Utils.drawTexturedRect(x, y,
-                        searchYSize + paddingUnscaled*2, searchYSize + paddingUnscaled*2, GL11.GL_NEAREST);
+                        searchYSize + paddingUnscaled * 2, searchYSize + paddingUnscaled * 2, GL11.GL_NEAREST);
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(settings);
                 GlStateManager.color(1f, 1f, 1f, 1f);
-                Utils.drawTexturedRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                Utils.drawTexturedRect((int) x + paddingUnscaled, (int) y + paddingUnscaled,
                         searchYSize, searchYSize);
                 GlStateManager.bindTexture(0);
             }
@@ -339,7 +339,7 @@ public class NEUOverlay extends Gui {
         return new MBGuiElement() {
             @Override
             public int getWidth() {
-                return getSearchBarYSize()+getPaddingUnscaled()*2;
+                return getSearchBarYSize() + getPaddingUnscaled() * 2;
             }
 
             @Override
@@ -353,7 +353,7 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
-                if(Mouse.getEventButtonState()) {
+                if (Mouse.getEventButtonState()) {
                     //displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
                     //        "https://moulberry.github.io/files/neu_help.html"));
                     Minecraft.getMinecraft().displayGuiScreen(new HelpGUI());
@@ -373,11 +373,11 @@ public class NEUOverlay extends Gui {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
                 GlStateManager.color(1, 1, 1, 1);
                 Utils.drawTexturedRect(x, y,
-                        searchYSize + paddingUnscaled*2, searchYSize + paddingUnscaled*2, GL11.GL_NEAREST);
+                        searchYSize + paddingUnscaled * 2, searchYSize + paddingUnscaled * 2, GL11.GL_NEAREST);
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(help);
                 GlStateManager.color(1f, 1f, 1f, 1f);
-                Utils.drawTexturedRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                Utils.drawTexturedRect((int) x + paddingUnscaled, (int) y + paddingUnscaled,
                         getSearchBarYSize(), getSearchBarYSize());
                 GlStateManager.bindTexture(0);
             }
@@ -388,7 +388,7 @@ public class NEUOverlay extends Gui {
         return new MBGuiElement() {
             @Override
             public int getWidth() {
-                return getSearchBarYSize()+getPaddingUnscaled()*2;
+                return getSearchBarYSize() + getPaddingUnscaled() * 2;
             }
 
             @Override
@@ -402,16 +402,16 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
-                if(!NotEnoughUpdates.INSTANCE.config.toolbar.quickCommands) return;
+                if (!NotEnoughUpdates.INSTANCE.config.toolbar.quickCommands) return;
 
-                if((NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType != 0 && Mouse.getEventButtonState()) ||
+                if ((NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType != 0 && Mouse.getEventButtonState()) ||
                         (NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType == 0 && !Mouse.getEventButtonState() && Mouse.getEventButton() != -1)) {
-                    if(quickCommandStr.contains(":")) {
+                    if (quickCommandStr.contains(":")) {
                         String command = quickCommandStr.split(":")[0].trim();
-                        if(command.startsWith("/")) {
+                        if (command.startsWith("/")) {
                             NotEnoughUpdates.INSTANCE.sendChatMessage(command);
                         } else {
-                            ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/"+command);
+                            ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/" + command);
                         }
                         Utils.playPressSound();
                     }
@@ -424,19 +424,19 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void render(float x, float y) {
-                if(!NotEnoughUpdates.INSTANCE.config.toolbar.quickCommands) return;
+                if (!NotEnoughUpdates.INSTANCE.config.toolbar.quickCommands) return;
 
                 int paddingUnscaled = getPaddingUnscaled();
                 int bigItemSize = getSearchBarYSize();
 
                 String[] quickCommandStrSplit = quickCommandStr.split(":");
-                if(quickCommandStrSplit.length!=3) {
+                if (quickCommandStrSplit.length != 3) {
                     return;
                 }
                 String display = quickCommandStrSplit[2];
                 ItemStack render = null;
                 float extraScale = 1;
-                if(display.length() > 20) { //Custom head
+                if (display.length() > 20) { //Custom head
                     render = new ItemStack(Items.skull, 1, 3);
                     NBTTagCompound nbt = new NBTTagCompound();
                     NBTTagCompound skullOwner = new NBTTagCompound();
@@ -457,15 +457,15 @@ public class NEUOverlay extends Gui {
                     render.setTagCompound(nbt);
 
                     extraScale = 1.3f;
-                } else if(manager.getItemInformation().containsKey(display)) {
+                } else if (manager.getItemInformation().containsKey(display)) {
                     render = manager.jsonToStack(manager.getItemInformation().get(display), true, true);
                 } else {
                     Item item = Item.itemRegistry.getObject(new ResourceLocation(display.toLowerCase()));
-                    if(item != null) {
+                    if (item != null) {
                         render = new ItemStack(item);
                     }
                 }
-                if(render != null) {
+                if (render != null) {
                     NBTTagCompound tag = render.getTagCompound() != null ? render.getTagCompound() : new NBTTagCompound();
                     tag.setString("qc_id", quickCommandStrSplit[0].toLowerCase().trim());
                     render.setTagCompound(tag);
@@ -473,24 +473,24 @@ public class NEUOverlay extends Gui {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
                     GlStateManager.color(1, 1, 1, 1);
                     Utils.drawTexturedRect(x, y,
-                            bigItemSize + paddingUnscaled*2, bigItemSize + paddingUnscaled*2, GL11.GL_NEAREST);
+                            bigItemSize + paddingUnscaled * 2, bigItemSize + paddingUnscaled * 2, GL11.GL_NEAREST);
 
                     int mouseX = Mouse.getX() * Utils.peekGuiScale().getScaledWidth() / Minecraft.getMinecraft().displayWidth;
                     int mouseY = Utils.peekGuiScale().getScaledHeight() - Mouse.getY() * Utils.peekGuiScale().getScaledHeight() / Minecraft.getMinecraft().displayHeight - 1;
 
-                    if(mouseX > x && mouseX < x+bigItemSize) {
-                        if(mouseY > y && mouseY < y+bigItemSize) {
+                    if (mouseX > x && mouseX < x + bigItemSize) {
+                        if (mouseY > y && mouseY < y + bigItemSize) {
                             textToDisplay = new ArrayList<>();
-                            textToDisplay.add(EnumChatFormatting.GRAY+quickCommandStrSplit[1]);
+                            textToDisplay.add(EnumChatFormatting.GRAY + quickCommandStrSplit[1]);
                         }
                     }
 
                     GlStateManager.enableDepth();
-                    float itemScale = bigItemSize/(float)ITEM_SIZE*extraScale;
+                    float itemScale = bigItemSize / (float) ITEM_SIZE * extraScale;
                     GlStateManager.pushMatrix();
                     GlStateManager.scale(itemScale, itemScale, 1);
-                    GlStateManager.translate((x-(extraScale-1)*bigItemSize/2+paddingUnscaled) /itemScale,
-                            (y-(extraScale-1)*bigItemSize/2+paddingUnscaled)/itemScale, 0f);
+                    GlStateManager.translate((x - (extraScale - 1) * bigItemSize / 2 + paddingUnscaled) / itemScale,
+                            (y - (extraScale - 1) * bigItemSize / 2 + paddingUnscaled) / itemScale, 0f);
                     Utils.drawItemStack(render, 0, 0);
                     GlStateManager.popMatrix();
                 }
@@ -500,12 +500,12 @@ public class NEUOverlay extends Gui {
 
     private MBGuiGroupAligned createQuickCommandGroup() {
         List<MBGuiElement> children = new ArrayList<>();
-        for(String quickCommand : NotEnoughUpdates.INSTANCE.config.hidden.quickCommands) {
+        for (String quickCommand : NotEnoughUpdates.INSTANCE.config.hidden.quickCommands) {
             children.add(createQuickCommand(quickCommand));
         }
         return new MBGuiGroupAligned(children, false) {
             public int getPadding() {
-                return getPaddingUnscaled()*4;
+                return getPaddingUnscaled() * 4;
             }
         };
     }
@@ -514,19 +514,19 @@ public class NEUOverlay extends Gui {
         List<MBGuiElement> children = Lists.newArrayList(createSettingsButton(this), createSearchBar(), createHelpButton(this));
         return new MBGuiGroupAligned(children, false) {
             public int getPadding() {
-                return getPaddingUnscaled()*4;
+                return getPaddingUnscaled() * 4;
             }
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
-                if(NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
+                if (NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                     super.mouseClick(x, y, mouseX, mouseY);
                 }
             }
 
             @Override
             public void render(float x, float y) {
-                if(NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
+                if (NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                     super.render(x, y);
                 }
             }
@@ -543,7 +543,7 @@ public class NEUOverlay extends Gui {
                 new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0, -searchBarYOffset));
         quickCommandAnchor = quickCommandAnchor != null ? quickCommandAnchor :
                 new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0,
-                        -searchBarYOffset-getSearchBarYSize()-getPaddingUnscaled()*4));
+                        -searchBarYOffset - getSearchBarYSize() - getPaddingUnscaled() * 4));
 
         map.put(createSearchBarGroup(), searchBarAnchor);
         map.put(createQuickCommandGroup(), quickCommandAnchor);
@@ -555,32 +555,32 @@ public class NEUOverlay extends Gui {
         MBAnchorPoint searchBarAnchor = MBAnchorPoint.createFromString(NotEnoughUpdates.INSTANCE.config.hidden.overlaySearchBar);
         MBAnchorPoint quickCommandAnchor = MBAnchorPoint.createFromString(NotEnoughUpdates.INSTANCE.config.hidden.overlayQuickCommand);
 
-        if(onlyIfNull) {
+        if (onlyIfNull) {
             searchBarAnchor = searchBarAnchor != null ? null :
                     new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0, -searchBarYOffset));
             quickCommandAnchor = quickCommandAnchor != null ? null :
                     new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0,
-                            -searchBarYOffset-getSearchBarYSize()-getPaddingUnscaled()*4));
+                            -searchBarYOffset - getSearchBarYSize() - getPaddingUnscaled() * 4));
         } else {
             searchBarAnchor = searchBarAnchor != null ? searchBarAnchor :
                     new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0, -searchBarYOffset));
             quickCommandAnchor = quickCommandAnchor != null ? quickCommandAnchor :
                     new MBAnchorPoint(MBAnchorPoint.AnchorPoint.BOTMID, new Vector2f(0,
-                            -searchBarYOffset-getSearchBarYSize()-getPaddingUnscaled()*4));
+                            -searchBarYOffset - getSearchBarYSize() - getPaddingUnscaled() * 4));
         }
 
 
         int index = 0;
         Set<MBGuiElement> set = new LinkedHashSet<>(guiGroup.getChildrenMap().keySet());
-        for(MBGuiElement element : set) {
-            switch(index) {
+        for (MBGuiElement element : set) {
+            switch (index) {
                 case 0:
-                    if(searchBarAnchor == null) continue;
+                    if (searchBarAnchor == null) continue;
                     guiGroup.getChildrenMap().get(element).anchorPoint = searchBarAnchor.anchorPoint;
                     guiGroup.getChildrenMap().get(element).offset = searchBarAnchor.offset;
                     break;
                 case 1:
-                    if(quickCommandAnchor == null) continue;
+                    if (quickCommandAnchor == null) continue;
                     guiGroup.getChildrenMap().get(element).anchorPoint = quickCommandAnchor.anchorPoint;
                     guiGroup.getChildrenMap().get(element).offset = quickCommandAnchor.offset;
                     break;
@@ -594,12 +594,12 @@ public class NEUOverlay extends Gui {
      */
     public void reset() {
         searchBarHasFocus = false;
-        if(!(searchMode || (NotEnoughUpdates.INSTANCE.config.itemlist.keepopen && itemPaneOpen))) {
+        if (!(searchMode || (NotEnoughUpdates.INSTANCE.config.itemlist.keepopen && itemPaneOpen))) {
             itemPaneOpen = false;
             itemPaneOffsetFactor.setValue(1);
             itemPaneTabOffset.setValue(20);
         }
-        if(activeInfoPane != null) activeInfoPane.reset();
+        if (activeInfoPane != null) activeInfoPane.reset();
         guiGroup.recalculate();
     }
 
@@ -607,7 +607,7 @@ public class NEUOverlay extends Gui {
      * Calls #displayInformationPane with a HTMLInfoPane created from item.info and item.infoType.
      */
     public void showInfo(JsonObject item) {
-        if(item.has("info") && item.has("infoType")) {
+        if (item.has("info") && item.has("infoType")) {
             JsonArray lore = item.get("info").getAsJsonArray();
             String[] loreA = new String[lore.size()];
             for (int i = 0; i < lore.size(); i++) loreA[i] = lore.get(i).getAsString();
@@ -615,7 +615,7 @@ public class NEUOverlay extends Gui {
 
             String internalname = item.get("internalname").getAsString();
             String name = item.get("displayname").getAsString();
-            switch(item.get("infoType").getAsString()) {
+            switch (item.get("infoType").getAsString()) {
                 case "WIKI_URL":
                     displayInformationPane(HTMLInfoPane.createFromWikiUrl(this, manager, name, loreS));
                     return;
@@ -631,13 +631,13 @@ public class NEUOverlay extends Gui {
     }
 
     public void mouseInputInv() {
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
-            if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
-                Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
-                if(slot != null) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
+            if (Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode() + 100) {
+                Slot slot = Utils.getSlotUnderMouse((GuiContainer) Minecraft.getMinecraft().currentScreen);
+                if (slot != null) {
                     ItemStack hover = slot.getStack();
-                    if(hover != null) {
-                        textField.setText("id:"+manager.getInternalNameForItem(hover));
+                    if (hover != null) {
+                        textField.setText("id:" + manager.getInternalNameForItem(hover));
                         itemPaneOpen = true;
                         updateSearch();
                     }
@@ -650,7 +650,7 @@ public class NEUOverlay extends Gui {
      * Handles the mouse input, cancelling the forge event if a NEU gui element is clicked.
      */
     public boolean mouseInput() {
-        if(disabled) {
+        if (disabled) {
             return false;
         }
 
@@ -668,30 +668,30 @@ public class NEUOverlay extends Gui {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
 
-        if(Mouse.getEventButtonState()) {
+        if (Mouse.getEventButtonState()) {
             mouseDown = true;
-        } else if(Mouse.getEventButton() != -1) {
+        } else if (Mouse.getEventButton() != -1) {
             mouseDown = false;
         }
 
         //Unfocuses the search bar by default. Search bar is focused if the click is on the bar itself.
-        if(Mouse.getEventButtonState()) setSearchBarFocus(false);
+        if (Mouse.getEventButtonState()) setSearchBarFocus(false);
 
         guiGroup.mouseClick(0, 0, mouseX, mouseY);
 
-        if(selectedItemGroup != null) {
-            int selectedX = Math.min(selectedItemGroupX, width-getBoxPadding()-18*selectedItemGroup.size());
-            if(mouseY > selectedItemGroupY+17 && mouseY < selectedItemGroupY+35) {
-                for(int i=0; i<selectedItemGroup.size(); i++) {
-                    if(mouseX >= selectedX-1+18*i && mouseX <= selectedX+17+18*i) {
+        if (selectedItemGroup != null) {
+            int selectedX = Math.min(selectedItemGroupX, width - getBoxPadding() - 18 * selectedItemGroup.size());
+            if (mouseY > selectedItemGroupY + 17 && mouseY < selectedItemGroupY + 35) {
+                for (int i = 0; i < selectedItemGroup.size(); i++) {
+                    if (mouseX >= selectedX - 1 + 18 * i && mouseX <= selectedX + 17 + 18 * i) {
                         JsonObject item = selectedItemGroup.get(i);
                         if (item != null) {
-                            if(Mouse.getEventButton() == 0) {
+                            if (Mouse.getEventButton() == 0) {
                                 manager.showRecipe(item);
-                            } else if(Mouse.getEventButton() == 1) {
+                            } else if (Mouse.getEventButton() == 1) {
                                 showInfo(item);
-                            } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
-                                textField.setText("id:"+item.get("internalname").getAsString());
+                            } else if (Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode() + 100) {
+                                textField.setText("id:" + item.get("internalname").getAsString());
                                 updateSearch();
                                 searchMode = true;
                             }
@@ -704,8 +704,8 @@ public class NEUOverlay extends Gui {
         }
 
         //Item selection (right) gui
-        if(mouseX > width*getItemPaneOffsetFactor()) {
-            if(!Mouse.getEventButtonState()) {
+        if (mouseX > width * getItemPaneOffsetFactor()) {
+            if (!Mouse.getEventButtonState()) {
                 Utils.pushGuiScale(-1);
                 return true; //End early if the mouse isn't pressed, but still cancel event.
             }
@@ -713,18 +713,18 @@ public class NEUOverlay extends Gui {
             AtomicBoolean clickedItem = new AtomicBoolean(false);
             iterateItemSlots(new ItemSlotConsumer() {
                 public void consume(int x, int y, int id) {
-                    if(mouseX >= x-1 && mouseX <= x+ITEM_SIZE+1) {
-                        if(mouseY >= y-1 && mouseY <= y+ITEM_SIZE+1) {
+                    if (mouseX >= x - 1 && mouseX <= x + ITEM_SIZE + 1) {
+                        if (mouseY >= y - 1 && mouseY <= y + ITEM_SIZE + 1) {
                             clickedItem.set(true);
 
                             JsonObject item = getSearchedItemPage(id);
                             if (item != null) {
-                                if(Mouse.getEventButton() == 0) {
+                                if (Mouse.getEventButton() == 0) {
                                     manager.showRecipe(item);
-                                } else if(Mouse.getEventButton() == 1) {
+                                } else if (Mouse.getEventButton() == 1) {
                                     showInfo(item);
-                                } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
-                                    textField.setText("id:"+item.get("internalname").getAsString());
+                                } else if (Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode() + 100) {
+                                    textField.setText("id:" + item.get("internalname").getAsString());
                                     updateSearch();
                                     searchMode = true;
                                 }
@@ -733,52 +733,52 @@ public class NEUOverlay extends Gui {
                     }
                 }
             });
-            if(!clickedItem.get()) {
-                int paneWidth = (int)(width/3*getWidthMult());
-                int leftSide = (int)(width*getItemPaneOffsetFactor());
-                int rightSide = leftSide+paneWidth-getBoxPadding()-getItemBoxXPadding();
-                leftSide = leftSide+getBoxPadding()+getItemBoxXPadding();
+            if (!clickedItem.get()) {
+                int paneWidth = (int) (width / 3 * getWidthMult());
+                int leftSide = (int) (width * getItemPaneOffsetFactor());
+                int rightSide = leftSide + paneWidth - getBoxPadding() - getItemBoxXPadding();
+                leftSide = leftSide + getBoxPadding() + getItemBoxXPadding();
 
                 FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
                 int maxPages = getMaxPages();
-                String name = Utils.peekGuiScale().getScaleFactor()<4?"Page: ":"";
-                float maxStrLen = fr.getStringWidth(EnumChatFormatting.BOLD+name + maxPages + "/" + maxPages);
-                float maxButtonXSize = (rightSide-leftSide+2 - maxStrLen*0.5f - 10)/2f;
-                int buttonXSize = (int)Math.min(maxButtonXSize, getSearchBarYSize()*480/160f);
-                int ySize = (int)(buttonXSize/480f*160);
-                int yOffset = (int)((getSearchBarYSize()-ySize)/2f);
-                int top = getBoxPadding()+yOffset;
+                String name = Utils.peekGuiScale().getScaleFactor() < 4 ? "Page: " : "";
+                float maxStrLen = fr.getStringWidth(EnumChatFormatting.BOLD + name + maxPages + "/" + maxPages);
+                float maxButtonXSize = (rightSide - leftSide + 2 - maxStrLen * 0.5f - 10) / 2f;
+                int buttonXSize = (int) Math.min(maxButtonXSize, getSearchBarYSize() * 480 / 160f);
+                int ySize = (int) (buttonXSize / 480f * 160);
+                int yOffset = (int) ((getSearchBarYSize() - ySize) / 2f);
+                int top = getBoxPadding() + yOffset;
 
-                if(mouseY >= top && mouseY <= top+ySize) {
-                    int leftPrev = leftSide-1;
-                    if(mouseX > leftPrev && mouseX < leftPrev+buttonXSize) { //"Previous" button
-                        setPage(page-1);
+                if (mouseY >= top && mouseY <= top + ySize) {
+                    int leftPrev = leftSide - 1;
+                    if (mouseX > leftPrev && mouseX < leftPrev + buttonXSize) { //"Previous" button
+                        setPage(page - 1);
                         Utils.playPressSound();
                     }
-                    int leftNext = rightSide+1-buttonXSize;
-                    if(mouseX > leftNext && mouseX < leftNext+buttonXSize) { //"Next" button
-                        setPage(page+1);
+                    int leftNext = rightSide + 1 - buttonXSize;
+                    if (mouseX > leftNext && mouseX < leftNext + buttonXSize) { //"Next" button
+                        setPage(page + 1);
                         Utils.playPressSound();
                     }
                 }
 
-                float sortIconsMinX = (sortIcons.length+orderIcons.length)*(ITEM_SIZE+ITEM_PADDING)+ITEM_SIZE;
-                float availableX = rightSide-leftSide;
+                float sortIconsMinX = (sortIcons.length + orderIcons.length) * (ITEM_SIZE + ITEM_PADDING) + ITEM_SIZE;
+                float availableX = rightSide - leftSide;
                 float sortOrderScaleFactor = Math.min(1, availableX / sortIconsMinX);
 
-                int scaledITEM_SIZE = (int)(ITEM_SIZE*sortOrderScaleFactor);
-                int scaledItemPaddedSize = (int)((ITEM_SIZE+ITEM_PADDING)*sortOrderScaleFactor);
-                int iconTop = height-getBoxPadding()-(ITEM_SIZE+scaledITEM_SIZE)/2-1;
+                int scaledITEM_SIZE = (int) (ITEM_SIZE * sortOrderScaleFactor);
+                int scaledItemPaddedSize = (int) ((ITEM_SIZE + ITEM_PADDING) * sortOrderScaleFactor);
+                int iconTop = height - getBoxPadding() - (ITEM_SIZE + scaledITEM_SIZE) / 2 - 1;
 
-                if(mouseY >= iconTop && mouseY <= iconTop+scaledITEM_SIZE) {
-                    for(int i=0; i<orderIcons.length; i++) {
-                        int orderIconX = leftSide+i*scaledItemPaddedSize;
-                        if(mouseX >= orderIconX && mouseX <= orderIconX+scaledITEM_SIZE) {
-                            if(Mouse.getEventButton() == 0) {
+                if (mouseY >= iconTop && mouseY <= iconTop + scaledITEM_SIZE) {
+                    for (int i = 0; i < orderIcons.length; i++) {
+                        int orderIconX = leftSide + i * scaledItemPaddedSize;
+                        if (mouseX >= orderIconX && mouseX <= orderIconX + scaledITEM_SIZE) {
+                            if (Mouse.getEventButton() == 0) {
                                 NotEnoughUpdates.INSTANCE.config.hidden.compareMode = i;
                                 updateSearch();
                                 Utils.playPressSound();
-                            } else if(Mouse.getEventButton() == 1) {
+                            } else if (Mouse.getEventButton() == 1) {
                                 NotEnoughUpdates.INSTANCE.config.hidden.compareAscending.set(i,
                                         !NotEnoughUpdates.INSTANCE.config.hidden.compareAscending.get(i));
                                 updateSearch();
@@ -787,9 +787,9 @@ public class NEUOverlay extends Gui {
                         }
                     }
 
-                    for(int i=0; i<sortIcons.length; i++) {
-                        int sortIconX = rightSide-scaledITEM_SIZE-i*scaledItemPaddedSize;
-                        if(mouseX >= sortIconX && mouseX <= sortIconX+scaledITEM_SIZE) {
+                    for (int i = 0; i < sortIcons.length; i++) {
+                        int sortIconX = rightSide - scaledITEM_SIZE - i * scaledItemPaddedSize;
+                        if (mouseX >= sortIconX && mouseX <= sortIconX + scaledITEM_SIZE) {
                             NotEnoughUpdates.INSTANCE.config.hidden.sortMode = i;
                             updateSearch();
                             Utils.playPressSound();
@@ -802,9 +802,9 @@ public class NEUOverlay extends Gui {
         }
 
         //Clicking on "close info pane" button
-        if(mouseX > width*getInfoPaneOffsetFactor()-getBoxPadding()-8 && mouseX < width*getInfoPaneOffsetFactor()-getBoxPadding()+8) {
-            if(mouseY > getBoxPadding()-8 && mouseY < getBoxPadding()+8) {
-                if(Mouse.getEventButtonState() && Mouse.getEventButton() < 2) { //Left or right click up
+        if (mouseX > width * getInfoPaneOffsetFactor() - getBoxPadding() - 8 && mouseX < width * getInfoPaneOffsetFactor() - getBoxPadding() + 8) {
+            if (mouseY > getBoxPadding() - 8 && mouseY < getBoxPadding() + 8) {
+                if (Mouse.getEventButtonState() && Mouse.getEventButton() < 2) { //Left or right click up
                     displayInformationPane(null);
                     Utils.pushGuiScale(-1);
                     return true;
@@ -812,12 +812,12 @@ public class NEUOverlay extends Gui {
             }
         }
 
-        if(activeInfoPane != null) {
-            if(mouseX < width*getInfoPaneOffsetFactor()) {
+        if (activeInfoPane != null) {
+            if (mouseX < width * getInfoPaneOffsetFactor()) {
                 activeInfoPane.mouseInput(width, height, mouseX, mouseY, mouseDown);
                 Utils.pushGuiScale(-1);
                 return true;
-            } else if(Mouse.getEventButton() <= 1 && Mouse.getEventButtonState()) { //Left or right click
+            } else if (Mouse.getEventButton() <= 1 && Mouse.getEventButtonState()) { //Left or right click
                 activeInfoPane.mouseInputOutside();
             }
         }
@@ -827,8 +827,8 @@ public class NEUOverlay extends Gui {
     }
 
     public int getPaddingUnscaled() {
-        int paddingUnscaled = searchBarPadding/Utils.peekGuiScale().getScaleFactor();
-        if(paddingUnscaled < 1) paddingUnscaled = 1;
+        int paddingUnscaled = searchBarPadding / Utils.peekGuiScale().getScaleFactor();
+        if (paddingUnscaled < 1) paddingUnscaled = 1;
 
         return paddingUnscaled;
     }
@@ -842,7 +842,7 @@ public class NEUOverlay extends Gui {
      */
     public int getSearchBarXSize() {
         int searchBarXSize = NotEnoughUpdates.INSTANCE.config.toolbar.searchBarWidth;
-        if(Utils.peekGuiScale().getScaleFactor()==4) return (int)(searchBarXSize*0.8);
+        if (Utils.peekGuiScale().getScaleFactor() == 4) return (int) (searchBarXSize * 0.8);
         return searchBarXSize;
     }
 
@@ -850,10 +850,10 @@ public class NEUOverlay extends Gui {
      * Sets the activeInfoPane and sets the target of the infoPaneOffsetFactor to make the infoPane "slide" out.
      */
     public void displayInformationPane(InfoPane pane) {
-        if(pane == null) {
+        if (pane == null) {
             infoPaneOffsetFactor.setTarget(0);
         } else {
-            infoPaneOffsetFactor.setTarget(1/3f);
+            infoPaneOffsetFactor.setTarget(1 / 3f);
         }
         infoPaneOffsetFactor.resetTimer();
         this.activeInfoPane = pane;
@@ -870,15 +870,15 @@ public class NEUOverlay extends Gui {
         int width = Utils.peekGuiScale().getScaledWidth();
         int height = Utils.peekGuiScale().getScaledHeight();
 
-        int xComp = mouseX - (width/2 - getSearchBarXSize()/2 + 5);
+        int xComp = mouseX - (width / 2 - getSearchBarXSize() / 2 + 5);
 
         String trimmed = Minecraft.getMinecraft().fontRendererObj.trimStringToWidth(textField.getText(), xComp);
         int linePos = trimmed.length();
-        if(linePos != textField.getText().length()) {
+        if (linePos != textField.getText().length()) {
             char after = textField.getText().charAt(linePos);
             int trimmedWidth = Minecraft.getMinecraft().fontRendererObj.getStringWidth(trimmed);
             int charWidth = Minecraft.getMinecraft().fontRendererObj.getCharWidth(after);
-            if(trimmedWidth + charWidth/2 < xComp-5) {
+            if (trimmedWidth + charWidth / 2 < xComp - 5) {
                 linePos++;
             }
         }
@@ -886,7 +886,7 @@ public class NEUOverlay extends Gui {
     }
 
     public void setSearchBarFocus(boolean focus) {
-        if(focus) {
+        if (focus) {
             itemPaneOpen = true;
         }
         searchBarHasFocus = focus;
@@ -896,64 +896,64 @@ public class NEUOverlay extends Gui {
      * Handles the keyboard input, cancelling the forge event if the search bar has focus.
      */
     public boolean keyboardInput(boolean hoverInv) {
-        if(Minecraft.getMinecraft().currentScreen == null) return false;
+        if (Minecraft.getMinecraft().currentScreen == null) return false;
         Keyboard.enableRepeatEvents(true);
 
-        int keyPressed = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter()+256 : Keyboard.getEventKey();
+        int keyPressed = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter() + 256 : Keyboard.getEventKey();
 
-        if(disabled) {
-            if(Keyboard.getEventKeyState() && keyPressed == manager.keybindToggleDisplay.getKeyCode()) {
+        if (disabled) {
+            if (Keyboard.getEventKeyState() && keyPressed == manager.keybindToggleDisplay.getKeyCode()) {
                 disabled = !disabled;
             }
             return false;
         }
 
-        if(Keyboard.isKeyDown(Keyboard.KEY_Y) && NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+        if (Keyboard.isKeyDown(Keyboard.KEY_Y) && NotEnoughUpdates.INSTANCE.config.hidden.dev) {
             displayInformationPane(new DevInfoPane(this, manager));
         }
 
-        if(Keyboard.getEventKeyState()) {
-            if(!NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
+        if (Keyboard.getEventKeyState()) {
+            if (!NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                 searchBarHasFocus = false;
             }
-            if(searchBarHasFocus) {
-                if(keyPressed == 1) {
+            if (searchBarHasFocus) {
+                if (keyPressed == 1) {
                     searchBarHasFocus = false;
                 } else {
-                    if(textField.textboxKeyTyped(Keyboard.getEventCharacter(), keyPressed)) {
+                    if (textField.textboxKeyTyped(Keyboard.getEventCharacter(), keyPressed)) {
                         updateSearch();
                     }
                 }
             } else {
-                if(activeInfoPane != null) {
-                    if(activeInfoPane.keyboardInput()) {
+                if (activeInfoPane != null) {
+                    if (activeInfoPane.keyboardInput()) {
                         return true;
                     }
                 }
 
-                if(keyPressed == manager.keybindClosePanes.getKeyCode()) {
+                if (keyPressed == manager.keybindClosePanes.getKeyCode()) {
                     itemPaneOffsetFactor.setValue(1);
                     itemPaneTabOffset.setValue(20);
                     itemPaneOpen = false;
                     displayInformationPane(null);
                 }
 
-                if(keyPressed == manager.keybindToggleDisplay.getKeyCode()) {
+                if (keyPressed == manager.keybindToggleDisplay.getKeyCode()) {
                     disabled = !disabled;
                     return true;
                 }
 
                 AtomicReference<String> internalname = new AtomicReference<>(null);
                 AtomicReference<ItemStack> itemstack = new AtomicReference<>(null);
-                if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
-                        Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen) != null) {
-                    Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
+                if (Minecraft.getMinecraft().currentScreen instanceof GuiContainer &&
+                        Utils.getSlotUnderMouse((GuiContainer) Minecraft.getMinecraft().currentScreen) != null) {
+                    Slot slot = Utils.getSlotUnderMouse((GuiContainer) Minecraft.getMinecraft().currentScreen);
                     ItemStack hover = slot.getStack();
-                    if(hover != null) {
+                    if (hover != null) {
                         internalname.set(manager.getInternalNameForItem(hover));
                         itemstack.set(hover);
                     }
-                } else if(!hoverInv) {
+                } else if (!hoverInv) {
                     Utils.pushGuiScale(NotEnoughUpdates.INSTANCE.config.itemlist.paneGuiScale);
 
                     int width = Utils.peekGuiScale().getScaledWidth();
@@ -987,36 +987,36 @@ public class NEUOverlay extends Gui {
 
                     Utils.pushGuiScale(-1);
                 }
-                if(internalname.get() != null) {
-                    if(itemstack.get() != null) {
-                        if(NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Keyboard.getEventCharacter() == 'k') {
+                if (internalname.get() != null) {
+                    if (itemstack.get() != null) {
+                        if (NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Keyboard.getEventCharacter() == 'k') {
                             Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
                                     internalname.get(), manager.getJsonForItem(itemstack.get())));
                             return true;
                         }
                     }
                     JsonObject item = manager.getItemInformation().get(internalname.get());
-                    if(item != null) {
-                        if(keyPressed == manager.keybindViewUsages.getKeyCode()) {
+                    if (item != null) {
+                        if (keyPressed == manager.keybindViewUsages.getKeyCode()) {
                             manager.displayGuiItemUsages(internalname.get());
                             return true;
-                        } else if(keyPressed == manager.keybindFavourite.getKeyCode()) {
+                        } else if (keyPressed == manager.keybindFavourite.getKeyCode()) {
                             toggleFavourite(item.get("internalname").getAsString());
                             return true;
-                        } else if(keyPressed == manager.keybindViewRecipe.getKeyCode()) {
+                        } else if (keyPressed == manager.keybindViewRecipe.getKeyCode()) {
                             manager.showRecipe(item);
                             return true;
-                        } else if(keyPressed == manager.keybindGive.getKeyCode()) {
-                            if(Minecraft.getMinecraft().thePlayer.capabilities.isCreativeMode) {
+                        } else if (keyPressed == manager.keybindGive.getKeyCode()) {
+                            if (Minecraft.getMinecraft().thePlayer.capabilities.isCreativeMode) {
                                 Minecraft.getMinecraft().thePlayer.inventory.addItemStackToInventory(
                                         manager.jsonToStack(item));
                             }
-                        } else if(NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Keyboard.getEventCharacter() == 'k') {
+                        } else if (NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Keyboard.getEventCharacter() == 'k') {
                             Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
                                     internalname.get(), item));
                             return true;
-                        } else if(keyPressed == manager.keybindItemSelect.getKeyCode()) {
-                            textField.setText("id:"+internalname.get());
+                        } else if (keyPressed == manager.keybindItemSelect.getKeyCode()) {
+                            textField.setText("id:" + internalname.get());
                             itemPaneOpen = true;
                             updateSearch();
                         }
@@ -1029,7 +1029,7 @@ public class NEUOverlay extends Gui {
     }
 
     public void toggleFavourite(String internalname) {
-        if(getFavourites().contains(internalname)) {
+        if (getFavourites().contains(internalname)) {
             getFavourites().remove(internalname);
         } else {
             getFavourites().add(internalname);
@@ -1037,13 +1037,13 @@ public class NEUOverlay extends Gui {
         updateSearch();
     }
 
-    String[] rarityArr = new String[] {
-        EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
-        EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
-        EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
-        EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
-        EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
-        EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+    String[] rarityArr = new String[]{
+            EnumChatFormatting.WHITE + EnumChatFormatting.BOLD.toString() + "COMMON",
+            EnumChatFormatting.GREEN + EnumChatFormatting.BOLD.toString() + "UNCOMMON",
+            EnumChatFormatting.BLUE + EnumChatFormatting.BOLD.toString() + "RARE",
+            EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD.toString() + "EPIC",
+            EnumChatFormatting.GOLD + EnumChatFormatting.BOLD.toString() + "LEGENDARY",
+            EnumChatFormatting.LIGHT_PURPLE + EnumChatFormatting.BOLD.toString() + "SPECIAL",
     };
 
     /**
@@ -1057,11 +1057,11 @@ public class NEUOverlay extends Gui {
      * 5 = SPECIAL
      */
     public int getRarity(JsonArray lore) {
-        for(int i=lore.size()-1; i>=0; i--) {
+        for (int i = lore.size() - 1; i >= 0; i--) {
             String line = lore.get(i).getAsString();
 
-            for(int j=0; j<rarityArr.length; j++) {
-                if(line.startsWith(rarityArr[j])) {
+            for (int j = 0; j < rarityArr.length; j++) {
+                if (line.startsWith(rarityArr[j])) {
                     return j;
                 }
             }
@@ -1075,12 +1075,15 @@ public class NEUOverlay extends Gui {
     private int getCompareMode() {
         return NotEnoughUpdates.INSTANCE.config.hidden.compareMode;
     }
+
     private int getSortMode() {
         return NotEnoughUpdates.INSTANCE.config.hidden.sortMode;
     }
+
     private List<Boolean> getCompareAscending() {
         return NotEnoughUpdates.INSTANCE.config.hidden.compareAscending;
     }
+
     private List<String> getFavourites() {
         return NotEnoughUpdates.INSTANCE.config.hidden.favourites;
     }
@@ -1093,21 +1096,21 @@ public class NEUOverlay extends Gui {
         return (o1, o2) -> {
             //1 (mult) if o1 should appear after o2
             //-1 (-mult) if o2 should appear after o1
-            if(getFavourites().contains(o1.get("internalname").getAsString()) && !getFavourites().contains(o2.get("internalname").getAsString())) {
+            if (getFavourites().contains(o1.get("internalname").getAsString()) && !getFavourites().contains(o2.get("internalname").getAsString())) {
                 return -1;
             }
-            if(!getFavourites().contains(o1.get("internalname").getAsString()) && getFavourites().contains(o2.get("internalname").getAsString())) {
+            if (!getFavourites().contains(o1.get("internalname").getAsString()) && getFavourites().contains(o2.get("internalname").getAsString())) {
                 return 1;
             }
 
             int mult = getCompareAscending().get(getCompareMode()) ? 1 : -1;
-            if(getCompareMode() == COMPARE_MODE_RARITY) {
+            if (getCompareMode() == COMPARE_MODE_RARITY) {
                 int rarity1 = getRarity(o1.get("lore").getAsJsonArray());
                 int rarity2 = getRarity(o2.get("lore").getAsJsonArray());
 
-                if(rarity1 < rarity2) return mult;
-                if(rarity1 > rarity2) return -mult;
-            } else if(getCompareMode() == COMPARE_MODE_VALUE) {
+                if (rarity1 < rarity2) return mult;
+                if (rarity1 > rarity2) return -mult;
+            } else if (getCompareMode() == COMPARE_MODE_VALUE) {
                 float cost1 = manager.auctionManager.getLowestBin(o1.get("internalname").getAsString());
                 float cost2 = manager.auctionManager.getLowestBin(o2.get("internalname").getAsString());
 
@@ -1116,54 +1119,55 @@ public class NEUOverlay extends Gui {
 
                 float diff = (cost1 - craftCost1) - (cost2 - craftCost2);
 
-                if(diff > 0) return mult;
-                if(diff < 0) return -mult;
+                if (diff > 0) return mult;
+                if (diff < 0) return -mult;
                 /*if(cost1 < cost2) return mult;
                 if(cost1 > cost2) return -mult;*/
             }
 
             String i1 = o1.get("internalname").getAsString();
             String[] split1 = i1.split("_");
-            String last1 = split1[split1.length-1];
-            String start1 = i1.substring(0, i1.length()-last1.length());
+            String last1 = split1[split1.length - 1];
+            String start1 = i1.substring(0, i1.length() - last1.length());
 
             String i2 = o2.get("internalname").getAsString();
             String[] split2 = i2.split("_");
-            String last2 = split2[split2.length-1];
-            String start2 = i2.substring(0, i2.length()-last2.length());
+            String last2 = split2[split2.length - 1];
+            String start2 = i2.substring(0, i2.length() - last2.length());
 
             mult = getCompareAscending().get(COMPARE_MODE_ALPHABETICAL) ? 1 : -1;
-            if(start1.equals(start2)) {
-                String[] order = new String[]{"HELMET","CHESTPLATE","LEGGINGS","BOOTS"};
+            if (start1.equals(start2)) {
+                String[] order = new String[]{"HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS"};
                 int type1 = checkItemType(o1.get("lore").getAsJsonArray(), order);
                 int type2 = checkItemType(o2.get("lore").getAsJsonArray(), order);
 
 
-                if(type1 < type2) return -mult;
-                if(type1 > type2) return mult;
+                if (type1 < type2) return -mult;
+                if (type1 > type2) return mult;
             }
 
-            int nameComp = mult*o1.get("displayname").getAsString().replaceAll("(?i)\\u00A7.", "")
-                     .compareTo(o2.get("displayname").getAsString().replaceAll("(?i)\\u00A7.", ""));
-            if(nameComp != 0) {
+            int nameComp = mult * o1.get("displayname").getAsString().replaceAll("(?i)\\u00A7.", "")
+                    .compareTo(o2.get("displayname").getAsString().replaceAll("(?i)\\u00A7.", ""));
+            if (nameComp != 0) {
                 return nameComp;
             }
-            return mult*o1.get("internalname").getAsString().compareTo(o2.get("internalname").getAsString());
+            return mult * o1.get("internalname").getAsString().compareTo(o2.get("internalname").getAsString());
         };
     }
 
     /**
      * Checks whether an item matches a certain type, i.e. whether the item lore ends in "{rarity} {item type}"
      * eg. "SHOVEL" will return >0 for "COMMON SHOVEL", "EPIC SHOVEL", etc.
+     *
      * @return the index of the type that matched, or -1 otherwise.
      */
     public int checkItemType(JsonArray lore, String... typeMatches) {
-        for(int i=lore.size()-1; i>=0; i--) {
+        for (int i = lore.size() - 1; i >= 0; i--) {
             String line = lore.get(i).getAsString();
 
-            for(String rarity : rarityArr) {
-                for(int j=0; j<typeMatches.length; j++) {
-                    if(line.trim().equals(rarity + " " + typeMatches[j])) {
+            for (String rarity : rarityArr) {
+                for (int j = 0; j < typeMatches.length; j++) {
+                    if (line.trim().equals(rarity + " " + typeMatches[j])) {
                         return j;
                     }
                 }
@@ -1176,22 +1180,22 @@ public class NEUOverlay extends Gui {
      * Checks whether an item matches the current sort mode.
      */
     public boolean checkMatchesSort(String internalname, JsonObject item) {
-        if(!NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems && item.has("vanilla") && item.get("vanilla").getAsBoolean()) {
+        if (!NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems && item.has("vanilla") && item.get("vanilla").getAsBoolean()) {
             return false;
         }
 
-        if(getSortMode() == SORT_MODE_ALL) {
+        if (getSortMode() == SORT_MODE_ALL) {
             return !internalname.matches(mobRegex);
-        } else if(getSortMode() == SORT_MODE_MOB) {
+        } else if (getSortMode() == SORT_MODE_MOB) {
             return internalname.matches(mobRegex);
-        } else if(getSortMode() == SORT_MODE_PET) {
+        } else if (getSortMode() == SORT_MODE_PET) {
             return internalname.matches(petRegex) && item.get("displayname").getAsString().contains("[");
-        } else if(getSortMode() == SORT_MODE_TOOL) {
+        } else if (getSortMode() == SORT_MODE_TOOL) {
             return checkItemType(item.get("lore").getAsJsonArray(),
                     "SWORD", "BOW", "AXE", "PICKAXE", "FISHING ROD", "WAND", "SHOVEL", "HOE") >= 0;
-        } else if(getSortMode() == SORT_MODE_ARMOR) {
+        } else if (getSortMode() == SORT_MODE_ARMOR) {
             return checkItemType(item.get("lore").getAsJsonArray(), "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS") >= 0;
-        } else if(getSortMode() == SORT_MODE_ACCESSORY) {
+        } else if (getSortMode() == SORT_MODE_ACCESSORY) {
             return checkItemType(item.get("lore").getAsJsonArray(), "ACCESSORY") >= 0;
         }
         return true;
@@ -1209,7 +1213,7 @@ public class NEUOverlay extends Gui {
     public void updateSearch() {
         SunTzu.randomizeQuote();
 
-        if(searchedItems == null) searchedItems = new TreeSet<>(getItemComparator());
+        if (searchedItems == null) searchedItems = new TreeSet<>(getItemComparator());
 
         searchES.submit(() -> {
             TreeSet<JsonObject> searchedItems = new TreeSet<>(getItemComparator());
@@ -1217,19 +1221,19 @@ public class NEUOverlay extends Gui {
 
             Set<JsonObject> removeChildItems = new HashSet<>();
             Set<String> itemsMatch = manager.search(textField.getText(), true);
-            for(String itemname : itemsMatch) {
+            for (String itemname : itemsMatch) {
                 JsonObject item = manager.getItemInformation().get(itemname);
-                if(checkMatchesSort(itemname, item)) {
-                    if(Constants.PARENTS != null) {
-                        if(Constants.PARENTS.has(itemname) && Constants.PARENTS.get(itemname).isJsonArray()) {
+                if (checkMatchesSort(itemname, item)) {
+                    if (Constants.PARENTS != null) {
+                        if (Constants.PARENTS.has(itemname) && Constants.PARENTS.get(itemname).isJsonArray()) {
                             List<String> children = new ArrayList<>();
-                            for(JsonElement e : Constants.PARENTS.get(itemname).getAsJsonArray()) {
-                                if(e.isJsonPrimitive()) {
+                            for (JsonElement e : Constants.PARENTS.get(itemname).getAsJsonArray()) {
+                                if (e.isJsonPrimitive()) {
                                     children.add(e.getAsString());
                                 }
                             }
                             children.retainAll(itemsMatch);
-                            for(String child : children) {
+                            for (String child : children) {
                                 removeChildItems.add(manager.getItemInformation().get(child));
                             }
                             searchedItemsSubgroup.put(itemname, children);
@@ -1248,7 +1252,7 @@ public class NEUOverlay extends Gui {
                     if (item != null) searchedItems.add(item);
                 }
             }
-            switch(textField.getText().toLowerCase().trim()) {
+            switch (textField.getText().toLowerCase().trim()) {
                 case "nullzee":
                     searchedItems.add(CustomItems.NULLZEE);
                     break;
@@ -1276,7 +1280,7 @@ public class NEUOverlay extends Gui {
             this.searchedItems = searchedItems;
             this.searchedItemsSubgroup = searchedItemsSubgroup;
 
-            synchronized(this.searchedItemsArr) {
+            synchronized (this.searchedItemsArr) {
                 this.searchedItemsArr.clear();
             }
 
@@ -1289,13 +1293,13 @@ public class NEUOverlay extends Gui {
      * Whenever searchedItems is updated in updateSearch(), the array is recreated here.
      */
     public List<JsonObject> getSearchedItems() {
-        if(searchedItems == null) {
+        if (searchedItems == null) {
             updateSearch();
             return new ArrayList<>();
         }
 
-        if(searchedItems.size() > 0 && searchedItemsArr.size() == 0) {
-            synchronized(searchedItemsArr) {
+        if (searchedItems.size() > 0 && searchedItemsArr.size() == 0) {
+            synchronized (searchedItemsArr) {
                 searchedItemsArr.addAll(searchedItems);
             }
         }
@@ -1304,13 +1308,14 @@ public class NEUOverlay extends Gui {
 
     /**
      * Gets the item in searchedItemArr corresponding to the certain index on the current page.
+     *
      * @return item, if the item exists. null, otherwise.
      */
     public JsonObject getSearchedItemPage(int index) {
-        if(index < getSlotsXSize()*getSlotsYSize()) {
-            int actualIndex = index + getSlotsXSize()*getSlotsYSize()*page;
+        if (index < getSlotsXSize() * getSlotsYSize()) {
+            int actualIndex = index + getSlotsXSize() * getSlotsYSize() * page;
             List<JsonObject> searchedItems = getSearchedItems();
-            if(actualIndex < searchedItems.size()) {
+            if (actualIndex < searchedItems.size()) {
                 return searchedItems.get(actualIndex);
             } else {
                 return null;
@@ -1322,12 +1327,12 @@ public class NEUOverlay extends Gui {
 
     public int getItemBoxXPadding() {
         int width = Utils.peekGuiScale().getScaledWidth();
-        return (((int)(width/3*getWidthMult())-2*getBoxPadding())%(ITEM_SIZE+ITEM_PADDING)+ITEM_PADDING)/2;
+        return (((int) (width / 3 * getWidthMult()) - 2 * getBoxPadding()) % (ITEM_SIZE + ITEM_PADDING) + ITEM_PADDING) / 2;
     }
 
     public int getBoxPadding() {
         double panePadding = Math.max(0, Math.min(20, NotEnoughUpdates.INSTANCE.config.itemlist.panePadding));
-        return (int)(panePadding*2/Utils.peekGuiScale().getScaleFactor()+5);
+        return (int) (panePadding * 2 / Utils.peekGuiScale().getScaleFactor() + 5);
     }
 
     private abstract static class ItemSlotConsumer {
@@ -1337,7 +1342,7 @@ public class NEUOverlay extends Gui {
     public void iterateItemSlots(ItemSlotConsumer itemSlotConsumer) {
         int width = Utils.peekGuiScale().getScaledWidth();
         int itemBoxXPadding = getItemBoxXPadding();
-        iterateItemSlots(itemSlotConsumer, (int)(width*getItemPaneOffsetFactor())+getBoxPadding()+itemBoxXPadding);
+        iterateItemSlots(itemSlotConsumer, (int) (width * getItemPaneOffsetFactor()) + getBoxPadding() + itemBoxXPadding);
     }
 
     /**
@@ -1349,18 +1354,18 @@ public class NEUOverlay extends Gui {
         int width = Utils.peekGuiScale().getScaledWidth();
         int height = Utils.peekGuiScale().getScaledHeight();
 
-        int paneWidth = (int)(width/3*getWidthMult());
-        int itemBoxYPadding = ((height-getSearchBarYSize()-2*getBoxPadding()-ITEM_SIZE-2)%(ITEM_SIZE+ITEM_PADDING)+ITEM_PADDING)/2;
+        int paneWidth = (int) (width / 3 * getWidthMult());
+        int itemBoxYPadding = ((height - getSearchBarYSize() - 2 * getBoxPadding() - ITEM_SIZE - 2) % (ITEM_SIZE + ITEM_PADDING) + ITEM_PADDING) / 2;
 
-        int yStart = getBoxPadding()+getSearchBarYSize()+itemBoxYPadding;
+        int yStart = getBoxPadding() + getSearchBarYSize() + itemBoxYPadding;
         int itemBoxXPadding = getItemBoxXPadding();
-        int xEnd = xStart+paneWidth-getBoxPadding()*2-ITEM_SIZE-itemBoxXPadding;
-        int yEnd = height-getBoxPadding()-ITEM_SIZE-2-itemBoxYPadding;
+        int xEnd = xStart + paneWidth - getBoxPadding() * 2 - ITEM_SIZE - itemBoxXPadding;
+        int yEnd = height - getBoxPadding() - ITEM_SIZE - 2 - itemBoxYPadding;
 
         //Render the items, displaying the tooltip if the cursor is over the item
         int id = 0;
-        for(int y = yStart; y < yEnd; y+=ITEM_SIZE+ITEM_PADDING) {
-            for(int x = xStart; x < xEnd; x+=ITEM_SIZE+ITEM_PADDING) {
+        for (int y = yStart; y < yEnd; y += ITEM_SIZE + ITEM_PADDING) {
+            for (int x = xStart; x < xEnd; x += ITEM_SIZE + ITEM_PADDING) {
                 itemSlotConsumer.consume(x, y, id++);
             }
         }
@@ -1368,9 +1373,10 @@ public class NEUOverlay extends Gui {
 
     public float getWidthMult() {
         float scaleFMult = 1;
-        if(Utils.peekGuiScale().getScaleFactor()==4) scaleFMult *= 0.9f;
-        if(manager.auctionManager.customAH.isRenderOverAuctionView() || Minecraft.getMinecraft().currentScreen instanceof CustomAHGui) scaleFMult *= 0.8f;
-        return (float)Math.max(0.5, Math.min(1.5, NotEnoughUpdates.INSTANCE.config.itemlist.paneWidthMult))*scaleFMult;
+        if (Utils.peekGuiScale().getScaleFactor() == 4) scaleFMult *= 0.9f;
+        if (manager.auctionManager.customAH.isRenderOverAuctionView() || Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)
+            scaleFMult *= 0.8f;
+        return (float) Math.max(0.5, Math.min(1.5, NotEnoughUpdates.INSTANCE.config.itemlist.paneWidthMult)) * scaleFMult;
     }
 
     /**
@@ -1379,12 +1385,12 @@ public class NEUOverlay extends Gui {
     public int getSlotsXSize() {
         int width = Utils.peekGuiScale().getScaledWidth();
 
-        int paneWidth = (int)(width/3*getWidthMult());
-        int itemBoxXPadding = (((int)(width-width*getItemPaneOffsetFactor())-2*getBoxPadding())%(ITEM_SIZE+ITEM_PADDING)+ITEM_PADDING)/2;
-        int xStart = (int)(width*getItemPaneOffsetFactor())+getBoxPadding()+itemBoxXPadding;
-        int xEnd = (int)(width*getItemPaneOffsetFactor())+paneWidth-getBoxPadding()-ITEM_SIZE;
+        int paneWidth = (int) (width / 3 * getWidthMult());
+        int itemBoxXPadding = (((int) (width - width * getItemPaneOffsetFactor()) - 2 * getBoxPadding()) % (ITEM_SIZE + ITEM_PADDING) + ITEM_PADDING) / 2;
+        int xStart = (int) (width * getItemPaneOffsetFactor()) + getBoxPadding() + itemBoxXPadding;
+        int xEnd = (int) (width * getItemPaneOffsetFactor()) + paneWidth - getBoxPadding() - ITEM_SIZE;
 
-        return (int)Math.ceil((xEnd - xStart)/((float)(ITEM_SIZE+ITEM_PADDING)));
+        return (int) Math.ceil((xEnd - xStart) / ((float) (ITEM_SIZE + ITEM_PADDING)));
     }
 
     /**
@@ -1393,21 +1399,21 @@ public class NEUOverlay extends Gui {
     public int getSlotsYSize() {
         int height = Utils.peekGuiScale().getScaledHeight();
 
-        int itemBoxYPadding = ((height-getSearchBarYSize()-2*getBoxPadding()-ITEM_SIZE-2)%(ITEM_SIZE+ITEM_PADDING)+ITEM_PADDING)/2;
-        int yStart = getBoxPadding()+getSearchBarYSize()+itemBoxYPadding;
-        int yEnd = height-getBoxPadding()-ITEM_SIZE-2-itemBoxYPadding;
+        int itemBoxYPadding = ((height - getSearchBarYSize() - 2 * getBoxPadding() - ITEM_SIZE - 2) % (ITEM_SIZE + ITEM_PADDING) + ITEM_PADDING) / 2;
+        int yStart = getBoxPadding() + getSearchBarYSize() + itemBoxYPadding;
+        int yEnd = height - getBoxPadding() - ITEM_SIZE - 2 - itemBoxYPadding;
 
-        return (int)Math.ceil((yEnd - yStart)/((float)(ITEM_SIZE+ITEM_PADDING)));
+        return (int) Math.ceil((yEnd - yStart) / ((float) (ITEM_SIZE + ITEM_PADDING)));
     }
 
     public int getMaxPages() {
-        if(getSearchedItems().size() == 0) return 1;
-        return (int)Math.ceil(getSearchedItems().size()/(float)getSlotsYSize()/getSlotsXSize());
+        if (getSearchedItems().size() == 0) return 1;
+        return (int) Math.ceil(getSearchedItems().size() / (float) getSlotsYSize() / getSlotsXSize());
     }
 
     public int getSearchBarYSize() {
         int searchBarYSize = NotEnoughUpdates.INSTANCE.config.toolbar.searchBarHeight;
-        return Math.max(searchBarYSize/Utils.peekGuiScale().getScaleFactor(), ITEM_SIZE);
+        return Math.max(searchBarYSize / Utils.peekGuiScale().getScaleFactor(), ITEM_SIZE);
     }
 
     /**
@@ -1417,78 +1423,78 @@ public class NEUOverlay extends Gui {
     public void renderNavElement(int leftSide, int rightSide, int maxPages, int page, String name) {
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
-        String pageText = EnumChatFormatting.BOLD+name + page + "/" + maxPages;
+        String pageText = EnumChatFormatting.BOLD + name + page + "/" + maxPages;
 
-        float maxStrLen = fr.getStringWidth(EnumChatFormatting.BOLD+name + maxPages + "/" + maxPages);
-        float maxButtonXSize = (rightSide-leftSide+2 - maxStrLen*0.5f - 10)/2f;
-        int buttonXSize = (int)Math.min(maxButtonXSize, getSearchBarYSize()*480/160f);
-        int ySize = (int)(buttonXSize/480f*160);
-        int yOffset = (int)((getSearchBarYSize()-ySize)/2f);
-        int top = getBoxPadding()+yOffset;
+        float maxStrLen = fr.getStringWidth(EnumChatFormatting.BOLD + name + maxPages + "/" + maxPages);
+        float maxButtonXSize = (rightSide - leftSide + 2 - maxStrLen * 0.5f - 10) / 2f;
+        int buttonXSize = (int) Math.min(maxButtonXSize, getSearchBarYSize() * 480 / 160f);
+        int ySize = (int) (buttonXSize / 480f * 160);
+        int yOffset = (int) ((getSearchBarYSize() - ySize) / 2f);
+        int top = getBoxPadding() + yOffset;
 
         int leftPressed = 0;
         int rightPressed = 0;
 
-        if(Mouse.isButtonDown(0) || Mouse.isButtonDown(1)) {
+        if (Mouse.isButtonDown(0) || Mouse.isButtonDown(1)) {
             int width = Utils.peekGuiScale().getScaledWidth();
             int height = Utils.peekGuiScale().getScaledHeight();
 
             int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
             int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-            if(mouseY >= top && mouseY <= top+ySize) {
-                int leftPrev = leftSide-1;
-                if(mouseX > leftPrev && mouseX < leftPrev+buttonXSize) { //"Previous" button
+            if (mouseY >= top && mouseY <= top + ySize) {
+                int leftPrev = leftSide - 1;
+                if (mouseX > leftPrev && mouseX < leftPrev + buttonXSize) { //"Previous" button
                     leftPressed = 1;
                 }
-                int leftNext = rightSide+1-buttonXSize;
-                if(mouseX > leftNext && mouseX < leftNext+buttonXSize) { //"Next" button
+                int leftNext = rightSide + 1 - buttonXSize;
+                if (mouseX > leftNext && mouseX < leftNext + buttonXSize) { //"Next" button
                     rightPressed = 1;
                 }
             }
         }
 
-        drawRect(leftSide-1, top, leftSide-1+buttonXSize, top+ySize, fg.getRGB());
+        drawRect(leftSide - 1, top, leftSide - 1 + buttonXSize, top + ySize, fg.getRGB());
         GlStateManager.color(1f, 1f, 1f, 1f);
         Minecraft.getMinecraft().getTextureManager().bindTexture(rightarrow);
-        Utils.drawTexturedRect(leftSide-1+leftPressed,
-                top+leftPressed,
+        Utils.drawTexturedRect(leftSide - 1 + leftPressed,
+                top + leftPressed,
                 buttonXSize, ySize, 1, 0, 0, 1);
         Minecraft.getMinecraft().getTextureManager().bindTexture(rightarrow_overlay);
-        Utils.drawTexturedRect(leftSide-1,
+        Utils.drawTexturedRect(leftSide - 1,
                 top,
-                buttonXSize, ySize, 1-leftPressed, leftPressed, 1-leftPressed, leftPressed);
+                buttonXSize, ySize, 1 - leftPressed, leftPressed, 1 - leftPressed, leftPressed);
         GlStateManager.bindTexture(0);
-        Utils.drawStringCenteredScaled(EnumChatFormatting.BOLD+"Prev", fr,
-                leftSide-1+buttonXSize*300/480f+leftPressed,
-                top+ySize/2f+leftPressed, false,
-                (int)(buttonXSize*240/480f), Color.BLACK.getRGB());
+        Utils.drawStringCenteredScaled(EnumChatFormatting.BOLD + "Prev", fr,
+                leftSide - 1 + buttonXSize * 300 / 480f + leftPressed,
+                top + ySize / 2f + leftPressed, false,
+                (int) (buttonXSize * 240 / 480f), Color.BLACK.getRGB());
 
-        drawRect(rightSide+1-buttonXSize, top, rightSide+1, top+ySize, fg.getRGB());
+        drawRect(rightSide + 1 - buttonXSize, top, rightSide + 1, top + ySize, fg.getRGB());
         GlStateManager.color(1f, 1f, 1f, 1f);
         Minecraft.getMinecraft().getTextureManager().bindTexture(rightarrow);
-        Utils.drawTexturedRect(rightSide+1-buttonXSize+rightPressed,
-                top+rightPressed,
+        Utils.drawTexturedRect(rightSide + 1 - buttonXSize + rightPressed,
+                top + rightPressed,
                 buttonXSize, ySize);
         Minecraft.getMinecraft().getTextureManager().bindTexture(rightarrow_overlay);
-        Utils.drawTexturedRect(rightSide+1-buttonXSize,
+        Utils.drawTexturedRect(rightSide + 1 - buttonXSize,
                 top,
-                buttonXSize, ySize, 1-rightPressed, rightPressed, 1-rightPressed, rightPressed);
+                buttonXSize, ySize, 1 - rightPressed, rightPressed, 1 - rightPressed, rightPressed);
         GlStateManager.bindTexture(0);
-        Utils.drawStringCenteredScaled(EnumChatFormatting.BOLD+"Next", fr,
-                rightSide+1-buttonXSize*300/480f+rightPressed,
-                top+ySize/2f+rightPressed, false,
-                (int)(buttonXSize*240/480f), Color.BLACK.getRGB());
+        Utils.drawStringCenteredScaled(EnumChatFormatting.BOLD + "Next", fr,
+                rightSide + 1 - buttonXSize * 300 / 480f + rightPressed,
+                top + ySize / 2f + rightPressed, false,
+                (int) (buttonXSize * 240 / 480f), Color.BLACK.getRGB());
 
-        int strMaxLen = rightSide-leftSide-2*buttonXSize-10;
+        int strMaxLen = rightSide - leftSide - 2 * buttonXSize - 10;
 
-        drawRect(leftSide-1+buttonXSize+3, top, rightSide+1-buttonXSize-3, top+ySize,
-                new Color(177,177,177).getRGB());
-        drawRect(leftSide+buttonXSize+3, top+1, rightSide+1-buttonXSize-3, top+ySize,
-                new Color(50,50,50).getRGB());
-        drawRect(leftSide+buttonXSize+3, top+1, rightSide-buttonXSize-3, top+ySize-1, fg.getRGB());
-        Utils.drawStringCenteredScaledMaxWidth(pageText, fr,(leftSide+rightSide)/2,
-                top+ySize/2f, false, strMaxLen, Color.BLACK.getRGB());
+        drawRect(leftSide - 1 + buttonXSize + 3, top, rightSide + 1 - buttonXSize - 3, top + ySize,
+                new Color(177, 177, 177).getRGB());
+        drawRect(leftSide + buttonXSize + 3, top + 1, rightSide + 1 - buttonXSize - 3, top + ySize,
+                new Color(50, 50, 50).getRGB());
+        drawRect(leftSide + buttonXSize + 3, top + 1, rightSide - buttonXSize - 3, top + ySize - 1, fg.getRGB());
+        Utils.drawStringCenteredScaledMaxWidth(pageText, fr, (leftSide + rightSide) / 2,
+                top + ySize / 2f, false, strMaxLen, Color.BLACK.getRGB());
     }
 
     private int limCol(int col) {
@@ -1509,11 +1515,11 @@ public class NEUOverlay extends Gui {
         EntityLivingBase[] entities = new EntityLivingBase[classes.length];
         try {
             EntityLivingBase last = null;
-            for(int i=0; i<classes.length; i++) {
+            for (int i = 0; i < classes.length; i++) {
                 Class<? extends EntityLivingBase> clazz = classes[i];
-                if(clazz == null) continue;
+                if (clazz == null) continue;
 
-                EntityLivingBase newEnt = clazz.getConstructor(new Class[] {World.class}).newInstance(Minecraft.getMinecraft().theWorld);
+                EntityLivingBase newEnt = clazz.getConstructor(new Class[]{World.class}).newInstance(Minecraft.getMinecraft().theWorld);
 
                 //newEnt.renderYawOffset = yaw;
                 //newEnt.rotationYaw = yaw;
@@ -1523,7 +1529,7 @@ public class NEUOverlay extends Gui {
 
                 newEnt.setCustomNameTag(name);
 
-                if(last != null) {
+                if (last != null) {
                     last.riddenByEntity = newEnt;
                     newEnt.ridingEntity = last;
                     last.updateRiderPosition();
@@ -1554,9 +1560,9 @@ public class NEUOverlay extends Gui {
         RenderManager rendermanager = Minecraft.getMinecraft().getRenderManager();
         rendermanager.setPlayerViewY(180.0F);
         rendermanager.setRenderShadow(false);
-        for(EntityLivingBase ent : entities) {
-            GL11.glColor4f(1,1,1,1);
-            if(ent != null) rendermanager.renderEntityWithPosYaw(ent, ent.posX, ent.posY, ent.posZ, 0.0F, 1.0F);
+        for (EntityLivingBase ent : entities) {
+            GL11.glColor4f(1, 1, 1, 1);
+            if (ent != null) rendermanager.renderEntityWithPosYaw(ent, ent.posX, ent.posY, ent.posZ, 0.0F, 1.0F);
         }
         rendermanager.setRenderShadow(true);
 
@@ -1578,15 +1584,15 @@ public class NEUOverlay extends Gui {
     /**
      * Creates a projection matrix that projects from our coordinate space [0->width; 0->height] to OpenGL coordinate
      * space [-1 -> 1; 1 -> -1] (Note: flipped y-axis).
-     *
+     * <p>
      * This is so that we can render to and from the framebuffer in a way that is familiar to us, instead of needing to
      * apply scales and translations manually.
      */
     private Matrix4f createProjectionMatrix(int width, int height) {
-        Matrix4f projMatrix  = new Matrix4f();
+        Matrix4f projMatrix = new Matrix4f();
         projMatrix.setIdentity();
-        projMatrix.m00 = 2.0F / (float)width;
-        projMatrix.m11 = 2.0F / (float)(-height);
+        projMatrix.m00 = 2.0F / (float) width;
+        projMatrix.m11 = 2.0F / (float) (-height);
         projMatrix.m22 = -0.0020001999F;
         projMatrix.m33 = 1.0F;
         projMatrix.m03 = -1.0F;
@@ -1600,7 +1606,7 @@ public class NEUOverlay extends Gui {
         int width = Utils.peekGuiScale().getScaledWidth();
         int height = Utils.peekGuiScale().getScaledHeight();
 
-        if(lastScreenWidth != width || lastScreenHeight != height || Utils.peekGuiScale().getScaleFactor() != lastScale) {
+        if (lastScreenWidth != width || lastScreenHeight != height || Utils.peekGuiScale().getScaleFactor() != lastScale) {
             guiGroup.width = width;
             guiGroup.height = height;
 
@@ -1622,7 +1628,7 @@ public class NEUOverlay extends Gui {
      * Renders the search bar, quick commands, item selection (right) and item info (left) gui elements.
      */
     public void render(boolean hoverInv) {
-        if(disabled) {
+        if (disabled) {
             return;
         }
         GlStateManager.enableDepth();
@@ -1637,15 +1643,15 @@ public class NEUOverlay extends Gui {
         int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
         int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-        if(showVanillaLast != NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems) {
+        if (showVanillaLast != NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems) {
             showVanillaLast = NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems;
             updateSearch();
         }
 
-        if(textField.getText().toLowerCase().contains("bald")) {
+        if (textField.getText().toLowerCase().contains("bald")) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(SUPERGEHEIMNISVERMOGEN);
             GlStateManager.color(1, 1, 1, 1);
-            Utils.drawTexturedRect((width-64)/2f, (height-64)/2f-114, 64, 64, GL11.GL_LINEAR);
+            Utils.drawTexturedRect((width - 64) / 2f, (height - 64) / 2f - 114, 64, 64, GL11.GL_LINEAR);
             GlStateManager.bindTexture(0);
         }
 
@@ -1653,12 +1659,12 @@ public class NEUOverlay extends Gui {
 
         updateGuiGroupSize();
 
-        if(guiScaleLast != Utils.peekGuiScale().getScaleFactor()) {
+        if (guiScaleLast != Utils.peekGuiScale().getScaleFactor()) {
             guiScaleLast = Utils.peekGuiScale().getScaleFactor();
             redrawItems = true;
         }
 
-        if(oldWidthMult != getWidthMult()) {
+        if (oldWidthMult != getWidthMult()) {
             oldWidthMult = getWidthMult();
             redrawItems = true;
         }
@@ -1671,29 +1677,29 @@ public class NEUOverlay extends Gui {
         Color fgCustomOpacity = new Color(SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.itemlist.foregroundColour), true);
 
         Color fgFavourite2 = new Color(SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.itemlist.favouriteColour), true);
-        Color fgFavourite = new Color((int)(fgFavourite2.getRed()*0.8f), (int)(fgFavourite2.getGreen()*0.8f),
-                (int)(fgFavourite2.getBlue()*0.8f), fgFavourite2.getAlpha());
+        Color fgFavourite = new Color((int) (fgFavourite2.getRed() * 0.8f), (int) (fgFavourite2.getGreen() * 0.8f),
+                (int) (fgFavourite2.getBlue() * 0.8f), fgFavourite2.getAlpha());
 
-        if(itemPaneOpen) {
-            if(itemPaneTabOffset.getValue() == 0) {
-                if(itemPaneOffsetFactor.getTarget() != 2/3f) {
-                    itemPaneOffsetFactor.setTarget(2/3f);
+        if (itemPaneOpen) {
+            if (itemPaneTabOffset.getValue() == 0) {
+                if (itemPaneOffsetFactor.getTarget() != 2 / 3f) {
+                    itemPaneOffsetFactor.setTarget(2 / 3f);
                     itemPaneOffsetFactor.resetTimer();
                 }
             } else {
-                if(itemPaneTabOffset.getTarget() != 0) {
+                if (itemPaneTabOffset.getTarget() != 0) {
                     itemPaneTabOffset.setTarget(0);
                     itemPaneTabOffset.resetTimer();
                 }
             }
         } else {
-            if(itemPaneOffsetFactor.getValue() == 1) {
-                if(itemPaneTabOffset.getTarget() != 20) {
+            if (itemPaneOffsetFactor.getValue() == 1) {
+                if (itemPaneTabOffset.getTarget() != 20) {
                     itemPaneTabOffset.setTarget(20);
                     itemPaneTabOffset.resetTimer();
                 }
             } else {
-                if(itemPaneOffsetFactor.getTarget() != 1f) {
+                if (itemPaneOffsetFactor.getTarget() != 1f) {
                     itemPaneOffsetFactor.setTarget(1f);
                     itemPaneOffsetFactor.resetTimer();
                 }
@@ -1704,27 +1710,27 @@ public class NEUOverlay extends Gui {
         itemPaneTabOffset.tick();
         infoPaneOffsetFactor.tick();
 
-        if(page > getMaxPages()-1) setPage(getMaxPages()-1);
-        if(page < 0) setPage(0);
+        if (page > getMaxPages() - 1) setPage(getMaxPages() - 1);
+        if (page < 0) setPage(0);
 
         GlStateManager.disableLighting();
 
         /**
          * Item selection (right) gui element rendering
          */
-        int paneWidth = (int)(width/3*getWidthMult());
-        int leftSide = (int)(width*getItemPaneOffsetFactor());
-        int rightSide = leftSide+paneWidth-getBoxPadding()-getItemBoxXPadding();
+        int paneWidth = (int) (width / 3 * getWidthMult());
+        int leftSide = (int) (width * getItemPaneOffsetFactor());
+        int rightSide = leftSide + paneWidth - getBoxPadding() - getItemBoxXPadding();
 
         //Tab
-        if(NotEnoughUpdates.INSTANCE.config.itemlist.tabOpen) {
+        if (NotEnoughUpdates.INSTANCE.config.itemlist.tabOpen) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(itemPaneTabArrow);
             GlStateManager.color(1f, 1f, 1f, 0.3f);
-            Utils.drawTexturedRect(width-itemPaneTabOffset.getValue()*64/20f, height/2f - 32, 64, 64);
+            Utils.drawTexturedRect(width - itemPaneTabOffset.getValue() * 64 / 20f, height / 2f - 32, 64, 64);
             GlStateManager.bindTexture(0);
 
-            if(!itemPaneOpen && mouseX > width-itemPaneTabOffset.getValue() && mouseY > height/2 - 32
-                    && mouseY < height/2 + 32) {
+            if (!itemPaneOpen && mouseX > width - itemPaneTabOffset.getValue() && mouseY > height / 2 - 32
+                    && mouseY < height / 2 + 32) {
                 itemPaneOpen = true;
             }
         }
@@ -1732,110 +1738,110 @@ public class NEUOverlay extends Gui {
         //Atomic reference used so that below lambda doesn't complain about non-effectively-final variable
         AtomicReference<JsonObject> tooltipToDisplay = new AtomicReference<>(null);
         //System.out.println(itemPaneOffsetFactor.getValue());
-        if(itemPaneOffsetFactor.getValue() < 0.99) {
-            if(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor > 0.5) {
+        if (itemPaneOffsetFactor.getValue() < 0.99) {
+            if (NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor > 0.5) {
                 BackgroundBlur.renderBlurredBackground(NotEnoughUpdates.INSTANCE.config.itemlist.bgBlurFactor,
                         width, height,
-                        leftSide+getBoxPadding()-5, getBoxPadding()-5,
-                        paneWidth-getBoxPadding()*2+10, height-getBoxPadding()*2+10,
+                        leftSide + getBoxPadding() - 5, getBoxPadding() - 5,
+                        paneWidth - getBoxPadding() * 2 + 10, height - getBoxPadding() * 2 + 10,
                         itemPaneOffsetFactor.getValue() > 0.01);
-                Gui.drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,
-                        leftSide+getBoxPadding()-5+paneWidth-getBoxPadding()*2+10,
-                        getBoxPadding()-5+height-getBoxPadding()*2+10, 0xc8101010);
+                Gui.drawRect(leftSide + getBoxPadding() - 5, getBoxPadding() - 5,
+                        leftSide + getBoxPadding() - 5 + paneWidth - getBoxPadding() * 2 + 10,
+                        getBoxPadding() - 5 + height - getBoxPadding() * 2 + 10, 0xc8101010);
             }
 
-            drawRect(leftSide+getBoxPadding()-5, getBoxPadding()-5,
-                    leftSide+paneWidth-getBoxPadding()+5, height-getBoxPadding()+5, bg.getRGB());
+            drawRect(leftSide + getBoxPadding() - 5, getBoxPadding() - 5,
+                    leftSide + paneWidth - getBoxPadding() + 5, height - getBoxPadding() + 5, bg.getRGB());
 
-            renderNavElement(leftSide+getBoxPadding()+getItemBoxXPadding(), rightSide, getMaxPages(), page+1,
-                    Utils.peekGuiScale().getScaleFactor()<4?"Page: ":"");
+            renderNavElement(leftSide + getBoxPadding() + getItemBoxXPadding(), rightSide, getMaxPages(), page + 1,
+                    Utils.peekGuiScale().getScaleFactor() < 4 ? "Page: " : "");
 
             //Sort bar
-            drawRect(leftSide+getBoxPadding()+getItemBoxXPadding()-1,
-                    height-getBoxPadding()-ITEM_SIZE-2,
-                    rightSide+1,
-                    height-getBoxPadding(), fgCustomOpacity.getRGB());
+            drawRect(leftSide + getBoxPadding() + getItemBoxXPadding() - 1,
+                    height - getBoxPadding() - ITEM_SIZE - 2,
+                    rightSide + 1,
+                    height - getBoxPadding(), fgCustomOpacity.getRGB());
 
-            float sortIconsMinX = (sortIcons.length+orderIcons.length)*(ITEM_SIZE+ITEM_PADDING)+ITEM_SIZE;
-            float availableX = rightSide-(leftSide+getBoxPadding()+getItemBoxXPadding());
+            float sortIconsMinX = (sortIcons.length + orderIcons.length) * (ITEM_SIZE + ITEM_PADDING) + ITEM_SIZE;
+            float availableX = rightSide - (leftSide + getBoxPadding() + getItemBoxXPadding());
             float sortOrderScaleFactor = Math.min(1, availableX / sortIconsMinX);
 
-            int scaledITEM_SIZE = (int)(ITEM_SIZE*sortOrderScaleFactor);
-            int scaledItemPaddedSize = (int)((ITEM_SIZE+ITEM_PADDING)*sortOrderScaleFactor);
-            int iconTop = height-getBoxPadding()-(ITEM_SIZE+scaledITEM_SIZE)/2-1;
+            int scaledITEM_SIZE = (int) (ITEM_SIZE * sortOrderScaleFactor);
+            int scaledItemPaddedSize = (int) ((ITEM_SIZE + ITEM_PADDING) * sortOrderScaleFactor);
+            int iconTop = height - getBoxPadding() - (ITEM_SIZE + scaledITEM_SIZE) / 2 - 1;
 
             boolean hoveredOverControl = false;
-            for(int i=0; i<orderIcons.length; i++) {
-                int orderIconX = leftSide+getBoxPadding()+getItemBoxXPadding()+i*scaledItemPaddedSize;
-                drawRect(orderIconX, iconTop,scaledITEM_SIZE+orderIconX,iconTop+scaledITEM_SIZE, fg.getRGB());
+            for (int i = 0; i < orderIcons.length; i++) {
+                int orderIconX = leftSide + getBoxPadding() + getItemBoxXPadding() + i * scaledItemPaddedSize;
+                drawRect(orderIconX, iconTop, scaledITEM_SIZE + orderIconX, iconTop + scaledITEM_SIZE, fg.getRGB());
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(getCompareMode() == i ? orderIconsActive[i] : orderIcons[i]);
                 GlStateManager.color(1f, 1f, 1f, 1f);
-                Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE,0, 1, 0, 1, GL11.GL_NEAREST);
+                Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(getCompareAscending().get(i) ? ascending_overlay : descending_overlay);
                 GlStateManager.color(1f, 1f, 1f, 1f);
-                Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE,0, 1, 0, 1, GL11.GL_NEAREST);
+                Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
                 GlStateManager.bindTexture(0);
 
-                if(mouseY > iconTop && mouseY < iconTop+scaledITEM_SIZE) {
-                    if(mouseX > orderIconX && mouseX < orderIconX+scaledITEM_SIZE) {
+                if (mouseY > iconTop && mouseY < iconTop + scaledITEM_SIZE) {
+                    if (mouseX > orderIconX && mouseX < orderIconX + scaledITEM_SIZE) {
                         hoveredOverControl = true;
-                        if(System.currentTimeMillis() - millisLastMouseMove > 400) {
-                            String text = EnumChatFormatting.GRAY+"Order ";
-                            if(i == COMPARE_MODE_ALPHABETICAL) text += "Alphabetically";
-                            else if(i == COMPARE_MODE_RARITY) text += "by Rarity";
-                            else if(i == COMPARE_MODE_VALUE) text += "by Item Worth";
+                        if (System.currentTimeMillis() - millisLastMouseMove > 400) {
+                            String text = EnumChatFormatting.GRAY + "Order ";
+                            if (i == COMPARE_MODE_ALPHABETICAL) text += "Alphabetically";
+                            else if (i == COMPARE_MODE_RARITY) text += "by Rarity";
+                            else if (i == COMPARE_MODE_VALUE) text += "by Item Worth";
                             else text = null;
-                            if(text != null) textToDisplay = Utils.createList(text);
+                            if (text != null) textToDisplay = Utils.createList(text);
                         }
                     }
                 }
             }
 
-            for(int i=0; i<sortIcons.length; i++) {
-                int sortIconX = rightSide-scaledITEM_SIZE-i*scaledItemPaddedSize;
-                drawRect(sortIconX, iconTop,scaledITEM_SIZE+sortIconX,iconTop+scaledITEM_SIZE, fg.getRGB());
+            for (int i = 0; i < sortIcons.length; i++) {
+                int sortIconX = rightSide - scaledITEM_SIZE - i * scaledItemPaddedSize;
+                drawRect(sortIconX, iconTop, scaledITEM_SIZE + sortIconX, iconTop + scaledITEM_SIZE, fg.getRGB());
                 Minecraft.getMinecraft().getTextureManager().bindTexture(getSortMode() == i ? sortIconsActive[i] : sortIcons[i]);
                 GlStateManager.color(1f, 1f, 1f, 1f);
                 Utils.drawTexturedRect(sortIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
                 GlStateManager.bindTexture(0);
 
-                if(mouseY > iconTop && mouseY < iconTop+scaledITEM_SIZE) {
-                    if(mouseX > sortIconX && mouseX < sortIconX+scaledITEM_SIZE) {
+                if (mouseY > iconTop && mouseY < iconTop + scaledITEM_SIZE) {
+                    if (mouseX > sortIconX && mouseX < sortIconX + scaledITEM_SIZE) {
                         hoveredOverControl = true;
-                        if(System.currentTimeMillis() - millisLastMouseMove > 400) {
-                            String text = EnumChatFormatting.GRAY+"Filter ";
-                            if(i == SORT_MODE_ALL) text = EnumChatFormatting.GRAY+"No Filter";
-                            else if(i == SORT_MODE_MOB) text += "Mobs";
-                            else if(i == SORT_MODE_PET) text += "Pets";
-                            else if(i == SORT_MODE_TOOL) text += "Tools";
-                            else if(i == SORT_MODE_ARMOR) text += "Armor";
-                            else if(i == SORT_MODE_ACCESSORY) text += "Accessories";
+                        if (System.currentTimeMillis() - millisLastMouseMove > 400) {
+                            String text = EnumChatFormatting.GRAY + "Filter ";
+                            if (i == SORT_MODE_ALL) text = EnumChatFormatting.GRAY + "No Filter";
+                            else if (i == SORT_MODE_MOB) text += "Mobs";
+                            else if (i == SORT_MODE_PET) text += "Pets";
+                            else if (i == SORT_MODE_TOOL) text += "Tools";
+                            else if (i == SORT_MODE_ARMOR) text += "Armor";
+                            else if (i == SORT_MODE_ACCESSORY) text += "Accessories";
                             else text = null;
-                            if(text != null) textToDisplay = Utils.createList(text);
+                            if (text != null) textToDisplay = Utils.createList(text);
                         }
                     }
                 }
             }
 
-            if(!hoveredOverControl) {
+            if (!hoveredOverControl) {
                 millisLastMouseMove = System.currentTimeMillis();
             }
 
-            if(selectedItemGroup != null) {
-                if(mouseX < selectedItemGroupX-1 || mouseX > selectedItemGroupX+17 ||
-                    mouseY < selectedItemGroupY-1 || mouseY > selectedItemGroupY+17) {
-                    int selectedX = Math.min(selectedItemGroupX, width-getBoxPadding()-18*selectedItemGroup.size());
-                    if(mouseX < selectedX-1 || mouseX > selectedX-1+18*selectedItemGroup.size() ||
-                        mouseY < selectedItemGroupY+17 || mouseY > selectedItemGroupY+35) {
+            if (selectedItemGroup != null) {
+                if (mouseX < selectedItemGroupX - 1 || mouseX > selectedItemGroupX + 17 ||
+                        mouseY < selectedItemGroupY - 1 || mouseY > selectedItemGroupY + 17) {
+                    int selectedX = Math.min(selectedItemGroupX, width - getBoxPadding() - 18 * selectedItemGroup.size());
+                    if (mouseX < selectedX - 1 || mouseX > selectedX - 1 + 18 * selectedItemGroup.size() ||
+                            mouseY < selectedItemGroupY + 17 || mouseY > selectedItemGroupY + 35) {
                         selectedItemGroup = null;
                         selectedItemMillis = -1;
                     }
                 }
             }
 
-            if(!hoverInv) {
+            if (!hoverInv) {
                 iterateItemSlots(new ItemSlotConsumer() {
                     public void consume(int x, int y, int id) {
                         JsonObject json = getSearchedItemPage(id);
@@ -1845,14 +1851,14 @@ public class NEUOverlay extends Gui {
                         if (mouseX > x - 1 && mouseX < x + ITEM_SIZE + 1) {
                             if (mouseY > y - 1 && mouseY < y + ITEM_SIZE + 1) {
                                 String internalname = json.get("internalname").getAsString();
-                                if(searchedItemsSubgroup.containsKey(internalname)) {
-                                    if(selectedItemMillis == -1) selectedItemMillis = System.currentTimeMillis();
-                                    if(System.currentTimeMillis() - selectedItemMillis > 200 &&
+                                if (searchedItemsSubgroup.containsKey(internalname)) {
+                                    if (selectedItemMillis == -1) selectedItemMillis = System.currentTimeMillis();
+                                    if (System.currentTimeMillis() - selectedItemMillis > 200 &&
                                             (selectedItemGroup == null || selectedItemGroup.isEmpty())) {
 
                                         ArrayList<JsonObject> children = new ArrayList<>();
                                         children.add(json);
-                                        for(String itemname : searchedItemsSubgroup.get(internalname)) {
+                                        for (String itemname : searchedItemsSubgroup.get(internalname)) {
                                             children.add(manager.getItemInformation().get(itemname));
                                         }
 
@@ -1871,15 +1877,15 @@ public class NEUOverlay extends Gui {
 
             //Iterate through all item slots and display the appropriate item
             int itemBoxXPadding = getItemBoxXPadding();
-            int xStart = (int)(width*getItemPaneOffsetFactor())+getBoxPadding()+itemBoxXPadding;
+            int xStart = (int) (width * getItemPaneOffsetFactor()) + getBoxPadding() + itemBoxXPadding;
 
-            if(OpenGlHelper.isFramebufferEnabled()) {
+            if (OpenGlHelper.isFramebufferEnabled()) {
                 renderItemsFromImage(xStart, width, height);
                 renderEnchOverlay();
 
                 checkFramebufferSizes(width, height);
 
-                if(redrawItems || !NotEnoughUpdates.INSTANCE.config.hidden.cacheRenderedItempane) {
+                if (redrawItems || !NotEnoughUpdates.INSTANCE.config.hidden.cacheRenderedItempane) {
                     renderItemsToImage(width, height, fgFavourite2, fgFavourite, fgCustomOpacity, true, true);
                     redrawItems = false;
                 }
@@ -1887,36 +1893,36 @@ public class NEUOverlay extends Gui {
                 renderItems(xStart, true, true, true);
             }
 
-            if(selectedItemGroup != null) {
+            if (selectedItemGroup != null) {
                 GL11.glTranslatef(0, 0, 10);
 
-                int selectedX = Math.min(selectedItemGroupX, width-getBoxPadding()-18*selectedItemGroup.size());
+                int selectedX = Math.min(selectedItemGroupX, width - getBoxPadding() - 18 * selectedItemGroup.size());
 
                 GlStateManager.enableDepth();
                 GlStateManager.depthFunc(GL11.GL_LESS);
-                drawRect(selectedX, selectedItemGroupY+18,
-                        selectedX-2+18*selectedItemGroup.size(), selectedItemGroupY+34, fgCustomOpacity.getRGB());
-                drawRect(selectedX-1, selectedItemGroupY+17,
-                        selectedX-2+18*selectedItemGroup.size(), selectedItemGroupY+34, new Color(180, 180, 180).getRGB());
-                drawRect(selectedX, selectedItemGroupY+18,
-                        selectedX-1+18*selectedItemGroup.size(), selectedItemGroupY+35, new Color(30, 30, 30).getRGB());
-                drawRect(selectedX-1+2, selectedItemGroupY+17+2,
-                        selectedX-1+18*selectedItemGroup.size()+2, selectedItemGroupY+35+2, 0xa0000000);
+                drawRect(selectedX, selectedItemGroupY + 18,
+                        selectedX - 2 + 18 * selectedItemGroup.size(), selectedItemGroupY + 34, fgCustomOpacity.getRGB());
+                drawRect(selectedX - 1, selectedItemGroupY + 17,
+                        selectedX - 2 + 18 * selectedItemGroup.size(), selectedItemGroupY + 34, new Color(180, 180, 180).getRGB());
+                drawRect(selectedX, selectedItemGroupY + 18,
+                        selectedX - 1 + 18 * selectedItemGroup.size(), selectedItemGroupY + 35, new Color(30, 30, 30).getRGB());
+                drawRect(selectedX - 1 + 2, selectedItemGroupY + 17 + 2,
+                        selectedX - 1 + 18 * selectedItemGroup.size() + 2, selectedItemGroupY + 35 + 2, 0xa0000000);
                 GlStateManager.depthFunc(GL11.GL_LEQUAL);
 
                 GL11.glTranslatef(0, 0, 10);
 
                 tooltipToDisplay.set(null);
-                if(mouseY > selectedItemGroupY+17 && mouseY < selectedItemGroupY+35) {
-                    for(int i=0; i<selectedItemGroup.size(); i++) {
-                        if(mouseX >= selectedX-1+18*i && mouseX <= selectedX+17+18*i) {
+                if (mouseY > selectedItemGroupY + 17 && mouseY < selectedItemGroupY + 35) {
+                    for (int i = 0; i < selectedItemGroup.size(); i++) {
+                        if (mouseX >= selectedX - 1 + 18 * i && mouseX <= selectedX + 17 + 18 * i) {
                             tooltipToDisplay.set(selectedItemGroup.get(i));
                         }
                     }
                 }
-                for(int i=0; i<selectedItemGroup.size(); i++) {
+                for (int i = 0; i < selectedItemGroup.size(); i++) {
                     JsonObject item = selectedItemGroup.get(i);
-                    Utils.drawItemStack(manager.jsonToStack(item), selectedX+18*i, selectedItemGroupY+18);
+                    Utils.drawItemStack(manager.jsonToStack(item), selectedX + 18 * i, selectedItemGroupY + 18);
                 }
 
                 GL11.glTranslatef(0, 0, -20);
@@ -1939,46 +1945,48 @@ public class NEUOverlay extends Gui {
          * Item info (left) gui element rendering
          */
 
-        rightSide = (int)(width*getInfoPaneOffsetFactor());
+        rightSide = (int) (width * getInfoPaneOffsetFactor());
         leftSide = rightSide - paneWidth;
 
-        if(activeInfoPane != null) {
+        if (activeInfoPane != null) {
             activeInfoPane.tick();
             activeInfoPane.render(width, height, bg, fg, Utils.peekGuiScale(), mouseX, mouseY);
 
             GlStateManager.color(1f, 1f, 1f, 1f);
             Minecraft.getMinecraft().getTextureManager().bindTexture(close);
-            Utils.drawTexturedRect(rightSide-getBoxPadding()-8, getBoxPadding()-8, 16, 16);
+            Utils.drawTexturedRect(rightSide - getBoxPadding() - 8, getBoxPadding() - 8, 16, 16);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
         }
 
         //Render tooltip
         JsonObject json = tooltipToDisplay.get();
-        if(json != null) {
+        if (json != null) {
             ItemStack stack = manager.jsonToStack(json);
             List<String> text = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
 
             String internalname = json.get("internalname").getAsString();
-            if(!NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoInvItem) {
+            if (!NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoInvItem) {
                 ItemPriceInformation.addToTooltip(text, internalname, stack);
             }
 
             boolean hasClick = false;
             boolean hasInfo = false;
-            if(json.has("clickcommand") && !json.get("clickcommand").getAsString().isEmpty()) {
+            if (json.has("clickcommand") && !json.get("clickcommand").getAsString().isEmpty()) {
                 hasClick = true;
             }
-            if(json.has("info") && json.get("info").getAsJsonArray().size() > 0) {
+            if (json.has("info") && json.get("info").getAsJsonArray().size() > 0) {
                 hasInfo = true;
             }
 
-            if(hasClick || hasInfo) text.add("");
-            if(hasClick) text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"LMB/R : View recipe!");
-            if(hasInfo) text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"RMB : View additional information!");
+            if (hasClick || hasInfo) text.add("");
+            if (hasClick)
+                text.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "LMB/R : View recipe!");
+            if (hasInfo)
+                text.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "RMB : View additional information!");
 
             textToDisplay = text;
         }
-        if(textToDisplay != null) {
+        if (textToDisplay != null) {
             Utils.drawHoveringText(textToDisplay, mouseX, mouseY, width, height, -1, fr);
             textToDisplay = null;
         }
@@ -2001,6 +2009,7 @@ public class NEUOverlay extends Gui {
 
     /**
      * Sets the current page and marks that the itemsPane should be redrawn
+     *
      * @param page
      */
     public void setPage(int page) {
@@ -2015,11 +2024,11 @@ public class NEUOverlay extends Gui {
      * itemPane should be redrawn.
      */
     private void checkFramebufferSizes(int width, int height) {
-        int sw = width*Utils.peekGuiScale().getScaleFactor();
-        int sh = height*Utils.peekGuiScale().getScaleFactor();
-        for(int i=0; i<itemFramebuffers.length; i++) {
-            if(itemFramebuffers[i] == null || itemFramebuffers[i].framebufferWidth != sw || itemFramebuffers[i].framebufferHeight != sh) {
-                if(itemFramebuffers[i] == null) {
+        int sw = width * Utils.peekGuiScale().getScaleFactor();
+        int sh = height * Utils.peekGuiScale().getScaleFactor();
+        for (int i = 0; i < itemFramebuffers.length; i++) {
+            if (itemFramebuffers[i] == null || itemFramebuffers[i].framebufferWidth != sw || itemFramebuffers[i].framebufferHeight != sh) {
+                if (itemFramebuffers[i] == null) {
                     itemFramebuffers[i] = new Framebuffer(sw, sh, true);
                 } else {
                     itemFramebuffers[i].createBindFramebuffer(sw, sh);
@@ -2035,6 +2044,7 @@ public class NEUOverlay extends Gui {
         buffer.bindFramebuffer(false);
         GL11.glViewport(0, 0, sw, sh);
     }
+
     private void cleanupFramebuffer(Framebuffer buffer, int sw, int sh) {
         buffer.unbindFramebuffer();
         Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
@@ -2047,8 +2057,8 @@ public class NEUOverlay extends Gui {
      */
     private void renderItemsToImage(int width, int height, Color fgFavourite2,
                                     Color fgFavourite, Color fgCustomOpacity, boolean items, boolean entities) {
-        int sw = width*Utils.peekGuiScale().getScaleFactor();
-        int sh = height*Utils.peekGuiScale().getScaleFactor();
+        int sw = width * Utils.peekGuiScale().getScaleFactor();
+        int sh = height * Utils.peekGuiScale().getScaleFactor();
 
         GL11.glPushMatrix();
         prepareFramebuffer(itemFramebuffers[0], sw, sh);
@@ -2071,17 +2081,18 @@ public class NEUOverlay extends Gui {
      * the item glint overlay model, meaning that a depthFunc of GL_EQUAL can correctly render on to the item.
      */
     float itemRenderOffset = 7.5001f;
+
     private void renderItemsFromImage(int xOffset, int width, int height) {
-        if(itemFramebuffers[0] != null && itemFramebuffers[1] != null) {
+        if (itemFramebuffers[0] != null && itemFramebuffers[1] != null) {
             itemFramebuffers[1].bindFramebufferTexture();
             GlStateManager.color(1f, 1f, 1f, 1f);
-            Utils.drawTexturedRect(xOffset-10, 0, width, height, 0, 1, 1, 0);
+            Utils.drawTexturedRect(xOffset - 10, 0, width, height, 0, 1, 1, 0);
             itemFramebuffers[1].unbindFramebufferTexture();
 
             GL11.glTranslatef(0, 0, itemRenderOffset);
             itemFramebuffers[0].bindFramebufferTexture();
             GlStateManager.color(1f, 1f, 1f, 1f);
-            Utils.drawTexturedRect(xOffset-10, 0, width, height, 0, 1, 1, 0);
+            Utils.drawTexturedRect(xOffset - 10, 0, width, height, 0, 1, 1, 0);
             itemFramebuffers[0].unbindFramebufferTexture();
             GL11.glTranslatef(0, 0, -itemRenderOffset);
         }
@@ -2090,7 +2101,7 @@ public class NEUOverlay extends Gui {
     /**
      * Renders the enchant overlay, since only the items have the specific z-offset of 7.5001, this will only apply
      * the enchant overlay to the actual items and not anything else.
-     *
+     * <p>
      * (I tried very hard to replicate the enchant rendering overlay code from vanilla, but I couldn't get it to
      * work without rendering with the "ITEM" vertex model like in vanilla, so I choose to render an arbitrary 2D
      * item. If a texture pack sets a custom 3D model for an apple, this will probably break.)
@@ -2099,66 +2110,66 @@ public class NEUOverlay extends Gui {
         ItemStack stack = new ItemStack(Items.apple);
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher()
                 .getItemModel(stack);
-        float f = (float)(Minecraft.getSystemTime() % 3000L) / 3000.0F / 8.0F;
-        float f1 = (float)(Minecraft.getSystemTime() % 4873L) / 4873.0F / 8.0F;
+        float f = (float) (Minecraft.getSystemTime() % 3000L) / 3000.0F / 8.0F;
+        float f1 = (float) (Minecraft.getSystemTime() % 4873L) / 4873.0F / 8.0F;
         Minecraft.getMinecraft().getTextureManager().bindTexture(RES_ITEM_GLINT);
 
         GL11.glPushMatrix();
-        GL11.glTranslatef(0, 0, -7.5001f+itemRenderOffset);
+        GL11.glTranslatef(0, 0, -7.5001f + itemRenderOffset);
         iterateItemSlots(new ItemSlotConsumer() {
             public void consume(int x, int y, int id) {
-            JsonObject json = getSearchedItemPage(id);
-            if(json == null) {
-                return;
-            }
-            ItemStack stack = manager.jsonToStack(json, true, true, false);
-            if (stack == null || !stack.hasEffect()) {
-                return;
-            }
+                JsonObject json = getSearchedItemPage(id);
+                if (json == null) {
+                    return;
+                }
+                ItemStack stack = manager.jsonToStack(json, true, true, false);
+                if (stack == null || !stack.hasEffect()) {
+                    return;
+                }
 
-            GlStateManager.pushMatrix();
-            GlStateManager.enableRescaleNormal();
-            GlStateManager.enableAlpha();
-            GlStateManager.alphaFunc(516, 0.1F);
-            GlStateManager.enableBlend();
+                GlStateManager.pushMatrix();
+                GlStateManager.enableRescaleNormal();
+                GlStateManager.enableAlpha();
+                GlStateManager.alphaFunc(516, 0.1F);
+                GlStateManager.enableBlend();
 
-            GlStateManager.disableLighting();
+                GlStateManager.disableLighting();
 
-            GlStateManager.translate(x, y, 0);
-            GlStateManager.scale(16f, 16f, 16f);
+                GlStateManager.translate(x, y, 0);
+                GlStateManager.scale(16f, 16f, 16f);
 
-            GlStateManager.depthMask(false);
-            GlStateManager.depthFunc(GL11.GL_EQUAL);
-            GlStateManager.blendFunc(GL11.GL_SRC_COLOR, GL11.GL_ONE);
-            GlStateManager.matrixMode(5890);
-            GlStateManager.pushMatrix();
-            GlStateManager.scale(8.0F, 8.0F, 8.0F);
-            GlStateManager.translate(f, 0.0F, 0.0F);
-            GlStateManager.rotate(-50.0F, 0.0F, 0.0F, 1.0F);
+                GlStateManager.depthMask(false);
+                GlStateManager.depthFunc(GL11.GL_EQUAL);
+                GlStateManager.blendFunc(GL11.GL_SRC_COLOR, GL11.GL_ONE);
+                GlStateManager.matrixMode(5890);
+                GlStateManager.pushMatrix();
+                GlStateManager.scale(8.0F, 8.0F, 8.0F);
+                GlStateManager.translate(f, 0.0F, 0.0F);
+                GlStateManager.rotate(-50.0F, 0.0F, 0.0F, 1.0F);
 
-            renderModel(model, -8372020, null);
+                renderModel(model, -8372020, null);
 
-            GlStateManager.popMatrix();
-            GlStateManager.pushMatrix();
-            GlStateManager.scale(8.0F, 8.0F, 8.0F);
-            GlStateManager.translate(-f1, 0.0F, 0.0F);
-            GlStateManager.rotate(10.0F, 0.0F, 0.0F, 1.0F);
+                GlStateManager.popMatrix();
+                GlStateManager.pushMatrix();
+                GlStateManager.scale(8.0F, 8.0F, 8.0F);
+                GlStateManager.translate(-f1, 0.0F, 0.0F);
+                GlStateManager.rotate(10.0F, 0.0F, 0.0F, 1.0F);
 
-            renderModel(model, -8372020, null);
+                renderModel(model, -8372020, null);
 
-            GlStateManager.popMatrix();
-            GlStateManager.matrixMode(5888);
-            GlStateManager.blendFunc(770, 771);
-            GlStateManager.depthFunc(515);
-            GlStateManager.depthMask(true);
+                GlStateManager.popMatrix();
+                GlStateManager.matrixMode(5888);
+                GlStateManager.blendFunc(770, 771);
+                GlStateManager.depthFunc(515);
+                GlStateManager.depthMask(true);
 
-            GlStateManager.popMatrix();
+                GlStateManager.popMatrix();
             }
         });
         GlStateManager.disableBlend();
         GlStateManager.disableAlpha();
         GlStateManager.disableRescaleNormal();
-        GL11.glTranslatef(0, 0, 7.5001f-itemRenderOffset);
+        GL11.glTranslatef(0, 0, 7.5001f - itemRenderOffset);
         GL11.glPopMatrix();
 
         GlStateManager.bindTexture(0);
@@ -2179,9 +2190,9 @@ public class NEUOverlay extends Gui {
     }
 
     private void renderQuads(WorldRenderer renderer, List<BakedQuad> quads, int color) {
-        if(quads == null) return;
+        if (quads == null) return;
 
-        for(BakedQuad quad : quads) {
+        for (BakedQuad quad : quads) {
             renderer.addVertexData(quad.getVertexData());
             renderer.putColor4(color);
         }
@@ -2191,38 +2202,38 @@ public class NEUOverlay extends Gui {
      * Renders all the item backgrounds, either squares or squircles.
      */
     private void renderItemBackgrounds(Color fgFavourite2, Color fgFavourite, Color fgCustomOpacity) {
-        if(fgCustomOpacity.getAlpha() == 0) return;
+        if (fgCustomOpacity.getAlpha() == 0) return;
         iterateItemSlots(new ItemSlotConsumer() {
             public void consume(int x, int y, int id) {
-            JsonObject json = getSearchedItemPage(id);
-            if (json == null) {
-                return;
-            }
-
-            Minecraft.getMinecraft().getTextureManager().bindTexture(item_mask);
-            if (getFavourites().contains(json.get("internalname").getAsString())) {
-                if(NotEnoughUpdates.INSTANCE.config.itemlist.itemStyle == 0) {
-                    GlStateManager.color(fgFavourite2.getRed() / 255f, fgFavourite2.getGreen() / 255f,
-                            fgFavourite2.getBlue() / 255f, fgFavourite2.getAlpha() / 255f);
-                    Utils.drawTexturedRect(x - 1, y - 1, ITEM_SIZE + 2, ITEM_SIZE + 2, GL11.GL_NEAREST);
-
-                    GlStateManager.color(fgFavourite.getRed() / 255f, fgFavourite.getGreen() / 255f,
-                            fgFavourite.getBlue() / 255f, fgFavourite.getAlpha() / 255f);
-                    Utils.drawTexturedRect(x, y, ITEM_SIZE, ITEM_SIZE, GL11.GL_NEAREST);
-                } else {
-                    drawRect(x-1, y-1, x+ITEM_SIZE+1, y+ITEM_SIZE+1, fgFavourite2.getRGB());
-                    drawRect(x, y, x+ITEM_SIZE, y+ITEM_SIZE, fgFavourite.getRGB());
+                JsonObject json = getSearchedItemPage(id);
+                if (json == null) {
+                    return;
                 }
-            } else {
-                if(NotEnoughUpdates.INSTANCE.config.itemlist.itemStyle == 0) {
-                    GlStateManager.color(fgCustomOpacity.getRed() / 255f, fgCustomOpacity.getGreen() / 255f,
-                            fgCustomOpacity.getBlue() / 255f, fgCustomOpacity.getAlpha() / 255f);
-                    Utils.drawTexturedRect(x - 1, y - 1, ITEM_SIZE + 2, ITEM_SIZE + 2, GL11.GL_NEAREST);
+
+                Minecraft.getMinecraft().getTextureManager().bindTexture(item_mask);
+                if (getFavourites().contains(json.get("internalname").getAsString())) {
+                    if (NotEnoughUpdates.INSTANCE.config.itemlist.itemStyle == 0) {
+                        GlStateManager.color(fgFavourite2.getRed() / 255f, fgFavourite2.getGreen() / 255f,
+                                fgFavourite2.getBlue() / 255f, fgFavourite2.getAlpha() / 255f);
+                        Utils.drawTexturedRect(x - 1, y - 1, ITEM_SIZE + 2, ITEM_SIZE + 2, GL11.GL_NEAREST);
+
+                        GlStateManager.color(fgFavourite.getRed() / 255f, fgFavourite.getGreen() / 255f,
+                                fgFavourite.getBlue() / 255f, fgFavourite.getAlpha() / 255f);
+                        Utils.drawTexturedRect(x, y, ITEM_SIZE, ITEM_SIZE, GL11.GL_NEAREST);
+                    } else {
+                        drawRect(x - 1, y - 1, x + ITEM_SIZE + 1, y + ITEM_SIZE + 1, fgFavourite2.getRGB());
+                        drawRect(x, y, x + ITEM_SIZE, y + ITEM_SIZE, fgFavourite.getRGB());
+                    }
                 } else {
-                    drawRect(x-1, y-1, x+ITEM_SIZE+1, y+ITEM_SIZE+1, fgCustomOpacity.getRGB());
+                    if (NotEnoughUpdates.INSTANCE.config.itemlist.itemStyle == 0) {
+                        GlStateManager.color(fgCustomOpacity.getRed() / 255f, fgCustomOpacity.getGreen() / 255f,
+                                fgCustomOpacity.getBlue() / 255f, fgCustomOpacity.getAlpha() / 255f);
+                        Utils.drawTexturedRect(x - 1, y - 1, ITEM_SIZE + 2, ITEM_SIZE + 2, GL11.GL_NEAREST);
+                    } else {
+                        drawRect(x - 1, y - 1, x + ITEM_SIZE + 1, y + ITEM_SIZE + 1, fgCustomOpacity.getRGB());
+                    }
                 }
-            }
-            GlStateManager.bindTexture(0);
+                GlStateManager.bindTexture(0);
             }
         }, 10);
     }
@@ -2236,7 +2247,7 @@ public class NEUOverlay extends Gui {
                 }
 
                 if (json.has("entityrender")) {
-                    if(!entities) return;
+                    if (!entities) return;
                     String name = json.get("displayname").getAsString();
                     String[] split = name.split(" \\(");
                     name = name.substring(0, name.length() - split[split.length - 1].length() - 2);
@@ -2265,10 +2276,10 @@ public class NEUOverlay extends Gui {
 
                     renderEntity(x + ITEM_SIZE / 2, y + ITEM_SIZE, scale, name, entities);
                 } else {
-                    if(!items) return;
+                    if (!items) return;
                     ItemStack stack = manager.jsonToStack(json, true, true, false);
-                    if(stack != null) {
-                        if(glint) {
+                    if (stack != null) {
+                        if (glint) {
                             Utils.drawItemStack(stack, x, y);
                         } else {
                             Utils.drawItemStackWithoutGlint(stack, x, y);
@@ -2277,10 +2288,10 @@ public class NEUOverlay extends Gui {
                 }
 
                 GlStateManager.translate(0, 0, 50);
-                if(searchedItemsSubgroup.containsKey(json.get("internalname").getAsString())) {
+                if (searchedItemsSubgroup.containsKey(json.get("internalname").getAsString())) {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(item_haschild);
                     GlStateManager.color(1, 1, 1, 1);
-                    Utils.drawTexturedRect(x-1, y-1, ITEM_SIZE+2, ITEM_SIZE+2, GL11.GL_NEAREST);
+                    Utils.drawTexturedRect(x - 1, y - 1, ITEM_SIZE + 2, ITEM_SIZE + 2, GL11.GL_NEAREST);
                 }
                 GlStateManager.translate(0, 0, -50);
             }
@@ -2288,7 +2299,7 @@ public class NEUOverlay extends Gui {
     }
 
     public float getItemPaneOffsetFactor() {
-        return itemPaneOffsetFactor.getValue() * getWidthMult() + (1-getWidthMult());
+        return itemPaneOffsetFactor.getValue() * getWidthMult() + (1 - getWidthMult());
     }
 
     public float getInfoPaneOffsetFactor() {

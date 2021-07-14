@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 public @interface ConfigEditorButton {
 
     int runnableId();
+
     String buttonText() default "";
 
 }

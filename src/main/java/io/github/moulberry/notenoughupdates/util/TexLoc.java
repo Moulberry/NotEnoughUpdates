@@ -21,28 +21,28 @@ public class TexLoc {
     }
 
     public boolean handleKeyboardInput() {
-        int mult=1;
-        if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)) mult=10;
-        if(Keyboard.isKeyDown(toggleKey)) {
-            if(!pressedLastTick) {
+        int mult = 1;
+        if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)) mult = 10;
+        if (Keyboard.isKeyDown(toggleKey)) {
+            if (!pressedLastTick) {
                 toggled = !toggled;
             }
             pressedLastTick = true;
         } else {
             pressedLastTick = false;
         }
-        if(toggled || toggleKey == 0) {
-            if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-                if(!dirPressed) x-=mult;
+        if (toggled || toggleKey == 0) {
+            if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
+                if (!dirPressed) x -= mult;
                 dirPressed = true;
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-                if(!dirPressed) x+=mult;
+            } else if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
+                if (!dirPressed) x += mult;
                 dirPressed = true;
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-                if(!dirPressed) y-=mult;
+            } else if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+                if (!dirPressed) y -= mult;
                 dirPressed = true;
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-                if(!dirPressed) y+=mult;
+            } else if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
+                if (!dirPressed) y += mult;
                 dirPressed = true;
             } else {
                 dirPressed = false;

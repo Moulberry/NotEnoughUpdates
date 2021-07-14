@@ -13,35 +13,35 @@ public class FlyFix {
     private static long lastAbilitySend = 0;
 
     public static void onSendAbilities(C13PacketPlayerAbilities packet) {
-        if(true) return;
+        if (true) return;
         //if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
-        if(Minecraft.getMinecraft().thePlayer == null) return;
-        if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("dynamic")) return;
+        if (Minecraft.getMinecraft().thePlayer == null) return;
+        if (!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
+        if (SBInfo.getInstance().getLocation() == null) return;
+        if (!SBInfo.getInstance().getLocation().equals("dynamic")) return;
 
         long currentTime = System.currentTimeMillis();
 
         clientWantFly = packet.isFlying();
-        if(clientWantFly != serverWantFly) lastAbilitySend = currentTime;
+        if (clientWantFly != serverWantFly) lastAbilitySend = currentTime;
     }
 
     public static void onReceiveAbilities(S39PacketPlayerAbilities packet) {
-        if(true) return;
+        if (true) return;
         //if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
-        if(Minecraft.getMinecraft().thePlayer == null) return;
-        if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("dynamic")) return;
+        if (Minecraft.getMinecraft().thePlayer == null) return;
+        if (!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
+        if (SBInfo.getInstance().getLocation() == null) return;
+        if (!SBInfo.getInstance().getLocation().equals("dynamic")) return;
 
         long currentTime = System.currentTimeMillis();
 
         serverWantFly = packet.isFlying();
 
-        if(serverWantFly != clientWantFly) {
-            if(currentTime - lastAbilitySend > 0 && currentTime - lastAbilitySend < 500) {
+        if (serverWantFly != clientWantFly) {
+            if (currentTime - lastAbilitySend > 0 && currentTime - lastAbilitySend < 500) {
                 packet.setFlying(clientWantFly);
             } else {
                 clientWantFly = serverWantFly;
@@ -50,18 +50,18 @@ public class FlyFix {
     }
 
     public static void tick() {
-        if(true) return;
+        if (true) return;
         //if(!NotEnoughUpdates.INSTANCE.config.misc.flyFix) return;
-        if(Minecraft.getMinecraft().thePlayer == null) return;
-        if(!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
-        if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("dynamic")) return;
+        if (Minecraft.getMinecraft().thePlayer == null) return;
+        if (!Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) return;
+        if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
+        if (SBInfo.getInstance().getLocation() == null) return;
+        if (!SBInfo.getInstance().getLocation().equals("dynamic")) return;
 
         long currentTime = System.currentTimeMillis();
 
-        if(currentTime - lastAbilitySend > 1000 && currentTime - lastAbilitySend < 5000) {
-            if(clientWantFly != serverWantFly) {
+        if (currentTime - lastAbilitySend > 1000 && currentTime - lastAbilitySend < 5000) {
+            if (clientWantFly != serverWantFly) {
                 Minecraft.getMinecraft().thePlayer.capabilities.isFlying = serverWantFly;
                 Minecraft.getMinecraft().thePlayer.sendPlayerAbilities();
                 clientWantFly = serverWantFly;
