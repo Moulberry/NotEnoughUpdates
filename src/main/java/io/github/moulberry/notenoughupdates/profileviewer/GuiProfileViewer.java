@@ -1316,13 +1316,11 @@ public class GuiProfileViewer extends GuiScreen {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
                 if(i == selectedPet) {
                     GlStateManager.color(1, 185/255f, 0, 1);
-                    Utils.drawTexturedRect(guiLeft+x, guiTop+y, 20, 20,
-                            0, 20/256f, 0, 20/256f, GL11.GL_NEAREST);
                 } else {
                     GlStateManager.color(1, 1, 1, 1);
-                    Utils.drawTexturedRect(guiLeft+x, guiTop+y, 20, 20,
-                            0, 20/256f, 0, 20/256f, GL11.GL_NEAREST);
                 }
+                Utils.drawTexturedRect(guiLeft+x, guiTop+y, 20, 20,
+                        0, 20/256f, 0, 20/256f, GL11.GL_NEAREST);
 
                 Utils.drawItemStack(stack, guiLeft+(int)x+2, guiTop+(int)y+2);
 

@@ -121,14 +121,11 @@ public class GuiCosmetics extends GuiScreen {
             String equipMsg;
             if(wantToEquipCape != null) {
                 equipMsg = EnumChatFormatting.GREEN + "Equip Cape";
-                if(System.currentTimeMillis() - lastCapeEquip < 20*1000) {
-                    equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip)/1000) + "s";
-                }
             } else {
                 equipMsg = EnumChatFormatting.GREEN + "Unequip";
-                if(System.currentTimeMillis() - lastCapeEquip < 20*1000) {
-                    equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip)/1000) + "s";
-                }
+            }
+            if(System.currentTimeMillis() - lastCapeEquip < 20*1000) {
+                equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip)/1000) + "s";
             }
 
             Utils.drawStringCenteredScaledMaxWidth(equipMsg, Minecraft.getMinecraft().fontRendererObj,

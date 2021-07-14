@@ -1203,7 +1203,6 @@ public class GuiCustomEnchant extends Gui {
 
                             cancelButtonAnimTime = System.currentTimeMillis();
                         }
-                        return true;
                     } else {
                         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) return true;
                         GuiContainer chest = ((GuiContainer)Minecraft.getMinecraft().currentScreen);
@@ -1213,8 +1212,8 @@ public class GuiCustomEnchant extends Gui {
                         ItemStack stack = ((ContainerChest)chest.inventorySlots).getLowerChestInventory().getStackInSlot(click);
                         Minecraft.getMinecraft().getNetHandler().addToSendQueue(new C0EPacketClickWindow(
                                 chest.inventorySlots.windowId, click, 0, 0, stack, transactionID));
-                        return true;
                     }
+                    return true;
                 }
             }
         }

@@ -571,10 +571,8 @@ public class NotEnoughUpdates {
                         builder.append("[").append(modContainer.getName()).append("]")
                                 .append("[").append(modContainer.getSource().getName()).append("]\n");
                     }
-                    builder.append("```");
-                } else {
-                    builder.append("```");
                 }
+                builder.append("```");
             }
             try {
                 StringSelection clipboard = new StringSelection(builder.toString());

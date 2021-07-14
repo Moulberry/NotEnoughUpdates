@@ -383,7 +383,7 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
     public void mouseClicked(MouseEvent e) {
         if (e.getSource() == getForgeTextArea()) {
             try {
-                Desktop.getDesktop().browse(new URI("http://files.minecraftforge.net/maven/net/minecraftforge/forge/index_1.8.9.html"));
+                Desktop.getDesktop().browse(new URI("https://files.minecraftforge.net/maven/net/minecraftforge/forge/index_1.8.9.html"));
             } catch (IOException | URISyntaxException ex) {
                 showErrorPopup(ex);
             }
