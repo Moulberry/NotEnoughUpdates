@@ -584,7 +584,7 @@ public class GuiProfileViewer extends GuiScreen {
 
                 if(mouseX >= x && mouseX <= x+16) {
                     if(mouseY >= y && mouseY <= y+16) {
-                        if(selectedInventory != entry.getKey()) Utils.playPressSound();
+                        if(!selectedInventory.equals(entry.getKey())) Utils.playPressSound();
                         selectedInventory = entry.getKey();
                         return;
                     }

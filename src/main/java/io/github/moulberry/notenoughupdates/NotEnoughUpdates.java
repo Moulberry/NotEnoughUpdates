@@ -524,7 +524,6 @@ public class NotEnoughUpdates {
                     builder.append("[").append(modContainer.getName()).append("]")
                             .append("[").append(modContainer.getSource().getName()).append("]\n");
                 }
-                builder.append("```");
             } else {
                 long memorySize = -1;
                 try {
@@ -572,8 +571,8 @@ public class NotEnoughUpdates {
                                 .append("[").append(modContainer.getSource().getName()).append("]\n");
                     }
                 }
-                builder.append("```");
             }
+            builder.append("```");
             try {
                 StringSelection clipboard = new StringSelection(builder.toString());
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(clipboard, clipboard);
