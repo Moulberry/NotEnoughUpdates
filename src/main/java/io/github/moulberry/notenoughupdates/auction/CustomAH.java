@@ -1292,7 +1292,6 @@ public class CustomAH extends Gui {
 
     private HashSet<String> search(String query, Set<String> dontMatch) {
         query = query.trim();
-        HashSet<String> matches = new HashSet<>();
 
         Set<String> itemMatches = manager.search(query);
         for (String internalname : itemMatches) {
@@ -1338,9 +1337,8 @@ public class CustomAH extends Gui {
             extrasMatchesCurrent.clear();
             first = false;
         }
-        matches.addAll(extrasMatches.keySet());
 
-        return matches;
+        return new HashSet<>(extrasMatches.keySet());
     }
 
     private ExecutorService es = Executors.newSingleThreadExecutor();
@@ -1366,7 +1364,6 @@ public class CustomAH extends Gui {
             scrollAmount = 0;
             try {
                 HashSet<String> auctionIdsNew = new HashSet<>();
-                auctionIdsNew.clear();
                 if (filterMyAuctions) {
                     for (String aucid : manager.auctionManager.getPlayerBids()) {
                         APIManager.Auction auc = manager.auctionManager.getAuctionItems().get(aucid);
@@ -1460,9 +1457,8 @@ public class CustomAH extends Gui {
         }
 
         try {
-            List<String> sortedAuctionIdsNew = new ArrayList<>();
 
-            sortedAuctionIdsNew.addAll(auctionIds);
+            List<String> sortedAuctionIdsNew = new ArrayList<>(auctionIds);
             sortedAuctionIdsNew.sort((o1, o2) -> {
                 APIManager.Auction auc1 = manager.auctionManager.getAuctionItems().get(o1);
                 APIManager.Auction auc2 = manager.auctionManager.getAuctionItems().get(o2);

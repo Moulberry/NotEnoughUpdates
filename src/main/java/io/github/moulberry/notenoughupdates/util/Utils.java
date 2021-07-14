@@ -785,11 +785,11 @@ public class Utils {
         String excess;
         String trimmed = trimToWidth(str, len);
 
-        String colourCodes = "";
+        StringBuilder colourCodes = new StringBuilder();
         Pattern pattern = Pattern.compile("\\u00A7.");
         Matcher matcher = pattern.matcher(trimmed);
         while(matcher.find()) {
-            colourCodes += matcher.group();
+            colourCodes.append(matcher.group());
         }
 
         boolean firstLine = true;

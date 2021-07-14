@@ -431,16 +431,17 @@ public class AuctionSearchOverlay {
                                 }
 
                                 JsonObject essenceCosts = Constants.ESSENCECOSTS;
-                                searchStringExtra = "";
+                                StringBuilder sb = new StringBuilder();
                                 if(essenceCosts != null && essenceCosts.has(str) && selectedStars > 0) {
                                     for(int i=0; i<selectedStars; i++) {
-                                        searchStringExtra += "\u272A";
+                                        sb.append("\u272A");
                                     }
                                     if(selectedStars < 5 && !atLeast) {
-                                        searchStringExtra += " ";
-                                        searchStringExtra += stack.getItem().getItemStackDisplayName(stack).substring(0, 1);
+                                        sb.append(" ");
+                                        sb.append(stack.getItem().getItemStackDisplayName(stack).charAt(0));
                                     }
                                 }
+                                searchStringExtra = sb.toString();
 
                                 close();
                                 return;

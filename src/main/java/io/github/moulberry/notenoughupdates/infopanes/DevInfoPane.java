@@ -40,7 +40,7 @@ public class DevInfoPane extends TextInfoPane {
     }
 
     private String getText() {
-        String text = "";
+        StringBuilder text = new StringBuilder();
 
         /*for(Map.Entry<String, JsonObject> item : manager.getItemInformation().entrySet()) {
             if(!item.getValue().has("infoType") || item.getValue().get("infoType").getAsString().isEmpty()) {
@@ -63,7 +63,7 @@ public class DevInfoPane extends TextInfoPane {
         for(String internalname : manager.auctionManager.getItemAuctionInfoKeySet()) {
             if(internalname.contains("-")) continue;
             if(!manager.getItemInformation().containsKey(internalname)) {
-                text += internalname + "\n";
+                text.append(internalname).append("\n");
             }
         }
 
@@ -79,7 +79,7 @@ public class DevInfoPane extends TextInfoPane {
                 text += entry.getKey() + "\n";
             }
         }*/
-        return text;
+        return text.toString();
     }
 
     AtomicBoolean running = new AtomicBoolean(false);

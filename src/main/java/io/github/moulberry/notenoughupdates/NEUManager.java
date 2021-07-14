@@ -42,8 +42,8 @@ public class NEUManager {
 
     private final TreeMap<String, JsonObject> itemMap = new TreeMap<>();
 
-    private TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
-    private TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
+    private final TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
+    private final TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
 
     public final KeyBinding keybindGive = new KeyBinding("Add item to inventory (Creative-only)", Keyboard.KEY_L, "NotEnoughUpdates");
     public final KeyBinding keybindFavourite = new KeyBinding("Set item as favourite", Keyboard.KEY_F, "NotEnoughUpdates");
@@ -68,7 +68,7 @@ public class NEUManager {
 
     private static final String GIT_COMMITS_URL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
 
-    private HashMap<String, Set<String>> usagesMap = new HashMap<>();
+    private final HashMap<String, Set<String>> usagesMap = new HashMap<>();
 
     public String latestRepoCommit = null;
 

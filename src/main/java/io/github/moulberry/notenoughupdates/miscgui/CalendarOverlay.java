@@ -627,10 +627,7 @@ public class CalendarOverlay {
                     if (id != null) {
                         String[] split = id.split(":");
                         if(split.length > 1 && split[0].equals("jacob_farming")) {
-                            jfFavouriteSelect = new ArrayList<>();
-                            for(int i=1; i<split.length; i++) {
-                                jfFavouriteSelect.add(split[i]);
-                            }
+                            jfFavouriteSelect = new ArrayList<>(Arrays.asList(split).subList(1, split.length));
                             jfFavouriteSelectIndex = 0;
                             jfFavouriteSelectX = mouseX;
                             jfFavouriteSelectY = mouseY;
