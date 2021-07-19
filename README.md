@@ -16,7 +16,7 @@ This is a fork that I will try to keep updated with the original NEU repo while 
 1. Todo list
 	1. Fixed fetchur display
 	2. Fixed godpot timer
-2. PV's wardrobe view not showing second page bottom row (not fully fixed could be better TODO)
+2. PV's wardrobe view not showing second page bottom row (not fully fixed could be better by dividing on every 4 and drawing per column instead of row but right now its always a full page)
 
 
 **Currently the fixed bugs are:**
