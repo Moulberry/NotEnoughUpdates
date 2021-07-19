@@ -15,7 +15,7 @@ public class StorageGUI {
     @Expose
     @ConfigOption(
             name = "Enable Storage GUI",
-            desc = "Show a custom storage overlay when accessing /storage." +
+            desc = "Show a custom storage overlay when accessing /storage. " +
                     "Makes switching between pages much easier and also allows for searching through all storages"
     )
     @ConfigEditorBoolean
@@ -62,7 +62,7 @@ public class StorageGUI {
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 1)
-    public boolean backpackPreview = false;
+    public boolean backpackPreview = true;
 
     @Expose
     @ConfigOption(
@@ -72,6 +72,36 @@ public class StorageGUI {
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 1)
     public boolean masonryMode = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Fancy Glass Panes",
+            desc = "Replace the glass pane textures in your storage containers with a fancy connected texture"
+    )
+    @ConfigEditorDropdown(
+            values = {"On", "Locked", "Off"}
+    )
+    @ConfigAccordionId(id = 1)
+    public int fancyPanes = 0;
+
+    @Expose
+    @ConfigOption(
+            name = "Search Bar Autofocus",
+            desc = "Automatically focus the search bar when pressing keys"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 1)
+    public boolean searchBarAutofocus = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Selected Storage Colour",
+            desc = "Change the colour used to draw the selected backpack border"
+    )
+    @ConfigEditorColour
+    @ConfigAccordionId(id = 1)
+    public String selectedStorageColour = "0:255:255:223:0";
+
 
     @ConfigOption(
             name = "Inventory Backpacks",
@@ -90,6 +120,14 @@ public class StorageGUI {
     public boolean showInvBackpack = false;
 
     //public boolean showInvBackpack = false;
+    @Expose
+    @ConfigOption(
+            name = "Scroll to Backpack",
+            desc = "Allow scrolling to the backpack using the mouse wheel. If you have the hotkey enabled (default: KEY_GRAVE), you can still use that"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 0)
+    public boolean scrollToBackpack = false;
 
     @Expose
     @ConfigOption(

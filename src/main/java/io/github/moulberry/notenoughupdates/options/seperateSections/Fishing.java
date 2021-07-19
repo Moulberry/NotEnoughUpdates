@@ -22,22 +22,21 @@ public class Fishing {
 
     @Expose
     @ConfigOption(
-            name = "Incoming Fish Warning",
-            desc = "Display a yellow '!' when a fish is incoming and a red '!' when you need to pull the fish up. " +
-                    "The red '!' also takes your ping into account"
+            name = "Fish Warning (R)",
+            desc = "Display a red '!' when you need to pull the fish up. The warning takes your ping into account"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 3)
+    public boolean incomingFishWarningR = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Fish Warning (Y)",
+            desc = "Display a yellow '!' when a fish is approaching your bobber"
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 3)
     public boolean incomingFishWarning = true;
-
-    @Expose
-    @ConfigOption(
-            name = "Auto Fish",
-            desc = "shitty auto fish"
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 3)
-    public boolean autoFish = true;
 
     @Expose
     @ConfigOption(
