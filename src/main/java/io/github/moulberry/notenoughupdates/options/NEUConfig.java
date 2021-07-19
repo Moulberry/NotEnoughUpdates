@@ -151,10 +151,10 @@ public class NEUConfig extends Config {
     public SkillOverlays skillOverlays = new SkillOverlays();
 
     @Expose
-    @Category(
+    /*@Category(
             name = "Misc Overlays",
             desc = "Misc Overlays"
-    )
+    )*/
     public MiscOverlays miscOverlays = new MiscOverlays();
 
     @Expose

@@ -320,7 +320,7 @@ public class NEUEventListener {
 
                     if(neu.config.notifications.doRamNotif) {
                         long maxMemoryMB = Runtime.getRuntime().maxMemory()/1024L/1024L;
-                        if(maxMemoryMB > 4100 || true) {
+                        if(maxMemoryMB > 4100) {
                             notificationDisplayMillis = System.currentTimeMillis();
                             notificationLines = new ArrayList<>();
                             notificationLines.add(EnumChatFormatting.GRAY+"Too much memory allocated!");
@@ -447,21 +447,28 @@ public class NEUEventListener {
                 Minecraft.getMinecraft().currentScreen instanceof GuiContainer && neu.overlay.isUsingMobsFilter()) {
             event.setCanceled(true);
         }
+        if(event.type != null && event.type.equals(RenderGameOverlayEvent.ElementType.PLAYER_LIST)) {
+            GlStateManager.enableDepth();
+        }
     }
 
     @SubscribeEvent
     public void onRenderGameOverlayPost(RenderGameOverlayEvent.Post event) {
-        if(neu.hasSkyblockScoreboard() && event.type == RenderGameOverlayEvent.ElementType.ALL) {
+        if(neu.hasSkyblockScoreboard() && event.type.equals(RenderGameOverlayEvent.ElementType.ALL)) {
             DungeonWin.render(event.partialTicks);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0, 0, -200);
             for(TextOverlay overlay : OverlayManager.textOverlays) {
                 if(OverlayManager.dontRenderOverlay != null && OverlayManager.dontRenderOverlay.isAssignableFrom(overlay.getClass())) {
                     continue;
                 }
+                GlStateManager.translate(0, 0, -1);
+                GlStateManager.enableDepth();
                 overlay.render();
             }
+            GlStateManager.popMatrix();
             OverlayManager.dontRenderOverlay = null;
         }
-
         if(Keyboard.isKeyDown(Keyboard.KEY_X)) {
             notificationDisplayMillis = 0;
         }

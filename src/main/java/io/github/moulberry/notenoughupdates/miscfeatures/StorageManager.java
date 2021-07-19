@@ -150,6 +150,7 @@ public class StorageManager {
         public ItemStack backpackDisplayStack;
         public String customTitle;
         public int rows = -1;
+        public boolean[] shouldDarkenIfNotSelected = new boolean[45];
 
         public transient boolean matchesSearch;
         public transient int searchedId;
@@ -185,7 +186,7 @@ public class StorageManager {
 
     private boolean shouldRenderStorageOverlayCached = false;
 
-    private static final Pattern WINDOW_REGEX = Pattern.compile(".+ Backpack \\((\\d+)/(\\d+)\\)");
+    private static final Pattern WINDOW_REGEX = Pattern.compile(".+ Backpack (?:\u2726 )?\\((\\d+)/(\\d+)\\)");
     private static final Pattern ECHEST_WINDOW_REGEX = Pattern.compile("Ender Chest \\((\\d+)/(\\d+)\\)");
 
     public void loadConfig(File file) {
@@ -313,7 +314,7 @@ public class StorageManager {
 
     public void sendToPage(int page) {
         if(desiredStoragePage != getCurrentPageId() &&
-                System.currentTimeMillis() - storageOpenSwitchMillis < 1000) return;
+                System.currentTimeMillis() - storageOpenSwitchMillis < 100) return;
         if(getCurrentPageId() == page) return;
 
         if(page == 0) {
@@ -325,6 +326,44 @@ public class StorageManager {
                 sendMouseClick(getCurrentWindowId(), 27+page-MAX_ENDER_CHEST_PAGES);
             }
         } else {
+            boolean onEnderchest = page < MAX_ENDER_CHEST_PAGES && currentStoragePage < MAX_ENDER_CHEST_PAGES;
+            boolean onStorage = page >= MAX_ENDER_CHEST_PAGES && currentStoragePage >= MAX_ENDER_CHEST_PAGES;
+            if(currentStoragePage >= 0 && (onEnderchest || (onStorage))) {
+                int currentPageDisplay = getDisplayIdForStorageId(currentStoragePage);
+                int desiredPageDisplay = getDisplayIdForStorageId(page);
+
+                if(onEnderchest && desiredPageDisplay > currentPageDisplay) {
+                    boolean isLastPage = true;
+                    for(int pageN=page+1; pageN<MAX_ENDER_CHEST_PAGES; pageN++) {
+                        if(getDisplayIdForStorageId(pageN) >= 0) {
+                            isLastPage = false;
+                            break;
+                        }
+                    }
+                    if(isLastPage) {
+                        sendMouseClick(getCurrentWindowId(), 8);
+                        return;
+                    }
+                }
+
+                if(onStorage && page == MAX_ENDER_CHEST_PAGES) {
+                    sendMouseClick(getCurrentWindowId(), 5);
+                    return;
+                } else if(onStorage && desiredPageDisplay == storageConfig.displayToStorageIdMap.size()-1) {
+                    sendMouseClick(getCurrentWindowId(), 8);
+                    return;
+                } else {
+                    int delta = desiredPageDisplay - currentPageDisplay;
+                    if(delta == -1) {
+                        sendMouseClick(getCurrentWindowId(), 6);
+                        return;
+                    } else if(delta == 1) {
+                        sendMouseClick(getCurrentWindowId(), 7);
+                        return;
+                    }
+                }
+            }
+
             storageOpenSwitchMillis = System.currentTimeMillis();
             desiredStoragePage = page;
 

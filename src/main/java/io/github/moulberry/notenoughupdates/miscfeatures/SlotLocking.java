@@ -512,7 +512,9 @@ public class SlotLocking {
                         y2 -= vec.y;
                     }
 
+                    GlStateManager.translate(0, 0, 200);
                     drawLinkArrow((int)x1, (int)y1, (int)x2, (int)y2);
+                    GlStateManager.translate(0, 0, -200);
                 }
             } else if(NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotBinding && slot.getSlotIndex() < 8 && pairingSlot != null && lockKeyHeld) {
                 if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) {

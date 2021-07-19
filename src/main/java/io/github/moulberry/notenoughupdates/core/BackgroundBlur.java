@@ -121,6 +121,7 @@ public class BackgroundBlur {
         if(event.type == RenderGameOverlayEvent.ElementType.ALL) {
             processBlurs();
         }
+        Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
     }
 
     @SubscribeEvent
@@ -215,9 +216,8 @@ public class BackgroundBlur {
             output.blurShaderVert.loadShader(0);
             GlStateManager.enableDepth();
             GL11.glPopMatrix();
-
-            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
         }
+        Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(false);
     }
 
     public static void renderBlurredBackground(float blurStrength, int screenWidth, int screenHeight,

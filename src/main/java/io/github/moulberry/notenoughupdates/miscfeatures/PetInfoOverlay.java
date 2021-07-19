@@ -115,6 +115,7 @@ public class PetInfoOverlay extends TextOverlay {
     private static LinkedList<Float> xpGainQueue = new LinkedList<>();
     private static float xpGainHourLast = -1;
     private static float xpGainHour = -1;
+    private static int pauseCountdown = 0;
 
     private static float xpGainHourSecondPet = -1;
 
@@ -369,7 +370,15 @@ public class PetInfoOverlay extends TextOverlay {
         if(xpGain < 0) xpGain = 0;
         String xpGainString = EnumChatFormatting.AQUA + "XP/h: " +
                 EnumChatFormatting.YELLOW + roundFloat(xpGain);
-        if(xpGain > 0 && xpGainHour == xpGainHourLast) xpGainString += EnumChatFormatting.RED + " (PAUSED)";
+        if(!secondPet && xpGain > 0 && levelXp != levelXpLast) {
+            if(pauseCountdown <= 0) {
+                xpGainString += EnumChatFormatting.RED + " (PAUSED)";
+            } else {
+                pauseCountdown--;
+            }
+        } else {
+            pauseCountdown = 60;
+        }
 
         String totalXpString = EnumChatFormatting.AQUA + "Total XP: " + EnumChatFormatting.YELLOW + roundFloat(currentPet.petLevel.totalXp);
 
@@ -609,7 +618,7 @@ public class PetInfoOverlay extends TextOverlay {
 
                         if(petItem) {
                             ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(entry.getValue());
-                            itemMap.put(stack.getDisplayName(), entry.getKey());
+                            itemMap.put(stack.getDisplayName().replace("\u00a7f\u00a7f", ""), entry.getKey());
                         }
                     }
                 }

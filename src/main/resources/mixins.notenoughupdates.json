@@ -9,7 +9,6 @@
     "MixinEntityPlayer",
     "MixinEntityPlayerSP",
     "MixinEntityRenderer",
-    "MixinFontRenderer",
     "MixinGuiChest",
     "MixinGuiContainer",
     "MixinGuiIngame",
