@@ -37,7 +37,8 @@ public class XPInformation {
 
     private static Splitter SPACE_SPLITTER = Splitter.on("  ").omitEmptyStrings().trimResults();
     private static Pattern SKILL_PATTERN = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d+(?:,\\d+)*(?:\\.\\d+)?)/(\\d+(?:,\\d+)*(?:\\.\\d+)?)\\)");
-    private static Pattern SKILL_PATTERN_ALT = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d\\d?(?:\\.\\d\\d?)?)%\\)");
+    private static Pattern SKILL_PATTERN_MULTIPLIER = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d+(?:,\\d+)*(?:\\.\\d+)?)/(\\d+(?:k|m|b))\\)");
+    private static Pattern SKILL_PATTERN_PERCENTAGE = Pattern.compile("\\+(\\d+(?:,\\d+)*(?:\\.\\d+)?) (.+) \\((\\d\\d?(?:\\.\\d\\d?)?)%\\)");
 
     public HashMap<String, SkillInfo> getSkillInfoMap() {
         return skillInfoMap;
@@ -47,13 +48,22 @@ public class XPInformation {
         return skillInfoMap.get(skillName.toLowerCase());
     }
 
+    private String lastActionBar = null;
+
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onChatReceived(ClientChatReceivedEvent event) {
         if(event.type == 2) {
             JsonObject leveling = Constants.LEVELING;
             if(leveling == null)  return;
 
-            List<String> components = SPACE_SPLITTER.splitToList(StringUtils.cleanColour(event.message.getUnformattedText()));
+            String actionBar = StringUtils.cleanColour(event.message.getUnformattedText());
+
+            if(lastActionBar != null && lastActionBar.equalsIgnoreCase(actionBar)) {
+                return;
+            }
+            lastActionBar = actionBar;
+
+            List<String> components = SPACE_SPLITTER.splitToList(actionBar);
 
             for(String component : components) {
                 Matcher matcher = SKILL_PATTERN.matcher(component);
@@ -83,14 +93,57 @@ public class XPInformation {
 
                     skillInfoMap.put(skillS.toLowerCase(), skillInfo);
                     return;
-                }
-                matcher = SKILL_PATTERN_ALT.matcher(component);
-                if(matcher.matches()) {
-                    String skillS = matcher.group(2);
-                    String xpPercentageS = matcher.group(3).replace(",","");
+                } else {
+                    matcher = SKILL_PATTERN_PERCENTAGE.matcher(component);
+                    if(matcher.matches()) {
+                        String skillS = matcher.group(2);
+                        String xpPercentageS = matcher.group(3).replace(",","");
 
-                    float xpPercentage = Float.parseFloat(xpPercentageS);
-                    updateWithPercentage.put(skillS.toLowerCase(), xpPercentage);
+                        float xpPercentage = Float.parseFloat(xpPercentageS);
+                        updateWithPercentage.put(skillS.toLowerCase(), xpPercentage);
+                    } else {
+                        matcher = SKILL_PATTERN_MULTIPLIER.matcher(component);
+
+                        if(matcher.matches()) {
+                            String skillS = matcher.group(2);
+                            String currentXpS = matcher.group(3).replace(",","");
+                            String maxXpS = matcher.group(4).replace(",","");
+
+                            float maxMult = 1;
+                            if(maxXpS.endsWith("k")) {
+                                maxMult = 1000;
+                                maxXpS = maxXpS.substring(0, maxXpS.length()-1);
+                            } else if(maxXpS.endsWith("m")) {
+                                maxMult = 1000000;
+                                maxXpS = maxXpS.substring(0, maxXpS.length()-1);
+                            } else if(maxXpS.endsWith("b")) {
+                                maxMult = 1000000000;
+                                maxXpS = maxXpS.substring(0, maxXpS.length()-1);
+                            }
+
+                            float currentXp = Float.parseFloat(currentXpS);
+                            float maxXp = Float.parseFloat(maxXpS) * maxMult;
+
+                            SkillInfo skillInfo = new SkillInfo();
+                            skillInfo.currentXp = currentXp;
+                            skillInfo.currentXpMax = maxXp;
+                            skillInfo.totalXp = currentXp;
+
+                            JsonArray levelingArray = leveling.getAsJsonArray("leveling_xp");
+                            for(int i=0; i<levelingArray.size(); i++) {
+                                float cap = levelingArray.get(i).getAsFloat();
+                                if(maxXp > 0 && maxXp <= cap) {
+                                    break;
+                                }
+
+                                skillInfo.totalXp += cap;
+                                skillInfo.level++;
+                            }
+
+                            skillInfoMap.put(skillS.toLowerCase(), skillInfo);
+                            return;
+                        }
+                    }
                 }
             }
         }

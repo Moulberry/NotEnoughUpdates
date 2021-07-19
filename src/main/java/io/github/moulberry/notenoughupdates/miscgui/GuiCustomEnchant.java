@@ -199,9 +199,12 @@ public class GuiCustomEnchant extends Gui {
     }
 
     public boolean shouldOverride(String containerName) {
+        shouldOverrideFast = false;
+        if(true) return shouldOverrideFast;
+
         shouldOverrideFast = containerName != null &&
                 NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
-                containerName.equalsIgnoreCase("Enchant Item") && !Keyboard.isKeyDown(Keyboard.KEY_K);
+                containerName.equalsIgnoreCase("Enchant Item");
         if(!shouldOverrideFast) {
             currentState = EnchantState.NO_ITEM;
             applicable.clear();

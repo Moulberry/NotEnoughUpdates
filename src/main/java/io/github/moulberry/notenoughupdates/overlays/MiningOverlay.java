@@ -36,7 +36,7 @@ public class MiningOverlay extends TextOverlay {
         super(position, dummyStrings, styleSupplier);
     }
 
-    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+(?: |$)");
     private static Map<String, Integer> commissionMaxes = new HashMap<>();
     public static Map<String, Float> commissionProgress = new LinkedHashMap<>();
 

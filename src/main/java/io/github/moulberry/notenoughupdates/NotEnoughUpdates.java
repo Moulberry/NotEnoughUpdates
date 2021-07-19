@@ -6,11 +6,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.authlib.Agent;
+import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
+import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.collectionlog.GuiCollectionLog;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
+import io.github.moulberry.notenoughupdates.core.config.GuiPositionEditor;
 import io.github.moulberry.notenoughupdates.core.util.MiscUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.cosmetics.GuiCosmetics;
@@ -62,6 +67,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClients;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
@@ -69,6 +76,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -711,9 +719,10 @@ public class NotEnoughUpdates {
 
     private ScheduledExecutorService devES = Executors.newSingleThreadScheduledExecutor();
     private static final String[] devFailStrings = {"No.", "I said no.", "You aren't allowed to use this.",
-            "Are you sure you want to use this? Type 'Yes' in chat.", "Lmao you thought", "Ok please stop",
-            "What do you want from me?", "This command almost certainly does nothing useful for you",
-            "Ok, this is the last message, after this it will repeat", "No.", "Dammit. I thought that would work. Uhh...",
+            "Are you sure you want to use this? Type 'Yes' in chat.", "Are you sure you want to use this? Type 'Yes' in chat.",
+            "Lmao you thought", "Ok please stop", "What do you want from me?",
+            "This command almost certainly does nothing useful for you",
+            "Ok, this is the last message, after this it will repeat", "No.", "I said no.", "Dammit. I thought that would work. Uhh...",
             "\u00a7dFrom \u00a7c[ADMIN] Minikloon\u00a77: If you use that command again, I'll have to ban you", "",
             "Ok, this is actually the last message, use the command again and you'll crash I promise"};
     private int devFailIndex = 0;
@@ -726,7 +735,7 @@ public class NotEnoughUpdates {
                     throw new Error("L") {
                         @Override
                         public void printStackTrace() {
-                            throw new Error("Double L");
+                            throw new Error("L");
                         }
                     };
                 }
@@ -750,9 +759,15 @@ public class NotEnoughUpdates {
                 DupePOC.doDupe(args[0]);
                 return;
             }*/
+            if(args.length == 1 && args[0].equalsIgnoreCase("positiontest")) {
+                openGui = new GuiPositionEditor();
+                return;
+            }
+
             if(args.length == 2 && args[0].equalsIgnoreCase("pt")) {
                 EnumParticleTypes t = EnumParticleTypes.valueOf(args[1]);
                 FishingHelper.type = t;
+                return;
             }
             if(args.length == 1 && args[0].equalsIgnoreCase("dev")) {
                 NotEnoughUpdates.INSTANCE.config.hidden.dev = true;
@@ -1106,12 +1121,7 @@ public class NotEnoughUpdates {
      */
     @EventHandler
     public void preinit(FMLPreInitializationEvent event) {
-        //if(!Minecraft.getMinecraft().getSession().getUsername().equalsIgnoreCase("moulberry")) throw new RuntimeException("moulbeBad");
-
         INSTANCE = this;
-
-        String uuid = Minecraft.getMinecraft().getSession().getPlayerID();
-        if(uuid.equalsIgnoreCase("ea9b1c5a-bf68-4fa2-9492-2d4e69693228")) throw new RuntimeException("Ding-dong, racism is wrong.");
 
         neuDir = new File(event.getModConfigurationDirectory(), "notenoughupdates");
         neuDir.mkdirs();

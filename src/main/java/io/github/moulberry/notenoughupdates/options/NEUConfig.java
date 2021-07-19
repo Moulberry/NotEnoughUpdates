@@ -153,10 +153,10 @@ public class NEUConfig extends Config {
     public SkillOverlays skillOverlays = new SkillOverlays();
 
     @Expose
-    @Category(
+    /*@Category(
             name = "Misc Overlays",
             desc = "Misc Overlays"
-    )
+    )*/
     public MiscOverlays miscOverlays = new MiscOverlays();
 
     @Expose
@@ -470,7 +470,7 @@ public class NEUConfig extends Config {
                 desc = "Show QuickCommands\u2122 in the NEU toolbar"
         )
         @ConfigEditorBoolean
-        public boolean quickCommands = true;
+        public boolean quickCommands = false;
 
         @Expose
         @ConfigOption(
@@ -1204,17 +1204,17 @@ public class NEUConfig extends Config {
                 desc = ""
         )
         @ConfigEditorAccordion(id = 1)
-        public boolean storageOverlayAccordion = false;
+        public boolean storageOverlayAccordion = true;
 
         @Expose
         @ConfigOption(
                 name = "Enable Storage GUI",
-                desc = "Show a custom storage overlay when accessing /storage." +
+                desc = "Show a custom storage overlay when accessing /storage. " +
                         "Makes switching between pages much easier and also allows for searching through all storages"
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1)
-        public boolean enableStorageGUI = false;
+        public boolean enableStorageGUI = true;
 
         @Expose
         @ConfigOption(
@@ -1256,7 +1256,7 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1)
-        public boolean backpackPreview = false;
+        public boolean backpackPreview = true;
 
         @Expose
         @ConfigOption(
@@ -1266,6 +1266,35 @@ public class NEUConfig extends Config {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1)
         public boolean masonryMode = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Fancy Glass Panes",
+                desc = "Replace the glass pane textures in your storage containers with a fancy connected texture"
+        )
+        @ConfigEditorDropdown(
+                values = {"On", "Locked", "Off"}
+        )
+        @ConfigAccordionId(id = 1)
+        public int fancyPanes = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Search Bar Autofocus",
+                desc = "Automatically focus the search bar when pressing keys"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean searchBarAutofocus = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Selected Storage Colour",
+                desc = "Change the colour used to draw the selected backpack border"
+        )
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 1)
+        public String selectedStorageColour = "0:255:255:223:0";
 
         @ConfigOption(
                 name = "Inventory Backpacks",
@@ -1283,7 +1312,14 @@ public class NEUConfig extends Config {
         @ConfigAccordionId(id = 0)
         public boolean showInvBackpack = false;
 
-        //public boolean showInvBackpack = false;
+        @Expose
+        @ConfigOption(
+                name = "Scroll to Backpack",
+                desc = "Allow scrolling to the backpack using the mouse wheel. If you have the hotkey enabled (default: KEY_GRAVE), you can still use that"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
+        public boolean scrollToBackpack = false;
 
         @Expose
         @ConfigOption(
@@ -1672,9 +1708,17 @@ public class NEUConfig extends Config {
 
         @Expose
         @ConfigOption(
-                name = "Incoming Fish Warning",
-                desc = "Display a yellow '!' when a fish is incoming and a red '!' when you need to pull the fish up. " +
-                        "The red '!' also takes your ping into account"
+                name = "Fish Warning (R)",
+                desc = "Display a red '!' when you need to pull the fish up. The warning takes your ping into account"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 3)
+        public boolean incomingFishWarningR = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Fish Warning (Y)",
+                desc = "Display a yellow '!' when a fish is approaching your bobber"
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 3)

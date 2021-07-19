@@ -2,14 +2,13 @@ package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.common.collect.Lists;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
-import io.github.moulberry.notenoughupdates.core.GlScissorStack;
-import io.github.moulberry.notenoughupdates.core.GuiElement;
-import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
+import io.github.moulberry.notenoughupdates.core.*;
 import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
+import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
+import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -19,6 +18,10 @@ import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -31,14 +34,14 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Vector2f;
+import org.lwjgl.util.vector.Vector4f;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class StorageOverlay extends GuiElement {
 
@@ -53,13 +56,19 @@ public class StorageOverlay extends GuiElement {
     public static final ResourceLocation STORAGE_PREVIEW_TEXTURES[] = new ResourceLocation[4];
     private static final ResourceLocation STORAGE_TEXTURES[] = new ResourceLocation[4];
     private static final ResourceLocation STORAGE_ICONS_TEXTURE = new ResourceLocation("notenoughupdates:storage_gui/storage_icons.png");
+    private static final ResourceLocation STORAGE_PANE_CTM_TEXTURE = new ResourceLocation("notenoughupdates:storage_gui/storage_gui_pane_ctm.png");
     private static final ResourceLocation[] LOAD_CIRCLE_SEQ = new ResourceLocation[11];
+    private static final ResourceLocation[] NOT_RICKROLL_SEQ = new ResourceLocation[19];
     static {
         for(int i=0; i<STORAGE_TEXTURES.length; i++) {
             STORAGE_TEXTURES[i] = new ResourceLocation("notenoughupdates:storage_gui/storage_gui_"+i+".png");
         }
         for(int i=0; i<STORAGE_PREVIEW_TEXTURES.length; i++) {
             STORAGE_PREVIEW_TEXTURES[i] = new ResourceLocation("notenoughupdates:storage_gui/storage_preview_"+i+".png");
+        }
+
+        for(int i=0; i<NOT_RICKROLL_SEQ.length; i++) {
+            NOT_RICKROLL_SEQ[i] = new ResourceLocation("notenoughupdates:storage_gui/we_do_a_little_rolling/"+i+".jpg");
         }
 
         LOAD_CIRCLE_SEQ[0] = new ResourceLocation("notenoughupdates:loading_circle_seq/1.png");
@@ -79,20 +88,29 @@ public class StorageOverlay extends GuiElement {
 
     private GuiElementTextField searchBar = new GuiElementTextField("", 88, 10,
                     GuiElementTextField.SCALE_TEXT | GuiElementTextField.DISABLE_BG);
+    private GuiElementTextField renameStorageField = new GuiElementTextField("", 100, 13,
+            GuiElementTextField.COLOUR);
+
+    private int editingNameId = -1;
 
     private int guiLeft;
     private int guiTop;
 
     private int loadCircleIndex = 0;
+    private int rollIndex = 0;
     private int loadCircleRotation = 0;
 
     private long millisAccumIndex = 0;
+    private long millisAccumRoll = 0;
     private long millisAccumRotation = 0;
 
     private long lastMillis = 0;
 
     private int scrollVelocity = 0;
     private long lastScroll = 0;
+
+    private int[][] isPaneCaches = new int[40][];
+    private int[][] ctmIndexCaches = new int[40][];
 
     private int desiredHeightSwitch = -1;
     private int desiredHeightMX = -1;
@@ -106,10 +124,19 @@ public class StorageOverlay extends GuiElement {
 
     private int getMaximumScroll() {
         synchronized(StorageManager.getInstance().storageConfig.displayToStorageIdMap) {
-            int lastDisplayId = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
-            int coords = (int)Math.ceil(lastDisplayId/3f)*3+3;
 
-            return getPageCoords(coords).y+scroll.getValue()-getStorageViewSize()-14;
+            int maxH = 0;
+
+            for(int i=0; i<3; i++) {
+                int lastDisplayId = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
+                int coords = (int)Math.ceil(lastDisplayId/3f)*3+1+i;
+
+                int h = getPageCoords(coords).y+scroll.getValue()-getStorageViewSize()-14;
+
+                if(h > maxH) maxH = h;
+            }
+
+            return maxH;
         }
     }
 
@@ -161,6 +188,8 @@ public class StorageOverlay extends GuiElement {
     @Override
     public void render() {
         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) return;
+        GuiChest guiChest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+        ContainerChest containerChest = (ContainerChest) guiChest.inventorySlots;
 
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         int width = scaledResolution.getScaledWidth();
@@ -196,10 +225,15 @@ public class StorageOverlay extends GuiElement {
             millisAccumRotation += deltaTime;
             loadCircleRotation += millisAccumRotation / (1000/107);
             millisAccumRotation %= (1000/107);
+
+            millisAccumRoll += deltaTime;
+            rollIndex += millisAccumRoll/100;
+            millisAccumRoll %= 100;
         }
 
         lastMillis = currentTime;
         loadCircleIndex %= LOAD_CIRCLE_SEQ.length;
+        rollIndex %= NOT_RICKROLL_SEQ.length*2;
         loadCircleRotation %= 360;
 
         Color loadCircleColour = Color.getHSBColor(loadCircleRotation/360f, 0.3f, 0.9f);
@@ -283,9 +317,14 @@ public class StorageOverlay extends GuiElement {
                 GlStateManager.enableDepth();
                 GlStateManager.translate(0, startY, 107.0001f);
                 framebuffer.bindFramebufferTexture();
+
                 GlStateManager.color(1, 1, 1, 1);
 
+                GlStateManager.enableAlpha();
+                GlStateManager.alphaFunc(GL11.GL_GREATER, 0F);
                 Utils.drawTexturedRect(0, 0, w, h, 0, 1, 1, 0, GL11.GL_NEAREST);
+                GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
+
                 renderEnchOverlay(enchantGlintRenderLocations);
 
                 GlStateManager.translate(0, -startY, -107.0001f);
@@ -338,22 +377,190 @@ public class StorageOverlay extends GuiElement {
                 if(page != null && page.rows > 0) {
                     int rows = page.rows;
 
-                    for(int k=0; k<rows*9; k++) {
-                        ItemStack stack = page.items[k];
+                    isPaneCaches[storageId] = new int[page.rows*9];
+                    ctmIndexCaches[storageId] = new int[page.rows*9];
+                    int[] isPaneCache = isPaneCaches[storageId];
+                    int[] ctmIndexCache = ctmIndexCaches[storageId];
 
-                        if(stack == null) continue;
+                    for(int k=0; k<rows*9; k++) {
+                        ItemStack stack;
+
+                        if(storageId == currentPage) {
+                            stack = containerChest.getSlot(k+9).getStack();
+                        } else {
+                            stack = page.items[k];
+                        }
 
                         int itemX = storageX+1+18*(k%9);
                         int itemY = storageY+1+18*(k/9);
 
+                        //Render fancy glass
+                        if(stack != null) {
+                            int paneType = getPaneType(stack, k, isPaneCache);
+                            if(paneType > 0) {
+                                GlStateManager.disableAlpha();
+                                Gui.drawRect(itemX-1, itemY-1, itemX+17, itemY+17, 0x01000000);
+                                GlStateManager.enableAlpha();
+
+                                int ctmIndex = getCTMIndex(page, k, isPaneCache, ctmIndexCache);
+                                int startCTMX = (ctmIndex%12)*19;
+                                int startCTMY = (ctmIndex/12)*19;
+
+                                ctmIndexCache[k] = ctmIndex;
+
+                                if(paneType != 17) {
+                                    int rgb = getRGBFromPane(paneType-1);
+                                    {
+                                        int a = (rgb >> 24) & 0xFF;
+                                        int r = (rgb >> 16) & 0xFF;
+                                        int g = (rgb >> 8) & 0xFF;
+                                        int b = rgb & 0xFF;
+                                        Minecraft.getMinecraft().getTextureManager().bindTexture(STORAGE_PANE_CTM_TEXTURE);
+                                        GlStateManager.color(r/255f, g/255f, b/255f, a/255f);
+                                        Utils.drawTexturedRect(itemX-1, itemY-1, 18, 18,
+                                                startCTMX/227f, (startCTMX+18)/227f, startCTMY/75f, (startCTMY+18)/75f, GL11.GL_NEAREST);
+                                    }
+
+                                    /*int[] colours = new int[9];
+
+                                    for(int xi=-1; xi<=1; xi++) {
+                                        for(int yi=-1; yi<=1; yi++) {
+                                            List<Integer> indexes = new ArrayList<>();
+                                            List<Integer> coloursList = new ArrayList<>();
+                                            coloursList.add(rgb);
+
+                                            if(xi != 0) {
+                                                indexes.add(k+xi);
+                                            }
+                                            if(yi != 0) {
+                                                indexes.add(k+yi*9);
+                                            }
+                                            if(xi != 0 && yi != 0) {
+                                                indexes.add(k+yi*9+xi);
+                                            }
+                                            for(int index : indexes) {
+                                                if(index >= 0 && index < rows*9) {
+                                                    int paneTypeI = getPaneType(page.items[index], index, isPaneCache);
+                                                    if(shouldConnect(paneType, paneTypeI)) {
+                                                        coloursList.add(getRGBFromPane(paneTypeI-1));
+                                                    }
+                                                }
+                                            }
+                                            Vector4f cv = new Vector4f();
+                                            for(int colour : coloursList) {
+                                                float a = (colour >> 24) & 0xFF;
+                                                float r = (colour >> 16) & 0xFF;
+                                                float g = (colour >> 8) & 0xFF;
+                                                float b = colour & 0xFF;
+                                                cv.x += a/coloursList.size();
+                                                cv.y += r/coloursList.size();
+                                                cv.z += g/coloursList.size();
+                                                cv.w += b/coloursList.size();
+                                            }
+                                            int finalCol = (((int)cv.x) << 24) | (((int)cv.y) << 16) | (((int)cv.z) << 8) | ((int)cv.w);
+                                            colours[(xi+1)+(yi+1)*3] = finalCol;
+                                        }
+                                    }
+                                    int[] colours4 = new int[16];
+
+                                    for(int x=0; x<4; x++) {
+                                        for(int y=0; y<4; y++) {
+                                            int ya = y < 2 ? y : y-1;
+                                            int xa = x < 2 ? x : x-1;
+                                            colours4[x+y*4] = colours[xa+ya*3];
+                                        }
+                                    }
+
+                                    GlStateManager.pushMatrix();
+                                    GlStateManager.translate(itemX-1, itemY-1, 0);
+                                    Tessellator tessellator = Tessellator.getInstance();
+                                    WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+                                    worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+                                    float uMinCTM = startCTMX/227f;
+                                    float uMaxCTM = (startCTMX+18)/227f;
+                                    float vMinCTM = startCTMY/75f;
+                                    float vMaxCTM = (startCTMY+18)/75f;
+                                    for(int xi=-1; xi<=1; xi++) {
+                                        for(int yi = -1; yi <= 1; yi++) {
+                                            float x = xi == -1 ? 0 : xi == 0 ? 1 : 17;
+                                            float y = yi == -1 ? 0 : yi == 0 ? 1 : 17;
+                                            float w = xi == 0 ? 16 : 1;
+                                            float h = yi == 0 ? 16 : 1;
+
+                                            int col1 = colours4[(xi+1)+(yi+1)*4];
+                                            int col2 = colours4[(xi+2)+(yi+1)*4];
+                                            int col3 = colours4[(xi+1)+(yi+2)*4];
+                                            int col4 = colours4[(xi+2)+(yi+2)*4];
+
+                                            worldrenderer
+                                                    .pos(x, y+h, 0.0D)
+                                                    .tex(uMinCTM + (uMaxCTM - uMinCTM) * x/18f, vMinCTM+(vMaxCTM-vMinCTM)*(y+h)/18f)
+                                                    .color((col3 >> 16) & 0xFF, (col3 >> 8) & 0xFF, col3 & 0xFF, (col3 >> 24) & 0xFF).endVertex();
+                                            worldrenderer
+                                                    .pos(x+w, y+h, 0.0D)
+                                                    .tex(uMinCTM+(uMaxCTM-uMinCTM)*(x+w)/18f, vMinCTM+(vMaxCTM-vMinCTM)*(y+h)/18f)
+                                                    .color((col4 >> 16) & 0xFF, (col4 >> 8) & 0xFF, col4 & 0xFF, (col4 >> 24) & 0xFF).endVertex();
+                                            worldrenderer
+                                                    .pos(x+w, y, 0.0D)
+                                                    .tex(uMinCTM+(uMaxCTM-uMinCTM)*(x+w)/18f, vMinCTM+(vMaxCTM-vMinCTM)*y/18f)
+                                                    .color((col2 >> 16) & 0xFF, (col2 >> 8) & 0xFF, col2 & 0xFF, (col2 >> 24) & 0xFF).endVertex();
+                                            worldrenderer
+                                                    .pos(x, y, 0.0D)
+                                                    .tex(uMinCTM + (uMaxCTM - uMinCTM) * x/18f, vMinCTM+(vMaxCTM-vMinCTM)*y/18f)
+                                                    .color((col1 >> 16) & 0xFF, (col1 >> 8) & 0xFF, col1 & 0xFF, (col1 >> 24) & 0xFF).endVertex();
+                                        }
+                                    }
+                                    GlStateManager.disableDepth();
+                                    GlStateManager.color(1, 1, 1, 1);
+                                    GlStateManager.shadeModel(GL11.GL_SMOOTH);
+                                    tessellator.draw();
+                                    GlStateManager.shadeModel(GL11.GL_FLAT);
+                                    GlStateManager.enableDepth();
+                                    GlStateManager.popMatrix();*/
+
+                                    RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
+                                    itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRendererObj, stack, itemX, itemY, null);
+                                    GlStateManager.disableLighting();
+                                }
+
+                                page.shouldDarkenIfNotSelected[k] = false;
+                                continue;
+                            }
+                        }
+                        page.shouldDarkenIfNotSelected[k] = true;
+
+                        //Render item
+                        GlStateManager.translate(0, 0, 20);
                         if(doRenderFramebuffer) {
-                            Utils.drawItemStackWithoutGlint(stack, itemX, itemY);
-                            if(stack.hasEffect() || stack.getItem() == Items.enchanted_book) {
+                            GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+                            GL14.glBlendFuncSeparate(GL11.GL_ONE, GL11.GL_ZERO, GL11.GL_ONE, GL11.GL_ZERO);
+                            
+                            if(storageId == currentPage) {
+                                Utils.hasEffectOverride = true;
+                                GlStateManager.translate(storageX-7, storageY-17-18, 0);
+                                guiChest.drawSlot(containerChest.getSlot(k+9));
+                                GlStateManager.translate(-storageX+7, -storageY+17+18, 0);
+                                Utils.hasEffectOverride = false;
+                            } else {
+                                Utils.drawItemStackWithoutGlint(stack, itemX, itemY);
+                            }
+
+                            GL14.glBlendFuncSeparate(770, 771, 1, 0);
+
+                            if(stack != null && (stack.hasEffect() || stack.getItem() == Items.enchanted_book)) {
                                 enchantGlintRenderLocations.add(new Vector2f(itemX, itemY-startY));
                             }
+                        } else if(storageId == currentPage) {
+                            Utils.hasEffectOverride = true;
+                            GlStateManager.translate(storageX-7, storageY-17-18, 0);
+                            guiChest.drawSlot(containerChest.getSlot(k+9));
+                            GlStateManager.translate(-storageX+7, -storageY+17+18, 0);
+                            Utils.hasEffectOverride = false;
                         } else {
                             Utils.drawItemStack(stack, itemX, itemY);
                         }
+                        GlStateManager.disableLighting();
+                        GlStateManager.translate(0, 0, -20);
                     }
 
                     GlStateManager.disableLighting();
@@ -386,25 +593,26 @@ public class StorageOverlay extends GuiElement {
 
             StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
 
-            String pageTitle;
-            if(storageId < 9) {
-                pageTitle = "Ender Chest Page " + (storageId + 1);
-            } else if(page.customTitle != null && !page.customTitle.isEmpty()) {
-                pageTitle = page.customTitle;
-            } else if(page != null && page.backpackDisplayStack != null) {
-                pageTitle = page.backpackDisplayStack.getDisplayName();
+            if(editingNameId == storageId) {
+                int len = fontRendererObj.getStringWidth(renameStorageField.getTextDisplay())+10;
+                renameStorageField.setSize(len, 12);
+                renameStorageField.render(storageX, storageY-13);
             } else {
-                pageTitle = "Backpack Slot "+(storageId-8);
-            }
-            int titleLen = fontRendererObj.getStringWidth(pageTitle);
-            fontRendererObj.drawString(pageTitle, storageX, storageY-11, textColour);
+                String pageTitle;
+                if(page.customTitle != null && !page.customTitle.isEmpty()) {
+                    pageTitle = Utils.chromaStringByColourCode(page.customTitle);
+                } else if(entry.getValue() < 9) {
+                    pageTitle = "Ender Chest Page " + (entry.getValue() + 1);
+                } else {
+                    pageTitle = "Backpack Slot "+(storageId-8);
+                }
+                int titleLen = fontRendererObj.getStringWidth(pageTitle);
 
-            if(mouseX >= storageX && mouseX <= storageX+titleLen+15 &&
-                    mouseY >= storageY-14 && mouseY <= storageY+1) {
-                Minecraft.getMinecraft().getTextureManager().bindTexture(storageTexture);
-                GlStateManager.color(1, 1, 1, 1);
-                Utils.drawTexturedRect(storageX+titleLen, storageY-14, 15, 15,
-                        24/600f, 39/600f, 250/400f, 265/ 400f, GL11.GL_NEAREST);
+                if(mouseX >= guiLeft+storageX && mouseX <= guiLeft+storageX+titleLen+15 &&
+                        mouseY >= guiTop+storageY-14 && mouseY <= guiTop+storageY+1) {
+                    pageTitle += " \u270E";
+                }
+                fontRendererObj.drawString(pageTitle, storageX, storageY-11, textColour);
             }
 
             if(page == null) {
@@ -440,23 +648,136 @@ public class StorageOverlay extends GuiElement {
                 int storageW = 162;
                 int storageH = 18*rows;
 
+                GlStateManager.enableDepth();
+
+                boolean[] shouldLimitBorder = new boolean[rows*9];
+                boolean hasCaches = isPaneCaches[storageId] != null && isPaneCaches[storageId].length == rows*9 &&
+                        ctmIndexCaches[storageId] != null && ctmIndexCaches[storageId].length == rows*9;
+
+                //Render item connections
+                for(int k=0; k<rows*9; k++) {
+                    ItemStack stack = page.items[k];
+
+                    if(stack != null && hasCaches) {
+                        int itemX = storageX+1+18*(k%9);
+                        int itemY = storageY+1+18*(k/9);
+
+                        int[] isPaneCache = isPaneCaches[storageId];
+                        int[] ctmIndexCache = ctmIndexCaches[storageId];
+
+                        if(isPaneCache[k] == 17) {
+                            int ctmIndex = getCTMIndex(page, k, isPaneCache, ctmIndexCache);
+                            int startCTMX = (ctmIndex%12)*19;
+                            int startCTMY = (ctmIndex/12)*19;
+
+                            int rgb = getRGBFromPane(isPaneCache[k]-1);
+                            int a = (rgb >> 24) & 0xFF;
+                            int r = (rgb >> 16) & 0xFF;
+                            int g = (rgb >> 8) & 0xFF;
+                            int b = rgb & 0xFF;
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(STORAGE_PANE_CTM_TEXTURE);
+                            GlStateManager.color(r/255f, g/255f, b/255f, a/255f);
+                            GlStateManager.translate(0, 0, 110);
+                            Utils.drawTexturedRect(itemX-1, itemY-1, 18, 18,
+                                    startCTMX/227f, (startCTMX+18)/227f, startCTMY/75f, (startCTMY+18)/75f, GL11.GL_NEAREST);
+                            GlStateManager.translate(0, 0, -110);
+
+                            RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
+                            itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRendererObj, stack, itemX, itemY, null);
+                            GlStateManager.enableDepth();
+                        } else if(isPaneCache[k] < 0) {
+                            boolean hasConnection = false;
+
+                            int upIndex = k-9;
+                            int leftIndex = k%9 > 0 ? k-1 : -1;
+                            int rightIndex = k%9 < 8 ? k+1 : -1;
+                            int downIndex = k+9;
+
+                            int[] indexArr = {rightIndex, downIndex, leftIndex, upIndex};
+
+                            for(int j=0; j<4; j++) {
+                                int index = indexArr[j];
+                                int type = index >= 0 && index < isPaneCache.length ? getPaneType(page.items[index], index, isPaneCache) : -1;
+                                if(type > 0) {
+                                    int ctmIndex = getCTMIndex(page, index, isPaneCache, ctmIndexCache);
+                                    if(ctmIndex < 0) continue;
+
+                                    boolean renderConnection;
+                                    boolean horizontal = ctmIndex == 1 || ctmIndex == 2 || ctmIndex == 3;
+                                    boolean vertical = ctmIndex == 12 || ctmIndex == 24 || ctmIndex == 36;
+                                    if((k%9 == 0 && index%9 == 0) || (k%9 == 8 && index%9 == 8)) {
+                                        renderConnection = horizontal || vertical;
+                                    } else if(index == leftIndex || index == rightIndex) {
+                                        renderConnection = horizontal;
+                                    } else {
+                                        renderConnection = vertical;
+                                    }
+
+                                    if(renderConnection) {
+                                        shouldLimitBorder[k] = true;
+                                        hasConnection = true;
+
+                                        Minecraft.getMinecraft().getTextureManager().bindTexture(STORAGE_PANE_CTM_TEXTURE);
+                                        int rgb = getRGBFromPane(type-1);
+                                        int a = (rgb >> 24) & 0xFF;
+                                        int r = (rgb >> 16) & 0xFF;
+                                        int g = (rgb >> 8) & 0xFF;
+                                        int b = rgb & 0xFF;
+                                        GlStateManager.color(r/255f, g/255f, b/255f, a/255f);
+
+                                        GlStateManager.pushMatrix();
+                                        GlStateManager.translate(itemX-1+9, itemY-1+9, 10);
+                                        GlStateManager.rotate(j*90, 0, 0, 1);
+                                        GlStateManager.enableAlpha();
+                                        GlStateManager.disableLighting();
+
+                                        boolean horzFlip = false;
+                                        boolean vertFlip = false;
+
+                                        if(index == leftIndex) {
+                                            vertFlip = true;
+                                        } else if(index == downIndex) {
+                                            vertFlip = true;
+                                        }
+
+                                        GlStateManager.enableDepth();
+                                        Utils.drawTexturedRect(0, -9, 8, 18,
+                                                !horzFlip ? 209/227f : 219/227f, horzFlip ? 227/227f : 217/227f,
+                                                !vertFlip ? 57/75f : 75f/75f, vertFlip ? 57/75f : 75f/75f, GL11.GL_NEAREST);
+                                        GlStateManager.translate(0, 0, 120);
+                                        Utils.drawTexturedRect(8, -9, 10, 18,
+                                                !horzFlip ? 217/227f : 209/227f, horzFlip ? 219/227f : 227/227f,
+                                                !vertFlip ? 57/75f : 75f/75f, vertFlip ? 57/75f : 75f/75f, GL11.GL_NEAREST);
+                                        GlStateManager.translate(0, 0, -120);
+
+                                        GlStateManager.popMatrix();
+                                    }
+                                }
+                            }
+
+                            if(hasConnection) {
+                                page.shouldDarkenIfNotSelected[k] = false;
+
+                                GlStateManager.disableAlpha();
+                                GlStateManager.translate(0, 0, 10);
+                                Gui.drawRect(itemX-1, itemY-1, itemX+17, itemY+17, 0x01000000);
+                                GlStateManager.translate(0, 0, -10);
+                                GlStateManager.enableAlpha();
+                            }
+                        }
+                    }
+                }
+
                 Minecraft.getMinecraft().getTextureManager().bindTexture(storageTexture);
                 GlStateManager.color(1, 1, 1, 1);
                 Utils.drawTexturedRect(storageX, storageY, storageW, storageH, 0, 162/600f, 265/400f, (265+storageH)/400f, GL11.GL_NEAREST);
 
                 boolean whiteOverlay = false;
 
-                GlStateManager.enableDepth();
                 for(int k=0; k<rows*9; k++) {
                     ItemStack stack = page.items[k];
                     int itemX = storageX+1+18*(k%9);
                     int itemY = storageY+1+18*(k/9);
-
-                    /*if(doItemRender || frameBufferItemRender) {
-                        GlStateManager.colorMask(true, true, true, true);
-                        Utils.drawItemStack(stack, itemX, itemY);
-                        GlStateManager.colorMask(false, false, false, false);
-                    }*/
 
                     if(!searchBar.getText().isEmpty()) {
                         if(stack == null || !NotEnoughUpdates.INSTANCE.manager.doesStackMatchSearch(stack, searchBar.getText())) {
@@ -469,15 +790,17 @@ public class StorageOverlay extends GuiElement {
                     GlStateManager.disableLighting();
 
                     if(mouseInsideStorages && mouseX >= guiLeft+itemX && mouseX < guiLeft+itemX+18 && mouseY >= guiTop+itemY && mouseY < guiTop+itemY+18) {
+                        boolean allowHover = NotEnoughUpdates.INSTANCE.config.storageGUI.fancyPanes != 1 || !hasCaches || isPaneCaches[storageId][k] <= 0;
+
                         if(storageId != StorageManager.getInstance().getCurrentPageId()) {
                             hoveringOtherBackpack = true;
                             whiteOverlay = stackOnMouse == null;
-                        } else {
+                        } else if(stack == null || allowHover) {
                             itemHoverX = itemX;
                             itemHoverY = itemY;
                         }
 
-                        if(stack != null) {
+                        if(stack != null && allowHover) {
                             tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().gameSettings.advancedItemTooltips);
                         }
                     }
@@ -485,10 +808,90 @@ public class StorageOverlay extends GuiElement {
 
                 GlStateManager.disableDepth();
                 if(storageId == currentPage) {
-                    Gui.drawRect(storageX+1, storageY, storageX, storageY+storageH, 0xffffdf00);
-                    Gui.drawRect(storageX+storageW-1, storageY, storageX+storageW, storageY+storageH, 0xffffdf00);
-                    Gui.drawRect(storageX, storageY, storageX+storageW, storageY+1, 0xffffdf00);
-                    Gui.drawRect(storageX, storageY+storageH-1, storageX+storageW, storageY+storageH, 0xffffdf00);
+                    if(isPaneCaches[storageId] != null && isPaneCaches[storageId].length == rows*9 &&
+                            ctmIndexCaches[storageId] != null && ctmIndexCaches[storageId].length == rows*9) {
+                        int[] isPaneCache = isPaneCaches[storageId];
+
+                        int borderStartY = 0;
+                        int borderEndY = storageH;
+                        int borderStartX = 0;
+                        int borderEndX = storageW;
+
+                        boolean allChroma = true;
+                        for(int y=0; y<page.rows; y++) {
+                            for(int x=0; x<9; x++) {
+                                int index = x+y*9;
+                                if(isPaneCache[index] != 17) {
+                                    allChroma = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        out:
+                        for(int y=0; y<page.rows; y++) {
+                            for(int x=0; x<9; x++) {
+                                int index = x+y*9;
+                                if(isPaneCache[index] <= 0 && !shouldLimitBorder[index]) {
+                                    borderStartY = y*18;
+                                    break out;
+                                }
+                            }
+                        }
+                        out:
+                        for(int y=page.rows-1; y>=0; y--) {
+                            for(int x=0; x<9; x++) {
+                                int index = x+y*9;
+                                if(isPaneCache[index] <= 0 && !shouldLimitBorder[index]) {
+                                    borderEndY = y*18+18; //Bottom
+                                    break out;
+                                }
+                            }
+                        }
+                        out:
+                        for(int x=0; x<9; x++) {
+                            for(int y=0; y<page.rows; y++) {
+                                int index = x+y*9;
+                                if(isPaneCache[index] <= 0 && !shouldLimitBorder[index]) {
+                                    borderStartX = x*18;
+                                    break out;
+                                }
+                            }
+                        }
+                        out:
+                        for(int x=8; x>=0; x--) {
+                            for(int y=0; y<page.rows; y++) {
+                                int index = x+y*9;
+                                if(isPaneCache[index] <= 0 && !shouldLimitBorder[index]) {
+                                    borderEndX = x*18+18; //Bottom
+                                    break out;
+                                }
+                            }
+                        }
+                        int borderColour = ChromaColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedStorageColour);
+                        Gui.drawRect(storageX+borderStartX+1, storageY+borderStartY, storageX+borderStartX, storageY+borderEndY, borderColour); //Left
+                        Gui.drawRect(storageX+borderEndX-1, storageY+borderStartY, storageX+borderEndX, storageY+borderEndY, borderColour); //Right
+                        Gui.drawRect(storageX+borderStartX, storageY+borderStartY, storageX+borderEndX, storageY+borderStartY+1, borderColour); //Top
+                        Gui.drawRect(storageX+borderStartX, storageY+borderEndY-1, storageX+borderEndX, storageY+borderEndY, borderColour); //Bottom
+
+                        if(allChroma) {
+                            ResourceLocation loc;
+                            if(rollIndex < NOT_RICKROLL_SEQ.length) {
+                                loc = NOT_RICKROLL_SEQ[rollIndex];
+                            } else {
+                                loc = NOT_RICKROLL_SEQ[NOT_RICKROLL_SEQ.length*2-rollIndex-1];
+                            }
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(loc);
+                            GlStateManager.color(1, 1, 1, 1);
+                            Utils.drawTexturedRect(storageX, storageY, storageW, storageH, GL11.GL_LINEAR);
+                        }
+                    } else {
+                        int borderColour = ChromaColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedStorageColour);
+                        Gui.drawRect(storageX+1, storageY, storageX, storageY+storageH, borderColour); //Left
+                        Gui.drawRect(storageX+storageW-1, storageY, storageX+storageW, storageY+storageH, borderColour); //Right
+                        Gui.drawRect(storageX, storageY-1, storageX+storageW, storageY, borderColour); //Top
+                        Gui.drawRect(storageX, storageY+storageH-1, storageX+storageW, storageY+storageH, borderColour); //Bottom
+                    }
                 } else if(currentTime - StorageManager.getInstance().storageOpenSwitchMillis < 1000 &&
                         StorageManager.getInstance().desiredStoragePage == storageId &&
                         StorageManager.getInstance().getCurrentPageId() != storageId) {
@@ -506,7 +909,17 @@ public class StorageOverlay extends GuiElement {
                 } else if(whiteOverlay) {
                     Gui.drawRect(storageX, storageY, storageX+storageW, storageY+storageH, 0x80ffffff);
                 } else {
-                    Gui.drawRect(storageX, storageY, storageX+storageW, storageY+storageH, 0x30000000);
+                    if(page.rows <= 0) {
+                        Gui.drawRect(storageX, storageY, storageX+storageW, storageY+storageH, 0x40000000);
+                    } else {
+                        for(int i=0; i<page.rows*9; i++) {
+                            if(page.items[i] == null || page.shouldDarkenIfNotSelected[i]) {
+                                int x = storageX+18*(i%9);
+                                int y = storageY+18*(i/9);
+                                Gui.drawRect(x, y, x+18, y+18, 0x40000000);
+                            }
+                        }
+                    }
                 }
 
                 if(StorageManager.getInstance().desiredStoragePage == storageId && StorageManager.getInstance().onStorageMenu) {
@@ -544,8 +957,6 @@ public class StorageOverlay extends GuiElement {
         searchBar.render(252, storageViewSize+5);
 
         //Player Inventory
-        GuiChest guiChest = (GuiChest) Minecraft.getMinecraft().currentScreen;
-        ContainerChest containerChest = (ContainerChest) guiChest.inventorySlots;
         ItemStack[] playerItems = Minecraft.getMinecraft().thePlayer.inventory.mainInventory;
         int inventoryStartIndex = containerChest.getLowerChestInventory().getSizeInventory();
         GlStateManager.enableDepth();
@@ -683,6 +1094,14 @@ public class StorageOverlay extends GuiElement {
                         itemHoverY = itemY;
                         if(NotEnoughUpdates.INSTANCE.config.storageGUI.backpackPreview) slotPreview = i+StorageManager.MAX_ENDER_CHEST_PAGES;
                         tooltipToDisplay = stack.getTooltip(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().gameSettings.advancedItemTooltips);
+
+                        if(!StorageManager.getInstance().onStorageMenu) {
+                            List<String> tooltip = new ArrayList<>();
+                            for(String line : tooltipToDisplay) {
+                                tooltip.add(line.replace("Right-click to remove", "Click \"Edit\" to manage"));
+                            }
+                            tooltipToDisplay = tooltip;
+                        }
                     }
                 }
             }
@@ -709,6 +1128,10 @@ public class StorageOverlay extends GuiElement {
                     vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.enderchestPreview ? 1 : 0; break;
                 case 5:
                     vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode ? 1 : 0; break;
+                case 6:
+                    vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.fancyPanes == 2 ? 0 : NotEnoughUpdates.INSTANCE.config.storageGUI.fancyPanes+1; break;
+                case 7:
+                    vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus ? 1 : 0; break;
             }
 
             Utils.drawTexturedRect(buttonX, buttonY, 16, 16, minU, maxU, (vIndex*16)/256f, (vIndex*16+16)/256f, GL11.GL_NEAREST);
@@ -774,8 +1197,34 @@ public class StorageOverlay extends GuiElement {
                                 "Off"
                         );
                         break;
+                    case 6:
+                        tooltipToDisplay = createTooltip(
+                                "Fancy Glass Panes",
+                                NotEnoughUpdates.INSTANCE.config.storageGUI.fancyPanes,
+                                "On",
+                                "Locked",
+                                "Off"
+                        );
+                        tooltipToDisplay.add(1, "\u00a7eReplace the glass pane textures");
+                        tooltipToDisplay.add(2, "\u00a7ein your storage containers with");
+                        tooltipToDisplay.add(3, "\u00a7ea fancy connected texture");
+                        break;
+                    case 7:
+                        tooltipToDisplay = createTooltip(
+                                "Search Bar Autofocus",
+                                NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus ? 0 : 1,
+                                "On",
+                                "Off"
+                        );
+                        break;
                 }
             }
+        }
+
+        if(!StorageManager.getInstance().onStorageMenu) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(storageTexture);
+            GlStateManager.color(1, 1, 1, 1);
+            Utils.drawTexturedRect(171-36, 41+storageViewSize, 36, 14, 24/600f, 60/600f, 251/400f, 265/400f, GL11.GL_NEAREST);
         }
 
         if(itemHoverX >= 0 && itemHoverY >= 0) {
@@ -787,7 +1236,7 @@ public class StorageOverlay extends GuiElement {
         }
 
         GlStateManager.popMatrix();
-        GlStateManager.translate(0, 0, 100);
+        GlStateManager.translate(0, 0, 300);
         if(stackOnMouse != null) {
             if(hoveringOtherBackpack) {
                 Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.barrier)), mouseX - 8, mouseY - 8);
@@ -796,7 +1245,6 @@ public class StorageOverlay extends GuiElement {
             }
         } else if(slotPreview >= 0) {
             StorageManager.StoragePage page = StorageManager.getInstance().getPage(slotPreview, false);
-
             if(page != null && page.rows > 0) {
                 int rows = page.rows;
 
@@ -812,6 +1260,7 @@ public class StorageOverlay extends GuiElement {
                     Utils.drawTexturedRect(mouseX, mouseY+7+18*i, 176, 18, 0, 1, 7/32f, 25/32f, GL11.GL_NEAREST);
                 }
                 Utils.drawTexturedRect(mouseX, mouseY+7+18*rows, 176, 7, 0, 1, 25/32f, 1, GL11.GL_NEAREST);
+                GlStateManager.enableDepth();
 
                 for(int i=0; i<rows*9; i++) {
                     ItemStack stack = page.items[i];
@@ -821,7 +1270,6 @@ public class StorageOverlay extends GuiElement {
                         GlStateManager.disableDepth();
                     }
                 }
-                GlStateManager.enableDepth();
                 GlStateManager.translate(0, 0, -100);
             } else {
                 Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY,  width, height, -1, Minecraft.getMinecraft().fontRendererObj);
@@ -829,7 +1277,102 @@ public class StorageOverlay extends GuiElement {
         } else if(tooltipToDisplay != null) {
             Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY,  width, height, -1, Minecraft.getMinecraft().fontRendererObj);
         }
-        GlStateManager.translate(0, 0, -100);
+        GlStateManager.translate(0, 0, -300);
+    }
+
+    private static boolean shouldConnect(int paneIndex1, int paneIndex2) {
+        if(paneIndex1 == 16 || paneIndex2 == 16) return false;
+        if(paneIndex1 < 1 || paneIndex2 < 1) return false;
+        if(paneIndex1 == paneIndex2) {
+            return true;
+        }
+        /*if((paneIndex1 == 17) == (paneIndex2 == 17)) {
+            return true;
+        }*/
+        return false;
+
+    }
+
+    public static int getCTMIndex(StorageManager.StoragePage page, int index, int[] isPaneCache, int[] ctmIndexCache) {
+        if(page.items[index] == null) {
+            ctmIndexCache[index] = -1;
+            return -1;
+        }
+
+        int paneType = getPaneType(page.items[index], index, isPaneCache);
+
+        int upIndex = index-9;
+        int leftIndex = index%9 > 0 ? index-1 : -1;
+        int rightIndex = index%9 < 8 ? index+1 : -1;
+        int downIndex = index+9;
+        int upleftIndex = index%9 > 0 ? index-10 : -1;
+        int uprightIndex = index%9 < 8 ? index-8 : -1;
+        int downleftIndex = index%9 > 0 ? index+8 : -1;
+        int downrightIndex = index%9 < 8 ?index+10 : -1;
+
+        boolean up = upIndex >= 0 && upIndex < isPaneCache.length && shouldConnect(getPaneType(page.items[upIndex], upIndex, isPaneCache), paneType);
+        boolean left = leftIndex >= 0 && leftIndex < isPaneCache.length && shouldConnect(getPaneType(page.items[leftIndex], leftIndex, isPaneCache) , paneType);
+        boolean down = downIndex >= 0 && downIndex < isPaneCache.length && shouldConnect(getPaneType(page.items[downIndex], downIndex, isPaneCache) , paneType);
+        boolean right = rightIndex >= 0 && rightIndex < isPaneCache.length && shouldConnect(getPaneType(page.items[rightIndex], rightIndex, isPaneCache) , paneType);
+        boolean upleft = upleftIndex >= 0 && upleftIndex < isPaneCache.length && shouldConnect(getPaneType(page.items[upleftIndex], upleftIndex, isPaneCache) , paneType);
+        boolean upright = uprightIndex >= 0 && uprightIndex < isPaneCache.length && shouldConnect(getPaneType(page.items[uprightIndex], uprightIndex, isPaneCache) , paneType);
+        boolean downleft = downleftIndex >= 0 && downleftIndex < isPaneCache.length && shouldConnect(getPaneType(page.items[downleftIndex], downleftIndex, isPaneCache) , paneType);
+        boolean downright = downrightIndex >= 0 && downrightIndex < isPaneCache.length && shouldConnect(getPaneType(page.items[downrightIndex], downrightIndex, isPaneCache) , paneType);
+
+        int ctmIndex = BetterContainers.getCTMIndex(up, right, down, left, upleft, upright, downright, downleft);
+        ctmIndexCache[index] = ctmIndex;
+        return ctmIndex;
+    }
+
+    private static String CHROMA_STR = "230:255:255:0:0";
+    public static int getRGBFromPane(int paneType) {
+        int rgb = -1;
+        EnumChatFormatting formatting = EnumChatFormatting.WHITE;
+        switch(paneType) {
+            case 0: formatting = EnumChatFormatting.WHITE; break;
+            case 1: formatting = EnumChatFormatting.GOLD; break;
+            case 2: formatting = EnumChatFormatting.LIGHT_PURPLE; break;
+            case 3: formatting = EnumChatFormatting.BLUE; break;
+            case 4: formatting = EnumChatFormatting.YELLOW; break;
+            case 5: formatting = EnumChatFormatting.GREEN; break;
+            case 6: rgb = 0xfff03c96; break;
+            case 7: formatting = EnumChatFormatting.DARK_GRAY; break;
+            case 8: formatting = EnumChatFormatting.GRAY; break;
+            case 9: formatting = EnumChatFormatting.DARK_AQUA; break;
+            case 10: formatting = EnumChatFormatting.DARK_PURPLE; break;
+            case 11: formatting = EnumChatFormatting.DARK_BLUE; break;
+            case 12: rgb = 0xffA0522D; break;
+            case 13: formatting = EnumChatFormatting.DARK_GREEN; break;
+            case 14: formatting = EnumChatFormatting.DARK_RED; break;
+            case 15: rgb = 0x00000000; break;
+            case 16: rgb = SpecialColour.specialToChromaRGB(CHROMA_STR); break;
+        }
+        if(rgb != -1) return rgb;
+        return 0xff000000 | Minecraft.getMinecraft().fontRendererObj.getColorCode(formatting.toString().charAt(1));
+    }
+
+    public static int getPaneType(ItemStack stack, int index, int[] cache) {
+        if(cache != null && cache[index] != 0) return cache[index];
+
+        if(NotEnoughUpdates.INSTANCE.config.storageGUI.fancyPanes == 2) {
+            if(cache != null) cache[index] = -1;
+            return -1;
+        }
+
+        if(stack != null && (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane) || stack.getItem() == Item.getItemFromBlock(Blocks.glass_pane))) {
+            String internalName = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
+            if(internalName != null) {
+                if(internalName.startsWith("STAINED_GLASS_PANE")) {
+                    if(cache != null) cache[index] = stack.getItemDamage()+1;
+                    return stack.getItemDamage()+1;
+                } else if(internalName.startsWith("THIN_GLASS")) {
+                    if(cache != null) cache[index] = 17;
+                    return 17;
+                }
+            }
+        }
+        if(cache != null) cache[index] = -1;
+        return -1;
     }
 
     private List<String> createTooltip(String title, int selectedOption, String... options) {
@@ -920,11 +1463,15 @@ public class StorageOverlay extends GuiElement {
             return true;
         }
 
+        if(Mouse.getEventButtonState()) {
+            editingNameId = -1;
+        }
+
         if(Mouse.getEventButton() == 0) {
             if(!Mouse.getEventButtonState()) {
                 scrollGrabOffset = -1;
             } else if(mouseX >= guiLeft+519 && mouseX <= guiLeft+519+14 &&
-                        mouseY >= guiTop+8 && mouseY <= guiTop+106) {
+                        mouseY >= guiTop+8 && mouseY <= guiTop+2+getStorageViewSize()) {
                 int scrollMouseY = mouseY - (guiTop+8);
                 int scrollBarY = Math.round(getScrollBarHeight()*scroll.getValue()/(float)getMaximumScroll());
 
@@ -954,6 +1501,35 @@ public class StorageOverlay extends GuiElement {
         guiLeft = width/2 - (sizeX-searchNobX)/2;
         guiTop = height/2 - sizeY/2;
 
+        if(Mouse.getEventButtonState() && !StorageManager.getInstance().onStorageMenu) {
+            if(mouseX > guiLeft+171-36 && mouseX < guiLeft+171 &&
+                    mouseY > guiTop+41+storageViewSize && mouseY < guiTop+41+storageViewSize+14) {
+                NotEnoughUpdates.INSTANCE.sendChatMessage("/storage");
+                searchBar.setFocus(false);
+                return true;
+            }
+        }
+
+        if(Mouse.getEventButtonState()) {
+            if(mouseX >= guiLeft+252 && mouseX <= guiLeft+252+searchBar.getWidth() &&
+                    mouseY >= guiTop+storageViewSize+5 && mouseY <= guiTop+storageViewSize+5+searchBar.getHeight()) {
+                if(searchBar.getFocus()) {
+                    searchBar.mouseClicked(mouseX-guiLeft, mouseY-guiTop, Mouse.getEventButton());
+                    StorageManager.getInstance().searchDisplay(searchBar.getText());
+                    dirty = true;
+                } else {
+                    searchBar.setFocus(true);
+                    if(Mouse.getEventButton() == 1) {
+                        searchBar.setText("");
+                        StorageManager.getInstance().searchDisplay(searchBar.getText());
+                        dirty = true;
+                    }
+                }
+            } else {
+                searchBar.setFocus(false);
+            }
+        }
+
         if(mouseX > guiLeft+181 && mouseX < guiLeft+181+162 &&
                 mouseY > guiTop+storageViewSize+18 && mouseY < guiTop+storageViewSize+94) {
             return false;
@@ -969,6 +1545,39 @@ public class StorageOverlay extends GuiElement {
 
                 StorageManager.StoragePage page = StorageManager.getInstance().getPage(entry.getValue(), false);
                 int rows = page == null ? 3 : page.rows <= 0 ? 3 : page.rows;
+
+                if(page != null) {
+                    String pageTitle;
+                    if(page.customTitle != null && !page.customTitle.isEmpty()) {
+                        pageTitle = page.customTitle;
+                    } else if(entry.getValue() < 9) {
+                        pageTitle = "Ender Chest Page " + (entry.getValue() + 1);
+                    } else {
+                        pageTitle = "Backpack Slot "+(entry.getValue()-8);
+                    }
+                    int titleLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(pageTitle);
+
+                    if(mouseX >= guiLeft+pageCoords.x && mouseX <= guiLeft+pageCoords.x+titleLen+15 &&
+                            mouseY >= guiTop+pageCoords.y-14 && mouseY <= guiTop+pageCoords.y+1) {
+                        if(Mouse.getEventButtonState() && (Mouse.getEventButton() == 0 || Mouse.getEventButton() == 1)) {
+                            if(editingNameId != entry.getValue()) {
+                                editingNameId = entry.getValue();
+                                if(!renameStorageField.getText().equalsIgnoreCase(pageTitle)) {
+                                    renameStorageField.setText(pageTitle);
+                                }
+                            }
+                            if(!renameStorageField.getFocus()) {
+                                renameStorageField.setFocus(true);
+                            } else {
+                                renameStorageField.mouseClicked(mouseX-guiLeft, mouseY-guiTop, Mouse.getEventButton());
+                            }
+                        } else if(Mouse.getEventButton() < 0 && Mouse.isButtonDown(0)) {
+                            renameStorageField.mouseClickMove(mouseX-guiLeft, mouseY-guiTop, 0, 0);
+                        }
+                        return true;
+                    }
+                }
+
                 if(mouseX > guiLeft+pageCoords.x && mouseX < guiLeft+pageCoords.x+162 &&
                         mouseY > guiTop+pageCoords.y && mouseY < guiTop+pageCoords.y+rows*18) {
                     if(currentPage >= 0 && entry.getValue() == currentPage) {
@@ -1042,9 +1651,9 @@ public class StorageOverlay extends GuiElement {
                 case 2:
                     int displayStyle = NotEnoughUpdates.INSTANCE.config.storageGUI.displayStyle;
                     if(Mouse.getEventButton() == 0) {
-                        displayStyle--;
-                    } else {
                         displayStyle++;
+                    } else {
+                        displayStyle--;
                     }
                     if(displayStyle < 0) displayStyle = STORAGE_TEXTURES.length-1;
                     if(displayStyle >= STORAGE_TEXTURES.length) displayStyle = 0;
@@ -1059,6 +1668,20 @@ public class StorageOverlay extends GuiElement {
                 case 5:
                     NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode =
                             !NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode; break;
+                case 6:
+                    int fancyPanes = NotEnoughUpdates.INSTANCE.config.storageGUI.fancyPanes;
+                    if(Mouse.getEventButton() == 0) {
+                        fancyPanes++;
+                    } else {
+                        fancyPanes--;
+                    }
+                    if(fancyPanes < 0) fancyPanes = 2;
+                    if(fancyPanes >= 3) fancyPanes = 0;
+
+                    NotEnoughUpdates.INSTANCE.config.storageGUI.fancyPanes = fancyPanes; break;
+                case 7:
+                    NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus =
+                            !NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus; break;
             }
             dirty = true;
         }
@@ -1183,6 +1806,11 @@ public class StorageOverlay extends GuiElement {
                         if(xClicked >= 0 && xClicked <= 8 &&
                                 yClicked >= 0 && yClicked <= 5) {
                             if(xClicked + yClicked*9 + 9 == slotId) {
+                                if(NotEnoughUpdates.INSTANCE.config.storageGUI.fancyPanes == 1 && slot.getHasStack() &&
+                                        getPaneType(slot.getStack(), -1, null) > 0) {
+                                    cir.setReturnValue(false);
+                                    return;
+                                }
                                 cir.setReturnValue(true);
                                 return;
                             }
@@ -1195,6 +1823,7 @@ public class StorageOverlay extends GuiElement {
     }
 
     public void clearSearch() {
+        searchBar.setFocus(false);
         searchBar.setText("");
         StorageManager.getInstance().searchDisplay(searchBar.getText());
     }
@@ -1234,13 +1863,38 @@ public class StorageOverlay extends GuiElement {
                 }
             }
 
-            String prevText = searchBar.getText();
-            searchBar.setFocus(true);
-            searchBar.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
-            if(!prevText.equals(searchBar.getText())) {
-                StorageManager.getInstance().searchDisplay(searchBar.getText());
-                dirty = true;
+            if(editingNameId >= 0) {
+                if(Keyboard.getEventKey() == Keyboard.KEY_RETURN) {
+                    editingNameId = -1;
+                    return true;
+                }
+
+                String prevText = renameStorageField.getText();
+                renameStorageField.setFocus(true);
+                searchBar.setFocus(false);
+                renameStorageField.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
+                if(!prevText.equals(renameStorageField.getText())) {
+                    StorageManager.StoragePage page = StorageManager.getInstance().getPage(editingNameId, false);
+                    if(page != null) {
+                        page.customTitle = renameStorageField.getText();
+                    }
+                }
+            } else if(NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus || searchBar.getFocus()) {
+                String prevText = searchBar.getText();
+                searchBar.setFocus(true);
+                renameStorageField.setFocus(false);
+                searchBar.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
+                if(!prevText.equals(searchBar.getText())) {
+                    StorageManager.getInstance().searchDisplay(searchBar.getText());
+                    dirty = true;
+                }
+                if(NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus &&
+                        searchBar.getText().isEmpty()) {
+                    searchBar.setFocus(false);
+                }
             }
+
+
         }
 
         return true;

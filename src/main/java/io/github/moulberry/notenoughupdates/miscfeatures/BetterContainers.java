@@ -348,7 +348,7 @@ public class BetterContainers {
         return false;
     }
 
-    private static int getCTMIndex(boolean up, boolean right, boolean down, boolean left, boolean upleft, boolean upright, boolean downright, boolean downleft) {
+    public static int getCTMIndex(boolean up, boolean right, boolean down, boolean left, boolean upleft, boolean upright, boolean downright, boolean downleft) {
         if(up && right && down && left) {
             if(upleft && upright && downright && downleft) {
                 return 26;

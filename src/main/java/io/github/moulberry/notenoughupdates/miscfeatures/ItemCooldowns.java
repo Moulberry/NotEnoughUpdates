@@ -109,12 +109,26 @@ public class ItemCooldowns {
 
     private static Pattern PICKAXE_COOLDOWN_LORE_REGEX = Pattern.compile("\\u00a78Cooldown: \\u00a7a(\\d+)s");
 
+    private static boolean isPickaxe(String internalname) {
+        if(internalname == null) return false;
+
+        if(internalname.endsWith("_PICKAXE")) {
+            return true;
+        } else if(internalname.contains("_DRILL_")) {
+            char lastChar = internalname.charAt(internalname.length()-1);
+            if(lastChar >= '0' && lastChar <= '9') {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void updatePickaxeCooldown() {
         if(pickaxeCooldown == -1) {
             for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
                 if(stack != null && stack.hasTagCompound()) {
                     String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
-                    if(internalname != null && (internalname.endsWith("_PICKAXE") || internalname.contains("_DRILL_"))) {
+                    if(isPickaxe(internalname)) {
                         for(String line : NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound())) {
                             Matcher matcher = PICKAXE_COOLDOWN_LORE_REGEX.matcher(line);
                             if(matcher.find()) {
@@ -154,7 +168,7 @@ public class ItemCooldowns {
             return -1;
         }
 
-        if(internalname.endsWith("_PICKAXE") || internalname.contains("_DRILL_")) {
+        if(isPickaxe(internalname)) {
             updatePickaxeCooldown();
 
             if(pickaxeUseCooldownMillisRemaining < 0) {

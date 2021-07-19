@@ -495,7 +495,7 @@ public class GuiElementTextField {
         if(focus && System.currentTimeMillis()%1000>500) {
             String textNCBeforeCursor = textNoColor.substring(0, textField.getCursorPosition()+prependText.length());
             int colorCodes = org.apache.commons.lang3.StringUtils.countMatches(textNCBeforeCursor, "\u00B6");
-            String textBeforeCursor = text.substring(0, textField.getCursorPosition()+prependText.length()+(((options & COLOUR) != 0) ? colorCodes*2 : 0));
+            String textBeforeCursor = text.substring(0, Math.min(text.length(), textField.getCursorPosition()+prependText.length()+(((options & COLOUR) != 0) ? colorCodes*2 : 0)));
 
             int numLinesBeforeCursor = org.apache.commons.lang3.StringUtils.countMatches(textBeforeCursor, "\n");
             int yOff = numLinesBeforeCursor*extraSize;

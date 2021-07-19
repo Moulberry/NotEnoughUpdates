@@ -1109,18 +1109,15 @@ public class NEUOverlay extends Gui {
                 if(rarity1 < rarity2) return mult;
                 if(rarity1 > rarity2) return -mult;
             } else if(getCompareMode() == COMPARE_MODE_VALUE) {
-                float cost1 = manager.auctionManager.getLowestBin(o1.get("internalname").getAsString());
-                float cost2 = manager.auctionManager.getLowestBin(o2.get("internalname").getAsString());
+                String internal1 = o1.get("internalname").getAsString();
+                String internal2 = o2.get("internalname").getAsString();
 
-                float craftCost1 = manager.auctionManager.getCraftCost(o1.get("internalname").getAsString()).craftCost;
-                float craftCost2 = manager.auctionManager.getCraftCost(o2.get("internalname").getAsString()).craftCost;
+                float cost1 = manager.auctionManager.getLowestBin(internal1);
+                float cost2 = manager.auctionManager.getLowestBin(internal2);
 
-                float diff = (cost1 - craftCost1) - (cost2 - craftCost2);
 
-                if(diff > 0) return mult;
-                if(diff < 0) return -mult;
-                /*if(cost1 < cost2) return mult;
-                if(cost1 > cost2) return -mult;*/
+                if(cost1 < cost2) return mult;
+                if(cost1 > cost2) return -mult;
             }
 
             String i1 = o1.get("internalname").getAsString();

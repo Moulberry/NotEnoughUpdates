@@ -67,7 +67,7 @@ import java.util.regex.Pattern;
 
 public class Utils {
 
-    private static boolean hasEffectOverride = false;
+    public static boolean hasEffectOverride = false;
     public static boolean disableCustomDungColours = false;
     private static LinkedList<Integer> guiScales = new LinkedList<>();
     private static ScaledResolution lastScale = new ScaledResolution(Minecraft.getMinecraft());

@@ -211,24 +211,26 @@ public class CapeManager {
     public void onRenderPlayer(RenderPlayerEvent.Post e) {
         if(e.partialRenderTick == 1.0F) return; //rendering in inventory
 
-        String uuid = e.entityPlayer.getUniqueID().toString().replace("-", "");
-        String clientUuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
+        try {
+            String uuid = e.entityPlayer.getUniqueID().toString().replace("-", "");
+            String clientUuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
 
-        if(Minecraft.getMinecraft().thePlayer != null && uuid.equals(clientUuid)) {
-            String selCape = NotEnoughUpdates.INSTANCE.config.hidden.selectedCape;
-            if(selCape != null && !selCape.isEmpty()) {
-                if(localCape == null) {
-                    localCape = new MutablePair<>(new NEUCape(selCape), selCape);
-                } else {
-                    localCape.setValue(selCape);
+            if(Minecraft.getMinecraft().thePlayer != null && uuid.equals(clientUuid)) {
+                String selCape = NotEnoughUpdates.INSTANCE.config.hidden.selectedCape;
+                if(selCape != null && !selCape.isEmpty()) {
+                    if(localCape == null) {
+                        localCape = new MutablePair<>(new NEUCape(selCape), selCape);
+                    } else {
+                        localCape.setValue(selCape);
+                    }
                 }
             }
-        }
-        if(uuid.equals(clientUuid) && localCape != null && localCape.getRight() != null && !localCape.getRight().equals("null")) {
-            localCape.getLeft().onRenderPlayer(e);
-        } else if(capeMap.containsKey(uuid)) {
-            capeMap.get(uuid).getLeft().onRenderPlayer(e);
-        }
+            if(uuid.equals(clientUuid) && localCape != null && localCape.getRight() != null && !localCape.getRight().equals("null")) {
+                localCape.getLeft().onRenderPlayer(e);
+            } else if(capeMap.containsKey(uuid)) {
+                capeMap.get(uuid).getLeft().onRenderPlayer(e);
+            }
+        } catch(Exception ignored) {}
     }
 
     public static void onTickSlow() {

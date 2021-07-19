@@ -68,6 +68,10 @@ public class FishingHelper {
     private static final ResourceLocation FISHING_WARNING_EXCLAM = new ResourceLocation("notenoughupdates:fishing_warning_exclam.png");
     public void onRenderBobber(EntityFishHook hook) {
         if(Minecraft.getMinecraft().thePlayer.fishEntity == hook && warningState != PlayerWarningState.NOTHING) {
+
+            if(!NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning && warningState == PlayerWarningState.FISH_INCOMING) return;
+            if(!NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarningR && warningState == PlayerWarningState.FISH_HOOKED) return;
+
             GlStateManager.disableCull();
             GlStateManager.disableLighting();
             GL11.glDepthFunc(GL11.GL_ALWAYS);
@@ -134,7 +138,7 @@ public class FishingHelper {
         if(Minecraft.getMinecraft().thePlayer != null && event.phase == TickEvent.Phase.END) {
             if(buildupSoundDelay > 0) buildupSoundDelay--;
 
-            if(NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning) {
+            if(NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning || NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarningR) {
                 if(Minecraft.getMinecraft().thePlayer.fishEntity != null) {
                     if(!pingDelayList.isEmpty()) {
                         while(pingDelayList.size() > 5) pingDelayList.remove(pingDelayList.size()-1);
@@ -270,7 +274,8 @@ public class FishingHelper {
     public boolean onSpawnParticle(EnumParticleTypes particleType, double x, double y, double z, double xOffset, double yOffset, double zOffset) {
         if(!NotEnoughUpdates.INSTANCE.config.fishing.hideOtherPlayerAll &&
                 !NotEnoughUpdates.INSTANCE.config.fishing.enableCustomParticles &&
-                !NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning) {
+                !NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning &&
+                !NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarningR) {
             return false;
         }
         if(hookEntities.isEmpty()) {
@@ -340,12 +345,12 @@ public class FishingHelper {
                                     double delta = oldDistance - newDistance;
 
                                     if(newDistance < 0.2 || (delta > -0.1 && delta < 0.3)) {
-                                        if(NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning &&
+                                        if((NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning  || NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarningR) &&
                                                 Minecraft.getMinecraft().thePlayer.fishEntity != null &&
                                                 Minecraft.getMinecraft().thePlayer.fishEntity.getEntityId() == hookEntityId &&
                                                 chain.particleNum > 3) {
 
-                                            if(newDistance <= 0.2f + 0.1f*pingDelayTicks) {
+                                            if(newDistance <= 0.2f + 0.1f*pingDelayTicks && NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarningR) {
                                                 if(NotEnoughUpdates.INSTANCE.config.fishing.incomingFishHookedSounds &&
                                                         hookedWarningStateTicks <= 0) {
                                                     float vol = NotEnoughUpdates.INSTANCE.config.fishing.incomingFishHookedSoundsVol/100f;
@@ -369,7 +374,7 @@ public class FishingHelper {
                                                 }
 
                                                 hookedWarningStateTicks = 12;
-                                            } else if(newDistance >= 0.4f + 0.1f*pingDelayTicks) {
+                                            } else if(newDistance >= 0.4f + 0.1f*pingDelayTicks && NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning) {
                                                 if(NotEnoughUpdates.INSTANCE.config.fishing.incomingFishIncSounds &&
                                                         buildupSoundDelay <= 0) {
                                                     float vol = NotEnoughUpdates.INSTANCE.config.fishing.incomingFishIncSoundsVol/100f;
