@@ -37,7 +37,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.io.PrintStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -199,6 +198,7 @@ public class GuiCustomEnchant extends Gui {
     }
 
     public boolean shouldOverride(String containerName) {
+        if(!NotEnoughUpdates.INSTANCE.config.enchanting.enableGui) return false;
 //        shouldOverrideFast = false;
 //        if(true) return shouldOverrideFast;
 

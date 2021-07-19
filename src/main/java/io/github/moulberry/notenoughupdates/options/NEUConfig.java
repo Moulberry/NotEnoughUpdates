@@ -174,10 +174,10 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Enchanting Solvers",
-            desc = "Enchanting Solvers"
+            name = "Enchanting",
+            desc = "Enchanting"
     )
-    public EnchSolvers enchantingSolvers = new EnchSolvers();
+    public Enchanting enchanting = new Enchanting();
 
     @Expose
     @Category(

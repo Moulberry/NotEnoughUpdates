@@ -3,13 +3,10 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
@@ -96,7 +93,7 @@ public class EnchantingSolvers {
     }
 
     public static ItemStack overrideStack(IInventory inventory, int slotIndex, ItemStack stack) {
-        if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
+        if(!NotEnoughUpdates.INSTANCE.config.enchanting.enableEnchantingSolvers) {
             return null;
         }
 
@@ -199,7 +196,7 @@ public class EnchantingSolvers {
     }
 
     public static boolean onStackRender(ItemStack stack, IInventory inventory, int slotIndex, int x, int y) {
-        if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
+        if(!NotEnoughUpdates.INSTANCE.config.enchanting.enableEnchantingSolvers) {
             return false;
         }
 
@@ -231,14 +228,14 @@ public class EnchantingSolvers {
                                 if(item.containerIndex == slotIndex) {
                                     int meta = 0;
                                     if(solveIndex == ultrasequencerReplayIndex) {
-                                        meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.seqNext;
+                                        meta = NotEnoughUpdates.INSTANCE.config.enchanting.seqNext;
                                     } else if(solveIndex == ultrasequencerReplayIndex+1) {
-                                        meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.seqUpcoming;
+                                        meta = NotEnoughUpdates.INSTANCE.config.enchanting.seqUpcoming;
                                     }
                                     if(meta > 0) {
                                         Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.stained_glass_pane), 1, meta-1), x, y);
                                     }
-                                    if(NotEnoughUpdates.INSTANCE.config.enchantingSolvers.seqNumbers &&
+                                    if(NotEnoughUpdates.INSTANCE.config.enchanting.seqNumbers &&
                                             solveIndex >= ultrasequencerReplayIndex) {
                                         int w = Minecraft.getMinecraft().fontRendererObj.getStringWidth((solveIndex+1)+"");
                                         GlStateManager.disableDepth();
@@ -257,15 +254,15 @@ public class EnchantingSolvers {
                     if(stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass) &&
                             superpairStacks.containsKey(slotIndex)) {
                         if(possibleMatches.contains(slotIndex)) {
-                            meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.supPossible;
+                            meta = NotEnoughUpdates.INSTANCE.config.enchanting.supPossible;
                         } else {
-                            meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.supUnmatched;
+                            meta = NotEnoughUpdates.INSTANCE.config.enchanting.supUnmatched;
                         }
                     } else {
                         if(powerupMatches.contains(slotIndex)) {
-                            meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.supPower;
+                            meta = NotEnoughUpdates.INSTANCE.config.enchanting.supPower;
                         } else if(successfulMatches.contains(slotIndex)) {
-                            meta = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.supMatched;
+                            meta = NotEnoughUpdates.INSTANCE.config.enchanting.supMatched;
                         }
                     }
                     if(meta > 0) {
@@ -278,7 +275,7 @@ public class EnchantingSolvers {
     }
 
     public static boolean onStackClick(ItemStack stack, int windowId, int slotId, int mouseButtonClicked, int mode) {
-        if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
+        if(!NotEnoughUpdates.INSTANCE.config.enchanting.enableEnchantingSolvers) {
             return false;
         }
 
@@ -371,7 +368,7 @@ public class EnchantingSolvers {
     public static void processInventoryContents(boolean fromTick) {
         if(currentSolver != SolverType.CHRONOMATRON && !fromTick) return;
 
-        if(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
+        if(!NotEnoughUpdates.INSTANCE.config.enchanting.enableEnchantingSolvers) {
             return;
         }
 
@@ -533,7 +530,7 @@ public class EnchantingSolvers {
 
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
-        if(NotEnoughUpdates.INSTANCE.config.enchantingSolvers.hideTooltips &&
+        if(NotEnoughUpdates.INSTANCE.config.enchanting.hideTooltips &&
                 (currentSolver == SolverType.CHRONOMATRON || currentSolver == SolverType.ULTRASEQUENCER)) {
             String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
             if(internal == null && event.toolTip.size() > 0 && !event.toolTip.get(0).trim().replaceAll("\\(#.+\\)$", "").trim().contains(" ")) {
