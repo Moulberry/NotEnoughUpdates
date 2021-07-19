@@ -52,7 +52,7 @@ public class MiningStuff {
                     IBlockState existingBlock = Minecraft.getMinecraft().theWorld.getBlockState(pos);
                     if(existingBlock == null) return;
                     if(existingBlock.getBlock() == Blocks.stone && existingBlock.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) return;
-                    if(!checkIfAnyIsAir(getAttachedBlocks(pos))) return;
+                    if(!checkIfAnyIsAir(getAttachedBlocks(pos)) && NotEnoughUpdates.INSTANCE.config.mining.titaniumAlertMustBeVisible) return;
                     BlockPos player = Minecraft.getMinecraft().thePlayer.getPosition();
 
                     double distSq = pos.distanceSq(player);

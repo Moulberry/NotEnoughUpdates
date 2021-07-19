@@ -154,6 +154,14 @@ public class Mining {
     @ConfigEditorBoolean
     public boolean titaniumAlert = true;
 
+    @Expose
+    @ConfigOption(
+            name = "Titanium must touch air",
+            desc = "Only show an alert if the Titanium touches air. (kinda sus)"
+    )
+    @ConfigEditorBoolean
+    public boolean titaniumAlertMustBeVisible = false;
+
 
     @Expose
     @ConfigOption(
