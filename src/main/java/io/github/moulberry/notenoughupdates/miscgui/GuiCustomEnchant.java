@@ -199,8 +199,8 @@ public class GuiCustomEnchant extends Gui {
     }
 
     public boolean shouldOverride(String containerName) {
-        shouldOverrideFast = false;
-        if(true) return shouldOverrideFast;
+//        shouldOverrideFast = false;
+//        if(true) return shouldOverrideFast;
 
         shouldOverrideFast = containerName != null &&
                 NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
