@@ -24,6 +24,8 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.Map;
+
 public class MiningStuff {
 
     private static BlockPos overlayLoc = null;
@@ -45,8 +47,13 @@ public class MiningStuff {
                 SBInfo.getInstance().getLocation().startsWith("mining_") &&
                 state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) {
 
-            for(String s : MiningOverlay.commissionProgress.keySet()) {
+
+            for(Map.Entry<String, Float> entry : MiningOverlay.commissionProgress.entrySet()) {
+                String s = entry.getKey();
                 if(s.contains("Titanium")) {
+                    if(entry.getValue() == 1f){
+                        return;
+                    }
                     BlockPos pos = packetIn.getBlockPosition();
 
                     IBlockState existingBlock = Minecraft.getMinecraft().theWorld.getBlockState(pos);
