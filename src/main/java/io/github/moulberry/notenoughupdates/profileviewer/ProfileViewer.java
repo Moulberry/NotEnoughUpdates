@@ -212,9 +212,9 @@ public class ProfileViewer {
         collectionToCollectionDisplayMap.put("LOG", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
                 EnumChatFormatting.DARK_GREEN+"Oak"));
         collectionToCollectionDisplayMap.put("LOG:1", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Birch", 1));
+                EnumChatFormatting.DARK_GREEN+"Spruce", 1));
         collectionToCollectionDisplayMap.put("LOG:2", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Spruce", 2));
+                EnumChatFormatting.DARK_GREEN+"Birch", 2));
         collectionToCollectionDisplayMap.put("LOG_2:1", Utils.createItemStack(Item.getItemFromBlock(Blocks.log2),
                 EnumChatFormatting.DARK_GREEN+"Dark Oak", 1));
         collectionToCollectionDisplayMap.put("LOG_2", Utils.createItemStack(Item.getItemFromBlock(Blocks.log2),
