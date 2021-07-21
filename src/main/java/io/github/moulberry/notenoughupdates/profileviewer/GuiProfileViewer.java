@@ -1665,6 +1665,8 @@ public class GuiProfileViewer extends GuiScreen {
                 return 4;
             case "backpack_contents":
                 return 5;
+            case "ender_chest_contents":
+                return 5;
         }
         return 6;
     }
@@ -1759,22 +1761,27 @@ public class GuiProfileViewer extends GuiScreen {
         ItemStack[][][] inventories = new ItemStack[numInventories][][];
 
         //int availableSlots = getAvailableSlotsForInventory(inventoryInfo, collectionInfo, invName);
+        int startNumberJ = 0;
 
         for(int i=0; i<numInventories; i++) {
             int thisRows = Math.min(maxRowsPerPage, rows-maxRowsPerPage*i);
+            int invSize =0;
+
+
             if(invName.equals("backpack_contents")) {
                 thisRows = backPackSizes.get(i).getAsInt()/9;
+                invSize = startNumberJ+(thisRows*9);
+                maxInvSize = thisRows*9;
+            } else {
+                startNumberJ = maxInvSize*i;
+                invSize = Math.min(jsonInvSize, maxInvSize + maxInvSize * i);
             }
             if(thisRows <= 0) break;
 
             ItemStack[][] items = new ItemStack[thisRows][rowSize];
-            int invSize =0;
 
-            invSize = Math.min(jsonInvSize, maxInvSize + maxInvSize * i);
+            for(int j=startNumberJ; j<invSize; j++) {
 
-
-
-            for(int j=maxInvSize*i; j<invSize; j++) {
                 int xIndex = (j%maxInvSize)%rowSize;
                 int yIndex = (j%maxInvSize)/rowSize;
                 if(invName.equals("inv_contents")) {
@@ -1815,9 +1822,13 @@ public class GuiProfileViewer extends GuiScreen {
                         stack.setTagCompound(tag);
                     }
                 }
+
                 items[yIndex][xIndex] = stack;
             }
             inventories[i] = items;
+            if(invName.equals("backpack_contents")) {
+                startNumberJ = startNumberJ + backPackSizes.get(i).getAsInt();
+            }
         }
 
         inventoryItems.put(invName, inventories);
