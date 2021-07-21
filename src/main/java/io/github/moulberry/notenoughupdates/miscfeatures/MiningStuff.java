@@ -6,6 +6,7 @@ import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.block.BlockAir;
 import net.minecraft.block.BlockStone;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -23,10 +24,18 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.Map;
+
 public class MiningStuff {
 
     private static BlockPos overlayLoc = null;
     private static long titaniumNotifMillis = 0;
+    private static Minecraft mc;
+
+
+    public MiningStuff(){
+        mc = Minecraft.getMinecraft();
+    }
 
     public static void processBlockChangePacket(S23PacketBlockChange packetIn) {
         if(!NotEnoughUpdates.INSTANCE.config.mining.titaniumAlert) {
@@ -38,14 +47,19 @@ public class MiningStuff {
                 SBInfo.getInstance().getLocation().startsWith("mining_") &&
                 state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) {
 
-            for(String s : MiningOverlay.commissionProgress.keySet()) {
+
+            for(Map.Entry<String, Float> entry : MiningOverlay.commissionProgress.entrySet()) {
+                String s = entry.getKey();
                 if(s.contains("Titanium")) {
+                    if(entry.getValue() == 1f){
+                        return;
+                    }
                     BlockPos pos = packetIn.getBlockPosition();
 
                     IBlockState existingBlock = Minecraft.getMinecraft().theWorld.getBlockState(pos);
                     if(existingBlock == null) return;
                     if(existingBlock.getBlock() == Blocks.stone && existingBlock.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH) return;
-
+                    if(!checkIfAnyIsAir(getAttachedBlocks(pos)) && NotEnoughUpdates.INSTANCE.config.mining.titaniumAlertMustBeVisible) return;
                     BlockPos player = Minecraft.getMinecraft().thePlayer.getPosition();
 
                     double distSq = pos.distanceSq(player);
@@ -57,6 +71,26 @@ public class MiningStuff {
                 }
             }
         }
+    }
+
+    private static BlockPos[] getAttachedBlocks(BlockPos block){
+        BlockPos[] blocks = new BlockPos[6];
+        blocks[0] = new BlockPos(block.getX()-1, block.getY(), block.getZ());
+        blocks[1] = new BlockPos(block.getX()+1, block.getY(), block.getZ());
+        blocks[2] = new BlockPos(block.getX(), block.getY()-1, block.getZ());
+        blocks[3] = new BlockPos(block.getX(), block.getY()+1, block.getZ());
+        blocks[4] = new BlockPos(block.getX(), block.getY(), block.getZ()-1);
+        blocks[5] = new BlockPos(block.getX(), block.getY(), block.getZ()+1);
+        return blocks;
+    }
+
+    private static boolean checkIfAnyIsAir(BlockPos[] blocks){
+        for (BlockPos block : blocks) {
+            if(mc.theWorld.getBlockState(block).getBlock() instanceof BlockAir){
+                return true;
+            }
+        }
+        return false;
     }
 
     @SubscribeEvent

@@ -331,7 +331,7 @@ public class AccessoryBagOverlay {
             List<String> missingInternal = new ArrayList<>();
             for(Map.Entry<String, JsonObject> entry : NotEnoughUpdates.INSTANCE.manager.getItemInformation().entrySet()) {
                 if(entry.getValue().has("lore")) {
-                    if(checkItemType(entry.getValue().get("lore").getAsJsonArray(), "ACCESSORY", "HATCCESSORY") >= 0) {
+                    if(checkItemType(entry.getValue().get("lore").getAsJsonArray(), "ACCESSORY", "HATCCESSORY", "DUNGEON ACCESSORY") >= 0) {
                         missingInternal.add(entry.getKey());
                     }
                 }

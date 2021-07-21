@@ -272,6 +272,7 @@ public class FishingHelper {
     }
 
     public boolean onSpawnParticle(EnumParticleTypes particleType, double x, double y, double z, double xOffset, double yOffset, double zOffset) {
+
         if(!NotEnoughUpdates.INSTANCE.config.fishing.hideOtherPlayerAll &&
                 !NotEnoughUpdates.INSTANCE.config.fishing.enableCustomParticles &&
                 !NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning &&
@@ -282,9 +283,11 @@ public class FishingHelper {
             return false;
         }
 
-        if(particleType == EnumParticleTypes.WATER_WAKE && Math.abs(yOffset - 0.01f) < 0.001f) {
+
+        if((particleType == EnumParticleTypes.WATER_WAKE|| particleType == EnumParticleTypes.SMOKE_NORMAL) && Math.abs(yOffset - 0.01f) < 0.001f) {
             double angle1 = calculateAngleFromOffsets(xOffset, -zOffset);
             double angle2 = calculateAngleFromOffsets(-xOffset, zOffset);
+
 
             final List<Integer> possibleHooks1 = new ArrayList<>();
             final List<Integer> possibleHooks2 = new ArrayList<>();
