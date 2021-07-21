@@ -157,13 +157,14 @@ public class MiningOverlay extends TextOverlay {
 
         if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay) return;
         if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
+        if(!SBInfo.getInstance().getLocation().equals("mining_3") && !SBInfo.getInstance().getLocation().equals("crystal_hollows")) return;
 
         overlayStrings = new ArrayList<>();
         commissionProgress.clear();
         List<String> forgeStrings = new ArrayList<>();
         List<String> forgeStringsEmpty = new ArrayList<>();
         String mithrilPowder = null;
+        String gemstonePowder = null;
 
         boolean commissions = false;
         boolean forges = false;
@@ -173,7 +174,10 @@ public class MiningOverlay extends TextOverlay {
             if(name.contains("Mithril Powder:")) {
                 mithrilPowder = DARK_AQUA+Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
             }
-            if(name.equals(RESET.toString()+BLUE+BOLD+"Forges"+RESET)) {
+            if(name.contains("Gemstone Powder:")) {
+                gemstonePowder = DARK_AQUA+Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
+            }
+            if(name.equals(RESET.toString()+BLUE+BOLD+"Forges")) {
                 commissions = false;
                 forges = true;
                 continue;
@@ -268,10 +272,12 @@ public class MiningOverlay extends TextOverlay {
                 case 1:
                     overlayStrings.add(mithrilPowder); break;
                 case 2:
-                    overlayStrings.addAll(forgeStrings); break;
+                    overlayStrings.add(gemstonePowder); break;
                 case 3:
-                    overlayStrings.addAll(forgeStringsEmpty); break;
+                    overlayStrings.addAll(forgeStrings); break;
                 case 4:
+                    overlayStrings.addAll(forgeStringsEmpty); break;
+                case 5:
                     overlayStrings.add(pickaxeCooldown); break;
             }
         }

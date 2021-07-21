@@ -1617,12 +1617,13 @@ public class NEUConfig extends Config {
         @ConfigEditorDraggableList(
                 exampleText = {"\u00a73Goblin Slayer: \u00a7626.5%\n\u00a73Lucky Raffle: \u00a7c0.0%",
                         "\u00a73Mithril Powder: \u00a726,243",
+                        "\u00a73Gemstone Powder: \u00a7d6,243",
                         "\u00a73Forge 1) \u00a79Diamonite\u00a77: \u00a7aReady!",
                         "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY",
                         "\u00a73Pickaxe CD: \u00a7a78s"}
         )
         @ConfigAccordionId(id = 2)
-        public List<Integer> dwarvenText = new ArrayList<>(Arrays.asList(0, 1, 4, 2, 3));
+        public List<Integer> dwarvenText = new ArrayList<>(Arrays.asList(0, 1, 4, 2, 3, 5));
 
         @Expose
         @ConfigOption(
