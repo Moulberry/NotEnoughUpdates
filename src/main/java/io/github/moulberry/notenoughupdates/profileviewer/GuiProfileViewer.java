@@ -518,16 +518,23 @@ public class GuiProfileViewer extends GuiScreen {
                 selectedInventory = "ender_chest_contents"; break;
             case Keyboard.KEY_3:
             case Keyboard.KEY_NUMPAD3:
-                selectedInventory = "talisman_bag"; break;
+                selectedInventory = "backpack_contents"; break;
             case Keyboard.KEY_4:
             case Keyboard.KEY_NUMPAD4:
-                selectedInventory = "wardrobe_contents"; break;
+                selectedInventory = "personal_vault_contents"; break;
             case Keyboard.KEY_5:
             case Keyboard.KEY_NUMPAD5:
-                selectedInventory = "fishing_bag"; break;
+                selectedInventory = "talisman_bag"; break;
             case Keyboard.KEY_6:
             case Keyboard.KEY_NUMPAD6:
+                selectedInventory = "wardrobe_contents"; break;
+            case Keyboard.KEY_7:
+            case Keyboard.KEY_NUMPAD7:
+                selectedInventory = "fishing_bag"; break;
+            case Keyboard.KEY_8:
+            case Keyboard.KEY_NUMPAD8:
                 selectedInventory = "potion_bag"; break;
+
         }
         Utils.playPressSound();
     }
@@ -1583,6 +1590,8 @@ public class GuiProfileViewer extends GuiScreen {
     static {
         invNameToDisplayMap.put("inv_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.chest), EnumChatFormatting.GRAY+"Inventory"));
         invNameToDisplayMap.put("ender_chest_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.ender_chest), EnumChatFormatting.GRAY+"Ender Chest"));
+        invNameToDisplayMap.put("backpack_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dropper), EnumChatFormatting.GRAY+"Backpacks"));
+        invNameToDisplayMap.put("personal_vault_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dispenser), EnumChatFormatting.GRAY+"Personal vault"));
         invNameToDisplayMap.put("talisman_bag", Utils.createItemStack(Items.golden_apple, EnumChatFormatting.GRAY+"Accessory Bag"));
         invNameToDisplayMap.put("wardrobe_contents", Utils.createItemStack(Items.leather_chestplate, EnumChatFormatting.GRAY+"Wardrobe"));
         invNameToDisplayMap.put("fishing_bag", Utils.createItemStack(Items.fish, EnumChatFormatting.GRAY+"Fishing Bag"));
@@ -1654,6 +1663,8 @@ public class GuiProfileViewer extends GuiScreen {
         switch(invName) {
             case "wardrobe_contents":
                 return 4;
+            case "backpack_contents":
+                return 5;
         }
         return 6;
     }
@@ -1663,6 +1674,7 @@ public class GuiProfileViewer extends GuiScreen {
             case "talisman_bag":
             case "fishing_bag":
             case "potion_bag":
+            case "personal_vault_contents":
                 return true;
         }
         return false;
@@ -1739,6 +1751,10 @@ public class GuiProfileViewer extends GuiScreen {
         int maxInvSize = rowSize*maxRowsPerPage;
 
         int numInventories = (jsonInvSize-1)/maxInvSize+1;
+        JsonArray backPackSizes = (JsonArray) inventoryInfo.get("backpack_sizes");
+        if(invName.equals("backpack_contents")) {
+            numInventories = backPackSizes.size();
+        }
 
         ItemStack[][][] inventories = new ItemStack[numInventories][][];
 
@@ -1746,11 +1762,18 @@ public class GuiProfileViewer extends GuiScreen {
 
         for(int i=0; i<numInventories; i++) {
             int thisRows = Math.min(maxRowsPerPage, rows-maxRowsPerPage*i);
+            if(invName.equals("backpack_contents")) {
+                thisRows = backPackSizes.get(i).getAsInt()/9;
+            }
             if(thisRows <= 0) break;
 
             ItemStack[][] items = new ItemStack[thisRows][rowSize];
+            int invSize =0;
 
-            int invSize = Math.min(jsonInvSize, maxInvSize+maxInvSize*i);
+            invSize = Math.min(jsonInvSize, maxInvSize + maxInvSize * i);
+
+
+
             for(int j=maxInvSize*i; j<invSize; j++) {
                 int xIndex = (j%maxInvSize)%rowSize;
                 int yIndex = (j%maxInvSize)/rowSize;
@@ -1865,7 +1888,7 @@ public class GuiProfileViewer extends GuiScreen {
         }
 
         for(int i=0; i<armorItems.length; i++) {
-            ItemStack stack = armorItems[i];
+                ItemStack stack = armorItems[i];
             if(stack != null) {
                 Utils.drawItemStack(stack, guiLeft+173, guiTop+67-18*i);
                 if(stack != fillerStack) {
@@ -1885,7 +1908,7 @@ public class GuiProfileViewer extends GuiScreen {
 
         ItemStack[][] inventory = inventories[currentInventoryIndex];
         if(inventory == null) {
-            Utils.drawStringCentered(EnumChatFormatting.RED+"Inventory API not enabled!", Minecraft.getMinecraft().fontRendererObj,
+            Utils.drawStringCentered(EnumChatFormatting.RED+"Inventory API not enabled!"+selectedInventory, Minecraft.getMinecraft().fontRendererObj,
                     guiLeft+317, guiTop+101, true, 0);
             return;
         }

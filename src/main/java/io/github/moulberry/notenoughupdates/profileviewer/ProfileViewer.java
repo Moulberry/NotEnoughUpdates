@@ -9,7 +9,6 @@ import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -17,12 +16,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -780,6 +777,12 @@ public class ProfileViewer {
             String fishing_bag_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "fishing_bag.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String quiver_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "quiver.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String ender_chest_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "ender_chest_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
+            //Todo clean this up
+            //Fake string is so for I loop works the same
+            String backpack_contents_json_fake = "fake should fix later";
+            JsonObject backpack_contents_json = (JsonObject) Utils.getElement(profileInfo, "backpack_contents");
+            JsonObject backpack_icons = (JsonObject) Utils.getElement(profileInfo, "backpack_icons");
+            String personal_vault_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "personal_vault_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String wardrobe_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "wardrobe_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String potion_bag_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "potion_bag.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String inv_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "inv_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
@@ -788,20 +791,29 @@ public class ProfileViewer {
 
             JsonObject inventoryInfo = new JsonObject();
 
-            String[] inv_names = new String[]{"inv_armor", "fishing_bag", "quiver", "ender_chest_contents", "wardrobe_contents",
+            String[] inv_names = new String[]{"inv_armor", "fishing_bag", "quiver", "ender_chest_contents", "backpack_contents", "personal_vault_contents", "wardrobe_contents",
                     "potion_bag", "inv_contents", "talisman_bag", "candy_inventory_contents"};
-            String[] inv_bytes = new String[]{inv_armor_bytes, fishing_bag_bytes, quiver_bytes, ender_chest_contents_bytes, wardrobe_contents_bytes,
+            String[] inv_bytes = new String[]{inv_armor_bytes, fishing_bag_bytes, quiver_bytes, ender_chest_contents_bytes, backpack_contents_json_fake, personal_vault_contents_bytes, wardrobe_contents_bytes,
                     potion_bag_bytes, inv_contents_bytes, talisman_bag_bytes, candy_inventory_contents_bytes};
             for(int i=0; i<inv_bytes.length; i++) {
                 try {
                     String bytes = inv_bytes[i];
 
                     JsonArray contents = new JsonArray();
-                    NBTTagCompound inv_contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(bytes)));
-                    NBTTagList items = inv_contents_nbt.getTagList("i", 10);
-                    for(int j=0; j<items.tagCount(); j++) {
-                        JsonObject item = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
-                        contents.add(item);
+
+                    if(inv_names[i].equals("backpack_contents")){
+                        JsonObject temp = getBackpackData(backpack_contents_json, backpack_icons);
+                        contents = (JsonArray) temp.get("contents");
+                        inventoryInfo.add("backpack_sizes", temp.get("backpack_sizes"));
+
+                    } else {
+
+                        NBTTagCompound inv_contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(bytes)));
+                        NBTTagList items = inv_contents_nbt.getTagList("i", 10);
+                        for (int j = 0; j < items.tagCount(); j++) {
+                            JsonObject item = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
+                            contents.add(item);
+                        }
                     }
                     inventoryInfo.add(inv_names[i], contents);
                 } catch(IOException e) {
@@ -813,6 +825,84 @@ public class ProfileViewer {
 
             return inventoryInfo;
         }
+
+        public JsonObject getBackpackData(JsonObject backpack_contents_json, JsonObject backpack_icons) {
+
+
+            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+                System.out.println(ste);
+            }
+
+            JsonArray contents = new JsonArray();
+
+
+            String[] backpackArray = new String[0];
+
+
+            //Create backpack array which sizes up
+            for(Map.Entry<String, JsonElement> backpackIcon : backpack_icons.entrySet()) {
+                if(backpackIcon.getValue() instanceof JsonObject){
+                    JsonObject backpackData = (JsonObject)backpack_contents_json.get(backpackIcon.getKey());
+                    String bytes = Utils.getElementAsString(backpackData.get("data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
+                    backpackArray = growArray(bytes, Integer.parseInt(backpackIcon.getKey()), backpackArray);
+                }
+            }
+
+
+            //reduce backpack array to filter out not existent backpacks
+            {
+                int backpackCount = 0;
+                String[] tempBackpackArray = new String[0];
+                for (String s : backpackArray) {
+                    if (s != null) {
+                        backpackCount++;
+                        String[] veryTempBackpackArray = new String[tempBackpackArray.length + 1];
+                        System.arraycopy(tempBackpackArray, 0, veryTempBackpackArray, 0, tempBackpackArray.length);
+
+                        veryTempBackpackArray[veryTempBackpackArray.length - 1] = s;
+                        tempBackpackArray = veryTempBackpackArray;
+                    }
+                }
+                backpackArray = tempBackpackArray;
+            }
+
+            JsonArray backpackSizes = new JsonArray();
+
+            for (String backpack : backpackArray) {
+                try {
+                    NBTTagCompound inv_contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(backpack)));
+                    NBTTagList items = inv_contents_nbt.getTagList("i", 10);
+
+                    backpackSizes.add(new JsonPrimitive(items.tagCount()));
+                    for (int j = 0; j < items.tagCount(); j++) {
+                        JsonObject item = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
+                        contents.add(item);
+                    }
+                } catch (IOException ignored) {
+                }
+            }
+
+
+            JsonObject bundledReturn = new JsonObject();
+            bundledReturn.add("contents", contents);
+            bundledReturn.add("backpack_sizes", backpackSizes);
+
+            return bundledReturn;
+        }
+
+        public String[] growArray(String bytes, int index, String[] oldArray){
+            int newSize = Math.max(index+1, oldArray.length);
+
+            String[] newArray = new String[newSize];
+            for (int i = 0; i < oldArray.length; i++) {
+                newArray[i] = oldArray[i];
+            }
+            newArray[index] = bytes;
+
+            return newArray;
+        }
+
+
 
         public JsonObject getPetsInfo(String profileId) {
             JsonObject profileInfo = getProfileInformation(profileId);
