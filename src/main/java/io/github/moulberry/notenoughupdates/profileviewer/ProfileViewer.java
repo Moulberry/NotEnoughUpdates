@@ -182,7 +182,7 @@ public class ProfileViewer {
                 EnumChatFormatting.GRAY+"Sand"));
         collectionToCollectionDisplayMap.put("ENDER_STONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.end_stone),
                 EnumChatFormatting.GRAY+"End Stone"));
-        collectionToCollectionDisplayMap.put("MITHRIL_ORE", Utils.createItemStack(Item.getItemFromBlock(Blocks.prismarine),
+        collectionToCollectionDisplayMap.put("MITHRIL_ORE", Utils.createItemStack(Items.prismarine_crystals,
                 EnumChatFormatting.GRAY+"Mithril"));
         collectionToCollectionDisplayMap.put("HARD_STONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.stone),
                 EnumChatFormatting.GRAY+"Hard Stone"));
