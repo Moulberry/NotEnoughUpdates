@@ -151,7 +151,7 @@ public class CustomItemEffects {
                 if(NotEnoughUpdates.INSTANCE.config.itemOverlays.smoothTpMillis <= 0
                         || Minecraft.getMinecraft().gameSettings.thirdPersonView != 0) return;
 
-                boolean aote = NotEnoughUpdates.INSTANCE.config.itemOverlays.enableSmoothAOTE && internal.equals("ASPECT_OF_THE_END");
+                boolean aote = NotEnoughUpdates.INSTANCE.config.itemOverlays.enableSmoothAOTE && (internal.equals("ASPECT_OF_THE_END") || internal.equals("ASPECT_OF_THE_VOID"));
                 boolean hyp = NotEnoughUpdates.INSTANCE.config.itemOverlays.enableSmoothHyperion && shadowWarp;
                 if(aote || hyp) {
                     aoteUseMillis = System.currentTimeMillis();
