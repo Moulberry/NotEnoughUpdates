@@ -40,6 +40,7 @@ import org.lwjgl.util.vector.Vector4f;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -1439,7 +1440,9 @@ public class StorageOverlay extends GuiElement {
         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) return false;
 
         int dWheel = Mouse.getEventDWheel();
-        if(dWheel != 0) {
+        if(dWheel != 0 &&
+                (((NotEnoughUpdates.INSTANCE.config.storageGUI.scrollLock == 0)||
+                (NotEnoughUpdates.INSTANCE.config.storageGUI.scrollLock == 1 && !KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.slotLockKey))))) {
             if(dWheel < 0) {
                 dWheel = -1;
                 if(scrollVelocity > 0) scrollVelocity = 0;
