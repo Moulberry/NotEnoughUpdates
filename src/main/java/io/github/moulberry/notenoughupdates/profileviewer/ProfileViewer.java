@@ -835,9 +835,20 @@ public class ProfileViewer {
             return inventoryInfo;
         }
 
+        public boolean checkIfValidJson(JsonElement element){
+            return element != null;
+        }
+
         public JsonObject getBackpackData(JsonObject backpack_contents_json, JsonObject backpack_icons) {
 
             JsonArray contents = new JsonArray();
+            if(!(checkIfValidJson(backpack_contents_json) && checkIfValidJson(backpack_icons))){
+                JsonObject bundledReturn = new JsonObject();
+                bundledReturn.add("contents", new JsonArray());
+                bundledReturn.add("backpack_sizes", new JsonArray());
+
+                return bundledReturn;
+            }
 
             String[] backpackArray = new String[0];
 
