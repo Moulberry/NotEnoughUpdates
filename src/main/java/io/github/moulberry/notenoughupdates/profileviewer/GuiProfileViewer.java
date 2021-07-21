@@ -1591,8 +1591,9 @@ public class GuiProfileViewer extends GuiScreen {
     static {
         invNameToDisplayMap.put("inv_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.chest), EnumChatFormatting.GRAY+"Inventory"));
         invNameToDisplayMap.put("ender_chest_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.ender_chest), EnumChatFormatting.GRAY+"Ender Chest"));
-        invNameToDisplayMap.put("backpack_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dropper), EnumChatFormatting.GRAY+"Backpacks"));
-        invNameToDisplayMap.put("personal_vault_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dispenser), EnumChatFormatting.GRAY+"Personal vault"));
+        //invNameToDisplayMap.put("backpack_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dropper), EnumChatFormatting.GRAY+"Backpacks"));
+        invNameToDisplayMap.put("backpack_contents", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("JUMBO_BACKPACK")).setStackDisplayName(EnumChatFormatting.GRAY+"Backpacks"));
+        invNameToDisplayMap.put("personal_vault_contents", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("IRON_CHEST")).setStackDisplayName(EnumChatFormatting.GRAY+"Personal vault"));
         invNameToDisplayMap.put("talisman_bag", Utils.createItemStack(Items.golden_apple, EnumChatFormatting.GRAY+"Accessory Bag"));
         invNameToDisplayMap.put("wardrobe_contents", Utils.createItemStack(Items.leather_chestplate, EnumChatFormatting.GRAY+"Wardrobe"));
         invNameToDisplayMap.put("fishing_bag", Utils.createItemStack(Items.fish, EnumChatFormatting.GRAY+"Fishing Bag"));
@@ -2222,7 +2223,7 @@ public class GuiProfileViewer extends GuiScreen {
                 guiLeft+xStart+xOffset, guiTop+yStartBottom, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_4,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T5", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_4,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*2, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T3", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_2,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*3, 76);
