@@ -107,7 +107,7 @@ public class ItemOverlays {
     @Expose
     @ConfigOption(
             name = "Enable Smooth AOTE",
-            desc = "Teleport smoothly to your destination when using AOTE"
+            desc = "Teleport smoothly to your destination when using AOTE or AOTV"
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 2)

@@ -690,7 +690,7 @@ public class ProfileViewer {
             Level level_skill_mining = getLevel(levelingArray, experience_skill_mining, getCap(leveling, "mining"), false);
             Level level_skill_foraging = getLevel(levelingArray, experience_skill_foraging, getCap(leveling, "foraging"), false);
             Level level_skill_enchanting = getLevel(levelingArray, experience_skill_enchanting, getCap(leveling, "enchanting"),  false);
-            Level level_skill_carpentry = getLevel(levelingArray, experience_skill_carpentry,getCap(leveling, "carpetry"),  false);
+            Level level_skill_carpentry = getLevel(levelingArray, experience_skill_carpentry,getCap(leveling, "carpentry"),  false);
             Level level_skill_farming = getLevel(levelingArray, experience_skill_farming, farmingCap, false);
             Level level_skill_combat = getLevel(levelingArray, experience_skill_combat, getCap(leveling, "combat"), false);
             Level level_skill_fishing = getLevel(levelingArray, experience_skill_fishing, getCap(leveling, "fishing"), false);
