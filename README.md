@@ -11,8 +11,7 @@ This is a fork that I will try to keep updated with the original NEU repo while 
 4. Added Dungeon items to the itemlist categories (for example armors now include dungeon armors and weapons include dungeon weapons)
 5. Added check to see if titanium that spawned atleast touches 1 air block (toggleable)
 6. Added check so titanium alert doesnt happen if titanium commision is set to "DONE"
-7. Added Storage to PV (with correct sizes)
-8. Added Personal Vault to PV
+8. Added Personal Vault to PV (storage wip)
 
 **Currently the fixed features are:**
 
