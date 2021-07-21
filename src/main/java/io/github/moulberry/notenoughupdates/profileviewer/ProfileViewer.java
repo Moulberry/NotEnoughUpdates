@@ -837,16 +837,9 @@ public class ProfileViewer {
 
         public JsonObject getBackpackData(JsonObject backpack_contents_json, JsonObject backpack_icons) {
 
-
-            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                System.out.println(ste);
-            }
-
             JsonArray contents = new JsonArray();
 
-
             String[] backpackArray = new String[0];
-
 
             //Create backpack array which sizes up
             for(Map.Entry<String, JsonElement> backpackIcon : backpack_icons.entrySet()) {
