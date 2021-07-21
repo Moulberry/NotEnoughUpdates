@@ -1,7 +1,7 @@
 
 # NotEnoughUpdates Fork by DoKM
 
-### Currently if you get a array out of bounds exception this is due to the todolist updated
+### Currently if you get a array out of bounds exception this is due to the todolist update
 Please go into .minecraft/config/notenoughupdates and then open the configNew.json in a text editor.
 In that file go to the "miscOverlays" section and find "todoText" and clear it.
 
