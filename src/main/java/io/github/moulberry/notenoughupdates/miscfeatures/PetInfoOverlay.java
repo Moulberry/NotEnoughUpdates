@@ -752,7 +752,7 @@ public class PetInfoOverlay extends TextOverlay {
                                             break;
                                         }
                                     }
-                                    if(!foundDespawn && config.selectedPet == petIndex) {
+                                    if(foundDespawn && config.selectedPet == petIndex) {
                                         clearPet();
                                     }
                                 }
