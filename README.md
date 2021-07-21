@@ -1,6 +1,10 @@
 
 # NotEnoughUpdates Fork by DoKM
 
+### Currently if you get a array out of bounds exception this is due to the todolist updated
+Please go into .minecraft/config/notenoughupdates and then open the configNew.json in a text editor.
+In that file go to the "miscOverlays" section and find "todoText" and clear it.
+
 This is a fork that I will try to keep updated with the original NEU repo while also adding features/fixing bugs etc.
 
 **Currently the added features are:**
