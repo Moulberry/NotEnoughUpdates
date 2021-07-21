@@ -102,6 +102,28 @@ public class StorageGUI {
     @ConfigAccordionId(id = 1)
     public String selectedStorageColour = "0:255:255:223:0";
 
+    @Expose
+    @ConfigOption(
+            name = "Scroll Lock",
+            desc = "Stop scrolling when holding the key below.\n"+
+                    "Usefull for people using scrollable tooltips."
+    )
+    @ConfigEditorDropdown(
+            values = {"Off", "On"}
+    )
+    @ConfigAccordionId(id = 1)
+    public int scrollLock = 0;
+
+    @Expose
+    @ConfigOption(
+            name = "Scroll Lock Key",
+            desc = "Hold this keep to stop scrolling in the gui.\n" +
+                    "Don't forget to enable it above."
+    )
+    @ConfigEditorKeybind(defaultKey = Keyboard.KEY_LSHIFT)
+    @ConfigAccordionId(id = 1)
+    public int slotLockKey = Keyboard.KEY_LSHIFT;
+
 
     @ConfigOption(
             name = "Inventory Backpacks",

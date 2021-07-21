@@ -616,8 +616,9 @@ public class GuiProfileViewer extends GuiScreen {
             int invSizeY = inventoryRows*18+17+7;
 
             int y = guiTop+101-invSizeY/2;
+            int staticSelectorHeight = guiTop+177;
 
-            if(mouseY > y+invSizeY && mouseY < y+invSizeY+16) {
+            if(mouseY > staticSelectorHeight && mouseY < staticSelectorHeight+16) {
                 if(mouseX > guiLeft+320-12 && mouseX < guiLeft+320+12) {
                     if(mouseX < guiLeft+320) {
                         currentInventoryIndex--;
@@ -1590,8 +1591,9 @@ public class GuiProfileViewer extends GuiScreen {
     static {
         invNameToDisplayMap.put("inv_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.chest), EnumChatFormatting.GRAY+"Inventory"));
         invNameToDisplayMap.put("ender_chest_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.ender_chest), EnumChatFormatting.GRAY+"Ender Chest"));
-        invNameToDisplayMap.put("backpack_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dropper), EnumChatFormatting.GRAY+"Backpacks"));
-        invNameToDisplayMap.put("personal_vault_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dispenser), EnumChatFormatting.GRAY+"Personal vault"));
+        //invNameToDisplayMap.put("backpack_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dropper), EnumChatFormatting.GRAY+"Backpacks"));
+        invNameToDisplayMap.put("backpack_contents", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("JUMBO_BACKPACK")).setStackDisplayName(EnumChatFormatting.GRAY+"Backpacks"));
+        invNameToDisplayMap.put("personal_vault_contents", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("IRON_CHEST")).setStackDisplayName(EnumChatFormatting.GRAY+"Personal vault"));
         invNameToDisplayMap.put("talisman_bag", Utils.createItemStack(Items.golden_apple, EnumChatFormatting.GRAY+"Accessory Bag"));
         invNameToDisplayMap.put("wardrobe_contents", Utils.createItemStack(Items.leather_chestplate, EnumChatFormatting.GRAY+"Wardrobe"));
         invNameToDisplayMap.put("fishing_bag", Utils.createItemStack(Items.fish, EnumChatFormatting.GRAY+"Fishing Bag"));
@@ -1993,6 +1995,7 @@ public class GuiProfileViewer extends GuiScreen {
 
         int x = guiLeft+320-176/2;
         int y = guiTop+101-invSizeY/2;
+        int staticSelectorHeight = guiTop+177;
 
         this.drawTexturedModalRect(x, y, 0, 0, 176, inventoryRows*18+17);
         this.drawTexturedModalRect(x, y+inventoryRows*18+17, 0, 215, 176, 7);
@@ -2000,7 +2003,7 @@ public class GuiProfileViewer extends GuiScreen {
         boolean leftHovered = false;
         boolean rightHovered = false;
         if(Mouse.isButtonDown(0)) {
-            if(mouseY > y+invSizeY && mouseY < y+invSizeY+16) {
+            if(mouseY > staticSelectorHeight && mouseY < staticSelectorHeight+16) {
                 if(mouseX > guiLeft+320-12 && mouseX < guiLeft+320+12) {
                     if(mouseX < guiLeft+320) {
                         leftHovered = true;
@@ -2013,11 +2016,11 @@ public class GuiProfileViewer extends GuiScreen {
         Minecraft.getMinecraft().getTextureManager().bindTexture(resource_packs);
 
         if(currentInventoryIndex > 0) {
-            Utils.drawTexturedRect(guiLeft+320-12, y+invSizeY, 12, 16,
+            Utils.drawTexturedRect(guiLeft+320-12, staticSelectorHeight, 12, 16,
                     29/256f, 53/256f, !leftHovered?0:32/256f, !leftHovered?32/256f:64/256f, GL11.GL_NEAREST);
         }
         if(currentInventoryIndex < inventories.length-1) {
-            Utils.drawTexturedRect(guiLeft+320, y+invSizeY, 12, 16,
+            Utils.drawTexturedRect(guiLeft+320, staticSelectorHeight, 12, 16,
                     5/256f, 29/256f, !rightHovered?0:32/256f, !rightHovered?32/256f:64/256f, GL11.GL_NEAREST);
         }
 
@@ -2220,7 +2223,7 @@ public class GuiProfileViewer extends GuiScreen {
                 guiLeft+xStart+xOffset, guiTop+yStartBottom, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_3,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T4", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_4,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Revenant T5", EnumChatFormatting.WHITE.toString()+(int)zombie_boss_kills_tier_4,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*2, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA+"Tarantula T3", EnumChatFormatting.WHITE.toString()+(int)spider_boss_kills_tier_2,
                 guiLeft+xStart+xOffset, guiTop+yStartBottom+yOffset*3, 76);

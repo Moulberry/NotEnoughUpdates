@@ -79,7 +79,7 @@ public class ProfileViewer {
         collectionCatToCollectionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON_INGOT", "GOLD_INGOT", "DIAMOND", "INK_SACK:4",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE_DUST", "GRAVEL", "ICE", "NETHERRACK",
-                        "SAND", "ENDER_STONE"));
+                        "SAND", "ENDER_STONE", "MITHRIL_ORE", "HARD_STONE", "GEMSTONE_COLLECTION"));
         collectionCatToCollectionMap.put(CAT_COMBAT,
                 Utils.createList("ROTTEN_FLESH", "BONE", "STRING", "SPIDER_EYE", "SULPHUR", "ENDER_PEARL",
                         "GHAST_TEAR", "SLIME_BALL", "BLAZE_ROD", "MAGMA_CREAM"));
@@ -99,7 +99,7 @@ public class ProfileViewer {
         collectionCatToMinionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON", "GOLD", "DIAMOND", "LAPIS",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE", "GRAVEL", "ICE", null,
-                        "SAND", "ENDER_STONE"));
+                        "SAND", "ENDER_STONE", "MITHRIL", "HARD_STONE", null));
         collectionCatToMinionMap.put(CAT_COMBAT,
                 Utils.createList("ZOMBIE", "SKELETON", "SPIDER", "CAVESPIDER", "CREEPER", "ENDERMAN",
                         "GHAST", "SLIME", "BLAZE", "MAGMA_CUBE"));
@@ -182,6 +182,15 @@ public class ProfileViewer {
                 EnumChatFormatting.GRAY+"Sand"));
         collectionToCollectionDisplayMap.put("ENDER_STONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.end_stone),
                 EnumChatFormatting.GRAY+"End Stone"));
+        collectionToCollectionDisplayMap.put("MITHRIL_ORE", Utils.createItemStack(Items.prismarine_crystals,
+                EnumChatFormatting.GRAY+"Mithril"));
+        collectionToCollectionDisplayMap.put("HARD_STONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.stone),
+                EnumChatFormatting.GRAY+"Hard Stone"));
+        ItemStack gemstone = Utils.createItemStack(Item.getItemFromBlock(Blocks.stained_glass),
+                EnumChatFormatting.GRAY+"Gem Stones");
+        gemstone.setItemDamage(14);
+        collectionToCollectionDisplayMap.put("GEMSTONE_COLLECTION", gemstone);
+
 
         /** COMBAT COLLECTIONS **/
         collectionToCollectionDisplayMap.put("ROTTEN_FLESH", Utils.createItemStack(Items.rotten_flesh,
@@ -826,18 +835,22 @@ public class ProfileViewer {
             return inventoryInfo;
         }
 
+        public boolean checkIfValidJson(JsonElement element){
+            return element != null;
+        }
+
         public JsonObject getBackpackData(JsonObject backpack_contents_json, JsonObject backpack_icons) {
 
+            JsonArray contents = new JsonArray();
+            if(!(checkIfValidJson(backpack_contents_json) && checkIfValidJson(backpack_icons))){
+                JsonObject bundledReturn = new JsonObject();
+                bundledReturn.add("contents", new JsonArray());
+                bundledReturn.add("backpack_sizes", new JsonArray());
 
-            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                System.out.println(ste);
+                return bundledReturn;
             }
 
-            JsonArray contents = new JsonArray();
-
-
             String[] backpackArray = new String[0];
-
 
             //Create backpack array which sizes up
             for(Map.Entry<String, JsonElement> backpackIcon : backpack_icons.entrySet()) {
