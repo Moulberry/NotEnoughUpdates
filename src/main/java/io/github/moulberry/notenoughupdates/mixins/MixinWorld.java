@@ -33,6 +33,8 @@ public class MixinWorld {
             cir.setReturnValue(BiomeGenBase.extremeHillsPlus);
         } else if(retexture == 2) {
             cir.setReturnValue(BiomeGenBase.extremeHillsEdge);
+        } else if(retexture == 3) {
+            cir.setReturnValue(BiomeGenBase.coldBeach);
         }
     }
 

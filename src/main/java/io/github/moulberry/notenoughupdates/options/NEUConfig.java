@@ -176,8 +176,8 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Enchanting Solvers",
-            desc = "Enchanting Solvers"
+            name = "Enchanting GUI/Solvers",
+            desc = "Enchanting GUI/Solvers"
     )
     public EnchSolvers enchantingSolvers = new EnchSolvers();
 
@@ -1207,6 +1207,9 @@ public class NEUConfig extends Config {
         public boolean storageOverlayAccordion = true;
 
         @Expose
+        public int selectedIndex = 0;
+
+        @Expose
         @ConfigOption(
                 name = "Enable Storage GUI",
                 desc = "Show a custom storage overlay when accessing /storage. " +
@@ -1214,7 +1217,7 @@ public class NEUConfig extends Config {
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1)
-        public boolean enableStorageGUI = true;
+        public boolean enableStorageGUI2 = true;
 
         @Expose
         @ConfigOption(
@@ -1296,6 +1299,16 @@ public class NEUConfig extends Config {
         @ConfigAccordionId(id = 1)
         public String selectedStorageColour = "0:255:255:223:0";
 
+        @Expose
+        @ConfigOption(
+                name = "Scrollable Tooltips",
+                desc = "Support for scrolling tooltips for users with small monitors\n" +
+                        "This will prevent the menu from scrolling while holding the key, allowing you to scroll tooltips"
+        )
+        @ConfigEditorKeybind(defaultKey = 0)
+        @ConfigAccordionId(id = 1)
+        public int cancelScrollKey = 0;
+
         @ConfigOption(
                 name = "Inventory Backpacks",
                 desc = ""
@@ -1315,11 +1328,14 @@ public class NEUConfig extends Config {
         @Expose
         @ConfigOption(
                 name = "Scroll to Backpack",
-                desc = "Allow scrolling to the backpack using the mouse wheel. If you have the hotkey enabled (default: KEY_GRAVE), you can still use that"
+                desc = "Allow scrolling to the backpack using the mouse wheel.\n" +
+                        "\"Scroll (Key)\" = Allow scrolling to 10th slot only while 'Backpack Scroll Key' (default: SHIFT) is pressed"
         )
-        @ConfigEditorBoolean
+        @ConfigEditorDropdown(
+                values = {"Scroll (Key)", "Scroll (Always)", "Don't Scroll"}
+        )
         @ConfigAccordionId(id = 0)
-        public boolean scrollToBackpack = false;
+        public int scrollToBackpack2 = 0;
 
         @Expose
         @ConfigOption(
@@ -1418,12 +1434,20 @@ public class NEUConfig extends Config {
     }
 
     public static class EnchSolvers {
+        @ConfigOption(
+                name = "Solvers",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 0)
+        public boolean solversAccordion = false;
+
         @Expose
         @ConfigOption(
                 name = "Enable Solvers",
                 desc = "Turn on solvers for the experimentation table"
         )
         @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
         public boolean enableEnchantingSolvers = true;
 
         /*@Expose
@@ -1440,6 +1464,7 @@ public class NEUConfig extends Config {
                 desc = "Hide the tooltip of items in the Chronomatron and Ultrasequencer experiments"
         )
         @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
         public boolean hideTooltips = true;
 
         @Expose
@@ -1448,6 +1473,7 @@ public class NEUConfig extends Config {
                 desc = "Replace the items in the supersequencer with only numbers"
         )
         @ConfigEditorBoolean
+        @ConfigAccordionId(id = 0)
         public boolean seqNumbers = false;
 
         @Expose
@@ -1459,6 +1485,7 @@ public class NEUConfig extends Config {
                 values = {"None", "White", "Orange", "Light Purple", "Light Blue", "Yellow", "Light Green", "Pink",
                         "Gray", "Light Gray", "Cyan", "Dark Purple", "Dark Blue", "Brown", "Dark Green", "Red", "Black"}
         )
+        @ConfigAccordionId(id = 0)
         public int seqNext = 6;
 
         @Expose
@@ -1470,6 +1497,7 @@ public class NEUConfig extends Config {
                 values = {"None", "White", "Orange", "Light Purple", "Light Blue", "Yellow", "Light Green", "Pink",
                         "Gray", "Light Gray", "Cyan", "Dark Purple", "Dark Blue", "Brown", "Dark Green", "Red", "Black"}
         )
+        @ConfigAccordionId(id = 0)
         public int seqUpcoming = 5;
 
         @Expose
@@ -1481,6 +1509,7 @@ public class NEUConfig extends Config {
                 values = {"None", "White", "Orange", "Light Purple", "Light Blue", "Yellow", "Light Green", "Pink",
                         "Gray", "Light Gray", "Cyan", "Dark Purple", "Dark Blue", "Brown", "Dark Green", "Red", "Black"}
         )
+        @ConfigAccordionId(id = 0)
         public int supMatched = 6;
 
         @Expose
@@ -1492,6 +1521,7 @@ public class NEUConfig extends Config {
                 values = {"None", "White", "Orange", "Light Purple", "Light Blue", "Yellow", "Light Green", "Pink",
                         "Gray", "Light Gray", "Cyan", "Dark Purple", "Dark Blue", "Brown", "Dark Green", "Red", "Black"}
         )
+        @ConfigAccordionId(id = 0)
         public int supPossible = 2;
 
         @Expose
@@ -1503,6 +1533,7 @@ public class NEUConfig extends Config {
                 values = {"None", "White", "Orange", "Light Purple", "Light Blue", "Yellow", "Light Green", "Pink",
                         "Gray", "Light Gray", "Cyan", "Dark Purple", "Dark Blue", "Brown", "Dark Green", "Red", "Black"}
         )
+        @ConfigAccordionId(id = 0)
         public int supUnmatched = 5;
 
         @Expose
@@ -1514,7 +1545,57 @@ public class NEUConfig extends Config {
                 values = {"None", "White", "Orange", "Light Purple", "Light Blue", "Yellow", "Light Green", "Pink",
                         "Gray", "Light Gray", "Cyan", "Dark Purple", "Dark Blue", "Brown", "Dark Green", "Red", "Black"}
         )
+        @ConfigAccordionId(id = 0)
         public int supPower = 11;
+
+        @ConfigOption(
+                name = "Enchant Table GUI",
+                desc = ""
+        )
+        @ConfigEditorAccordion(id = 1)
+        public boolean tableGUIAccordion = false;
+
+        @Expose
+        @ConfigOption(
+                name = "Enable Enchant Table GUI",
+                desc = "Show a custom GUI when using the Enchant Table"
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1)
+        public boolean enableTableGUI = true;
+
+        @Expose
+        @ConfigOption(
+                name = "Incompatible Enchants",
+                desc = "Handle enchants that are incompatible with your current item, eg. Smite on a sword with Sharpness"
+        )
+        @ConfigEditorDropdown(
+                values = {"Highlight", "Hide"}
+        )
+        @ConfigAccordionId(id = 1)
+        public int incompatibleEnchants = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Enchant Sorting",
+                desc = "Change the method of sorting enchants in the GUI"
+        )
+        @ConfigEditorDropdown(
+                values = {"By Cost", "Alphabetical"}
+        )
+        @ConfigAccordionId(id = 1)
+        public int enchantSorting = 0;
+
+        @Expose
+        @ConfigOption(
+                name = "Enchant Ordering",
+                desc = "Change the method of ordered used by the sort"
+        )
+        @ConfigEditorDropdown(
+                values = {"Ascending", "Descending"}
+        )
+        @ConfigAccordionId(id = 1)
+        public int enchantOrdering = 0;
     }
 
     public static class Mining {

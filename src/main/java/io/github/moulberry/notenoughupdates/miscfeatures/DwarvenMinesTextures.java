@@ -54,8 +54,11 @@ public class DwarvenMinesTextures {
         if(error) return 0;
         if(Minecraft.getMinecraft().theWorld == null) return 0;
 
-        if(SBInfo.getInstance().getLocation() == null) return 0;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return 0;
+        String location = SBInfo.getInstance().getLocation();
+
+        if(location == null) return 0;
+        if(location.equals("crystal_hollows")) return 3;
+        if(!location.equals("mining_3")) return 0;
 
         IBlockState state = Minecraft.getMinecraft().theWorld.getBlockState(pos);
         boolean titanium = state.getBlock() == Blocks.stone && state.getValue(BlockStone.VARIANT) == BlockStone.EnumType.DIORITE_SMOOTH;

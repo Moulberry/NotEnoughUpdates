@@ -30,7 +30,6 @@ public class InventoryStorageSelector {
     private static final ResourceLocation STORAGE_PANE_CTM_TEXTURE = new ResourceLocation("notenoughupdates:storage_gui/storage_gui_pane_ctm.png");
 
     public boolean isOverridingSlot = false;
-    public int selectedIndex = 0;
 
     public static InventoryStorageSelector getInstance() {
         return INSTANCE;
@@ -65,19 +64,19 @@ public class InventoryStorageSelector {
         }
 
         if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowLeftKey)) {
-            selectedIndex--;
+            NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex--;
 
             int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
-            if(selectedIndex > max) selectedIndex = max;
-            if(selectedIndex < 0) selectedIndex = 0;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
         } else if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowRightKey)) {
-            selectedIndex++;
+            NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex++;
 
             int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
-            if(selectedIndex > max) selectedIndex = max;
-            if(selectedIndex < 0) selectedIndex = 0;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
         } else if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowDownKey)) {
-            sendToPage(selectedIndex);
+            sendToPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
         }
 
         if(isSlotSelected()) {
@@ -87,7 +86,7 @@ public class InventoryStorageSelector {
             if(Mouse.getEventButton() == useKeycode || Mouse.getEventButton() == attackKeycode) {
                 if(Mouse.getEventButtonState() &&
                         Mouse.getEventButton() != NotEnoughUpdates.INSTANCE.config.storageGUI.backpackScrollKey+100) {
-                    sendToPage(selectedIndex);
+                    sendToPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
                 }
 
                 event.setCanceled(true);
@@ -99,10 +98,10 @@ public class InventoryStorageSelector {
         if(!StorageManager.getInstance().storageConfig.displayToStorageIdMap.containsKey(displayId)) {
             return;
         }
-        if(getPage(selectedIndex) == null) {
+        if(getPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex) == null) {
             NotEnoughUpdates.INSTANCE.sendChatMessage("/storage");
         } else {
-            int index = StorageManager.getInstance().storageConfig.displayToStorageIdMap.get(selectedIndex);
+            int index = StorageManager.getInstance().storageConfig.displayToStorageIdMap.get(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
             StorageManager.getInstance().sendToPage(index);
         }
     }
@@ -124,19 +123,19 @@ public class InventoryStorageSelector {
             Minecraft.getMinecraft().thePlayer.inventory.currentItem = 0;
             isOverridingSlot = true;
         } else if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowLeftKey)) {
-            selectedIndex--;
+            NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex--;
 
             int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
-            if(selectedIndex > max) selectedIndex = max;
-            if(selectedIndex < 0) selectedIndex = 0;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
         } else if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowRightKey)) {
-            selectedIndex++;
+            NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex++;
 
             int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
-            if(selectedIndex > max) selectedIndex = max;
-            if(selectedIndex < 0) selectedIndex = 0;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
         } else if(KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowDownKey)) {
-            sendToPage(selectedIndex);
+            sendToPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
         }
 
         if(isSlotSelected()) {
@@ -145,7 +144,7 @@ public class InventoryStorageSelector {
 
             if(attack.isPressed() || attack.isKeyDown()) {
                 if(attack.getKeyCode() != NotEnoughUpdates.INSTANCE.config.storageGUI.backpackScrollKey) {
-                    sendToPage(selectedIndex);
+                    sendToPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
                 }
 
                 KeyBinding.setKeyBindState(attack.getKeyCode(), false);
@@ -154,7 +153,7 @@ public class InventoryStorageSelector {
 
             if(use.isPressed() || use.isKeyDown()) {
                 if(attack.getKeyCode() != NotEnoughUpdates.INSTANCE.config.storageGUI.backpackScrollKey) {
-                    sendToPage(selectedIndex);
+                    sendToPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
                 }
 
                 KeyBinding.setKeyBindState(use.getKeyCode(), false);
@@ -173,16 +172,19 @@ public class InventoryStorageSelector {
 
         int keyCode = NotEnoughUpdates.INSTANCE.config.storageGUI.backpackScrollKey;
         if(isOverridingSlot && KeybindHelper.isKeyDown(keyCode)) {
-            selectedIndex -= direction;
+            NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex -= direction;
             int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
 
-            if(selectedIndex > max) selectedIndex = max;
-            if(selectedIndex < 0) selectedIndex = 0;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
+            if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
             return 0;
         }
 
-        if(NotEnoughUpdates.INSTANCE.config.storageGUI.scrollToBackpack &&
-                resultantSlot == 0 && direction == -1 && !isOverridingSlot) {
+        boolean allowScroll = NotEnoughUpdates.INSTANCE.config.storageGUI.scrollToBackpack2 == 0 ?
+                KeybindHelper.isKeyDown(NotEnoughUpdates.INSTANCE.config.storageGUI.backpackScrollKey) :
+                NotEnoughUpdates.INSTANCE.config.storageGUI.scrollToBackpack2 == 1;
+
+        if(allowScroll && resultantSlot == 0 && direction == -1 && !isOverridingSlot) {
             isOverridingSlot = true;
             Minecraft.getMinecraft().getItemRenderer().resetEquippedProgress();
             return 0;
@@ -190,8 +192,7 @@ public class InventoryStorageSelector {
             isOverridingSlot = false;
             Minecraft.getMinecraft().getItemRenderer().resetEquippedProgress();
             return 0;
-        } else if(NotEnoughUpdates.INSTANCE.config.storageGUI.scrollToBackpack &&
-                resultantSlot == 8 && direction == 1 && !isOverridingSlot) {
+        } else if(allowScroll && resultantSlot == 8 && direction == 1 && !isOverridingSlot) {
             isOverridingSlot = true;
             Minecraft.getMinecraft().getItemRenderer().resetEquippedProgress();
             return 0;
@@ -208,7 +209,7 @@ public class InventoryStorageSelector {
     }
 
     public ItemStack getNamedHeldItemOverride() {
-        StorageManager.StoragePage page = getPage(selectedIndex);
+        StorageManager.StoragePage page = getPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
         if(page != null && page.backpackDisplayStack != null) {
             return page.backpackDisplayStack;
         }
@@ -216,7 +217,7 @@ public class InventoryStorageSelector {
     }
 
     public ItemStack getHeldItemOverride() {
-        return getHeldItemOverride(selectedIndex);
+        return getHeldItemOverride(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
     }
 
     public ItemStack getHeldItemOverride(int selectedIndex) {
@@ -240,8 +241,8 @@ public class InventoryStorageSelector {
         }
 
         int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
-        if(selectedIndex > max) selectedIndex = max;
-        if(selectedIndex < 0) selectedIndex = 0;
+        if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
+        if(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0) NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
 
         int width = scaledResolution.getScaledWidth();
         int height = scaledResolution.getScaledHeight();
@@ -259,7 +260,7 @@ public class InventoryStorageSelector {
         int top = scaledResolution.getScaledHeight() - 22;
 
         if(NotEnoughUpdates.INSTANCE.config.storageGUI.showInvBackpackPreview && isSlotSelected()) {
-            StorageManager.StoragePage page = getPage(selectedIndex);
+            StorageManager.StoragePage page = getPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
 
             if(page != null && page.rows > 0) {
                 int rows = page.rows;
@@ -428,8 +429,8 @@ public class InventoryStorageSelector {
         }
 
         int index = 1;
-        if(StorageManager.getInstance().storageConfig.displayToStorageIdMap.containsKey(selectedIndex)) {
-            int displayIndex = StorageManager.getInstance().storageConfig.displayToStorageIdMap.get(selectedIndex);
+        if(StorageManager.getInstance().storageConfig.displayToStorageIdMap.containsKey(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex)) {
+            int displayIndex = StorageManager.getInstance().storageConfig.displayToStorageIdMap.get(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
             if(displayIndex < 9) {
                 index = displayIndex+1;
             } else {
