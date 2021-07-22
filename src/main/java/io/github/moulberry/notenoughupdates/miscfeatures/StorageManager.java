@@ -226,7 +226,7 @@ public class StorageManager {
     }
     
     public boolean shouldRenderStorageOverlay(String containerName) {
-        if(!NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI) {
+        if(!NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI2) {
             shouldRenderStorageOverlayCached = false;
             return false;
         }

@@ -42,7 +42,7 @@ public class MiscOverlays {
                     "\u00a73Experiments: \u00a7e3h38m"}
     )
     @ConfigAccordionId(id = 0)
-    public List<Integer> todoText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
+    public List<Integer> todoText2 = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
 
     @ConfigOption(
             name = "Show Only If Soon",

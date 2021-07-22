@@ -4,13 +4,55 @@ import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
 
 public class Enchanting {
+    @ConfigOption(
+            name = "Enchant Table GUI",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 1)
+    public boolean tableGUIAccordion = false;
+
     @Expose
     @ConfigOption(
-            name = "Enable Custom Enchanting Gui",
-            desc = "Adds a BETA enchanting gui"
+            name = "Enable Enchant Table GUI",
+            desc = "Show a custom GUI when using the Enchant Table"
     )
     @ConfigEditorBoolean
-    public boolean enableGui = false;
+    @ConfigAccordionId(id = 1)
+    public boolean enableTableGUI = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Incompatible Enchants",
+            desc = "Handle enchants that are incompatible with your current item, eg. Smite on a sword with Sharpness"
+    )
+    @ConfigEditorDropdown(
+            values = {"Highlight", "Hide"}
+    )
+    @ConfigAccordionId(id = 1)
+    public int incompatibleEnchants = 0;
+
+    @Expose
+    @ConfigOption(
+            name = "Enchant Sorting",
+            desc = "Change the method of sorting enchants in the GUI"
+    )
+    @ConfigEditorDropdown(
+            values = {"By Cost", "Alphabetical"}
+    )
+    @ConfigAccordionId(id = 1)
+    public int enchantSorting = 0;
+
+    @Expose
+    @ConfigOption(
+            name = "Enchant Ordering",
+            desc = "Change the method of ordered used by the sort"
+    )
+    @ConfigEditorDropdown(
+            values = {"Ascending", "Descending"}
+    )
+    @ConfigAccordionId(id = 1)
+    public int enchantOrdering = 0;
+
 
     @ConfigOption(
             name = "Enchanting Solvers",

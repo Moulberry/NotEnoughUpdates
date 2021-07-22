@@ -2,7 +2,6 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.common.collect.Lists;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 
 import java.util.ArrayList;
@@ -36,7 +35,7 @@ public class OverlayManager {
                 "\u00a73Experiments: \u00a7e3h38m");
         textOverlays.add(timersOverlay = new TimersOverlay(NotEnoughUpdates.INSTANCE.config.miscOverlays.todoPosition, () -> {
             List<String> strings = new ArrayList<>();
-            for(int i : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText) {
+            for(int i : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText2) {
                 if(i >= 0 && i < todoDummy.size()) strings.add(todoDummy.get(i));
             }
             return strings;

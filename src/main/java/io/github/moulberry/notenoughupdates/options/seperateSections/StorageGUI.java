@@ -13,6 +13,9 @@ public class StorageGUI {
     public boolean storageOverlayAccordion = false;
 
     @Expose
+    public int selectedIndex = 0;
+
+    @Expose
     @ConfigOption(
             name = "Enable Storage GUI",
             desc = "Show a custom storage overlay when accessing /storage. " +
@@ -20,7 +23,7 @@ public class StorageGUI {
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 1)
-    public boolean enableStorageGUI = false;
+    public boolean enableStorageGUI2 = false;
 
     @Expose
     @ConfigOption(
@@ -104,25 +107,13 @@ public class StorageGUI {
 
     @Expose
     @ConfigOption(
-            name = "Scroll Lock",
-            desc = "Stop scrolling when holding the key below.\n"+
-                    "Usefull for people using scrollable tooltips."
+            name = "Scrollable Tooltips",
+            desc = "Support for scrolling tooltips for users with small monitors\n" +
+                    "This will prevent the menu from scrolling while holding the key, allowing you to scroll tooltips"
     )
-    @ConfigEditorDropdown(
-            values = {"Off", "On"}
-    )
+    @ConfigEditorKeybind(defaultKey = 0)
     @ConfigAccordionId(id = 1)
-    public int scrollLock = 0;
-
-    @Expose
-    @ConfigOption(
-            name = "Scroll Lock Key",
-            desc = "Hold this keep to stop scrolling in the gui.\n" +
-                    "Don't forget to enable it above."
-    )
-    @ConfigEditorKeybind(defaultKey = Keyboard.KEY_LSHIFT)
-    @ConfigAccordionId(id = 1)
-    public int slotLockKey = Keyboard.KEY_LSHIFT;
+    public int cancelScrollKey = 0;
 
 
     @ConfigOption(
@@ -145,11 +136,14 @@ public class StorageGUI {
     @Expose
     @ConfigOption(
             name = "Scroll to Backpack",
-            desc = "Allow scrolling to the backpack using the mouse wheel. If you have the hotkey enabled (default: KEY_GRAVE), you can still use that"
+            desc = "Allow scrolling to the backpack using the mouse wheel.\n" +
+                    "\"Scroll (Key)\" = Allow scrolling to 10th slot only while 'Backpack Scroll Key' (default: SHIFT) is pressed"
     )
-    @ConfigEditorBoolean
+    @ConfigEditorDropdown(
+            values = {"Scroll (Key)", "Scroll (Always)", "Don't Scroll"}
+    )
     @ConfigAccordionId(id = 0)
-    public boolean scrollToBackpack = false;
+    public int scrollToBackpack2 = 0;
 
     @Expose
     @ConfigOption(

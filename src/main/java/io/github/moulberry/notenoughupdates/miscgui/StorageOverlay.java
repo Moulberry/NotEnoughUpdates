@@ -118,6 +118,7 @@ public class StorageOverlay extends GuiElement {
     private int desiredHeightMY = -1;
 
     private boolean dirty = false;
+    private boolean allowTypingInSearchBar = true;
 
     private int scrollGrabOffset = -1;
 
@@ -1238,6 +1239,7 @@ public class StorageOverlay extends GuiElement {
 
         GlStateManager.popMatrix();
         GlStateManager.translate(0, 0, 300);
+        allowTypingInSearchBar = false;
         if(stackOnMouse != null) {
             if(hoveringOtherBackpack) {
                 Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.barrier)), mouseX - 8, mouseY - 8);
@@ -1277,6 +1279,8 @@ public class StorageOverlay extends GuiElement {
             }
         } else if(tooltipToDisplay != null) {
             Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY,  width, height, -1, Minecraft.getMinecraft().fontRendererObj);
+        } else {
+            allowTypingInSearchBar = true;
         }
         GlStateManager.translate(0, 0, -300);
     }
@@ -1440,9 +1444,8 @@ public class StorageOverlay extends GuiElement {
         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) return false;
 
         int dWheel = Mouse.getEventDWheel();
-        if(dWheel != 0 &&
-                (((NotEnoughUpdates.INSTANCE.config.storageGUI.scrollLock == 0)||
-                (NotEnoughUpdates.INSTANCE.config.storageGUI.scrollLock == 1 && !KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.slotLockKey))))) {
+        if(!(NotEnoughUpdates.INSTANCE.config.storageGUI.cancelScrollKey != 0 &&
+                Keyboard.isKeyDown(NotEnoughUpdates.INSTANCE.config.storageGUI.cancelScrollKey)) && dWheel != 0) {
             if(dWheel < 0) {
                 dWheel = -1;
                 if(scrollVelocity > 0) scrollVelocity = 0;
@@ -1636,7 +1639,7 @@ public class StorageOverlay extends GuiElement {
 
             switch(buttonIndex) {
                 case 0:
-                    NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI = false; break;
+                    NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI2 = false; break;
                 case 1:
                     int size = desiredHeightSwitch != -1 ? desiredHeightSwitch : NotEnoughUpdates.INSTANCE.config.storageGUI.storageHeight;
                     int sizeIndex = Math.round((size-104)/54f);
@@ -1882,7 +1885,7 @@ public class StorageOverlay extends GuiElement {
                         page.customTitle = renameStorageField.getText();
                     }
                 }
-            } else if(NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus || searchBar.getFocus()) {
+            } else if(searchBar.getFocus() || (allowTypingInSearchBar && NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus)) {
                 String prevText = searchBar.getText();
                 searchBar.setFocus(true);
                 renameStorageField.setFocus(false);

@@ -174,8 +174,8 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
-            name = "Enchanting",
-            desc = "Enchanting"
+            name = "Enchanting GUI/Solvers",
+            desc = "Enchanting GUI/Solvers"
     )
     public Enchanting enchanting = new Enchanting();
 

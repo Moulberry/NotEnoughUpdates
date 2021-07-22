@@ -83,9 +83,10 @@ public class GuiOptionEditorKeybind extends GuiOptionEditor {
             editingKeycode = false;
             if(Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
                 keyCode = 0;
-            } else {
-                keyCode = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter() + 256 : Keyboard.getEventKey();
+            } else if(Keyboard.getEventKey() != 0) {
+                keyCode = Keyboard.getEventKey();
             }
+            if(keyCode > 256) keyCode = 0;
             option.set(keyCode);
             return true;
         }

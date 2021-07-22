@@ -10,6 +10,7 @@ import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingFloat;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -198,11 +199,8 @@ public class GuiCustomEnchant extends Gui {
     }
 
     public boolean shouldOverride(String containerName) {
-        if(!NotEnoughUpdates.INSTANCE.config.enchanting.enableGui) return false;
-//        shouldOverrideFast = false;
-//        if(true) return shouldOverrideFast;
-
-        shouldOverrideFast = containerName != null &&
+        shouldOverrideFast = NotEnoughUpdates.INSTANCE.config.enchanting.enableTableGUI &&
+                containerName != null &&
                 NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
                 containerName.equalsIgnoreCase("Enchant Item");
         if(!shouldOverrideFast) {
@@ -467,8 +465,13 @@ public class GuiCustomEnchant extends Gui {
                             }
                         }
                     }
-                    removable.sort(Comparator.comparingInt(e -> e.xpCost));
-                    applicable.sort(Comparator.comparingInt(e -> e.xpCost));
+                    NEUConfig cfg = NotEnoughUpdates.INSTANCE.config;
+                    int mult = cfg.enchanting.enchantOrdering == 0 ? 1 : -1;
+                    Comparator<Enchantment> comparator = cfg.enchanting.enchantSorting == 0 ?
+                            Comparator.comparingInt(e -> mult*e.xpCost) :
+                            (c1, c2) -> mult*c1.enchId.toLowerCase().compareTo(c2.enchId.toLowerCase());
+                    removable.sort(comparator);
+                    applicable.sort(comparator);
                 }
             }
         }
