@@ -38,7 +38,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.io.PrintStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -200,7 +199,7 @@ public class GuiCustomEnchant extends Gui {
     }
 
     public boolean shouldOverride(String containerName) {
-        shouldOverrideFast = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableTableGUI &&
+        shouldOverrideFast = NotEnoughUpdates.INSTANCE.config.enchanting.enableTableGUI &&
                 containerName != null &&
                 NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
                 containerName.equalsIgnoreCase("Enchant Item");
@@ -467,8 +466,8 @@ public class GuiCustomEnchant extends Gui {
                         }
                     }
                     NEUConfig cfg = NotEnoughUpdates.INSTANCE.config;
-                    int mult = cfg.enchantingSolvers.enchantOrdering == 0 ? 1 : -1;
-                    Comparator<Enchantment> comparator = cfg.enchantingSolvers.enchantSorting == 0 ?
+                    int mult = cfg.enchanting.enchantOrdering == 0 ? 1 : -1;
+                    Comparator<Enchantment> comparator = cfg.enchanting.enchantSorting == 0 ?
                             Comparator.comparingInt(e -> mult*e.xpCost) :
                             (c1, c2) -> mult*c1.enchId.toLowerCase().compareTo(c2.enchId.toLowerCase());
                     removable.sort(comparator);

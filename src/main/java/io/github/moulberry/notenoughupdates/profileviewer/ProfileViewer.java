@@ -9,7 +9,6 @@ import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -17,12 +16,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,6 +61,7 @@ public class ProfileViewer {
         skillToSkillDisplayMap.put("slayer_zombie", Utils.createItemStack(Items.rotten_flesh, EnumChatFormatting.GOLD+"Rev Slayer"));
         skillToSkillDisplayMap.put("slayer_spider", Utils.createItemStack(Items.spider_eye, EnumChatFormatting.GOLD+"Tara Slayer"));
         skillToSkillDisplayMap.put("slayer_wolf", Utils.createItemStack(Items.bone, EnumChatFormatting.GOLD+"Sven Slayer"));
+        skillToSkillDisplayMap.put("slayer_enderman", Utils.createItemStack(Items.ender_pearl, EnumChatFormatting.GOLD+"Ender Slayer"));
     }
 
     private static final ItemStack CAT_FARMING = Utils.createItemStack(Items.golden_hoe, EnumChatFormatting.YELLOW+"Farming");
@@ -81,7 +79,7 @@ public class ProfileViewer {
         collectionCatToCollectionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON_INGOT", "GOLD_INGOT", "DIAMOND", "INK_SACK:4",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE_DUST", "GRAVEL", "ICE", "NETHERRACK",
-                        "SAND", "ENDER_STONE"));
+                        "SAND", "ENDER_STONE", "MITHRIL_ORE", "HARD_STONE", "GEMSTONE_COLLECTION"));
         collectionCatToCollectionMap.put(CAT_COMBAT,
                 Utils.createList("ROTTEN_FLESH", "BONE", "STRING", "SPIDER_EYE", "SULPHUR", "ENDER_PEARL",
                         "GHAST_TEAR", "SLIME_BALL", "BLAZE_ROD", "MAGMA_CREAM"));
@@ -101,7 +99,7 @@ public class ProfileViewer {
         collectionCatToMinionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON", "GOLD", "DIAMOND", "LAPIS",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE", "GRAVEL", "ICE", null,
-                        "SAND", "ENDER_STONE"));
+                        "SAND", "ENDER_STONE", "MITHRIL", "HARD_STONE", null));
         collectionCatToMinionMap.put(CAT_COMBAT,
                 Utils.createList("ZOMBIE", "SKELETON", "SPIDER", "CAVESPIDER", "CREEPER", "ENDERMAN",
                         "GHAST", "SLIME", "BLAZE", "MAGMA_CUBE"));
@@ -184,6 +182,15 @@ public class ProfileViewer {
                 EnumChatFormatting.GRAY+"Sand"));
         collectionToCollectionDisplayMap.put("ENDER_STONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.end_stone),
                 EnumChatFormatting.GRAY+"End Stone"));
+        collectionToCollectionDisplayMap.put("MITHRIL_ORE", Utils.createItemStack(Items.prismarine_crystals,
+                EnumChatFormatting.GRAY+"Mithril"));
+        collectionToCollectionDisplayMap.put("HARD_STONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.stone),
+                EnumChatFormatting.GRAY+"Hard Stone"));
+        ItemStack gemstone = Utils.createItemStack(Item.getItemFromBlock(Blocks.stained_glass),
+                EnumChatFormatting.GRAY+"Gem Stones");
+        gemstone.setItemDamage(14);
+        collectionToCollectionDisplayMap.put("GEMSTONE_COLLECTION", gemstone);
+
 
         /** COMBAT COLLECTIONS **/
         collectionToCollectionDisplayMap.put("ROTTEN_FLESH", Utils.createItemStack(Items.rotten_flesh,
@@ -211,9 +218,9 @@ public class ProfileViewer {
         collectionToCollectionDisplayMap.put("LOG", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
                 EnumChatFormatting.DARK_GREEN+"Oak"));
         collectionToCollectionDisplayMap.put("LOG:1", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Birch", 1));
+                EnumChatFormatting.DARK_GREEN+"Spruce", 1));
         collectionToCollectionDisplayMap.put("LOG:2", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Spruce", 2));
+                EnumChatFormatting.DARK_GREEN+"Birch", 2));
         collectionToCollectionDisplayMap.put("LOG_2:1", Utils.createItemStack(Item.getItemFromBlock(Blocks.log2),
                 EnumChatFormatting.DARK_GREEN+"Dark Oak", 1));
         collectionToCollectionDisplayMap.put("LOG_2", Utils.createItemStack(Item.getItemFromBlock(Blocks.log2),
@@ -653,6 +660,8 @@ public class ProfileViewer {
             float experience_slayer_zombie = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.zombie.xp"), 0);
             float experience_slayer_spider = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.spider.xp"), 0);
             float experience_slayer_wolf = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.xp"), 0);
+            float experience_slayer_enderman = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.enderman.xp"), 0);
+
 
             float totalSkillXP = experience_skill_taming + experience_skill_mining + experience_skill_foraging
                     + experience_skill_enchanting + experience_skill_carpentry + experience_skill_farming
@@ -681,6 +690,7 @@ public class ProfileViewer {
             skillInfo.addProperty("experience_slayer_zombie", experience_slayer_zombie);
             skillInfo.addProperty("experience_slayer_spider", experience_slayer_spider);
             skillInfo.addProperty("experience_slayer_wolf", experience_slayer_wolf);
+            skillInfo.addProperty("experience_slayer_enderman", experience_slayer_enderman);
 
             JsonArray levelingArray = Utils.getElement(leveling, "leveling_xp").getAsJsonArray();
             int farmingCap = getCap(leveling, "farming") + (int)Utils.getElementAsFloat(
@@ -689,7 +699,7 @@ public class ProfileViewer {
             Level level_skill_mining = getLevel(levelingArray, experience_skill_mining, getCap(leveling, "mining"), false);
             Level level_skill_foraging = getLevel(levelingArray, experience_skill_foraging, getCap(leveling, "foraging"), false);
             Level level_skill_enchanting = getLevel(levelingArray, experience_skill_enchanting, getCap(leveling, "enchanting"),  false);
-            Level level_skill_carpentry = getLevel(levelingArray, experience_skill_carpentry,getCap(leveling, "carpetry"),  false);
+            Level level_skill_carpentry = getLevel(levelingArray, experience_skill_carpentry,getCap(leveling, "carpentry"),  false);
             Level level_skill_farming = getLevel(levelingArray, experience_skill_farming, farmingCap, false);
             Level level_skill_combat = getLevel(levelingArray, experience_skill_combat, getCap(leveling, "combat"), false);
             Level level_skill_fishing = getLevel(levelingArray, experience_skill_fishing, getCap(leveling, "fishing"), false);
@@ -706,6 +716,8 @@ public class ProfileViewer {
                     experience_slayer_spider, 9,true);
             Level level_slayer_wolf = getLevel(Utils.getElement(leveling, "slayer_xp.wolf").getAsJsonArray(),
                     experience_slayer_wolf, 9,true);
+            Level level_slayer_enderman = getLevel(Utils.getElement(leveling, "slayer_xp.enderman").getAsJsonArray(),
+                    experience_slayer_enderman, 9,true);
 
             skillInfo.addProperty("level_skill_taming", level_skill_taming.level);
             skillInfo.addProperty("level_skill_mining", level_skill_mining.level);
@@ -723,6 +735,7 @@ public class ProfileViewer {
             skillInfo.addProperty("level_slayer_zombie", level_slayer_zombie.level);
             skillInfo.addProperty("level_slayer_spider", level_slayer_spider.level);
             skillInfo.addProperty("level_slayer_wolf", level_slayer_wolf.level);
+            skillInfo.addProperty("level_slayer_enderman", level_slayer_enderman.level);
 
             skillInfo.addProperty("maxed_skill_taming", level_skill_taming.maxed);
             skillInfo.addProperty("maxed_skill_mining", level_skill_mining.maxed);
@@ -740,6 +753,7 @@ public class ProfileViewer {
             skillInfo.addProperty("maxed_slayer_zombie", level_slayer_zombie.maxed);
             skillInfo.addProperty("maxed_slayer_spider", level_slayer_spider.maxed);
             skillInfo.addProperty("maxed_slayer_wolf", level_slayer_wolf.maxed);
+            skillInfo.addProperty("maxed_slayer_enderman", level_slayer_enderman.maxed);
 
             skillInfo.addProperty("maxxp_skill_taming", level_skill_taming.maxXpForLevel);
             skillInfo.addProperty("maxxp_skill_mining", level_skill_mining.maxXpForLevel);
@@ -757,6 +771,7 @@ public class ProfileViewer {
             skillInfo.addProperty("maxxp_slayer_zombie", level_slayer_zombie.maxXpForLevel);
             skillInfo.addProperty("maxxp_slayer_spider", level_slayer_spider.maxXpForLevel);
             skillInfo.addProperty("maxxp_slayer_wolf", level_slayer_wolf.maxXpForLevel);
+            skillInfo.addProperty("maxxp_slayer_enderman", level_slayer_enderman.maxXpForLevel);
 
             return skillInfo;
         }
@@ -771,6 +786,12 @@ public class ProfileViewer {
             String fishing_bag_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "fishing_bag.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String quiver_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "quiver.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String ender_chest_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "ender_chest_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
+            //Todo clean this up
+            //Fake string is so for I loop works the same
+            String backpack_contents_json_fake = "fake should fix later";
+            JsonObject backpack_contents_json = (JsonObject) Utils.getElement(profileInfo, "backpack_contents");
+            JsonObject backpack_icons = (JsonObject) Utils.getElement(profileInfo, "backpack_icons");
+            String personal_vault_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "personal_vault_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String wardrobe_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "wardrobe_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String potion_bag_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "potion_bag.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String inv_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "inv_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
@@ -779,20 +800,29 @@ public class ProfileViewer {
 
             JsonObject inventoryInfo = new JsonObject();
 
-            String[] inv_names = new String[]{"inv_armor", "fishing_bag", "quiver", "ender_chest_contents", "wardrobe_contents",
+            String[] inv_names = new String[]{"inv_armor", "fishing_bag", "quiver", "ender_chest_contents", "backpack_contents", "personal_vault_contents", "wardrobe_contents",
                     "potion_bag", "inv_contents", "talisman_bag", "candy_inventory_contents"};
-            String[] inv_bytes = new String[]{inv_armor_bytes, fishing_bag_bytes, quiver_bytes, ender_chest_contents_bytes, wardrobe_contents_bytes,
+            String[] inv_bytes = new String[]{inv_armor_bytes, fishing_bag_bytes, quiver_bytes, ender_chest_contents_bytes, backpack_contents_json_fake, personal_vault_contents_bytes, wardrobe_contents_bytes,
                     potion_bag_bytes, inv_contents_bytes, talisman_bag_bytes, candy_inventory_contents_bytes};
             for(int i=0; i<inv_bytes.length; i++) {
                 try {
                     String bytes = inv_bytes[i];
 
                     JsonArray contents = new JsonArray();
-                    NBTTagCompound inv_contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(bytes)));
-                    NBTTagList items = inv_contents_nbt.getTagList("i", 10);
-                    for(int j=0; j<items.tagCount(); j++) {
-                        JsonObject item = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
-                        contents.add(item);
+
+                    if(inv_names[i].equals("backpack_contents")){
+                        JsonObject temp = getBackpackData(backpack_contents_json, backpack_icons);
+                        contents = (JsonArray) temp.get("contents");
+                        inventoryInfo.add("backpack_sizes", temp.get("backpack_sizes"));
+
+                    } else {
+
+                        NBTTagCompound inv_contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(bytes)));
+                        NBTTagList items = inv_contents_nbt.getTagList("i", 10);
+                        for (int j = 0; j < items.tagCount(); j++) {
+                            JsonObject item = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
+                            contents.add(item);
+                        }
                     }
                     inventoryInfo.add(inv_names[i], contents);
                 } catch(IOException e) {
@@ -804,6 +834,88 @@ public class ProfileViewer {
 
             return inventoryInfo;
         }
+
+        public boolean checkIfValidJson(JsonElement element){
+            return element != null;
+        }
+
+        public JsonObject getBackpackData(JsonObject backpack_contents_json, JsonObject backpack_icons) {
+
+            JsonArray contents = new JsonArray();
+            if(!(checkIfValidJson(backpack_contents_json) && checkIfValidJson(backpack_icons))){
+                JsonObject bundledReturn = new JsonObject();
+                bundledReturn.add("contents", new JsonArray());
+                bundledReturn.add("backpack_sizes", new JsonArray());
+
+                return bundledReturn;
+            }
+
+            String[] backpackArray = new String[0];
+
+            //Create backpack array which sizes up
+            for(Map.Entry<String, JsonElement> backpackIcon : backpack_icons.entrySet()) {
+                if(backpackIcon.getValue() instanceof JsonObject){
+                    JsonObject backpackData = (JsonObject)backpack_contents_json.get(backpackIcon.getKey());
+                    String bytes = Utils.getElementAsString(backpackData.get("data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
+                    backpackArray = growArray(bytes, Integer.parseInt(backpackIcon.getKey()), backpackArray);
+                }
+            }
+
+
+            //reduce backpack array to filter out not existent backpacks
+            {
+                int backpackCount = 0;
+                String[] tempBackpackArray = new String[0];
+                for (String s : backpackArray) {
+                    if (s != null) {
+                        backpackCount++;
+                        String[] veryTempBackpackArray = new String[tempBackpackArray.length + 1];
+                        System.arraycopy(tempBackpackArray, 0, veryTempBackpackArray, 0, tempBackpackArray.length);
+
+                        veryTempBackpackArray[veryTempBackpackArray.length - 1] = s;
+                        tempBackpackArray = veryTempBackpackArray;
+                    }
+                }
+                backpackArray = tempBackpackArray;
+            }
+
+            JsonArray backpackSizes = new JsonArray();
+
+            for (String backpack : backpackArray) {
+                try {
+                    NBTTagCompound inv_contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(backpack)));
+                    NBTTagList items = inv_contents_nbt.getTagList("i", 10);
+
+                    backpackSizes.add(new JsonPrimitive(items.tagCount()));
+                    for (int j = 0; j < items.tagCount(); j++) {
+                        JsonObject item = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
+                        contents.add(item);
+                    }
+                } catch (IOException ignored) {
+                }
+            }
+
+
+            JsonObject bundledReturn = new JsonObject();
+            bundledReturn.add("contents", contents);
+            bundledReturn.add("backpack_sizes", backpackSizes);
+
+            return bundledReturn;
+        }
+
+        public String[] growArray(String bytes, int index, String[] oldArray){
+            int newSize = Math.max(index+1, oldArray.length);
+
+            String[] newArray = new String[newSize];
+            for (int i = 0; i < oldArray.length; i++) {
+                newArray[i] = oldArray[i];
+            }
+            newArray[index] = bytes;
+
+            return newArray;
+        }
+
+
 
         public JsonObject getPetsInfo(String profileId) {
             JsonObject profileInfo = getProfileInformation(profileId);
