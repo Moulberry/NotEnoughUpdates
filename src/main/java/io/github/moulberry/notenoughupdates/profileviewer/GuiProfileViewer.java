@@ -2600,7 +2600,7 @@ public class GuiProfileViewer extends GuiScreen {
                 for(int i=0; i<4; i++) {
                     JsonObject item = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(type+";"+i);
                     if(item != null) {
-                        int x = guiLeft+50;
+                        int x = guiLeft+20;
                         float y = guiTop+82+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
                         GlStateManager.translate(x, y, 0);
                         ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item, false);
@@ -2610,10 +2610,10 @@ public class GuiProfileViewer extends GuiScreen {
                         stackTag.removeTag("ExtraAttributes");
                         stack.setTagCompound(stackTag);
 
-                        GlStateManager.scale(-1.5f, 1.5f, 1);
+                        GlStateManager.scale(1.5f, 1.5f, 1);
                         GlStateManager.enableDepth();
                         Utils.drawItemStack(stack, 0, 0);
-                        GlStateManager.scale(-1/1.5f, 1/1.5f, 1);
+                        GlStateManager.scale(1/1.5f, 1/1.5f, 1);
                         GlStateManager.translate(-x, -y, 0);
                         break;
                     }
