@@ -15,7 +15,7 @@ out
 
 # gradle
 build
-gradle/wrapper/gradle.properties
+gradle.properties
 .gradle
 
 # other
