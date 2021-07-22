@@ -1446,7 +1446,7 @@ public class StorageOverlay extends GuiElement {
 
         int dWheel = Mouse.getEventDWheel();
         if(!(NotEnoughUpdates.INSTANCE.config.storageGUI.cancelScrollKey != 0 &&
-                Keyboard.isKeyDown(NotEnoughUpdates.INSTANCE.config.storageGUI.cancelScrollKey)) && dWheel != 0) {
+                KeybindHelper.isKeyDown(NotEnoughUpdates.INSTANCE.config.storageGUI.cancelScrollKey)) && dWheel != 0) {
             if(dWheel < 0) {
                 dWheel = -1;
                 if(scrollVelocity > 0) scrollVelocity = 0;
