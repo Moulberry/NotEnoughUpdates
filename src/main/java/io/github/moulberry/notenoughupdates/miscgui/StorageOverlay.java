@@ -18,10 +18,7 @@ import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -36,11 +33,9 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector4f;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -1640,7 +1635,7 @@ public class StorageOverlay extends GuiElement {
 
             switch(buttonIndex) {
                 case 0:
-                    NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI2 = false; break;
+                    NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI3 = false; break;
                 case 1:
                     int size = desiredHeightSwitch != -1 ? desiredHeightSwitch : NotEnoughUpdates.INSTANCE.config.storageGUI.storageHeight;
                     int sizeIndex = Math.round((size-104)/54f);
