@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.MathHelper;
@@ -15,6 +16,7 @@ import net.minecraftforge.client.ForgeHooksClient;
 import org.lwjgl.util.Display;
 import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.Vector3f;
+import org.spongepowered.asm.lib.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EntityRenderer.class)
 public abstract class MixinEntityRenderer {
@@ -33,6 +36,20 @@ public abstract class MixinEntityRenderer {
     @Shadow private float farPlaneDistance;
 
     @Shadow protected abstract void orientCamera(float partialTicks);
+
+    @Inject(method="getFOVModifier", at=@At("RETURN"), cancellable = true)
+    public void getFOVModifier_mult(float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Float> cir) {
+        cir.setReturnValue(cir.getReturnValueF() * CustomItemEffects.INSTANCE.getFovMultiplier(partialTicks));
+    }
+
+    @Redirect(method="updateCameraAndRender", at=@At(
+            value="FIELD",
+            target="Lnet/minecraft/client/settings/GameSettings;mouseSensitivity:F",
+            opcode = Opcodes.GETFIELD
+    ))
+    public float updateCameraAndRender_mouseSensitivity(GameSettings gameSettings) {
+        return gameSettings.mouseSensitivity * CustomItemEffects.INSTANCE.getSensMultiplier();
+    }
 
     @Redirect(method="renderWorldPass", at=@At(
             value="INVOKE",

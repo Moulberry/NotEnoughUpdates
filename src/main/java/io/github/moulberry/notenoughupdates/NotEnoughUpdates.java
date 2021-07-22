@@ -1052,7 +1052,7 @@ public class NotEnoughUpdates {
         }
     });
 
-    SimpleCommand customizeCommand = new SimpleCommand("neucustomize", new SimpleCommand.ProcessCommandRunnable() {
+    SimpleCommand.ProcessCommandRunnable customizeRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
 
@@ -1070,7 +1070,10 @@ public class NotEnoughUpdates {
 
             openGui = new GuiItemCustomize(held, heldUUID);
         }
-    });
+    };
+
+    SimpleCommand customizeCommand = new SimpleCommand("neucustomize", customizeRunnable);
+    SimpleCommand customizeCommand2 = new SimpleCommand("neurename", customizeRunnable);
 
     SimpleCommand.ProcessCommandRunnable settingsRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -1195,6 +1198,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(dhCommand);
         ClientCommandHandler.instance.registerCommand(dnCommand);
         ClientCommandHandler.instance.registerCommand(customizeCommand);
+        ClientCommandHandler.instance.registerCommand(customizeCommand2);
         ClientCommandHandler.instance.registerCommand(devTestCommand);
         ClientCommandHandler.instance.registerCommand(packDevCommand);
         if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);

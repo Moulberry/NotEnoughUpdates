@@ -126,8 +126,6 @@ public class CrystalOverlay {
 
     public static HashMap<CrystalType, BlockPos> crystals = new HashMap<>();
 
-    private static ExecutorService es = Executors.newSingleThreadExecutor();
-
     public static void tick() {
         if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
         if(Minecraft.getMinecraft().theWorld == null) return;

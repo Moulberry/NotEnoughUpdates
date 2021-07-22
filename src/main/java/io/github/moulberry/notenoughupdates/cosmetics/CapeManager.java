@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.potion.Potion;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.RenderWorldEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -49,15 +50,82 @@ public class CapeManager {
 
     public JsonObject lastJsonSync = null;
 
-    private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
+    public static class CapeData {
+        public String capeName;
+        public boolean special;
+        public boolean hidden;
+
+        public boolean canShow() {
+            return !special && !hidden;
+        }
+
+        public CapeData(String capeName, boolean special, boolean hidden) {
+            this.capeName = capeName;
+            this.special = special;
+            this.hidden = hidden;
+        }
+    }
+
+    public CapeData[] capes = new CapeData[]{
+            //Content Creator
+        new CapeData("jakethybro", false, true),
+        new CapeData("krusty", false, true),
+        new CapeData("krusty_day", false, true),
+        new CapeData("krusty_sunset", false, true),
+        new CapeData("krusty_night", false, true),
+        new CapeData("zera", false, true),
+        new CapeData("soldier", false, true),
+        new CapeData("alexxoffi", false, false),
+
+            //Patreon
+        new CapeData("patreon1", false, false),
+        new CapeData("patreon2", false, false),
+        new CapeData("fade", false, false),
+        new CapeData("space", false, false),
+        new CapeData("mcworld", false, false),
+        new CapeData("negative", false, false),
+        new CapeData("void", false, false),
+        new CapeData("lava", false, false),
+        new CapeData("tunnel", false, false),
+        new CapeData("planets", false, false),
+
+            //Admins
+        new CapeData("nullzee", true, false),
+        new CapeData("ironmoon", true, false),
+        new CapeData("gravy", true, false),
+
+            //Partner
+        new CapeData("thebakery", true, false),
+        new CapeData("furf", true, false),
+        new CapeData("dsm", true, false),
+        new CapeData("skyclient", true, false),
+        new CapeData("subreddit_dark", true, false),
+        new CapeData("subreddit_light", true, false),
+        new CapeData("packshq", true, false),
+        new CapeData("skytils", true, false),
+
+            //Special Other
+        new CapeData("contrib", true, false),
+        new CapeData("mbstaff", true, false)
+    };
+
+    /*private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
             "gravy", "space", "mcworld", "lava", "packshq", "mbstaff", "thebakery", "negative",
             "void", "ironmoon", "krusty", "furf", "soldier", "dsm", "zera", "tunnel", "alexxoffi", "parallax", "jakethybro", "planets", "skytils" };
-    public Boolean[] specialCapes = new Boolean[]{ true, true, false, true, true,
+    public Boolean[] specialCapes = new Boolean[] {true, true, false, true, true,
             true, false, false, false, true, true, true, false,
-            false, true, false, true, true, true, true, false, true, true, true, true, true };
+            false, true, false, true, true, true, true, false, true, true, true, true, true };*/
 
     public static CapeManager getInstance() {
         return INSTANCE;
+    }
+
+    public void tryUnlockCape(String unlock) {
+        for(CapeData data : capes) {
+            if(data.capeName.equalsIgnoreCase(unlock)) {
+                data.hidden = false;
+            }
+        }
     }
 
     public void tick() {
@@ -227,7 +295,7 @@ public class CapeManager {
             }
             if(uuid.equals(clientUuid) && localCape != null && localCape.getRight() != null && !localCape.getRight().equals("null")) {
                 localCape.getLeft().onRenderPlayer(e);
-            } else if(capeMap.containsKey(uuid)) {
+            } else if(!Minecraft.getMinecraft().thePlayer.isPotionActive(Potion.blindness) && capeMap.containsKey(uuid)) {
                 capeMap.get(uuid).getLeft().onRenderPlayer(e);
             }
         } catch(Exception ignored) {}
@@ -301,7 +369,7 @@ public class CapeManager {
         }
     }
 
-    public String[] getCapes() {
+    public CapeData[] getCapes() {
         return capes;
     }
 

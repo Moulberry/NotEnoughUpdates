@@ -1241,6 +1241,7 @@ public class StorageOverlay extends GuiElement {
         GlStateManager.translate(0, 0, 300);
         allowTypingInSearchBar = false;
         if(stackOnMouse != null) {
+            GlStateManager.enableDepth();
             if(hoveringOtherBackpack) {
                 Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.barrier)), mouseX - 8, mouseY - 8);
             } else {
@@ -1649,8 +1650,8 @@ public class StorageOverlay extends GuiElement {
                         sizeIndex++;
                     }
                     size = sizeIndex*54+104;
-                    if(size < 104) size = 104;
-                    if(size > 312) size = 312;
+                    if(size < 104) size = 312;
+                    if(size > 320) size = 104;
                     desiredHeightMX = mouseX;
                     desiredHeightMY = mouseY;
                     desiredHeightSwitch = size; break;
@@ -1898,8 +1899,9 @@ public class StorageOverlay extends GuiElement {
                         searchBar.getText().isEmpty()) {
                     searchBar.setFocus(false);
                 }
+            } else if(Keyboard.getEventKey() == Keyboard.KEY_E) {
+                return false;
             }
-
 
         }
 

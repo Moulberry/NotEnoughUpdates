@@ -1921,8 +1921,13 @@ public class GuiProfileViewer extends GuiScreen {
 
         ItemStack[][] inventory = inventories[currentInventoryIndex];
         if(inventory == null) {
-            Utils.drawStringCentered(EnumChatFormatting.RED+"Inventory API not enabled!"+selectedInventory, Minecraft.getMinecraft().fontRendererObj,
-                    guiLeft+317, guiTop+101, true, 0);
+            if(selectedInventory.equalsIgnoreCase("personal_vault_contents")) {
+                Utils.drawStringCentered(EnumChatFormatting.RED+"Personal Vault API not enabled!", Minecraft.getMinecraft().fontRendererObj,
+                        guiLeft+317, guiTop+101, true, 0);
+            } else {
+                Utils.drawStringCentered(EnumChatFormatting.RED+"Inventory API not enabled!", Minecraft.getMinecraft().fontRendererObj,
+                        guiLeft+317, guiTop+101, true, 0);
+            }
             return;
         }
 

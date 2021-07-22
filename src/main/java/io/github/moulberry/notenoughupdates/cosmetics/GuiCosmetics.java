@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -12,10 +13,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Matrix4f;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 import java.awt.*;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.*;
@@ -26,6 +29,8 @@ public class GuiCosmetics extends GuiScreen {
     public static final ResourceLocation pv_dropdown = new ResourceLocation("notenoughupdates:pv_dropdown.png");
     public static final ResourceLocation cosmetics_fg = new ResourceLocation("notenoughupdates:cosmetics_fg.png");
     public static final ResourceLocation pv_elements = new ResourceLocation("notenoughupdates:pv_elements.png");
+
+    private GuiElementTextField unlockTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
 
     private CosmeticsPage currentPage = CosmeticsPage.CAPES;
     private int sizeX;
@@ -134,6 +139,15 @@ public class GuiCosmetics extends GuiScreen {
             Utils.drawStringCenteredScaledMaxWidth(equipMsg, Minecraft.getMinecraft().fontRendererObj,
                     guiLeft+sizeX/2f, guiTop+sizeY+5+10, false, 90, 0);
         }
+
+        if(unlockTextField.getFocus() || !unlockTextField.getText().isEmpty()) {
+            unlockTextField.setPrependText("");
+        } else {
+            unlockTextField.setPrependText("\u00a77Creator Code");
+        }
+
+        unlockTextField.setSize(80, 20);
+        unlockTextField.render(guiLeft+sizeX-80, guiTop+sizeY+2);
     }
 
     private void renderTabs(boolean renderPressed) {
@@ -193,7 +207,29 @@ public class GuiCosmetics extends GuiScreen {
     }
 
     @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        if(unlockTextField.getFocus()) {
+            if(keyCode == Keyboard.KEY_ESCAPE || keyCode == Keyboard.KEY_RETURN) {
+                CapeManager.INSTANCE.tryUnlockCape(unlockTextField.getText().trim());
+                unlockTextField.setText("");
+                unlockTextField.setFocus(false);
+            } else {
+                unlockTextField.keyTyped(typedChar, keyCode);
+            }
+        } else {
+            super.keyTyped(typedChar, keyCode);
+        }
+    }
+
+    @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        //guiLeft+sizeX-140, guiTop+sizeY+2
+
+        if(mouseX > guiLeft+sizeX-140 & mouseX < guiLeft+sizeX &&
+            mouseY > guiTop+sizeY && mouseY < guiTop+sizeY+22) {
+            unlockTextField.mouseClicked(mouseX, mouseY, mouseButton);
+        }
+
         for (int i = 0; i < CosmeticsPage.values().length; i++) {
             CosmeticsPage page = CosmeticsPage.values()[i];
             int x = guiLeft + i * 28;
@@ -216,9 +252,9 @@ public class GuiCosmetics extends GuiScreen {
 
         int index = 0;
         int displayingCapes = 0;
-        for(String cape : CapeManager.INSTANCE.getCapes()) {
-            boolean equipable = CapeManager.INSTANCE.getAvailableCapes() == null || CapeManager.INSTANCE.getAvailableCapes().contains(cape);
-            if (!CapeManager.INSTANCE.specialCapes[index++] || equipable) {
+        for(CapeManager.CapeData cape : CapeManager.INSTANCE.getCapes()) {
+            boolean equipable = CapeManager.INSTANCE.getAvailableCapes() == null || CapeManager.INSTANCE.getAvailableCapes().contains(cape.capeName);
+            if (cape.canShow() || equipable) {
                 displayingCapes++;
             }
         }
@@ -229,9 +265,9 @@ public class GuiCosmetics extends GuiScreen {
 
         index = 0;
         int displayIndex = 0;
-        for(String cape : CapeManager.INSTANCE.getCapes()) {
-            boolean equipable = CapeManager.INSTANCE.getAvailableCapes() == null || CapeManager.INSTANCE.getAvailableCapes().contains(cape);
-            if(CapeManager.INSTANCE.specialCapes[index++] && !equipable) continue;
+        for(CapeManager.CapeData cape : CapeManager.INSTANCE.getCapes()) {
+            boolean equipable = CapeManager.INSTANCE.getAvailableCapes() == null || CapeManager.INSTANCE.getAvailableCapes().contains(cape.capeName);
+            if(!cape.canShow() && !equipable) continue;
 
             GlStateManager.color(1, 1, 1, 1);
             Utils.drawTexturedRect(guiLeft + 20 + 91 * displayIndex - xOffset, guiTop + 123, 81, 20,
@@ -239,20 +275,20 @@ public class GuiCosmetics extends GuiScreen {
 
             if(mouseX > guiLeft + 20 + 91 * displayIndex - xOffset && mouseX < guiLeft + 20 + 91 * displayIndex - xOffset+81) {
                 if(mouseY > guiTop + 123 && mouseY < guiTop + 123 + 20) {
-                    if(CapeManager.INSTANCE.localCape != null && CapeManager.INSTANCE.localCape.getRight().equals(cape)) {
+                    if(CapeManager.INSTANCE.localCape != null && CapeManager.INSTANCE.localCape.getRight().equals(cape.capeName)) {
                         CapeManager.INSTANCE.setCape(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
                                 "null", true);
                     } else {
                         CapeManager.INSTANCE.setCape(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""),
-                                cape, true);
+                                cape.capeName, true);
                     }
 
                     return;
                 } else if(equipable && mouseY > guiTop + 149 && mouseY < guiTop + 149 + 20) {
-                    if(cape.equals(wantToEquipCape)) {
+                    if(cape.capeName.equals(wantToEquipCape)) {
                         wantToEquipCape = null;
                     } else {
-                        wantToEquipCape = cape;
+                        wantToEquipCape = cape.capeName;
                     }
                     return;
                 }
@@ -342,9 +378,9 @@ public class GuiCosmetics extends GuiScreen {
 
         int index = 0;
         int displayingCapes = 0;
-        for(String cape : CapeManager.INSTANCE.getCapes()) {
-            boolean equipable = CapeManager.INSTANCE.getAvailableCapes() == null || CapeManager.INSTANCE.getAvailableCapes().contains(cape);
-            if (!CapeManager.INSTANCE.specialCapes[index++] || equipable) {
+        for(CapeManager.CapeData capeData : CapeManager.INSTANCE.getCapes()) {
+            boolean equipable = CapeManager.INSTANCE.getAvailableCapes() == null || CapeManager.INSTANCE.getAvailableCapes().contains(capeData.capeName);
+            if (capeData.canShow() || equipable) {
                 displayingCapes++;
             }
         }
@@ -355,21 +391,21 @@ public class GuiCosmetics extends GuiScreen {
 
         index = 0;
         int displayIndex = 0;
-        for(String cape : CapeManager.INSTANCE.getCapes()) {
-            boolean equipable = CapeManager.INSTANCE.getAvailableCapes() == null || CapeManager.INSTANCE.getAvailableCapes().contains(cape);
-            if(CapeManager.INSTANCE.specialCapes[index++] && !equipable) continue;
+        for(CapeManager.CapeData capeData : CapeManager.INSTANCE.getCapes()) {
+            boolean equipable = CapeManager.INSTANCE.getAvailableCapes() == null || CapeManager.INSTANCE.getAvailableCapes().contains(capeData.capeName);
+            if(!capeData.canShow() && !equipable) continue;
 
-            if(cape.equals(CapeManager.INSTANCE.getCape(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "")))) {
+            if(capeData.capeName.equals(CapeManager.INSTANCE.getCape(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "")))) {
                 GlStateManager.color(250 / 255f, 200 / 255f, 0 / 255f, 1);
                 Utils.drawGradientRect(guiLeft + 20 + 91 * displayIndex - (int) xOffset, guiTop + 10,
                         guiLeft + 20 + 91 * displayIndex - (int) xOffset + 81, guiTop + 10 + 108,
                         new Color(150, 100, 0, 40).getRGB(), new Color(250, 200, 0, 40).getRGB());
-            } else if(cape.equals(wantToEquipCape)) {
+            } else if(capeData.capeName.equals(wantToEquipCape)) {
                 GlStateManager.color(0, 200 / 255f, 250 / 255f, 1);
                 Utils.drawGradientRect(guiLeft + 20 + 91 * displayIndex - (int) xOffset, guiTop + 10,
                         guiLeft + 20 + 91 * displayIndex - (int) xOffset + 81, guiTop + 10 + 108,
                         new Color(0, 100, 150, 40).getRGB(), new Color(0, 200, 250, 40).getRGB());
-            } else if(CapeManager.INSTANCE.localCape != null && CapeManager.INSTANCE.localCape.getRight().equals(cape)) {
+            } else if(CapeManager.INSTANCE.localCape != null && CapeManager.INSTANCE.localCape.getRight().equals(capeData.capeName)) {
                 GlStateManager.color(100/255f, 250/255f, 150/255f, 1);
                 Utils.drawGradientRect(guiLeft+20+91*displayIndex-(int)xOffset, guiTop+10,
                         guiLeft+20+91*displayIndex-(int)xOffset+81, guiTop+10+108,
@@ -383,7 +419,7 @@ public class GuiCosmetics extends GuiScreen {
             Utils.drawTexturedRect(guiLeft+20+91*displayIndex-xOffset, guiTop+123, 81, 20,
                     0, 81/256f, 216/256f, 236/256f, GL11.GL_NEAREST);
 
-            boolean equipPressed = cape.equals(wantToEquipCape);
+            boolean equipPressed = capeData.capeName.equals(wantToEquipCape);
             if(!equipable) GlStateManager.color(1, 1, 1, 0.5f);
             Utils.drawTexturedRect(guiLeft+20+91*displayIndex-xOffset, guiTop+149, 81, 20,
                     equipPressed?81/256f:0, equipPressed?0:81/256f, equipPressed?236/256f:216/256f, equipPressed?216/256f:236/256f, GL11.GL_NEAREST);
@@ -399,8 +435,8 @@ public class GuiCosmetics extends GuiScreen {
             }
             GlStateManager.color(1, 1, 1, 1);
 
-            ResourceLocation capeTexture = capesLocation.computeIfAbsent(cape,
-                    k -> new ResourceLocation("notenoughupdates", "capes/"+cape+"_preview.png"));
+            ResourceLocation capeTexture = capesLocation.computeIfAbsent(capeData.capeName,
+                    k -> new ResourceLocation("notenoughupdates", "capes/"+capeData.capeName+"_preview.png"));
             Minecraft.getMinecraft().getTextureManager().bindTexture(capeTexture);
             Utils.drawTexturedRect(guiLeft+31+91*displayIndex-xOffset, guiTop+24, 59, 84, GL11.GL_NEAREST);
 

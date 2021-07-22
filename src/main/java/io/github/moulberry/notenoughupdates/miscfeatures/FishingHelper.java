@@ -49,12 +49,12 @@ public class FishingHelper {
         }
     }
 
-    private enum PlayerWarningState {
+    public enum PlayerWarningState {
         NOTHING,
         FISH_INCOMING,
         FISH_HOOKED
     }
-    private PlayerWarningState warningState = PlayerWarningState.NOTHING;
+    public PlayerWarningState warningState = PlayerWarningState.NOTHING;
     private int hookedWarningStateTicks = 0;
 
     public final HashMap<Integer, EntityFishHook> hookEntities = new HashMap<>();

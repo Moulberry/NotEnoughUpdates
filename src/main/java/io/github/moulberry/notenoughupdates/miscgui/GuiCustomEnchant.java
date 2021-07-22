@@ -199,7 +199,12 @@ public class GuiCustomEnchant extends Gui {
     }
 
     public boolean shouldOverride(String containerName) {
-        shouldOverrideFast = NotEnoughUpdates.INSTANCE.config.enchanting.enableTableGUI &&
+        if(true) {
+            shouldOverrideFast = false;
+            return false;
+        }
+
+        shouldOverrideFast = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableTableGUI &&
                 containerName != null &&
                 NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
                 containerName.equalsIgnoreCase("Enchant Item");
@@ -466,8 +471,8 @@ public class GuiCustomEnchant extends Gui {
                         }
                     }
                     NEUConfig cfg = NotEnoughUpdates.INSTANCE.config;
-                    int mult = cfg.enchanting.enchantOrdering == 0 ? 1 : -1;
-                    Comparator<Enchantment> comparator = cfg.enchanting.enchantSorting == 0 ?
+                    int mult = cfg.enchantingSolvers.enchantOrdering == 0 ? 1 : -1;
+                    Comparator<Enchantment> comparator = cfg.enchantingSolvers.enchantSorting == 0 ?
                             Comparator.comparingInt(e -> mult*e.xpCost) :
                             (c1, c2) -> mult*c1.enchId.toLowerCase().compareTo(c2.enchId.toLowerCase());
                     removable.sort(comparator);
