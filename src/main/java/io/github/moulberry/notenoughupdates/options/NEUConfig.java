@@ -284,6 +284,8 @@ public class NEUConfig extends Config {
                 "Life Steal:\u003e:3:5:0",
                 "Scavenger:\u003e:3:5:0",
                 "Looting:\u003e:3:5:0");
+        @Expose public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
+        @Expose public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
     }
 
     private static ArrayList<String> createDefaultQuickCommands() {

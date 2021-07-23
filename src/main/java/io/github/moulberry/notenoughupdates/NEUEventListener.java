@@ -19,7 +19,10 @@ import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
-import io.github.moulberry.notenoughupdates.overlays.*;
+import io.github.moulberry.notenoughupdates.overlays.AuctionSearchOverlay;
+import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
+import io.github.moulberry.notenoughupdates.overlays.RancherBootOverlay;
+import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.*;
 import net.minecraft.client.Minecraft;
@@ -31,10 +34,7 @@ import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.gui.inventory.GuiInventory;
-import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.init.Blocks;
@@ -46,14 +46,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
-import net.minecraft.network.play.client.C12PacketUpdateSign;
 import net.minecraft.util.*;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -101,11 +98,17 @@ public class NEUEventListener {
                 JsonObject o = neu.manager.getJsonFromFile(updateJson);
 
                 String version = o.get("version").getAsString();
+                String preVersion = o.get("pre_version").getAsString();
 
                 boolean shouldUpdate = !NotEnoughUpdates.VERSION.equalsIgnoreCase(version);
+                boolean shouldPreUpdate = !NotEnoughUpdates.PRE_VERSION.equalsIgnoreCase(preVersion);
                 if(o.has("version_id") && o.get("version_id").isJsonPrimitive()) {
                     int version_id = o.get("version_id").getAsInt();
                     shouldUpdate = version_id > NotEnoughUpdates.VERSION_ID;
+                }
+                if (o.has("pre_version_id") && o.get("pre_version_id").isJsonPrimitive()) {
+                    int pre_version_id = o.get("pre_version_id").getAsInt();
+                    shouldPreUpdate = pre_version_id > NotEnoughUpdates.PRE_VERSION_ID;
                 }
 
                 if(shouldUpdate) {
@@ -127,6 +130,31 @@ public class NEUEventListener {
                             line = sb.toString();
                         }
                         line = line.replaceAll("\\{version}", version);
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(line));
+                    }
+
+                    neu.displayLinks(o);
+
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                } else if (shouldPreUpdate && NotEnoughUpdates.VERSION.equalsIgnoreCase("2.0.0-REL")) {
+                    String pre_update_msg = o.get("pre_update_msg").getAsString();
+
+                    int first_len = -1;
+                    for (String line : pre_update_msg.split("\n")) {
+                        FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+                        int len = fr.getStringWidth(line);
+                        if (first_len == -1) {
+                            first_len = len;
+                        }
+                        int missing_len = first_len - len;
+                        if (missing_len > 0) {
+                            StringBuilder sb = new StringBuilder(line);
+                            for (int i = 0; i < missing_len / 8; i++) {
+                                sb.insert(0, " ");
+                            }
+                            line = sb.toString();
+                        }
+                        line = line.replaceAll("\\{pre_version}", preVersion);
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(line));
                     }
 
@@ -314,7 +342,7 @@ public class NEUEventListener {
                     SBGamemodes.loadFromFile();
 
                     if(neu.config.notifications.showUpdateMsg) {
-                        displayUpdateMessageIfOutOfDate();
+                        this.displayUpdateMessageIfOutOfDate();
                     }
 
                     if(neu.config.notifications.doRamNotif) {
@@ -571,7 +599,7 @@ public class NEUEventListener {
                 && event.gui instanceof GuiContainer) {
             neu.overlay.reset();
         }
-        if(event.gui != null && neu.config.hidden.dev) {
+        if(event.gui != null && NotEnoughUpdates.INSTANCE.config.hidden.dev) {
             if(event.gui instanceof GuiChest) {
                 GuiChest eventGui = (GuiChest) event.gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
@@ -1473,7 +1501,7 @@ public class NEUEventListener {
                 event.setCanceled(true);
             }
         }
-        if(neu.config.hidden.dev && neu.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
+        if(NotEnoughUpdates.INSTANCE.config.hidden.dev && NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
                 Keyboard.getEventKey() == Keyboard.KEY_N && Keyboard.getEventKeyState()) {
             GuiScreen gui = Minecraft.getMinecraft().currentScreen;
             if(gui instanceof GuiChest) {
@@ -1529,7 +1557,7 @@ public class NEUEventListener {
                 System.out.println(essenceJson);
             }
         }
-        if(neu.config.hidden.dev && neu.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
+        if(NotEnoughUpdates.INSTANCE.config.hidden.dev && NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
                 Keyboard.getEventKey() == Keyboard.KEY_O && Keyboard.getEventKeyState()) {
             GuiScreen gui = Minecraft.getMinecraft().currentScreen;
             if(gui instanceof GuiChest) {
@@ -2268,7 +2296,7 @@ public class NEUEventListener {
                 }
             }
         }*/
-        if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && neu.config.hidden.dev &&
+        if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && NotEnoughUpdates.INSTANCE.config.hidden.dev &&
                 event.toolTip.size()>0&&event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
             event.toolTip.remove(event.toolTip.size()-1);
 

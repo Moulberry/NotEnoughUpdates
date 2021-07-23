@@ -2396,7 +2396,7 @@ public class GuiProfileViewer extends GuiScreen {
                 playerName = Utils.getElementAsString(profile.getHypixelProfile().get("prefix"), "") + " " + entityPlayer.getName();
             } else {
                 String rank = Utils.getElementAsString(profile.getHypixelProfile().get("rank"),
-                        Utils.getElementAsString(profile.getHypixelProfile().get("newPackageRank"), "NONE"));;
+                        Utils.getElementAsString(profile.getHypixelProfile().get("newPackageRank"), "NONE"));
                 String monthlyPackageRank = Utils.getElementAsString(profile.getHypixelProfile().get("monthlyPackageRank"), "NONE");
                 if(!rank.equals("YOUTUBER") && !monthlyPackageRank.equals("NONE")) {
                     rank = monthlyPackageRank;

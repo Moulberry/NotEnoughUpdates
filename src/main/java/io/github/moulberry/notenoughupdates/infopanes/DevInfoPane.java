@@ -588,7 +588,7 @@ public class DevInfoPane extends TextInfoPane {
 
                         ItemStack stack = null;
                         if(i < shapeless.getRecipeSize()) {
-                            Object o = shapeless.getInput().get(i);;
+                            Object o = shapeless.getInput().get(i);
                             if(o instanceof ItemStack) {
                                 stack = (ItemStack) o;
                             } else if(o instanceof List<?>) {
@@ -829,7 +829,7 @@ public class DevInfoPane extends TextInfoPane {
 
                                         ItemStack stack = null;
                                         if(i < shapeless.getRecipeSize()) {
-                                            Object o = shapeless.getInput().get(i);;
+                                            Object o = shapeless.getInput().get(i);
                                             if(o instanceof ItemStack) {
                                                 stack = (ItemStack) o;
                                             } else if(o instanceof List<?>) {

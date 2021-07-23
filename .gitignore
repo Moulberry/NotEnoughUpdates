@@ -21,3 +21,4 @@ gradle.properties
 # other
 eclipse
 run
+.vscode

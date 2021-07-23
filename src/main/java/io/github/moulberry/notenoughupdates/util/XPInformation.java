@@ -70,7 +70,7 @@ public class XPInformation {
                 if(matcher.matches()) {
                     String skillS = matcher.group(2);
                     String currentXpS = matcher.group(3).replace(",","");
-                    String maxXpS = matcher.group(4).replace(",","");;
+                    String maxXpS = matcher.group(4).replace(",","");
 
                     float currentXp = Float.parseFloat(currentXpS);
                     float maxXp = Float.parseFloat(maxXpS);
