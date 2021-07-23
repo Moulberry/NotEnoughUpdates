@@ -43,6 +43,7 @@ public class ProfileViewer {
         petRarityToNumMap.put("RARE", "2");
         petRarityToNumMap.put("EPIC", "3");
         petRarityToNumMap.put("LEGENDARY", "4");
+        petRarityToNumMap.put("MYTHIC", "5");
     }
 
     private static final LinkedHashMap<String, ItemStack> skillToSkillDisplayMap = new LinkedHashMap<>();
@@ -79,12 +80,12 @@ public class ProfileViewer {
         collectionCatToCollectionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON_INGOT", "GOLD_INGOT", "DIAMOND", "INK_SACK:4",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE_DUST", "GRAVEL", "ICE", "NETHERRACK",
-                        "SAND", "ENDER_STONE", "MITHRIL_ORE", "HARD_STONE", "GEMSTONE_COLLECTION"));
+                        "SAND", "ENDER_STONE", null ,"MITHRIL_ORE", "HARD_STONE", "GEMSTONE_COLLECTION"));
         collectionCatToCollectionMap.put(CAT_COMBAT,
                 Utils.createList("ROTTEN_FLESH", "BONE", "STRING", "SPIDER_EYE", "SULPHUR", "ENDER_PEARL",
-                        "GHAST_TEAR", "SLIME_BALL", "BLAZE_ROD", "MAGMA_CREAM"));
+                        "GHAST_TEAR", "SLIME_BALL", "BLAZE_ROD", "MAGMA_CREAM", null, null, null));
         collectionCatToCollectionMap.put(CAT_FORAGING,
-                Utils.createList("LOG", "LOG:1", "LOG:2", "LOG_2:1", "LOG_2", "LOG:3"));
+                Utils.createList("LOG", "LOG:1", "LOG:2", "LOG_2:1", "LOG_2", "LOG:3", null));
         collectionCatToCollectionMap.put(CAT_FISHING,
                 Utils.createList("RAW_FISH", "RAW_FISH:1", "RAW_FISH:2", "RAW_FISH:3", "PRISMARINE_SHARD",
                         "PRISMARINE_CRYSTALS", "CLAY_BALL", "WATER_LILY", "INK_SACK", "SPONGE"));
@@ -99,12 +100,12 @@ public class ProfileViewer {
         collectionCatToMinionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON", "GOLD", "DIAMOND", "LAPIS",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE", "GRAVEL", "ICE", null,
-                        "SAND", "ENDER_STONE", "MITHRIL", "HARD_STONE", null));
+                        "SAND", "ENDER_STONE", "SNOW", "MITHRIL", "HARD_STONE", null));
         collectionCatToMinionMap.put(CAT_COMBAT,
                 Utils.createList("ZOMBIE", "SKELETON", "SPIDER", "CAVESPIDER", "CREEPER", "ENDERMAN",
-                        "GHAST", "SLIME", "BLAZE", "MAGMA_CUBE"));
+                        "GHAST", "SLIME", "BLAZE", "MAGMA_CUBE", "REVENANT", "TARANTULA", "VOIDLING"));
         collectionCatToMinionMap.put(CAT_FORAGING,
-                Utils.createList("OAK", "SPRUCE", "BIRCH", "DARK_OAK", "ACACIA", "JUNGLE"));
+                Utils.createList("OAK", "SPRUCE", "BIRCH", "DARK_OAK", "ACACIA", "JUNGLE", "FLOWER"));
         collectionCatToMinionMap.put(CAT_FISHING,
                 Utils.createList("FISHING", null, null, null, null,
                         null, "CLAY", null, null, null));

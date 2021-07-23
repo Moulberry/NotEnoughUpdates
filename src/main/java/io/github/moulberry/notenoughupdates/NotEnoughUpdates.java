@@ -389,6 +389,7 @@ public class NotEnoughUpdates {
                                     float zombie = Utils.getElementAsFloat(skill.get("level_slayer_zombie"), 0);
                                     float spider = Utils.getElementAsFloat(skill.get("level_slayer_spider"), 0);
                                     float wolf = Utils.getElementAsFloat(skill.get("level_slayer_wolf"), 0);
+                                    float enderman = Utils.getElementAsFloat(skill.get("level_slayer_enderman"), 0);
 
                                     float avgSkillLVL = totalSkillLVL/totalSkillCount;
 
@@ -404,11 +405,13 @@ public class NotEnoughUpdates {
                                     EnumChatFormatting zombiePrefix = zombie>3?(zombie>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                     EnumChatFormatting spiderPrefix = spider>3?(spider>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                     EnumChatFormatting wolfPrefix = wolf>3?(wolf>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting endermanPrefix = enderman>3?(enderman>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                     EnumChatFormatting avgPrefix = avgSkillLVL>20?(avgSkillLVL>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
 
                                     overallScore += zombie*zombie/81f;
                                     overallScore += spider*spider/81f;
                                     overallScore += wolf*wolf/81f;
+                                    overallScore += enderman*enderman/81f;
                                     overallScore += avgSkillLVL/20f;
 
                                     int cata = (int)Utils.getElementAsFloat(skill.get("level_skill_catacombs"), 0);
@@ -422,7 +425,9 @@ public class NotEnoughUpdates {
                                                     g+" - AVG: " + avgPrefix+(int)Math.floor(avgSkillLVL)));
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                                             g+"Slayer: "+zombiePrefix+(int)Math.floor(zombie)+g+"-"+
-                                                    spiderPrefix+(int)Math.floor(spider)+g+"-"+wolfPrefix+(int)Math.floor(wolf)));
+                                                    spiderPrefix+(int)Math.floor(spider)+g+"-"+
+                                                    wolfPrefix+(int)Math.floor(wolf)+"-"+
+                                                    endermanPrefix+(int)Math.floor(enderman)));
                                 }
                                 if(stats == null) {
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
@@ -727,11 +732,12 @@ public class NotEnoughUpdates {
             "\u00a7dFrom \u00a7c[ADMIN] Minikloon\u00a77: If you use that command again, I'll have to ban you", "",
             "Ok, this is actually the last message, use the command again and you'll crash I promise"};
     private int devFailIndex = 0;
+
+    private static final List<String> devTestUsers = new ArrayList<>(Arrays.asList("moulberry", "lucycoconut", "ironm00n", "ariyio"));
     SimpleCommand devTestCommand = new SimpleCommand("neudevtest", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("Moulberry") &&
-                    !Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("LucyCoconut")) {
+            if(!devTestUsers.contains(Minecraft.getMinecraft().thePlayer.getName().toLowerCase())) {
                 if(devFailIndex >= devFailStrings.length) {
                     throw new Error("L") {
                         @Override

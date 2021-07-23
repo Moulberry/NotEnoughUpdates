@@ -1524,13 +1524,23 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.drawStringCentered(selectedCollectionCategory.getDisplayName() + " Minions", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+326, guiTop+14, true, 4210752);
 
-        float MAX_MINION_TIER = 11f;
+
         List<String> minions = ProfileViewer.getCollectionCatToMinionMap().get(selectedCollectionCategory);
         if(minions != null) {
             for(int i=0; i<minions.size(); i++) {
                 String minion = minions.get(i);
                 if(minion != null) {
-                    JsonObject minionJson = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(minion+"_GENERATOR_1");
+                    JsonObject misc = Constants.MISC;
+                    float MAX_MINION_TIER = Utils.getElementAsFloat(Utils.getElement(misc, "minions." + minion + "_GENERATOR"), 11);
+
+                    int tier = (int) Utils.getElementAsFloat(minionTiers.get(minion), 0);
+                    JsonObject minionJson;
+                    if (tier == 0) {
+                        minionJson = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(minion + "_GENERATOR_1");
+                    } else {
+                        minionJson = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(minion + "_GENERATOR_" + tier);
+                    }
+
                     if(minionJson != null) {
                         int xIndex = i%COLLS_XCOUNT;
                         int yIndex = i/COLLS_XCOUNT;
@@ -1539,7 +1549,7 @@ public class GuiProfileViewer extends GuiScreen {
                         float y = 7+COLLS_YPADDING+(COLLS_YPADDING+20)*yIndex;
 
                         String tierString;
-                        int tier = (int)Utils.getElementAsFloat(minionTiers.get(minion), 0);
+
                         if(tier-1 >= romans.length || tier-1 < 0) {
                             tierString = String.valueOf(tier);
                         } else {
@@ -2136,7 +2146,7 @@ public class GuiProfileViewer extends GuiScreen {
         float xStart = 22;
         float xOffset = 103;
         float yStartTop = 27;
-        float yStartBottom = 109;
+        float yStartBottom = 105;
         float yOffset = 10;
 
         float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), 0);
@@ -2162,6 +2172,7 @@ public class GuiProfileViewer extends GuiScreen {
             float totalSlayerLVL = 0;
             float totalSkillCount = 0;
             float totalSlayerCount = 0;
+            float totalSlayerXP = 0;
 
             for(Map.Entry<String, JsonElement> entry : skillInfo.entrySet()) {
                 if(entry.getKey().startsWith("level_skill")) {
@@ -2175,6 +2186,8 @@ public class GuiProfileViewer extends GuiScreen {
                 } else if(entry.getKey().startsWith("level_slayer")) {
                     totalSlayerLVL += entry.getValue().getAsFloat();
                     totalSlayerCount++;
+                } else if (entry.getKey().startsWith("experience_slayer")) {
+                    totalSlayerXP += entry.getValue().getAsFloat();
                 }
             }
 
@@ -2184,10 +2197,15 @@ public class GuiProfileViewer extends GuiScreen {
 
             Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSkillLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset, 76);
-            Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
-                    guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
+
             Utils.renderAlignedString(EnumChatFormatting.RED+"True AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgTrueSkillLVL*10)/10,
+                    guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
+
+            Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
+
+            Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE.toString() + Math.floor(totalSlayerXP * 10) / 10,
+                    guiLeft + xStart, guiTop + yStartBottom + yOffset * 4, 76);
         }
 
 
@@ -2396,7 +2414,7 @@ public class GuiProfileViewer extends GuiScreen {
                 playerName = Utils.getElementAsString(profile.getHypixelProfile().get("prefix"), "") + " " + entityPlayer.getName();
             } else {
                 String rank = Utils.getElementAsString(profile.getHypixelProfile().get("rank"),
-                        Utils.getElementAsString(profile.getHypixelProfile().get("newPackageRank"), "NONE"));;
+                        Utils.getElementAsString(profile.getHypixelProfile().get("newPackageRank"), "NONE"));
                 String monthlyPackageRank = Utils.getElementAsString(profile.getHypixelProfile().get("monthlyPackageRank"), "NONE");
                 if(!rank.equals("YOUTUBER") && !monthlyPackageRank.equals("NONE")) {
                     rank = monthlyPackageRank;
@@ -2478,8 +2496,10 @@ public class GuiProfileViewer extends GuiScreen {
                         } else {
                             tooltipToDisplay.add(EnumChatFormatting.GRAY+"[SHIFT for Info]");
                         }
-                        tooltipToDisplay.add("");
-                        tooltipToDisplay.add(EnumChatFormatting.RED+"THIS IS IN NO WAY ENDORSING IRL TRADING!");
+                        if (!NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+                            tooltipToDisplay.add("");
+                            tooltipToDisplay.add(EnumChatFormatting.RED + "THIS IS IN NO WAY ENDORSING IRL TRADING!");
+                        }
 
                     }
                 }
@@ -2635,6 +2655,7 @@ public class GuiProfileViewer extends GuiScreen {
             Splitter splitter = Splitter.on(" ").omitEmptyStrings().limit(2);
             for(int i=0; i<PlayerStats.defaultStatNames.length; i++) {
                 String statName = PlayerStats.defaultStatNames[i];
+                if(statName.equals("mining_fortune") ||  statName.equals("mining_speed")) continue;
                 String statNamePretty = PlayerStats.defaultStatNamesPretty[i];
 
                 int val = Math.round(stats.get(statName));

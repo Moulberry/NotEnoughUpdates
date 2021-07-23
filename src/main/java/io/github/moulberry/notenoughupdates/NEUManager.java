@@ -66,7 +66,7 @@ public class NEUManager {
 
     private ExecutorService repoLoaderES = Executors.newSingleThreadExecutor();
 
-    private static final String GIT_COMMITS_URL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
+    private static String GIT_COMMITS_URL;
 
     private HashMap<String, Set<String>> usagesMap = new HashMap<>();
 
@@ -80,6 +80,7 @@ public class NEUManager {
         this.neu = neu;
         this.configLocation = configLocation;
         this.auctionManager = new APIManager(this);
+        GIT_COMMITS_URL = neu.config.hidden.repoCommitsURL;
 
         gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -188,8 +189,8 @@ public class NEUManager {
                     Utils.recursiveDelete(repoLocation);
                     repoLocation.mkdirs();
 
-                    //TODO: Store hard-coded value somewhere else
-                    String dlUrl = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
+
+                    String dlUrl = neu.config.hidden.repoURL;
 
                     pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
                     dialog.pack();
