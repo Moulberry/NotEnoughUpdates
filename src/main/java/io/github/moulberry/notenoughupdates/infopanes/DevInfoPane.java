@@ -35,7 +35,7 @@ public class DevInfoPane extends TextInfoPane {
      */
 
     public DevInfoPane(NEUOverlay overlay, NEUManager manager) {
-        super(overlay, manager, "Dev", "");
+        super(overlay, manager, "Missing Items", "");
         text = getText();
     }
 
@@ -61,7 +61,7 @@ public class DevInfoPane extends TextInfoPane {
         //if(true) return text;
 
         for(String internalname : manager.auctionManager.getItemAuctionInfoKeySet()) {
-            if(internalname.contains("-")) continue;
+            if(internalname.matches("^.*-[0-9]{1,3}$")) continue;
             if(!manager.getItemInformation().containsKey(internalname)) {
                 text += internalname + "\n";
             }
@@ -81,6 +81,8 @@ public class DevInfoPane extends TextInfoPane {
         }*/
         return text;
     }
+
+    //#region add vanilla items
 
     AtomicBoolean running = new AtomicBoolean(false);
     ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
@@ -1052,4 +1054,5 @@ public class DevInfoPane extends TextInfoPane {
         }*/
         return false;
     }
+    //#endregion
 }
