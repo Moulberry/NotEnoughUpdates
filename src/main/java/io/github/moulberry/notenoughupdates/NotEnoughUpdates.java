@@ -734,11 +734,11 @@ public class NotEnoughUpdates {
             "\u00a7dFrom \u00a7c[ADMIN] Minikloon\u00a77: If you use that command again, I'll have to ban you", "",
             "Ok, this is actually the last message, use the command again and you'll crash I promise"};
     private int devFailIndex = 0;
+    private static final List<String> devTestUsers = new ArrayList<>(Arrays.asList("moulberry", "lucycoconut", "ironm00n"));
     SimpleCommand devTestCommand = new SimpleCommand("neudevtest", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {
-            if(!Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("Moulberry") &&
-                    !Minecraft.getMinecraft().thePlayer.getName().equalsIgnoreCase("LucyCoconut")) {
+            if(!devTestUsers.contains(Minecraft.getMinecraft().thePlayer.getName().toLowerCase())) {
                 if(devFailIndex >= devFailStrings.length) {
                     throw new Error("L") {
                         @Override
@@ -830,6 +830,11 @@ public class NotEnoughUpdates {
 
                 return;
             }
+
+            /* if(args.length == 1 && args[0].equalsIgnoreCase("update")) {
+                NEUEventListener.displayUpdateMessageIfOutOfDate();
+            } */
+
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Executing dubious code"));
             /*Minecraft.getMinecraft().thePlayer.rotationYaw = 0;
             Minecraft.getMinecraft().thePlayer.rotationPitch = 0;

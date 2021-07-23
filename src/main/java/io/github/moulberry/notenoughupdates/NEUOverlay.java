@@ -1277,6 +1277,10 @@ public class NEUOverlay extends Gui {
                 case "who made this mod":
                     searchedItems.add(CustomItems.CREDITS);
                     break;
+                case "ironmoon":
+                case "ironm00n":
+                    searchedItems.add(CustomItems.IRONM00N);
+                    break;
             }
 
             this.searchedItems = searchedItems;
