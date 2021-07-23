@@ -313,6 +313,7 @@ public class NotEnoughUpdates {
         petRarityToColourMap.put("RARE", EnumChatFormatting.BLUE.toString());
         petRarityToColourMap.put("EPIC", EnumChatFormatting.DARK_PURPLE.toString());
         petRarityToColourMap.put("LEGENDARY", EnumChatFormatting.GOLD.toString());
+        petRarityToColourMap.put("MYTHIC", EnumChatFormatting.LIGHT_PURPLE.toString());
     }
     ScheduledExecutorService peekCommandExecutorService = null;
     SimpleCommand peekCommand = new SimpleCommand("peek", new SimpleCommand.ProcessCommandRunnable() {
@@ -391,6 +392,7 @@ public class NotEnoughUpdates {
                                     float zombie = Utils.getElementAsFloat(skill.get("level_slayer_zombie"), 0);
                                     float spider = Utils.getElementAsFloat(skill.get("level_slayer_spider"), 0);
                                     float wolf = Utils.getElementAsFloat(skill.get("level_slayer_wolf"), 0);
+                                    float enderman = Utils.getElementAsFloat(skill.get("level_slayer_enderman"), 0);
 
                                     float avgSkillLVL = totalSkillLVL/totalSkillCount;
 
@@ -400,17 +402,20 @@ public class NotEnoughUpdates {
                                         zombie = 2;
                                         spider = 1;
                                         wolf = 2;
+                                        enderman = 0;
                                     }
 
                                     EnumChatFormatting combatPrefix = combat>20?(combat>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                     EnumChatFormatting zombiePrefix = zombie>3?(zombie>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                     EnumChatFormatting spiderPrefix = spider>3?(spider>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                     EnumChatFormatting wolfPrefix = wolf>3?(wolf>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
+                                    EnumChatFormatting endermanPrefix = enderman>3?(enderman>6?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                     EnumChatFormatting avgPrefix = avgSkillLVL>20?(avgSkillLVL>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
 
                                     overallScore += zombie*zombie/81f;
                                     overallScore += spider*spider/81f;
                                     overallScore += wolf*wolf/81f;
+                                    overallScore += enderman*enderman/81f;
                                     overallScore += avgSkillLVL/20f;
 
                                     int cata = (int)Utils.getElementAsFloat(skill.get("level_skill_catacombs"), 0);
@@ -424,9 +429,9 @@ public class NotEnoughUpdates {
                                                     g+" - AVG: " + avgPrefix+(int)Math.floor(avgSkillLVL)));
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                                             g+"Slayer: "+zombiePrefix+(int)Math.floor(zombie)+g+"-"+
-                                                    spiderPrefix+(int)Math.floor(spider)+g+"-"+wolfPrefix+(int)Math.floor(wolf)));
+                                                    spiderPrefix+(int)Math.floor(spider)+g+"-"+wolfPrefix+(int)Math.floor(wolf)+"-"+endermanPrefix+(int)Math.floor(enderman)));
                                 }
-                                if(stats == null) {
+                                if (stats == null) {
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                                             EnumChatFormatting.YELLOW+"Skills, collection and/or inventory apis disabled!"));
                                 } else {
@@ -473,7 +478,7 @@ public class NotEnoughUpdates {
 
                                 String overall = "Skywars Main";
                                 if(isMe) {
-                                    overall = Utils.chromaString("Literally the best player to exist");
+                                    overall = Utils.chromaString("Literally the best player to exist"); // ego much
                                 } else if(overallScore < 5 && (bankBalance+purseBalance) > 500*1000*1000) {
                                     overall = EnumChatFormatting.GOLD+"Bill Gates";
                                 } else if(overallScore > 9) {
