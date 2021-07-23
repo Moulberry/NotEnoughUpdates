@@ -18,10 +18,7 @@ import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -36,11 +33,9 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector4f;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -1241,6 +1236,7 @@ public class StorageOverlay extends GuiElement {
         GlStateManager.translate(0, 0, 300);
         allowTypingInSearchBar = false;
         if(stackOnMouse != null) {
+            GlStateManager.enableDepth();
             if(hoveringOtherBackpack) {
                 Utils.drawItemStack(new ItemStack(Item.getItemFromBlock(Blocks.barrier)), mouseX - 8, mouseY - 8);
             } else {
@@ -1445,7 +1441,7 @@ public class StorageOverlay extends GuiElement {
 
         int dWheel = Mouse.getEventDWheel();
         if(!(NotEnoughUpdates.INSTANCE.config.storageGUI.cancelScrollKey != 0 &&
-                Keyboard.isKeyDown(NotEnoughUpdates.INSTANCE.config.storageGUI.cancelScrollKey)) && dWheel != 0) {
+                KeybindHelper.isKeyDown(NotEnoughUpdates.INSTANCE.config.storageGUI.cancelScrollKey)) && dWheel != 0) {
             if(dWheel < 0) {
                 dWheel = -1;
                 if(scrollVelocity > 0) scrollVelocity = 0;
@@ -1639,7 +1635,7 @@ public class StorageOverlay extends GuiElement {
 
             switch(buttonIndex) {
                 case 0:
-                    NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI2 = false; break;
+                    NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI3 = false; break;
                 case 1:
                     int size = desiredHeightSwitch != -1 ? desiredHeightSwitch : NotEnoughUpdates.INSTANCE.config.storageGUI.storageHeight;
                     int sizeIndex = Math.round((size-104)/54f);
@@ -1649,8 +1645,8 @@ public class StorageOverlay extends GuiElement {
                         sizeIndex++;
                     }
                     size = sizeIndex*54+104;
-                    if(size < 104) size = 104;
-                    if(size > 312) size = 312;
+                    if(size < 104) size = 312;
+                    if(size > 320) size = 104;
                     desiredHeightMX = mouseX;
                     desiredHeightMY = mouseY;
                     desiredHeightSwitch = size; break;
@@ -1898,8 +1894,9 @@ public class StorageOverlay extends GuiElement {
                         searchBar.getText().isEmpty()) {
                     searchBar.setFocus(false);
                 }
+            } else if(Keyboard.getEventKey() == Keyboard.KEY_E) {
+                return false;
             }
-
 
         }
 

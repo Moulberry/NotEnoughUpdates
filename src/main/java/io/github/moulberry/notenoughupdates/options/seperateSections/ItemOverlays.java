@@ -98,7 +98,7 @@ public class ItemOverlays {
     public String zapperOverlayColour = "0:102:171:5:0";
 
     @ConfigOption(
-            name = "Smooth AOTE",
+            name = "Smooth AOTE/AOTV/Hyp",
             desc = ""
     )
     @ConfigEditorAccordion(id = 2)
@@ -133,7 +133,20 @@ public class ItemOverlays {
             minStep = 25
     )
     @ConfigAccordionId(id = 2)
-    public int smoothTpMillis = 175;
+    public int smoothTpMillis = 125;
+
+    @Expose
+    @ConfigOption(
+            name = "Smooth TP Time (Etherwarp)",
+            desc = "Teleport smoothly to your destination when using AOTV Etherwarp"
+    )
+    @ConfigEditorSlider(
+            minValue = 0,
+            maxValue = 500,
+            minStep = 25
+    )
+    @ConfigAccordionId(id = 2)
+    public int smoothTpMillisEtherwarp = 50;
 
     @Expose
     @ConfigOption(
@@ -143,6 +156,31 @@ public class ItemOverlays {
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 2)
     public boolean disableHyperionParticles = true;
+
+    @ConfigOption(
+            name = "Etherwarp",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 7)
+    public boolean etherwarpAccordion = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Etherwarp Zoom",
+            desc = "Zoom in on targeted blocks with etherwarp, making it easier to adjust at a distance"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 7)
+    public boolean etherwarpZoom = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Highlight Colour",
+            desc = "Change the colour of the etherwarp target block outline"
+    )
+    @ConfigEditorColour
+    @ConfigAccordionId(id = 7)
+    public String etherwarpHighlightColour = "00:70:156:8:96";
 
     @ConfigOption(
             name = "Bonemerang Overlay",

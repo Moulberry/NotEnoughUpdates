@@ -24,8 +24,7 @@ public class MixinNetHandlerPlayClient {
     @Redirect(method="handlePlayerPosLook", at=@At(value="INVOKE", target=TARGET))
     public void handlePlayerPosLook_setPositionAndRotation(EntityPlayer player, double x, double y, double z, float yaw, float pitch) {
         if(CustomItemEffects.INSTANCE.aoteTeleportationCurr != null) {
-            CustomItemEffects.INSTANCE.aoteTeleportationMillis +=
-                    Math.max(0, Math.min(300, NotEnoughUpdates.INSTANCE.config.itemOverlays.smoothTpMillis));
+            CustomItemEffects.INSTANCE.aoteTeleportationMillis += Math.max(0, Math.min(300, CustomItemEffects.INSTANCE.tpTime));
         }
         player.setPositionAndRotation(x, y, z, yaw, pitch);
     }

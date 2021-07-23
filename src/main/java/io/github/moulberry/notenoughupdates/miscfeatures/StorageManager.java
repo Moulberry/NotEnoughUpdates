@@ -19,7 +19,6 @@ import net.minecraft.network.play.server.S2DPacketOpenWindow;
 import net.minecraft.network.play.server.S2EPacketCloseWindow;
 import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraft.network.play.server.S30PacketWindowItems;
-import org.lwjgl.input.Keyboard;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -226,7 +225,7 @@ public class StorageManager {
     }
     
     public boolean shouldRenderStorageOverlay(String containerName) {
-        if(!NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI2) {
+        if(!NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI3) {
             shouldRenderStorageOverlayCached = false;
             return false;
         }

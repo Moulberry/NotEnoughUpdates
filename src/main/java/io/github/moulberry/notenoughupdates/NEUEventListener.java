@@ -270,7 +270,6 @@ public class NEUEventListener {
             FairySouls.tick();
             XPInformation.getInstance().tick();
             ProfileApiSyncer.getInstance().tick();
-            DamageCommas.tick();
             ItemCustomizeManager.tick();
             BackgroundBlur.markDirty();
             NPCRetexturing.getInstance().tick();

@@ -21,7 +21,7 @@ public abstract class MixinRendererLivingEntity<T extends EntityLivingBase> {
             "Lnet/minecraft/entity/EntityLivingBase;getDisplayName()Lnet/minecraft/util/IChatComponent;"))
     public IChatComponent renderName_getDisplayName(EntityLivingBase entity) {
         if(entity instanceof EntityArmorStand) {
-            return DamageCommas.replaceName(entity.getDisplayName());
+            return DamageCommas.replaceName(entity);
         } else {
             return entity.getDisplayName();
         }

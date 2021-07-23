@@ -1,36 +1,99 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
 import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.WeakHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DamageCommas {
 
-    private static final HashMap<Integer, ChatComponentText> replacementMap = new HashMap<>();
+    private static final WeakHashMap<EntityLivingBase, ChatComponentText> replacementMap = new WeakHashMap<>();
 
-    //From [MVP++] HY7:
     private static final EnumChatFormatting[] colours = {EnumChatFormatting.RED, EnumChatFormatting.GOLD, EnumChatFormatting.YELLOW, EnumChatFormatting.WHITE};
 
-    public static void tick() {
-        replacementMap.clear();
-    }
+    private static final char STAR = '\u2727';
+    private static final Pattern PATTERN_CRIT = Pattern.compile("\u00a7f"+STAR+"((?:\u00a7.\\d)+)\u00a7."+STAR+"(.*)");
+    private static final Pattern PATTERN_NO_CRIT = Pattern.compile("\u00a77(\\d+)(.*)");
 
-    public static IChatComponent replaceName(IChatComponent name) {
+    public static IChatComponent replaceName(EntityLivingBase entity) {
+        if(!entity.hasCustomName()) return entity.getDisplayName();
+
+        IChatComponent name = entity.getDisplayName();
         if(NotEnoughUpdates.INSTANCE.config.misc.damageIndicatorStyle == 0) return name;
 
-        String formatted = name.getFormattedText();
-        int hashCode = formatted.hashCode();
-
-        if(replacementMap.containsKey(hashCode)) {
-            ChatComponentText component = replacementMap.get(hashCode);
+        if(replacementMap.containsKey(entity)) {
+            ChatComponentText component = replacementMap.get(entity);
             if(component == null) return name;
             return component;
         }
+
+        String formatted = name.getFormattedText();
+
+        boolean crit = false;
+        String numbers;
+        String prefix;
+        String suffix;
+
+        Matcher matcherCrit = PATTERN_CRIT.matcher(formatted);
+        if(matcherCrit.matches()) {
+            crit = true;
+            numbers = StringUtils.cleanColour(matcherCrit.group(1));
+            prefix = "\u00a7f"+STAR;
+            suffix = "\u00a7f"+STAR+matcherCrit.group(2);
+        } else {
+            Matcher matcherNoCrit = PATTERN_NO_CRIT.matcher(formatted);
+            if(matcherNoCrit.matches()) {
+                numbers = matcherNoCrit.group(1);
+                prefix = "\u00A77";
+                suffix = "\u00A7r"+matcherNoCrit.group(2);
+            } else {
+                replacementMap.put(entity, null);
+                return name;
+            }
+        }
+
+        StringBuilder newFormatted = new StringBuilder();
+
+        try {
+            int number = Integer.parseInt(numbers);
+
+            if(number > 999 && NotEnoughUpdates.INSTANCE.config.misc.damageIndicatorStyle == 2) {
+                newFormatted.append(Utils.shortNumberFormat(number, 0));
+            } else {
+                newFormatted.append(NumberFormat.getIntegerInstance().format(number));
+            }
+        } catch(NumberFormatException e) {
+            replacementMap.put(entity, null);
+            return name;
+        }
+
+        if(crit) {
+            StringBuilder newFormattedCrit = new StringBuilder();
+
+            int colourIndex = 0;
+            for(char c : newFormatted.toString().toCharArray()) {
+                newFormattedCrit.append(colours[colourIndex++ % colours.length]);
+                newFormattedCrit.append(c);
+            }
+
+            newFormatted = newFormattedCrit;
+        }
+
+        ChatComponentText finalComponent = new ChatComponentText(prefix+newFormatted.toString()+suffix);
+
+        replacementMap.put(entity, finalComponent);
+        return finalComponent;
+
+        /*if(formatted.startsWith("\u00A7f\u2727")) System.out.println(formatted);
 
         if(formatted.length() >= 7 && (formatted.startsWith("\u00A7f\u2727") || formatted.startsWith("\u00A7f\u2694")) &&
                 (formatted.endsWith("\u2727\u00a7r") || formatted.endsWith("\u2694\u00a7r"))) {
@@ -79,7 +142,7 @@ public class DamageCommas {
                     if(numLast) numCount--;
                     numLast = false;
                     colLast = true;
-                } else if(c >= '0' && c <= '9') {
+                } else if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
                     numLast = true;
                     colLast = false;
                     numCount++;
@@ -131,7 +194,7 @@ public class DamageCommas {
             }
         }
         replacementMap.put(hashCode, null);
-        return name;
+        return name;*/
     }
 
 }

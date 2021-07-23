@@ -51,9 +51,10 @@ public class BetterContainers {
     private static long clickedSlotMillis = 0;
     public static long lastRenderMillis = 0;
 
+    private static int lastInvHashcode = 0;
+    private static int lastHashcodeCheck = 0;
+
     public static HashMap<Integer, ItemStack> itemCache = new HashMap<>();
-    public static boolean lastUsingCached = false;
-    public static boolean usingCached = false;
 
     public static void clickSlot(int slot) {
         clickedSlotMillis = System.currentTimeMillis();
@@ -68,22 +69,30 @@ public class BetterContainers {
     }
 
     public static void bindHook(TextureManager textureManager, ResourceLocation location) {
+        long currentMillis = System.currentTimeMillis();
+
         if(isChestOpen() && NEUEventListener.inventoryLoaded) {
-            if((texture != null && lastClickedSlot != getClickedSlot()) ||
-                    lastUsingCached != getUsingCache() || !loaded) {
-                lastUsingCached = getUsingCache();
+            int invHashcode = lastInvHashcode;
+
+            if(currentMillis - lastHashcodeCheck > 50) {
+                Container container = ((GuiChest)Minecraft.getMinecraft().currentScreen).inventorySlots;
+                invHashcode = container.getInventory().hashCode();
+            }
+
+            if((texture != null && lastClickedSlot != getClickedSlot()) || !loaded || lastInvHashcode != invHashcode) {
+                lastInvHashcode = invHashcode;
                 lastClickedSlot = getClickedSlot();
                 generateTex(location);
             }
             if(texture != null && loaded) {
-                lastRenderMillis = System.currentTimeMillis();
+                lastRenderMillis = currentMillis;
 
                 GlStateManager.color(1, 1, 1, 1);
                 textureManager.loadTexture(rl, texture);
                 textureManager.bindTexture(rl);
                 return;
             }
-        } else if(System.currentTimeMillis() - lastRenderMillis < 200 && texture != null) {
+        } else if(currentMillis - lastRenderMillis < 200 && texture != null) {
             GlStateManager.color(1, 1, 1, 1);
             textureManager.loadTexture(rl, texture);
             textureManager.bindTexture(rl);
@@ -94,7 +103,7 @@ public class BetterContainers {
     }
 
     public static boolean getUsingCache() {
-        return usingCached && System.currentTimeMillis() - lastRenderMillis < 300;
+        return false;
     }
 
     public static boolean isBlacklistedInventory() {
