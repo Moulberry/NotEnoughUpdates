@@ -32,7 +32,7 @@ public class FuelBar {
         fuelAmount = -1;
 
         if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().startsWith("mining_")) return;
+        if(!(SBInfo.getInstance().getLocation().startsWith("mining_")||SBInfo.getInstance().getLocation().equals("crystal_hollows"))) return;
 
         if(Minecraft.getMinecraft().thePlayer == null) return;
         if(!NotEnoughUpdates.INSTANCE.config.mining.drillFuelBar) return;
@@ -40,7 +40,7 @@ public class FuelBar {
         ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
         if(held != null) {
             String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-            if(internalname != null && internalname.contains("_DRILL_")) {
+            if(internalname != null && (internalname.contains("_DRILL_") || internalname.equals("DIVAN_DRILL"))) {
                 String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(held.getTagCompound());
                 for(String line : lore) {
                     try {
