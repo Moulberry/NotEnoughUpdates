@@ -156,7 +156,7 @@ public class MiscOverlays {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 2)
-    public int readyColour = 0;
+    public int readyColour = 10;
 
     @Expose
     @ConfigOption(
@@ -168,7 +168,7 @@ public class MiscOverlays {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 2)
-    public int goneColour = 0;
+    public int goneColour = 12;
 
     @Expose
     @ConfigOption(
@@ -180,7 +180,7 @@ public class MiscOverlays {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 2)
-    public int verySoonColour = 0;
+    public int verySoonColour = 11;
 
     @Expose
     @ConfigOption(
@@ -192,7 +192,7 @@ public class MiscOverlays {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 2)
-    public int soonColour = 0;
+    public int soonColour = 9;
 
     @Expose
     @ConfigOption(
@@ -204,7 +204,7 @@ public class MiscOverlays {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 2)
-    public int kindaSoonColour = 0;
+    public int kindaSoonColour = 1;
 
 
     @Expose
@@ -218,7 +218,7 @@ public class MiscOverlays {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 2)
-    public int defaultColour = 0;
+    public int defaultColour = 15;
 
 
     @Expose
