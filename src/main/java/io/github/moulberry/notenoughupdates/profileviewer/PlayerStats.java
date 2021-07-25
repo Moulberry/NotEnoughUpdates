@@ -30,12 +30,12 @@ public class PlayerStats {
     public static final String PET_LUCK = "pet_luck";
 
     public static final String[] defaultStatNames = new String[]{"health","defence","strength","speed","crit_chance",
-            "crit_damage","bonus_attack_speed","intelligence","sea_creature_chance","magic_find","pet_luck","ferocity","ability_damage"};
+            "crit_damage","bonus_attack_speed","intelligence","sea_creature_chance","magic_find","pet_luck","ferocity","ability_damage","mining_fortune", "mining_speed"};
     public static final String[] defaultStatNamesPretty = new String[]{EnumChatFormatting.RED+"\u2764 Health",EnumChatFormatting.GREEN+"\u2748 Defence",
             EnumChatFormatting.RED+"\u2741 Strength",EnumChatFormatting.WHITE+"\u2726 Speed",EnumChatFormatting.BLUE+"\u2623 Crit Chance",
             EnumChatFormatting.BLUE+"\u2620 Crit Damage",EnumChatFormatting.YELLOW+"\u2694 Attack Speed",EnumChatFormatting.AQUA+"\u270e Intelligence",
             EnumChatFormatting.DARK_AQUA+"\u03b1 SC Chance",EnumChatFormatting.AQUA+"\u272f Magic Find",EnumChatFormatting.LIGHT_PURPLE+"\u2663 Pet Luck",
-            EnumChatFormatting.RED+"\u2AFD Ferocity",EnumChatFormatting.RED+"\u2739 Ability Damage"};
+            EnumChatFormatting.RED+"\u2AFD Ferocity",EnumChatFormatting.RED+"\u2739 Ability Damage", EnumChatFormatting.GOLD+"\u2618 Mining Fortune" ,EnumChatFormatting.GOLD+"\u2E15 Mining Speed"};
 
     public static class Stats {
         JsonObject statsJson = new JsonObject();

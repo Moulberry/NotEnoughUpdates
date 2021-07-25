@@ -37,7 +37,7 @@ import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 public class GuiDungeonMapEditor extends GuiScreen {
 
     public static final ResourceLocation BACKGROUND = new ResourceLocation("notenoughupdates:dungeon_map/editor/background.png");
-    public static final ResourceLocation BUTTON = new ResourceLocation("notenoughupdates:button.png");
+    public static final ResourceLocation BUTTON = new ResourceLocation("notenoughupdates:dungeon_map/editor/button.png");
     private static final DungeonMap demoMap = new DungeonMap();
 
     private int sizeX;

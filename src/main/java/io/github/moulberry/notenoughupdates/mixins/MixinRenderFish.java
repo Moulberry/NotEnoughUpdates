@@ -41,8 +41,8 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
             return;
         }
 
-        if(!(NotEnoughUpdates.INSTANCE.config.fishing.enableRodColours ||
-                FishingHelper.getInstance().warningState != FishingHelper.PlayerWarningState.NOTHING) || entity == null) return;
+        if((!NotEnoughUpdates.INSTANCE.config.fishing.enableRodColours &&
+                FishingHelper.getInstance().warningState == FishingHelper.PlayerWarningState.NOTHING) || entity == null) return;
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(entity.angler.getHeldItem());
         if (NotEnoughUpdates.INSTANCE.isOnSkyblock() && internalname != null && entity.angler != null &&
