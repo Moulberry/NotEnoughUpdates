@@ -15,7 +15,7 @@
         <img src="https://img.shields.io/tokei/lines/github/Moulberry/NotEnoughUpdates?label=lines&color=informational&logo=GitHub" alt="lines">
     </a>
     <!-- license -->
-    <a href="https://github.com/Moulberry/NotEnoughUpdates-REPO/blob/master/LICENSE" target="_blank">
+    <a href="https://github.com/Moulberry/NotEnoughUpdates/blob/master/LICENSE" target="_blank">
         <img src="https://img.shields.io/badge/license-CC%20BY--NC%203.0-informational" alt="license">
     </a>
     <!-- contributors -->
