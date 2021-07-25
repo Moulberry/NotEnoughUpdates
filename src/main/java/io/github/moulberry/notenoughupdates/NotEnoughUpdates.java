@@ -429,7 +429,9 @@ public class NotEnoughUpdates {
                                                     g+" - AVG: " + avgPrefix+(int)Math.floor(avgSkillLVL)));
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                                             g+"Slayer: "+zombiePrefix+(int)Math.floor(zombie)+g+"-"+
-                                                    spiderPrefix+(int)Math.floor(spider)+g+"-"+wolfPrefix+(int)Math.floor(wolf)+"-"+endermanPrefix+(int)Math.floor(enderman)));
+                                                    spiderPrefix+(int)Math.floor(spider)+g+"-"+
+                                                    wolfPrefix+(int)Math.floor(wolf)+"-"+
+                                                    endermanPrefix+(int)Math.floor(enderman)));
                                 }
                                 if (stats == null) {
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
@@ -734,7 +736,8 @@ public class NotEnoughUpdates {
             "\u00a7dFrom \u00a7c[ADMIN] Minikloon\u00a77: If you use that command again, I'll have to ban you", "",
             "Ok, this is actually the last message, use the command again and you'll crash I promise"};
     private int devFailIndex = 0;
-    private static final List<String> devTestUsers = new ArrayList<>(Arrays.asList("moulberry", "lucycoconut", "ironm00n"));
+
+    private static final List<String> devTestUsers = new ArrayList<>(Arrays.asList("moulberry", "lucycoconut", "ironm00n", "ariyio"));
     SimpleCommand devTestCommand = new SimpleCommand("neudevtest", new SimpleCommand.ProcessCommandRunnable() {
         @Override
         public void processCommand(ICommandSender sender, String[] args) {

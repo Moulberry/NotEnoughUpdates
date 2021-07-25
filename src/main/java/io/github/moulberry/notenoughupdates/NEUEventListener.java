@@ -102,6 +102,7 @@ public class NEUEventListener {
 
                 boolean shouldUpdate = !NotEnoughUpdates.VERSION.equalsIgnoreCase(version);
                 boolean shouldPreUpdate = !NotEnoughUpdates.PRE_VERSION.equalsIgnoreCase(preVersion);
+
                 if(o.has("version_id") && o.get("version_id").isJsonPrimitive()) {
                     int version_id = o.get("version_id").getAsInt();
                     shouldUpdate = version_id > NotEnoughUpdates.VERSION_ID;
@@ -276,7 +277,7 @@ public class NEUEventListener {
             longUpdate = true;
             lastLongUpdate = currentTime;
         }
-        if(!neu.config.dungeons.slowDungeonBlocks) {
+        if(!NotEnoughUpdates.INSTANCE.config.dungeons.slowDungeonBlocks) {
             DungeonBlocks.tick();
         }
         DungeonWin.tick();
@@ -315,7 +316,7 @@ public class NEUEventListener {
             NotEnoughUpdates.profileViewer.putNameUuid(Minecraft.getMinecraft().thePlayer.getName(),
                     Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
 
-            if(neu.config.dungeons.slowDungeonBlocks) {
+            if(NotEnoughUpdates.INSTANCE.config.dungeons.slowDungeonBlocks) {
                 DungeonBlocks.tick();
             }
 
@@ -341,11 +342,12 @@ public class NEUEventListener {
 
                     SBGamemodes.loadFromFile();
 
-                    if(neu.config.notifications.showUpdateMsg) {
-                        this.displayUpdateMessageIfOutOfDate();
+
+                    if(NotEnoughUpdates.INSTANCE.config.notifications.showUpdateMsg) {
+                        displayUpdateMessageIfOutOfDate();
                     }
 
-                    if(neu.config.notifications.doRamNotif) {
+                    if(NotEnoughUpdates.INSTANCE.config.notifications.doRamNotif) {
                         long maxMemoryMB = Runtime.getRuntime().maxMemory()/1024L/1024L;
                         if(maxMemoryMB > 4100) {
                             notificationDisplayMillis = System.currentTimeMillis();
@@ -359,8 +361,8 @@ public class NEUEventListener {
                         }
                     }
 
-                    if(!neu.config.hidden.loadedModBefore) {
-                        neu.config.hidden.loadedModBefore = true;
+                    if(!NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore) {
+                        NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore = true;
 
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
@@ -783,7 +785,7 @@ public class NEUEventListener {
         } else if(unformatted.startsWith("Your profile was changed to: ")) {//Your profile was changed to:
             neu.manager.setCurrentProfile(unformatted.substring("Your profile was changed to: ".length()).split(" ")[0].trim());
         } else if(unformatted.startsWith("Your new API key is ")) {
-            neu.config.apiKey.apiKey = unformatted.substring("Your new API key is ".length());
+            NotEnoughUpdates.INSTANCE.config.apiKey.apiKey = unformatted.substring("Your new API key is ".length());
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW+
                     "[NEU] API Key automatically configured"));
         }
@@ -810,7 +812,7 @@ public class NEUEventListener {
         }
         //System.out.println(e.message);
         if(unformatted.startsWith("Sending to server") &&
-                neu.isOnSkyblock() && neu.config.misc.streamerMode && e.message instanceof ChatComponentText) {
+                neu.isOnSkyblock() && NotEnoughUpdates.INSTANCE.config.misc.streamerMode && e.message instanceof ChatComponentText) {
             String m = e.message.getFormattedText();
             String m2 = StreamerMode.filterChat(e.message.getFormattedText());
             if(!m.equals(m2)) {
@@ -879,7 +881,7 @@ public class NEUEventListener {
             }
             if(hoverInv) {
                 renderDungeonChestOverlay(event.gui);
-                if(neu.config.accessoryBag.enableOverlay) {
+                if(NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay) {
                     AccessoryBagOverlay.renderOverlay();
                 }
             }
@@ -1058,7 +1060,7 @@ public class NEUEventListener {
 
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock() && !hoverInv) {
             renderDungeonChestOverlay(event.gui);
-            if(neu.config.accessoryBag.enableOverlay) {
+            if(NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay) {
                 AccessoryBagOverlay.renderOverlay();
             }
         }
@@ -1115,9 +1117,9 @@ public class NEUEventListener {
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
-        if(neu.config.dungeons.profitDisplayLoc == 3) return;
+        if(NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 3) return;
 
-        if(gui instanceof GuiChest && neu.config.dungeons.profitDisplayLoc != 2) {
+        if(gui instanceof GuiChest && NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc != 2) {
             try {
                 int xSize = ((GuiContainer)gui).xSize;
                 int ySize = ((GuiContainer)gui).ySize;
@@ -1164,7 +1166,7 @@ public class NEUEventListener {
                             if(bazaarPrice > 0) {
                                 worth = bazaarPrice;
                             } else {
-                                switch(neu.config.dungeons.profitType) {
+                                switch(NotEnoughUpdates.INSTANCE.config.dungeons.profitType) {
                                     case 1:
                                         worth = neu.manager.auctionManager.getItemAvgBin(internal);
                                         break;
@@ -1256,7 +1258,7 @@ public class NEUEventListener {
                         plStringBIN = prefix + "-" + format.format(-profitLossBIN) + " coins";
                     }
 
-                    if(neu.config.dungeons.profitDisplayLoc == 1 && !valueStringBIN2.equals(missingItem)) {
+                    if(NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 1 && !valueStringBIN2.equals(missingItem)) {
                         int w = Minecraft.getMinecraft().fontRendererObj.getStringWidth(plStringBIN);
                         GlStateManager.disableLighting();
                         GlStateManager.translate(0, 0, 200);
@@ -1378,7 +1380,7 @@ public class NEUEventListener {
         }
 
         if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            if(!neu.config.accessoryBag.enableOverlay || !AccessoryBagOverlay.mouseClick()) {
+            if(!NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay || !AccessoryBagOverlay.mouseClick()) {
                 if(!(hoverInv && focusInv)) {
                     if(neu.overlay.mouseInput()) {
                         event.setCanceled(true);
@@ -1671,7 +1673,7 @@ public class NEUEventListener {
         JsonObject enchantsConst = Constants.ENCHANTS;
         JsonArray allItemEnchs = null;
         Set<String> ignoreFromPool = new HashSet<>();
-        if(enchantsConst != null && hasEnchantments && neu.config.tooltipTweaks.missingEnchantList) {
+        if(enchantsConst != null && hasEnchantments && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.missingEnchantList) {
             try {
                 JsonArray enchantPools = enchantsConst.get("enchant_pools").getAsJsonArray();
                 for(JsonElement element : enchantPools) {
@@ -1861,7 +1863,7 @@ public class NEUEventListener {
                 line = line.replace("\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune",
                         Utils.chromaString("Rainbow Rune", index, false)+EnumChatFormatting.BLUE);
             } else if(hasEnchantments) {
-                if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && neu.config.tooltipTweaks.missingEnchantList) {
+                if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.missingEnchantList) {
                     boolean lineHasEnch = false;
                     for(String s : enchantIds) {
                         String enchantName = WordUtils.capitalizeFully(s.replace("_", " "));
@@ -1904,7 +1906,7 @@ public class NEUEventListener {
                         }
                     }
                 }
-                for(String op : neu.config.hidden.enchantColours) {
+                for(String op : NotEnoughUpdates.INSTANCE.config.hidden.enchantColours) {
                     List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
                     String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
                     String comparator = GuiEnchantColour.getColourOpIndex(colourOps, 1);
@@ -2046,7 +2048,7 @@ public class NEUEventListener {
 
             newTooltip.add(line);
 
-            if(neu.config.tooltipTweaks.showPriceInfoAucItem) {
+            if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoAucItem) {
                 if(line.contains(EnumChatFormatting.GRAY+"Buy it now: ") ||
                         line.contains(EnumChatFormatting.GRAY+"Bidder: ") ||
                         line.contains(EnumChatFormatting.GRAY+"Starting bid: ")) {
@@ -2060,7 +2062,7 @@ public class NEUEventListener {
                 }
             }
 
-            if(neu.config.dungeons.profitDisplayLoc == 2 && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            if(NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 2 && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
                 if(line.contains(EnumChatFormatting.GREEN+"Open Reward Chest")) {
                     dungeonProfit = true;
                 } else if(index == 7 && dungeonProfit) {
@@ -2102,7 +2104,7 @@ public class NEUEventListener {
                             if(bazaarPrice > 0) {
                                 worth = bazaarPrice;
                             } else {
-                                switch(neu.config.dungeons.profitType) {
+                                switch(NotEnoughUpdates.INSTANCE.config.dungeons.profitType) {
                                     case 1:
                                         worth = neu.manager.auctionManager.getItemAvgBin(internal);
                                         break;
@@ -2227,7 +2229,7 @@ public class NEUEventListener {
         hypixelOrder.add("reforge_bonus");
         hypixelOrder.add("rarity");
 
-        if(neu.config.tooltipTweaks.showPriceInfoInvItem) {
+        if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoInvItem) {
             ItemPriceInformation.addToTooltip(event.toolTip, internalname, event.itemStack);
         }
     }
@@ -2239,7 +2241,7 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
         if(!neu.isOnSkyblock()) return;
-        if(neu.config.improvedSBMenu.hideEmptyPanes &&
+        if(NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
                 event.itemStack.getItem().equals(Item.getItemFromBlock(Blocks.stained_glass_pane))) {
             String first = Utils.cleanColour(event.toolTip.get(0));
             first = first.replaceAll("\\(.*\\)", "").trim();

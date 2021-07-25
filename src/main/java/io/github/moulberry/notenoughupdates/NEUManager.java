@@ -187,6 +187,7 @@ public class NEUManager {
                     Utils.recursiveDelete(repoLocation);
                     repoLocation.mkdirs();
 
+
                     String dlUrl = neu.config.hidden.repoURL;
 
                     pane.setMessage("Downloading NEU Master Archive. (DL# >20)");

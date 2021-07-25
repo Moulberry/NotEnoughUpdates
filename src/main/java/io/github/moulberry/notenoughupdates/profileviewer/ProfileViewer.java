@@ -80,7 +80,7 @@ public class ProfileViewer {
         collectionCatToCollectionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON_INGOT", "GOLD_INGOT", "DIAMOND", "INK_SACK:4",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE_DUST", "GRAVEL", "ICE", "NETHERRACK",
-                        "SAND", "ENDER_STONE", "MITHRIL_ORE", null, "HARD_STONE", "GEMSTONE_COLLECTION"));
+                        "SAND", "ENDER_STONE", null ,"MITHRIL_ORE", "HARD_STONE", "GEMSTONE_COLLECTION"));
         collectionCatToCollectionMap.put(CAT_COMBAT,
                 Utils.createList("ROTTEN_FLESH", "BONE", "STRING", "SPIDER_EYE", "SULPHUR", "ENDER_PEARL",
                         "GHAST_TEAR", "SLIME_BALL", "BLAZE_ROD", "MAGMA_CREAM", null, null, null));
@@ -100,7 +100,7 @@ public class ProfileViewer {
         collectionCatToMinionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON", "GOLD", "DIAMOND", "LAPIS",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE", "GRAVEL", "ICE", null,
-                        "SAND", "ENDER_STONE", "MITHRIL", "SNOW","HARD_STONE", null));
+                        "SAND", "ENDER_STONE", "SNOW", "MITHRIL", "HARD_STONE", null));
         collectionCatToMinionMap.put(CAT_COMBAT,
                 Utils.createList("ZOMBIE", "SKELETON", "SPIDER", "CAVESPIDER", "CREEPER", "ENDERMAN",
                         "GHAST", "SLIME", "BLAZE", "MAGMA_CUBE", "REVENANT", "TARANTULA", "VOIDLING"));

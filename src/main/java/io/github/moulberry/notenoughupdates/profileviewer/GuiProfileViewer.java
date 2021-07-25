@@ -1524,6 +1524,7 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.drawStringCentered(selectedCollectionCategory.getDisplayName() + " Minions", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+326, guiTop+14, true, 4210752);
 
+      
         List<String> minions = ProfileViewer.getCollectionCatToMinionMap().get(selectedCollectionCategory);
         if(minions != null) {
             for(int i=0; i<minions.size(); i++) {
@@ -2145,7 +2146,7 @@ public class GuiProfileViewer extends GuiScreen {
         float xStart = 22;
         float xOffset = 103;
         float yStartTop = 27;
-        float yStartBottom = 109;
+        float yStartBottom = 105;
         float yOffset = 10;
 
         float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), 0);
@@ -2185,7 +2186,7 @@ public class GuiProfileViewer extends GuiScreen {
                 } else if(entry.getKey().startsWith("level_slayer")) {
                     totalSlayerLVL += entry.getValue().getAsFloat();
                     totalSlayerCount++;
-                } else if (entry.getKey().startsWith("experience_slayer")){
+                } else if (entry.getKey().startsWith("experience_slayer")) {
                     totalSlayerXP += entry.getValue().getAsFloat();
                 }
             }
@@ -2196,10 +2197,16 @@ public class GuiProfileViewer extends GuiScreen {
 
             Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSkillLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset, 76);
+
             Utils.renderAlignedString(EnumChatFormatting.RED+"True AVG Skill Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgTrueSkillLVL*10)/10,
-                    guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
-            Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
+
+            Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
+                    guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
+
+          Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
+                    guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
+
             Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE.toString() + Math.floor(totalSlayerXP * 10) / 10,
                     guiLeft + xStart, guiTop + yStartBottom + yOffset * 4, 76);
         }
@@ -2650,6 +2657,7 @@ public class GuiProfileViewer extends GuiScreen {
             Splitter splitter = Splitter.on(" ").omitEmptyStrings().limit(2);
             for(int i=0; i<PlayerStats.defaultStatNames.length; i++) {
                 String statName = PlayerStats.defaultStatNames[i];
+                if(statName.equals("mining_fortune") ||  statName.equals("mining_speed")) continue;
                 String statNamePretty = PlayerStats.defaultStatNamesPretty[i];
 
                 int val = Math.round(stats.get(statName));

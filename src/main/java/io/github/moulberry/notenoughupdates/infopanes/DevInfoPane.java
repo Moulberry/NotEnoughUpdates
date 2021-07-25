@@ -61,7 +61,7 @@ public class DevInfoPane extends TextInfoPane {
         //if(true) return text;
 
         for(String internalname : manager.auctionManager.getItemAuctionInfoKeySet()) {
-            if(internalname.matches("^.*-[0-9]{1,3}$")) continue;
+            if (internalname.matches("^.*-[0-9]{1,3}$")) continue;
             if(!manager.getItemInformation().containsKey(internalname)) {
                 text += internalname + "\n";
             }
@@ -466,7 +466,9 @@ public class DevInfoPane extends TextInfoPane {
                             ItemStack stack = shaped.recipeItems[recipeIndex];
                             if(stack != null) {
                                 if(stack.getItem() != stackToAdd.getItem() ||
-                                        (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) addStack(stack, depth+1);
+                                        (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) {
+                                    addStack(stack, depth+1);
+                                }
 
                                 Item stackItem = stack.getItem();
                                 String regName = stackItem.getRegistryName().replace("minecraft:", "");
@@ -518,7 +520,9 @@ public class DevInfoPane extends TextInfoPane {
                             }
                             if(stack != null) {
                                 if(stack.getItem() != stackToAdd.getItem() ||
-                                        (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) addStack(stack, depth+1);
+                                        (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) {
+                                    addStack(stack, depth+1);
+                                }
                                 Item stackItem = stack.getItem();
                                 String regName = stackItem.getRegistryName().replace("minecraft:", "");
                                 for(String bukkit2 : bukkitList) {
@@ -556,7 +560,9 @@ public class DevInfoPane extends TextInfoPane {
                         }
                         if(stack != null) {
                             if(stack.getItem() != stackToAdd.getItem() ||
-                                    (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) addStack(stack, depth+1);
+                                    (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) {
+                                addStack(stack, depth + 1);
+                            }
                             Item stackItem = stack.getItem();
                             String regName = stackItem.getRegistryName().replace("minecraft:", "");
                             for(String bukkit2 : bukkitList) {
@@ -604,7 +610,9 @@ public class DevInfoPane extends TextInfoPane {
                         }
                         if(stack != null) {
                             if(stack.getItem() != stackToAdd.getItem() ||
-                                    (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) addStack(stack, depth+1);
+                                    (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) {
+                                addStack(stack, depth+1);
+                            }
                             Item stackItem = stack.getItem();
                             String regName = stackItem.getRegistryName().replace("minecraft:", "");
                             for(String bukkit2 : bukkitList) {
