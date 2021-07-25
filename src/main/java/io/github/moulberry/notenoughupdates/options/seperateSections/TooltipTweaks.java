@@ -62,6 +62,14 @@ public class TooltipTweaks {
 
     @Expose
     @ConfigOption(
+            name = "Show reforge stats",
+            desc = "Show statistics a reforge stone will apply."
+    )
+    @ConfigEditorBoolean
+    public boolean showReforgeStats = true;
+
+    @Expose
+    @ConfigOption(
             name = "Missing Enchant List",
             desc = "Show which enchants are missing on an item when pressing LSHIFT"
     )

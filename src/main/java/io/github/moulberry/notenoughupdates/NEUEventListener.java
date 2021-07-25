@@ -1721,8 +1721,9 @@ public class NEUEventListener {
         int index = 0;
         List<String> newTooltip = new ArrayList<>();
         for(String line : event.toolTip) {
-            if(line.endsWith(EnumChatFormatting.DARK_GRAY+"Reforge Stone")) {
+            if(line.endsWith(EnumChatFormatting.DARK_GRAY+"Reforge Stone") && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showReforgeStats) {
                 JsonObject reforgeStones = Constants.REFORGESTONES;
+
 
                 if(reforgeStones != null && reforgeStones.has(internalname)) {
                     boolean shift = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
