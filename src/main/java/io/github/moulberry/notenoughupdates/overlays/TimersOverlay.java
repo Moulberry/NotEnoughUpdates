@@ -349,7 +349,7 @@ public class TimersOverlay extends TextOverlay {
                     hidden.godPotionDuration < TimeEnums.DAY.time) {
                 map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(hidden.godPotionDuration));
             } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
-                map.put(2, DARK_AQUA + "Godpotf: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(hidden.godPotionDuration));
+                map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(hidden.godPotionDuration));
             }
     }
 
