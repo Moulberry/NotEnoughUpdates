@@ -90,7 +90,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NotEnoughUpdates {
     public static final String MODID = "notenoughupdates";
     public static final String VERSION = "2.0.0-REL";
+    public static final String PRE_VERSION = "30.2";
     public static final int VERSION_ID = 20000;
+    public static final int PRE_VERSION_ID = 3002;
 
     public static NotEnoughUpdates INSTANCE = null;
 
@@ -311,6 +313,7 @@ public class NotEnoughUpdates {
         petRarityToColourMap.put("RARE", EnumChatFormatting.BLUE.toString());
         petRarityToColourMap.put("EPIC", EnumChatFormatting.DARK_PURPLE.toString());
         petRarityToColourMap.put("LEGENDARY", EnumChatFormatting.GOLD.toString());
+        petRarityToColourMap.put("MYTHIC", EnumChatFormatting.LIGHT_PURPLE.toString());
     }
     ScheduledExecutorService peekCommandExecutorService = null;
     SimpleCommand peekCommand = new SimpleCommand("peek", new SimpleCommand.ProcessCommandRunnable() {
@@ -399,6 +402,7 @@ public class NotEnoughUpdates {
                                         zombie = 2;
                                         spider = 1;
                                         wolf = 2;
+                                        enderman = 0;
                                     }
 
                                     EnumChatFormatting combatPrefix = combat>20?(combat>35?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
@@ -429,7 +433,7 @@ public class NotEnoughUpdates {
                                                     wolfPrefix+(int)Math.floor(wolf)+"-"+
                                                     endermanPrefix+(int)Math.floor(enderman)));
                                 }
-                                if(stats == null) {
+                                if (stats == null) {
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                                             EnumChatFormatting.YELLOW+"Skills, collection and/or inventory apis disabled!"));
                                 } else {
@@ -476,7 +480,7 @@ public class NotEnoughUpdates {
 
                                 String overall = "Skywars Main";
                                 if(isMe) {
-                                    overall = Utils.chromaString("Literally the best player to exist");
+                                    overall = Utils.chromaString("Literally the best player to exist"); // ego much
                                 } else if(overallScore < 5 && (bankBalance+purseBalance) > 500*1000*1000) {
                                     overall = EnumChatFormatting.GOLD+"Bill Gates";
                                 } else if(overallScore > 9) {
@@ -829,6 +833,11 @@ public class NotEnoughUpdates {
 
                 return;
             }
+
+            /* if(args.length == 1 && args[0].equalsIgnoreCase("update")) {
+                NEUEventListener.displayUpdateMessageIfOutOfDate();
+            } */
+
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN+"Executing dubious code"));
             /*Minecraft.getMinecraft().thePlayer.rotationYaw = 0;
             Minecraft.getMinecraft().thePlayer.rotationPitch = 0;
@@ -958,7 +967,7 @@ public class NotEnoughUpdates {
                 } catch(Exception ignored) { }
             }
 
-            if(!config.hidden.dev) {
+            if(!NotEnoughUpdates.INSTANCE.config.hidden.dev) {
                 openGui = new GuiDungeonMapEditor();
                 return;
             }

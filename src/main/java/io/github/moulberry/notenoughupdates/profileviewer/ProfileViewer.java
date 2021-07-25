@@ -113,7 +113,7 @@ public class ProfileViewer {
 
     private static final LinkedHashMap<String, ItemStack> collectionToCollectionDisplayMap = new LinkedHashMap<>();
     static {
-        /** FARMING COLLECTIONS **/
+        /* FARMING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("WHEAT", Utils.createItemStack(Items.wheat,
                 EnumChatFormatting.YELLOW+"Wheat"));
         collectionToCollectionDisplayMap.put("CARROT_ITEM", Utils.createItemStack(Items.carrot,
@@ -150,7 +150,7 @@ public class ProfileViewer {
         collectionToCollectionDisplayMap.put("NETHER_STALK", Utils.createItemStack(Items.nether_wart,
                 EnumChatFormatting.YELLOW+"Nether Wart"));
 
-        /** MINING COLLECTIONS **/
+        /* MINING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("COBBLESTONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.cobblestone),
                 EnumChatFormatting.GRAY+"Cobblestone"));
         collectionToCollectionDisplayMap.put("COAL", Utils.createItemStack(Items.coal,
@@ -193,7 +193,7 @@ public class ProfileViewer {
         collectionToCollectionDisplayMap.put("GEMSTONE_COLLECTION", gemstone);
 
 
-        /** COMBAT COLLECTIONS **/
+        /* COMBAT COLLECTIONS **/
         collectionToCollectionDisplayMap.put("ROTTEN_FLESH", Utils.createItemStack(Items.rotten_flesh,
                 EnumChatFormatting.RED+"Rotten Flesh"));
         collectionToCollectionDisplayMap.put("BONE", Utils.createItemStack(Items.bone,
@@ -215,7 +215,7 @@ public class ProfileViewer {
         collectionToCollectionDisplayMap.put("MAGMA_CREAM", Utils.createItemStack(Items.magma_cream,
                 EnumChatFormatting.RED+"Magma Cream"));
 
-        /** FORAGING COLLECTIONS **/
+        /* FORAGING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("LOG", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
                 EnumChatFormatting.DARK_GREEN+"Oak"));
         collectionToCollectionDisplayMap.put("LOG:1", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
@@ -229,7 +229,7 @@ public class ProfileViewer {
         collectionToCollectionDisplayMap.put("LOG:3", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
                 EnumChatFormatting.DARK_GREEN+"Jungle", 3));
 
-        /** FISHING COLLECTIONS **/
+        /* FISHING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("RAW_FISH", Utils.createItemStack(Items.fish,
                 EnumChatFormatting.AQUA+"Fish"));
         collectionToCollectionDisplayMap.put("RAW_FISH:1", Utils.createItemStack(Items.fish,
@@ -798,6 +798,7 @@ public class ProfileViewer {
             String inv_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "inv_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String talisman_bag_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "talisman_bag.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String candy_inventory_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "candy_inventory_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
+
 
             JsonObject inventoryInfo = new JsonObject();
 

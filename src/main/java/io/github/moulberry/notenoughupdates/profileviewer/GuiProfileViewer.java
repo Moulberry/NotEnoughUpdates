@@ -1524,7 +1524,7 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.drawStringCentered(selectedCollectionCategory.getDisplayName() + " Minions", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+326, guiTop+14, true, 4210752);
 
-
+      
         List<String> minions = ProfileViewer.getCollectionCatToMinionMap().get(selectedCollectionCategory);
         if(minions != null) {
             for(int i=0; i<minions.size(); i++) {
@@ -2204,6 +2204,9 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
 
+          Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
+                    guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
+
             Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE.toString() + Math.floor(totalSlayerXP * 10) / 10,
                     guiLeft + xStart, guiTop + yStartBottom + yOffset * 4, 76);
         }
@@ -2500,7 +2503,6 @@ public class GuiProfileViewer extends GuiScreen {
                             tooltipToDisplay.add("");
                             tooltipToDisplay.add(EnumChatFormatting.RED + "THIS IS IN NO WAY ENDORSING IRL TRADING!");
                         }
-
                     }
                 }
             } catch(Exception e){}

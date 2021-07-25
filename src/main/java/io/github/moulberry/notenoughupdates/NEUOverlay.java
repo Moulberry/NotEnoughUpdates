@@ -71,7 +71,7 @@ public class NEUOverlay extends Gui {
     private NEUManager manager;
 
     private String mobRegex = ".*?((_MONSTER)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
-    private String petRegex = ".*?;[0-4]$";
+    private String petRegex = ".*?;[0-5]$";
 
     private ResourceLocation[] sortIcons = new ResourceLocation[] {
         sort_all, sort_mob, sort_pet, sort_tool, sort_armor, sort_accessory
@@ -1045,7 +1045,7 @@ public class NEUOverlay extends Gui {
         EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
         EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
         EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
-        EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+        EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
     };
 
     /**
@@ -1271,6 +1271,15 @@ public class NEUOverlay extends Gui {
                     break;
                 case "spinaxx":
                     searchedItems.add(CustomItems.SPINAXX);
+                    break;
+                case "credits":
+                case "credit":
+                case "who made this mod":
+                    searchedItems.add(CustomItems.CREDITS);
+                    break;
+                case "ironmoon":
+                case "ironm00n":
+                    searchedItems.add(CustomItems.IRONM00N);
                     break;
             }
 

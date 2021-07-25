@@ -3,8 +3,6 @@ package io.github.moulberry.notenoughupdates;
 import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
-import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
-import io.github.moulberry.notenoughupdates.miscgui.GuiItemCustomize;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
@@ -1159,32 +1157,6 @@ public class NEUManager {
         if(json == null) {
             return false;
         }
-
-        try {
-            writeJsonDefaultDir(json, internalname+".json");
-        } catch(IOException e) {
-            return false;
-        }
-
-        loadItem(internalname);
-        return true;
-    }
-
-    public boolean uploadItemJson(String internalname, String itemid, String displayname, String[] lore, String crafttext, String infoType, String[] info,
-                                 String clickcommand, int damage, NBTTagCompound nbttag) {
-        JsonObject json = createItemJson(internalname, itemid, displayname, lore, crafttext, infoType, info, clickcommand, damage, nbttag);
-        if(json == null) {
-            return false;
-        }
-
-        String username = Minecraft.getMinecraft().thePlayer.getName();
-        String newBranchName = UUID.randomUUID().toString().substring(0, 8) + "-" + internalname + "-" + username;
-        String prTitle = internalname + "-" + username;
-        String prBody = "Internal name: " + internalname + "\nSubmitted by: " + username;
-        String file = "items/"+internalname+".json";
-        /*if(!neuio.createNewRequest(newBranchName, prTitle, prBody, file, gson.toJson(json))) {
-            return false;
-        }*/
 
         try {
             writeJsonDefaultDir(json, internalname+".json");

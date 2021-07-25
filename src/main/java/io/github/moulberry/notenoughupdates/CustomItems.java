@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import net.minecraft.util.EnumChatFormatting;
 
 public class CustomItems {
@@ -61,6 +62,14 @@ public class CustomItems {
                   "39 legendary phoenix pets",
                   "",
                   "get flexed");
+    public static JsonObject CREDITS = Constants.MISC.getAsJsonObject("credits");
+    public static JsonObject IRONM00N = create(
+            "IRONM00N",
+            "end_stone",
+            "IRONM00N",
+            "Your life has been a lie,",
+            "the moon is made out of iron."
+    );
 
     /**
      * SHAAAAAAAAAAAAAAAAAAME

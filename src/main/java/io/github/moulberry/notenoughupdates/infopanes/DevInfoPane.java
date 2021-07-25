@@ -82,6 +82,8 @@ public class DevInfoPane extends TextInfoPane {
         return text;
     }
 
+    //#region add vanilla items
+
     AtomicBoolean running = new AtomicBoolean(false);
     ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
 
@@ -1060,4 +1062,5 @@ public class DevInfoPane extends TextInfoPane {
         }*/
         return false;
     }
+    //#endregion
 }

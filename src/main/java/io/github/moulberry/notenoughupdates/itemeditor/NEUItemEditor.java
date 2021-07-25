@@ -116,23 +116,6 @@ public class NEUItemEditor extends GuiScreen {
         }.b;
         rightOptions.add(button);
 
-        /*button = new Object() { //Used to make the compiler shut the fuck up
-            GuiElementButton b = new GuiElementButton("Upload", Color.YELLOW.getRGB(), new Runnable() {
-                public void run() {
-                    if(b.getText().equals("Upload")) {
-                        b.setText("Confirm upload?");
-                    } else {
-                        if(upload()) {
-                            b.setText("Uploaded");
-                        } else {
-                            b.setText("Upload failed.");
-                        }
-                    }
-                }
-            });
-        }.b;
-        rightOptions.add(button);*/
-
         rightOptions.add(new GuiElementText("", Color.WHITE.getRGB()));
 
         rightOptions.add(new GuiElementButton("Remove enchants", Color.RED.getRGB(), () -> {
@@ -159,20 +142,6 @@ public class NEUItemEditor extends GuiScreen {
         return manager.writeItemJson(item, internalname.get(), itemid.get(), displayname.get(), lore.get().split("\n"),
                 crafttext.get(), infoType.get(), infoA, clickcommand.get(), damageI, nbttag);
     }
-
-    /*public boolean upload() {
-        int damageI = 0;
-        try {
-            damageI = Integer.valueOf(damage.get());
-        } catch(NumberFormatException e) {}
-        resyncNbttag();
-        String[] infoA = info.get().trim().split("\n");
-        if(infoA.length == 0 || infoA[0].isEmpty()) {
-            infoA = new String[0];
-        }
-        return manager.uploadItemJson(internalname.get(), itemid.get(), displayname.get(), lore.get().split("\n"),
-                crafttext.get(), infoType.get(), infoA, clickcommand.get(), damageI, nbttag);
-    }*/
 
     public void onGuiClosed() {
         Keyboard.enableRepeatEvents(false);
