@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'The branch to build'
+        required: true
+        default: 'master'
+      remote:
+        descriptoin: 'The custom remote link, e.g. https://github.com/Moulberry/NotEnoughUpdates'
+        required: false
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Alternate origin to user specified
+      if: ${{ github.event.inputs.remote != '' }}
+      run: |
+        git remote remove origin
+        git remote add origin ${{ github.event.inputs.remote }}
+    - name: Check out to the branch user specified
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        git fetch origin
+        git checkout origin/${{ github.event.inputs.branch }}
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Setup ForgeGradle
+      run: ./gradlew setupCIWorkspace
+    - name: Build with Gradle
+      run: ./gradlew build
+    - name: Upload mod jar
+      uses: actions/upload-artifact@v2
+      with:
+        name: NotEnoughUpdates
+        path: |
+          build/libs/*.jar
+          !build/libs/*-dep.jar
+          !build/libs/*-sources.jar
