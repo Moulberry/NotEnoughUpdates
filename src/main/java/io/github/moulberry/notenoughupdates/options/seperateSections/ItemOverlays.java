@@ -175,6 +175,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Enable etherwarp helper overlay",
+            desc = "Display an overlay which tells you if the etherwarp will fail."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 7)
+    public boolean enableEtherwarpHelperOverlay = true;
+
+    @Expose
+    @ConfigOption(
             name = "Highlight Colour",
             desc = "Change the colour of the etherwarp target block outline"
     )

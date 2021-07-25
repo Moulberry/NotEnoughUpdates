@@ -301,7 +301,7 @@ public class CustomItemEffects {
             ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
             String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
 
-            if(usingEtherwarp) {
+            if(usingEtherwarp && NotEnoughUpdates.INSTANCE.config.itemOverlays.enableEtherwarpHelperOverlay) {
                 String denyTpReason = null;
                 if(etherwarpRaycast == null) {
                     denyTpReason = "Too far!";
