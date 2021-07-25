@@ -12,13 +12,14 @@ public class Toolbar {
     @ConfigEditorButton(runnableId = 6, buttonText = "Edit")
     public boolean positionButton = true;
 
-    @Expose
+
+
     @ConfigOption(
-            name = "Show Quick Commands",
-            desc = "Show QuickCommands\u2122 in the NEU toolbar"
+            name = "Search Bar",
+            desc = ""
     )
-    @ConfigEditorBoolean
-    public boolean quickCommands = false;
+    @ConfigEditorAccordion(id = 0)
+    public boolean todoAccordion = false;
 
     @Expose
     @ConfigOption(
@@ -26,7 +27,26 @@ public class Toolbar {
             desc = "Show Itemlist search bar in the NEU toolbar"
     )
     @ConfigEditorBoolean
+    @ConfigAccordionId(id = 0)
     public boolean searchBar = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Show a quick settings button",
+            desc = "Show quick settings button in the NEU toolbar"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 0)
+    public boolean enableSettingsButton = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Show a help settings button",
+            desc = "Show quick settings button in the NEU toolbar"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 0)
+    public boolean enableHelpButton = false;
 
     @Expose
     @ConfigOption(
@@ -38,6 +58,7 @@ public class Toolbar {
             maxValue = 300f,
             minStep = 10f
     )
+    @ConfigAccordionId(id = 0)
     public int searchBarWidth = 200;
 
     @Expose
@@ -50,7 +71,16 @@ public class Toolbar {
             maxValue = 50f,
             minStep = 1f
     )
+    @ConfigAccordionId(id = 0)
     public int searchBarHeight = 40;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Quick Commands",
+            desc = "Show QuickCommands\u2122 in the NEU toolbar"
+    )
+    @ConfigEditorBoolean
+    public boolean quickCommands = false;
 
     @Expose
     @ConfigOption(

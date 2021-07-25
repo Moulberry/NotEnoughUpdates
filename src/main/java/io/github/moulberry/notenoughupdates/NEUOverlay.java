@@ -180,6 +180,9 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
+                    return;
+                }
                 if(Mouse.getEventButtonState()) {
                     setSearchBarFocus(true);
                     if(Mouse.getEventButton() == 1) { //Right mouse button down
@@ -202,6 +205,9 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void render(float x, float y) {
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
+                    return;
+                }
                 FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
                 int paddingUnscaled = getPaddingUnscaled();
 
@@ -282,6 +288,7 @@ public class NEUOverlay extends Gui {
                             (int)x + 5 + textBeforeSelectionWidth,
                             (int)y-4 + getHeight()/2, Color.BLACK.getRGB());
                 }
+
             }
 
             @Override
@@ -308,6 +315,9 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.enableSettingsButton) {
+                    return;
+                }
                 if(Mouse.getEventButtonState()) {
                     NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config));
                 }
@@ -322,15 +332,20 @@ public class NEUOverlay extends Gui {
                 int paddingUnscaled = getPaddingUnscaled();
                 int searchYSize = getSearchBarYSize();
 
+
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.enableSettingsButton) {
+                    return;
+                }
                 Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
                 GlStateManager.color(1, 1, 1, 1);
                 Utils.drawTexturedRect(x, y,
-                        searchYSize + paddingUnscaled*2, searchYSize + paddingUnscaled*2, GL11.GL_NEAREST);
+                        searchYSize + paddingUnscaled * 2, searchYSize + paddingUnscaled * 2, GL11.GL_NEAREST);
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(settings);
                 GlStateManager.color(1f, 1f, 1f, 1f);
-                Utils.drawTexturedRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                Utils.drawTexturedRect((int) x + paddingUnscaled, (int) y + paddingUnscaled,
                         searchYSize, searchYSize);
+
                 GlStateManager.bindTexture(0);
             }
         };
@@ -354,6 +369,9 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.enableHelpButton){
+                    return;
+                }
                 if(Mouse.getEventButtonState()) {
                     //displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
                     //        "https://moulberry.github.io/files/neu_help.html"));
@@ -371,16 +389,21 @@ public class NEUOverlay extends Gui {
                 int paddingUnscaled = getPaddingUnscaled();
                 int searchYSize = getSearchBarYSize();
 
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.enableHelpButton) {
+                    return;
+                }
+
                 Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
                 GlStateManager.color(1, 1, 1, 1);
                 Utils.drawTexturedRect(x, y,
-                        searchYSize + paddingUnscaled*2, searchYSize + paddingUnscaled*2, GL11.GL_NEAREST);
+                        searchYSize + paddingUnscaled * 2, searchYSize + paddingUnscaled * 2, GL11.GL_NEAREST);
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(help);
                 GlStateManager.color(1f, 1f, 1f, 1f);
-                Utils.drawTexturedRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                Utils.drawTexturedRect((int) x + paddingUnscaled, (int) y + paddingUnscaled,
                         getSearchBarYSize(), getSearchBarYSize());
                 GlStateManager.bindTexture(0);
+
             }
         };
     }
@@ -516,20 +539,6 @@ public class NEUOverlay extends Gui {
         return new MBGuiGroupAligned(children, false) {
             public int getPadding() {
                 return getPaddingUnscaled()*4;
-            }
-
-            @Override
-            public void mouseClick(float x, float y, int mouseX, int mouseY) {
-                if(NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
-                    super.mouseClick(x, y, mouseX, mouseY);
-                }
-            }
-
-            @Override
-            public void render(float x, float y) {
-                if(NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
-                    super.render(x, y);
-                }
             }
         };
     }
