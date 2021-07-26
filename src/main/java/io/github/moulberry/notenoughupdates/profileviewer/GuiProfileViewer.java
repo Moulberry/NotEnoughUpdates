@@ -2203,10 +2203,7 @@ public class GuiProfileViewer extends GuiScreen {
 
             Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
-
-          Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
-                    guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
-
+            
             Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE.toString() + Math.floor(totalSlayerXP * 10) / 10,
                     guiLeft + xStart, guiTop + yStartBottom + yOffset * 4, 76);
         }
