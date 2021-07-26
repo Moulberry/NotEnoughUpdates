@@ -1778,84 +1778,88 @@ public class NEUEventListener {
                         pressedArrowLast = left || right;
 
                         JsonElement statsE = reforgeInfo.get("reforgeStats");
+
+
+                        String rarityFormatted = rarityArrMap.getOrDefault(rarity, rarity);
+
+                        JsonElement reforgeAbilityE = reforgeInfo.get("reforgeAbility");
+                        String reforgeAbility = null;
+                        if (reforgeAbilityE != null) {
+                            if (reforgeAbilityE.isJsonPrimitive() && reforgeAbilityE.getAsJsonPrimitive().isString()) {
+                                reforgeAbility = Utils.getElementAsString(reforgeInfo.get("reforgeAbility"), "");
+
+                            } else if (reforgeAbilityE.isJsonObject()) {
+                                if (reforgeAbilityE.getAsJsonObject().has(rarity)) {
+                                    reforgeAbility = reforgeAbilityE.getAsJsonObject().get(rarity).getAsString();
+                                }
+                            }
+                        }
+
+                        if (reforgeAbility != null && !reforgeAbility.isEmpty()) {
+                            String text = EnumChatFormatting.BLUE + (reforgeName.isEmpty() ? "Bonus: " : reforgeName + " Bonus: ") +
+                                    EnumChatFormatting.GRAY + reforgeAbility;
+                            boolean first = true;
+                            for (String s : Minecraft.getMinecraft().fontRendererObj.listFormattedStringToWidth(text, 150)) {
+                                newTooltip.add((first ? "" : "  ") + s);
+                                first = false;
+                            }
+                            newTooltip.add("");
+                        }
+
+                        newTooltip.add(EnumChatFormatting.BLUE + "Stats for " + rarityFormatted + "\u00a79: [\u00a7l\u00a7m< \u00a79Switch\u00a7l\u27a1\u00a79]");
+
                         if(statsE != null && statsE.isJsonObject()) {
                             JsonObject stats = statsE.getAsJsonObject();
 
-                            String rarityFormatted = rarityArrMap.getOrDefault(rarity, rarity);
-
-                            JsonElement reforgeAbilityE = reforgeInfo.get("reforgeAbility");
-                            String reforgeAbility = null;
-                            if(reforgeAbilityE != null) {
-                                if(reforgeAbilityE.isJsonPrimitive() && reforgeAbilityE.getAsJsonPrimitive().isString()) {
-                                    reforgeAbility = Utils.getElementAsString(reforgeInfo.get("reforgeAbility"), "");
-
-                                } else if(reforgeAbilityE.isJsonObject()) {
-                                    if(reforgeAbilityE.getAsJsonObject().has(rarity)) {
-                                        reforgeAbility = reforgeAbilityE.getAsJsonObject().get(rarity).getAsString();
-                                    }
-                                }
-                            }
-
-                            if(reforgeAbility != null && !reforgeAbility.isEmpty()) {
-                                String text = EnumChatFormatting.BLUE + (reforgeName.isEmpty() ? "Bonus: " : reforgeName + " Bonus: ") +
-                                        EnumChatFormatting.GRAY+reforgeAbility;
-                                boolean first = true;
-                                for(String s : Minecraft.getMinecraft().fontRendererObj.listFormattedStringToWidth(text, 150)) {
-                                    newTooltip.add((first ? "" : "  ") + s);
-                                    first = false;
-                                }
-                                newTooltip.add("");
-                            }
-
-                            newTooltip.add(EnumChatFormatting.BLUE+"Stats for "+rarityFormatted+"\u00a79: [\u00a7l\u00a7m< \u00a79Switch\u00a7l\u27a1\u00a79]");
-
                             JsonElement statsRarE = stats.get(rarity);
-                            if(statsRarE != null && statsRarE.isJsonObject()) {
+                            if (statsRarE != null && statsRarE.isJsonObject()) {
+
                                 JsonObject statsRar = statsRarE.getAsJsonObject();
 
                                 TreeSet<Map.Entry<String, JsonElement>> sorted = new TreeSet<>(Map.Entry.comparingByKey());
                                 sorted.addAll(statsRar.entrySet());
 
-                                for(Map.Entry<String, JsonElement> entry : sorted) {
-                                    if(entry.getValue().isJsonPrimitive() && ((JsonPrimitive)entry.getValue()).isNumber()) {
+                                for (Map.Entry<String, JsonElement> entry : sorted) {
+                                    if (entry.getValue().isJsonPrimitive() && ((JsonPrimitive) entry.getValue()).isNumber()) {
                                         float statNumF = entry.getValue().getAsFloat();
                                         String statNumS;
-                                        if(statNumF % 1 == 0) {
+                                        if (statNumF % 1 == 0) {
                                             statNumS = String.valueOf(Math.round(statNumF));
                                         } else {
                                             statNumS = Utils.floatToString(statNumF, 1);
                                         }
                                         String reforgeNamePretty = WordUtils.capitalizeFully(entry.getKey().replace("_", " "));
-                                        String text = EnumChatFormatting.GRAY + reforgeNamePretty + ": " + EnumChatFormatting.GREEN+"+"+statNumS;
-                                        if(percentStats.contains(entry.getKey())) {
+                                        String text = EnumChatFormatting.GRAY + reforgeNamePretty + ": " + EnumChatFormatting.GREEN + "+" + statNumS;
+                                        if (percentStats.contains(entry.getKey())) {
                                             text += "%";
                                         }
-                                        newTooltip.add("  "+text);
+                                        newTooltip.add("  " + text);
                                     }
                                 }
                             }
-
-                            JsonElement reforgeCostsE = reforgeInfo.get("reforgeCosts");
-                            int reforgeCost = -1;
-                            if(reforgeCostsE != null) {
-                                if(reforgeCostsE.isJsonPrimitive() && reforgeCostsE.getAsJsonPrimitive().isNumber()) {
-                                    reforgeCost = (int)Utils.getElementAsFloat(reforgeInfo.get("reforgeAbility"), -1);
-
-                                } else if(reforgeCostsE.isJsonObject()) {
-                                    if(reforgeCostsE.getAsJsonObject().has(rarity)) {
-                                        reforgeCost = (int)Utils.getElementAsFloat(reforgeCostsE.getAsJsonObject().get(rarity), -1);
-                                    }
-                                }
-                            }
-
-                            if(reforgeCost >= 0) {
-                                String text = EnumChatFormatting.BLUE + "Apply Cost: " + EnumChatFormatting.GOLD+NumberFormat.getNumberInstance().format(reforgeCost) +" coins";
-                                newTooltip.add("");
-                                newTooltip.add(text);
-                            }
-
                         }
+
+                        JsonElement reforgeCostsE = reforgeInfo.get("reforgeCosts");
+                        int reforgeCost = -1;
+                        if (reforgeCostsE != null) {
+                            if (reforgeCostsE.isJsonPrimitive() && reforgeCostsE.getAsJsonPrimitive().isNumber()) {
+                                reforgeCost = (int) Utils.getElementAsFloat(reforgeInfo.get("reforgeAbility"), -1);
+
+                            } else if (reforgeCostsE.isJsonObject()) {
+                                if (reforgeCostsE.getAsJsonObject().has(rarity)) {
+                                    reforgeCost = (int) Utils.getElementAsFloat(reforgeCostsE.getAsJsonObject().get(rarity), -1);
+                                }
+                            }
+                        }
+
+                        if (reforgeCost >= 0) {
+                            String text = EnumChatFormatting.BLUE + "Apply Cost: " + EnumChatFormatting.GOLD + NumberFormat.getNumberInstance().format(reforgeCost) + " coins";
+                            newTooltip.add("");
+                            newTooltip.add(text);
+                        }
+
                     }
+
 
                     continue;
                 }
