@@ -756,7 +756,7 @@ public class NEUEventListener {
 
     private String processText(String text) {
         if(SBInfo.getInstance().getLocation() == null) return text;
-        if(!SBInfo.getInstance().getLocation().startsWith("mining_")) return text;
+        if(!SBInfo.getInstance().getLocation().startsWith("mining_")&&!SBInfo.getInstance().getLocation().equals("crystal_hollows")) return text;
 
         if(Minecraft.getMinecraft().thePlayer == null) return text;
         if(!NotEnoughUpdates.INSTANCE.config.mining.drillFuelBar) return text;
