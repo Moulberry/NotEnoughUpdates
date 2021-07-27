@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
 import io.github.moulberry.notenoughupdates.util.ReverseWorldRenderer;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
@@ -79,32 +80,45 @@ public class NEUCape {
 
     public void setCapeTexture(String capeName) {
         if(this.capeName != null && this.capeName.equalsIgnoreCase(capeName)) return;
-        this.capeName = capeName;
 
         startTime = System.currentTimeMillis();
+        boolean defaultBehaviour = true;
 
-        if(capeName.equalsIgnoreCase("fade")) {
-            shaderName = "fade_cape";
-        } else if(capeName.equalsIgnoreCase("space")) {
-            shaderName = "space_cape";
-        } else if(capeName.equalsIgnoreCase("mcworld") || capeName.equalsIgnoreCase("skyclient")) {
-            shaderName = "mcworld_cape";
-        } else if(capeName.equalsIgnoreCase("lava")) {
-            shaderName = "lava_cape";
-        } else if(capeName.equalsIgnoreCase("lightning")) {
-            shaderName = "lightning_cape";
-        } else if(capeName.equalsIgnoreCase("thebakery")) {
-            shaderName = "biscuit_cape";
-        } else if(capeName.equalsIgnoreCase("negative")) {
-            shaderName = "negative";
-        } else if(capeName.equalsIgnoreCase("void")) {
-            shaderName = "void";
-        } else if(capeName.equalsIgnoreCase("tunnel")) {
-            shaderName = "tunnel";
-        } else if(capeName.equalsIgnoreCase("planets")) {
-            shaderName = "planets";
-        } else {
-            shaderName = "shiny_cape";
+        if(NotEnoughUpdates.INSTANCE.config.hidden.disableBrokenCapes){
+            if(capeName.equals("negative")){
+                defaultBehaviour = false;
+                this.capeName = "fade";
+                this.shaderName = "fade_cape";
+            }
+        }
+        if(defaultBehaviour){
+            this.capeName = capeName;
+
+
+
+            if (capeName.equalsIgnoreCase("fade")) {
+                shaderName = "fade_cape";
+            } else if (capeName.equalsIgnoreCase("space")) {
+                shaderName = "space_cape";
+            } else if (capeName.equalsIgnoreCase("mcworld") || capeName.equalsIgnoreCase("skyclient")) {
+                shaderName = "mcworld_cape";
+            } else if (capeName.equalsIgnoreCase("lava")) {
+                shaderName = "lava_cape";
+            } else if (capeName.equalsIgnoreCase("lightning")) {
+                shaderName = "lightning_cape";
+            } else if (capeName.equalsIgnoreCase("thebakery")) {
+                shaderName = "biscuit_cape";
+            } else if (capeName.equalsIgnoreCase("negative")) {
+                shaderName = "negative";
+            } else if (capeName.equalsIgnoreCase("void")) {
+                shaderName = "void";
+            } else if (capeName.equalsIgnoreCase("tunnel")) {
+                shaderName = "tunnel";
+            } else if (capeName.equalsIgnoreCase("planets")) {
+                shaderName = "planets";
+            } else {
+                shaderName = "shiny_cape";
+            }
         }
 
         ResourceLocation staticCapeTex = new ResourceLocation("notenoughupdates:capes/" + capeName + ".png");

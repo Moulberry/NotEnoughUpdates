@@ -286,6 +286,9 @@ public class NEUConfig extends Config {
                 "Looting:\u003e:3:5:0");
         @Expose public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
         @Expose public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
+        //These config options were added due to a graphical bug that caused the player to be unable to see the screen
+        @Expose public boolean disableBrokenCapes = false;
+        @Expose public boolean disableAllCapes = false;
     }
 
     private static ArrayList<String> createDefaultQuickCommands() {

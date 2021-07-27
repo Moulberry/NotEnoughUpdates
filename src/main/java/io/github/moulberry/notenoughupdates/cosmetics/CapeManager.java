@@ -137,6 +137,7 @@ public class CapeManager {
     }
 
     private void updateCapes() {
+
         NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("activecapes.json", (jsonObject) -> {
             if(jsonObject.get("success").getAsBoolean()) {
                 lastJsonSync = jsonObject;
@@ -203,7 +204,9 @@ public class CapeManager {
             if(none) {
                 localCape = null;
             } else {
-                localCape = new MutablePair<>(new NEUCape(capename), capename);
+                if (!NotEnoughUpdates.INSTANCE.config.hidden.disableAllCapes) {
+                    localCape = new MutablePair<>(new NEUCape(capename), capename);
+                }
             }
         } else if(capeMap.containsKey(playerUUID)) {
             if(none) {
@@ -213,7 +216,9 @@ public class CapeManager {
                 capePair.setValue(capename);
             }
         } else if(!none) {
-            capeMap.put(playerUUID, new MutablePair<>(new NEUCape(capename), capename));
+            if (!NotEnoughUpdates.INSTANCE.config.hidden.disableAllCapes){
+                capeMap.put(playerUUID, new MutablePair<>(new NEUCape(capename), capename));
+            }
         }
     }
 
@@ -287,7 +292,9 @@ public class CapeManager {
                 String selCape = NotEnoughUpdates.INSTANCE.config.hidden.selectedCape;
                 if(selCape != null && !selCape.isEmpty()) {
                     if(localCape == null) {
-                        localCape = new MutablePair<>(new NEUCape(selCape), selCape);
+                        if (!NotEnoughUpdates.INSTANCE.config.hidden.disableAllCapes) {
+                            localCape = new MutablePair<>(new NEUCape(selCape), selCape);
+                        }
                     } else {
                         localCape.setValue(selCape);
                     }
