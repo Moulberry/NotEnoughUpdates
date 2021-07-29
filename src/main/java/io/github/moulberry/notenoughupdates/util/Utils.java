@@ -492,9 +492,12 @@ public class Utils {
     }
 
     public static void playPressSound() {
-        if(NotEnoughUpdates.INSTANCE.config.misc.guiButtonClicks) {
-            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
-                    new ResourceLocation("gui.button.press"), 1.0F));
+        playSound(new ResourceLocation("gui.button.press"), true);
+    }
+
+    public static void playSound(ResourceLocation sound, boolean gui) {
+        if(NotEnoughUpdates.INSTANCE.config.misc.guiButtonClicks || !gui) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(sound, 1.0F));
         }
     }
 

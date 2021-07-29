@@ -42,6 +42,8 @@ import org.lwjgl.opengl.GL20;
 
 import java.awt.*;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
@@ -175,12 +177,23 @@ public class GuiProfileViewer extends GuiScreen {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
             if(profile != null) {
+                //Render Profile chooser button
                 renderBlurredBackground(width, height, guiLeft+2, guiTop+sizeY+3+2, 100-4, 20-4);
                 Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
                 Utils.drawTexturedRect(guiLeft, guiTop+sizeY+3, 100, 20,
                         0, 100/200f, 0, 20/185f, GL11.GL_NEAREST);
                 Utils.drawStringCenteredScaledMaxWidth(profileId, Minecraft.getMinecraft().fontRendererObj, guiLeft+50,
                         guiTop+sizeY+3+10, true, 90, new Color(63, 224, 208, 255).getRGB());
+                //Render Open In Skycrypt button
+                renderBlurredBackground(width, height, guiLeft+100+6+2, guiTop+sizeY+3+2, 100-4, 20-4);
+                Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
+                Utils.drawTexturedRect(guiLeft+100+6, guiTop+sizeY+3, 100, 20,
+                        0, 100/200f, 0, 20/185f, GL11.GL_NEAREST);
+                Utils.drawStringCenteredScaledMaxWidth("Open in Skycrypt", Minecraft.getMinecraft().fontRendererObj, guiLeft+50+100+6,
+                        guiTop+sizeY+3+10, true, 90, new Color(63, 224, 208, 255).getRGB());
+
+
+
 
                 if(profileDropdownSelected && !profile.getProfileIds().isEmpty() && scaledResolution.getScaleFactor() != 4) {
                     int dropdownOptionSize = scaledResolution.getScaleFactor()==3?10:20;
@@ -382,6 +395,21 @@ public class GuiProfileViewer extends GuiScreen {
                 return;
             }
         }
+        if(mouseX > guiLeft+106 && mouseX < guiLeft+106+100 && profile != null && !profile.getProfileIds().isEmpty() && profileId != null) {
+            if(mouseY > guiTop+sizeY+3 && mouseY < guiTop+sizeY+23) {
+                try{
+                    Desktop desk = Desktop.getDesktop();
+                    desk.browse(new URI("https://sky.shiiyu.moe/stats/"+profile.getHypixelProfile().get("displayname").getAsString()+"/"+profileId));
+                    Utils.playPressSound();
+                    return;
+                } catch (IOException | URISyntaxException ignored) {
+                    //no idea how this sounds, but ya know just in case
+                    Utils.playSound(new ResourceLocation("game.player.hurt"), true);
+                    return;
+                }
+            }
+        }
+
         if(mouseX > guiLeft && mouseX < guiLeft+100 && profile != null && !profile.getProfileIds().isEmpty()) {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
             if(mouseY > guiTop+sizeY+3 && mouseY < guiTop+sizeY+23) {
