@@ -103,6 +103,7 @@ public class CapeManager {
         new CapeData("subreddit_light", true, false),
         new CapeData("packshq", true, false),
         new CapeData("skytils", true, false),
+        new CapeData("sbp", true, false),
 
             //Special Other
         new CapeData("contrib", true, false),
