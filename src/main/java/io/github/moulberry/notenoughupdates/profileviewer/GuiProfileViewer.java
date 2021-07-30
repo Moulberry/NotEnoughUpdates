@@ -65,6 +65,7 @@ public class GuiProfileViewer extends GuiScreen {
     public static final ResourceLocation pv_dropdown = new ResourceLocation("notenoughupdates:pv_dropdown.png");
     public static final ResourceLocation pv_bg = new ResourceLocation("notenoughupdates:pv_bg.png");
     public static final ResourceLocation pv_elements = new ResourceLocation("notenoughupdates:pv_elements.png");
+    public static final ResourceLocation pv_ironman = new ResourceLocation("notenoughupdates:pv_ironman.png");
     public static final ResourceLocation resource_packs = new ResourceLocation("minecraft:textures/gui/resource_packs.png");
     public static final ResourceLocation icons = new ResourceLocation("textures/gui/icons.png");
 
@@ -177,6 +178,7 @@ public class GuiProfileViewer extends GuiScreen {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
             if(profile != null) {
+                JsonObject currProfileInfo = profile.getProfileInformation(profileId);
                 //Render Profile chooser button
                 renderBlurredBackground(width, height, guiLeft+2, guiTop+sizeY+3+2, 100-4, 20-4);
                 Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
@@ -184,6 +186,11 @@ public class GuiProfileViewer extends GuiScreen {
                         0, 100/200f, 0, 20/185f, GL11.GL_NEAREST);
                 Utils.drawStringCenteredScaledMaxWidth(profileId, Minecraft.getMinecraft().fontRendererObj, guiLeft+50,
                         guiTop+sizeY+3+10, true, 90, new Color(63, 224, 208, 255).getRGB());
+                if(currProfileInfo != null && currProfileInfo.has("game_mode") && currProfileInfo.get("game_mode").getAsString().equals("ironman")) {
+                    GlStateManager.color(1, 1, 1, 1);
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(pv_ironman);
+                    Utils.drawTexturedRect(guiLeft-16-5, guiTop+sizeY+5, 16, 16, GL11.GL_NEAREST);
+                }
                 //Render Open In Skycrypt button
                 renderBlurredBackground(width, height, guiLeft+100+6+2, guiTop+sizeY+3+2, 100-4, 20-4);
                 Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
@@ -213,6 +220,12 @@ public class GuiProfileViewer extends GuiScreen {
                         String otherProfileId = profile.getProfileIds().get(yIndex);
                         Utils.drawStringCenteredScaledMaxWidth(otherProfileId, Minecraft.getMinecraft().fontRendererObj, guiLeft+50,
                                 guiTop+sizeY+23+dropdownOptionSize/2f+dropdownOptionSize*yIndex, true, 90, new Color(33, 112, 104, 255).getRGB());
+                        currProfileInfo = profile.getProfileInformation(otherProfileId);
+                        if(currProfileInfo != null && currProfileInfo.has("game_mode") && currProfileInfo.get("game_mode").getAsString().equals("ironman")) {
+                            GlStateManager.color(1, 1, 1, 1);
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(pv_ironman);
+                            Utils.drawTexturedRect(guiLeft-16-5, guiTop+sizeY+2+23+dropdownOptionSize*yIndex, 16, 16, GL11.GL_NEAREST);
+                        }
                     }
 
                 }

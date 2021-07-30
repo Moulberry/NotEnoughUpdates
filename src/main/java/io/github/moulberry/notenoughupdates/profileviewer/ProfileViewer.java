@@ -354,6 +354,7 @@ public class ProfileViewer {
             return null;
         }
 
+
         public long getNetWorth(String profileId) {
             if(profileId == null) profileId = latestProfile;
             if(networth.get(profileId) != null) return networth.get(profileId);
@@ -569,6 +570,9 @@ public class ProfileViewer {
                     JsonObject profileInfo = members.get(uuid).getAsJsonObject();
                     if(profile.has("banking")) {
                         profileInfo.add("banking", profile.get("banking").getAsJsonObject());
+                    }
+                    if(profile.has("game_mode")){
+                        profileInfo.add("game_mode", profile.get("game_mode"));
                     }
                     profileMap.put(profileId, profileInfo);
                     return profileInfo;
