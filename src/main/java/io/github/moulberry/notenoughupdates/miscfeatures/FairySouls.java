@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.Constants;
@@ -356,6 +357,9 @@ public class FairySouls {
             print(EnumChatFormatting.DARK_PURPLE.toString()+EnumChatFormatting.BOLD+"     NEU Fairy Soul Waypoint Guide");
             print(EnumChatFormatting.LIGHT_PURPLE+"Shows waypoints for every fairy soul in your world");
             print(EnumChatFormatting.LIGHT_PURPLE+"Clicking a fairy soul automatically removes it from the list");
+            if(!NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+                print(EnumChatFormatting.DARK_RED + "" + EnumChatFormatting.OBFUSCATED + "Ab" + EnumChatFormatting.RESET + EnumChatFormatting.DARK_RED + "!" + EnumChatFormatting.RESET + EnumChatFormatting.RED + " This feature cannot and will not work in Dungeons. " + EnumChatFormatting.DARK_RED + "!" + EnumChatFormatting.OBFUSCATED + "Ab");
+            }
             print(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+"     Commands:");
             print(EnumChatFormatting.YELLOW+"/neusouls help          - Display this message");
             print(EnumChatFormatting.YELLOW+"/neusouls on/off        - Enable/disable the waypoint markers");
