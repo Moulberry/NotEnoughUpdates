@@ -2210,7 +2210,7 @@ public class GuiProfileViewer extends GuiScreen {
         {
             String lastSaveText = this.getTimeSinceString(profileInfo, "last_save");
             if(lastSaveText != null) {
-                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Last Saved", EnumChatFormatting.WHITE.toString() + lastSaveText,
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Last Seen", EnumChatFormatting.WHITE.toString() + lastSaveText,
                         guiLeft + xStart, guiTop + yStartTop + yOffset * 2, 76);
             }
 
