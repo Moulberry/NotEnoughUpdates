@@ -45,6 +45,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.NumberFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -140,6 +144,10 @@ public class GuiProfileViewer extends GuiScreen {
 
         if(profileId == null && profile != null && profile.getLatestProfile() != null) {
             profileId = profile.getLatestProfile();
+        }
+        {
+            //this is just to cache the guild info
+            JsonObject guildinfo = profile.getGuildInfo(null);
         }
 
         this.sizeX = 431;
@@ -2198,6 +2206,37 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.renderAlignedString(EnumChatFormatting.GOLD+"Purse", EnumChatFormatting.WHITE.toString()+shortNumberFormat(purseBalance, 0),
                 guiLeft+xStart, guiTop+yStartTop+yOffset, 76);
 
+        {
+            String lastSaveText = this.getTimeSinceString(profileInfo, "last_save");
+            if(lastSaveText != null) {
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Last Saved", EnumChatFormatting.WHITE.toString() + lastSaveText,
+                        guiLeft + xStart, guiTop + yStartTop + yOffset * 2, 76);
+            }
+
+        }
+        {
+            String first_join = this.getTimeSinceString(profileInfo, "first_join");
+            if(first_join != null) {
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Joined", EnumChatFormatting.WHITE.toString() + first_join,
+                        guiLeft + xStart, guiTop + yStartTop + yOffset * 3, 76);
+            }
+
+        }
+        {
+            String first_join = this.getTimeSinceString(profileInfo, "first_join");
+            if(first_join != null) {
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Joined", EnumChatFormatting.WHITE.toString() + first_join,
+                        guiLeft + xStart, guiTop + yStartTop + yOffset * 3, 76);
+            }
+
+        }
+        {
+            JsonObject guildInfo = profile.getGuildInfo(null);
+            if(guildInfo != null && guildInfo.has("name")){
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Guild", EnumChatFormatting.WHITE.toString() + guildInfo.get("name").getAsString(),
+                        guiLeft + xStart, guiTop + yStartTop + yOffset * 4, 76);
+            }
+        }
 
         float fairySouls = Utils.getElementAsFloat(Utils.getElement(profileInfo, "fairy_souls_collected"), 0);
 
@@ -2377,6 +2416,33 @@ public class GuiProfileViewer extends GuiScreen {
                 index++;
             }
         }
+    }
+
+    private String getTimeSinceString(JsonObject profileInfo, String path){
+        JsonElement lastSaveElement = Utils.getElement(profileInfo, path);
+
+        if (lastSaveElement.isJsonPrimitive()) {
+
+            Instant lastSave = Instant.ofEpochMilli(lastSaveElement.getAsLong());
+            LocalDateTime lastSaveTime = LocalDateTime.ofInstant(lastSave,TimeZone.getDefault().toZoneId());
+            long timeDiff = System.currentTimeMillis() - lastSave.toEpochMilli();
+            LocalDateTime  sinceOnline= LocalDateTime.ofInstant(Instant.ofEpochMilli(timeDiff), ZoneId.of("UTC"));
+            String renderText;
+
+            if(timeDiff < 60000L){
+                renderText = sinceOnline.getSecond()+" seconds ago.";
+            } else if(timeDiff < 3600000L){
+                renderText = sinceOnline.getMinute()+" minutes ago.";
+            } else if(timeDiff < 86400000L){
+                renderText = sinceOnline.getHour()+" hours ago.";
+            } else if(timeDiff < 31556952000L){
+                renderText = sinceOnline.getDayOfYear()+" days ago.";
+            } else {
+                renderText = lastSaveTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            }
+            return renderText;
+        }
+        return null;
     }
 
     private int backgroundClickedX = -1;
