@@ -1651,13 +1651,14 @@ public class GuiProfileViewer extends GuiScreen {
         invNameToDisplayMap.put("inv_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.chest), EnumChatFormatting.GRAY+"Inventory"));
         invNameToDisplayMap.put("ender_chest_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.ender_chest), EnumChatFormatting.GRAY+"Ender Chest"));
         //invNameToDisplayMap.put("backpack_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dropper), EnumChatFormatting.GRAY+"Backpacks"));
-        invNameToDisplayMap.put("backpack_contents", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("JUMBO_BACKPACK")).setStackDisplayName(EnumChatFormatting.GRAY+"Backpacks"));
-        invNameToDisplayMap.put("personal_vault_contents", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("IRON_CHEST")).setStackDisplayName(EnumChatFormatting.GRAY+"Personal vault"));
+        invNameToDisplayMap.put("backpack_contents", Utils.editItemStackInfo(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("JUMBO_BACKPACK")),EnumChatFormatting.GRAY+"Backpacks", true));
+        invNameToDisplayMap.put("personal_vault_contents", Utils.editItemStackInfo(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("IRON_CHEST")),EnumChatFormatting.GRAY+"Personal vault", true));
         invNameToDisplayMap.put("talisman_bag", Utils.createItemStack(Items.golden_apple, EnumChatFormatting.GRAY+"Accessory Bag"));
         invNameToDisplayMap.put("wardrobe_contents", Utils.createItemStack(Items.leather_chestplate, EnumChatFormatting.GRAY+"Wardrobe"));
         invNameToDisplayMap.put("fishing_bag", Utils.createItemStack(Items.fish, EnumChatFormatting.GRAY+"Fishing Bag"));
         invNameToDisplayMap.put("potion_bag", Utils.createItemStack(Items.potionitem, EnumChatFormatting.GRAY+"Potion Bag"));
     }
+
 
     public int countItemsInInventory(String internalname, JsonObject inventoryInfo, String... invsToSearch) {
         int count = 0;

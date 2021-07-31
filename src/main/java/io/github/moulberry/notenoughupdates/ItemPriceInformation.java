@@ -20,6 +20,9 @@ public class ItemPriceInformation {
     }
 
     public static boolean addToTooltip(List<String> tooltip, String internalname, ItemStack stack, boolean useStackSize) {
+        if(stack.getTagCompound().hasKey("disableNeuTooltip") && stack.getTagCompound().getBoolean("disableNeuTooltip")){
+            return false;
+        }
         JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
         JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
         float lowestBinAvg = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAvgBin(internalname);

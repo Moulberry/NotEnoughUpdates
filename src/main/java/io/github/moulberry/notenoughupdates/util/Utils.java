@@ -610,6 +610,29 @@ public class Utils {
         return stack;
     }
 
+    public static ItemStack editItemStackInfo(ItemStack itemStack, String displayName, boolean disableNeuToolTips, String... lore){
+        NBTTagCompound tag = itemStack.getTagCompound();
+        NBTTagCompound display = tag.getCompoundTag("display");
+        NBTTagList Lore = new NBTTagList();
+
+        for(String line : lore) {
+            Lore.appendTag(new NBTTagString(line));
+        }
+
+        display.setString("Name", displayName);
+        display.setTag("Lore", Lore);
+
+        tag.setTag("display", display);
+        tag.setInteger("HideFlags", 254);
+        if(disableNeuToolTips){
+            tag.setBoolean("disableNeuTooltip", true);
+        }
+
+        itemStack.setTagCompound(tag);
+
+        return itemStack;
+    }
+
     public static void drawStringF(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
         fr.drawString(str, x, y, colour, shadow);
     }
