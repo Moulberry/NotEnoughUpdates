@@ -1288,6 +1288,7 @@ public class NotEnoughUpdates {
     public void displayLinks(JsonObject update) {
         String discord_link = update.get("discord_link").getAsString();
         String youtube_link = update.get("youtube_link").getAsString();
+        String twitch_link = update.get("twitch_link").getAsString();
         String update_link = update.get("update_link").getAsString();
         String github_link = update.get("github_link").getAsString();
         String other_text = update.get("other_text").getAsString();
@@ -1300,11 +1301,13 @@ public class NotEnoughUpdates {
         }
         ChatComponentText links = new ChatComponentText("");
         ChatComponentText separator = new ChatComponentText(
-                EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"---":"--"));
+                EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"--":"-"));
         ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+"Discord"+EnumChatFormatting.GRAY+"]");
         discord.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, discord_link));
         ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.RED+"YouTube"+EnumChatFormatting.GRAY+"]");
         youtube.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, youtube_link));
+        ChatComponentText twitch = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"Twitch"+EnumChatFormatting.GRAY+"]");
+        twitch.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, twitch_link));
         ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.GREEN+"Release"+EnumChatFormatting.GRAY+"]");
         release.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, update_link));
         ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"GitHub"+EnumChatFormatting.GRAY+"]");
@@ -1314,6 +1317,8 @@ public class NotEnoughUpdates {
         links.appendSibling(discord);
         links.appendSibling(separator);
         links.appendSibling(youtube);
+        links.appendSibling(separator);
+        links.appendSibling(twitch);
         links.appendSibling(separator);
         links.appendSibling(release);
         links.appendSibling(separator);
