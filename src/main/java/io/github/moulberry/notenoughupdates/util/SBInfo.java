@@ -125,7 +125,7 @@ public class SBInfo {
     private static final Pattern SKILL_LEVEL_PATTERN = Pattern.compile("([^0-9:]+) (\\d{1,2})");
 
     public void tick() {
-        isInDungeon = false;
+        Boolean tempIsInDungeon = false;
 
         long currentTime = System.currentTimeMillis();
 
@@ -171,13 +171,16 @@ public class SBInfo {
                 ScorePlayerTeam scoreplayerteam1 = scoreboard.getPlayersTeam(score.getPlayerName());
                 String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
                 line = Utils.cleanDuplicateColourCodes(line);
+                
+                String cleanLine = Utils.cleanColour(line);
 
-                if(Utils.cleanColour(line).contains("Dungeon Cleared: ")) {
-                    isInDungeon = true;
+                if(cleanLine.contains("Dungeon") &&  cleanLine.contains("Cleared:") && cleanLine.contains("%")) {
+                    tempIsInDungeon = true;
                 }
 
                 lines.add(line);
             }
+            isInDungeon= tempIsInDungeon;
 
             if(lines.size() >= 5) {
                 date = Utils.cleanColour(lines.get(1)).trim();
