@@ -147,7 +147,9 @@ public class GuiProfileViewer extends GuiScreen {
         }
         {
             //this is just to cache the guild info
-            JsonObject guildinfo = profile.getGuildInfo(null);
+            if(profile != null) {
+                JsonObject guildinfo = profile.getGuildInfo(null);
+            }
         }
 
         this.sizeX = 431;
@@ -2212,14 +2214,6 @@ public class GuiProfileViewer extends GuiScreen {
             if(lastSaveText != null) {
                 Utils.renderAlignedString(EnumChatFormatting.AQUA + "Last Seen", EnumChatFormatting.WHITE.toString() + lastSaveText,
                         guiLeft + xStart, guiTop + yStartTop + yOffset * 2, 76);
-            }
-
-        }
-        {
-            String first_join = this.getTimeSinceString(profileInfo, "first_join");
-            if(first_join != null) {
-                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Joined", EnumChatFormatting.WHITE.toString() + first_join,
-                        guiLeft + xStart, guiTop + yStartTop + yOffset * 3, 76);
             }
 
         }
