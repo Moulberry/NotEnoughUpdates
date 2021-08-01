@@ -67,4 +67,15 @@ public class Misc {
             minStep = 10
     )
     public int chromaSpeed = 100;
+
+    @Expose
+    @ConfigOption(
+            name = "Disable Skull retexturing",
+            desc = "Disables the skull retexturing."
+    )
+    @ConfigEditorBoolean
+    public boolean disableSkullRetexturing = false;
+
+
+
 }

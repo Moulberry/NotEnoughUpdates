@@ -220,6 +220,9 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
     public boolean renderSkull(float xOffset, float yOffset, float zOffset, EnumFacing placedDirection,
                                float rotationDeg, int skullType, GameProfile skullOwner, int damage) {
+        if(NotEnoughUpdates.INSTANCE.config.misc.disableSkullRetexturing) {
+            return false;
+        }
         if(placedDirection != EnumFacing.UP || skullType != 3) {
             return false;
         }
