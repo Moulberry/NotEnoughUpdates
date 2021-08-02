@@ -174,6 +174,7 @@ public class NEUEventListener {
 
     private static long notificationDisplayMillis = 0;
     private static List<String> notificationLines = null;
+    private static boolean showNotificationOverInv = false;
 
     private static final Pattern BAD_ITEM_REGEX = Pattern.compile("x[0-9]{1,2}$");
 
@@ -192,14 +193,18 @@ public class NEUEventListener {
     private int inventoryLoadedTicks = 0;
     private String loadedInvName = "";
     public static boolean inventoryLoaded = false;
-
     public static void displayNotification(List<String> lines, boolean showForever) {
+        displayNotification(lines, showForever, false);
+    }
+
+    public static void displayNotification(List<String> lines, boolean showForever, boolean overInventory) {
         if(showForever) {
             notificationDisplayMillis = -420;
         } else {
             notificationDisplayMillis = System.currentTimeMillis();
         }
         notificationLines = lines;
+        showNotificationOverInv = overInventory;
     }
 
     @SubscribeEvent
@@ -501,13 +506,20 @@ public class NEUEventListener {
         if(Keyboard.isKeyDown(Keyboard.KEY_X)) {
             notificationDisplayMillis = 0;
         }
+
+        if(event.type == RenderGameOverlayEvent.ElementType.ALL){
+            renderNotification();
+        }
+
+    }
+    private static void renderNotification(){
+
         long timeRemaining = 15000 - (System.currentTimeMillis() - notificationDisplayMillis);
         boolean display = timeRemaining > 0 || notificationDisplayMillis == -420;
-        if(event.type == RenderGameOverlayEvent.ElementType.ALL &&
-                display && notificationLines != null && notificationLines.size() > 0) {
+        if(display && notificationLines != null && notificationLines.size() > 0) {
             int width = 0;
             int height = notificationLines.size()*10+10;
-            
+
             for(String line : notificationLines) {
                 int len = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line) + 8;
                 if(len > width) {
@@ -836,6 +848,11 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiBackgroundDraw(GuiScreenEvent.BackgroundDrawnEvent event) {
+        if(showNotificationOverInv){
+
+            renderNotification();
+
+        }
         if((shouldRenderOverlay(event.gui) || event.gui instanceof CustomAHGui) && neu.isOnSkyblock()) {
             ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
             int width = scaledresolution.getScaledWidth();

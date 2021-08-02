@@ -191,6 +191,18 @@ public class NEUOverlay extends Gui {
                     } else {
                         if(System.currentTimeMillis() - millisLastLeftClick < 300) {
                             searchMode = !searchMode;
+                            if (searchMode && NotEnoughUpdates.INSTANCE.config.hidden.firstTimeSearchFocus) {
+                                NEUEventListener.displayNotification(Lists.newArrayList(
+                                        "\u00a7eSearch Highlight",
+                                        "\u00a77In this mode NEU will gray out non matching items in",
+                                        "\u00a77your inventory or chests.",
+                                        "\u00a77This allows you easily find items as the item will stand out.",
+                                        "\u00a77To toggle this please double click on the search bar in your inventory.",
+                                        "\u00a77",
+                                        "\u00a77Press X on your keyboard to close this notifcation"), true, true);
+                                NotEnoughUpdates.INSTANCE.config.hidden.firstTimeSearchFocus = false;
+
+                            }
                         }
                         textField.setCursorPosition(getClickedIndex(mouseX, mouseY));
                         millisLastLeftClick = System.currentTimeMillis();

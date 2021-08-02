@@ -19,7 +19,7 @@ public class Toolbar {
             desc = ""
     )
     @ConfigEditorAccordion(id = 0)
-    public boolean todoAccordion = false;
+    public boolean searchBarAccordion = false;
 
     @Expose
     @ConfigOption(
