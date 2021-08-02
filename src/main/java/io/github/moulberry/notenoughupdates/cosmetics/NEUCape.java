@@ -87,9 +87,9 @@ public class NEUCape {
             shaderName = "fade_cape";
         } else if(capeName.equalsIgnoreCase("space")) {
             shaderName = "space_cape";
-        } else if(capeName.equalsIgnoreCase("mcworld") || capeName.equalsIgnoreCase("skyclient")) {
+        } else if(capeName.equalsIgnoreCase("mcworld")) {
             shaderName = "mcworld_cape";
-        } else if(capeName.equalsIgnoreCase("lava")) {
+        } else if(capeName.equalsIgnoreCase("lava") || capeName.equalsIgnoreCase("skyclient")) {
             shaderName = "lava_cape";
         } else if(capeName.equalsIgnoreCase("lightning")) {
             shaderName = "lightning_cape";
