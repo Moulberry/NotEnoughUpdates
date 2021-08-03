@@ -234,7 +234,7 @@ public class Utils {
         long currentTimeMillis = System.currentTimeMillis();
         if(startTime == 0) startTime = currentTimeMillis;
 
-        int chromaSpeed = NotEnoughUpdates.INSTANCE.config.misc.chromaSpeed;
+        int chromaSpeed = 510 - NotEnoughUpdates.INSTANCE.config.misc.chromaSpeed2;
         if(chromaSpeed < 10) chromaSpeed = 10;
         if(chromaSpeed > 5000) chromaSpeed = 5000;
 

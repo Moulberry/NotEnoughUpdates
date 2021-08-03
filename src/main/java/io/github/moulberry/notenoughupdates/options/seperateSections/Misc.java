@@ -66,7 +66,7 @@ public class Misc {
             maxValue = 500,
             minStep = 10
     )
-    public int chromaSpeed = 100;
+    public int chromaSpeed2 = 400;
 
     @Expose
     @ConfigOption(
