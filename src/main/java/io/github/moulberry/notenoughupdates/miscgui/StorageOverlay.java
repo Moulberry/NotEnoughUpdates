@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.common.collect.Lists;
+import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.*;
 import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
@@ -28,6 +29,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
+
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -36,6 +38,7 @@ import org.lwjgl.util.vector.Vector2f;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
+
 import java.util.*;
 import java.util.List;
 
@@ -91,6 +94,8 @@ public class StorageOverlay extends GuiElement {
 
     private int guiLeft;
     private int guiTop;
+
+    private boolean fastRender = false;
 
     private int loadCircleIndex = 0;
     private int rollIndex = 0;
@@ -947,6 +952,10 @@ public class StorageOverlay extends GuiElement {
             }
         }
         GlScissorStack.pop(scaledResolution);
+
+        if(fastRender){
+            fontRendererObj.drawString("Fast render does not work with Storage overlay.", sizeX/2-fontRendererObj.getStringWidth("Fast render does not work with Storage overlay.")/2, -10, 0xFFFF0000);
+        }
 
         //Inventory Text
         fontRendererObj.drawString("Inventory", 180, storageViewSize+6, textColour);
@@ -1955,6 +1964,23 @@ public class StorageOverlay extends GuiElement {
         GL11.glPopMatrix();
 
         GlStateManager.bindTexture(0);
+    }
+
+    public void fastRenderCheck(){
+        if(!OpenGlHelper.isFramebufferEnabled()) {
+            this.fastRender = true;
+            NEUEventListener.displayNotification(Lists.newArrayList(
+                    "\u00a74Fast Render Warning",
+                    "\u00a77Due to the way fast render works, it's not compatible with NEU.",
+                    "\u00a77Please disable fast render in your options under",
+                    "\u00a77Options -> Video settings -> Performance -> Fast render",
+                    "\u00a77This can't be fixed.",
+                    "\u00a77",
+                    "\u00a77Press X on your keyboard to close this notifcation"), true, true);
+            return;
+        }
+
+        this.fastRender = false;
     }
 
 }

@@ -609,21 +609,10 @@ public class NotEnoughUpdates {
 
     SimpleCommand.ProcessCommandRunnable viewProfileRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(Loader.isModLoaded("optifine") &&
-                    new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
-                try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            if(!OpenGlHelper.isFramebufferEnabled()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                        "Some parts of the profile viewer do not work with OF Fast Render. Go to Video > Performance to disable it."));
 
-                    String line;
-                    while((line = reader.readLine()) != null) {
-                        if(line.contains("ofFastRender:true")) {
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                                    "Some parts of the profile viewer do not work with OF Fast Render. Go to Video > Performance to disable it."));
-                            break;
-                        }
-                    }
-                } catch(Exception e) {
-                }
             }
             if (config.apiKey.apiKey == null || config.apiKey.apiKey.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
@@ -1046,21 +1035,10 @@ public class NotEnoughUpdates {
 
     SimpleCommand cosmeticsCommand = new SimpleCommand("neucosmetics", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(Loader.isModLoaded("optifine") &&
-                    new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
-                try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            if(!OpenGlHelper.isFramebufferEnabled()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                        "NEU cosmetics do not work with OF Fast Render. Go to Video > Performance to disable it."));
 
-                    String line;
-                    while((line = reader.readLine()) != null) {
-                        if(line.contains("ofFastRender:true")) {
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                                    "NEU cosmetics do not work with OF Fast Render. Go to Video > Performance to disable it."));
-                            return;
-                        }
-                    }
-                } catch(Exception e) {
-                }
             }
 
             openGui = new GuiCosmetics();

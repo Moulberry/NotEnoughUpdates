@@ -444,7 +444,10 @@ public class StorageManager {
             }
         } else {
             StorageOverlay.getInstance().clearSearch();
+            return;
         }
+        StorageOverlay.getInstance().fastRenderCheck();
+
     }
 
     public void closeWindowPacket(S2EPacketCloseWindow packet) {
