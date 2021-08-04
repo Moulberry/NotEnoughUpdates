@@ -209,6 +209,7 @@ public class NEUEventListener {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        Keyboard.enableRepeatEvents(false);
         if(event.phase != TickEvent.Phase.START) return;
         if(Minecraft.getMinecraft().theWorld == null) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
