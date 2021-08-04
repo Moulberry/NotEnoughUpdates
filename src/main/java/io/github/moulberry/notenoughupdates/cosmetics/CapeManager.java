@@ -205,9 +205,7 @@ public class CapeManager {
             if(none) {
                 localCape = null;
             } else {
-                if (!NotEnoughUpdates.INSTANCE.config.hidden.disableAllCapes) {
-                    localCape = new MutablePair<>(new NEUCape(capename), capename);
-                }
+                localCape = new MutablePair<>(new NEUCape(capename), capename);
             }
         } else if(capeMap.containsKey(playerUUID)) {
             if(none) {
@@ -217,9 +215,7 @@ public class CapeManager {
                 capePair.setValue(capename);
             }
         } else if(!none) {
-            if (!NotEnoughUpdates.INSTANCE.config.hidden.disableAllCapes){
-                capeMap.put(playerUUID, new MutablePair<>(new NEUCape(capename), capename));
-            }
+            capeMap.put(playerUUID, new MutablePair<>(new NEUCape(capename), capename));
         }
     }
 
@@ -293,9 +289,7 @@ public class CapeManager {
                 String selCape = NotEnoughUpdates.INSTANCE.config.hidden.selectedCape;
                 if(selCape != null && !selCape.isEmpty()) {
                     if(localCape == null) {
-                        if (!NotEnoughUpdates.INSTANCE.config.hidden.disableAllCapes) {
-                            localCape = new MutablePair<>(new NEUCape(selCape), selCape);
-                        }
+                        localCape = new MutablePair<>(new NEUCape(selCape), selCape);
                     } else {
                         localCape.setValue(selCape);
                     }

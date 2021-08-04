@@ -291,7 +291,7 @@ public class NEUConfig extends Config {
 
         //These config options were added due to a graphical bug that caused the player to be unable to see the screen
         @Expose public boolean disableBrokenCapes = false;
-        @Expose public boolean disableAllCapes = false;
+
     }
 
     private static ArrayList<String> createDefaultQuickCommands() {
