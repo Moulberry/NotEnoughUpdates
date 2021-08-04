@@ -653,9 +653,13 @@ public class NotEnoughUpdates {
             } else {
                 if(args.length != 1) {
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                            EnumChatFormatting.RED+"Example Usage: /join f7 or /join 7"));
+                            EnumChatFormatting.RED+"Example Usage: /join f7, /join m6 or /join 7"));
                 } else {
-                    String cmd = "/joindungeon catacombs " + args[0].charAt(args[0].length()-1);
+                    String cataPrefix = "catacombs";
+                    if(args[0].startsWith("m")){
+                        cataPrefix = "master_catacombs";
+                    }
+                    String cmd = "/joindungeon "+cataPrefix+" " + args[0].charAt(args[0].length()-1);
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                             EnumChatFormatting.YELLOW+"Running command: "+cmd));
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
