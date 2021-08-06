@@ -1973,7 +1973,7 @@ public class StorageOverlay extends GuiElement {
                     "\u00a74Fast Render Warning",
                     "\u00a77Due to the way fast render works, it's not compatible with NEU.",
                     "\u00a77Please disable fast render in your options under",
-                    "\u00a77Options -> Video settings -> Performance -> Fast render",
+                    "\u00a77ESC > Options > Video Settings > Performance > Fast Render",
                     "\u00a77This can't be fixed.",
                     "\u00a77",
                     "\u00a77Press X on your keyboard to close this notifcation"), true, true);

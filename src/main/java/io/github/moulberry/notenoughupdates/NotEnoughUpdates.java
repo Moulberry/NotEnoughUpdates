@@ -611,7 +611,7 @@ public class NotEnoughUpdates {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!OpenGlHelper.isFramebufferEnabled()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                        "Some parts of the profile viewer do not work with OF Fast Render. Go to Video > Performance to disable it."));
+                        "Some parts of the profile viewer do not work with OF Fast Render. Go to ESC > Options > Video Settings > Performance > Fast Render to disable it."));
 
             }
             if (config.apiKey.apiKey == null || config.apiKey.apiKey.trim().isEmpty()) {
@@ -1041,7 +1041,7 @@ public class NotEnoughUpdates {
         public void processCommand(ICommandSender sender, String[] args) {
             if(!OpenGlHelper.isFramebufferEnabled()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                        "NEU cosmetics do not work with OF Fast Render. Go to Video > Performance to disable it."));
+                        "NEU cosmetics do not work with OF Fast Render. Go to ESC > Options > Video Settings > Performance > Fast Render to disable it."));
 
             }
 
