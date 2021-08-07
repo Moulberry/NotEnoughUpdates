@@ -26,6 +26,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.tuple.Triple;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -86,6 +87,36 @@ public class SlotLocking {
             config = new SlotLockingConfig();
         }
     }
+
+    public void changedSlot(int slotNumber){
+        int pingModifier = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSwapDelay;
+        if(pingModifier == 0){ return; };
+        long currentTimeMilis = System.currentTimeMillis();
+
+        for (int i = 0; i < slotChanges.length; i++) {
+            if(i != slotNumber && slotChanges[i] != 0 && slotChanges[i] < (currentTimeMilis+pingModifier)){
+                slotChanges[i] = 0;
+            }
+        }
+        slotChanges[slotNumber] = currentTimeMilis;
+    }
+
+    public boolean isSwapedSlotLocked(){
+        int pingModifier = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSwapDelay;
+        if(pingModifier == 0){ return false; };
+        long currentTimeMilis = System.currentTimeMillis();
+
+        for (int i = 0; i < slotChanges.length; i++) {
+            if(slotChanges[i] != 0 && slotChanges[i] < (currentTimeMilis+pingModifier)){
+                if(isSlotIndexLocked(i)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private long[] slotChanges = new long[9];
 
     public void saveConfig(File file) {
         try {
@@ -576,5 +607,6 @@ public class SlotLocking {
 
         return locked != null && (locked.locked || (NotEnoughUpdates.INSTANCE.config.slotLocking.bindingAlsoLocks && locked.boundTo != -1));
     }
+    
 
 }
