@@ -8,6 +8,7 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -433,7 +434,11 @@ public class Utils {
     }
 
     public static Slot getSlotUnderMouse(GuiContainer container) {
-        return (Slot) getField(GuiContainer.class, container, "theSlot", "field_147006_u");
+        Slot slot = (Slot) getField(GuiContainer.class, container, "theSlot", "field_147006_u");
+        if(slot == null){
+            slot = SlotLocking.getInstance().getRealSlot();
+        }
+        return slot;
     }
 
     public static void drawTexturedRect(float x, float y, float width, float height) {
