@@ -48,7 +48,7 @@ public class BonemerangOverlay extends TextOverlay{
     }
 
     private void updateOverlay(){
-        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableBonemerangOverlay){
+        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableBonemerangOverlay && NotEnoughUpdates.INSTANCE.config.itemOverlays.highlightTargeted){
             overlayStrings = null;
             return;
         }
@@ -89,23 +89,25 @@ public class BonemerangOverlay extends TextOverlay{
                     break;
                 }
 
-                if(NotEnoughUpdates.INSTANCE.config.itemOverlays.highlightTargeted) {
-                    List<Entity> entities = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABBExcludingEntity(Minecraft.getMinecraft().thePlayer, bb);
-                    for(Entity entity : entities) {
-                        if(entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand) && !entity.isInvisible()) {
-                            if(!bonemeragedEntities.contains(entity)) {
-                                bonemeragedEntities.add((EntityLivingBase)entity);
-                            }
+
+                List<Entity> entities = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABBExcludingEntity(Minecraft.getMinecraft().thePlayer, bb);
+                for (Entity entity : entities) {
+                    if (entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand) && !entity.isInvisible()) {
+                        if (!bonemeragedEntities.contains(entity)) {
+                            bonemeragedEntities.add((EntityLivingBase) entity);
                         }
                     }
                 }
+
                 position.translate(step.x, step.y, step.z);
             }
+            if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableBonemerangOverlay) {
 
-            map.put(1, EnumChatFormatting.GRAY+"Targets: "+ EnumChatFormatting.GOLD+EnumChatFormatting.BOLD+bonemeragedEntities.size());
-            for(int index : NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangOverlayText) {
-                if(map.containsKey(index)) {
-                    overlayStrings.add(map.get(index));
+                map.put(1, EnumChatFormatting.GRAY + "Targets: " + EnumChatFormatting.GOLD + EnumChatFormatting.BOLD + bonemeragedEntities.size());
+                for (int index : NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangOverlayText) {
+                    if (map.containsKey(index)) {
+                        overlayStrings.add(map.get(index));
+                    }
                 }
             }
 
