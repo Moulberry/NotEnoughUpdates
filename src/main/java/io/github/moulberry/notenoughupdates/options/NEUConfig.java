@@ -82,6 +82,9 @@ public class NEUConfig extends Config {
             case 8:
                 NotEnoughUpdates.INSTANCE.openGui = new GuiEnchantColour();
                 return;
+            case 9:
+                editOverlay(activeConfigCategory, OverlayManager.bonemerangOverlay, itemOverlays.bonemerangPosition);
+                return;
 
         }
     }
