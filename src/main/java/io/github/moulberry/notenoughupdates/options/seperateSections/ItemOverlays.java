@@ -205,6 +205,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Enable Bonemerang Overlay",
+            desc = "Shows info about the bonemerang while holding it."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 3)
+    public boolean enableBonemerangOverlay = true;
+
+    @Expose
+    @ConfigOption(
             name = "Highlight Targeted Entities",
             desc = "Highlight entities that will be hit by your bonemerang"
     )

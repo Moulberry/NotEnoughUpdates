@@ -48,6 +48,10 @@ public class BonemerangOverlay extends TextOverlay{
     }
 
     private void updateOverlay(){
+        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableBonemerangOverlay){
+            overlayStrings = null;
+            return;
+        }
         overlayStrings = new ArrayList<>();
 
 
