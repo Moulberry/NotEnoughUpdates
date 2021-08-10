@@ -223,7 +223,7 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
-            name = "Bonemerang overlay Position",
+            name = "Bonemerang Overlay Position",
             desc = "The position of the Bonemerang overlay."
     )
     @ConfigEditorButton(
@@ -235,7 +235,7 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
-            name = "Bonemerang overlay Text",
+            name = "Bonemerang Overlay Text",
             desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
                     "\u00a7rHold a Bonemerang to display the overlay"
     )
