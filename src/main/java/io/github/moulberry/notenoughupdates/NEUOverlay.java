@@ -654,7 +654,7 @@ public class NEUOverlay extends Gui {
 
     public void mouseInputInv() {
         if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
-            if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
+            if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100 && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                 Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
                 if(slot != null) {
                     ItemStack hover = slot.getStack();
@@ -712,7 +712,7 @@ public class NEUOverlay extends Gui {
                                 manager.showRecipe(item);
                             } else if(Mouse.getEventButton() == 1) {
                                 showInfo(item);
-                            } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
+                            } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100 && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                                 textField.setText("id:"+item.get("internalname").getAsString());
                                 updateSearch();
                                 searchMode = true;
@@ -745,7 +745,7 @@ public class NEUOverlay extends Gui {
                                     manager.showRecipe(item);
                                 } else if(Mouse.getEventButton() == 1) {
                                     showInfo(item);
-                                } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
+                                } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100  && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                                     textField.setText("id:"+item.get("internalname").getAsString());
                                     updateSearch();
                                     searchMode = true;
@@ -1037,7 +1037,7 @@ public class NEUOverlay extends Gui {
                             Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
                                     internalname.get(), item));
                             return true;
-                        } else if(keyPressed == manager.keybindItemSelect.getKeyCode()) {
+                        } else if(keyPressed == manager.keybindItemSelect.getKeyCode() && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                             textField.setText("id:"+internalname.get());
                             itemPaneOpen = true;
                             updateSearch();
