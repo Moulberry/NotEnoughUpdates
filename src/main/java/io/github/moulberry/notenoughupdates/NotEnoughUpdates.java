@@ -239,7 +239,7 @@ public class NotEnoughUpdates {
                     "\u00a75\u00a7lNotEnoughUpdates commands",
                     "\u00a76/neu \u00a77- Opens the main neu GUI.",
                     "\u00a76/pv \u00a7b?{name} \u00a72\u2D35 \u00a7r\u00a77- Opens the profile viewer",
-                    "\u00a76/neusouls {on/off/clear/unclear}\u00a7r\u00a77- Shows waypoints to fairy souls.",
+                    "\u00a76/neusouls {on/off/clear/unclear} \u00a7r\u00a77- Shows waypoints to fairy souls.",
                     "\u00a76/neubuttons \u00a7r\u00a77- Opens a GUI which allows you to customize inventory buttons.",
                     "\u00a76/neuec \u00a7r\u00a77- Opens the enchant colour GUI.",
 
