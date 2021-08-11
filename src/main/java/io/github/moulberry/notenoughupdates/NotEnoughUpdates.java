@@ -263,8 +263,7 @@ public class NotEnoughUpdates {
                     "\u00a76/neureloadrepo \u00a7r\u00a77- reloads the repo",
                     "",
                     "\u00a76\u00a7lDev commands:",
-                    "\u00a76/neupackdev \u00a7r\u00a77- pack creator command - getnpc",
-                    "\u00a76/neudevtest \u00a7r\u00a77- dont touch - moulberry");
+                    "\u00a76/neupackdev \u00a7r\u00a77- pack creator command - getnpc");
             for (int i = 0; i < neuHelpMessages.size(); i++) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuHelpMessages.get(i)
                 ));
@@ -272,7 +271,7 @@ public class NotEnoughUpdates {
             }
             if(NotEnoughUpdates.INSTANCE.config.hidden.dev) {
                 ArrayList<String> neuDevHelpMessages = Lists.newArrayList(
-
+                        "\u00a76/neudevtest \u00a7r\u00a77- dev test command",
                         "\u00a76/neuzeephere \u00a7r\u00a77- sphere",
                         "\u00a76/neudungeonwintest \u00a7r\u00a77- displays the dungeon win screen");
 
@@ -283,9 +282,9 @@ public class NotEnoughUpdates {
                 }
             }
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a7fCommands marked with a \u00a72\"\u2D35\"\u00a7f require are api key. You can set your api key via \u00a77\"/api new\"\u00a7f or \u00a7fby manually putting it in the api field in \u00a77\"/neu\""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a77Commands marked with a \u00a72\"\u2D35\"\u00a77 require are api key. You can set your api key via \"/api new\" or by manually putting it in the api field in \"/neu\""));
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a7fArguments marked with a \u00a7b\"?\"\u00a7f are optional."));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a77Arguments marked with a \u00a7b\"?\"\u00a77 are optional."));
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a76\u00a7lScroll up to see everything"));
         }
