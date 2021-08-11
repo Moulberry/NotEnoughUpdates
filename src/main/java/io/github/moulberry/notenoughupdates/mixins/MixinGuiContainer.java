@@ -101,7 +101,10 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Inject(method="drawScreen", at=@At("RETURN"))
     public void drawScreen(CallbackInfo ci) {
         if(theSlot != null && SlotLocking.getInstance().isSlotLocked(theSlot)) {
+            SlotLocking.getInstance().setRealSlot(theSlot);
             theSlot = null;
+        } else if( theSlot == null){
+            SlotLocking.getInstance().setRealSlot(null);
         }
     }
 

@@ -59,10 +59,7 @@ public class CustomItemEffects {
 
     public long lastUsedHyperion = 0;
 
-    private boolean heldBonemerang = false;
 
-    public final Set<EntityLivingBase> bonemeragedEntities = new HashSet<>();
-    public boolean bonemerangBreak = false;
 
     public int aoteTeleportationMillis = 0;
     public Vector3f aoteTeleportationCurr = null;
@@ -197,55 +194,7 @@ public class CustomItemEffects {
         tick++;
         if(tick > Integer.MAX_VALUE/2) tick = 0;
 
-        heldBonemerang = false;
-        bonemerangBreak = false;
-        bonemeragedEntities.clear();
-        if(Minecraft.getMinecraft().thePlayer == null) return;
-        if(Minecraft.getMinecraft().theWorld == null) return;
 
-        ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
-
-        String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-        if(internal != null && internal.equals("BONE_BOOMERANG")) {
-            heldBonemerang = true;
-
-            EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-            float stepSize = 0.15f;
-            float bonemerangDistance = 15;
-
-            Vector3f position = new Vector3f((float)p.posX, (float)p.posY + p.getEyeHeight(), (float)p.posZ);
-            Vec3 look = p.getLook(0);
-
-            Vector3f step = new Vector3f((float)look.xCoord, (float)look.yCoord, (float)look.zCoord);
-            step.scale(stepSize / step.length());
-
-            for(int i=0; i<Math.floor(bonemerangDistance/stepSize)-2; i++) {
-                AxisAlignedBB bb = new AxisAlignedBB(position.x - 0.75f, position.y - 0.1, position.z - 0.75f,
-                        position.x + 0.75f, position.y + 0.25, position.z + 0.75);
-
-                BlockPos blockPos = new BlockPos(position.x, position.y, position.z);
-
-                if(!Minecraft.getMinecraft().theWorld.isAirBlock(blockPos) &&
-                        Minecraft.getMinecraft().theWorld.getBlockState(blockPos).getBlock().isFullCube()) {
-                    if(NotEnoughUpdates.INSTANCE.config.itemOverlays.showBreak) {
-                        bonemerangBreak = true;
-                    }
-                    break;
-                }
-
-                if(NotEnoughUpdates.INSTANCE.config.itemOverlays.highlightTargeted) {
-                    List<Entity> entities = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABBExcludingEntity(Minecraft.getMinecraft().thePlayer, bb);
-                    for(Entity entity : entities) {
-                        if(entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand) && !entity.isInvisible()) {
-                            if(!bonemeragedEntities.contains(entity)) {
-                                bonemeragedEntities.add((EntityLivingBase)entity);
-                            }
-                        }
-                    }
-                }
-                position.translate(step.x, step.y, step.z);
-            }
-        }
     }
 
     private float lastPartialTicks = 0;
@@ -329,14 +278,8 @@ public class CustomItemEffects {
                 }
             }
 
-            if(heldBonemerang) {
-                if(bonemerangBreak) {
-                    ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
-                    Utils.drawStringCentered(EnumChatFormatting.RED+"Bonemerang will break!",
-                            Minecraft.getMinecraft().fontRendererObj,
-                            scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
-                }
-            } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay &&
+
+            if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay &&
                     Minecraft.getMinecraft().objectMouseOver != null &&
                     Minecraft.getMinecraft().objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
 

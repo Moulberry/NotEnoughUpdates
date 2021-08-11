@@ -79,6 +79,14 @@ public class SlotLocking {
     private boolean lockKeyHeld = false;
     private Slot pairingSlot = null;
 
+    private Slot realSlot = null;
+
+    public void setRealSlot(Slot slot){
+        realSlot = slot;
+    }
+
+    public Slot getRealSlot(){ return realSlot;}
+
     public void loadConfig(File file) {
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             config = GSON.fromJson(reader, SlotLockingConfig.class);

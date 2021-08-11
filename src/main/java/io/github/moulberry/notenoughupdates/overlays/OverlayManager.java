@@ -15,6 +15,7 @@ public class OverlayManager {
     public static FarmingOverlay farmingOverlay;
     public static PetInfoOverlay petInfoOverlay;
     public static TimersOverlay timersOverlay;
+    public static BonemerangOverlay bonemerangOverlay;
     public static final List<TextOverlay> textOverlays = new ArrayList<>();
 
     static {
@@ -108,9 +109,23 @@ public class OverlayManager {
             return TextOverlayStyle.BACKGROUND;
         });
 
+        List<String> bonemerangDummy = Lists.newArrayList(
+                "\u00a74Gonna break",
+                "\u00a77Targets: \u00a76\u00a7lLike alot"
+        );
+        bonemerangOverlay = new BonemerangOverlay(NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangPosition, () -> bonemerangDummy, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangOverlayStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
+
+
         textOverlays.add(miningOverlay);
         textOverlays.add(farmingOverlay);
         textOverlays.add(petInfoOverlay);
+        textOverlays.add(bonemerangOverlay);
 
     }
 

@@ -1,7 +1,12 @@
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
+import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ItemOverlays {
     @ConfigOption(
@@ -200,6 +205,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Enable Bonemerang Overlay",
+            desc = "Shows info about the bonemerang while holding it."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 3)
+    public boolean enableBonemerangOverlay = true;
+
+    @Expose
+    @ConfigOption(
             name = "Highlight Targeted Entities",
             desc = "Highlight entities that will be hit by your bonemerang"
     )
@@ -209,12 +223,51 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
-            name = "Break Warning",
-            desc = "Show a warning below your crosshair if the bonemerang will break on a block"
+            name = "Bonemerang Overlay Position",
+            desc = "The position of the Bonemerang overlay."
+    )
+    @ConfigEditorButton(
+            runnableId = 9,
+            buttonText = "Edit"
+    )
+    @ConfigAccordionId(id = 3)
+    public Position bonemerangPosition = new Position(-1, -1);
+
+    @Expose
+    @ConfigOption(
+            name = "Bonemerang Overlay Text",
+            desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
+                    "\u00a7rHold a Bonemerang to display the overlay"
+    )
+    @ConfigEditorDraggableList(
+            exampleText = {"\u00a74Gonna break",
+                    "\u00a77Targets: \u00a76\u00a7l10"
+            }
+    )
+    @ConfigAccordionId(id = 3)
+    public List<Integer> bonemerangOverlayText = new ArrayList<>(Arrays.asList(0, 1));
+
+    @Expose
+    @ConfigOption(
+            name = "Bonemerang Overlay Style",
+            desc = "Change the style of the Bonemerang overlay"
+    )
+    @ConfigEditorDropdown(
+            values = {"Background", "No Shadow", "Shadow Only", "Full Shadow"}
+    )
+    @ConfigAccordionId(id = 3)
+    public int bonemerangOverlayStyle = 0;
+    @Expose
+    @ConfigOption(
+            name = "Fast update",
+            desc = "Updates the bonemerang overlay faster.\n"+
+                    "Might cause some lag."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 3)
-    public boolean showBreak = true;
+    public boolean bonemerangFastUpdate = false;
+
+
 
     @ConfigOption(
             name = "Minion Crystal Radius Overlay",

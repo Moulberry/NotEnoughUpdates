@@ -233,6 +233,63 @@ public class NotEnoughUpdates {
         }
     });*/
 
+    SimpleCommand neuhelp = new SimpleCommand("neuhelp", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            ArrayList<String> neuHelpMessages = Lists.newArrayList(
+                    "\u00a75\u00a7lNotEnoughUpdates commands",
+                    "\u00a76/neu \u00a77- opens the neu gui",
+                    "\u00a76/pv \u00a7b?{name} \u00a72\u2D35 \u00a7r\u00a77- opens the profile viewer",
+                    "\u00a76/neusouls \u00a7r\u00a77- fairy souls waypoints",
+                    "\u00a76/neubuttons \u00a7r\u00a77- add custom inventory buttons",
+                    "\u00a76/neuec \u00a7r\u00a77- recolour enchantment text",
+
+                    "\u00a76/join {floor} \u00a7r\u00a77- quickly join a dungeon {4/f7/m5}",
+                    "\u00a76/neucosmetics \u00a7r\u00a77- open the cosmetic gui",
+                    "\u00a76/neurename \u00a7r\u00a77- rename/customize items/armor",
+                    "\u00a76/cata \u00a7b?{name} \u00a72\u2D35 \u00a7r\u00a77- opens the profile viewer's catacombs page",
+                    "\u00a76/neulinks \u00a7r\u00a77- links to neu/moulberry",
+                    "\u00a76/neuoverlay \u00a7r\u00a77- inventory overlay placement command",
+                    "\u00a76/neuah \u00a7r\u00a77- neu's custom Auction house gui",
+                    "\u00a76/neumap \u00a7r\u00a77- opens the dungeon map gui",
+                    "\u00a76/neucalendar \u00a7r\u00a77- opens neu's custom calendar gui",
+                    "",
+                    "\u00a76\u00a7lOld commands:",
+                    "\u00a76/peek \u00a7b?{user} \u00a72\u2D35 \u00a7r\u00a77- quickly get stats for a user",
+                    "",
+                    "\u00a76\u00a7lDebug commands:",
+                    "\u00a76/neustats \u00a7r\u00a77- copies pc info to clipboard",
+                    "\u00a76/neustats modlist \u00a7r\u00a77- copies mod list info to clipboard",
+                    "\u00a76/neuresetrepo \u00a7r\u00a77- resets the repo",
+                    "\u00a76/neureloadrepo \u00a7r\u00a77- reloads the repo",
+                    "",
+                    "\u00a76\u00a7lDev commands:",
+                    "\u00a76/neupackdev \u00a7r\u00a77- pack creator command - getnpc");
+            for (int i = 0; i < neuHelpMessages.size(); i++) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuHelpMessages.get(i)
+                ));
+
+            }
+            if(NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+                ArrayList<String> neuDevHelpMessages = Lists.newArrayList(
+                        "\u00a76/neudevtest \u00a7r\u00a77- dev test command",
+                        "\u00a76/neuzeephere \u00a7r\u00a77- sphere",
+                        "\u00a76/neudungeonwintest \u00a7r\u00a77- displays the dungeon win screen");
+
+                for (int i = 0; i < neuDevHelpMessages.size(); i++) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuDevHelpMessages.get(i)
+                    ));
+
+                }
+            }
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a77Commands marked with a \u00a72\"\u2D35\"\u00a77 require are api key. You can set your api key via \"/api new\" or by manually putting it in the api field in \"/neu\""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a77Arguments marked with a \u00a7b\"?\"\u00a77 are optional."));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a76\u00a7lScroll up to see everything"));
+        }
+    });
+
     SimpleCommand stWhyCommand = new SimpleCommand("neustwhy", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             NEUEventListener.displayNotification(Lists.newArrayList(
@@ -1183,7 +1240,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(nullzeeSphereCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);
-        ClientCommandHandler.instance.registerCommand(gamemodesCommand);
+        //ClientCommandHandler.instance.registerCommand(gamemodesCommand);
         ClientCommandHandler.instance.registerCommand(stWhyCommand);
         ClientCommandHandler.instance.registerCommand(buttonsCommand);
         ClientCommandHandler.instance.registerCommand(resetRepoCommand);
@@ -1200,7 +1257,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(packDevCommand);
         if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
         ClientCommandHandler.instance.registerCommand(peekCommand);
-        ClientCommandHandler.instance.registerCommand(tutorialCommand);
+        //ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
@@ -1212,6 +1269,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(dungeonWinTest);
         ClientCommandHandler.instance.registerCommand(calendarCommand);
         ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommand());
+        ClientCommandHandler.instance.registerCommand(neuhelp);
 
         BackgroundBlur.registerListener();
 
