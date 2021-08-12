@@ -795,7 +795,7 @@ public class CustomItemEffects {
                         GlStateManager.enableTexture2D();
                         GlStateManager.disableBlend();
                     }
-                } else if((heldInternal.equals("WATER_BUCKET") || heldInternal.equals("MAGICAL_WATER_BUCKET")) &&
+                } else if((heldInternal.equals("WATER_BUCKET") || heldInternal.equals("MAGICAL_WATER_BUCKET") && NotEnoughUpdates.INSTANCE.config.itemOverlays.enablePrismapumpOverlay) &&
                         event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                     BlockPos hover = event.target.getBlockPos().offset(event.target.sideHit, 1);
 

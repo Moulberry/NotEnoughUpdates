@@ -279,7 +279,7 @@ public class ItemOverlays {
     @Expose
     @ConfigOption(
             name = "Enable Crystal Overlay",
-            desc = "Show a block overlay for the effective radius of minion crystals (farming, mining, etc)"
+            desc = "Show a block overlay for the effective radius of minion crystals (farming, mining, etc)."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 5)
@@ -288,9 +288,19 @@ public class ItemOverlays {
     @Expose
     @ConfigOption(
             name = "Always Show Crystal Overlay",
-            desc = "Show the crystal overlay, even when a minion crystal is not being held"
+            desc = "Show the crystal overlay, even when a minion crystal is not being held."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 5)
     public boolean alwaysShowCrystal = false;
+
+
+    @Expose
+    @ConfigOption(
+            name = "Enable Prismapump Overlay",
+            desc = "Show a block overlay for the effected blocks of prismapump's ability."
+    )
+    @ConfigEditorBoolean
+    public boolean enablePrismapumpOverlay = true;
+
 }
