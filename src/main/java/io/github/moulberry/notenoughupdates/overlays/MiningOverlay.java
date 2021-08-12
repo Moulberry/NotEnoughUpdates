@@ -155,7 +155,7 @@ public class MiningOverlay extends TextOverlay {
             }
         }*/
 
-        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay) return;
+        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay && NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints == 0) return;
         if(SBInfo.getInstance().getLocation() == null) return;
         if(!SBInfo.getInstance().getLocation().equals("mining_3") && !SBInfo.getInstance().getLocation().equals("crystal_hollows")) return;
 
@@ -216,6 +216,10 @@ public class MiningOverlay extends TextOverlay {
                 commissions = false;
                 forges = false;
             }
+        }
+        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay){
+            overlayStrings = null;
+            return;
         }
 
         List<String> commissionsStrings = new ArrayList<>();
