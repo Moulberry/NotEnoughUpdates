@@ -374,8 +374,8 @@ public class NEUEventListener {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                                 EnumChatFormatting.BLUE+"It seems this is your first time using NotEnoughUpdates."));
                         ChatComponentText clickText = new ChatComponentText(
-                                EnumChatFormatting.YELLOW+"Click this message if you would like to view a short tutorial.");
-                        clickText.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/neututorial"));
+                                EnumChatFormatting.YELLOW+"Click this message if you would like to view a list of NotEnoughUpdate's commands.");
+                        clickText.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/neuhelp"));
                         Minecraft.getMinecraft().thePlayer.addChatMessage(clickText);
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                     }
