@@ -346,7 +346,7 @@ public class NEUEventListener {
                 if(!joinedSB) {
                     joinedSB = true;
 
-                    SBGamemodes.loadFromFile();
+                    //SBGamemodes.loadFromFile();
 
 
                     if(NotEnoughUpdates.INSTANCE.config.notifications.showUpdateMsg) {

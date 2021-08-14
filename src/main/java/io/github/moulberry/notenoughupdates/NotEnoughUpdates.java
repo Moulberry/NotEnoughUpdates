@@ -1206,7 +1206,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new NEUEventListener(this));
         MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
-        MinecraftForge.EVENT_BUS.register(new SBGamemodes());
+        //MinecraftForge.EVENT_BUS.register(new SBGamemodes());
         MinecraftForge.EVENT_BUS.register(new EnchantingSolvers());
         MinecraftForge.EVENT_BUS.register(new CalendarOverlay());
         MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
