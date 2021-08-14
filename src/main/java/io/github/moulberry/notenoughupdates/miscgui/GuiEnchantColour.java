@@ -7,6 +7,7 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -223,8 +224,10 @@ public class GuiEnchantColour extends GuiScreen {
         GlStateManager.color(1, 1, 1, 1);
         Utils.drawTexturedRect(guiLeft+xSize+3, guiTopSidebar+2, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
         Utils.drawTexturedRect(guiLeft+xSize+3, guiTopSidebar+2+24, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
+        Utils.drawTexturedRect(guiLeft+xSize+3, guiTopSidebar+2+24*2, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
         Utils.drawStringCenteredScaledMaxWidth("Load preset from clipboard", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+12, false, 86, 4210752);
         Utils.drawStringCenteredScaledMaxWidth("Save preset to clipboard", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+12+24, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("Reset Config", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+12+24*2, false, 86, 4210752);
 
 //        for (int i = 0; i < enchantPresets.size(); i++) {
 //
@@ -437,7 +440,7 @@ public class GuiEnchantColour extends GuiScreen {
 //        System.out.println("Hit Mouse X: "+mouseX+ " Mouse Y: "+mouseY);
 //        System.out.println("guileft: "+ (guiLeft+xSize+3)+ " Gui Right: "+ (guiLeft+xSize+3+88));
         if(mouseX > guiLeft+xSize+3 && mouseX< guiLeft+xSize+3+88){
-            if(mouseY > guiTopSidebar && mouseY < guiTopSidebar+25){
+            if(mouseY > guiTopSidebar+2 && mouseY < guiTopSidebar+20+2){
 
 //                String result = NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.toString();
 //                String base64String = Base64.getEncoder().encodeToString(result.getBytes(StandardCharsets.UTF_8));
@@ -479,7 +482,7 @@ public class GuiEnchantColour extends GuiScreen {
                 }
 
 
-            } else if(mouseY > guiTopSidebar+25 && mouseY < guiTopSidebar+25+25){
+            } else if(mouseY > guiTopSidebar+2+24 && mouseY < guiTopSidebar+20+24+2){
 
                 ArrayList<String> result = NotEnoughUpdates.INSTANCE.config.hidden.enchantColours;
                 JsonArray jsonArray = new JsonArray();
@@ -487,10 +490,10 @@ public class GuiEnchantColour extends GuiScreen {
                 for (int i = 0; i < result.size(); i++) {
                     jsonArray.add(new JsonPrimitive(result.get(i)));
                 }
-
-
                 String base64String = Base64.getEncoder().encodeToString(jsonArray.toString().getBytes(StandardCharsets.UTF_8));
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(base64String), null);
+            } else if(mouseY > guiTopSidebar+2+(24*2) && mouseY < guiTopSidebar+20+2+24*2){
+                NotEnoughUpdates.INSTANCE.config.hidden.enchantColours = NEUConfig.createDefaultEnchantColours();
             }
 
 //            for(int sidebarYIndex=0; sidebarYIndex<enchantPresets.size(); sidebarYIndex++) {

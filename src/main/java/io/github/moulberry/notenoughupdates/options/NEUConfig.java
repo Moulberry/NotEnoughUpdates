@@ -279,14 +279,7 @@ public class NEUConfig extends Config {
         @Expose public ArrayList<String> previousAuctionSearches = new ArrayList<>();
         @Expose public ArrayList<String> eventFavourites = new ArrayList<>();
         @Expose public ArrayList<String> quickCommands = createDefaultQuickCommands();
-        @Expose public ArrayList<String> enchantColours = Lists.newArrayList(
-                "[a-zA-Z\\- ]+:\u003e:9:6:0",
-                "[a-zA-Z\\- ]+:\u003e:6:c:0",
-                "[a-zA-Z\\- ]+:\u003e:5:5:0",
-                "Experience:\u003e:3:5:0",
-                "Life Steal:\u003e:3:5:0",
-                "Scavenger:\u003e:3:5:0",
-                "Looting:\u003e:3:5:0");
+        @Expose public ArrayList<String> enchantColours = createDefaultEnchantColours();
         @Expose public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
         @Expose public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
 
@@ -295,6 +288,17 @@ public class NEUConfig extends Config {
         //These config options were added due to a graphical bug that caused the player to be unable to see the screen
         @Expose public boolean disableBrokenCapes = false;
 
+    }
+
+    public static ArrayList<String> createDefaultEnchantColours(){
+        return Lists.newArrayList(
+                "[a-zA-Z\\- ]+:\u003e:9:6:0",
+                "[a-zA-Z\\- ]+:\u003e:6:c:0",
+                "[a-zA-Z\\- ]+:\u003e:5:5:0",
+                "Experience:\u003e:3:5:0",
+                "Life Steal:\u003e:3:5:0",
+                "Scavenger:\u003e:3:5:0",
+                "Looting:\u003e:3:5:0");
     }
 
     private static ArrayList<String> createDefaultQuickCommands() {
