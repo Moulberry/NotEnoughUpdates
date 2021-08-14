@@ -310,6 +310,7 @@ public class SlotLocking {
     }
 
     public void toggleLock(int lockIndex) {
+        if(lockIndex == 8) return;
         LockedSlot[] lockedSlots = getDataForProfile();
 
         if(lockedSlots != null) {
