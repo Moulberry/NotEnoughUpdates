@@ -51,6 +51,7 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -1675,6 +1676,19 @@ public class NEUEventListener {
 
     private boolean copied = false;
 
+    //just to try and optimize it a bit
+    private int sbaloaded = -1;
+    private boolean isSbaloaded(){
+        if(sbaloaded == -1){
+            if(Loader.isModLoaded("skyblockaddons")) {
+                sbaloaded = 1;
+            } else {
+                sbaloaded = 0;
+            }
+        }
+        return sbaloaded == 1;
+    }
+
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltipLow(ItemTooltipEvent event) {
         if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
@@ -1952,7 +1966,12 @@ public class NEUEventListener {
                     } catch(Exception e) { continue; }
 
                     if(comparatorI < 0) continue;
-                    if("0123456789abcdefz".indexOf(colourCode.charAt(0)) < 0) continue;
+                    String regexText = "0123456789abcdefz";
+                    if(isSbaloaded()) {
+                        regexText = regexText + "Z";
+                    }
+
+                    if (regexText.indexOf(colourCode.charAt(0)) < 0) continue;
 
                     //item_lore = item_lore.replaceAll("\\u00A79("+lvl4Max+" IV)", EnumChatFormatting.DARK_PURPLE+"$1");
                     //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
