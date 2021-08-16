@@ -582,13 +582,19 @@ public class AccessoryBagOverlay {
             return o1.compareTo(o2);
         };
     }
+    private static boolean inAccessoryBag = false;
+    public static boolean isInAccessoryBag(){
+        return inAccessoryBag;
+    }
 
-    public static void renderOverlay() {
+    public static void  renderOverlay() {
+        inAccessoryBag = false;
         if(Minecraft.getMinecraft().currentScreen instanceof GuiChest && NEUEventListener.inventoryLoaded) {
             GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
             if(containerName.trim().startsWith("Accessory Bag")) {
+                inAccessoryBag = true;
                 try {
                     int xSize = (int) Utils.getField(GuiContainer.class, eventGui, "xSize", "field_146999_f");
                     int ySize = (int) Utils.getField(GuiContainer.class, eventGui, "ySize", "field_147000_g");

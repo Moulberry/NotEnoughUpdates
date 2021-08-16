@@ -1003,6 +1003,11 @@ public class NEUEventListener {
                 if(button.anchorBottom) {
                     y += ySize;
                 }
+                if(AccessoryBagOverlay.isInAccessoryBag()){
+                    if(x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28+ 5 && y > guiTop-18 && y < guiTop + 150){
+                        x += 80+28;
+                    }
+                }
 
                 GlStateManager.color(1, 1, 1, 1f);
 
@@ -1104,6 +1109,11 @@ public class NEUEventListener {
                 }
                 if(button.anchorBottom) {
                     y += ySize;
+                }
+                if(AccessoryBagOverlay.isInAccessoryBag()){
+                    if(x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28+ 5 && y > guiTop-18 && y < guiTop + 150){
+                        x += 80+28;
+                    }
                 }
 
                 if(x-guiLeft >= 85 && x-guiLeft <= 115 && y-guiTop >= 4 && y-guiTop <= 25) {
@@ -1429,6 +1439,11 @@ public class NEUEventListener {
                 }
                 if(button.anchorBottom) {
                     y += ySize;
+                }
+                if(AccessoryBagOverlay.isInAccessoryBag()){
+                    if(x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28+ 5 && y > guiTop-18 && y < guiTop + 150){
+                        x += 80+28;
+                    }
                 }
 
                 if(mouseX >= x && mouseX <= x+18 && mouseY >= y && mouseY <= y+18) {
