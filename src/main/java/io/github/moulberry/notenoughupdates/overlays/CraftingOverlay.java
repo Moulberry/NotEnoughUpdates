@@ -60,6 +60,7 @@ public class CraftingOverlay {
 
     public void updateItem(JsonObject item) {
         items = new ItemStack[9];
+        text = null;
         String[] x = {"1", "2", "3"};
         String[] y = {"A", "B", "C"};
         for (int i = 0; i < 9; i++) {
