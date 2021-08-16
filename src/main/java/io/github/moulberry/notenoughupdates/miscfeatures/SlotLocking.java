@@ -99,10 +99,11 @@ public class SlotLocking {
     public void changedSlot(int slotNumber){
         int pingModifier = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSwapDelay;
         if(pingModifier == 0){ return; };
+        if(!isSlotIndexLocked(slotNumber)){ return;}
         long currentTimeMilis = System.currentTimeMillis();
 
         for (int i = 0; i < slotChanges.length; i++) {
-            if(i != slotNumber && slotChanges[i] != 0 && slotChanges[i] < (currentTimeMilis+pingModifier)){
+            if(i != slotNumber && slotChanges[i] != 0 && (slotChanges[i] + (long) pingModifier) > currentTimeMilis){
                 slotChanges[i] = 0;
             }
         }
@@ -115,10 +116,8 @@ public class SlotLocking {
         long currentTimeMilis = System.currentTimeMillis();
 
         for (int i = 0; i < slotChanges.length; i++) {
-            if(slotChanges[i] != 0 && slotChanges[i] < (currentTimeMilis+pingModifier)){
-                if(isSlotIndexLocked(i)){
-                    return true;
-                }
+            if (slotChanges[i] != 0 && isSlotIndexLocked(i) && (slotChanges[i] + (long) pingModifier) > currentTimeMilis) {
+                return true;
             }
         }
         return false;
