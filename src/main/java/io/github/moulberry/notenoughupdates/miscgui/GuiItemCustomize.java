@@ -215,6 +215,7 @@ public class GuiItemCustomize extends GuiScreen {
                     EnumChatFormatting.LIGHT_PURPLE+"\u00B6d = Purple",
                     EnumChatFormatting.YELLOW+"\u00B6e = Yellow",
                     EnumChatFormatting.WHITE+"\u00B6f = White",
+                    "\u00A7Z\u00B6Z = SBA Chroma"+EnumChatFormatting.RESET+EnumChatFormatting.GRAY+" (Requires SBA)",
                     "",
                     EnumChatFormatting.GREEN+"Available formatting codes:",
                     EnumChatFormatting.GRAY+"\u00B6k = "+EnumChatFormatting.OBFUSCATED+"Obfuscated",
