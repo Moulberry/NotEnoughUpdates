@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
+import io.github.moulberry.notenoughupdates.overlays.CraftingOverlay;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -12,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.ContainerChest;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
@@ -35,10 +37,10 @@ import java.util.zip.ZipInputStream;
 public class NEUManager {
 
     private final NotEnoughUpdates neu;
-    public final Gson gson;
+    public static Gson gson;
     public final APIManager auctionManager;
 
-    private TreeMap<String, JsonObject> itemMap = new TreeMap<>();
+    private static TreeMap<String, JsonObject> itemMap = new TreeMap<>();
 
     private TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
     private TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
@@ -60,7 +62,7 @@ public class NEUManager {
     private String currentProfileBackup = "";
     public final HypixelApi hypixelApi = new HypixelApi();
 
-    private Map<String, ItemStack> itemstackCache = new HashMap<>();
+    private static Map<String, ItemStack> itemstackCache = new HashMap<>();
 
     private ExecutorService repoLoaderES = Executors.newSingleThreadExecutor();
 
@@ -797,7 +799,12 @@ public class NEUManager {
     }
 
     public void showRecipe(JsonObject item) {
-        if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
+        if (item.has("recipe") && Minecraft.getMinecraft().thePlayer.openContainer instanceof ContainerChest) {
+            ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
+            if (container.getLowerChestInventory().getDisplayName().getUnformattedText().equals("Craft Item")) {
+                CraftingOverlay.updateItem(item);
+            }
+        } else if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
             displayGuiItemRecipe(item.get("internalname").getAsString(), "");
         } else if(item.has("clickcommand")) {
             String clickcommand = item.get("clickcommand").getAsString();
@@ -1181,11 +1188,11 @@ public class NEUManager {
         writeJson(json, file);
     }
 
-    public TreeMap<String, JsonObject> getItemInformation() {
+    public static TreeMap<String, JsonObject> getItemInformation() {
         return itemMap;
     }
 
-    public String removeUnusedDecimal(double num) {
+    public static String removeUnusedDecimal(double num) {
         if(num % 1 == 0) {
             return String.valueOf((int)num);
         } else {
@@ -1193,7 +1200,7 @@ public class NEUManager {
         }
     }
 
-    public HashMap<String, String> getLoreReplacements(String petname, String tier, int level) {
+    public static HashMap<String, String> getLoreReplacements(String petname, String tier, int level) {
         JsonObject petnums = null;
         if(petname != null && tier != null) {
             petnums = Constants.PETNUMS;
@@ -1257,7 +1264,7 @@ public class NEUManager {
         return replacements;
     }
 
-    public HashMap<String, String> getLoreReplacements(NBTTagCompound tag, int level) {
+    public static HashMap<String, String> getLoreReplacements(NBTTagCompound tag, int level) {
         String petname = null;
         String tier = null;
         if(tag != null && tag.hasKey("ExtraAttributes")) {
@@ -1289,7 +1296,7 @@ public class NEUManager {
         return getLoreReplacements(petname, tier, level);
     }
 
-    public NBTTagList processLore(JsonArray lore, HashMap<String, String> replacements) {
+    public static NBTTagList processLore(JsonArray lore, HashMap<String, String> replacements) {
         NBTTagList nbtLore = new NBTTagList();
         for(JsonElement line : lore) {
             String lineStr = line.getAsString();
@@ -1304,19 +1311,19 @@ public class NEUManager {
         return nbtLore;
     }
 
-    public ItemStack jsonToStack(JsonObject json) {
+    public static ItemStack jsonToStack(JsonObject json) {
         return jsonToStack(json, true);
     }
 
-    public ItemStack jsonToStack(JsonObject json, boolean useCache) {
+    public static ItemStack jsonToStack(JsonObject json, boolean useCache) {
         return jsonToStack(json, useCache, true);
     }
 
-    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {
+    public static ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {
         return jsonToStack(json, useCache, useReplacements, true);
     }
 
-    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean copyStack) {
+    public static ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean copyStack) {
         if(json == null) return new ItemStack(Items.painting, 1, 10);
         String internalname = json.get("internalname").getAsString();
 
