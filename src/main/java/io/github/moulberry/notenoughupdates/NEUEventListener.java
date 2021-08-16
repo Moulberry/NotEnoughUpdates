@@ -15,11 +15,13 @@ import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
-import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
-import io.github.moulberry.notenoughupdates.overlays.*;
+import io.github.moulberry.notenoughupdates.overlays.AuctionSearchOverlay;
+import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
+import io.github.moulberry.notenoughupdates.overlays.RancherBootOverlay;
+import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.*;
 import net.minecraft.client.Minecraft;
@@ -567,7 +569,7 @@ public class NEUEventListener {
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
-        CraftingOverlay.shouldRender = false;
+        neu.manager.craftingOverlay.shouldRender = false;
 
         if((Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper ||
                 Minecraft.getMinecraft().currentScreen instanceof GuiItemRecipe) &&
@@ -1060,7 +1062,7 @@ public class NEUEventListener {
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
             if (containerName.equals("Craft Item")) {
-                CraftingOverlay.render();
+                neu.manager.craftingOverlay.render();
             }
         }
 

@@ -6,23 +6,25 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import org.luaj.vm2.ast.Str;
 import org.lwjgl.input.Mouse;
 
 import java.util.List;
 
 public class CraftingOverlay {
-    private static ItemStack[] items = new ItemStack[9];
-    public static boolean shouldRender = false;
-    private static String text = null;
+    private ItemStack[] items = new ItemStack[9];
+    private final NEUManager manager;
+    public boolean shouldRender = false;
+    private String text = null;
 
-    public static void render() {
+    public CraftingOverlay(NEUManager manager) {
+        this.manager = manager;
+    }
+
+    public void render() {
         if (shouldRender) {
             ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
             GuiChest gc = (GuiChest) Minecraft.getMinecraft().currentScreen;
@@ -38,7 +40,7 @@ public class CraftingOverlay {
                     Slot slot = container.inventorySlots.get(slotIndex);
                     int x = slot.xDisplayPosition + gc.guiLeft;
                     int y = slot.yDisplayPosition + gc.guiTop;
-                    if (!slot.getHasStack() || !slot.getStack().getDisplayName().equals(items[i].getDisplayName()) ||
+                    if (!slot.getHasStack() || !manager.getInternalNameForItem(items[i]).equals(manager.getInternalNameForItem(slot.getStack())) ||
                             slot.getStack().stackSize < items[i].stackSize)
                         Gui.drawRect(x, y,
                                 x + 16, y + 16, 0x64ff0000);
@@ -57,7 +59,7 @@ public class CraftingOverlay {
         }
     }
 
-    public static void updateItem(JsonObject item) {
+    public void updateItem(JsonObject item) {
         items = new ItemStack[9];
         String[] x = {"1", "2", "3"};
         String[] y = {"A", "B", "C"};
@@ -70,9 +72,9 @@ public class CraftingOverlay {
                     count = Integer.parseInt(itemS.split(":")[1]);
                     itemS = itemS.split(":")[0];
                 }
-                JsonObject craft = NEUManager.getItemInformation().get(itemS);
+                JsonObject craft = manager.getItemInformation().get(itemS);
                 if (craft != null) {
-                    ItemStack stack = NEUManager.jsonToStack(craft);
+                    ItemStack stack = manager.jsonToStack(craft);
                     stack.stackSize = count;
                     items[i] = stack;
                 }

@@ -37,10 +37,10 @@ import java.util.zip.ZipInputStream;
 public class NEUManager {
 
     private final NotEnoughUpdates neu;
-    public static Gson gson;
+    public final Gson gson;
     public final APIManager auctionManager;
 
-    private static TreeMap<String, JsonObject> itemMap = new TreeMap<>();
+    private TreeMap<String, JsonObject> itemMap = new TreeMap<>();
 
     private TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
     private TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
@@ -62,7 +62,7 @@ public class NEUManager {
     private String currentProfileBackup = "";
     public final HypixelApi hypixelApi = new HypixelApi();
 
-    private static Map<String, ItemStack> itemstackCache = new HashMap<>();
+    private Map<String, ItemStack> itemstackCache = new HashMap<>();
 
     private ExecutorService repoLoaderES = Executors.newSingleThreadExecutor();
 
@@ -75,6 +75,8 @@ public class NEUManager {
     public File configLocation;
     public File repoLocation;
     public File configFile;
+
+    public CraftingOverlay craftingOverlay = new CraftingOverlay(this);
 
     public NEUManager(NotEnoughUpdates neu, File configLocation) {
         this.neu = neu;
@@ -802,7 +804,7 @@ public class NEUManager {
         if (item.has("recipe") && Minecraft.getMinecraft().thePlayer.openContainer instanceof ContainerChest) {
             ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
             if (container.getLowerChestInventory().getDisplayName().getUnformattedText().equals("Craft Item")) {
-                CraftingOverlay.updateItem(item);
+                craftingOverlay.updateItem(item);
             }
         } else if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
             displayGuiItemRecipe(item.get("internalname").getAsString(), "");
@@ -1188,11 +1190,11 @@ public class NEUManager {
         writeJson(json, file);
     }
 
-    public static TreeMap<String, JsonObject> getItemInformation() {
+    public TreeMap<String, JsonObject> getItemInformation() {
         return itemMap;
     }
 
-    public static String removeUnusedDecimal(double num) {
+    public String removeUnusedDecimal(double num) {
         if(num % 1 == 0) {
             return String.valueOf((int)num);
         } else {
@@ -1200,7 +1202,7 @@ public class NEUManager {
         }
     }
 
-    public static HashMap<String, String> getLoreReplacements(String petname, String tier, int level) {
+    public HashMap<String, String> getLoreReplacements(String petname, String tier, int level) {
         JsonObject petnums = null;
         if(petname != null && tier != null) {
             petnums = Constants.PETNUMS;
@@ -1264,7 +1266,7 @@ public class NEUManager {
         return replacements;
     }
 
-    public static HashMap<String, String> getLoreReplacements(NBTTagCompound tag, int level) {
+    public HashMap<String, String> getLoreReplacements(NBTTagCompound tag, int level) {
         String petname = null;
         String tier = null;
         if(tag != null && tag.hasKey("ExtraAttributes")) {
@@ -1296,7 +1298,7 @@ public class NEUManager {
         return getLoreReplacements(petname, tier, level);
     }
 
-    public static NBTTagList processLore(JsonArray lore, HashMap<String, String> replacements) {
+    public NBTTagList processLore(JsonArray lore, HashMap<String, String> replacements) {
         NBTTagList nbtLore = new NBTTagList();
         for(JsonElement line : lore) {
             String lineStr = line.getAsString();
@@ -1311,19 +1313,19 @@ public class NEUManager {
         return nbtLore;
     }
 
-    public static ItemStack jsonToStack(JsonObject json) {
+    public ItemStack jsonToStack(JsonObject json) {
         return jsonToStack(json, true);
     }
 
-    public static ItemStack jsonToStack(JsonObject json, boolean useCache) {
+    public ItemStack jsonToStack(JsonObject json, boolean useCache) {
         return jsonToStack(json, useCache, true);
     }
 
-    public static ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {
+    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements) {
         return jsonToStack(json, useCache, useReplacements, true);
     }
 
-    public static ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean copyStack) {
+    public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean copyStack) {
         if(json == null) return new ItemStack(Items.painting, 1, 10);
         String internalname = json.get("internalname").getAsString();
 
