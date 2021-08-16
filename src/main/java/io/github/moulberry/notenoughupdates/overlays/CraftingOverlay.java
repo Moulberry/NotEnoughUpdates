@@ -42,11 +42,10 @@ public class CraftingOverlay {
                     int y = slot.yDisplayPosition + gc.guiTop;
                     if (!slot.getHasStack() || !manager.getInternalNameForItem(items[i]).equals(manager.getInternalNameForItem(slot.getStack())) ||
                             slot.getStack().stackSize < items[i].stackSize)
-                        Gui.drawRect(x, y,
-                                x + 16, y + 16, 0x64ff0000);
+                        Gui.drawRect(x, y, x + 16, y + 16, 0x64ff0000);
                     if (!slot.getHasStack())
                         Utils.drawItemStack(items[i], x, y);
-                    if (mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16)
+                    if (!slot.getHasStack() && mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16)
                         tooltip = items[i].getTooltip(Minecraft.getMinecraft().thePlayer, false);
                 }
             }
