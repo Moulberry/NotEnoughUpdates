@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
+import io.github.moulberry.notenoughupdates.overlays.CraftingOverlay;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -12,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.ContainerChest;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
@@ -73,6 +75,8 @@ public class NEUManager {
     public File configLocation;
     public File repoLocation;
     public File configFile;
+
+    public CraftingOverlay craftingOverlay = new CraftingOverlay(this);
 
     public NEUManager(NotEnoughUpdates neu, File configLocation) {
         this.neu = neu;
@@ -797,7 +801,12 @@ public class NEUManager {
     }
 
     public void showRecipe(JsonObject item) {
-        if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
+        if (item.has("recipe") && Minecraft.getMinecraft().thePlayer.openContainer instanceof ContainerChest) {
+            ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
+            if (container.getLowerChestInventory().getDisplayName().getUnformattedText().equals("Craft Item")) {
+                craftingOverlay.updateItem(item);
+            }
+        } else if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
             displayGuiItemRecipe(item.get("internalname").getAsString(), "");
         } else if(item.has("clickcommand")) {
             String clickcommand = item.get("clickcommand").getAsString();

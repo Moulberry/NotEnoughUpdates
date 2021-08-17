@@ -15,7 +15,6 @@ import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
-import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
@@ -570,6 +569,8 @@ public class NEUEventListener {
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
+        neu.manager.craftingOverlay.shouldRender = false;
+
         if((Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper ||
                 Minecraft.getMinecraft().currentScreen instanceof GuiItemRecipe) &&
                 event.gui == null && !(Keyboard.getEventKeyState() && Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) &&
@@ -1060,6 +1061,9 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if (containerName.equals("Craft Item")) {
+                neu.manager.craftingOverlay.render();
+            }
         }
 
         if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
