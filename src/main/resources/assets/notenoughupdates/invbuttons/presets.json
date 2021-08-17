@@ -2529,7 +2529,7 @@
         "anchorRight": false,
         "anchorBottom": false,
         "backgroundIndex": 0,
-        "command": "joindungeon master_catacombs 1",
+        "command": "joindungeon master_catacombs 3",
         "icon": "DIAMOND_PROFESSOR_HEAD"
       },
       {
