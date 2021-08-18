@@ -105,6 +105,7 @@ public class ItemPriceInformation {
                         break;
                     case 4:
                         if(craftCost.fromRecipe) {
+                            if((int)craftCost.craftCost == 0){ continue;}
                             if(!added) {
                                 tooltip.add("");
                                 added = true;
@@ -172,6 +173,7 @@ public class ItemPriceInformation {
                         break;
                     case 3:
                         if(craftCost.fromRecipe) {
+                            if((int)craftCost.craftCost == 0){ continue;}
                             if(!added) {
                                 tooltip.add("");
                                 added = true;
