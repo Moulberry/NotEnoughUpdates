@@ -553,6 +553,15 @@ public class GuiProfileViewer extends GuiScreen {
                 }
             }
         }
+        if(mouseX >= guiLeft-29 && mouseX <= guiLeft){
+            if(mouseY >= guiTop && mouseY<= guiTop+28){
+                onMasterMode = false;
+                return;
+            } else if(mouseY+28 >= guiTop && mouseY<= guiTop+28*2){
+                onMasterMode = true;
+                return;
+            }
+        }
     }
 
     protected void keyTypedDung(char typedChar, int keyCode) {
@@ -754,6 +763,13 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
+    private static final LinkedHashMap<String, ItemStack> dungeonsModeIcons = new LinkedHashMap<>();
+    static {
+        dungeonsModeIcons.put("catacombs", Utils.editItemStackInfo(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DUNGEON_STONE")),EnumChatFormatting.GRAY+"Normal Mode", true));
+        dungeonsModeIcons.put("master_catacombs", Utils.editItemStackInfo(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MASTER_SKULL_TIER_7")),EnumChatFormatting.GRAY+"Master Mode", true));
+
+    }
+
     private void drawDungPage(int mouseX, int mouseY, float partialTicks) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dung);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
@@ -767,6 +783,10 @@ public class GuiProfileViewer extends GuiScreen {
         if(leveling == null)  return;
 
         int sectionWidth = 110;
+
+        String dungeonString = onMasterMode?"master_catacombs":"catacombs";
+
+
 
         ProfileViewer.Level levelObjCata = levelObjCatas.get(profileId);
         //Catacombs level thingy
@@ -865,35 +885,58 @@ public class GuiProfileViewer extends GuiScreen {
 
             float secrets = Utils.getElementAsFloat(Utils.getElement(hypixelInfo,
                     "achievements.skyblock_treasure_hunter"), 0);
-
             float totalRuns = 0;
+            float totalRunsF = 0;
             float totalRunsF5 = 0;
             for(int i=1; i<=7; i++) {
                 float runs = Utils.getElementAsFloat(Utils.getElement(profileInfo,
                         "dungeons.dungeon_types.catacombs.tier_completions."+i), 0);
-                totalRuns += runs;
+                totalRunsF += runs;
                 if(i >= 5) {
                     totalRunsF5 += runs;
                 }
             }
+            float totalRunsM = 0;
+            float totalRunsM5 = 0;
+            for(int i=1; i<=7; i++) {
+                float runs = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.tier_completions."+i), 0);
+                totalRunsM += runs;
+                if(i >= 5) {
+                    totalRunsM5 += runs;
+                }
+            }
+            totalRuns=totalRunsF+totalRunsM;
 
             float mobKills = 0;
+            float mobKillsF = 0;
             float mobKillsF5 = 0;
             for(int i=1; i<=7; i++) {
                 float kills = Utils.getElementAsFloat(Utils.getElement(profileInfo,
                         "dungeons.dungeon_types.catacombs.mobs_killed."+i), 0);
-                mobKills += kills;
+                mobKillsF += kills;
                 if(i >= 5) {
                     mobKillsF5 += kills;
                 }
             }
+            float mobKillsM = 0;
+            float mobKillsM5 = 0;
+            for(int i=1; i<=7; i++) {
+                float kills = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.mobs_killed."+i), 0);
+                mobKillsM += kills;
+                if(i >= 5) {
+                    mobKillsM5 += kills;
+                }
+            }
+            mobKills = mobKillsF+mobKillsM;
 
             int miscTopY = y+55;
 
-            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs  ",
-                    EnumChatFormatting.WHITE.toString()+((int)(totalRuns)), x, miscTopY, sectionWidth);
-            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs (F5-7)  ",
-                    EnumChatFormatting.WHITE.toString()+((int)(totalRunsF5)), x, miscTopY+10, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs "+(onMasterMode?"M":"F"),
+                    EnumChatFormatting.WHITE.toString()+((int)(onMasterMode?totalRunsM:totalRunsF)), x, miscTopY, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs ("+(onMasterMode?"M":"F")+ "5-7)  ",
+                    EnumChatFormatting.WHITE.toString()+((int)(onMasterMode?totalRunsM5:totalRunsF5)), x, miscTopY+10, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (Total)  ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(secrets, 0), x, miscTopY+20, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (/Run)  ",
@@ -924,11 +967,11 @@ public class GuiProfileViewer extends GuiScreen {
             }
 
             float timeNorm = Utils.getElementAsFloat(Utils.getElement(profileInfo,
-                    "dungeons.dungeon_types.catacombs.fastest_time."+floorTime), 0);
+                    "dungeons.dungeon_types."+dungeonString+".fastest_time."+floorTime), 0);
             float timeS = Utils.getElementAsFloat(Utils.getElement(profileInfo,
-                    "dungeons.dungeon_types.catacombs.fastest_time_s."+floorTime), 0);
+                    "dungeons.dungeon_types."+dungeonString+".fastest_time_s."+floorTime), 0);
             float timeSPLUS = Utils.getElementAsFloat(Utils.getElement(profileInfo,
-                    "dungeons.dungeon_types.catacombs.fastest_time_s_plus."+floorTime), 0);
+                    "dungeons.dungeon_types."+dungeonString+".fastest_time_s_plus."+floorTime), 0);
             String timeNormStr = timeNorm <= 0 ? "N/A" : Utils.prettyTime((long)timeNorm);
             String timeSStr = timeS <= 0 ? "N/A" : Utils.prettyTime((long)timeS);
             String timeSPlusStr = timeSPLUS <= 0 ? "N/A" : Utils.prettyTime((long)timeSPLUS);
@@ -949,7 +992,7 @@ public class GuiProfileViewer extends GuiScreen {
                     x+sectionWidth/2, y, sectionWidth);
             for(int i=1; i<=7; i++) {
                 float compl = Utils.getElementAsFloat(Utils.getElement(profileInfo,
-                        "dungeons.dungeon_types.catacombs.tier_completions."+i), 0);
+                        "dungeons.dungeon_types."+dungeonString+".tier_completions."+i), 0);
 
                 if(BOSS_HEADS[i-1] == null) {
                     String textureLink = bossFloorHeads[i-1];
@@ -985,7 +1028,7 @@ public class GuiProfileViewer extends GuiScreen {
                 Utils.drawItemStack(BOSS_HEADS[i-1], 0, 0);
                 GlStateManager.popMatrix();
 
-                Utils.renderAlignedString(String.format(EnumChatFormatting.YELLOW+"%s (F%d) ", bossFloorArr[i-1], i),
+                Utils.renderAlignedString(String.format(EnumChatFormatting.YELLOW+"%s ("+(onMasterMode?"M":"F")+"%d) ", bossFloorArr[i-1], i),
                         EnumChatFormatting.WHITE.toString()+(int)compl,
                         x+16, y+18+20*(i-1), sectionWidth-15);
 
@@ -1031,6 +1074,89 @@ public class GuiProfileViewer extends GuiScreen {
                 renderXpBar(colour+skillName, dungSkillsStack[i], x, y+20+29*i, sectionWidth, levelObj, mouseX, mouseY);
             }
         }
+
+        drawSideButtons();
+
+        //drawSideButton(0, dungeonsModeIcons.get("catacombs"), true);
+        //drawSideButton(1, dungeonsModeIcons.get("master_catacombs"), true);
+        //drawSideButton(1, dungeonsModeIcons.get("catacombs"), true);
+        //drawSideButton(2, dungeonsModeIcons.get("catacombs"), false);
+
+
+    }
+
+    private boolean onMasterMode = false;
+
+    //TODO: improve this shit
+    private void drawSideButtons(){
+       // GlStateManager.pushMatrix();
+        GlStateManager.enableDepth();
+        GlStateManager.translate(0, 0, 5);
+        if(onMasterMode){
+            drawSideButton(1, dungeonsModeIcons.get("master_catacombs"), true);
+        } else {
+            drawSideButton(0, dungeonsModeIcons.get("catacombs"), true);
+        }
+        GlStateManager.translate(0, 0, -3);
+
+        GlStateManager.translate(0, 0, -2);
+        if(!onMasterMode){
+            drawSideButton(1, dungeonsModeIcons.get("master_catacombs"), false);
+        } else {
+            drawSideButton(0, dungeonsModeIcons.get("catacombs"), false);
+        }
+        GlStateManager.disableDepth();
+        //GlStateManager.popMatrix();
+    }
+
+
+
+
+    private void drawSideButton(int yIndex, ItemStack itemStack, boolean pressed){
+        GlStateManager.disableLighting();
+        GlStateManager.enableBlend();
+        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+
+        int x = guiLeft-28;
+        int y = guiTop+yIndex*28;
+
+        float uMin = 194/256f;
+        float uMax = 224/256f;
+        float vMin = 200/256f;
+        float vMax = 228/256f;
+        if(pressed) {
+            uMin = 224/256f;
+            uMax = 1f;
+
+
+            if(yIndex != 0) {
+                vMin = 228/256f;
+                vMax = 1f;
+            }
+
+            renderBlurredBackground(width, height, x+2, y+2, 30, 28-4);
+        } else {
+            renderBlurredBackground(width, height, x+2, y+2, 28-2, 28-4);
+        }
+
+        GlStateManager.disableLighting();
+        GlStateManager.enableBlend();
+        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
+
+        Utils.drawTexturedRect(x, y, pressed?32:28, 28, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
+
+        GlStateManager.enableDepth();
+        Utils.drawItemStack(itemStack, x+6, y+6);
+
+
+
+
     }
 
     private void renderXpBar(String skillName, ItemStack stack, int x, int y, int xSize, ProfileViewer.Level levelObj, int mouseX, int mouseY) {
