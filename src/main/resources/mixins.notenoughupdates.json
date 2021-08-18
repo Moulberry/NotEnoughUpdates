@@ -22,7 +22,7 @@
     "MixinItemStack",
     "MixinLayerArmorBase",
     "MixinLayerCustomHead",
-    "MixinLoadingScreenRenderer",
+
     "MixinMouseHelper",
     "MixinNetHandlerPlayClient",
     "MixinPlayerControllerMP",
