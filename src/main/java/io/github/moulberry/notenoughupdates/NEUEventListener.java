@@ -787,6 +787,7 @@ public class NEUEventListener {
     @SubscribeEvent(priority = EventPriority.LOW, receiveCanceled = true)
     public void onGuiChat(ClientChatReceivedEvent e) {
         if(e.type == 2) {
+            CrystalMetalDetectorSolver.process(e.message);
             e.message = processChatComponent(e.message);
             return;
         }
@@ -833,6 +834,9 @@ public class NEUEventListener {
             if(!m.equals(m2)) {
                 e.message = new ChatComponentText(m2);
             }
+        }
+        if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
+            CrystalMetalDetectorSolver.reset();
         }
     }
 
@@ -2445,5 +2449,10 @@ public class NEUEventListener {
                 copied = false;
             }
         }
+    }
+
+    @SubscribeEvent
+    public void onRenderLast(RenderWorldLastEvent event){
+        CrystalMetalDetectorSolver.render(event.partialTicks);
     }
 }
