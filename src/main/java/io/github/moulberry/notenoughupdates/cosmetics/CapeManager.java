@@ -312,7 +312,9 @@ public class CapeManager {
         playerMap.clear();
         for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
             String uuid = player.getUniqueID().toString().replace("-", "");
-            playerMap.put(uuid, player);
+            try {
+                playerMap.put(uuid, player);
+            } catch(IllegalArgumentException ignored){}
         }
     }
 
