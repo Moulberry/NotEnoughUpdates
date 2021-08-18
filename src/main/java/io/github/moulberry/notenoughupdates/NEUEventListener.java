@@ -170,6 +170,7 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Unload event) {
         NotEnoughUpdates.INSTANCE.saveConfig();
+        CrystalMetalDetectorSolver.reset();
     }
 
     private static long notificationDisplayMillis = 0;
