@@ -120,6 +120,6 @@ public class CrystalMetalDetectorSolver {
     }
 
     private static float calculateDistance(Vec3 pos1, Vec3 pos2) {
-        return (float) Math.sqrt(Math.pow(pos2.xCoord - pos1.xCoord, 2) + pos2.yCoord - pos1.yCoord + Math.pow(pos2.zCoord - pos1.zCoord, 2));
+        return (float) Math.sqrt(Math.pow(pos2.xCoord - pos1.xCoord, 2) + Math.pow(pos2.yCoord - pos1.yCoord, 2) + Math.pow(pos2.zCoord - pos1.zCoord, 2));
     }
 }
