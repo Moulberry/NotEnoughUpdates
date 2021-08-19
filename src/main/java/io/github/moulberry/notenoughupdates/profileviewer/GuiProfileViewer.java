@@ -786,6 +786,9 @@ public class GuiProfileViewer extends GuiScreen {
 
         String dungeonString = onMasterMode?"master_catacombs":"catacombs";
 
+        //Utils.drawStringCentered((onMasterMode?"Master Mode":"Catacombs"),fontRendererObj,(guiLeft+sizeX/2), guiTop+10, true, 0xffff0000);
+        Utils.renderShadowedString(EnumChatFormatting.RED+(onMasterMode?"Master Mode":"Catacombs"),
+                (guiLeft+sizeX/2), guiTop+5, sectionWidth);
 
 
         ProfileViewer.Level levelObjCata = levelObjCatas.get(profileId);
@@ -1122,8 +1125,8 @@ public class GuiProfileViewer extends GuiScreen {
         int x = guiLeft-28;
         int y = guiTop+yIndex*28;
 
-        float uMin = 194/256f;
-        float uMax = 224/256f;
+        float uMin = 193/256f;
+        float uMax = 223/256f;
         float vMin = 200/256f;
         float vMax = 228/256f;
         if(pressed) {
@@ -1152,7 +1155,7 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.drawTexturedRect(x, y, pressed?32:28, 28, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
 
         GlStateManager.enableDepth();
-        Utils.drawItemStack(itemStack, x+6, y+6);
+        Utils.drawItemStack(itemStack, x+8, y+7);
 
 
 
