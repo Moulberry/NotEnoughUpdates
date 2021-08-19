@@ -24,7 +24,7 @@ public class CrystalMetalDetectorSolver {
                 if (possibleBlocks.size() == 0) {
                     locations.add(mc.thePlayer.getPosition());
                     for (int zOffset = (int) Math.floor(-dist); zOffset <= Math.ceil(dist); zOffset++) {
-                        for (int yOffset = 65; yOffset <= 69; yOffset++) {
+                        for (int yOffset = 65; yOffset <= 70; yOffset++) {
                             float calculatedDist = 0;
                             int xOffset = 0;
                             while (calculatedDist < dist) {
@@ -33,10 +33,11 @@ public class CrystalMetalDetectorSolver {
                                 BlockPos above = new BlockPos(Math.floor(mc.thePlayer.posX) + xOffset,
                                         yOffset + 1, Math.floor(mc.thePlayer.posZ) + zOffset);
                                 xOffset++;
-                                calculatedDist = round(calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ)), 1);
-                                if (calculatedDist == dist && treasureAllowed(pos) && !possibleBlocks.contains(pos) &&
+                                calculatedDist = calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
+                                if (inRange(calculatedDist, dist) && treasureAllowed(pos) && !possibleBlocks.contains(pos) &&
                                         mc.theWorld.getBlockState(above).getBlock().getRegistryName().equals("minecraft:air")) {
                                     possibleBlocks.add(pos);
+                                    System.out.println(calculatedDist);
                                 }
                                 xOffset++;
                             }
@@ -47,16 +48,16 @@ public class CrystalMetalDetectorSolver {
                                         yOffset, Math.floor(mc.thePlayer.posZ) + zOffset);
                                 BlockPos above = new BlockPos(Math.floor(mc.thePlayer.posX) - xOffset,
                                         yOffset + 1, Math.floor(mc.thePlayer.posZ) + zOffset);
-                                calculatedDist = round(calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ)), 1);
-                                if (calculatedDist == dist && treasureAllowed(pos) && !possibleBlocks.contains(pos) &&
+                                calculatedDist = calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
+                                if (inRange(calculatedDist, dist) && treasureAllowed(pos) && !possibleBlocks.contains(pos) &&
                                         mc.theWorld.getBlockState(above).getBlock().getRegistryName().equals("minecraft:air")) {
                                     possibleBlocks.add(pos);
+                                    System.out.println(calculatedDist);
                                 }
                                 xOffset++;
                             }
                         }
                     }
-                    if (possibleBlocks.size() == 1) possibleBlocks.clear(); //protection from completely wrong things
                     sendMessage();
                 } else if (possibleBlocks.size() != 1) {
                     locations.add(mc.thePlayer.getPosition());
@@ -64,6 +65,14 @@ public class CrystalMetalDetectorSolver {
                     for (BlockPos pos : possibleBlocks) {
                         if (round(calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ)), 1) == dist) {
                             temp.add(pos);
+                        }
+                    }
+                    if(temp.size() == 0){
+                        for (BlockPos pos : possibleBlocks) {
+                            if (inRange(calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ)), dist)) {
+                                temp.add(pos);
+                                mc.thePlayer.addChatMessage(new ChatComponentText("Less accurate calculation"));
+                            }
                         }
                     }
                     possibleBlocks = temp;
@@ -121,5 +130,9 @@ public class CrystalMetalDetectorSolver {
 
     private static float calculateDistance(Vec3 pos1, Vec3 pos2) {
         return (float) Math.sqrt(Math.pow(pos2.xCoord - pos1.xCoord, 2) + Math.pow(pos2.yCoord - pos1.yCoord, 2) + Math.pow(pos2.zCoord - pos1.zCoord, 2));
+    }
+
+    private static boolean inRange(float number, float dist) {
+        return dist + 0.1D >= number && dist - 0.1D <= number;
     }
 }
