@@ -836,7 +836,7 @@ public class NEUEventListener {
                 e.message = new ChatComponentText(m2);
             }
         }
-        if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
+        if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
             CrystalMetalDetectorSolver.reset();
         }
     }
