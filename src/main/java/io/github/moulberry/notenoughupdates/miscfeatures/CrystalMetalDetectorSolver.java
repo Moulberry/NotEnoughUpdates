@@ -63,16 +63,8 @@ public class CrystalMetalDetectorSolver {
                     locations.add(mc.thePlayer.getPosition());
                     List<BlockPos> temp = new ArrayList<>();
                     for (BlockPos pos : possibleBlocks) {
-                        if (round(calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ)), 1) == dist) {
+                        if (inRange(calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ)), dist)) {
                             temp.add(pos);
-                        }
-                    }
-                    if(temp.size() == 0){
-                        for (BlockPos pos : possibleBlocks) {
-                            if (inRange(calculateDistance(new Vec3(pos).addVector(0, 1d, 0), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ)), dist)) {
-                                temp.add(pos);
-                                mc.thePlayer.addChatMessage(new ChatComponentText("Less accurate calculation"));
-                            }
                         }
                     }
                     possibleBlocks = temp;
