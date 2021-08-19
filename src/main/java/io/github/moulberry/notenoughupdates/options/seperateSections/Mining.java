@@ -139,6 +139,32 @@ public class Mining {
     @ConfigAccordionId(id = 2)
     public int overlayStyle = 0;
 
+    @ConfigOption(
+            name = "Metal Detector Solver",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 3)
+    public boolean metalDetectorSolverAccordion = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Enabled",
+            desc = "Enabled the metal detector solver for Mines of Divan, to use this stand still to calculate possible blocks and then if required stand" +
+                    " still on another block."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 3)
+    public boolean metalDetectorEnabled = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Possible Blocks",
+            desc = "Show waypoints on possible locations when NEU isn't sure about what block the treasure is."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 3)
+    public boolean metalDetectorShowPossible = false;
+
     @Expose
     @ConfigOption(
             name = "Puzzler Solver",

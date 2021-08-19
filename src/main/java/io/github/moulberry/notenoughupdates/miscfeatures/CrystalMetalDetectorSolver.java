@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
@@ -19,12 +20,13 @@ public class CrystalMetalDetectorSolver {
         if (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")
                 && message.getUnformattedText().contains("TREASURE: ")) {
             float dist = Float.parseFloat(message.getUnformattedText().split("TREASURE: ")[1].split("m")[0].replaceAll("(?!\\.)\\D", ""));
-            if (prevDist == dist && prevPos.getX() == mc.thePlayer.getPosition().getX() && prevPos.getY() == mc.thePlayer.getPosition().getY() &&
+            if (NotEnoughUpdates.INSTANCE.config.mining.metalDetectorEnabled && prevDist == dist && prevPos.getX() == mc.thePlayer.getPosition().getX() &&
+                    prevPos.getY() == mc.thePlayer.getPosition().getY() &&
                     prevPos.getZ() == mc.thePlayer.getPosition().getZ() && !locations.contains(mc.thePlayer.getPosition())) {
                 if (possibleBlocks.size() == 0) {
                     locations.add(mc.thePlayer.getPosition());
                     for (int zOffset = (int) Math.floor(-dist); zOffset <= Math.ceil(dist); zOffset++) {
-                        for (int yOffset = 65; yOffset <= 70; yOffset++) {
+                        for (int yOffset = 65; yOffset <= 75; yOffset++) {
                             float calculatedDist = 0;
                             int xOffset = 0;
                             while (calculatedDist < dist) {
@@ -91,7 +93,7 @@ public class CrystalMetalDetectorSolver {
         if (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")) {
             if (possibleBlocks.size() == 1) {
                 RenderUtils.renderWayPoint("Treasure", possibleBlocks.get(0).add(0, 2.5, 0), partialTicks);
-            } else {
+            } else if(possibleBlocks.size() > 1 && NotEnoughUpdates.INSTANCE.config.mining.metalDetectorShowPossible) {
                 for (BlockPos block : possibleBlocks) {
                     RenderUtils.renderWayPoint("Possible Treasure Location", block.add(0, 2.5, 0), partialTicks);
                 }
