@@ -387,7 +387,8 @@ public class NEUOverlay extends Gui {
                 if(Mouse.getEventButtonState()) {
                     //displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
                     //        "https://moulberry.github.io/files/neu_help.html"));
-                    Minecraft.getMinecraft().displayGuiScreen(new HelpGUI());
+                    //Minecraft.getMinecraft().displayGuiScreen(new HelpGUI());
+                    ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neuhelp");
                     Utils.playPressSound();
                 }
             }
