@@ -23,7 +23,7 @@ public class CrystalMetalDetectorSolver {
                     prevPos.getZ() == mc.thePlayer.getPosition().getZ() && !locations.contains(mc.thePlayer.getPosition())) {
                 if (possibleBlocks.size() == 0) {
                     locations.add(mc.thePlayer.getPosition());
-                    for (int zOffset = Math.round(-dist); zOffset <= dist; zOffset++) {
+                    for (int zOffset = (int) Math.floor(-dist); zOffset <= Math.ceil(dist); zOffset++) {
                         for (int yOffset = 65; yOffset <= 69; yOffset++) {
                             float calculatedDist = 0;
                             int xOffset = 0;
@@ -120,6 +120,6 @@ public class CrystalMetalDetectorSolver {
     }
 
     private static float calculateDistance(Vec3 pos1, Vec3 pos2) {
-        return (float) Math.sqrt(Math.pow(pos2.xCoord - pos1.xCoord, 2) + Math.pow(pos2.yCoord - pos1.yCoord, 2) + Math.pow(pos2.zCoord - pos1.zCoord, 2));
+        return (float) Math.sqrt(Math.pow(pos2.xCoord - pos1.xCoord, 2) + pos2.yCoord - pos1.yCoord + Math.pow(pos2.zCoord - pos1.zCoord, 2));
     }
 }
