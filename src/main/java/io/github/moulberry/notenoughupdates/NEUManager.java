@@ -76,8 +76,6 @@ public class NEUManager {
     public File repoLocation;
     public File configFile;
 
-    public CraftingOverlay craftingOverlay = new CraftingOverlay(this);
-
     public NEUManager(NotEnoughUpdates neu, File configLocation) {
         this.neu = neu;
         this.configLocation = configLocation;
@@ -804,7 +802,7 @@ public class NEUManager {
         if (item.has("recipe") && Minecraft.getMinecraft().thePlayer.openContainer instanceof ContainerChest) {
             ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
             if (container.getLowerChestInventory().getDisplayName().getUnformattedText().equals("Craft Item")) {
-                craftingOverlay.updateItem(item);
+                CraftingOverlay.updateItem(item);
             }
         } else if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
             displayGuiItemRecipe(item.get("internalname").getAsString(), "");
