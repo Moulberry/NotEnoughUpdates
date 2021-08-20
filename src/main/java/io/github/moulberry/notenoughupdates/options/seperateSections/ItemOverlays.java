@@ -303,4 +303,13 @@ public class ItemOverlays {
     @ConfigEditorBoolean
     public boolean enablePrismapumpOverlay = true;
 
+
+    @Expose
+    @ConfigOption(
+            name = "Pickaxe Ability Cooldown",
+            desc = "Show the cooldown duration off the pickaxe ability as the durability."
+    )
+    @ConfigEditorBoolean
+    public boolean pickaxeAbility = true;
+
 }
