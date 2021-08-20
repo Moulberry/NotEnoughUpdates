@@ -799,11 +799,11 @@ public class NEUManager {
     }
 
     public void showRecipe(JsonObject item) {
-        if (item.has("recipe") && Minecraft.getMinecraft().thePlayer.openContainer instanceof ContainerChest) {
-            ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
-            if (container.getLowerChestInventory().getDisplayName().getUnformattedText().equals("Craft Item")) {
-                CraftingOverlay.updateItem(item);
-            }
+        ContainerChest container = null;
+        if(Minecraft.getMinecraft().thePlayer.openContainer instanceof ContainerChest)
+            container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
+        if (item.has("recipe") && container != null && container.getLowerChestInventory().getDisplayName().getUnformattedText().equals("Craft Item")) {
+            CraftingOverlay.updateItem(item);
         } else if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
             displayGuiItemRecipe(item.get("internalname").getAsString(), "");
         } else if(item.has("clickcommand")) {
