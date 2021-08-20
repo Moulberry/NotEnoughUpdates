@@ -1269,6 +1269,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(dungeonWinTest);
         ClientCommandHandler.instance.registerCommand(calendarCommand);
         ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommand());
+        ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommandAlt());
         ClientCommandHandler.instance.registerCommand(neuhelp);
 
         BackgroundBlur.registerListener();

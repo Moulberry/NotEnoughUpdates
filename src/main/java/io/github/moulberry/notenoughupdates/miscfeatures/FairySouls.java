@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.*;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -291,6 +292,18 @@ public class FairySouls {
         GlStateManager.disableLighting();
         GlStateManager.enableTexture2D();
         GlStateManager.enableDepth();
+    }
+
+    public static class FairySoulsCommandAlt extends SimpleCommand {
+        public FairySoulsCommandAlt() {
+            super("fairysouls", new ProcessCommandRunnable() {
+                @Override
+                public void processCommand(ICommandSender sender, String[] args) {
+                    ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neusouls");
+                }
+                    }
+            );
+        }
     }
 
     public static class FairySoulsCommand extends SimpleCommand {
