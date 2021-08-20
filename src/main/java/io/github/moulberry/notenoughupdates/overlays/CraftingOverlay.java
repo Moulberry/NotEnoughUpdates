@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -10,21 +11,19 @@ import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import java.util.List;
 
 public class CraftingOverlay {
-    private ItemStack[] items = new ItemStack[9];
-    private final NEUManager manager;
-    public boolean shouldRender = false;
-    private String text = null;
+    private static ItemStack[] items = new ItemStack[9];
+    private static final NEUManager manager = NotEnoughUpdates.INSTANCE.manager;
+    public static boolean shouldRender = false;
+    private static String text = null;
 
-    public CraftingOverlay(NEUManager manager) {
-        this.manager = manager;
-    }
 
-    public void render() {
+    public static void render() {
         if (shouldRender) {
             ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
             GuiChest gc = (GuiChest) Minecraft.getMinecraft().currentScreen;
@@ -58,7 +57,7 @@ public class CraftingOverlay {
         }
     }
 
-    public void updateItem(JsonObject item) {
+    public static void updateItem(JsonObject item) {
         items = new ItemStack[9];
         text = null;
         String[] x = {"1", "2", "3"};
@@ -84,5 +83,36 @@ public class CraftingOverlay {
             text = item.get("crafttext").getAsString();
         }
         shouldRender = true;
+    }
+
+    public static void keyInput() {
+        if (!Keyboard.getEventKeyState() || Keyboard.getEventKey() != Keyboard.KEY_U && Keyboard.getEventKey() != Keyboard.KEY_R)
+            return;
+        int width = Utils.peekGuiScale().getScaledWidth();
+        int height = Utils.peekGuiScale().getScaledHeight();
+        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
+        ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
+        GuiChest gc = (GuiChest) Minecraft.getMinecraft().currentScreen;
+        for (int i = 0; i < 9; i++) {
+            if (items[i] != null) {
+                int slotIndex = (int) (10 + 9 * Math.floor(i / 3f) + (i % 3));
+                Slot slot = container.inventorySlots.get(slotIndex);
+                int x = slot.xDisplayPosition + gc.guiLeft;
+                int y = slot.yDisplayPosition + gc.guiTop;
+                if (mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16) {
+                    if (!slot.getHasStack()) {
+                        String internalName = manager.getInternalNameForItem(items[i]);
+                        if (Keyboard.getEventKey() == Keyboard.KEY_U && internalName != null) {
+                            manager.displayGuiItemUsages(internalName);
+                        } else if (Keyboard.getEventKey() == Keyboard.KEY_R && internalName != null && manager.getItemInformation().containsKey(internalName)) {
+                            JsonObject item = manager.getItemInformation().get(internalName);
+                            manager.showRecipe(item);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
     }
 }
