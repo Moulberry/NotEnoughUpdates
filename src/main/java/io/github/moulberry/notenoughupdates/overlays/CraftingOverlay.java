@@ -14,7 +14,6 @@ import net.minecraft.item.ItemStack;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import java.io.File;
 import java.util.List;
 
 public class CraftingOverlay {
