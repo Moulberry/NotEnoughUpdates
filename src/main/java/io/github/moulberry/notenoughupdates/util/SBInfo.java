@@ -198,6 +198,7 @@ public class SBInfo {
                 for (String line : lines){
                     if (line.contains("⏣")) {
                         location = Utils.cleanColour(line).replaceAll("[^A-Za-z0-9() ]", "").trim();
+                        break;
                     }
                 }
             }
