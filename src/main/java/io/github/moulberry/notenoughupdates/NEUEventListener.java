@@ -836,6 +836,8 @@ public class NEUEventListener {
         if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
             CrystalMetalDetectorSolver.reset();
         }
+        if(unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  "))
+            OverlayManager.automatonOverlay.message(unformatted);
     }
 
     public static boolean drawingGuiScreen = false;

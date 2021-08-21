@@ -165,6 +165,132 @@ public class Mining {
     @ConfigAccordionId(id = 3)
     public boolean metalDetectorShowPossible = false;
 
+    @ConfigOption(
+            name = "Automaton Parts Overlay",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 4)
+    public boolean automatonOverlayAccordion = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Enabled",
+            desc = "Enables the Automaton parts overlay."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 4)
+    public boolean automatonOverlay = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Position",
+            desc = "Change the position of the Automaton parts overlay."
+    )
+    @ConfigEditorButton(
+            runnableId = 10,
+            buttonText = "Edit"
+    )
+    @ConfigAccordionId(id = 4)
+    public Position automatonOverlayPosition = new Position(200, 0);
+
+    @Expose
+    @ConfigOption(
+            name = "Style",
+            desc = "Change the style of the Automaton parts overlay."
+    )
+    @ConfigEditorDropdown(
+            values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+    )
+    @ConfigAccordionId(id = 4)
+    public int automatonOverlayStyle = 0;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Icons",
+            desc = "Show icons in the overlay that represent the part."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 4)
+    public boolean automatonIcons = true;
+
+
+    @Expose
+    @ConfigOption(
+            name = "Hide Done",
+            desc = "Don't show parts you've given to Professor Robot."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 4)
+    public boolean automatonHideDone = false;
+
+    @ConfigOption(
+            name = "Colours",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 5)
+    @ConfigAccordionId(id = 4)
+    public boolean AutomatonColourAccordion = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Part colour",
+            desc = "Change the colour of the part text."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 5)
+    public int automatonPartColor = 3;
+
+    @Expose
+    @ConfigOption(
+            name = "Ready colour",
+            desc = "Change the colour when the part is given to Professor Robot."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 5)
+    public int automatonDoneColor = 10;
+
+    @Expose
+    @ConfigOption(
+            name = "In Inventory Color",
+            desc = "Change the colour when the part is in the inventory."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 5)
+    public int automatonInventoryColor = 14;
+
+    @Expose
+    @ConfigOption(
+            name = "In Storage Color",
+            desc = "Change the colour when the part is in the storage."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 5)
+    public int automatonStorageColor = 14;
+
+    @Expose
+    @ConfigOption(
+            name = "Missing Color",
+            desc = "Change the colour when the part is missing."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 5)
+    public int automatonMissingColor = 12;
+
     @Expose
     @ConfigOption(
             name = "Puzzler Solver",

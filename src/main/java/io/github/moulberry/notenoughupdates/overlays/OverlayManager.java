@@ -16,6 +16,7 @@ public class OverlayManager {
     public static PetInfoOverlay petInfoOverlay;
     public static TimersOverlay timersOverlay;
     public static BonemerangOverlay bonemerangOverlay;
+    public static AutomatonOverlay automatonOverlay;
     public static final List<TextOverlay> textOverlays = new ArrayList<>();
 
     static {
@@ -120,13 +121,27 @@ public class OverlayManager {
             }
             return TextOverlayStyle.BACKGROUND;
         });
+        List<String> automatonOverlayDummy = Lists.newArrayList(
+                "\u00a73Electron Transmitter: \u00a7aDone",
+                "\u00a73Robotron Reflector: \u00a7eIn Storage",
+                "\u00a73Superlite Motor: \u00a7eIn Inventory",
+                "\u00a73Synthetic Hearth: \u00a7cMissing",
+                "\u00a73Control Switch: \u00a7cMissing",
+                "\u00a73FTX 3070: \u00a7cMissing");
+        automatonOverlay = new AutomatonOverlay(NotEnoughUpdates.INSTANCE.config.mining.automatonOverlayPosition, () -> automatonOverlayDummy, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.mining.automatonOverlayStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
 
 
         textOverlays.add(miningOverlay);
         textOverlays.add(farmingOverlay);
         textOverlays.add(petInfoOverlay);
         textOverlays.add(bonemerangOverlay);
-
+        textOverlays.add(automatonOverlay);
     }
 
 }
