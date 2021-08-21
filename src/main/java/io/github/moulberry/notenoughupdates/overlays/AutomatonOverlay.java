@@ -54,8 +54,6 @@ public class AutomatonOverlay extends TextOverlay {
             Boolean has = items.get(key);
             if (has)
                 states.put(key, EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.automatonDoneColor] + "Done");
-            /*else
-                states.put(key, EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.automatonMissingColor] + "Missing");*/
         }
         for (ItemStack item : mc.thePlayer.inventory.mainInventory) {
             if (item != null) {
