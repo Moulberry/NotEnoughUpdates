@@ -24,8 +24,9 @@ public class DivanMinesOverlay extends TextOverlay {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private final StorageManager storageManager = StorageManager.getInstance();
     private final Pattern notFoundPattern = Pattern.compile("\\[NPC] Keeper of \\w+: Talk to me when you have found a (?<item>[a-z-A-Z ]+)!");
-    private final Pattern foundPattern = Pattern.compile("\\[NPC] Keeper of \\w+: (Excellent! You have returned the|You have already restored this Dwarf's) (?<item>[a-z-A-Z ]+)(!| to its rightful place!)");
+    private final Pattern foundPattern = Pattern.compile("\\[NPC] Keeper of \\w+: Excellent! You have returned the (?<item>[a-z-A-Z ]+) to its rightful place!");
     private final Pattern resetPattern = Pattern.compile("\\[NPC] Keeper of \\w+: (You haven't placed the Jade Crystal yet!|You found all of the items! Behold\\.\\.\\. the Jade Crystal!|You have already placed the Jade Crystal!)");
+    private final Pattern alreadyFoundPattern = Pattern.compile("\\[NPC] Keeper of \\w+: You have already restored this Dwarf's (?<item>[a-z-A-Z ]+)!");
 
     static {
         items = new HashMap<>();
@@ -86,16 +87,18 @@ public class DivanMinesOverlay extends TextOverlay {
 
     public void message(String message) {
         Matcher foundMatcher = foundPattern.matcher(message);
+        Matcher alreadyFoundMatcher = alreadyFoundPattern.matcher(message);
         Matcher notFoundMatcher = notFoundPattern.matcher(message);
         Matcher resetMatcher = resetPattern.matcher(message);
         System.out.println(message);
-        if (foundMatcher.matches() && items.containsKey(foundMatcher.group("item"))) {
+        if (foundMatcher.matches() && items.containsKey(foundMatcher.group("item")))
             items.put(foundMatcher.group("item"), true);
-        } else if (notFoundMatcher.matches() && items.containsKey(notFoundMatcher.group("item"))) {
+        else if (notFoundMatcher.matches() && items.containsKey(notFoundMatcher.group("item")))
             items.put(notFoundMatcher.group("item"), false);
-        } else if (resetMatcher.matches()) {
+        else if (resetMatcher.matches())
             items.replaceAll((k, v) -> false);
-        }
+        else if (alreadyFoundMatcher.matches() && items.containsKey(alreadyFoundMatcher.group("item")))
+            items.put(alreadyFoundMatcher.group("item"), true);
     }
 
     @Override
