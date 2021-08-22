@@ -179,7 +179,7 @@ public class Mining {
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 4)
-    public boolean automatonOverlay = true;
+    public boolean automatonOverlay = false;
 
     @Expose
     @ConfigOption(
@@ -305,7 +305,7 @@ public class Mining {
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 6)
-    public boolean divanMinesOverlay = true;
+    public boolean divanMinesOverlay = false;
 
     @Expose
     @ConfigOption(
