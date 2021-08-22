@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.overlays;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -20,21 +21,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DivanMinesOverlay extends TextOverlay {
-    private static final HashMap<String, Boolean> items;
     private static final Minecraft mc = Minecraft.getMinecraft();
     private final StorageManager storageManager = StorageManager.getInstance();
     private final Pattern notFoundPattern = Pattern.compile("\\[NPC] Keeper of \\w+: Talk to me when you have found a (?<item>[a-z-A-Z ]+)!");
     private final Pattern foundPattern = Pattern.compile("\\[NPC] Keeper of \\w+: Excellent! You have returned the (?<item>[a-z-A-Z ]+) to its rightful place!");
     private final Pattern resetPattern = Pattern.compile("\\[NPC] Keeper of \\w+: (You haven't placed the Jade Crystal yet!|You found all of the items! Behold\\.\\.\\. the Jade Crystal!|You have already placed the Jade Crystal!)");
     private final Pattern alreadyFoundPattern = Pattern.compile("\\[NPC] Keeper of \\w+: You have already restored this Dwarf's (?<item>[a-z-A-Z ]+)!");
-
-    static {
-        items = new HashMap<>();
-        items.put("Scavenged Lapis Sword", false);
-        items.put("Scavenged Golden Hammer", false);
-        items.put("Scavenged Diamond Axe", false);
-        items.put("Scavenged Emerald Hammer", false);
-    }
 
     public DivanMinesOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
         super(position, dummyStrings, styleSupplier);
@@ -47,10 +39,11 @@ public class DivanMinesOverlay extends TextOverlay {
                 !SBInfo.getInstance().getLocation().equals("crystal_hollows") || !SBInfo.getInstance().location.equals("Mines of Divan"))
             return;
 
+        NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
         overlayStrings = new ArrayList<>();
         HashMap<String, String> states = new HashMap<>();
-        for (String key : items.keySet()) {
-            Boolean has = items.get(key);
+        for (String key : hidden.divanMinesParts.keySet()) {
+            Boolean has = hidden.divanMinesParts.get(key);
             if (has)
                 states.put(key, EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.divanMinesDoneColor] + "Done");
         }
@@ -76,8 +69,8 @@ public class DivanMinesOverlay extends TextOverlay {
                 }
             }
         }
-        for (String key : items.keySet()) {
-            if (!NotEnoughUpdates.INSTANCE.config.mining.divanMinesHideDone || !items.get(key)) {
+        for (String key : hidden.divanMinesParts.keySet()) {
+            if (!NotEnoughUpdates.INSTANCE.config.mining.divanMinesHideDone || !hidden.divanMinesParts.get(key)) {
                 if (!states.containsKey(key))
                     states.put(key, EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.divanMinesMissingColor] + "Missing");
                 overlayStrings.add(EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.divanMinesPartColor] + key + ": " + states.get(key));
@@ -86,19 +79,20 @@ public class DivanMinesOverlay extends TextOverlay {
     }
 
     public void message(String message) {
+        NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
         Matcher foundMatcher = foundPattern.matcher(message);
         Matcher alreadyFoundMatcher = alreadyFoundPattern.matcher(message);
         Matcher notFoundMatcher = notFoundPattern.matcher(message);
         Matcher resetMatcher = resetPattern.matcher(message);
         System.out.println(message);
-        if (foundMatcher.matches() && items.containsKey(foundMatcher.group("item")))
-            items.put(foundMatcher.group("item"), true);
-        else if (notFoundMatcher.matches() && items.containsKey(notFoundMatcher.group("item")))
-            items.put(notFoundMatcher.group("item"), false);
+        if (foundMatcher.matches() && hidden.divanMinesParts.containsKey(foundMatcher.group("item")))
+            hidden.divanMinesParts.put(foundMatcher.group("item"), true);
+        else if (notFoundMatcher.matches() && hidden.divanMinesParts.containsKey(notFoundMatcher.group("item")))
+            hidden.divanMinesParts.put(notFoundMatcher.group("item"), false);
         else if (resetMatcher.matches())
-            items.replaceAll((k, v) -> false);
-        else if (alreadyFoundMatcher.matches() && items.containsKey(alreadyFoundMatcher.group("item")))
-            items.put(alreadyFoundMatcher.group("item"), true);
+            hidden.divanMinesParts.replaceAll((k, v) -> false);
+        else if (alreadyFoundMatcher.matches() && hidden.divanMinesParts.containsKey(alreadyFoundMatcher.group("item")))
+            hidden.divanMinesParts.put(alreadyFoundMatcher.group("item"), true);
     }
 
     @Override

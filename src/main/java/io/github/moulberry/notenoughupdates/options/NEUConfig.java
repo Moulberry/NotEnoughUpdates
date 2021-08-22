@@ -328,7 +328,7 @@ public class NEUConfig extends Config {
 
     public static class HiddenProfileSpecific {
 
-        @Expose public long godPotionDuration = 0l;
+        @Expose public long godPotionDuration = 0L;
         @Expose public long puzzlerCompleted = 0L;
         @Expose public long firstCakeAte = 0L;
         @Expose public long fetchurCompleted = 0L;
@@ -337,6 +337,24 @@ public class NEUConfig extends Config {
         @Expose public long cookieBuffRemaining = 0L;
 
         @Expose public int commissionMilestone = 0;
+
+        @Expose public HashMap<String, Boolean> automatonParts = new HashMap<>();
+
+        @Expose public HashMap<String, Boolean> divanMinesParts = new HashMap<>();
+
+        public HiddenProfileSpecific(){
+            automatonParts.putIfAbsent("Electron Transmitter", false);
+            automatonParts.putIfAbsent("FTX 3070", false);
+            automatonParts.putIfAbsent("Robotron Reflector", false);
+            automatonParts.putIfAbsent("Superlite Motor", false);
+            automatonParts.putIfAbsent("Control Switch", false);
+            automatonParts.putIfAbsent("Synthetic Heart", false);
+
+            divanMinesParts.putIfAbsent("Scavenged Lapis Sword", false);
+            divanMinesParts.putIfAbsent("Scavenged Golden Hammer", false);
+            divanMinesParts.putIfAbsent("Scavenged Diamond Axe", false);
+            divanMinesParts.putIfAbsent("Scavenged Emerald Hammer", false);
+        }
     }
 
     public static List<InventoryButton> createDefaultInventoryButtons() {
