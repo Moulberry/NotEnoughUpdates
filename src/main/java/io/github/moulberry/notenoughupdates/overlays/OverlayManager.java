@@ -17,6 +17,7 @@ public class OverlayManager {
     public static TimersOverlay timersOverlay;
     public static BonemerangOverlay bonemerangOverlay;
     public static AutomatonOverlay automatonOverlay;
+    public static DivanMinesOverlay divanMinesOverlay;
     public static final List<TextOverlay> textOverlays = new ArrayList<>();
 
     static {
@@ -135,13 +136,26 @@ public class OverlayManager {
             }
             return TextOverlayStyle.BACKGROUND;
         });
-
+        List<String> divanMinesOverlayDummy = Lists.newArrayList(
+                "\u00a73Scavenged Lapis Sword: \u00a7aDone",
+                "\u00a73Scavenged Golden Hammer: \u00a7eIn Storage",
+                "\u00a73Scavenged Diamond Axe: \u00a7eIn Inventory",
+                "\u00a73Scavenged Emerald Hammer: \u00a7cMissing"
+        );
+        divanMinesOverlay = new DivanMinesOverlay(NotEnoughUpdates.INSTANCE.config.mining.divanMinesOverlayPosition, () -> divanMinesOverlayDummy, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.mining.divanMinesOverlayStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
 
         textOverlays.add(miningOverlay);
         textOverlays.add(farmingOverlay);
         textOverlays.add(petInfoOverlay);
         textOverlays.add(bonemerangOverlay);
         textOverlays.add(automatonOverlay);
+        textOverlays.add(divanMinesOverlay);
     }
 
 }

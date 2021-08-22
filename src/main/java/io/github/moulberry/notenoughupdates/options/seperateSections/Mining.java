@@ -291,6 +291,132 @@ public class Mining {
     @ConfigAccordionId(id = 5)
     public int automatonMissingColor = 12;
 
+    @ConfigOption(
+            name = "Mines of Divan overlay",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 6)
+    public boolean divanMinesOverlayAccordion = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Enabled",
+            desc = "Enables the Mines of Divan overlay."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 6)
+    public boolean divanMinesOverlay = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Position",
+            desc = "Change the position of the AMines of Divan overlay."
+    )
+    @ConfigEditorButton(
+            runnableId = 11,
+            buttonText = "Edit"
+    )
+    @ConfigAccordionId(id = 6)
+    public Position divanMinesOverlayPosition = new Position(200, 0);
+
+    @Expose
+    @ConfigOption(
+            name = "Style",
+            desc = "Change the style of the Mines of Divan overlay."
+    )
+    @ConfigEditorDropdown(
+            values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+    )
+    @ConfigAccordionId(id = 6)
+    public int divanMinesOverlayStyle = 0;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Icons",
+            desc = "Show icons in the overlay that represent the part."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 6)
+    public boolean divanMinesIcons = true;
+
+
+    @Expose
+    @ConfigOption(
+            name = "Hide Done",
+            desc = "Don't show parts you've given to the Keepers."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 6)
+    public boolean divanMinesHideDone = false;
+
+    @ConfigOption(
+            name = "Colours",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 7)
+    @ConfigAccordionId(id = 6)
+    public boolean divanMinesColourAccordion = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Part colour",
+            desc = "Change the colour of the part text."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 7)
+    public int divanMinesPartColor = 3;
+
+    @Expose
+    @ConfigOption(
+            name = "Ready colour",
+            desc = "Change the colour when the part is given to the Keepers."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 7)
+    public int divanMinesDoneColor = 10;
+
+    @Expose
+    @ConfigOption(
+            name = "In Inventory Color",
+            desc = "Change the colour when the part is in the inventory."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 7)
+    public int divanMinesInventoryColor = 14;
+
+    @Expose
+    @ConfigOption(
+            name = "In Storage Color",
+            desc = "Change the colour when the part is in the storage."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 7)
+    public int divanMinesStorageColor = 14;
+
+    @Expose
+    @ConfigOption(
+            name = "Missing Color",
+            desc = "Change the colour when the part is missing."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 7)
+    public int divanMinesMissingColor = 12;
+
     @Expose
     @ConfigOption(
             name = "Puzzler Solver",

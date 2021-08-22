@@ -7,7 +7,6 @@ import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.util.vector.Vector2f;
@@ -93,25 +92,31 @@ public class AutomatonOverlay extends TextOverlay {
                 items.put(item, false);
             }
         } else if (message.startsWith("[NPC] Professor Robot: ")) {
-            if (message.equals("[NPC] Professor Robot: That's not one of the components I need! Bring me one of the missing components:")) {
-                items.replaceAll((k, v) -> true);
-            } else if (message.equals("[NPC] Professor Robot: You've brought me all of the components!")) {
-                items.replaceAll((k, v) -> false);
-            } else {
-                Matcher giveMatcher = givePattern.matcher(message);
-                Matcher notFinalMatcher = notFinalPattern.matcher(message);
-                if (giveMatcher.matches()) {
-                    String item = giveMatcher.group("part");
-                    if (items.containsKey(item)) {
-                        items.put(item, true);
+            switch (message) {
+                case "[NPC] Professor Robot: That's not one of the components I need! Bring me one of the missing components:":
+                    items.replaceAll((k, v) -> true);
+                    break;
+                case "[NPC] Professor Robot: You've brought me all of the components!":
+                case "[NPC] Professor Robot: You haven't placed the Sapphire Crystal yet!":
+                case "[NPC] Professor Robot: You have already placed the Sapphire Crystal!":
+                    items.replaceAll((k, v) -> false);
+                    break;
+                default:
+                    Matcher giveMatcher = givePattern.matcher(message);
+                    Matcher notFinalMatcher = notFinalPattern.matcher(message);
+                    if (giveMatcher.matches()) {
+                        String item = giveMatcher.group("part");
+                        if (items.containsKey(item)) {
+                            items.put(item, true);
+                        }
+                    } else if (notFinalMatcher.matches()) {
+                        String item = notFinalMatcher.group("part");
+                        if (items.containsKey(item)) {
+                            items.replaceAll((k, v) -> true);
+                            items.put(item, false);
+                        }
                     }
-                } else if (notFinalMatcher.matches()) {
-                    String item = notFinalMatcher.group("part");
-                    if (items.containsKey(item)) {
-                        items.replaceAll((k, v) -> true);
-                        items.put(item, false);
-                    }
-                }
+                    break;
             }
         }
     }
