@@ -93,7 +93,7 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Dwarven Overlay",
-            desc = "Show an overlay with useful information on the screen while in Dwarven Mines"
+            desc = "Show an Overlay with useful information on the screen while in Dwarven Mines"
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 2)
@@ -102,8 +102,8 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Dwarven Text",
-            desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
-                    "\u00a7rGo to the Dwarven Mines to show this overlay with useful information"
+            desc = "\u00a7eDrag text to change the appearance of the Overlay\n" +
+                    "\u00a7rGo to the Dwarven Mines to show this Overlay with useful information"
     )
     @ConfigEditorDraggableList(
             exampleText = {"\u00a73Goblin Slayer: \u00a7626.5%\n\u00a73Lucky Raffle: \u00a7c0.0%",
@@ -119,7 +119,7 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Overlay Position",
-            desc = "Change the position of the Dwarven Mines information overlay (commisions, powder & forge statuses)"
+            desc = "Change the position of the Dwarven Mines information Overlay (commisions, powder & forge statuses)"
     )
     @ConfigEditorButton(
             runnableId = 1,
@@ -131,7 +131,7 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Overlay Style",
-            desc = "Change the style of the Dwarven Mines information overlay"
+            desc = "Change the style of the Dwarven Mines information Overlay"
     )
     @ConfigEditorDropdown(
             values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
@@ -148,7 +148,7 @@ public class Mining {
 
     @Expose
     @ConfigOption(
-            name = "Enabled",
+            name = "Enable Waypoints",
             desc = "Enabled the metal detector solver for Mines of Divan, to use this stand still to calculate possible blocks and then if required stand" +
                     " still on another block."
     )
@@ -174,8 +174,8 @@ public class Mining {
 
     @Expose
     @ConfigOption(
-            name = "Enabled",
-            desc = "Enables the Automaton parts overlay."
+            name = "Enable Overlay",
+            desc = "Enables the Automaton parts Overlay."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 4)
@@ -183,8 +183,8 @@ public class Mining {
 
     @Expose
     @ConfigOption(
-            name = "Position",
-            desc = "Change the position of the Automaton parts overlay."
+            name = "Overlay Position",
+            desc = "Change the position of the Automaton parts Overlay."
     )
     @ConfigEditorButton(
             runnableId = 10,
@@ -196,7 +196,7 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Style",
-            desc = "Change the style of the Automaton parts overlay."
+            desc = "Change the style of the Automaton parts Overlay."
     )
     @ConfigEditorDropdown(
             values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
@@ -207,7 +207,7 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Show Icons",
-            desc = "Show icons in the overlay that represent the part."
+            desc = "Show icons in the Overlay that represent the part."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 4)
@@ -292,7 +292,7 @@ public class Mining {
     public int automatonMissingColor = 12;
 
     @ConfigOption(
-            name = "Mines of Divan overlay",
+            name = "Mines of Divan Overlay",
             desc = ""
     )
     @ConfigEditorAccordion(id = 6)
@@ -300,8 +300,8 @@ public class Mining {
 
     @Expose
     @ConfigOption(
-            name = "Enabled",
-            desc = "Enables the Mines of Divan overlay."
+            name = "Enable Overlay",
+            desc = "Enables the Mines of Divan Overlay."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 6)
@@ -309,8 +309,8 @@ public class Mining {
 
     @Expose
     @ConfigOption(
-            name = "Position",
-            desc = "Change the position of the AMines of Divan overlay."
+            name = "Overlay Position",
+            desc = "Change the position of the Mines of Divan Overlay."
     )
     @ConfigEditorButton(
             runnableId = 11,
@@ -322,7 +322,7 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Style",
-            desc = "Change the style of the Mines of Divan overlay."
+            desc = "Change the style of the Mines of Divan Overlay."
     )
     @ConfigEditorDropdown(
             values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
@@ -333,7 +333,7 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Show Icons",
-            desc = "Show icons in the overlay that represent the part."
+            desc = "Show icons in the Overlay that represent the part."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 6)
