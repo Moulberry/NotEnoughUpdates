@@ -32,12 +32,13 @@ public class AutomatonOverlay extends TextOverlay {
 
     @Override
     public void update() {
-        NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
         overlayStrings = null;
         if (!NotEnoughUpdates.INSTANCE.config.mining.automatonOverlay || SBInfo.getInstance().getLocation() == null ||
                 !SBInfo.getInstance().getLocation().equals("crystal_hollows") || !SBInfo.getInstance().location.equals("Lost Precursor City"))
             return;
 
+        NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+        if (hidden == null) return;
         overlayStrings = new ArrayList<>();
         HashMap<String, String> states = new HashMap<>();
         for (String key : hidden.automatonParts.keySet()) {
@@ -78,6 +79,7 @@ public class AutomatonOverlay extends TextOverlay {
 
     public void message(String message) {
         NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+        if (hidden == null) return;
         if (message.startsWith("  ")) {
             String item = message.replace("  ", "");
             if (hidden.automatonParts.containsKey(item)) {

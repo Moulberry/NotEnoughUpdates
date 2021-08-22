@@ -40,6 +40,7 @@ public class DivanMinesOverlay extends TextOverlay {
             return;
 
         NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+        if (hidden == null) return;
         overlayStrings = new ArrayList<>();
         HashMap<String, String> states = new HashMap<>();
         for (String key : hidden.divanMinesParts.keySet()) {
@@ -80,6 +81,7 @@ public class DivanMinesOverlay extends TextOverlay {
 
     public void message(String message) {
         NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+        if (hidden == null) return;
         Matcher foundMatcher = foundPattern.matcher(message);
         Matcher alreadyFoundMatcher = alreadyFoundPattern.matcher(message);
         Matcher notFoundMatcher = notFoundPattern.matcher(message);
