@@ -838,6 +838,8 @@ public class NEUEventListener {
         }
         if(unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  "))
             OverlayManager.automatonOverlay.message(unformatted);
+        else if(unformatted.startsWith("[NPC] Keeper of "))
+            OverlayManager.divanMinesOverlay.message(unformatted);
     }
 
     public static boolean drawingGuiScreen = false;
