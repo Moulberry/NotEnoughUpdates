@@ -594,14 +594,14 @@ public class StorageOverlay extends GuiElement {
             if(coords.y-11 > 3+storageViewSize || coords.y+90 < 3) continue;
 
             StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
-
+            
             if(editingNameId == storageId) {
                 int len = fontRendererObj.getStringWidth(renameStorageField.getTextDisplay())+10;
                 renameStorageField.setSize(len, 12);
                 renameStorageField.render(storageX, storageY-13);
             } else {
                 String pageTitle;
-                if(page.customTitle != null && !page.customTitle.isEmpty()) {
+                if(page != null && page.customTitle != null && !page.customTitle.isEmpty()) {
                     pageTitle = Utils.chromaStringByColourCode(page.customTitle);
                 } else if(entry.getValue() < 9) {
                     pageTitle = "Ender Chest Page " + (entry.getValue() + 1);
