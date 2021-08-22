@@ -85,7 +85,8 @@ public class NEUConfig extends Config {
             case 9:
                 editOverlay(activeConfigCategory, OverlayManager.bonemerangOverlay, itemOverlays.bonemerangPosition);
                 return;
-
+            case 10:
+                editOverlay(activeConfigCategory, OverlayManager.automatonOverlay, mining.automatonOverlayPosition);
         }
     }
 

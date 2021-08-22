@@ -28,6 +28,7 @@ group= "io.github.moulberry"
 archivesBaseName = "NotEnoughUpdates"
 String modid = "notenoughupdates"
 String mixinClassifier = "dep"
+compileJava.options.encoding = 'UTF-8'
 
 minecraft {
     version = "1.8.9-11.15.1.2318-1.8.9"

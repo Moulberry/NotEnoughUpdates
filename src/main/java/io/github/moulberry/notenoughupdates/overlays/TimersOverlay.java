@@ -85,7 +85,9 @@ public class TimersOverlay extends TextOverlay {
 
     @Override
     protected Vector2f getSize(List<String> strings) {
-        return super.getSize(strings).translate(12, 0);
+        if(NotEnoughUpdates.INSTANCE.config.miscOverlays.todoIcons)
+            return super.getSize(strings).translate(12, 0);
+        return super.getSize(strings);
     }
 
     private static final ItemStack CAKES_ICON = new ItemStack(Items.cake);

@@ -194,7 +194,13 @@ public class SBInfo {
                         currentTimeDate = parseFormat.parse(timeSpace);
                     } catch (ParseException e) {}
                 }
-                location = Utils.cleanColour(lines.get(3)).replaceAll("[^A-Za-z0-9() ]", "").trim();
+                //Replaced with for loop because in crystal hollows with events the line it's on can shift.
+                for (String line : lines){
+                    if (line.contains("⏣")) {
+                        location = Utils.cleanColour(line).replaceAll("[^A-Za-z0-9() ]", "").trim();
+                        break;
+                    }
+                }
             }
             objective = null;
 

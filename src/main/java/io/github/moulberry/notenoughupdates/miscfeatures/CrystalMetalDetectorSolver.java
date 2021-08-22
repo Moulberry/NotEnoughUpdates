@@ -81,7 +81,8 @@ public class CrystalMetalDetectorSolver {
     }
 
     public static void render(float partialTicks) {
-        if (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")) {
+        if (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows") &&
+                SBInfo.getInstance().location.equals("Mines of Divan")) {
             if (possibleBlocks.size() == 1) {
                 RenderUtils.renderWayPoint("Treasure", possibleBlocks.get(0).add(0, 2.5, 0), partialTicks);
             } else if (possibleBlocks.size() > 1 && NotEnoughUpdates.INSTANCE.config.mining.metalDetectorShowPossible) {
