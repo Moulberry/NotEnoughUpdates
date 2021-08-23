@@ -1,10 +1,7 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
@@ -37,6 +34,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -61,6 +59,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
@@ -1723,6 +1722,7 @@ public class NEUEventListener {
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
         if(internalname == null) {
+            onItemToolTipInternalNameNull(event);
             return;
         }
 
@@ -1780,6 +1780,8 @@ public class NEUEventListener {
         boolean dungeonProfit = false;
         int index = 0;
         List<String> newTooltip = new ArrayList<>();
+
+
         for(String line : event.toolTip) {
             if(line.endsWith(EnumChatFormatting.DARK_GRAY+"Reforge Stone") && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showReforgeStats) {
                 JsonObject reforgeStones = Constants.REFORGESTONES;
@@ -2118,6 +2120,7 @@ public class NEUEventListener {
 
             newTooltip.add(line);
 
+
             if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoAucItem) {
                 if(line.contains(EnumChatFormatting.GRAY+"Buy it now: ") ||
                         line.contains(EnumChatFormatting.GRAY+"Bidder: ") ||
@@ -2302,7 +2305,85 @@ public class NEUEventListener {
         if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoInvItem) {
             ItemPriceInformation.addToTooltip(event.toolTip, internalname, event.itemStack);
         }
+
+        //petToolTipXPExtend(event, false);
+
+
+
     }
+
+    private Pattern xpLevelPattern = Pattern.compile("(.*) (\\xA7e(.*)\\xA76/\\xA7e(.*))");
+
+    private void onItemToolTipInternalNameNull(ItemTooltipEvent event){
+        petToolTipXPExtend(event, true);
+
+    }
+
+    private void petToolTipXPExtend(ItemTooltipEvent event, boolean xpBarExists) {
+
+        if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
+
+
+            //7 is just a random number i chose, prob no pets with less lines than 7
+            if (event.toolTip.size() > 7) {
+
+                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)).*")) {
+
+                    GuiProfileViewer.PetLevel petlevel = null;
+
+                    //This is in the pets menu
+                    if (xpBarExists) {
+                        PetInfoOverlay.Pet pet = PetInfoOverlay.getPetFromStack(event.itemStack.getDisplayName(), NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(event.itemStack.getTagCompound()));
+                        if(pet == null){
+                            return;
+                        }
+                        Matcher matcher = xpLevelPattern.matcher(event.toolTip.get(event.toolTip.size() - 3));
+                        if(matcher.matches()) {
+                            event.toolTip.set(event.toolTip.size() - 3, matcher.group(1));
+                        }
+                        petlevel = pet.petLevel;
+                    } else {
+                        //this is the item itself
+                        NBTTagCompound tag = event.itemStack.getTagCompound();
+                        if (tag.hasKey("ExtraAttributes")) {
+                            if (tag.getCompoundTag("ExtraAttributes").hasKey("petInfo")) {
+                                JsonObject petInfo = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(
+                                        tag.getCompoundTag("ExtraAttributes").getString("petInfo"), JsonObject.class);
+                                if (petInfo.has("exp") && petInfo.get("exp").isJsonPrimitive()) {
+                                    JsonPrimitive exp = petInfo.getAsJsonPrimitive("exp");
+                                    int rarityOffset = Constants.PETS.get("pet_rarity_offset").getAsJsonObject().get(
+                                            Utils.getRarityFromInt(Utils.checkItemTypePet(event.toolTip))).getAsInt();
+                                    petlevel = GuiProfileViewer.getPetLevel(Constants.PETS.get("pet_levels").getAsJsonArray(), rarityOffset, exp.getAsLong());
+                                }
+                            }
+                        }
+                    }
+
+                    if (petlevel == null) {
+                        return;
+                    }
+                    if(petlevel.totalXp > petlevel.maxXP && !xpBarExists) {
+                        event.toolTip.add(event.toolTip.size() - 2, EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD +"MAX LEVEL");
+                    } else {
+                        if(!xpBarExists){
+                            int percentage = (int)Math.round(petlevel.levelPercentage*20);
+
+                            String bar = EnumChatFormatting.DARK_GREEN  +String.join("", Collections.nCopies(percentage, "-"))+EnumChatFormatting.WHITE+String.join("", Collections.nCopies(20-percentage, "-"));
+                            event.toolTip.add(event.toolTip.size() - 2, bar);
+                        }
+                        if(!xpBarExists || (xpBarExists && !Utils.cleanColour(event.toolTip.get(event.toolTip.size() - 3)).matches("MAX LEVEL"))) {
+                            event.toolTip.add(event.toolTip.size() - 2, EnumChatFormatting.YELLOW + "" + myFormatter.format(petlevel.levelXp) + "/" + myFormatter.format(petlevel.currentLevelRequirement) + " EXP");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    DecimalFormat myFormatter = new DecimalFormat("###,###.###");
+
+
+
 
     /**
      * This makes it so that holding LCONTROL while hovering over an item with NBT will show the NBT of the item.

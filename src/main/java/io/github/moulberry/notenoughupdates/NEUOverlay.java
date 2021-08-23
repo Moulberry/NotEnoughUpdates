@@ -2008,6 +2008,7 @@ public class NEUOverlay extends Gui {
             if(hasClick) text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"LMB/R : View recipe!");
             if(hasInfo) text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"RMB : View additional information!");
 
+
             textToDisplay = text;
         }
         if(textToDisplay != null) {
