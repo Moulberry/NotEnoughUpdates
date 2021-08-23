@@ -2335,6 +2335,11 @@ public class NEUEventListener {
     private List<String> petToolTipXPExtend(ItemTooltipEvent event) {
         List<String> tooltipText = new ArrayList();
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
+            if(event.itemStack.getTagCompound().hasKey("ItemList")){
+                if(event.itemStack.getTagCompound().getBoolean("ItemList")){
+                    return tooltipText;
+                }
+            }
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
 

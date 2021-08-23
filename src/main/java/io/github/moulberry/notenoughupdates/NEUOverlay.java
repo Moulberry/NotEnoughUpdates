@@ -1987,7 +1987,14 @@ public class NEUOverlay extends Gui {
         //Render tooltip
         JsonObject json = tooltipToDisplay.get();
         if(json != null) {
+
             ItemStack stack = manager.jsonToStack(json);
+            {
+                NBTTagCompound tag = stack.getTagCompound();
+                tag.setBoolean("ItemList", true);
+                stack.setTagCompound(tag);
+            }
+
             List<String> text = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
 
             String internalname = json.get("internalname").getAsString();
