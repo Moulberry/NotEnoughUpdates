@@ -469,7 +469,7 @@ public class Utils {
         return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
     }
 
-    private static String[] rarityArr = new String[] {
+    public static String[] rarityArr = new String[] {
             "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
     };
 
@@ -545,6 +545,11 @@ public class Utils {
             }
         }
         return -1;
+    }
+
+    public static float round (float value, int precision) {
+        int scale = (int) Math.pow(10, precision);
+        return (float) Math.round(value * scale) / scale;
     }
 
 
