@@ -2390,13 +2390,6 @@ public class NEUEventListener {
                 if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)).*")) {
                     GuiProfileViewer.PetLevel petlevel = null;
 
-                    PetInfoOverlay.Pet pet = PetInfoOverlay.getPetFromStack(event.itemStack.getDisplayName(), NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(event.itemStack.getTagCompound()));
-                    if (pet == null) {
-                        return;
-                    }
-                    petlevel = pet.petLevel;
-
-                    boolean maxLevel = false;
                     int xpLine = -1;
                     for (int i = event.toolTip.size() - 1; i >= 0; i--) {
                         Matcher matcher = xpLevelPattern.matcher(event.toolTip.get(i));
@@ -2405,19 +2398,22 @@ public class NEUEventListener {
                             event.toolTip.set(xpLine, matcher.group(1));
                             break;
                         } else if (event.toolTip.get(i).matches("MAX LEVEL")) {
-                            xpLine = i;
-                            maxLevel = true;
+                            return;
                         }
                     }
+
+                    PetInfoOverlay.Pet pet = PetInfoOverlay.getPetFromStack(event.itemStack.getDisplayName(), NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(event.itemStack.getTagCompound()));
+                    if (pet == null) {
+                        return;
+                    }
+                    petlevel = pet.petLevel;
 
                     if (petlevel == null||xpLine==-1) {
                         return;
                     }
 
+                    event.toolTip.add(xpLine+1, EnumChatFormatting.YELLOW + "" + myFormatter.format(petlevel.levelXp) + "/" + myFormatter.format(petlevel.currentLevelRequirement) + " EXP");
 
-                    if (!maxLevel) {
-                        event.toolTip.add(event.toolTip.size() - 2, EnumChatFormatting.YELLOW + "" + myFormatter.format(petlevel.levelXp) + "/" + myFormatter.format(petlevel.currentLevelRequirement) + " EXP");
-                    }
                 }
             }
         }
