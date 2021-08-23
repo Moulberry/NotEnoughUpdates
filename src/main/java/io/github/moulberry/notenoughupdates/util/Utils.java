@@ -469,32 +469,90 @@ public class Utils {
         return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
     }
 
-    private static String[] rarityArr = new String[] {
+    public static String[] rarityArr = new String[] {
             "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
     };
+
+    public static String getRarityFromInt(int rarity){
+        if(rarity < 0|| rarity >= rarityArr.length){ return rarityArr[0]; }
+        return rarityArr[rarity];
+    }
+
+    public static int checkItemTypePet(List<String> lore){
+        for(int i=lore.size()-1; i>=0; i--){
+            String line = Utils.cleanColour(lore.get(i));
+            for (int i1 = 0; i1 < rarityArr.length; i1++) {
+                if(line.equals(rarityArr[i1])){
+                    return i1;
+                }
+            }
+        }
+        return -1;
+    }
+
     public static int checkItemType(JsonArray lore, boolean contains, String... typeMatches) {
         for(int i=lore.size()-1; i>=0; i--) {
             String line = lore.get(i).getAsString();
-            for(String rarity : rarityArr) {
-                for(int j=0; j<typeMatches.length; j++) {
-                    if(contains) {
-                        if(line.trim().contains(rarity + " " + typeMatches[j])) {
-                            return j;
-                        } else if(line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
-                            return j;
-                        }
-                    } else {
-                        if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
-                            return j;
-                        } else if(line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
-                            return j;
-                        }
+
+            int returnType = checkItemType(line, contains, typeMatches);
+            if(returnType != -1){
+                return returnType;
+            }
+        }
+        return -1;
+    }
+
+    public static int checkItemType(String[] lore, boolean contains, String... typeMatches) {
+        for(int i=lore.length-1; i>=0; i--) {
+            String line = lore[i];
+
+            int returnType = checkItemType(line, contains, typeMatches);
+            if(returnType != -1){
+                return returnType;
+            }
+        }
+        return -1;
+    }
+
+    public static int checkItemType(List<String> lore, boolean contains, String... typeMatches) {
+        for(int i=lore.size()-1; i>=0; i--) {
+            String line = lore.get(i);
+
+            int returnType = checkItemType(line, contains, typeMatches);
+            if(returnType != -1){
+                return returnType;
+            }
+        }
+        return -1;
+    }
+
+    private static int checkItemType(String line, boolean contains, String... typeMatches) {
+        for (String rarity : rarityArr) {
+            for (int j = 0; j < typeMatches.length; j++) {
+                if (contains) {
+                    if (line.trim().contains(rarity + " " + typeMatches[j])) {
+                        return j;
+                    } else if (line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
+                        return j;
+                    }
+                } else {
+                    if (line.trim().endsWith(rarity + " " + typeMatches[j])) {
+                        return j;
+                    } else if (line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
+                        return j;
                     }
                 }
             }
         }
         return -1;
     }
+
+    public static float round (float value, int precision) {
+        int scale = (int) Math.pow(10, precision);
+        return (float) Math.round(value * scale) / scale;
+    }
+
+
 
     public static void playPressSound() {
         playSound(new ResourceLocation("gui.button.press"), true);
