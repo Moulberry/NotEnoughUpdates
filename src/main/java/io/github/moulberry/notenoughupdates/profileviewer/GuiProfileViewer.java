@@ -11,15 +11,17 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
-import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Constants;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.SkinManager;
@@ -32,7 +34,9 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
-import net.minecraft.util.*;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.Matrix4f;
+import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -49,8 +53,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -1340,6 +1344,8 @@ public class GuiProfileViewer extends GuiScreen {
                 String petname = pet.get("type").getAsString();
                 String tier = pet.get("tier").getAsString();
                 String heldItem = Utils.getElementAsString(pet.get("heldItem"), null);
+                String skin = Utils.getElementAsString(pet.get("skin"), null);
+                int candy = pet.get("candyUsed").getAsInt();
                 JsonObject heldItemJson = heldItem==null?null:NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(heldItem);
                 String tierNum = MINION_RARITY_TO_NUM.get(tier);
                 float exp = pet.get("exp").getAsFloat();
@@ -1407,6 +1413,22 @@ public class GuiProfileViewer extends GuiScreen {
                             newLore.appendTag(new NBTTagString(line));
                         }
                         Integer secondLastBlank = blankLocations.get(blankLocations.size()-2);
+                        if(skin != null){
+                            JsonObject petSkin = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PET_SKIN_" + skin);
+                            if(petSkin != null){
+                                try {
+                                    NBTTagCompound nbt = JsonToNBT.getTagFromJson(petSkin.get("nbttag").getAsString());
+                                    tag.setTag("SkullOwner", nbt.getTag("SkullOwner"));
+                                    String name = petSkin.get("displayname").getAsString();
+                                    if(name != null){
+                                        name = Utils.cleanColour(name);
+                                        newLore.set(0, new NBTTagString(newLore.get(0).toString().replace("\"" , "") + ", " + name));
+                                    }
+                                } catch (NBTException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
                         if(heldItemJson != null && secondLastBlank != null) {
                             for(int j=0; j<newLore.tagCount(); j++) {
                                 String line = newLore.getStringTagAt(j);
@@ -1433,6 +1455,10 @@ public class GuiProfileViewer extends GuiScreen {
                             display.setTag("Lore", newNewLore);
                         } else {
                             display.setTag("Lore", newLore);
+                        }
+                        if(candy != 0){
+                            newLore.appendTag(new NBTTagString());
+                            newLore.appendTag(new NBTTagString(EnumChatFormatting.GREEN + "(" + candy + "/10) Pet Candy Used"));
                         }
                     }
                     if(display.hasKey("Name", 8)) {
@@ -1535,33 +1561,25 @@ public class GuiProfileViewer extends GuiScreen {
             ItemStack petStack = sortedPetsStack.get(selectedPet);
             String display = petStack.getDisplayName();
             JsonObject pet = sortedPets.get(selectedPet);
-            String type = pet.get("type").getAsString();
 
-            for(int i=0; i<4; i++) {
-                JsonObject item = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(type+";"+i);
-                if(item != null) {
-                    int x = guiLeft+280;
-                    float y = guiTop+67+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
+            int x = guiLeft+280;
+            float y = guiTop+67+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
 
-                    int displayLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(display);
-                    int halfDisplayLen = displayLen/2;
+            int displayLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(display);
+            int halfDisplayLen = displayLen/2;
 
-                    GlStateManager.pushMatrix();
-                    GlStateManager.translate(x, y, 0);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(x, y, 0);
 
-                    drawRect(-halfDisplayLen-1-28, -1, halfDisplayLen+1-28, 8, new Color(0, 0, 0, 100).getRGB());
+            drawRect(-halfDisplayLen-1-28, -1, halfDisplayLen+1-28, 8, new Color(0, 0, 0, 100).getRGB());
 
-                    Minecraft.getMinecraft().fontRendererObj.drawString(display, -halfDisplayLen-28, 0, 0, true);
+            Minecraft.getMinecraft().fontRendererObj.drawString(display, -halfDisplayLen-28, 0, 0, true);
 
-                    ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
-                    GlStateManager.enableDepth();
-                    GlStateManager.translate(-55, 0, 0);
-                    GlStateManager.scale(3.5f, 3.5f, 1);
-                    Utils.drawItemStack(stack, 0, 0);
-                    GlStateManager.popMatrix();
-                    break;
-                }
-            }
+            GlStateManager.enableDepth();
+            GlStateManager.translate(-55, 0, 0);
+            GlStateManager.scale(3.5f, 3.5f, 1);
+            Utils.drawItemStack(petStack, 0, 0);
+            GlStateManager.popMatrix();
 
             float level = pet.get("level").getAsFloat();
             float currentLevelRequirement = pet.get("currentLevelRequirement").getAsFloat();
@@ -1711,7 +1729,7 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.drawStringCentered(selectedCollectionCategory.getDisplayName() + " Minions", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+326, guiTop+14, true, 4210752);
 
-      
+
         List<String> minions = ProfileViewer.getCollectionCatToMinionMap().get(selectedCollectionCategory);
         if(minions != null) {
             for(int i=0; i<minions.size(); i++) {
@@ -2414,7 +2432,7 @@ public class GuiProfileViewer extends GuiScreen {
 
             Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
-            
+
             Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE.toString() + shortNumberFormat(totalSlayerXP, 0),
                     guiLeft + xStart, guiTop + yStartBottom + yOffset * 4, 76);
         }

@@ -838,7 +838,6 @@ public class NEUEventListener {
         if(unformatted.startsWith("[NPC] Keeper of ") | unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  ") || unformatted.startsWith("✦") ||
         unformatted.equals("  You've earned a Crystal Loot Bundle!"))
             OverlayManager.crystalHollowOverlay.message(unformatted);
-        System.out.println(unformatted);
     }
 
     public static boolean drawingGuiScreen = false;
