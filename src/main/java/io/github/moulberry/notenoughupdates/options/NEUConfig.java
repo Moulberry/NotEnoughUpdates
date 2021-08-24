@@ -16,6 +16,7 @@ import io.github.moulberry.notenoughupdates.overlays.*;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
+import org.luaj.vm2.ast.Str;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.util.ArrayList;
@@ -86,10 +87,7 @@ public class NEUConfig extends Config {
                 editOverlay(activeConfigCategory, OverlayManager.bonemerangOverlay, itemOverlays.bonemerangPosition);
                 return;
             case 10:
-                editOverlay(activeConfigCategory, OverlayManager.automatonOverlay, mining.automatonOverlayPosition);
-                return;
-            case 11:
-                editOverlay(activeConfigCategory, OverlayManager.divanMinesOverlay, mining.divanMinesOverlayPosition);
+                editOverlay(activeConfigCategory, OverlayManager.crystalHollowOverlay, mining.crystalHollowOverlayPosition);
         }
     }
 
@@ -338,23 +336,29 @@ public class NEUConfig extends Config {
 
         @Expose public int commissionMilestone = 0;
 
-        @Expose public HashMap<String, Boolean> automatonParts = new HashMap<>();
+        @Expose public HashMap<String, Boolean> automatonParts = new HashMap<String, Boolean>(){{
+            put("Electron Transmitter", false);
+            put("FTX 3070", false);
+            put("Robotron Reflector", false);
+            put("Superlite Motor", false);
+            put("Control Switch", false);
+            put("Synthetic Heart", false);
+        }};
 
-        @Expose public HashMap<String, Boolean> divanMinesParts = new HashMap<>();
+        @Expose public HashMap<String, Boolean> divanMinesParts = new HashMap<String, Boolean>(){{
+            put("Scavenged Lapis Sword", false);
+            put("Scavenged Golden Hammer", false);
+            put("Scavenged Diamond Axe", false);
+            put("Scavenged Emerald Hammer", false);
+        }};
 
-        public HiddenProfileSpecific(){
-            automatonParts.putIfAbsent("Electron Transmitter", false);
-            automatonParts.putIfAbsent("FTX 3070", false);
-            automatonParts.putIfAbsent("Robotron Reflector", false);
-            automatonParts.putIfAbsent("Superlite Motor", false);
-            automatonParts.putIfAbsent("Control Switch", false);
-            automatonParts.putIfAbsent("Synthetic Heart", false);
-
-            divanMinesParts.putIfAbsent("Scavenged Lapis Sword", false);
-            divanMinesParts.putIfAbsent("Scavenged Golden Hammer", false);
-            divanMinesParts.putIfAbsent("Scavenged Diamond Axe", false);
-            divanMinesParts.putIfAbsent("Scavenged Emerald Hammer", false);
-        }
+        @Expose public HashMap<String, Integer> crystals = new HashMap<String, Integer>(){{
+            put("Jade", 0);
+            put("Amber", 0);
+            put("Amethyst", 0);
+            put("Sapphire", 0);
+            put("Topaz", 0);
+        }};
     }
 
     public static List<InventoryButton> createDefaultInventoryButtons() {

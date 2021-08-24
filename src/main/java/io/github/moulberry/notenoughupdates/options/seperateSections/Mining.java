@@ -166,169 +166,109 @@ public class Mining {
     public boolean metalDetectorShowPossible = false;
 
     @ConfigOption(
-            name = "Automaton Parts Overlay",
+            name = "Crystal Hollows Overlay",
             desc = ""
     )
-    @ConfigEditorAccordion(id = 4)
-    public boolean automatonOverlayAccordion = false;
+    @ConfigEditorAccordion(id = 6)
+    public boolean crystalHollowOverlayAccordion = false;
 
     @Expose
     @ConfigOption(
             name = "Enabled",
-            desc = "Enables the Automaton parts overlay."
+            desc = "Enables the Crystal Hollows Overlay."
     )
     @ConfigEditorBoolean
-    @ConfigAccordionId(id = 4)
-    public boolean automatonOverlay = false;
+    @ConfigAccordionId(id = 6)
+    public boolean crystalHollowOverlay = false;
 
     @Expose
     @ConfigOption(
             name = "Position",
-            desc = "Change the position of the Automaton parts overlay."
+            desc = "Change the position of the Crystal Hollows Overlay overlay."
     )
     @ConfigEditorButton(
             runnableId = 10,
             buttonText = "Edit"
     )
-    @ConfigAccordionId(id = 4)
-    public Position automatonOverlayPosition = new Position(200, 0);
+    @ConfigAccordionId(id = 6)
+    public Position crystalHollowOverlayPosition = new Position(200, 0);
+
+    @Expose
+    @ConfigOption(
+            name = "Text",
+            desc = "\u00a7eDrag text to change the appearance of the overlay"
+    )
+    @ConfigEditorDraggableList(
+            exampleText = {
+                    "\u00a73Amber Crystal: \u00a7aPlaced\n" +
+                            "\u00a73Sapphire Crystal: \u00a7eCollected\n" +
+                            "\u00a73Jade Crystal: \u00a7eMissing\n" +
+                            "\u00a73Amethyst Crystal: \u00a7cMissing\n" +
+                            "\u00a73Topaz Crystal: \u00a7cMissing\n",
+                    "\u00a73Crystals: \u00a7a4/5",
+                    "\u00a73Crystals: \u00a7a80%",
+                    "\u00a73Electron Transmitter: \u00a7aDone\n" +
+                            "\u00a73Robotron Reflector: \u00a7eIn Storage\n" +
+                            "\u00a73Superlite Motor: \u00a7eIn Inventory\n" +
+                            "\u00a73Synthetic Hearth: \u00a7cMissing\n" +
+                            "\u00a73Control Switch: \u00a7cMissing\n" +
+                            "\u00a73FTX 3070: \u00a7cMissing",
+                    "\u00a73Electron Transmitter: \u00a7a3\n" +
+                            "\u00a73Robotron Reflector: \u00a7e2\n" +
+                            "\u00a73Superlite Motor: \u00a7e1\n" +
+                            "\u00a73Synthetic Hearth: \u00a7c0\n" +
+                            "\u00a73Control Switch: \u00a7c0\n" +
+                            "\u00a73FTX 3070: \u00a7c0",
+                    "\u00a73Automaton parts: \u00a7a5/6",
+                    "\u00a73Automaton parts: \u00a7a83%",
+                    "\u00a73Scavenged Lapis Sword: \u00a7aDone\n" +
+                            "\u00a73Scavenged Golden Hammer: \u00a7eIn Storage\n" +
+                            "\u00a73Scavenged Diamond Axe: \u00a7eIn Inventory\n" +
+                            "\u00a73Scavenged Emerald Hammer: \u00a7cMissing\n",
+                    "\u00a73Scavenged Lapis Sword: \u00a7a3\n" +
+                            "\u00a73Scavenged Golden Hammer: \u00a7e2\n" +
+                            "\u00a73Scavenged Diamond Axe: \u00a7e1\n" +
+                            "\u00a73Scavenged Emerald Hammer: \u00a7c0\n",
+                    "\u00a73Mines of Divan parts: \u00a7a3/4",
+                    "\u00a73Mines of Divan parts: \u00a7a75%"
+            }
+    )
+    @ConfigAccordionId(id = 6)
+    public List<Integer> crystalHollowText = new ArrayList<>(Arrays.asList(0, 3, 7));
 
     @Expose
     @ConfigOption(
             name = "Style",
-            desc = "Change the style of the Automaton parts overlay."
-    )
-    @ConfigEditorDropdown(
-            values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
-    )
-    @ConfigAccordionId(id = 4)
-    public int automatonOverlayStyle = 0;
-
-    @Expose
-    @ConfigOption(
-            name = "Show Icons",
-            desc = "Show icons in the overlay that represent the part."
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 4)
-    public boolean automatonIcons = true;
-
-
-    @Expose
-    @ConfigOption(
-            name = "Hide Done",
-            desc = "Don't show parts you've given to Professor Robot."
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 4)
-    public boolean automatonHideDone = false;
-
-    @ConfigOption(
-            name = "Colours",
-            desc = ""
-    )
-    @ConfigEditorAccordion(id = 5)
-    @ConfigAccordionId(id = 4)
-    public boolean AutomatonColourAccordion = false;
-
-    @Expose
-    @ConfigOption(
-            name = "Part colour",
-            desc = "Change the colour of the part text."
-
-    )
-    @ConfigEditorDropdown(
-            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
-    )
-    @ConfigAccordionId(id = 5)
-    public int automatonPartColor = 3;
-
-    @Expose
-    @ConfigOption(
-            name = "Ready colour",
-            desc = "Change the colour when the part is given to Professor Robot."
-
-    )
-    @ConfigEditorDropdown(
-            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
-    )
-    @ConfigAccordionId(id = 5)
-    public int automatonDoneColor = 10;
-
-    @Expose
-    @ConfigOption(
-            name = "In Inventory Color",
-            desc = "Change the colour when the part is in the inventory."
-
-    )
-    @ConfigEditorDropdown(
-            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
-    )
-    @ConfigAccordionId(id = 5)
-    public int automatonInventoryColor = 14;
-
-    @Expose
-    @ConfigOption(
-            name = "In Storage Color",
-            desc = "Change the colour when the part is in the storage."
-
-    )
-    @ConfigEditorDropdown(
-            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
-    )
-    @ConfigAccordionId(id = 5)
-    public int automatonStorageColor = 14;
-
-    @Expose
-    @ConfigOption(
-            name = "Missing Color",
-            desc = "Change the colour when the part is missing."
-
-    )
-    @ConfigEditorDropdown(
-            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
-    )
-    @ConfigAccordionId(id = 5)
-    public int automatonMissingColor = 12;
-
-    @ConfigOption(
-            name = "Mines of Divan overlay",
-            desc = ""
-    )
-    @ConfigEditorAccordion(id = 6)
-    public boolean divanMinesOverlayAccordion = false;
-
-    @Expose
-    @ConfigOption(
-            name = "Enabled",
-            desc = "Enables the Mines of Divan overlay."
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 6)
-    public boolean divanMinesOverlay = false;
-
-    @Expose
-    @ConfigOption(
-            name = "Position",
-            desc = "Change the position of the AMines of Divan overlay."
-    )
-    @ConfigEditorButton(
-            runnableId = 11,
-            buttonText = "Edit"
-    )
-    @ConfigAccordionId(id = 6)
-    public Position divanMinesOverlayPosition = new Position(200, 0);
-
-    @Expose
-    @ConfigOption(
-            name = "Style",
-            desc = "Change the style of the Mines of Divan overlay."
+            desc = "Change the style of the Crystal Hollows Overlay overlay."
     )
     @ConfigEditorDropdown(
             values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
     )
     @ConfigAccordionId(id = 6)
-    public int divanMinesOverlayStyle = 0;
+    public int crystalHollowOverlayStyle = 0;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Automaton",
+            desc = "Change where to show Automaton parts."
+    )
+    @ConfigEditorDropdown(
+            values = {"Crystal Hollows", "Precursor Remnants", "Lost Precursor City"}
+    )
+    @ConfigAccordionId(id = 6)
+    public int crystalHollowAutomatonLocation = 2;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Automaton",
+            desc = "Change where to show Automaton parts."
+    )
+    @ConfigEditorDropdown(
+            values = {"Crystal Hollows", "Mithril Deposits", "Mines of Divan"}
+    )
+    @ConfigAccordionId(id = 6)
+    public int crystalHollowDivanLocation = 2;
+
 
     @Expose
     @ConfigOption(
@@ -337,17 +277,17 @@ public class Mining {
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 6)
-    public boolean divanMinesIcons = true;
+    public boolean crystalHollowIcons = true;
 
 
     @Expose
     @ConfigOption(
             name = "Hide Done",
-            desc = "Don't show parts you've given to the Keepers."
+            desc = "Don't show parts you've given to the NPC."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 6)
-    public boolean divanMinesHideDone = false;
+    public boolean crystalHollowHideDone = false;
 
     @ConfigOption(
             name = "Colours",
@@ -355,7 +295,7 @@ public class Mining {
     )
     @ConfigEditorAccordion(id = 7)
     @ConfigAccordionId(id = 6)
-    public boolean divanMinesColourAccordion = false;
+    public boolean crystalHollowColourAccordion = false;
 
     @Expose
     @ConfigOption(
@@ -367,19 +307,19 @@ public class Mining {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 7)
-    public int divanMinesPartColor = 3;
+    public int crystalHollowPartColor = 3;
 
     @Expose
     @ConfigOption(
-            name = "Ready colour",
-            desc = "Change the colour when the part is given to the Keepers."
+            name = "Done colour",
+            desc = "Change the colour when the part is given to the NPC."
 
     )
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 7)
-    public int divanMinesDoneColor = 10;
+    public int crystalHollowDoneColor = 10;
 
     @Expose
     @ConfigOption(
@@ -391,7 +331,7 @@ public class Mining {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 7)
-    public int divanMinesInventoryColor = 14;
+    public int crystalHollowInventoryColor = 14;
 
     @Expose
     @ConfigOption(
@@ -403,7 +343,7 @@ public class Mining {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 7)
-    public int divanMinesStorageColor = 14;
+    public int crystalHollowStorageColor = 14;
 
     @Expose
     @ConfigOption(
@@ -415,7 +355,7 @@ public class Mining {
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
     @ConfigAccordionId(id = 7)
-    public int divanMinesMissingColor = 12;
+    public int crystalHollowMissingColor = 12;
 
     @Expose
     @ConfigOption(

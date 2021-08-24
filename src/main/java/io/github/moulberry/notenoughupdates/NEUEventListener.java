@@ -836,10 +836,10 @@ public class NEUEventListener {
         if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
             CrystalMetalDetectorSolver.reset();
         }
-        if(unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  "))
-            OverlayManager.automatonOverlay.message(unformatted);
-        else if(unformatted.startsWith("[NPC] Keeper of "))
-            OverlayManager.divanMinesOverlay.message(unformatted);
+        if(unformatted.startsWith("[NPC] Keeper of ") | unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  ") || unformatted.startsWith("✦") ||
+        unformatted.equals("  You've earned a Crystal Loot Bundle!"))
+            OverlayManager.crystalHollowOverlay.message(unformatted);
+        System.out.println(unformatted);
     }
 
     public static boolean drawingGuiScreen = false;
