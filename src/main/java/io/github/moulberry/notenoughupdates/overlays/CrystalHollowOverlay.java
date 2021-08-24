@@ -251,8 +251,8 @@ public class CrystalHollowOverlay extends TextOverlay {
         Matcher crystalPlacedMatcher = crystalPlacedPattern.matcher(message);
         Matcher crystalPlaceMatcher = crystalPlacePattern.matcher(message);
         Matcher crystalReclaimMatcher = crystalReclaimPattern.matcher(message);
-        if(message.equals("  You've earned a Crystal Loot Bundle!"))
-            hidden.crystals.replaceAll((k,v) -> 0);
+        if (message.equals("  You've earned a Crystal Loot Bundle!"))
+            hidden.crystals.replaceAll((k, v) -> 0);
         if (crystalNotPlacedMatcher.matches() && hidden.crystals.containsKey(crystalNotPlacedMatcher.group("crystal"))) {
             hidden.crystals.put(crystalNotPlacedMatcher.group("crystal"), 1);
             resetCrystal(hidden, crystalNotPlacedMatcher.group("crystal"));
@@ -278,14 +278,13 @@ public class CrystalHollowOverlay extends TextOverlay {
                 hidden.divanMinesParts.put(alreadyFoundMatcher.group("item"), true);
         } else if (message.startsWith("  ")) {
             Matcher crystalMatcher = obtainCrystalPattern.matcher(message);
-            if (crystalMatcher.matches())
-                if (hidden.crystals.containsKey(crystalMatcher.group("crystal")))
-                    hidden.crystals.put(crystalMatcher.group("crystal"), 1);
-                else {
-                    String item = message.replace("  ", "");
-                    if (hidden.divanMinesParts.containsKey(item))
-                        hidden.divanMinesParts.put(item, false);
-                }
+            if (crystalMatcher.matches() && hidden.crystals.containsKey(crystalMatcher.group("crystal")))
+                hidden.crystals.put(crystalMatcher.group("crystal"), 1);
+            else {
+                String item = message.replace("  ", "");
+                if (hidden.divanMinesParts.containsKey(item))
+                    hidden.divanMinesParts.put(item, false);
+            }
         } else if (message.startsWith("[NPC] Professor Robot: ")) {
             switch (message) {
                 case "[NPC] Professor Robot: That's not one of the components I need! Bring me one of the missing components:":
