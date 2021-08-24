@@ -169,7 +169,7 @@ public class Mining {
             name = "Crystal Hollows Overlay",
             desc = ""
     )
-    @ConfigEditorAccordion(id = 6)
+    @ConfigEditorAccordion(id = 4)
     public boolean crystalHollowOverlayAccordion = false;
 
     @Expose
@@ -178,7 +178,7 @@ public class Mining {
             desc = "Enables the Crystal Hollows Overlay."
     )
     @ConfigEditorBoolean
-    @ConfigAccordionId(id = 6)
+    @ConfigAccordionId(id = 4)
     public boolean crystalHollowOverlay = true;
 
     @Expose
@@ -190,7 +190,7 @@ public class Mining {
             runnableId = 10,
             buttonText = "Edit"
     )
-    @ConfigAccordionId(id = 6)
+    @ConfigAccordionId(id = 4)
     public Position crystalHollowOverlayPosition = new Position(200, 0);
 
     @Expose
@@ -234,7 +234,7 @@ public class Mining {
                     "\u00a73Mines of Divan parts: \u00a7a75%"
             }
     )
-    @ConfigAccordionId(id = 6)
+    @ConfigAccordionId(id = 4)
     public List<Integer> crystalHollowText = new ArrayList<>(Arrays.asList(0, 3, 7));
 
     @Expose
@@ -245,7 +245,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
     )
-    @ConfigAccordionId(id = 6)
+    @ConfigAccordionId(id = 4)
     public int crystalHollowOverlayStyle = 0;
 
 
@@ -255,7 +255,7 @@ public class Mining {
             desc = "Show icons in the overlay that represent the part."
     )
     @ConfigEditorBoolean
-    @ConfigAccordionId(id = 6)
+    @ConfigAccordionId(id = 4)
     public boolean crystalHollowIcons = true;
 
 
@@ -265,15 +265,15 @@ public class Mining {
             desc = "Don't show parts you've given to the NPC."
     )
     @ConfigEditorBoolean
-    @ConfigAccordionId(id = 6)
+    @ConfigAccordionId(id = 4)
     public boolean crystalHollowHideDone = false;
 
     @ConfigOption(
             name = "Locations",
             desc = ""
     )
-    @ConfigEditorAccordion(id = 7)
-    @ConfigAccordionId(id = 6)
+    @ConfigEditorAccordion(id = 5)
+    @ConfigAccordionId(id = 4)
     public boolean crystalHollowLocationAccordion = false;
 
     @Expose
@@ -284,7 +284,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Crystal Hollows", "Precursor Remnants", "Lost Precursor City"}
     )
-    @ConfigAccordionId(id = 7)
+    @ConfigAccordionId(id = 5)
     public int crystalHollowAutomatonLocation = 2;
 
     @Expose
@@ -295,7 +295,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Crystal Hollows", "Mithril Deposits", "Mines of Divan"}
     )
-    @ConfigAccordionId(id = 7)
+    @ConfigAccordionId(id = 5)
     public int crystalHollowDivanLocation = 2;
 
     @Expose
@@ -306,15 +306,15 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Crystal Hollows", "When No Other Overlays"}
     )
-    @ConfigAccordionId(id = 7)
+    @ConfigAccordionId(id = 5)
     public int crystalHollowCrystalLocation = 1;
 
     @ConfigOption(
             name = "Colours",
             desc = ""
     )
-    @ConfigEditorAccordion(id = 8)
-    @ConfigAccordionId(id = 6)
+    @ConfigEditorAccordion(id = 6)
+    @ConfigAccordionId(id = 4)
     public boolean crystalHollowColourAccordion = false;
 
     @Expose
@@ -326,7 +326,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowPartColor = 3;
 
     @Expose
@@ -338,7 +338,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowDoneColor = 10;
 
     @Expose
@@ -350,7 +350,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowInventoryColor = 14;
 
     @Expose
@@ -362,7 +362,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowStorageColor = 14;
 
     @Expose
@@ -374,7 +374,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowMissingColor = 12;
 
     @Expose
@@ -386,7 +386,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowPlacedColor = 10;
 
     @Expose
@@ -398,7 +398,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowCollectedColor = 14;
 
     @Expose
@@ -410,7 +410,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowAllColor = 10;
 
     @Expose
@@ -422,7 +422,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowMiddleColor = 14;
 
     @Expose
@@ -434,7 +434,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 8)
+    @ConfigAccordionId(id = 6)
     public int crystalHollowNoneColor = 12;
 
     @Expose
