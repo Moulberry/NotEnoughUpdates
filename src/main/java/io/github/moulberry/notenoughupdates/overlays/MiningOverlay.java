@@ -2,13 +2,11 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
-import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
-import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -24,7 +22,6 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.WorldSettings;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.Sys;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -45,6 +42,7 @@ public class MiningOverlay extends TextOverlay {
 
     @Override
     public void updateFrequent() {
+        NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
         if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
@@ -82,6 +80,64 @@ public class MiningOverlay extends TextOverlay {
                         if(name != null && numberValue > 0) {
                             commissionMaxes.put(name, numberValue);
                         }
+                    }
+                }
+            } else if(containerName.equals("Forge") && lower.getSizeInventory() >= 36 && hidden != null) {
+
+                itemLoop:
+                for (int i = 0; i < 5; i++) {
+                    ItemStack stack = lower.getStackInSlot(i + 11);
+                    if (stack != null) {
+
+                        String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+
+
+                        for (int i1 = 0; i1 < lore.length; i1++) {
+                            String line = lore[i1];
+                            Matcher matcher = timeRemainingForge.matcher(line);
+                            if (stack.getDisplayName().matches("\\xA7cSlot #([1-5])")) {
+                                ForgeItem newForgeItem = new ForgeItem("Locked", 0, 1, i, false);
+                                replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                                //empty Slot
+                            } else if (stack.getDisplayName().matches("\\xA7aSlot #([1-5])")) {
+                                ForgeItem newForgeItem = new ForgeItem("Empty", 0, 0, i, false);
+                                replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                            } else if (matcher.matches()) {
+                                String timeremainingString = matcher.group(1);
+
+                                long duration = 0;
+
+                                if (matcher.group("Completed") != null && !matcher.group("Completed").equals("")) {
+                                    ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), 0, 2, i, false);
+                                    replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                                } else {
+
+                                    try {
+                                        if (matcher.group("days") != null && !matcher.group("days").equals("")) {
+                                            duration = duration + (long) Integer.parseInt(matcher.group("days")) * 24 * 60 * 60 * 1000;
+                                        }
+                                        if (matcher.group("hours") != null && !matcher.group("hours").equals("")) {
+                                            duration = duration + (long) Integer.parseInt(matcher.group("hours")) * 60 * 60 * 1000;
+                                        }
+                                        if (matcher.group("minutes") != null && !matcher.group("minutes").equals("")) {
+                                            duration = duration + (long) Integer.parseInt(matcher.group("minutes")) * 60 * 1000;
+                                        }
+                                        if (matcher.group("seconds") != null && !matcher.group("seconds").equals("")) {
+                                            duration = duration + (long) Integer.parseInt(matcher.group("seconds")) * 1000;
+                                        }
+                                    } catch (Exception ignored) {
+                                    }
+                                    if (duration > 0) {
+                                        ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), System.currentTimeMillis() + duration, 2, i, false);
+                                        replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                                    }
+                                }
+
+                                continue itemLoop;
+                            }
+                        }
+                        //Locked Slot
+
                     }
                 }
             }
@@ -161,41 +217,66 @@ public class MiningOverlay extends TextOverlay {
             }
         }*/
 
-        if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
-            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
-            ContainerChest container = (ContainerChest) chest.inventorySlots;
-            IInventory lower = container.getLowerChestInventory();
-            String containerName = lower.getDisplayName().getUnformattedText();
-            if(containerName.equals("Forge") && lower.getSizeInventory() >= 36 && hidden != null){
+        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay && NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints == 0) return;
+        if(SBInfo.getInstance().getLocation() == null) return;
+        if(SBInfo.getInstance().getLocation().equals("mining_3") || SBInfo.getInstance().getLocation().equals("crystal_hollows")) {
 
-                itemLoop:
-                for (int i = 0; i < 5; i++) {
-                    ItemStack stack = lower.getStackInSlot(i+11);
-                    if(stack != null) {
+            overlayStrings = new ArrayList<>();
+            commissionProgress.clear();
 
-                        String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+            String mithrilPowder = null;
+            String gemstonePowder = null;
+            int forgeInt = 0;
+            boolean commissions = false;
+            boolean forges = false;
+            List<NetworkPlayerInfo> players = playerOrdering.sortedCopy(Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap());
 
+            for (NetworkPlayerInfo info : players) {
+                String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
+                if (name.contains("Mithril Powder:")) {
+                    mithrilPowder = DARK_AQUA + Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
+                }
+                if (name.contains("Gemstone Powder:")) {
+                    gemstonePowder = DARK_AQUA + Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
+                }
+                if (name.equals(RESET.toString() + BLUE + BOLD + "Forges " + RESET)) {
+                    commissions = false;
+                    forges = true;
+                    continue;
+                } else if (name.equals(RESET.toString() + BLUE + BOLD + "Commissions" + RESET)) {
+                    commissions = true;
+                    forges = false;
+                    continue;
+                }
+                String clean = StringUtils.cleanColour(name);
+                if (forges && clean.startsWith(" ")) {
 
-                        for (int i1 = 0; i1 < lore.length; i1++) {
-                            String line = lore[i1];
-                            Matcher matcher = timeRemainingForge.matcher(line);
-                            if (stack.getDisplayName().matches("\\xA7cSlot #([1-5])")){
-                                ForgeItem newForgeItem = new ForgeItem("Locked", 0,1, i, false);
-                                replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
-                                //empty Slot
-                            } else if(stack.getDisplayName().matches("\\xA7aSlot #([1-5])")){
-                                ForgeItem newForgeItem = new ForgeItem("Empty", 0,0, i, false);
-                                replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
-                            } else if(matcher.matches()){
-                                String timeremainingString = matcher.group(1);
+                    char firstChar = clean.trim().charAt(0);
+                    if (firstChar < '0' || firstChar > '9') {
+                        forges = false;
+                    } else {
 
-                                long duration = 0;
+                        if (name.contains("LOCKED")) {
+                            ForgeItem item = new ForgeItem("Locked", 0, 1, forgeInt, true);
+                            replaceForgeOrAdd(item, hidden.forgeItems, true);
+                        } else if (name.contains("EMPTY")) {
+                            ForgeItem item = new ForgeItem("Empty", 0, 0, forgeInt, true);
+                            replaceForgeOrAdd(item, hidden.forgeItems, true);
+                            //forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                        } else {
+                            String cleanName = Utils.cleanColour(name);
 
-                                if(matcher.group("Completed")!= null && !matcher.group("Completed").equals("")){
-                                    ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), 0, 2, i, false);
-                                    replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                            Matcher matcher = timeRemainingTab.matcher(cleanName);
+
+                            if (matcher.matches()) {
+
+                                String itemName = matcher.group(1);
+
+                                if (matcher.group("Ready") != null && !matcher.group("Ready").equals("")) {
+                                    ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), 0, 2, forgeInt, true);
+                                    replaceForgeOrAdd(item, hidden.forgeItems, true);
                                 } else {
-
+                                    long duration = 0;
                                     try {
                                         if (matcher.group("days") != null && !matcher.group("days").equals("")) {
                                             duration = duration + (long) Integer.parseInt(matcher.group("days")) * 24 * 60 * 60 * 1000;
@@ -212,152 +293,62 @@ public class MiningOverlay extends TextOverlay {
                                     } catch (Exception ignored) {
                                     }
                                     if (duration > 0) {
-                                        ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), System.currentTimeMillis() + duration, 2, i, false);
-                                        replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                                        duration = duration + 4000;
+                                        ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), System.currentTimeMillis() + duration, 2, forgeInt, true);
+                                        replaceForgeOrAdd(item, hidden.forgeItems, false);
                                     }
                                 }
-
-                                continue itemLoop;
                             }
                         }
-                        //Locked Slot
-
+                        forgeInt++;
                     }
-                }
-            }
-        }
-
-        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay && NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints == 0) return;
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3") && !SBInfo.getInstance().getLocation().equals("crystal_hollows")) return;
-
-        overlayStrings = new ArrayList<>();
-        commissionProgress.clear();
-
-        String mithrilPowder = null;
-        String gemstonePowder = null;
-        int forgeInt = 0;
-        boolean commissions = false;
-        boolean forges = false;
-        List<NetworkPlayerInfo> players = playerOrdering.sortedCopy(Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap());
-
-        for(NetworkPlayerInfo info : players) {
-            String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
-            if(name.contains("Mithril Powder:")) {
-                mithrilPowder = DARK_AQUA+Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
-            }
-            if(name.contains("Gemstone Powder:")) {
-                gemstonePowder = DARK_AQUA+Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
-            }
-            if(name.equals(RESET.toString()+BLUE+BOLD+"Forges "+RESET)) {
-                commissions = false;
-                forges = true;
-                continue;
-            } else if(name.equals(RESET.toString()+BLUE+BOLD+"Commissions"+RESET)) {
-                commissions = true;
-                forges = false;
-                continue;
-            }
-            String clean = StringUtils.cleanColour(name);
-            if(forges && clean.startsWith(" ")) {
-
-                char firstChar = clean.trim().charAt(0);
-                if(firstChar < '0' || firstChar > '9') {
+                } else if (commissions && clean.startsWith(" ")) {
+                    String[] split = clean.trim().split(": ");
+                    if (split.length == 2) {
+                        if (split[1].endsWith("%")) {
+                            try {
+                                float progress = Float.parseFloat(split[1].replace("%", "")) / 100;
+                                progress = LerpUtils.clampZeroOne(progress);
+                                commissionProgress.put(split[0], progress);
+                            } catch (Exception ignored) {
+                            }
+                        } else {
+                            commissionProgress.put(split[0], 1.0f);
+                        }
+                    }
+                } else {
+                    commissions = false;
                     forges = false;
-                } else {
-
-                    if(name.contains("LOCKED")) {
-                        ForgeItem item = new ForgeItem("Locked", 0,1, forgeInt, true);
-                        replaceForgeOrAdd(item, hidden.forgeItems, true);
-                    } else if(name.contains("EMPTY")) {
-                        ForgeItem item = new ForgeItem("Empty", 0,0, forgeInt, true);
-                        replaceForgeOrAdd(item, hidden.forgeItems, true);
-                        //forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
-                    } else {
-                        String cleanName = Utils.cleanColour(name);
-
-                        Matcher matcher = timeRemainingTab.matcher(cleanName);
-
-                        if(matcher.matches()){
-
-                            String itemName = matcher.group(1);
-
-                            if(matcher.group("Ready") != null && !matcher.group("Ready").equals("")){
-                                ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), 0, 2, forgeInt, true);
-                                replaceForgeOrAdd(item, hidden.forgeItems, true);
-                            } else {
-                                long duration = 0;
-                                try {
-                                    if (matcher.group("days") != null && !matcher.group("days").equals("")) {
-                                        duration = duration + (long) Integer.parseInt(matcher.group("days")) * 24 * 60 * 60 * 1000;
-                                    }
-                                    if (matcher.group("hours") != null && !matcher.group("hours").equals("")) {
-                                        duration = duration + (long) Integer.parseInt(matcher.group("hours")) * 60 * 60 * 1000;
-                                    }
-                                    if (matcher.group("minutes") != null && !matcher.group("minutes").equals("")) {
-                                        duration = duration + (long) Integer.parseInt(matcher.group("minutes")) * 60 * 1000;
-                                    }
-                                    if (matcher.group("seconds") != null && !matcher.group("seconds").equals("")) {
-                                        duration = duration + (long) Integer.parseInt(matcher.group("seconds")) * 1000;
-                                    }
-                                } catch (Exception ignored) {
-                                }
-                                if (duration > 0) {
-                                    duration = duration + 4000;
-                                    ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), System.currentTimeMillis() + duration, 2, forgeInt, true);
-                                    replaceForgeOrAdd(item, hidden.forgeItems, false);
-                                }
-                            }
-                        }
-                    }
-                    forgeInt++;
-                }
-            } else if(commissions && clean.startsWith(" ")) {
-                String[] split = clean.trim().split(": ");
-                if(split.length == 2) {
-                    if(split[1].endsWith("%")) {
-                        try {
-                            float progress = Float.parseFloat(split[1].replace("%", ""))/100;
-                            progress = LerpUtils.clampZeroOne(progress);
-                            commissionProgress.put(split[0], progress);
-                        } catch(Exception ignored) {}
-                    } else {
-                        commissionProgress.put(split[0], 1.0f);
-                    }
-                }
-            } else {
-                commissions = false;
-                forges = false;
-            }
-        }
-        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay){
-            overlayStrings = null;
-            return;
-        }
-
-        List<String> commissionsStrings = new ArrayList<>();
-        for(Map.Entry<String, Float> entry : commissionProgress.entrySet()) {
-            if(entry.getValue() >= 1) {
-                commissionsStrings.add(DARK_AQUA+entry.getKey() + ": " + GREEN + "DONE");
-            } else {
-                EnumChatFormatting col = RED;
-                if(entry.getValue() >= 0.75) {
-                    col = GREEN;
-                } else if(entry.getValue() >= 0.5) {
-                    col = YELLOW;
-                } else if(entry.getValue() >= 0.25) {
-                    col = GOLD;
-                }
-                if(true && commissionMaxes.containsKey(entry.getKey())) {
-                    int max = commissionMaxes.get(entry.getKey());
-                    commissionsStrings.add(DARK_AQUA+entry.getKey() + ": " + col+Math.round(entry.getValue()*max)+"/"+max);
-                } else {
-                    String valS = Utils.floatToString(entry.getValue()*100, 1);
-
-                    commissionsStrings.add(DARK_AQUA+entry.getKey() + ": " + col+valS+"%");
                 }
             }
-        }
+            if (!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay) {
+                overlayStrings = null;
+                return;
+            }
+
+            List<String> commissionsStrings = new ArrayList<>();
+            for (Map.Entry<String, Float> entry : commissionProgress.entrySet()) {
+                if (entry.getValue() >= 1) {
+                    commissionsStrings.add(DARK_AQUA + entry.getKey() + ": " + GREEN + "DONE");
+                } else {
+                    EnumChatFormatting col = RED;
+                    if (entry.getValue() >= 0.75) {
+                        col = GREEN;
+                    } else if (entry.getValue() >= 0.5) {
+                        col = YELLOW;
+                    } else if (entry.getValue() >= 0.25) {
+                        col = GOLD;
+                    }
+                    if (true && commissionMaxes.containsKey(entry.getKey())) {
+                        int max = commissionMaxes.get(entry.getKey());
+                        commissionsStrings.add(DARK_AQUA + entry.getKey() + ": " + col + Math.round(entry.getValue() * max) + "/" + max);
+                    } else {
+                        String valS = Utils.floatToString(entry.getValue() * 100, 1);
+
+                        commissionsStrings.add(DARK_AQUA + entry.getKey() + ": " + col + valS + "%");
+                    }
+                }
+            }
         /*boolean hasAny = false;
         if(NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay) {
             overlayStrings.addAll(commissionsStrings);
@@ -375,29 +366,53 @@ public class MiningOverlay extends TextOverlay {
             overlayStrings.addAll(forgeStrings);
         }*/
 
-        String pickaxeCooldown;
-        if(ItemCooldowns.pickaxeUseCooldownMillisRemaining <= 0) {
-            pickaxeCooldown = DARK_AQUA+"Pickaxe CD: \u00a7aReady";
+            String pickaxeCooldown;
+            if (ItemCooldowns.pickaxeUseCooldownMillisRemaining <= 0) {
+                pickaxeCooldown = DARK_AQUA + "Pickaxe CD: \u00a7aReady";
+            } else {
+                pickaxeCooldown = DARK_AQUA + "Pickaxe CD: \u00a7a" + (ItemCooldowns.pickaxeUseCooldownMillisRemaining / 1000) + "s";
+            }
+
+
+
+            for (int index : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText2) {
+                switch (index) {
+                    case 0:
+                        overlayStrings.addAll(commissionsStrings);
+                        break;
+                    case 1:
+                        overlayStrings.add(mithrilPowder);
+                        break;
+                    case 2:
+                        overlayStrings.add(gemstonePowder);
+                        break;
+                    case 3:
+                        overlayStrings.addAll(getForgeStrings(hidden.forgeItems));
+                        break;
+                    case 4:
+                        //overlayStrings.addAll(forgeStringsEmpty); break;
+                    case 5:
+                        overlayStrings.add(pickaxeCooldown);
+                        break;
+                }
+            }
         } else {
-            pickaxeCooldown = DARK_AQUA+"Pickaxe CD: \u00a7a" + (ItemCooldowns.pickaxeUseCooldownMillisRemaining/1000) + "s";
-        }
-
-
-
-        for(int index : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText) {
-            switch(index) {
-                case 0:
-                    overlayStrings.addAll(commissionsStrings); break;
-                case 1:
-                    overlayStrings.add(mithrilPowder); break;
-                case 2:
-                    overlayStrings.add(gemstonePowder); break;
-                case 3:
-                    overlayStrings.addAll(getForgeStrings(hidden.forgeItems)); break;
-                case 4:
-                    //overlayStrings.addAll(forgeStringsEmpty); break;
-                case 5:
-                    overlayStrings.add(pickaxeCooldown); break;
+            overlayStrings = new ArrayList<>();
+            if(hidden == null){
+                return;
+            }
+            boolean forgeDisplay = false;
+            for (int i = 0; i < NotEnoughUpdates.INSTANCE.config.mining.dwarvenText2.size(); i++) {
+                if(NotEnoughUpdates.INSTANCE.config.mining.dwarvenText2.get(i) == 3){
+                    forgeDisplay = true;
+                }
+            }
+            if(forgeDisplay){
+                if(NotEnoughUpdates.INSTANCE.config.mining.forgeDisplayEnabledLocations == 1 && !SBInfo.getInstance().isInDungeon){
+                    overlayStrings.addAll(getForgeStrings(hidden.forgeItems));
+                } else if(NotEnoughUpdates.INSTANCE.config.mining.forgeDisplayEnabledLocations == 2){
+                    overlayStrings.addAll(getForgeStrings(hidden.forgeItems));
+                }
             }
         }
 
@@ -483,7 +498,7 @@ public class MiningOverlay extends TextOverlay {
 
 
         public String getFormattedString(long currentTimeMillis){
-            String returnText = EnumChatFormatting.AQUA+"Forge "+(this.forgeID+1)+": ";
+            String returnText = EnumChatFormatting.DARK_AQUA+"Forge "+(this.forgeID+1)+": ";
             if(status == 0){
                 return returnText +EnumChatFormatting.GRAY +"Empty";
             } else if(status == 1){

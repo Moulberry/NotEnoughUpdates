@@ -56,7 +56,7 @@ public class OverlayManager {
                 "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY");
         miningOverlay = new MiningOverlay(NotEnoughUpdates.INSTANCE.config.mining.overlayPosition, () -> {
             List<String> strings = new ArrayList<>();
-            for(int i : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText) {
+            for(int i : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText2) {
                 if(i >= 0 && i < miningDummy.size()) strings.add(miningDummy.get(i));
             }
             return strings;
