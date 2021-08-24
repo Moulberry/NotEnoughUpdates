@@ -1991,7 +1991,7 @@ public class NEUOverlay extends Gui {
             ItemStack stack = manager.jsonToStack(json);
             {
                 NBTTagCompound tag = stack.getTagCompound();
-                tag.setBoolean("ItemList", true);
+                tag.setBoolean("DisablePetExp", true);
                 stack.setTagCompound(tag);
             }
 

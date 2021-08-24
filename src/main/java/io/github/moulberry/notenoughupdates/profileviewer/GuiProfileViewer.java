@@ -1496,7 +1496,14 @@ public class GuiProfileViewer extends GuiScreen {
         for(int i=petsPage*20; i<Math.min(petsPage*20+20, Math.min(sortedPetsStack.size(), sortedPets.size())); i++) {
             JsonObject pet = sortedPets.get(i);
             ItemStack stack = sortedPetsStack.get(i);
+
+
             if(pet != null) {
+                {
+                    NBTTagCompound tag = stack.getTagCompound();
+                    tag.setBoolean("DisablePetExp", true);
+                    stack.setTagCompound(tag);
+                }
                 int xIndex = (i%20) % COLLS_XCOUNT;
                 int yIndex = (i%20) / COLLS_XCOUNT;
 

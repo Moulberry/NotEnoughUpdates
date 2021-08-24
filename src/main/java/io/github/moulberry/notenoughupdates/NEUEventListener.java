@@ -2335,8 +2335,8 @@ public class NEUEventListener {
     private List<String> petToolTipXPExtend(ItemTooltipEvent event) {
         List<String> tooltipText = new ArrayList();
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
-            if(event.itemStack.getTagCompound().hasKey("ItemList")){
-                if(event.itemStack.getTagCompound().getBoolean("ItemList")){
+            if(event.itemStack.getTagCompound().hasKey("DisablePetExp")){
+                if(event.itemStack.getTagCompound().getBoolean("DisablePetExp")){
                     return tooltipText;
                 }
             }
