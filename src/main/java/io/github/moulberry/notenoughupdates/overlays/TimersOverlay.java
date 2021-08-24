@@ -243,7 +243,6 @@ public class TimersOverlay extends TextOverlay {
                         }
                         if (godpotRemaingTimeUnformatted.length >= 1) {
                             godPotDuration = godPotDuration + (long) Integer.parseInt(godpotRemaingTimeUnformatted[i]) * 1000;
-
                         }
                     } catch (Exception ignored) {
                     }

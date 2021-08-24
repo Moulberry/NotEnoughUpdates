@@ -139,6 +139,30 @@ public class Mining {
     @ConfigAccordionId(id = 2)
     public int overlayStyle = 0;
 
+
+    @Expose
+    @ConfigOption(
+            name = "Forge Display",
+            desc = "Change what gets shown in the Forge Display"
+    )
+    @ConfigEditorDropdown(
+            values = {"Only Done", "Only Working", "Everything Except Locked", "Everything"}
+    )
+    @ConfigAccordionId(id = 2)
+    public int forgeDisplay = 1;
+
+    @Expose
+    @ConfigOption(
+            name = "Forge Location",
+            desc = "Change when the forge display gets shown"
+    )
+    @ConfigEditorDropdown(
+            values = {"Dwarven mines", "DM+Crystal Hollows", "Everywhere except dungeons", "Everywhere"}
+    )
+    @ConfigAccordionId(id = 2)
+    public int forgeDisplayLocation = 0;
+
+
     @ConfigOption(
             name = "Metal Detector Solver",
             desc = ""
