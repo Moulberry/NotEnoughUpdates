@@ -282,8 +282,8 @@ public class CrystalHollowOverlay extends TextOverlay {
                 hidden.crystals.put(crystalMatcher.group("crystal"), 1);
             else {
                 String item = message.replace("  ", "");
-                if (hidden.divanMinesParts.containsKey(item))
-                    hidden.divanMinesParts.put(item, false);
+                if (hidden.automatonParts.containsKey(item))
+                    hidden.automatonParts.put(item, false);
             }
         } else if (message.startsWith("[NPC] Professor Robot: ")) {
             switch (message) {
