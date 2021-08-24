@@ -45,6 +45,8 @@ import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CustomItemEffects {
 
@@ -59,7 +61,7 @@ public class CustomItemEffects {
 
     public long lastUsedHyperion = 0;
 
-
+    private final Pattern etherwarpDistancePattern = Pattern.compile("up to (?<distance>\\d{2}) blocks away\\.");
 
     public int aoteTeleportationMillis = 0;
     public Vector3f aoteTeleportationCurr = null;
@@ -262,7 +264,10 @@ public class CustomItemEffects {
                         denyTpReason = "Not solid!";
                     } else {
                         WorldClient world = Minecraft.getMinecraft().theWorld;
-                        if(world.getBlockState(pos.add(0, 1, 0)).getBlock() != Blocks.air ||
+                        Block above = world.getBlockState(pos.add(0, 1, 0)).getBlock();
+                        if(above != Blocks.air && above.isCollidable() &&
+                                above.getCollisionBoundingBox(Minecraft.getMinecraft().theWorld, pos.add(0, 1, 0),
+                                        world.getBlockState(pos.add(0, 1, 0))) != null ||
                                 world.getBlockState(pos.add(0, 2, 0)).getBlock() != Blocks.air) {
                             denyTpReason = "No air above!";
                         }
@@ -543,34 +548,45 @@ public class CustomItemEffects {
                     }
 
                     if(usingEtherwarp) {
-                        etherwarpRaycast = raycast(Minecraft.getMinecraft().thePlayer, 1f, 60, 0.1f);
-
-                        if(etherwarpRaycast != null) {
-                            AxisAlignedBB bb = etherwarpRaycast.state.getBlock().getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, etherwarpRaycast.pos)
-                                    .expand(0.01D, 0.01D, 0.01D).offset(-d0, -d1, -d2);
-                            drawFilledBoundingBox(bb, 1f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);
-
-                            GlStateManager.disableDepth();
-                            drawOutlineBoundingBox(bb, 2f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);
-                            GlStateManager.enableDepth();
-
-                            GlStateManager.depthMask(true);
-                            GlStateManager.enableTexture2D();
-                            GlStateManager.disableBlend();
-
-                            if(NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpZoom) {
-                                float distFactor = 1 - (float)Math.sqrt(etherwarpRaycast.pos.distanceSq(Minecraft.getMinecraft().thePlayer.getPosition()))/60;
-
-                                targetFOVMult = distFactor*distFactor*distFactor*0.75f + 0.25f;
-                                if(targetFOVMult < 0.25f) targetFOVMult = 0.25f;
-
-                                targetSensMult = distFactor*0.76f + 0.25f;
+                        int dist = 0;
+                        for (String line : NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(held.getTagCompound())) {
+                            String cleaned = Utils.cleanColour(line);
+                            Matcher matcher = etherwarpDistancePattern.matcher(cleaned);
+                            if (matcher.matches()) {
+                                dist = Integer.parseInt(matcher.group("distance"));
+                                break;
                             }
-                        } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpZoom) {
-                            targetFOVMult = lastFOVMult;
                         }
+                        if (dist != 0) {
+                            etherwarpRaycast = raycast(Minecraft.getMinecraft().thePlayer, 1f, dist, 0.1f);
 
-                        return;
+                            if (etherwarpRaycast != null) {
+                                AxisAlignedBB bb = etherwarpRaycast.state.getBlock().getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, etherwarpRaycast.pos)
+                                        .expand(0.01D, 0.01D, 0.01D).offset(-d0, -d1, -d2);
+                                drawFilledBoundingBox(bb, 1f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);
+
+                                GlStateManager.disableDepth();
+                                drawOutlineBoundingBox(bb, 2f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);
+                                GlStateManager.enableDepth();
+
+                                GlStateManager.depthMask(true);
+                                GlStateManager.enableTexture2D();
+                                GlStateManager.disableBlend();
+
+                                if (NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpZoom) {
+                                    float distFactor = 1 - (float) Math.sqrt(etherwarpRaycast.pos.distanceSq(Minecraft.getMinecraft().thePlayer.getPosition())) / 60;
+
+                                    targetFOVMult = distFactor * distFactor * distFactor * 0.75f + 0.25f;
+                                    if (targetFOVMult < 0.25f) targetFOVMult = 0.25f;
+
+                                    targetSensMult = distFactor * 0.76f + 0.25f;
+                                }
+                            } else if (NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpZoom) {
+                                targetFOVMult = lastFOVMult;
+                            }
+
+                            return;
+                        }
                     }
                 }
             }
