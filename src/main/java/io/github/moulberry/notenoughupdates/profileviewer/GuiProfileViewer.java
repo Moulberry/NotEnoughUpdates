@@ -1398,7 +1398,6 @@ public class GuiProfileViewer extends GuiScreen {
                 if(tag.hasKey("display", 10)) {
                     NBTTagCompound display = tag.getCompoundTag("display");
                     if(display.hasKey("Lore", 9)) {
-                        NBTTagList newNewLore = new NBTTagList();
                         NBTTagList newLore = new NBTTagList();
                         NBTTagList lore = display.getTagList("Lore", 8);
                         HashMap<Integer, Integer> blankLocations = new HashMap<>();
@@ -1429,37 +1428,45 @@ public class GuiProfileViewer extends GuiScreen {
                                 }
                             }
                         }
-                        if(heldItemJson != null && secondLastBlank != null) {
-                            for(int j=0; j<newLore.tagCount(); j++) {
-                                String line = newLore.getStringTagAt(j);
-
-                                if(j == secondLastBlank.intValue()) {
-                                    newNewLore.appendTag(new NBTTagString(""));
-                                    newNewLore.appendTag(new NBTTagString(EnumChatFormatting.GOLD+"Held Item: "+heldItemJson.get("displayname").getAsString()));
+                        for (int i = 0; i < newLore.tagCount() ; i++){
+                            String cleaned = Utils.cleanColour(newLore.get(i).toString());
+                            if (cleaned.equals("\"Right-click to add this pet to\"")){
+                                newLore.removeTag(i + 1);
+                                newLore.removeTag(i);
+                                secondLastBlank = i - 1;
+                                break;
+                            }
+                        }
+                        NBTTagList temp = new NBTTagList();
+                        for (int i = 0; i < newLore.tagCount(); i++) {
+                            temp.appendTag(newLore.get(i));
+                            if(secondLastBlank != null && i == secondLastBlank) {
+                                if (heldItem != null) {
+                                    temp.appendTag(new NBTTagString(EnumChatFormatting.GOLD + "Held Item: " + heldItemJson.get("displayname").getAsString()));
                                     int blanks = 0;
                                     JsonArray heldItemLore = heldItemJson.get("lore").getAsJsonArray();
-                                    for(int k=0; k<heldItemLore.size(); k++) {
+                                    for (int k = 0; k < heldItemLore.size(); k++) {
                                         String heldItemLine = heldItemLore.get(k).getAsString();
-                                        if(heldItemLine.trim().isEmpty()) {
+                                        if (heldItemLine.trim().isEmpty()) {
                                             blanks++;
-                                        } else if(blanks==2) {
-                                            newNewLore.appendTag(new NBTTagString(heldItemLine));
-                                        } else if(blanks>2) {
+                                        } else if (blanks == 2) {
+                                            System.out.println(heldItemLine);
+                                            temp.appendTag(new NBTTagString(heldItemLine));
+                                        } else if (blanks > 2) {
                                             break;
                                         }
                                     }
+                                    temp.appendTag(new NBTTagString());
                                 }
-
-                                newNewLore.appendTag(new NBTTagString(line));
+                                if (candy != 0) {
+                                    temp.appendTag(new NBTTagString(EnumChatFormatting.GREEN + "(" + candy + "/10) Pet Candy Used"));
+                                    temp.appendTag(new NBTTagString());
+                                }
+                                temp.removeTag(temp.tagCount() - 1);
                             }
-                            display.setTag("Lore", newNewLore);
-                        } else {
-                            display.setTag("Lore", newLore);
                         }
-                        if(candy != 0){
-                            newLore.appendTag(new NBTTagString());
-                            newLore.appendTag(new NBTTagString(EnumChatFormatting.GREEN + "(" + candy + "/10) Pet Candy Used"));
-                        }
+                        newLore = temp;
+                        display.setTag("Lore", newLore);
                     }
                     if(display.hasKey("Name", 8)) {
                         String displayName = display.getString("Name");
