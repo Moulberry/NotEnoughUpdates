@@ -81,12 +81,13 @@ public class CrystalHollowOverlay extends TextOverlay {
                         for (String part : hidden.crystals.keySet()) {
                             switch (hidden.crystals.get(part)) {
                                 case 2:
-                                    overlayStrings.add(EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] + part + ": " +
-                                            EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowDoneColor] + "Placed");
+                                    if (!NotEnoughUpdates.INSTANCE.config.mining.crystalHollowHideDone)
+                                        overlayStrings.add(EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] + part + ": " +
+                                                EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPlacedColor] + "Placed");
                                     break;
                                 case 1:
                                     overlayStrings.add(EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] + part + ": " +
-                                            EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowInventoryColor] + "Collected");
+                                            EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowCollectedColor] + "Collected");
                                     break;
                                 case 0:
                                     overlayStrings.add(EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] + part + ": " +
@@ -100,8 +101,8 @@ public class CrystalHollowOverlay extends TextOverlay {
                     if (crystalCheck()) {
                         int count = getCountCrystal(hidden.crystals);
                         float percent = (float) count / hidden.crystals.size() * 100;
-                        overlayStrings.add(EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] + "Crystals: " + getColor(percent) + count
-                                + "/" + hidden.crystals.size());
+                        overlayStrings.add(EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] + "Crystals: " + getColor(percent)
+                                + count + "/" + hidden.crystals.size());
                     }
                     break;
                 case 2:
@@ -151,7 +152,7 @@ public class CrystalHollowOverlay extends TextOverlay {
 
     private void renderParts(HashMap<String, Boolean> parts, HashMap<String, Integer> inventoryData, HashMap<String, Integer> storageData) {
         for (String part : parts.keySet()) {
-            if (parts.get(part))
+            if (parts.get(part) && !NotEnoughUpdates.INSTANCE.config.mining.crystalHollowHideDone)
                 overlayStrings.add(EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] + part + ": " +
                         EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowDoneColor] + "Done");
             else if (inventoryData.get(part) >= 1)
@@ -200,11 +201,11 @@ public class CrystalHollowOverlay extends TextOverlay {
 
     private EnumChatFormatting getColor(float percent) {
         if (percent >= 66)
-            return EnumChatFormatting.GREEN;
+            return EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowAllColor];
         else if (percent >= 33)
-            return EnumChatFormatting.YELLOW;
+            return EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowMiddleColor];
         else
-            return EnumChatFormatting.RED;
+            return EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowNoneColor];
     }
 
     private int getCount(HashMap<String, Boolean> parts, HashMap<String, Integer> inventoryData, HashMap<String, Integer> storageData) {
@@ -240,7 +241,7 @@ public class CrystalHollowOverlay extends TextOverlay {
     }
 
     private boolean crystalCheck() {
-        return true;
+        return NotEnoughUpdates.INSTANCE.config.mining.crystalHollowCrystalLocation == 0 || !divanCheck() && !automatonCheck();
     }
 
     public void message(String message) {

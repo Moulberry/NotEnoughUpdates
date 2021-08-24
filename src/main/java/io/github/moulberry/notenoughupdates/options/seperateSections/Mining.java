@@ -179,12 +179,12 @@ public class Mining {
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 6)
-    public boolean crystalHollowOverlay = false;
+    public boolean crystalHollowOverlay = true;
 
     @Expose
     @ConfigOption(
             name = "Position",
-            desc = "Change the position of the Crystal Hollows Overlay overlay."
+            desc = "Change the position of the Crystal Hollows Overlay."
     )
     @ConfigEditorButton(
             runnableId = 10,
@@ -195,8 +195,9 @@ public class Mining {
 
     @Expose
     @ConfigOption(
-            name = "Text",
-            desc = "\u00a7eDrag text to change the appearance of the overlay"
+            name = "Options",
+            desc = "Drag text to change the appearance of the overlay!\n" +
+                    "Click add to add extra things!"
     )
     @ConfigEditorDraggableList(
             exampleText = {
@@ -239,35 +240,13 @@ public class Mining {
     @Expose
     @ConfigOption(
             name = "Style",
-            desc = "Change the style of the Crystal Hollows Overlay overlay."
+            desc = "Change the style of the Crystal Hollows Overlay."
     )
     @ConfigEditorDropdown(
             values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
     )
     @ConfigAccordionId(id = 6)
     public int crystalHollowOverlayStyle = 0;
-
-    @Expose
-    @ConfigOption(
-            name = "Show Automaton",
-            desc = "Change where to show Automaton parts."
-    )
-    @ConfigEditorDropdown(
-            values = {"Crystal Hollows", "Precursor Remnants", "Lost Precursor City"}
-    )
-    @ConfigAccordionId(id = 6)
-    public int crystalHollowAutomatonLocation = 2;
-
-    @Expose
-    @ConfigOption(
-            name = "Show Automaton",
-            desc = "Change where to show Automaton parts."
-    )
-    @ConfigEditorDropdown(
-            values = {"Crystal Hollows", "Mithril Deposits", "Mines of Divan"}
-    )
-    @ConfigAccordionId(id = 6)
-    public int crystalHollowDivanLocation = 2;
 
 
     @Expose
@@ -290,35 +269,76 @@ public class Mining {
     public boolean crystalHollowHideDone = false;
 
     @ConfigOption(
-            name = "Colours",
+            name = "Locations",
             desc = ""
     )
     @ConfigEditorAccordion(id = 7)
+    @ConfigAccordionId(id = 6)
+    public boolean crystalHollowLocationAccordion = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Automaton",
+            desc = "Change where to show Automaton parts."
+    )
+    @ConfigEditorDropdown(
+            values = {"Crystal Hollows", "Precursor Remnants", "Lost Precursor City"}
+    )
+    @ConfigAccordionId(id = 7)
+    public int crystalHollowAutomatonLocation = 2;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Divan",
+            desc = "Change where to show Mines of Divan parts."
+    )
+    @ConfigEditorDropdown(
+            values = {"Crystal Hollows", "Mithril Deposits", "Mines of Divan"}
+    )
+    @ConfigAccordionId(id = 7)
+    public int crystalHollowDivanLocation = 2;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Crystal",
+            desc = "Change where to show Collected Crystals."
+    )
+    @ConfigEditorDropdown(
+            values = {"Crystal Hollows", "When No Other Overlays"}
+    )
+    @ConfigAccordionId(id = 7)
+    public int crystalHollowCrystalLocation = 1;
+
+    @ConfigOption(
+            name = "Colours",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 8)
     @ConfigAccordionId(id = 6)
     public boolean crystalHollowColourAccordion = false;
 
     @Expose
     @ConfigOption(
-            name = "Part colour",
-            desc = "Change the colour of the part text."
+            name = "Main Color",
+            desc = "Change the main color of the overlay."
 
     )
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 7)
+    @ConfigAccordionId(id = 8)
     public int crystalHollowPartColor = 3;
 
     @Expose
     @ConfigOption(
-            name = "Done colour",
+            name = "Done Color",
             desc = "Change the colour when the part is given to the NPC."
 
     )
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 7)
+    @ConfigAccordionId(id = 8)
     public int crystalHollowDoneColor = 10;
 
     @Expose
@@ -330,7 +350,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 7)
+    @ConfigAccordionId(id = 8)
     public int crystalHollowInventoryColor = 14;
 
     @Expose
@@ -342,7 +362,7 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 7)
+    @ConfigAccordionId(id = 8)
     public int crystalHollowStorageColor = 14;
 
     @Expose
@@ -354,8 +374,68 @@ public class Mining {
     @ConfigEditorDropdown(
             values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
     )
-    @ConfigAccordionId(id = 7)
+    @ConfigAccordionId(id = 8)
     public int crystalHollowMissingColor = 12;
+
+    @Expose
+    @ConfigOption(
+            name = "Placed Color",
+            desc = "Change the colour when the crystal is placed."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 8)
+    public int crystalHollowPlacedColor = 10;
+
+    @Expose
+    @ConfigOption(
+            name = "Collected Color",
+            desc = "Change the colour when the crystal is collected"
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 8)
+    public int crystalHollowCollectedColor = 14;
+
+    @Expose
+    @ConfigOption(
+            name = "All Color",
+            desc = "Change the colour when you have 2/3-all of the parts collected in the count overlay."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 8)
+    public int crystalHollowAllColor = 10;
+
+    @Expose
+    @ConfigOption(
+            name = "1/3 Color",
+            desc = "Change the colour when you have 1/3-2/3 of the parts collected in the count overlay."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 8)
+    public int crystalHollowMiddleColor = 14;
+
+    @Expose
+    @ConfigOption(
+            name = "0 Color",
+            desc = "Change the colour when you have 0-1/3 of the parts collected in the count overlay."
+
+    )
+    @ConfigEditorDropdown(
+            values = {"Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red", "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua", "Red", "Light Purple", "Yellow", "White"}
+    )
+    @ConfigAccordionId(id = 8)
+    public int crystalHollowNoneColor = 12;
 
     @Expose
     @ConfigOption(
