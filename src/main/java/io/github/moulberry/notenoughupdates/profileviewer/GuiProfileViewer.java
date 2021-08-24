@@ -1450,7 +1450,6 @@ public class GuiProfileViewer extends GuiScreen {
                                         if (heldItemLine.trim().isEmpty()) {
                                             blanks++;
                                         } else if (blanks == 2) {
-                                            System.out.println(heldItemLine);
                                             temp.appendTag(new NBTTagString(heldItemLine));
                                         } else if (blanks > 2) {
                                             break;
