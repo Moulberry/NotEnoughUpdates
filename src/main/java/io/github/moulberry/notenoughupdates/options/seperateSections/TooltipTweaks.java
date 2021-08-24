@@ -97,6 +97,16 @@ public class TooltipTweaks {
 
     @Expose
     @ConfigOption(
+            name = "Expand Pet Exp Requirement",
+            desc = "Show which the full amount of pet xp required"
+    )
+    @ConfigEditorBoolean
+    public boolean petExtendExp = true;
+
+
+
+    @Expose
+    @ConfigOption(
             name = "Tooltip Border Colours",
             desc = "Make the borders of tooltips match the rarity of the item (NEU Tooltips Only)"
     )

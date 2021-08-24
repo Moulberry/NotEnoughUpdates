@@ -3,12 +3,14 @@ package io.github.moulberry.notenoughupdates.overlays;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
 import com.google.gson.JsonObject;
+import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -22,6 +24,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.WorldSettings;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.Sys;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -85,9 +88,12 @@ public class MiningOverlay extends TextOverlay {
         }
     }
 
+    private static final Pattern timeRemainingForge = Pattern.compile("\\xA77Time Remaining: \\xA7a((?<Completed>Completed!)|(((?<days>[0-9]+)d)? ?((?<hours>[0-9]+)h)? ?((?<minutes>[0-9]+)m)? ?((?<seconds>[0-9]+)s)?))");
+    private static final Pattern timeRemainingTab = Pattern.compile(".*[1-5]\\) (?<ItemName>.*): ((?<Ready>Ready!)|(((?<days>[0-9]+)d)? ?((?<hours>[0-9]+)h)? ?((?<minutes>[0-9]+)m)? ?((?<seconds>[0-9]+)s)?))");
     @Override
     public void update() {
         overlayStrings = null;
+        NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
 
         /*if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
@@ -155,20 +161,86 @@ public class MiningOverlay extends TextOverlay {
             }
         }*/
 
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+            ContainerChest container = (ContainerChest) chest.inventorySlots;
+            IInventory lower = container.getLowerChestInventory();
+            String containerName = lower.getDisplayName().getUnformattedText();
+            if(containerName.equals("Forge") && lower.getSizeInventory() >= 36 && hidden != null){
+
+                itemLoop:
+                for (int i = 0; i < 5; i++) {
+                    ItemStack stack = lower.getStackInSlot(i+11);
+                    if(stack != null) {
+
+                        String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+
+
+                        for (int i1 = 0; i1 < lore.length; i1++) {
+                            String line = lore[i1];
+                            Matcher matcher = timeRemainingForge.matcher(line);
+                            if (stack.getDisplayName().matches("\\xA7cSlot #([1-5])")){
+                                ForgeItem newForgeItem = new ForgeItem("Locked", 0,1, i, false);
+                                replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                                //empty Slot
+                            } else if(stack.getDisplayName().matches("\\xA7aSlot #([1-5])")){
+                                ForgeItem newForgeItem = new ForgeItem("Empty", 0,0, i, false);
+                                replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                            } else if(matcher.matches()){
+                                String timeremainingString = matcher.group(1);
+
+                                long duration = 0;
+
+                                if(matcher.group("Completed")!= null && !matcher.group("Completed").equals("")){
+                                    ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), 0, 2, i, false);
+                                    replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                                } else {
+
+                                    try {
+                                        if (matcher.group("days") != null && !matcher.group("days").equals("")) {
+                                            duration = duration + (long) Integer.parseInt(matcher.group("days")) * 24 * 60 * 60 * 1000;
+                                        }
+                                        if (matcher.group("hours") != null && !matcher.group("hours").equals("")) {
+                                            duration = duration + (long) Integer.parseInt(matcher.group("hours")) * 60 * 60 * 1000;
+                                        }
+                                        if (matcher.group("minutes") != null && !matcher.group("minutes").equals("")) {
+                                            duration = duration + (long) Integer.parseInt(matcher.group("minutes")) * 60 * 1000;
+                                        }
+                                        if (matcher.group("seconds") != null && !matcher.group("seconds").equals("")) {
+                                            duration = duration + (long) Integer.parseInt(matcher.group("seconds")) * 1000;
+                                        }
+                                    } catch (Exception ignored) {
+                                    }
+                                    if (duration > 0) {
+                                        ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), System.currentTimeMillis() + duration, 2, i, false);
+                                        replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
+                                    }
+                                }
+
+                                continue itemLoop;
+                            }
+                        }
+                        //Locked Slot
+
+                    }
+                }
+            }
+        }
+
         if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay && NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints == 0) return;
         if(SBInfo.getInstance().getLocation() == null) return;
         if(!SBInfo.getInstance().getLocation().equals("mining_3") && !SBInfo.getInstance().getLocation().equals("crystal_hollows")) return;
 
         overlayStrings = new ArrayList<>();
         commissionProgress.clear();
-        List<String> forgeStrings = new ArrayList<>();
-        List<String> forgeStringsEmpty = new ArrayList<>();
+
         String mithrilPowder = null;
         String gemstonePowder = null;
-
+        int forgeInt = 0;
         boolean commissions = false;
         boolean forges = false;
         List<NetworkPlayerInfo> players = playerOrdering.sortedCopy(Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap());
+
         for(NetworkPlayerInfo info : players) {
             String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
             if(name.contains("Mithril Powder:")) {
@@ -188,16 +260,57 @@ public class MiningOverlay extends TextOverlay {
             }
             String clean = StringUtils.cleanColour(name);
             if(forges && clean.startsWith(" ")) {
+
                 char firstChar = clean.trim().charAt(0);
                 if(firstChar < '0' || firstChar > '9') {
                     forges = false;
                 } else {
-                    if(name.contains("LOCKED")) continue;
-                    if(name.contains("EMPTY")) {
-                        forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+
+                    if(name.contains("LOCKED")) {
+                        ForgeItem item = new ForgeItem("Locked", 0,1, forgeInt, true);
+                        replaceForgeOrAdd(item, hidden.forgeItems, true);
+                    } else if(name.contains("EMPTY")) {
+                        ForgeItem item = new ForgeItem("Empty", 0,0, forgeInt, true);
+                        replaceForgeOrAdd(item, hidden.forgeItems, true);
+                        //forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
                     } else {
-                        forgeStrings.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
+                        String cleanName = Utils.cleanColour(name);
+
+                        Matcher matcher = timeRemainingTab.matcher(cleanName);
+
+                        if(matcher.matches()){
+
+                            String itemName = matcher.group(1);
+
+                            if(matcher.group("Ready") != null && !matcher.group("Ready").equals("")){
+                                ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), 0, 2, forgeInt, true);
+                                replaceForgeOrAdd(item, hidden.forgeItems, true);
+                            } else {
+                                long duration = 0;
+                                try {
+                                    if (matcher.group("days") != null && !matcher.group("days").equals("")) {
+                                        duration = duration + (long) Integer.parseInt(matcher.group("days")) * 24 * 60 * 60 * 1000;
+                                    }
+                                    if (matcher.group("hours") != null && !matcher.group("hours").equals("")) {
+                                        duration = duration + (long) Integer.parseInt(matcher.group("hours")) * 60 * 60 * 1000;
+                                    }
+                                    if (matcher.group("minutes") != null && !matcher.group("minutes").equals("")) {
+                                        duration = duration + (long) Integer.parseInt(matcher.group("minutes")) * 60 * 1000;
+                                    }
+                                    if (matcher.group("seconds") != null && !matcher.group("seconds").equals("")) {
+                                        duration = duration + (long) Integer.parseInt(matcher.group("seconds")) * 1000;
+                                    }
+                                } catch (Exception ignored) {
+                                }
+                                if (duration > 0) {
+                                    duration = duration + 4000;
+                                    ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), System.currentTimeMillis() + duration, 2, forgeInt, true);
+                                    replaceForgeOrAdd(item, hidden.forgeItems, false);
+                                }
+                            }
+                        }
                     }
+                    forgeInt++;
                 }
             } else if(commissions && clean.startsWith(" ")) {
                 String[] split = clean.trim().split(": ");
@@ -269,6 +382,8 @@ public class MiningOverlay extends TextOverlay {
             pickaxeCooldown = DARK_AQUA+"Pickaxe CD: \u00a7a" + (ItemCooldowns.pickaxeUseCooldownMillisRemaining/1000) + "s";
         }
 
+
+
         for(int index : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText) {
             switch(index) {
                 case 0:
@@ -278,15 +393,128 @@ public class MiningOverlay extends TextOverlay {
                 case 2:
                     overlayStrings.add(gemstonePowder); break;
                 case 3:
-                    overlayStrings.addAll(forgeStrings); break;
+                    overlayStrings.addAll(getForgeStrings(hidden.forgeItems)); break;
                 case 4:
-                    overlayStrings.addAll(forgeStringsEmpty); break;
+                    //overlayStrings.addAll(forgeStringsEmpty); break;
                 case 5:
                     overlayStrings.add(pickaxeCooldown); break;
             }
         }
 
         if(overlayStrings.isEmpty()) overlayStrings = null;
+    }
+
+    private static List<String> getForgeStrings(List<ForgeItem> forgeItems){
+        List<String> forgeString = new ArrayList<>();
+        long currentTimeMillis = System.currentTimeMillis();
+        forgeIDLabel:
+        for (int i = 0; i < 5; i++) {
+            for (int y = 0; y < forgeItems.size(); y++) {
+                if (forgeItems.get(y).forgeID == i) {
+                    ForgeItem item = forgeItems.get(y);
+                    if (NotEnoughUpdates.INSTANCE.config.mining.forgeDisplay == 0) {
+                        if (item.status == 2 && item.finishTime < currentTimeMillis) {
+
+                            forgeString.add(item.getFormattedString(currentTimeMillis));
+                            continue forgeIDLabel;
+                        }
+                    } else if (NotEnoughUpdates.INSTANCE.config.mining.forgeDisplay == 1) {
+                        if (item.status == 2) {
+
+                            forgeString.add(item.getFormattedString(currentTimeMillis));
+                            continue forgeIDLabel;
+                        }
+                    } else if (NotEnoughUpdates.INSTANCE.config.mining.forgeDisplay == 2) {
+                        if (item.status == 2 || item.status ==0) {
+
+                            forgeString.add(item.getFormattedString(currentTimeMillis));
+                            continue forgeIDLabel;
+                        }
+                    } else if (NotEnoughUpdates.INSTANCE.config.mining.forgeDisplay == 3) {
+
+                        forgeString.add(item.getFormattedString(currentTimeMillis));
+                        continue forgeIDLabel;
+                    }
+                }
+            }
+        }
+        return forgeString;
+    }
+
+    private static void replaceForgeOrAdd(ForgeItem item, List<ForgeItem> forgeItems, boolean overwrite){
+        for (int i = 0; i < forgeItems.size(); i++) {
+            if (forgeItems.get(i).forgeID == item.forgeID) {
+                if (overwrite) {
+                    forgeItems.set(i, item);
+                    return;
+                } else {
+                    ForgeItem currentItem = forgeItems.get(i);
+                    if (!(currentItem.status == 2 && item.status ==2)) {
+                        forgeItems.set(i, item);
+                        return;
+                    } else if(currentItem.fromScoreBoard){
+                        forgeItems.set(i, item);
+                        return;
+                    }
+                }
+                return;
+            }
+        }
+        forgeItems.add(item);
+        return;
+    }
+
+    public static class ForgeItem{
+        public ForgeItem(String itemName, long finishTime, int status, int forgeID, boolean fromScoreBoard){
+            this.itemName = itemName;
+            this.finishTime = finishTime;
+            this.status = status;
+            this.forgeID = forgeID;
+            this.fromScoreBoard = fromScoreBoard;
+        }
+
+
+        @Expose public final String itemName;
+        @Expose public final long finishTime;
+        @Expose public final int status;
+        @Expose public final int forgeID;
+        @Expose public final boolean fromScoreBoard;
+
+
+
+        public String getFormattedString(long currentTimeMillis){
+            String returnText = EnumChatFormatting.AQUA+"Forge "+(this.forgeID+1)+": ";
+            if(status == 0){
+                return returnText +EnumChatFormatting.GRAY +"Empty";
+            } else if(status == 1){
+                return returnText+ EnumChatFormatting.DARK_RED+"Locked";
+            }
+
+            long timeDuration = finishTime - currentTimeMillis;
+            returnText =  returnText+ EnumChatFormatting.DARK_PURPLE +this.itemName+" : ";
+
+            int days = (int) (timeDuration / (1000*60*60*24));
+            timeDuration = timeDuration-(days*(1000*60*60*24));
+            int hours = (int) ((timeDuration / (1000*60*60)) % 24);
+
+            if(days > 0){
+                return returnText+EnumChatFormatting.AQUA+days+"d "+hours+"h";
+            }
+            timeDuration = timeDuration-(hours*(1000*60*60));
+            int minutes = (int) ((timeDuration / (1000*60)) % 60);
+            if(hours > 0){
+                return returnText+EnumChatFormatting.AQUA+hours+"h "+minutes+"m";
+            }
+            timeDuration = timeDuration-(minutes*(1000*60));
+            int seconds = (int) (timeDuration / 1000) % 60 ;
+            if(minutes > 0){
+                return returnText+EnumChatFormatting.AQUA+minutes+"m "+seconds+"s";
+            } else if(seconds > 0){
+                return returnText+EnumChatFormatting.AQUA+seconds+"s";
+            } else {
+                return returnText+ EnumChatFormatting.DARK_GREEN+"Done";
+            }
+        }
     }
 
     private static final Ordering<NetworkPlayerInfo> playerOrdering = Ordering.from(new PlayerComparator());

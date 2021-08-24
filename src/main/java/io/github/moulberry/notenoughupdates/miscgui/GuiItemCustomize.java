@@ -68,7 +68,7 @@ public class GuiItemCustomize extends GuiScreen {
             this.enchantGlint = stackHasEffect;
         }
 
-        supportCustomLeatherColour = stack.getItem() instanceof ItemArmor && ((ItemArmor)stack.getItem()).hasColor(stack);
+        supportCustomLeatherColour = stack.getItem() instanceof ItemArmor && ((ItemArmor) stack.getItem()).getArmorMaterial() == ItemArmor.ArmorMaterial.LEATHER;
 
         enchantGlintCustomColourAnimation.setValue(enchantGlint ? 17 : 0);
         this.enchantGlintButton = new GuiElementBoolean(0, 0, enchantGlint, (bool) -> {
