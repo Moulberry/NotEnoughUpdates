@@ -283,10 +283,12 @@ public class CustomItemEffects {
                 }
             }
 
+            boolean onPrivateIsland = SBInfo.getInstance().getLocation() == null || SBInfo.getInstance().getLocation().equals("dynamic");
+
 
             if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay &&
                     Minecraft.getMinecraft().objectMouseOver != null &&
-                    Minecraft.getMinecraft().objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                    Minecraft.getMinecraft().objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && onPrivateIsland) {
 
                 IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(
                         Minecraft.getMinecraft().objectMouseOver.getBlockPos().offset(
@@ -528,6 +530,7 @@ public class CustomItemEffects {
         ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
         String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
         if(heldInternal != null) {
+            boolean onPrivateIsland = SBInfo.getInstance().getLocation() == null || SBInfo.getInstance().getLocation().equals("dynamic");
             EntityPlayer player = event.player;
             double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double)event.partialTicks;
             double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)event.partialTicks;
@@ -592,8 +595,8 @@ public class CustomItemEffects {
             }
 
             if(heldInternal.equals("BLOCK_ZAPPER")) {
-                boolean privateIs = SBInfo.getInstance().getLocation() == null || SBInfo.getInstance().getLocation().equals("dynamic");
-                if (!privateIs || !NotEnoughUpdates.INSTANCE.config.itemOverlays.enableZapperOverlay ||
+
+                if (!onPrivateIsland || !NotEnoughUpdates.INSTANCE.config.itemOverlays.enableZapperOverlay ||
                         event.target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
                     zapperBlocks.clear();
                     return;
@@ -729,7 +732,7 @@ public class CustomItemEffects {
                     GlStateManager.disableBlend();
                 }
             } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay) {
-                if(heldInternal.equals("BUILDERS_WAND")) {
+                if(heldInternal.equals("BUILDERS_WAND") && onPrivateIsland) {
                     int maxBlocks = MAX_BUILDERS_BLOCKS;
                     if (event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                         IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos().offset(event.target.sideHit, 1));
@@ -811,7 +814,7 @@ public class CustomItemEffects {
                         GlStateManager.enableTexture2D();
                         GlStateManager.disableBlend();
                     }
-                } else if((heldInternal.equals("WATER_BUCKET") || heldInternal.equals("MAGICAL_WATER_BUCKET") && NotEnoughUpdates.INSTANCE.config.itemOverlays.enablePrismapumpOverlay) &&
+                } else if((heldInternal.equals("WATER_BUCKET") || heldInternal.equals("MAGICAL_WATER_BUCKET") && NotEnoughUpdates.INSTANCE.config.itemOverlays.enablePrismapumpOverlay && onPrivateIsland) &&
                         event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                     BlockPos hover = event.target.getBlockPos().offset(event.target.sideHit, 1);
 
@@ -893,7 +896,7 @@ public class CustomItemEffects {
                     GlStateManager.depthMask(true);
                     GlStateManager.enableTexture2D();
                     GlStateManager.disableBlend();
-                }  else if((heldInternal.equals("HOE_OF_GREAT_TILLING") || heldInternal.equals("HOE_OF_GREATER_TILLING")) &&
+                }  else if((heldInternal.equals("HOE_OF_GREAT_TILLING") || heldInternal.equals("HOE_OF_GREATER_TILLING") && onPrivateIsland) &&
                         event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                     BlockPos target = event.target.getBlockPos();
                     IBlockState targetState = Minecraft.getMinecraft().theWorld.getBlockState(target);
