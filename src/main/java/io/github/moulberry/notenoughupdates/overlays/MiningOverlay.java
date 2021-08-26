@@ -67,9 +67,7 @@ public class MiningOverlay extends TextOverlay {
                                     if(matcher.find()) {
                                         try {
                                             numberValue = Integer.parseInt(matcher.group("number").replace(",", ""));
-                                        } catch(NumberFormatException ignored) {
-                                            ignored.printStackTrace();
-                                        }
+                                        } catch(NumberFormatException ignored) {}
                                     }
                                 }
                             }
