@@ -239,7 +239,9 @@ public class MiningOverlay extends TextOverlay {
                 if (name.contains("Gemstone Powder:")) {
                     gemstonePowder = DARK_AQUA + Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
                 }
-                if (name.equals(RESET.toString() + BLUE + BOLD + "Forges " + RESET)) {
+
+                
+                if (name.matches("\\xa7r\\xa79\\xa7lForges \\xa7r(?:\\xa7f\\(\\+1 more\\)\\xa7r)?")) {
                     commissions = false;
                     forges = true;
                     continue;
