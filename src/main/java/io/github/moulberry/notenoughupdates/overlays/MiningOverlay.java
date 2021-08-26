@@ -14,6 +14,7 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -22,6 +23,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.WorldSettings;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.util.vector.Vector2f;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -508,7 +510,7 @@ public class MiningOverlay extends TextOverlay {
             }
 
             long timeDuration = finishTime - currentTimeMillis;
-            returnText =  returnText+ EnumChatFormatting.DARK_PURPLE +this.itemName+" : ";
+            returnText =  returnText+ EnumChatFormatting.DARK_PURPLE +this.itemName+": ";
 
             int days = (int) (timeDuration / (1000*60*60*24));
             timeDuration = timeDuration-(days*(1000*60*60*24));
@@ -551,5 +553,102 @@ public class MiningOverlay extends TextOverlay {
         }
     }
 
+    @Override
+    protected Vector2f getSize(List<String> strings) {
+        if (NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlayIcons)
+            return super.getSize(strings).translate(12, 0);
+        return super.getSize(strings);
+    }
 
+    @Override
+    protected void renderLine(String line, Vector2f position, boolean dummy) {
+        if (!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlayIcons) return;
+        GlStateManager.enableDepth();
+
+        ItemStack icon = null;
+        String cleaned = Utils.cleanColour(line);
+        String beforeColon = cleaned.split(":")[0];
+        switch (beforeColon) {
+            case "Mithril Powder":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("INK_SACK-10"));
+                break;
+            case "Gemstone Powder":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("INK_SACK-9"));
+                break;
+            case "Lucky Raffle":
+            case "Raffle":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MINING_RAFFLE_TICKET"));
+                break;
+            case "Pickaxe CD":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DIAMOND_PICKAXE"));
+                break;
+            case "Thyst Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("THYST_MONSTER"));
+                break;
+            case "Hard Stone Miner":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("HARD_STONE"));
+                break;
+            case "Ice Walker Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_ICE"));
+                break;
+            case "Goblin Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("GOBLIN_MONSTER"));
+                break;
+            case "Star Sentry Puncher":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("NETHER_STAR"));
+                break;
+            case "Goblin Raid":
+            case "Goblin Raid Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GOLD"));
+                break;
+            case "2x Mithril Powder Collector":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GLOWSTONE_DUST"));
+                break;
+            case "Automaton Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("AUTOMATON_MONSTER"));
+                break;
+            case "Sludge Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SLUDGE_MONSTER"));
+                break;
+            case "Team Treasurite Member Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("EXECUTIVE_WENDY_MONSTER"));
+                break;
+            case "Yog Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("YOG_MONSTER"));
+                break;
+            case "Boss Corleone Slayer":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("BOSS_CORLEONE_BOSS"));
+                break;
+            case "Chest Looter":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("CHEST"));
+                break;
+        }
+        if (icon == null) {
+            if(beforeColon.startsWith("Forge")){
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ANVIL"));
+            } else if (beforeColon.contains("Mithril")) {
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MITHRIL_ORE"));
+            } else if(beforeColon.endsWith(" Gemstone Collector")){
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ROUGH_"
+                        + beforeColon.replace(" Gemstone Collector", "").toUpperCase() + "_GEM"));
+            } else if (beforeColon.endsWith(" Crystal Hunter")){
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_"
+                        + beforeColon.replace(" Crystal Hunter", "").toUpperCase() + "_GEM"));
+            } else if (beforeColon.contains("Titanium")) {
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("TITANIUM_ORE"));
+            }
+        }
+
+        if (icon != null) {
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(position.x, position.y, 0);
+            GlStateManager.scale(0.5f, 0.5f, 1f);
+            Utils.drawItemStack(icon, 0, 0);
+            GlStateManager.popMatrix();
+
+            position.x += 12;
+        }
+
+        super.renderLine(line, position, dummy);
+    }
 }

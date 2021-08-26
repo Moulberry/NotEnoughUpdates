@@ -138,6 +138,14 @@ public class Mining {
     @ConfigAccordionId(id = 2)
     public int overlayStyle = 0;
 
+    @Expose
+    @ConfigOption(
+            name = "Show Icons",
+            desc = "Show Icons representing the part of the overlay."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 2)
+    public boolean dwarvenOverlayIcons = true;
 
     @Expose
     @ConfigOption(
