@@ -937,6 +937,16 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if(containerName.endsWith(" Profile")){
+                Slot slot = new Slot(cc.getLowerChestInventory(), 34, cc.inventorySlots.get(34).xDisplayPosition, cc.inventorySlots.get(34).yDisplayPosition);
+                slot.putStack(Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block), EnumChatFormatting.GREEN + "Profile Viewer",
+                        EnumChatFormatting.YELLOW + "Click to open NEU profile viewer!"));
+                cc.inventorySlots.replaceAll(e -> {
+                    if(e.getSlotIndex() == 34)
+                        return slot;
+                    return e;
+                });
+            }
         }
 
         if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
@@ -1386,6 +1396,12 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if(containerName.endsWith(" Profile") && eventGui.getSlotUnderMouse() != null && eventGui.getSlotUnderMouse().getSlotIndex() == 34 &&
+                Mouse.getEventButton() >= 0) {
+                event.setCanceled(true);
+                Utils.playPressSound();
+                NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{containerName.replaceAll("'s? Profile", "")});
+            }
         }
 
         if(GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
