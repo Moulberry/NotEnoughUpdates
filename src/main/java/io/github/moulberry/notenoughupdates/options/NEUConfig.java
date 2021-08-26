@@ -23,6 +23,7 @@ import org.lwjgl.util.vector.Vector2f;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NEUConfig extends Config {
 
@@ -285,6 +286,7 @@ public class NEUConfig extends Config {
         @Expose public ArrayList<String> enchantColours = createDefaultEnchantColours();
         @Expose public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
         @Expose public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
+        @Expose public Map<String, Integer> commissionMaxes = new HashMap<>();
 
         @Expose public boolean firstTimeSearchFocus = true;
 

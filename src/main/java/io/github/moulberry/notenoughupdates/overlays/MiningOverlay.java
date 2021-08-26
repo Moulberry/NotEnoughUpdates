@@ -38,8 +38,7 @@ public class MiningOverlay extends TextOverlay {
         super(position, dummyStrings, styleSupplier);
     }
 
-    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+(?: |$)");
-    private static Map<String, Integer> commissionMaxes = new HashMap<>();
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("(?<number>\\d*,?\\d+)(?: |$)");
     public static Map<String, Float> commissionProgress = new LinkedHashMap<>();
 
     @Override
@@ -67,8 +66,10 @@ public class MiningOverlay extends TextOverlay {
                                     Matcher matcher = NUMBER_PATTERN.matcher(clean);
                                     if(matcher.find()) {
                                         try {
-                                            numberValue = Integer.parseInt(matcher.group());
-                                        } catch(NumberFormatException ignored) {}
+                                            numberValue = Integer.parseInt(matcher.group("number").replace(",", ""));
+                                        } catch(NumberFormatException ignored) {
+                                            ignored.printStackTrace();
+                                        }
                                     }
                                 }
                             }
@@ -80,7 +81,7 @@ public class MiningOverlay extends TextOverlay {
                             }
                         }
                         if(name != null && numberValue > 0) {
-                            commissionMaxes.put(name, numberValue);
+                            NotEnoughUpdates.INSTANCE.config.hidden.commissionMaxes.put(name, numberValue);
                         }
                     }
                 }
@@ -343,8 +344,8 @@ public class MiningOverlay extends TextOverlay {
                     } else if (entry.getValue() >= 0.25) {
                         col = GOLD;
                     }
-                    if (true && commissionMaxes.containsKey(entry.getKey())) {
-                        int max = commissionMaxes.get(entry.getKey());
+                    if (NotEnoughUpdates.INSTANCE.config.hidden.commissionMaxes.containsKey(entry.getKey())) {
+                        int max = NotEnoughUpdates.INSTANCE.config.hidden.commissionMaxes.get(entry.getKey());
                         commissionsStrings.add(DARK_AQUA + entry.getKey() + ": " + col + Math.round(entry.getValue() * max) + "/" + max);
                     } else {
                         String valS = Utils.floatToString(entry.getValue() * 100, 1);
