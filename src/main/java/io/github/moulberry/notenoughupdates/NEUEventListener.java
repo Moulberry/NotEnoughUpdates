@@ -1399,8 +1399,10 @@ public class NEUEventListener {
             if(containerName.endsWith(" Profile") && eventGui.getSlotUnderMouse() != null && eventGui.getSlotUnderMouse().getSlotIndex() == 34 &&
                 Mouse.getEventButton() >= 0) {
                 event.setCanceled(true);
-                Utils.playPressSound();
-                NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{containerName.replaceAll("'s? Profile", "")});
+                if(Mouse.getEventButtonState()) {
+                    Utils.playPressSound();
+                    NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{containerName.replaceAll("'s? Profile", "")});
+                }
             }
         }
 

@@ -166,6 +166,7 @@ public class StorageManager {
     public static class StorageConfig {
         public HashMap<String, StoragePage[]> pages = new HashMap<>();
         public final HashMap<Integer, Integer> displayToStorageIdMap = new HashMap<>();
+        public final HashMap<Integer, Integer> displayToStorageIdMapRender = new HashMap<>();
     }
 
     public StorageConfig storageConfig = new StorageConfig();
@@ -491,21 +492,22 @@ public class StorageManager {
                 if(changed) {
                     synchronized(storageConfig.displayToStorageIdMap) {
                         storageConfig.displayToStorageIdMap.clear();
+                        storageConfig.displayToStorageIdMapRender.clear();
                         int displayIndex = 0;
                         for(int i=0; i<storagePresent.length; i++) {
                             if(storagePresent[i]) {
-                                if(lastSearch == null || lastSearch.isEmpty()) {
-                                    storageConfig.displayToStorageIdMap.put(displayIndex++, i);
-                                } else {
+                                storageConfig.displayToStorageIdMap.put(displayIndex, i);
+                                if(lastSearch != null && !lastSearch.isEmpty()){
                                     StoragePage page = getPage(i, false);
 
                                     if(page != null) {
                                         updateSearchForPage(lastSearch, page);
                                         if(page.matchesSearch) {
-                                            storageConfig.displayToStorageIdMap.put(displayIndex++, i);
+                                            storageConfig.displayToStorageIdMapRender.put(displayIndex++, i);
                                         }
                                     }
-                                }
+                                } else
+                                    storageConfig.displayToStorageIdMapRender.put(displayIndex++, i);
                             }
                         }
                     }
@@ -530,21 +532,22 @@ public class StorageManager {
                 if(changed) {
                     synchronized(storageConfig.displayToStorageIdMap) {
                         storageConfig.displayToStorageIdMap.clear();
+                        storageConfig.displayToStorageIdMapRender.clear();
                         int displayIndex = 0;
                         for(int i=0; i<storagePresent.length; i++) {
                             if(storagePresent[i]) {
-                                if(lastSearch == null || lastSearch.isEmpty()) {
-                                    storageConfig.displayToStorageIdMap.put(displayIndex++, i);
-                                } else {
+                                storageConfig.displayToStorageIdMap.put(displayIndex, i);
+                                if(lastSearch != null && !lastSearch.isEmpty()){
                                     StoragePage page = getPage(i, false);
 
                                     if(page != null) {
                                         updateSearchForPage(lastSearch, page);
                                         if(page.matchesSearch) {
-                                            storageConfig.displayToStorageIdMap.put(displayIndex++, i);
+                                            storageConfig.displayToStorageIdMapRender.put(displayIndex++, i);
                                         }
                                     }
-                                }
+                                } else
+                                    storageConfig.displayToStorageIdMapRender.put(displayIndex++, i);
                             }
                         }
                     }
@@ -590,8 +593,8 @@ public class StorageManager {
     public void searchDisplay(String searchStr) {
         if(storagePresent == null) return;
 
-        synchronized(storageConfig.displayToStorageIdMap) {
-            storageConfig.displayToStorageIdMap.clear();
+        synchronized(storageConfig.displayToStorageIdMapRender) {
+            storageConfig.displayToStorageIdMapRender.clear();
 
             lastSearch = searchStr;
             int sid = searchId.incrementAndGet();
@@ -603,10 +606,10 @@ public class StorageManager {
                         if(page.rows > 0) {
                             updateSearchForPage(searchStr, page);
                             if(page.matchesSearch) {
-                                storageConfig.displayToStorageIdMap.put(displayIndex++, i);
+                                storageConfig.displayToStorageIdMapRender.put(displayIndex++, i);
                             }
                         } else {
-                            storageConfig.displayToStorageIdMap.put(displayIndex++, i);
+                            storageConfig.displayToStorageIdMapRender.put(displayIndex++, i);
                             page.matchesSearch = true;
                             page.searchedId = sid;
                         }
