@@ -420,7 +420,7 @@ public class SlotLocking {
             return;
         } else if(locked.locked || (clickType == 2 && SlotLocking.getInstance().isSlotIndexLocked(clickedButton))) {
             consumer.accept(null);
-        } else if(NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotBinding && clickType == 1) {
+        } else if(NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotBinding && clickType == 1 && locked.boundTo != -1) {
             GuiContainer container = (GuiContainer) Minecraft.getMinecraft().currentScreen;
             Slot boundSlot = container.inventorySlots.getSlotFromInventory(Minecraft.getMinecraft().thePlayer.inventory, locked.boundTo);
 
