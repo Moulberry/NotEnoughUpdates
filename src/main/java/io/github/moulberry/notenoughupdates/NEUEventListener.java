@@ -776,6 +776,20 @@ public class NEUEventListener {
         return Utils.trimIgnoreColour(text.replaceAll(EnumChatFormatting.DARK_GREEN+"\\S+ Drill Fuel", ""));
     }
 
+
+    private IChatComponent replaceSocialControlsWithPV(IChatComponent chatComponent){
+
+        if(NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions && chatComponent.getChatStyle() != null && chatComponent.getChatStyle().getChatClickEvent() != null && chatComponent.getChatStyle().getChatClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND){
+            if(chatComponent.getChatStyle().getChatClickEvent().getValue().startsWith("/socialoptions")){
+                String username = chatComponent.getChatStyle().getChatClickEvent().getValue().substring(15);
+
+                chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv "+username, ""+EnumChatFormatting.YELLOW+"Click to open "+EnumChatFormatting.AQUA+EnumChatFormatting.BOLD+username+EnumChatFormatting.RESET+EnumChatFormatting.YELLOW+"'s profile in "+EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD+"NEU's"+EnumChatFormatting.RESET+EnumChatFormatting.YELLOW+ " profile viewer."));
+                return chatComponent;
+            }
+        }
+        return  chatComponent;
+    }
+
     /**
      * 1) When receiving "You are playing on profile" messages, will set the current profile.
      * 2) When a /viewrecipe command fails (i.e. player does not have recipe unlocked, will open the custom recipe GUI)
@@ -787,6 +801,8 @@ public class NEUEventListener {
             CrystalMetalDetectorSolver.process(e.message);
             e.message = processChatComponent(e.message);
             return;
+        } else if(e.type == 0){
+            e.message = replaceSocialControlsWithPV(e.message);
         }
 
         DungeonWin.onChatMessage(e);

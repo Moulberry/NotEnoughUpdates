@@ -38,6 +38,17 @@ public class Misc {
     @ConfigEditorBoolean
     public boolean guiButtonClicks = true;
 
+
+    @Expose
+    @ConfigOption(
+            name = "Replace Chat Social Options",
+            desc = "Replace Hypixel's chat social options with NEU's profile viewer."
+    )
+    @ConfigEditorBoolean
+    public boolean replaceSocialOptions = true;
+
+
+
     @Expose
     @ConfigOption(
             name = "Damage Indicator Style",

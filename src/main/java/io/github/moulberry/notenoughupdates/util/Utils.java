@@ -1045,6 +1045,11 @@ public class Utils {
         style.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW+value)));
         return style;
     }
+    public static ChatStyle createClickStyle(ClickEvent.Action action, String value, String message) {
+        ChatStyle style = createClickStyle(action, value);
+        style.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(message)));
+        return style;
+    }
 
     public static void recursiveDelete(File file) {
         if(file.isDirectory() && !Files.isSymbolicLink(file.toPath())) {
