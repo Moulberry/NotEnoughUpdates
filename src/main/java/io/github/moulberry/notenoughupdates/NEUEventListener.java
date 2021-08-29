@@ -953,15 +953,20 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.endsWith(" Profile")){
-                Slot slot = new Slot(cc.getLowerChestInventory(), 34, cc.inventorySlots.get(34).xDisplayPosition, cc.inventorySlots.get(34).yDisplayPosition);
-                slot.putStack(Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block), EnumChatFormatting.GREEN + "Profile Viewer",
-                        EnumChatFormatting.YELLOW + "Click to open NEU profile viewer!"));
-                cc.inventorySlots.replaceAll(e -> {
-                    if(e.getSlotIndex() == 34)
-                        return slot;
-                    return e;
-                });
+            if(containerName.contains(" Profile") && cc.inventorySlots.size() >= 54){
+                if(cc.inventorySlots.get(22).getStack() != null && cc.inventorySlots.get(22).getStack().getTagCompound() != null){
+                    NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
+                    if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
+                        String tagName = tag.getCompoundTag("SkullOwner").getString("Name");
+                        String displayname = Utils.cleanColour(cc.inventorySlots.get(22).getStack().getDisplayName());
+                        if(tagName.equals(displayname.substring(displayname.length()-tagName.length()))){
+                            Slot slot = new Slot(cc.getLowerChestInventory(), 42, cc.inventorySlots.get(42).xDisplayPosition, cc.inventorySlots.get(42).yDisplayPosition);
+                            slot.putStack(Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block), EnumChatFormatting.GREEN + "Profile Viewer",
+                                    EnumChatFormatting.YELLOW + "Click to open NEU profile viewer!"));
+                            cc.inventorySlots.set(42, slot);
+                        }
+                    }
+                }
             }
         }
 
@@ -1412,11 +1417,18 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.endsWith(" Profile") && eventGui.getSlotUnderMouse() != null && eventGui.getSlotUnderMouse().getSlotIndex() == 34 &&
-                Mouse.getEventButton() >= 0) {
+            if(containerName.contains(" Profile") && eventGui.getSlotUnderMouse() != null &&
+                    eventGui.getSlotUnderMouse().getSlotIndex() == 42 && Mouse.getEventButton() >= 0) {
                 event.setCanceled(true);
-                Utils.playPressSound();
-                NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{containerName.replaceAll("'s? Profile", "")});
+                if(eventGui.inventorySlots.inventorySlots.get(22).getStack() != null && eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){
+                    NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
+                    if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
+                        String username = tag.getCompoundTag("SkullOwner").getString("Name");
+                        Utils.playPressSound();
+                        NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{username});
+                    }
+                }
+
             }
         }
 
