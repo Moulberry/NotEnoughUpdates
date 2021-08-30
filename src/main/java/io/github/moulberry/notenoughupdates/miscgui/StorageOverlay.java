@@ -1543,6 +1543,8 @@ public class StorageOverlay extends GuiElement {
 
         if(mouseX > guiLeft+181 && mouseX < guiLeft+181+162 &&
                 mouseY > guiTop+storageViewSize+18 && mouseY < guiTop+storageViewSize+94) {
+            if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT))
+                dirty = true;
             return false;
         }
 
