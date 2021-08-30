@@ -1705,7 +1705,7 @@ public class StorageOverlay extends GuiElement {
             } else if(Mouse.getEventButtonState() && Mouse.getEventButton() == 0) {
                 for(int i=0; i<9; i++) {
                     int storageId = i;
-                    int displayId = StorageManager.getInstance().getDisplayIdForStorageId(i);
+                    int displayId = StorageManager.getInstance().getDisplayIdForStorageIdRender(i);
 
                     StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
                     if(page != null) {
@@ -1722,7 +1722,7 @@ public class StorageOverlay extends GuiElement {
                 }
                 for(int i=0; i<18; i++) {
                     int storageId = i+StorageManager.MAX_ENDER_CHEST_PAGES;
-                    int displayId = StorageManager.getInstance().getDisplayIdForStorageId(i);
+                    int displayId = StorageManager.getInstance().getDisplayIdForStorageIdRender(i);
 
                     StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
                     if(page != null) {
@@ -1805,7 +1805,7 @@ public class StorageOverlay extends GuiElement {
                     }
                 } else {
                     int currentPage = StorageManager.getInstance().getCurrentPageId();
-                    int displayId = StorageManager.getInstance().getDisplayIdForStorageId(currentPage);
+                    int displayId = StorageManager.getInstance().getDisplayIdForStorageIdRender(currentPage);
                     if(displayId >= 0) {
                         IntPair pageCoords = getPageCoords(displayId);
 
