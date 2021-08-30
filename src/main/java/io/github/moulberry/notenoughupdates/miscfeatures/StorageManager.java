@@ -380,7 +380,7 @@ public class StorageManager {
 
     public int getDisplayIdForStorageId(int storageId) {
         if(storageId < 0) return -1;
-        for(Map.Entry<Integer, Integer> entry : storageConfig.displayToStorageIdMap.entrySet()) {
+        for(Map.Entry<Integer, Integer> entry : storageConfig.displayToStorageIdMapRender.entrySet()) {
             if(entry.getValue() == storageId) {
                 return entry.getKey();
             }
