@@ -776,6 +776,20 @@ public class NEUEventListener {
         return Utils.trimIgnoreColour(text.replaceAll(EnumChatFormatting.DARK_GREEN+"\\S+ Drill Fuel", ""));
     }
 
+
+    private IChatComponent replaceSocialControlsWithPV(IChatComponent chatComponent){
+
+        if(NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions && chatComponent.getChatStyle() != null && chatComponent.getChatStyle().getChatClickEvent() != null && chatComponent.getChatStyle().getChatClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND){
+            if(chatComponent.getChatStyle().getChatClickEvent().getValue().startsWith("/socialoptions")){
+                String username = chatComponent.getChatStyle().getChatClickEvent().getValue().substring(15);
+
+                chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv "+username, ""+EnumChatFormatting.YELLOW+"Click to open "+EnumChatFormatting.AQUA+EnumChatFormatting.BOLD+username+EnumChatFormatting.RESET+EnumChatFormatting.YELLOW+"'s profile in "+EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD+"NEU's"+EnumChatFormatting.RESET+EnumChatFormatting.YELLOW+ " profile viewer."));
+                return chatComponent;
+            }
+        }
+        return  chatComponent;
+    }
+
     /**
      * 1) When receiving "You are playing on profile" messages, will set the current profile.
      * 2) When a /viewrecipe command fails (i.e. player does not have recipe unlocked, will open the custom recipe GUI)
@@ -787,6 +801,8 @@ public class NEUEventListener {
             CrystalMetalDetectorSolver.process(e.message);
             e.message = processChatComponent(e.message);
             return;
+        } else if(e.type == 0){
+            e.message = replaceSocialControlsWithPV(e.message);
         }
 
         DungeonWin.onChatMessage(e);
@@ -937,15 +953,20 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.endsWith(" Profile")){
-                Slot slot = new Slot(cc.getLowerChestInventory(), 34, cc.inventorySlots.get(34).xDisplayPosition, cc.inventorySlots.get(34).yDisplayPosition);
-                slot.putStack(Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block), EnumChatFormatting.GREEN + "Profile Viewer",
-                        EnumChatFormatting.YELLOW + "Click to open NEU profile viewer!"));
-                cc.inventorySlots.replaceAll(e -> {
-                    if(e.getSlotIndex() == 34)
-                        return slot;
-                    return e;
-                });
+            if(containerName.contains(" Profile") && cc.inventorySlots.size() >= 54){
+                if(cc.inventorySlots.get(22).getStack() != null && cc.inventorySlots.get(22).getStack().getTagCompound() != null){
+                    NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
+                    if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
+                        String tagName = tag.getCompoundTag("SkullOwner").getString("Name");
+                        String displayname = Utils.cleanColour(cc.inventorySlots.get(22).getStack().getDisplayName());
+                        if(tagName.equals(displayname.substring(displayname.length()-tagName.length()))){
+                            Slot slot = new Slot(cc.getLowerChestInventory(), 42, cc.inventorySlots.get(42).xDisplayPosition, cc.inventorySlots.get(42).yDisplayPosition);
+                            slot.putStack(Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block), EnumChatFormatting.GREEN + "Profile Viewer",
+                                    EnumChatFormatting.YELLOW + "Click to open NEU profile viewer!"));
+                            cc.inventorySlots.set(42, slot);
+                        }
+                    }
+                }
             }
         }
 
@@ -1396,12 +1417,17 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.endsWith(" Profile") && eventGui.getSlotUnderMouse() != null && eventGui.getSlotUnderMouse().getSlotIndex() == 34 &&
-                Mouse.getEventButton() >= 0) {
+            if(containerName.contains(" Profile") && eventGui.getSlotUnderMouse() != null &&
+                    eventGui.getSlotUnderMouse().getSlotIndex() == 42 && Mouse.getEventButton() >= 0) {
                 event.setCanceled(true);
-                if(Mouse.getEventButtonState()) {
-                    Utils.playPressSound();
-                    NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{containerName.replaceAll("'s? Profile", "")});
+                if(Mouse.getEventButtonState() && eventGui.inventorySlots.inventorySlots.get(22).getStack() != null &&
+                        eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){
+                    NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
+                    if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
+                        String username = tag.getCompoundTag("SkullOwner").getString("Name");
+                        Utils.playPressSound();
+                        NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{username});
+                    }
                 }
             }
         }

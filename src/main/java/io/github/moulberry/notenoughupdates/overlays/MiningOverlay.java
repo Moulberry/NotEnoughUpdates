@@ -97,11 +97,11 @@ public class MiningOverlay extends TextOverlay {
                             String line = lore[i1];
                             Matcher matcher = timeRemainingForge.matcher(line);
                             if (stack.getDisplayName().matches("\\xA7cSlot #([1-5])")) {
-                                ForgeItem newForgeItem = new ForgeItem("Locked", 0, 1, i, false);
+                                ForgeItem newForgeItem = new ForgeItem(i, 1, false);
                                 replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
                                 //empty Slot
                             } else if (stack.getDisplayName().matches("\\xA7aSlot #([1-5])")) {
-                                ForgeItem newForgeItem = new ForgeItem("Empty", 0, 0, i, false);
+                                ForgeItem newForgeItem = new ForgeItem(i, 0, false);
                                 replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
                             } else if (matcher.matches()) {
                                 String timeremainingString = matcher.group(1);
@@ -109,7 +109,7 @@ public class MiningOverlay extends TextOverlay {
                                 long duration = 0;
 
                                 if (matcher.group("Completed") != null && !matcher.group("Completed").equals("")) {
-                                    ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), 0, 2, i, false);
+                                    ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), 0, i, false);
                                     replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
                                 } else {
 
@@ -129,7 +129,7 @@ public class MiningOverlay extends TextOverlay {
                                     } catch (Exception ignored) {
                                     }
                                     if (duration > 0) {
-                                        ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), System.currentTimeMillis() + duration, 2, i, false);
+                                        ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), System.currentTimeMillis() + duration, i, false);
                                         replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
                                     }
                                 }
@@ -260,10 +260,10 @@ public class MiningOverlay extends TextOverlay {
                     } else {
 
                         if (name.contains("LOCKED")) {
-                            ForgeItem item = new ForgeItem("Locked", 0, 1, forgeInt, true);
+                            ForgeItem item = new ForgeItem(forgeInt, 1,true);
                             replaceForgeOrAdd(item, hidden.forgeItems, true);
                         } else if (name.contains("EMPTY")) {
-                            ForgeItem item = new ForgeItem("Empty", 0, 0, forgeInt, true);
+                            ForgeItem item = new ForgeItem(forgeInt, 0,true);
                             replaceForgeOrAdd(item, hidden.forgeItems, true);
                             //forgeStringsEmpty.add(DARK_AQUA+"Forge "+ Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", ""));
                         } else {
@@ -276,7 +276,7 @@ public class MiningOverlay extends TextOverlay {
                                 String itemName = matcher.group(1);
 
                                 if (matcher.group("Ready") != null && !matcher.group("Ready").equals("")) {
-                                    ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), 0, 2, forgeInt, true);
+                                    ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), 0, forgeInt, true);
                                     replaceForgeOrAdd(item, hidden.forgeItems, true);
                                 } else {
                                     long duration = 0;
@@ -297,7 +297,7 @@ public class MiningOverlay extends TextOverlay {
                                     }
                                     if (duration > 0) {
                                         duration = duration + 4000;
-                                        ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), System.currentTimeMillis() + duration, 2, forgeInt, true);
+                                        ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), System.currentTimeMillis() + duration, forgeInt, true);
                                         replaceForgeOrAdd(item, hidden.forgeItems, false);
                                     }
                                 }
@@ -483,17 +483,23 @@ public class MiningOverlay extends TextOverlay {
     }
 
     public static class ForgeItem{
-        public ForgeItem(String itemName, long finishTime, int status, int forgeID, boolean fromScoreBoard){
+        public ForgeItem(String itemName, long finishTime, int forgeID, boolean fromScoreBoard){
             this.itemName = itemName;
             this.finishTime = finishTime;
-            this.status = status;
+            this.status = 2;
             this.forgeID = forgeID;
             this.fromScoreBoard = fromScoreBoard;
         }
 
+        public ForgeItem(int forgeID, int status, boolean fromScoreBoard){
+            this.forgeID = forgeID;
+            this.status = status;
+            this.fromScoreBoard = fromScoreBoard;
+        }
 
-        @Expose public final String itemName;
-        @Expose public final long finishTime;
+
+        @Expose public String itemName;
+        @Expose public long finishTime;
         @Expose public final int status;
         @Expose public final int forgeID;
         @Expose public final boolean fromScoreBoard;
