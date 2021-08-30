@@ -1209,7 +1209,65 @@ public class GuiProfileViewer extends GuiScreen {
         public float totalXp;
     }
 
-    public static PetLevel getPetLevel(JsonArray levels, int offset, float exp) {
+    private static JsonObject getPetInfo(String pet_name, String rarity){
+        JsonObject petInfo = new JsonObject();
+        //System.out.println(pet_name);
+        //System.out.println(rarity);
+
+        if(Constants.PETS.has("custom_pet_leveling") && Constants.PETS.getAsJsonObject("custom_pet_leveling").has(pet_name)){
+            JsonObject pet = Constants.PETS.getAsJsonObject("custom_pet_leveling").getAsJsonObject(pet_name);
+            if(pet.has("type") && pet.has("pet_levels")){
+                int type = pet.get("type").getAsInt();
+                switch (type) {
+                    case 1:
+                        JsonArray defaultLevels = Constants.PETS.getAsJsonArray("pet_levels");
+                        defaultLevels.addAll(pet.getAsJsonArray("pet_levels"));
+                        petInfo.add("pet_levels", Constants.PETS.getAsJsonArray("pet_levels"));
+                        break;
+                    case 2:
+                        petInfo.add("pet_levels", pet.getAsJsonArray("pet_levels"));
+                        break;
+                    default:
+                        petInfo.add("pet_levels", Constants.PETS.getAsJsonArray("pet_levels"));
+                        break;
+                }
+            } else {
+                petInfo.add("pet_levels", Constants.PETS.getAsJsonArray("pet_levels"));
+            }
+            if(pet.has("max_level")){
+                petInfo.add("max_level", pet.get("max_level"));
+            } else {
+                petInfo.add("max_level", new JsonPrimitive(100));
+            }
+
+            if(pet.has("pet_rarity_offset")){
+                petInfo.add("offset", pet.get("pet_rarity_offset"));
+            } else {
+                petInfo.add("offset", Constants.PETS.getAsJsonObject("pet_rarity_offset").get(rarity));
+            }
+
+        } else {
+            //System.out.println("Default Path");
+            petInfo.add("offset", Constants.PETS.getAsJsonObject("pet_rarity_offset").get(rarity));
+            petInfo.add("max_level", new JsonPrimitive(100));
+            petInfo.add("pet_levels", Constants.PETS.getAsJsonArray("pet_levels"));
+        }
+
+
+        return petInfo;
+
+    }
+
+    public static PetLevel getPetLevel(String pet_name, String rarity, float exp) {
+
+        JsonObject petInfo = getPetInfo(pet_name, rarity);
+        int offset = petInfo.get("offset").getAsInt();
+        int maxPetLevel = petInfo.get("max_level").getAsInt();
+        JsonArray levels = petInfo.getAsJsonArray("pet_levels");
+        System.out.println("Offset: "+offset);
+        System.out.println("MaxPetLevel: "+maxPetLevel);
+
+
         float xpTotal = 0;
         float level = 1;
         float currentLevelRequirement = 0;
@@ -1217,7 +1275,7 @@ public class GuiProfileViewer extends GuiScreen {
 
         boolean addLevel = true;
 
-        for(int i=offset; i<offset+99; i++) {
+        for(int i=offset; i<offset+maxPetLevel-1; i++) {
             if(addLevel) {
                 currentLevelRequirement = levels.get(i).getAsFloat();
                 xpTotal += currentLevelRequirement;
@@ -1228,15 +1286,17 @@ public class GuiProfileViewer extends GuiScreen {
                     level += 1;
                 }
             } else {
+
                 xpTotal += levels.get(i).getAsFloat();
+
             }
         }
 
         level += currentLevelProgress/currentLevelRequirement;
         if(level <= 0) {
             level = 1;
-        } else if(level > 100) {
-            level = 100;
+        } else if(level > maxPetLevel) {
+            level = maxPetLevel;
         }
         PetLevel levelObj = new PetLevel();
         levelObj.level = level;
@@ -1355,10 +1415,8 @@ public class GuiProfileViewer extends GuiScreen {
                     tierNum = ""+(Integer.parseInt(tierNum)+1);
                 }
 
-                int petRarityOffset = petsJson.get("pet_rarity_offset").getAsJsonObject().get(tier).getAsInt();
-                JsonArray levelsArr = petsJson.get("pet_levels").getAsJsonArray();
+                PetLevel levelObj = GuiProfileViewer.getPetLevel(petname, tier, exp);
 
-                PetLevel levelObj = getPetLevel(levelsArr, petRarityOffset, exp);
                 float level = levelObj.level;
                 float currentLevelRequirement = levelObj.currentLevelRequirement;
                 float maxXP = levelObj.maxXP;

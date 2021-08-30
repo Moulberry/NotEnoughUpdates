@@ -2398,9 +2398,9 @@ public class NEUEventListener {
                                     tag.getCompoundTag("ExtraAttributes").getString("petInfo"), JsonObject.class);
                             if (petInfo.has("exp") && petInfo.get("exp").isJsonPrimitive()) {
                                 JsonPrimitive exp = petInfo.getAsJsonPrimitive("exp");
-                                int rarityOffset = Constants.PETS.get("pet_rarity_offset").getAsJsonObject().get(
+                                String petName = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
                                         Utils.getRarityFromInt(Utils.checkItemTypePet(event.toolTip))).getAsInt();
-                                petlevel = GuiProfileViewer.getPetLevel(Constants.PETS.get("pet_levels").getAsJsonArray(), rarityOffset, exp.getAsLong());
+                                petlevel = GuiProfileViewer.getPetLevel(petName, Utils.getRarityFromInt(Utils.checkItemTypePet(event.toolTip)), exp.getAsLong());
                             }
                         }
                     }

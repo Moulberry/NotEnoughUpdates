@@ -1018,7 +1018,7 @@ public class PetInfoOverlay extends TextOverlay {
 
         JsonObject petsJson = Constants.PETS;
         if(currentPet != null && petsJson != null) {
-            currentPet.petLevel = GuiProfileViewer.getPetLevel(petsJson.get("pet_levels").getAsJsonArray(), currentPet.rarity.petOffset, currentPet.petLevel.totalXp);
+            currentPet.petLevel = GuiProfileViewer.getPetLevel(currentPet.petItem, currentPet.rarity.name(), currentPet.petLevel.totalXp);
         }
     }
 
