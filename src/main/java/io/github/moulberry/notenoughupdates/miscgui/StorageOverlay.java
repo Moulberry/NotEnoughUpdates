@@ -125,12 +125,12 @@ public class StorageOverlay extends GuiElement {
     private LerpingInteger scroll = new LerpingInteger(0, 200);
 
     private int getMaximumScroll() {
-        synchronized(StorageManager.getInstance().storageConfig.displayToStorageIdMap) {
+        synchronized(StorageManager.getInstance().storageConfig.displayToStorageIdMapRender) {
 
             int maxH = 0;
 
             for(int i=0; i<3; i++) {
-                int lastDisplayId = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
+                int lastDisplayId = StorageManager.getInstance().storageConfig.displayToStorageIdMapRender.size()-1;
                 int coords = (int)Math.ceil(lastDisplayId/3f)*3+1+i;
 
                 int h = getPageCoords(coords).y+scroll.getValue()-getStorageViewSize()-14;
@@ -305,8 +305,8 @@ public class StorageOverlay extends GuiElement {
         int startY = getPageCoords(0).y;
         if(OpenGlHelper.isFramebufferEnabled()) {
             int h;
-            synchronized(StorageManager.getInstance().storageConfig.displayToStorageIdMap) {
-                int lastDisplayId = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size()-1;
+            synchronized(StorageManager.getInstance().storageConfig.displayToStorageIdMapRender) {
+                int lastDisplayId = StorageManager.getInstance().storageConfig.displayToStorageIdMapRender.size()-1;
                 int coords = (int)Math.ceil(lastDisplayId/3f)*3+3;
 
                 h = getPageCoords(coords).y+scroll.getValue();
@@ -363,7 +363,7 @@ public class StorageOverlay extends GuiElement {
 
         if(doItemRender) {
             enchantGlintRenderLocations.clear();
-            for(Map.Entry<Integer, Integer> entry : StorageManager.getInstance().storageConfig.displayToStorageIdMap.entrySet()) {
+            for(Map.Entry<Integer, Integer> entry : StorageManager.getInstance().storageConfig.displayToStorageIdMapRender.entrySet()) {
                 int displayId = entry.getKey();
                 int storageId = entry.getValue();
 
@@ -583,7 +583,7 @@ public class StorageOverlay extends GuiElement {
         }
 
         GlScissorStack.push(0, guiTop+3, width, guiTop+3+storageViewSize, scaledResolution);
-        for(Map.Entry<Integer, Integer> entry : StorageManager.getInstance().storageConfig.displayToStorageIdMap.entrySet()) {
+        for(Map.Entry<Integer, Integer> entry : StorageManager.getInstance().storageConfig.displayToStorageIdMapRender.entrySet()) {
             int displayId = entry.getKey();
             int storageId = entry.getValue();
 
@@ -1427,10 +1427,10 @@ public class StorageOverlay extends GuiElement {
             for(int j=i; j<i+3; j++) {
                 if(NotEnoughUpdates.INSTANCE.config.storageGUI.masonryMode && displayId%3 != j%3) continue;
 
-                if(!StorageManager.getInstance().storageConfig.displayToStorageIdMap.containsKey(j)) {
+                if(!StorageManager.getInstance().storageConfig.displayToStorageIdMapRender.containsKey(j)) {
                     continue;
                 }
-                int storageId = StorageManager.getInstance().storageConfig.displayToStorageIdMap.get(j);
+                int storageId = StorageManager.getInstance().storageConfig.displayToStorageIdMapRender.get(j);
                 StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
                 if(page == null || page.rows <= 0) {
                     maxRows = Math.max(maxRows, 3);
@@ -1543,13 +1543,14 @@ public class StorageOverlay extends GuiElement {
 
         if(mouseX > guiLeft+181 && mouseX < guiLeft+181+162 &&
                 mouseY > guiTop+storageViewSize+18 && mouseY < guiTop+storageViewSize+94) {
+            if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT))
+                dirty = true;
             return false;
         }
 
         if(mouseY > guiTop+3 && mouseY < guiTop+storageViewSize+3) {
             int currentPage = StorageManager.getInstance().getCurrentPageId();
-
-            for(Map.Entry<Integer, Integer> entry : StorageManager.getInstance().storageConfig.displayToStorageIdMap.entrySet()) {
+            for(Map.Entry<Integer, Integer> entry : StorageManager.getInstance().storageConfig.displayToStorageIdMapRender.entrySet()) {
                 IntPair pageCoords = getPageCoords(entry.getKey());
 
                 if(pageCoords.y > storageViewSize+3 || pageCoords.y+90 < 3) continue;
@@ -1704,7 +1705,7 @@ public class StorageOverlay extends GuiElement {
             } else if(Mouse.getEventButtonState() && Mouse.getEventButton() == 0) {
                 for(int i=0; i<9; i++) {
                     int storageId = i;
-                    int displayId = StorageManager.getInstance().getDisplayIdForStorageId(i);
+                    int displayId = StorageManager.getInstance().getDisplayIdForStorageIdRender(i);
 
                     StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
                     if(page != null) {
@@ -1721,7 +1722,7 @@ public class StorageOverlay extends GuiElement {
                 }
                 for(int i=0; i<18; i++) {
                     int storageId = i+StorageManager.MAX_ENDER_CHEST_PAGES;
-                    int displayId = StorageManager.getInstance().getDisplayIdForStorageId(i);
+                    int displayId = StorageManager.getInstance().getDisplayIdForStorageIdRender(i);
 
                     StorageManager.StoragePage page = StorageManager.getInstance().getPage(storageId, false);
                     if(page != null) {
@@ -1804,7 +1805,7 @@ public class StorageOverlay extends GuiElement {
                     }
                 } else {
                     int currentPage = StorageManager.getInstance().getCurrentPageId();
-                    int displayId = StorageManager.getInstance().getDisplayIdForStorageId(currentPage);
+                    int displayId = StorageManager.getInstance().getDisplayIdForStorageIdRender(currentPage);
                     if(displayId >= 0) {
                         IntPair pageCoords = getPageCoords(displayId);
 
@@ -1854,7 +1855,7 @@ public class StorageOverlay extends GuiElement {
 
         if(Keyboard.getEventKeyState()) {
             if(NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotLocking &&
-                    KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockKey)) {
+                    KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockKey) && !searchBar.getFocus()) {
                 if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) return true;
                 GuiContainer container = (GuiContainer) Minecraft.getMinecraft().currentScreen;
 
