@@ -554,7 +554,7 @@ public class PetInfoOverlay extends TextOverlay {
 
     public static Pet getPetFromStack(String name, String[] lore) {
         if(Constants.PETS == null || Constants.PETS.get("pet_levels") == null || Constants.PETS.get("pet_levels") instanceof JsonNull) {
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a7cInvalid PET constants. Please run /neuresetrepo and restart game in order to fix. If that doesn't fix it, please join discord.gg/moulberry and post in #neu-support-1"));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a7cInvalid PET constants. Please run "+EnumChatFormatting.BOLD+"/neuresetrepo"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" and "+EnumChatFormatting.BOLD+"restart your game"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" in order to fix. "+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"If that doesn't fix it"+EnumChatFormatting.RESET+EnumChatFormatting.RED+", please join discord.gg/moulberry and post in #neu-support"));
             return null;
         }
 

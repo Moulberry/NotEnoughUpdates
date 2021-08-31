@@ -6,11 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.authlib.Agent;
-import com.mojang.authlib.minecraft.MinecraftSessionService;
-import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
-import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
-import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.collectionlog.GuiCollectionLog;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
@@ -24,7 +19,6 @@ import io.github.moulberry.notenoughupdates.dungeons.DungeonMap;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
-import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.miscgui.tutorials.NeuTutorial;
@@ -69,8 +63,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClients;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
@@ -78,7 +70,8 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.net.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -234,7 +227,7 @@ public class NotEnoughUpdates {
         }
     });*/
 
-    SimpleCommand neuhelp = new SimpleCommand("neuhelp", new SimpleCommand.ProcessCommandRunnable() {
+    SimpleCommand neuHelp = new SimpleCommand("neuhelp", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
             ArrayList<String> neuHelpMessages = Lists.newArrayList(
                     "\u00a75\u00a7lNotEnoughUpdates commands",
@@ -290,6 +283,35 @@ public class NotEnoughUpdates {
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a76\u00a7lScroll up to see everything"));
         }
     });
+
+    SimpleCommand neuFeatures = new SimpleCommand("neufeatures", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+            if(Constants.MISC == null || !Constants.MISC.has("featureslist")){
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"WARNING: "+EnumChatFormatting.RESET+EnumChatFormatting.RED+"Could not load URL from repo."));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.RED+ "Please run "+EnumChatFormatting.BOLD+"/neuresetrepo"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" and "+EnumChatFormatting.BOLD+"restart your game"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" in order to fix. "+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"If that doesn't fix it"+EnumChatFormatting.RESET+EnumChatFormatting.RED+", please join discord.gg/moulberry and post in #neu-support"));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                return;
+            }
+            String url = Constants.MISC.get("featureslist").getAsString();
+
+            Desktop desk = Desktop.getDesktop();
+            try {
+                desk.browse(new URI(url));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.DARK_PURPLE+""+EnumChatFormatting.BOLD+"NEU"+EnumChatFormatting.RESET+EnumChatFormatting.GOLD+"> Opening Feature List in browser."));
+            } catch (URISyntaxException | IOException ignored){
+
+                ChatComponentText clickTextFeatures = new ChatComponentText(
+                        EnumChatFormatting.DARK_PURPLE+""+EnumChatFormatting.BOLD+"NEU"+EnumChatFormatting.RESET+EnumChatFormatting.GOLD+"> Click here to open the Feature List in your browser.");
+                clickTextFeatures.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, url));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(clickTextFeatures);
+
+            }
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+
+        }
+    });
+
 
     SimpleCommand stWhyCommand = new SimpleCommand("neustwhy", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -1271,7 +1293,8 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(calendarCommand);
         ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommand());
         ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommandAlt());
-        ClientCommandHandler.instance.registerCommand(neuhelp);
+        ClientCommandHandler.instance.registerCommand(neuHelp);
+        ClientCommandHandler.instance.registerCommand(neuFeatures);
 
         BackgroundBlur.registerListener();
 
