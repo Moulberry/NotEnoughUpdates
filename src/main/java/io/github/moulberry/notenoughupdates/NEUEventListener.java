@@ -1425,7 +1425,8 @@ public class NEUEventListener {
             if(containerName.contains(" Profile") && eventGui.getSlotUnderMouse() != null &&
                     eventGui.getSlotUnderMouse().getSlotIndex() == 42 && Mouse.getEventButton() >= 0) {
                 event.setCanceled(true);
-                if(eventGui.inventorySlots.inventorySlots.get(22).getStack() != null && eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){
+                if(Mouse.getEventButtonState() && eventGui.inventorySlots.inventorySlots.get(22).getStack() != null &&
+                        eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){
                     NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
                     if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
                         String username = tag.getCompoundTag("SkullOwner").getString("Name");
@@ -1433,7 +1434,6 @@ public class NEUEventListener {
                         NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{username});
                     }
                 }
-
             }
         }
 
