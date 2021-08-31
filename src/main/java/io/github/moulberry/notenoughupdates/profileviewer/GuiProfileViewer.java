@@ -1974,6 +1974,9 @@ public class GuiProfileViewer extends GuiScreen {
         return 0;
     }
 
+    //unused function
+    //Data has been removed from the repo
+    @Deprecated
     private int getAvailableSlotsForInventory(JsonObject inventoryInfo, JsonObject collectionInfo, String invName) {
         if(collectionInfo == null) return -1;
         JsonObject misc = Constants.MISC;

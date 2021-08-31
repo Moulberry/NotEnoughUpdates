@@ -1047,9 +1047,9 @@ public class NEUEventListener {
                         }
                     }
 
-                GlStateManager.color(1, 1, 1, 1f);
+                    GlStateManager.color(1, 1, 1, 1f);
 
-                GlStateManager.enableDepth();
+                    GlStateManager.enableDepth();
                     GlStateManager.enableAlpha();
                     Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
                     Utils.drawTexturedRect(x, y, 18, 18,
@@ -1515,11 +1515,11 @@ public class NEUEventListener {
                                     NotEnoughUpdates.INSTANCE.sendChatMessage(command);
                                 }
                             }
-                    } else {
-                        event.setCanceled(true);
+                        } else {
+                            event.setCanceled(true);
+                        }
+                        return;
                     }
-                    return;
-                }
                 }
             }
         }
@@ -1734,6 +1734,10 @@ public class NEUEventListener {
         rarityArrMap.put("EPIC", rarityArrC[3]);
         rarityArrMap.put("LEGENDARY", rarityArrC[4]);
         rarityArrMap.put("MYTHIC", rarityArrC[5]);
+        rarityArrMap.put("SPECIAL", rarityArrC[6]);
+        rarityArrMap.put("VERY SPECIAL", rarityArrC[7]);
+        rarityArrMap.put("SUPREME", rarityArrC[8]);
+
     }
 
     private HashSet<String> percentStats = new HashSet<>();
