@@ -567,6 +567,7 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
         CraftingOverlay.shouldRender = false;
+        NEUApi.disableInventoryButtons = false;
 
         if((Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper ||
                 Minecraft.getMinecraft().currentScreen instanceof GuiItemRecipe) &&
@@ -1022,40 +1023,42 @@ public class NEUEventListener {
 
             GlStateManager.translate(0, 0, zOffset);
 
-            int xSize = ((GuiContainer)event.gui).xSize;
-            int ySize = ((GuiContainer)event.gui).ySize;
-            int guiLeft = ((GuiContainer)event.gui).guiLeft;
-            int guiTop = ((GuiContainer)event.gui).guiTop;
+            int xSize = ((GuiContainer) event.gui).xSize;
+            int ySize = ((GuiContainer) event.gui).ySize;
+            int guiLeft = ((GuiContainer) event.gui).guiLeft;
+            int guiTop = ((GuiContainer) event.gui).guiTop;
 
-            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
-                if(!button.isActive()) continue;
-                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
+            if (!NEUApi.disableInventoryButtons) {
+                for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                    if (!button.isActive()) continue;
+                    if (button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
 
-                int x = guiLeft+button.x;
-                int y = guiTop+button.y;
-                if(button.anchorRight) {
-                    x += xSize;
-                }
-                if(button.anchorBottom) {
-                    y += ySize;
-                }
-                if(AccessoryBagOverlay.isInAccessoryBag()){
-                    if(x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28+ 5 && y > guiTop-18 && y < guiTop + 150){
-                        x += 80+28;
+                    int x = guiLeft + button.x;
+                    int y = guiTop + button.y;
+                    if (button.anchorRight) {
+                        x += xSize;
                     }
-                }
+                    if (button.anchorBottom) {
+                        y += ySize;
+                    }
+                    if (AccessoryBagOverlay.isInAccessoryBag()) {
+                        if (x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28 + 5 && y > guiTop - 18 && y < guiTop + 150) {
+                            x += 80 + 28;
+                        }
+                    }
 
                 GlStateManager.color(1, 1, 1, 1f);
 
                 GlStateManager.enableDepth();
-                GlStateManager.enableAlpha();
-                Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
-                Utils.drawTexturedRect(x, y, 18, 18,
-                        button.backgroundIndex*18/256f, (button.backgroundIndex*18+18)/256f,
-                        18/256f, 36/256f, GL11.GL_NEAREST);
+                    GlStateManager.enableAlpha();
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
+                    Utils.drawTexturedRect(x, y, 18, 18,
+                            button.backgroundIndex * 18 / 256f, (button.backgroundIndex * 18 + 18) / 256f,
+                            18 / 256f, 36 / 256f, GL11.GL_NEAREST);
 
-                if(button.icon != null && !button.icon.trim().isEmpty()) {
-                    GuiInvButtonEditor.renderIcon(button.icon, x+1, y+1);
+                    if (button.icon != null && !button.icon.trim().isEmpty()) {
+                        GuiInvButtonEditor.renderIcon(button.icon, x + 1, y + 1);
+                    }
                 }
             }
             GlStateManager.translate(0, 0, -zOffset);
@@ -1132,51 +1135,53 @@ public class NEUEventListener {
         if(!doInventoryButtons) return;
         if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) &&
                 event.gui instanceof GuiContainer) {
-            int xSize = ((GuiContainer)event.gui).xSize;
-            int ySize = ((GuiContainer)event.gui).ySize;
-            int guiLeft = ((GuiContainer)event.gui).guiLeft;
-            int guiTop = ((GuiContainer)event.gui).guiTop;
+            int xSize = ((GuiContainer) event.gui).xSize;
+            int ySize = ((GuiContainer) event.gui).ySize;
+            int guiLeft = ((GuiContainer) event.gui).guiLeft;
+            int guiTop = ((GuiContainer) event.gui).guiTop;
 
-            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
-                if(!button.isActive()) continue;
-                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
+            if (!NEUApi.disableInventoryButtons) {
+                for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                    if (!button.isActive()) continue;
+                    if (button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
 
-                int x = guiLeft+button.x;
-                int y = guiTop+button.y;
-                if(button.anchorRight) {
-                    x += xSize;
-                }
-                if(button.anchorBottom) {
-                    y += ySize;
-                }
-                if(AccessoryBagOverlay.isInAccessoryBag()){
-                    if(x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28+ 5 && y > guiTop-18 && y < guiTop + 150){
-                        x += 80+28;
+                    int x = guiLeft + button.x;
+                    int y = guiTop + button.y;
+                    if (button.anchorRight) {
+                        x += xSize;
                     }
-                }
-
-                if(x-guiLeft >= 85 && x-guiLeft <= 115 && y-guiTop >= 4 && y-guiTop <= 25) {
-                    disableCraftingText = true;
-                }
-
-                if(event.mouseX >= x && event.mouseX <= x+18 &&
-                        event.mouseY >= y && event.mouseY <= y+18) {
-                    hoveringButton = true;
-                    long currentTime = System.currentTimeMillis();
-
-                    if(buttonHovered != button) {
-                        buttonHoveredMillis = currentTime;
-                        buttonHovered = button;
+                    if (button.anchorBottom) {
+                        y += ySize;
+                    }
+                    if (AccessoryBagOverlay.isInAccessoryBag()) {
+                        if (x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28 + 5 && y > guiTop - 18 && y < guiTop + 150) {
+                            x += 80 + 28;
+                        }
                     }
 
-                    if(currentTime - buttonHoveredMillis > 600) {
-                        String command = button.command.trim();
-                        if(!command.startsWith("/")) {
-                            command = "/" + command;
+                    if (x - guiLeft >= 85 && x - guiLeft <= 115 && y - guiTop >= 4 && y - guiTop <= 25) {
+                        disableCraftingText = true;
+                    }
+
+                    if (event.mouseX >= x && event.mouseX <= x + 18 &&
+                            event.mouseY >= y && event.mouseY <= y + 18) {
+                        hoveringButton = true;
+                        long currentTime = System.currentTimeMillis();
+
+                        if (buttonHovered != button) {
+                            buttonHoveredMillis = currentTime;
+                            buttonHovered = button;
                         }
 
-                        Utils.drawHoveringText(Lists.newArrayList("\u00a77"+command), event.mouseX, event.mouseY,
-                                event.gui.width, event.gui.height, -1, Minecraft.getMinecraft().fontRendererObj);
+                        if (currentTime - buttonHoveredMillis > 600) {
+                            String command = button.command.trim();
+                            if (!command.startsWith("/")) {
+                                command = "/" + command;
+                            }
+
+                            Utils.drawHoveringText(Lists.newArrayList("\u00a77" + command), event.mouseX, event.mouseY,
+                                    event.gui.width, event.gui.height, -1, Minecraft.getMinecraft().fontRendererObj);
+                        }
                     }
                 }
             }
@@ -1479,41 +1484,42 @@ public class NEUEventListener {
             int ySize = ((GuiContainer)event.gui).ySize;
             int guiLeft = ((GuiContainer)event.gui).guiLeft;
             int guiTop = ((GuiContainer)event.gui).guiTop;
+            if(!NEUApi.disableInventoryButtons) {
+                for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                    if (!button.isActive()) continue;
+                    if (button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
 
-            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
-                if(!button.isActive()) continue;
-                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
-
-                int x = guiLeft+button.x;
-                int y = guiTop+button.y;
-                if(button.anchorRight) {
-                    x += xSize;
-                }
-                if(button.anchorBottom) {
-                    y += ySize;
-                }
-                if(AccessoryBagOverlay.isInAccessoryBag()){
-                    if(x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28+ 5 && y > guiTop-18 && y < guiTop + 150){
-                        x += 80+28;
+                    int x = guiLeft + button.x;
+                    int y = guiTop + button.y;
+                    if (button.anchorRight) {
+                        x += xSize;
                     }
-                }
-
-                if(mouseX >= x && mouseX <= x+18 && mouseY >= y && mouseY <= y+18) {
-                    if(Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
-                        int clickType = NotEnoughUpdates.INSTANCE.config.inventoryButtons.clickType;
-                        if((clickType == 0 && Mouse.getEventButtonState()) || (clickType == 1 && !Mouse.getEventButtonState())) {
-                            String command = button.command.trim();
-                            if(!command.startsWith("/")) {
-                                command = "/" + command;
-                            }
-                            if(ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command) == 0) {
-                                NotEnoughUpdates.INSTANCE.sendChatMessage(command);
-                            }
+                    if (button.anchorBottom) {
+                        y += ySize;
+                    }
+                    if (AccessoryBagOverlay.isInAccessoryBag()) {
+                        if (x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28 + 5 && y > guiTop - 18 && y < guiTop + 150) {
+                            x += 80 + 28;
                         }
+                    }
+
+                    if (mouseX >= x && mouseX <= x + 18 && mouseY >= y && mouseY <= y + 18) {
+                        if (Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
+                            int clickType = NotEnoughUpdates.INSTANCE.config.inventoryButtons.clickType;
+                            if ((clickType == 0 && Mouse.getEventButtonState()) || (clickType == 1 && !Mouse.getEventButtonState())) {
+                                String command = button.command.trim();
+                                if (!command.startsWith("/")) {
+                                    command = "/" + command;
+                                }
+                                if (ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command) == 0) {
+                                    NotEnoughUpdates.INSTANCE.sendChatMessage(command);
+                                }
+                            }
                     } else {
                         event.setCanceled(true);
                     }
                     return;
+                }
                 }
             }
         }
