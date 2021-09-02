@@ -160,6 +160,9 @@ public class DwarvenMinesTextures {
                 }
                 if(loadedChunkData.get(pair) != null) {
                     HashMap<ChunkCoordIntPair, IgnoreColumn> map = loadedChunkData.get(pair);
+                    if(map == null) {
+                        return 0;
+                    }
 
                     int modX = pos.getX() % 16;
                     int modZ = pos.getZ() % 16;
