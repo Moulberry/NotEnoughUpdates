@@ -329,7 +329,7 @@ public class NEUOverlay extends Gui {
                     return;
                 }
                 if(Mouse.getEventButtonState()) {
-                    NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config));
+                    NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor);
                 }
             }
 

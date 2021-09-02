@@ -12,6 +12,7 @@ import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.EnumChatFormatting;
@@ -39,6 +40,7 @@ public class GuiEnchantColour extends GuiScreen {
 
     public static final ResourceLocation custom_ench_colour = new ResourceLocation("notenoughupdates:custom_ench_colour.png");
 
+    private static final String sharePrefix = "NEUEC/";
 
     private int guiLeft;
     private int guiTop;
@@ -126,12 +128,6 @@ public class GuiEnchantColour extends GuiScreen {
 
         Utils.drawStringCentered("Add Ench Colour", fontRendererObj, guiLeft+xSize/2+1, guiTop+ySize-20, false, 4210752);
 
-        //Minecraft.getMinecraft().getTextureManager().bindTexture(custom_ench_colour);
-
-//        Utils.drawTexturedRect(guiLeft+2, guiTop+ySize+2, 48, 16);
-//        Utils.drawTexturedRect(guiLeft+xSize-50, guiTop+ySize+2, 48, 16);
-
-
         int yIndex = 0;
         for(String str : enchantColours) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(custom_ench_colour);
@@ -196,12 +192,7 @@ public class GuiEnchantColour extends GuiScreen {
     }
 
     private void renderSideBar(int mouseX, int mouseY, float partialTicks){
-        //ySizeSidebar = 25*(enchantPresets.size()+2);
-//        enchantPresets = getEnchantPresetKeys();
-
-
         ySizeSidebar = 24*(2);
-
 
         if(ySizeSidebar > height) {
 
@@ -225,52 +216,15 @@ public class GuiEnchantColour extends GuiScreen {
         Utils.drawTexturedRect(guiLeft+xSize+3, guiTopSidebar+2, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
         Utils.drawTexturedRect(guiLeft+xSize+3, guiTopSidebar+2+24, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
         Utils.drawTexturedRect(guiLeft+xSize+3, guiTopSidebar+2+24*2, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
-        Utils.drawStringCenteredScaledMaxWidth("Load preset from clipboard", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+12, false, 86, 4210752);
-        Utils.drawStringCenteredScaledMaxWidth("Save preset to clipboard", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+12+24, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("Load preset", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+8, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("from Clipboard", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+16, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("Save preset", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+8+24, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("to Clipboard", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+16+24, false, 86, 4210752);
         Utils.drawStringCenteredScaledMaxWidth("Reset Config", fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+12+24*2, false, 86, 4210752);
 
-//        for (int i = 0; i < enchantPresets.size(); i++) {
-//
-//            Minecraft.getMinecraft().getTextureManager().bindTexture(custom_ench_colour);
-//            GlStateManager.color(1, 1, 1, 1);
-//            Utils.drawTexturedRect(guiLeft+xSize+3, guiTopSidebar+2+24*(i+2), 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
-//            String text;
-//
-//                text = "Test";
-//
-////                {
-////                    JsonElement element = enchantPresets.get(i - 2);
-////                    if(element.isJsonObject()){
-////                        JsonObject object = enchantPresets.get(i - 2).getAsJsonObject();
-////                        if(object.has("NAME")){
-////                            JsonElement nameobject = object.get("NAME");
-////                            if(nameobject.isJsonPrimitive()){
-////                                text = nameobject.getAsJsonPrimitive().getAsString();
-////                                break;
-////                            }
-////                        }
-////                    }
-////                    text = "ERROR";
-////                }
-////                break;
-//
-//            Utils.drawStringCenteredScaledMaxWidth(text, fontRendererObj, guiLeft+xSize+4+44, guiTopSidebar+12+24*i, false, 86, 4210752);
-//        }
-
-
-    }
-
-    private JsonArray getEnchantPresetKeys(){
-        return new JsonArray();
-//        if(enchantPresets == null) {
-//            JsonObject enchantsJson = Constants.ENCHANTS;
-//            if(!enchantsJson.has("enchants_pretty")) {
-//                return new JsonArray();
-//            } else {
-//                JsonArray pretty = enchantsJson.getAsJsonArray("enchants_pretty");
-//            }
-//        }
-//        return enchantPresets;
+        if(!validShareContents()) {
+            Gui.drawRect(guiLeft+xSize+3, guiTopSidebar+2, guiLeft+xSize+3+88, guiTopSidebar+2+20, 0x80000000);
+        }
     }
 
     @Override
@@ -350,6 +304,22 @@ public class GuiEnchantColour extends GuiScreen {
             return Integer.parseInt(modifier);
         } catch(NumberFormatException e) {
             return 0;
+        }
+    }
+
+    private boolean validShareContents() {
+        try {
+            String base64 = (String)Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+
+            if(base64.length() <= sharePrefix.length()) return false;
+
+            try {
+                return new String(Base64.getDecoder().decode(base64)).startsWith(sharePrefix);
+            } catch (IllegalArgumentException e){
+                return false;
+            }
+        } catch (HeadlessException | IOException | UnsupportedFlavorException e) {
+            return false;
         }
     }
 
@@ -437,13 +407,8 @@ public class GuiEnchantColour extends GuiScreen {
                 NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.add("[a-zA-Z\\- ]+:>:5:9:0");
             }
         }
-//        System.out.println("Hit Mouse X: "+mouseX+ " Mouse Y: "+mouseY);
-//        System.out.println("guileft: "+ (guiLeft+xSize+3)+ " Gui Right: "+ (guiLeft+xSize+3+88));
         if(mouseX > guiLeft+xSize+3 && mouseX< guiLeft+xSize+3+88){
             if(mouseY > guiTopSidebar+2 && mouseY < guiTopSidebar+20+2){
-
-//                String result = NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.toString();
-//                String base64String = Base64.getEncoder().encodeToString(result.getBytes(StandardCharsets.UTF_8));
 
                 String base64;
 
@@ -452,13 +417,20 @@ public class GuiEnchantColour extends GuiScreen {
                 } catch (HeadlessException | IOException | UnsupportedFlavorException e) {
                     return;
                 }
+
+                if(base64.length() <= sharePrefix.length()) return;
+
                 String jsonString;
                 try {
                     jsonString = new String(Base64.getDecoder().decode(base64));
+                    if(!jsonString.startsWith(sharePrefix)) return;
+                    jsonString = jsonString.substring(sharePrefix.length());
                 } catch (IllegalArgumentException e){
                     return;
-
                 }
+
+                System.out.println(jsonString);
+
                 JsonArray presetArray;
                 try{
                     presetArray = new JsonParser().parse(jsonString).getAsJsonArray();
@@ -490,39 +462,11 @@ public class GuiEnchantColour extends GuiScreen {
                 for (int i = 0; i < result.size(); i++) {
                     jsonArray.add(new JsonPrimitive(result.get(i)));
                 }
-                String base64String = Base64.getEncoder().encodeToString(jsonArray.toString().getBytes(StandardCharsets.UTF_8));
+                String base64String = Base64.getEncoder().encodeToString((sharePrefix+jsonArray).getBytes(StandardCharsets.UTF_8));
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(base64String), null);
             } else if(mouseY > guiTopSidebar+2+(24*2) && mouseY < guiTopSidebar+20+2+24*2){
                 NotEnoughUpdates.INSTANCE.config.hidden.enchantColours = NEUConfig.createDefaultEnchantColours();
             }
-
-//            for(int sidebarYIndex=0; sidebarYIndex<enchantPresets.size(); sidebarYIndex++) {
-//
-//                ;
-//
-//                if(mouseY > guiTopSidebar+50+25*sidebarYIndex && mouseY < guiTopSidebar+50+25+25*sidebarYIndex) {
-//
-//                    if(mouseButton == 0) {
-//
-//                        JsonElement element = enchantPresets.get(sidebarYIndex - 2);
-//                        if (element.isJsonObject()) {
-//                            JsonObject object = enchantPresets.get(sidebarYIndex - 2).getAsJsonObject();
-//                            if (object.has("SETTINGS")) {
-//                                JsonElement settingsElement = object.get("SETTINGS");
-//                                if (settingsElement.isJsonArray()) {
-//                                    JsonArray newEnchantColours = settingsElement.getAsJsonArray();
-//
-//                                    ArrayList<String> tempEnchantColours = new ArrayList<>();
-//                                    for (int i = 0; i < newEnchantColours.size(); i++) {
-//                                        tempEnchantColours.add(newEnchantColours.get(i).getAsString());
-//                                    }
-//                                    NotEnoughUpdates.INSTANCE.config.hidden.enchantColours = tempEnchantColours;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
         }
     }
 

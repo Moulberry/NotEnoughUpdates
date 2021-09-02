@@ -29,6 +29,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.client.C0EPacketClickWindow;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.text.WordUtils;
@@ -199,12 +200,6 @@ public class GuiCustomEnchant extends Gui {
     }
 
     public boolean shouldOverride(String containerName) {
-        
-        if(!NotEnoughUpdates.INSTANCE.config.hidden.dev) {
-            shouldOverrideFast = false;
-            return false;
-        }
-
         shouldOverrideFast = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableTableGUI &&
                 containerName != null &&
                 NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
@@ -509,6 +504,25 @@ public class GuiCustomEnchant extends Gui {
         this.pageOpen += this.pageOpenVelocity;
     }
 
+
+    private List<String> createTooltip(String title, int selectedOption, String... options) {
+        String selPrefix = EnumChatFormatting.DARK_AQUA + " \u25b6 ";
+        String unselPrefix = EnumChatFormatting.GRAY.toString();
+
+        for(int i=0; i<options.length; i++) {
+            if(i == selectedOption) {
+                options[i] = selPrefix + options[i];
+            } else {
+                options[i] = unselPrefix + options[i];
+            }
+        }
+
+        List list = Lists.newArrayList(options);
+        list.add(0, "");
+        list.add(0, EnumChatFormatting.GREEN+title);
+        return list;
+    }
+
     public void render(float partialTicks) {
         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) return;
 
@@ -549,18 +563,71 @@ public class GuiCustomEnchant extends Gui {
         Minecraft.getMinecraft().fontRendererObj.drawString("Applicable", guiLeft+7, guiTop+7, 0x404040, false);
         Minecraft.getMinecraft().fontRendererObj.drawString("Removable", guiLeft+247, guiTop+7, 0x404040, false);
 
+        //Page Text
         if(currentState == EnchantState.HAS_ITEM || currentState == EnchantState.ADDING_ENCHANT) {
             String pageStr = "Page: "+currentPage+"/"+expectedMaxPage;
             int pageStrLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(pageStr);
             Utils.drawStringCentered(pageStr, Minecraft.getMinecraft().fontRendererObj,
                     guiLeft+X_SIZE/2, guiTop+14, false, 0x404040);
 
+            //Page Arrows
             Minecraft.getMinecraft().getTextureManager().bindTexture(TEXTURE);
             GlStateManager.color(1, 1, 1, 1);
             Utils.drawTexturedRect(guiLeft+X_SIZE/2-pageStrLen/2-2-15, guiTop+6, 15, 15,
                     0, 15/512f, 372/512f, 387/512f, GL11.GL_NEAREST);
             Utils.drawTexturedRect(guiLeft+X_SIZE/2+pageStrLen/2+2, guiTop+6, 15, 15,
                     15/512f, 30/512f, 372/512f, 387/512f, GL11.GL_NEAREST);
+        }
+
+        //Settings Buttons
+        Minecraft.getMinecraft().getTextureManager().bindTexture(TEXTURE);
+        GlStateManager.color(1, 1, 1, 1);
+        //On Settings Button
+        Utils.drawTexturedRect(guiLeft+295, guiTop+147, 16, 16,
+                0, 16/512f, 387/512f, (387+16)/512f, GL11.GL_NEAREST);
+        //Incompatible Settings Button
+        float incompatibleMinU = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants*16/512f;
+        Utils.drawTexturedRect(guiLeft+295+18, guiTop+147, 16, 16,
+                incompatibleMinU, incompatibleMinU+16/512f, 403/512f, (403+16)/512f, GL11.GL_NEAREST);
+        //Sorting Settings Button
+        float sortingMinU = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantSorting*16/512f;
+        Utils.drawTexturedRect(guiLeft+295, guiTop+147+18, 16, 16,
+                sortingMinU, sortingMinU+16/512f, 419/512f, (419+16)/512f, GL11.GL_NEAREST);
+        //Ordering Settings Button
+        float orderingMinU = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantOrdering*16/512f;
+        Utils.drawTexturedRect(guiLeft+295+18, guiTop+147+18, 16, 16,
+                orderingMinU, orderingMinU+16/512f, 435/512f, (435+16)/512f, GL11.GL_NEAREST);
+
+        if(mouseX >= guiLeft+294 && mouseX < guiLeft+294+36 &&
+                mouseY >= guiTop+146 && mouseY < guiTop+146+36) {
+            int index = (mouseX-(guiLeft+295))/18 + (mouseY-(guiTop+147))/18*2;
+            switch (index) {
+                case 0:
+                    Gui.drawRect(guiLeft+295, guiTop+147, guiLeft+295+16, guiTop+147+16, 0x80ffffff);
+                    tooltipToDisplay = createTooltip("Enable GUI", 0, "On", "Off");
+                    break;
+                case 1:
+                    Gui.drawRect(guiLeft+295+18, guiTop+147, guiLeft+295+16+18, guiTop+147+16, 0x80ffffff);
+                    tooltipToDisplay = createTooltip("Incompatible Enchants",
+                            NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants,
+                            "Highlight", "Hide");
+                    tooltipToDisplay.add(1, EnumChatFormatting.GRAY+"How to display enchants that are");
+                    tooltipToDisplay.add(2, EnumChatFormatting.GRAY+"incompatible with your current item,");
+                    tooltipToDisplay.add(3, EnumChatFormatting.GRAY+"eg. Smite on a sword with Sharpness");
+                    break;
+                case 2:
+                    Gui.drawRect(guiLeft+295, guiTop+147+18, guiLeft+295+16, guiTop+147+16+18, 0x80ffffff);
+                    tooltipToDisplay = createTooltip("Sort enchants...",
+                            NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantSorting,
+                            "By Cost", "Alphabetically");
+                    break;
+                case 3:
+                    Gui.drawRect(guiLeft+295+18, guiTop+147+18, guiLeft+295+16+18, guiTop+147+16+18, 0x80ffffff);
+                    tooltipToDisplay = createTooltip("Order enchants...",
+                            NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantOrdering,
+                            "Ascending", "Descending");
+                    break;
+            }
         }
 
         //Left scroll bar
@@ -1355,6 +1422,48 @@ public class GuiCustomEnchant extends Gui {
                 lerpingInteger.setValue(newScroll);
             }
         }
+
+        //Config options
+        if(Mouse.getEventButtonState()) {
+            if(mouseX >= guiLeft+294 && mouseX < guiLeft+294+36 &&
+                    mouseY >= guiTop+146 && mouseY < guiTop+146+36) {
+                int index = (mouseX-(guiLeft+295))/18 + (mouseY-(guiTop+147))/18*2;
+
+                int direction = Mouse.getEventButton() == 0 ? 1 : -1;
+
+                switch (index) {
+                    case 0: {
+                        NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableTableGUI = false;
+                        break;
+                    }
+                    case 1: {
+                        int val = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants;
+                        val += direction;
+                        if (val < 0) val = 1;
+                        if (val > 1) val = 0;
+                        NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants = val;
+                        break;
+                    }
+                    case 2: {
+                        int val = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantSorting;
+                        val += direction;
+                        if (val < 0) val = 1;
+                        if (val > 1) val = 0;
+                        NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantSorting = val;
+                        break;
+                    }
+                    case 3: {
+                        int val = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantOrdering;
+                        val += direction;
+                        if (val < 0) val = 1;
+                        if (val > 1) val = 0;
+                        NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantOrdering = val;
+                        break;
+                    }
+                }
+            }
+        }
+
         if(Mouse.getEventButton() == 0) {
             if(Mouse.getEventButtonState()) {
                 if(mouseX > guiLeft+104 && mouseX < guiLeft+104+12) {

@@ -35,8 +35,7 @@ public class NEUConfig extends Config {
             overlay.renderDummy();
             OverlayManager.dontRenderOverlay = overlay.getClass();
         }, () -> {
-        }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfig))
+        }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)
         ));
     }
 
@@ -49,7 +48,6 @@ public class NEUConfig extends Config {
                 activeConfigCategory = ((NEUConfigEditor)wrapper.element).getSelectedCategoryName();
             }
         }
-        final String activeConfigCategoryF = activeConfigCategory;
 
         switch (runnableId) {
             case 0:
@@ -63,8 +61,7 @@ public class NEUConfig extends Config {
                         NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarPosition,
                         NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, 12, () -> {
                 }, () -> {
-                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
+                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)
                 ));
                 return;
             case 3:
@@ -236,12 +233,13 @@ public class NEUConfig extends Config {
     )
     public PetOverlay petOverlay = new PetOverlay();
 
+
     @Expose
     @Category(
-            name = "AH Search GUI",
-            desc = "AH Search GUI"
+            name = "AH Tweaks",
+            desc = "Tweaks for Hypixel's (Not NEU's) Auction House"
     )
-    public AuctionHouseSearch auctionHouseSearch = new AuctionHouseSearch();
+    public AHTweaks ahTweaks = new AHTweaks();
 
     @Expose
     @Category(

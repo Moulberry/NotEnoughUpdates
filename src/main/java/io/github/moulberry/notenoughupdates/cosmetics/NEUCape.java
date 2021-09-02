@@ -95,8 +95,6 @@ public class NEUCape {
         if(defaultBehaviour){
             this.capeName = capeName;
 
-
-
             if (capeName.equalsIgnoreCase("fade")) {
                 shaderName = "fade_cape";
             } else if (capeName.equalsIgnoreCase("space")) {
@@ -125,26 +123,6 @@ public class NEUCape {
         ResourceLocation staticCapeTex = new ResourceLocation("notenoughupdates:capes/" + capeName + ".png");
         capeTextures = new ResourceLocation[1];
         capeTextures[0] = staticCapeTex;
-
-        /*if(rlExists(staticCapeTex)) {
-            capeTextures = new ResourceLocation[1];
-            capeTextures[0] = staticCapeTex;
-        } else {
-            List<ResourceLocation> texs = new ArrayList<>();
-            for(int i=0; i<99; i++) {
-                ResourceLocation frame = new ResourceLocation(
-                        "notenoughupdates:capes/"+capeName+"/"+capeName+"_"+String.format("%02d", i)+".png");
-                if(rlExists(frame)) {
-                    texs.add(frame);
-                } else {
-                    break;
-                }
-            }
-            capeTextures = new ResourceLocation[texs.size()];
-            for(int i=0; i<texs.size(); i++) {
-                capeTextures[i] = texs.get(i);
-            }
-        }*/
     }
 
     private void bindTexture() {

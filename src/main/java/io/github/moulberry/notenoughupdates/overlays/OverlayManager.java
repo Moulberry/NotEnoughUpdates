@@ -111,8 +111,8 @@ public class OverlayManager {
         });
 
         List<String> bonemerangDummy = Lists.newArrayList(
-                "\u00a74Gonna break",
-                "\u00a77Targets: \u00a76\u00a7lLike alot"
+                "\u00a7cBonemerang will break!",
+                "\u00a77Targets: \u00a76\u00a7l10"
         );
         bonemerangOverlay = new BonemerangOverlay(NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangPosition, () -> bonemerangDummy, () -> {
             int style = NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangOverlayStyle;

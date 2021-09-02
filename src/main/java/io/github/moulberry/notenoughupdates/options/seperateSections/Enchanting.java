@@ -23,7 +23,7 @@ public class Enchanting {
     @Expose
     @ConfigOption(
             name = "Incompatible Enchants",
-            desc = "Handle enchants that are incompatible with your current item, eg. Smite on a sword with Sharpness"
+            desc = "How to display enchants that are incompatible with your current item, eg. Smite on a sword with Sharpness"
     )
     @ConfigEditorDropdown(
             values = {"Highlight", "Hide"}
@@ -45,7 +45,7 @@ public class Enchanting {
     @Expose
     @ConfigOption(
             name = "Enchant Ordering",
-            desc = "Change the method of ordered used by the sort"
+            desc = "Change the method of ordering used by the sort"
     )
     @ConfigEditorDropdown(
             values = {"Ascending", "Descending"}
