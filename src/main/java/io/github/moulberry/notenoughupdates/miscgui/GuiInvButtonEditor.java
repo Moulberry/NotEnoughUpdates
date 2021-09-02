@@ -495,7 +495,7 @@ public class GuiInvButtonEditor extends GuiScreen {
             } catch (IllegalArgumentException e){
                 return false;
             }
-        } catch (HeadlessException | IOException | UnsupportedFlavorException e) {
+        } catch (HeadlessException | IOException | UnsupportedFlavorException | IllegalStateException e) {
             return false;
         }
     }
