@@ -28,6 +28,9 @@ import java.util.regex.Pattern;
 public class SBInfo {
 
     private static final SBInfo INSTANCE = new SBInfo();
+    public static SBInfo getInstance() {
+        return INSTANCE;
+    }
 
     private static final Pattern timePattern = Pattern.compile(".+(am|pm)");
 
@@ -43,11 +46,7 @@ public class SBInfo {
 
     public Date currentTimeDate = null;
 
-    public String lastOpenContainerName = null;
-
-    public static SBInfo getInstance() {
-        return INSTANCE;
-    }
+    public String lastOpenContainerName = "";
 
     private long lastManualLocRaw = -1;
     private long lastLocRaw = -1;
@@ -77,7 +76,7 @@ public class SBInfo {
         locraw = null;
         mode = null;
         joinedWorld = System.currentTimeMillis();
-        lastOpenContainerName = null;
+        lastOpenContainerName = "";
     }
 
     @SubscribeEvent

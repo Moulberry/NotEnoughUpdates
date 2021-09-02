@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.overlays;
 
-import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
@@ -14,8 +13,6 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -314,7 +311,7 @@ public class TimersOverlay extends TextOverlay {
         }
 
 
-        if (!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay) {
+        if (!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay2) {
             overlayStrings = null;
             return;
         }

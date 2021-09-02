@@ -429,7 +429,7 @@ public class GuiProfileViewer extends GuiScreen {
                     desk.browse(new URI("https://sky.shiiyu.moe/stats/"+profile.getHypixelProfile().get("displayname").getAsString()+"/"+profileId));
                     Utils.playPressSound();
                     return;
-                } catch (IOException | URISyntaxException ignored) {
+                } catch (UnsupportedOperationException | IOException | URISyntaxException ignored) {
                     //no idea how this sounds, but ya know just in case
                     Utils.playSound(new ResourceLocation("game.player.hurt"), true);
                     return;
@@ -1259,14 +1259,10 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     public static PetLevel getPetLevel(String pet_name, String rarity, float exp) {
-
         JsonObject petInfo = getPetInfo(pet_name, rarity);
         int offset = petInfo.get("offset").getAsInt();
         int maxPetLevel = petInfo.get("max_level").getAsInt();
         JsonArray levels = petInfo.getAsJsonArray("pet_levels");
-        System.out.println("Offset: "+offset);
-        System.out.println("MaxPetLevel: "+maxPetLevel);
-
 
         float xpTotal = 0;
         float level = 1;

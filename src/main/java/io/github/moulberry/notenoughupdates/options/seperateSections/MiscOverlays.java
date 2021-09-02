@@ -23,7 +23,7 @@ public class MiscOverlays {
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 0)
-    public boolean todoOverlay = false;
+    public boolean todoOverlay2 = false;
 
     @Expose
     @ConfigOption(

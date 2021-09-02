@@ -181,9 +181,8 @@ public class XPInformation {
                 correctionCounter = 0;
                 skillInfoMap.put(skill.toLowerCase(), skillInfo);
             }
-
-            updateWithPercentage.remove(skill);
         }
+        updateWithPercentage.clear();
     }
 
     public void tick() {

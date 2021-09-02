@@ -1199,6 +1199,10 @@ public class NEUEventListener {
             }
         }
         if(!hoveringButton) buttonHovered = null;
+
+        if(AuctionBINWarning.getInstance().shouldShow()) {
+            AuctionBINWarning.getInstance().render();
+        }
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
@@ -1408,6 +1412,18 @@ public class NEUEventListener {
             return;
         }
 
+        final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+        final int scaledWidth = scaledresolution.getScaledWidth();
+        final int scaledHeight = scaledresolution.getScaledHeight();
+        int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
+        int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
+
+        if(AuctionBINWarning.getInstance().shouldShow()) {
+            AuctionBINWarning.getInstance().mouseInput(mouseX, mouseY);
+            event.setCanceled(true);
+            return;
+        }
+
         if(!event.isCanceled()) {
             Utils.scrollTooltip(Mouse.getEventDWheel());
         }
@@ -1421,12 +1437,6 @@ public class NEUEventListener {
             event.setCanceled(true);
             return;
         }
-
-        final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-        final int scaledWidth = scaledresolution.getScaledWidth();
-        final int scaledHeight = scaledresolution.getScaledHeight();
-        int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
-        int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
 
         String containerName = null;
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
@@ -1547,6 +1557,12 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
+        if(AuctionBINWarning.getInstance().shouldShow()) {
+            AuctionBINWarning.getInstance().keyboardInput();
+            event.setCanceled(true);
+            return;
+        }
+
         if(AuctionSearchOverlay.shouldReplace()) {
             AuctionSearchOverlay.keyEvent();
             event.setCanceled(true);

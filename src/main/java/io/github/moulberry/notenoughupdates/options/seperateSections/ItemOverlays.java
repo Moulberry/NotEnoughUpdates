@@ -240,7 +240,7 @@ public class ItemOverlays {
                     "\u00a7rHold a Bonemerang to display the overlay"
     )
     @ConfigEditorDraggableList(
-            exampleText = {"\u00a74Gonna break",
+            exampleText = {"\u00a7cBonemerang will break!",
                     "\u00a77Targets: \u00a76\u00a7l10"
             }
     )

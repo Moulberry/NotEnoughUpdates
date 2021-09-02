@@ -46,6 +46,8 @@ public class GuiInvButtonEditor extends GuiScreen {
     private static final ResourceLocation EXTRA_ICONS_JSON = new ResourceLocation("notenoughupdates:invbuttons/extraicons.json");
     private static final ResourceLocation PRESETS_JSON = new ResourceLocation("notenoughupdates:invbuttons/presets.json");
 
+    private static final String sharePrefix = "NEUBUTTONS/";
+
     private int xSize = 176;
     private int ySize = 166;
 
@@ -293,8 +295,15 @@ public class GuiInvButtonEditor extends GuiScreen {
         GlStateManager.color(1, 1, 1, 1);
         Utils.drawTexturedRect(guiLeft-88-2-22, guiTop+2, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
         Utils.drawTexturedRect(guiLeft-88-2-22, guiTop+2+24, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
-        Utils.drawStringCenteredScaledMaxWidth("Load preset from clipboard", fontRendererObj, guiLeft-44-2-22, guiTop+12, false, 86, 4210752);
-        Utils.drawStringCenteredScaledMaxWidth("Save preset to clipboard", fontRendererObj, guiLeft-44-2-22, guiTop+12+24, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("Load preset", fontRendererObj, guiLeft-44-2-22, guiTop+8, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("from Clipboard", fontRendererObj, guiLeft-44-2-22, guiTop+16, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("Save preset", fontRendererObj, guiLeft-44-2-22, guiTop+8+24, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("to Clipboard", fontRendererObj, guiLeft-44-2-22, guiTop+16+24, false, 86, 4210752);
+
+        if(!validShareContents()) {
+            Gui.drawRect(guiLeft-88-2-22, guiTop+2, guiLeft-2-22, guiTop+2+20, 0x80000000);
+        }
+
         GlStateManager.color(1, 1, 1, 1);
 
         if(presets != null) {
@@ -475,6 +484,22 @@ public class GuiInvButtonEditor extends GuiScreen {
         super.handleMouseInput();
     }
 
+    private boolean validShareContents() {
+        try {
+            String base64 = (String)Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+
+            if(base64.length() <= sharePrefix.length()) return false;
+
+            try {
+                return new String(Base64.getDecoder().decode(base64)).startsWith(sharePrefix);
+            } catch (IllegalArgumentException e){
+                return false;
+            }
+        } catch (HeadlessException | IOException | UnsupportedFlavorException e) {
+            return false;
+        }
+    }
+
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
@@ -572,9 +597,6 @@ public class GuiInvButtonEditor extends GuiScreen {
         if(mouseX > guiLeft-2-88-22 && mouseX< guiLeft-2-22) {
             if (mouseY > guiTop + 2 && mouseY < guiTop + 22) {
 
-//                String result = NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.toString();
-//                String base64String = Base64.getEncoder().encodeToString(result.getBytes(StandardCharsets.UTF_8));
-
                 String base64;
 
                 try {
@@ -582,9 +604,14 @@ public class GuiInvButtonEditor extends GuiScreen {
                 } catch (HeadlessException | IOException | UnsupportedFlavorException e) {
                     return;
                 }
+
+                if(base64.length() <= sharePrefix.length()) return;
+
                 String jsonString;
                 try {
                     jsonString = new String(Base64.getDecoder().decode(base64));
+                    if(!jsonString.startsWith(sharePrefix)) return;
+                    jsonString = jsonString.substring(sharePrefix.length());
                 } catch (IllegalArgumentException e) {
                     return;
 
@@ -629,7 +656,7 @@ public class GuiInvButtonEditor extends GuiScreen {
 
                     jsonArray.add(new JsonPrimitive(NotEnoughUpdates.INSTANCE.manager.gson.toJson(result.get(i), NEUConfig.InventoryButton.class)));
                 }
-                String base64String = Base64.getEncoder().encodeToString(jsonArray.toString().getBytes(StandardCharsets.UTF_8));
+                String base64String = Base64.getEncoder().encodeToString((sharePrefix+jsonArray).getBytes(StandardCharsets.UTF_8));
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(base64String), null);
                 return;
             }

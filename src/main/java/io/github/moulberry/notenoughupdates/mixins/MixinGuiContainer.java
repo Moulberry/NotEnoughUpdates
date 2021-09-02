@@ -2,18 +2,14 @@ package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
-import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
-import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
+import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
-import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.miscgui.GuiCustomEnchant;
 import io.github.moulberry.notenoughupdates.miscgui.StorageOverlay;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -74,6 +70,17 @@ public abstract class MixinGuiContainer extends GuiScreen {
         }
     }
 
+    @Inject(method="drawScreen",
+            at=@At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/GlStateManager;popMatrix()V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    public void drawScreen_after(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+        AuctionSortModeWarning.getInstance().onPostGuiRender();
+    }
+
     @Redirect(method="mouseReleased", at=@At(value = "INVOKE", target = "Ljava/util/Set;isEmpty()Z"))
     public boolean mouseReleased_isEmpty(Set<?> set) {
         return set.size() <= 1;
@@ -83,6 +90,7 @@ public abstract class MixinGuiContainer extends GuiScreen {
     public void isMouseOverSlot(Slot slotIn, int mouseX, int mouseY, CallbackInfoReturnable<Boolean> cir) {
         StorageOverlay.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
         GuiCustomEnchant.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
+        AuctionBINWarning.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
     }
 
     @Redirect(method="drawScreen", at=@At(value="INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;drawGradientRect(IIIIII)V"))
@@ -177,6 +185,11 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Inject(method="handleMouseClick", at=@At(value="HEAD"), cancellable = true)
     public void handleMouseClick(Slot slotIn, int slotId, int clickedButton, int clickType, CallbackInfo ci) {
         GuiContainer $this = (GuiContainer)(Object)this;
+
+        if(AuctionBINWarning.getInstance().onMouseClick(slotIn, slotId, clickedButton, clickType)) {
+            ci.cancel();
+            return;
+        }
 
         AtomicBoolean ret = new AtomicBoolean(false);
         SlotLocking.getInstance().onWindowClick(slotIn, slotId, clickedButton, clickType, (tuple) -> {

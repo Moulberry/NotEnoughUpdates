@@ -19,24 +19,21 @@ import java.util.function.Supplier;
 
 import static net.minecraft.util.EnumChatFormatting.DARK_AQUA;
 
-public class BonemerangOverlay extends TextOverlay{
+public class BonemerangOverlay extends TextOverlay {
     public BonemerangOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
         super(position, dummyStrings, styleSupplier);
         INSTANCE = this;
     }
+
     public static BonemerangOverlay INSTANCE;
 
-
     public final Set<EntityLivingBase> bonemeragedEntities = new HashSet<>();
-
-
 
     @Override
     public void updateFrequent() {
         if(NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangFastUpdate){
             updateOverlay();
         }
-
     }
 
     @Override
@@ -44,7 +41,6 @@ public class BonemerangOverlay extends TextOverlay{
         if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangFastUpdate){
             updateOverlay();
         }
-
     }
 
     private void updateOverlay(){
@@ -65,7 +61,6 @@ public class BonemerangOverlay extends TextOverlay{
 
         if(internal != null && internal.equals("BONE_BOOMERANG")) {
             HashMap<Integer, String> map = new HashMap<>();
-
 
             EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
             float stepSize = 0.15f;
@@ -89,7 +84,6 @@ public class BonemerangOverlay extends TextOverlay{
                     break;
                 }
 
-
                 List<Entity> entities = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABBExcludingEntity(Minecraft.getMinecraft().thePlayer, bb);
                 for (Entity entity : entities) {
                     if (entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand) && !entity.isInvisible()) {
@@ -102,7 +96,6 @@ public class BonemerangOverlay extends TextOverlay{
                 position.translate(step.x, step.y, step.z);
             }
             if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableBonemerangOverlay) {
-
                 map.put(1, EnumChatFormatting.GRAY + "Targets: " + EnumChatFormatting.GOLD + EnumChatFormatting.BOLD + bonemeragedEntities.size());
                 for (int index : NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangOverlayText) {
                     if (map.containsKey(index)) {

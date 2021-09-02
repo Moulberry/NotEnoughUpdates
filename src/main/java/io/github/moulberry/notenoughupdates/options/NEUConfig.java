@@ -245,6 +245,13 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
+            name = "AH BIN Warning",
+            desc = "AH BIN Warning"
+    )
+    public AuctionHouseBINWarning auctionHouseBINWarning = new AuctionHouseBINWarning();
+
+    @Expose
+    @Category(
             name = "Accessory Bag Overlay",
             desc = "Accessory Bag Overlay"
     )
