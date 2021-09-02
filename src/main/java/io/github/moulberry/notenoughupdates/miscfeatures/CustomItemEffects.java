@@ -45,6 +45,8 @@ import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CustomItemEffects {
 
@@ -59,10 +61,7 @@ public class CustomItemEffects {
 
     public long lastUsedHyperion = 0;
 
-    private boolean heldBonemerang = false;
-
-    public final Set<EntityLivingBase> bonemeragedEntities = new HashSet<>();
-    public boolean bonemerangBreak = false;
+    private final Pattern etherwarpDistancePattern = Pattern.compile("up to (?<distance>\\d{2}) blocks away\\.");
 
     public int aoteTeleportationMillis = 0;
     public Vector3f aoteTeleportationCurr = null;
@@ -197,55 +196,7 @@ public class CustomItemEffects {
         tick++;
         if(tick > Integer.MAX_VALUE/2) tick = 0;
 
-        heldBonemerang = false;
-        bonemerangBreak = false;
-        bonemeragedEntities.clear();
-        if(Minecraft.getMinecraft().thePlayer == null) return;
-        if(Minecraft.getMinecraft().theWorld == null) return;
 
-        ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
-
-        String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-        if(internal != null && internal.equals("BONE_BOOMERANG")) {
-            heldBonemerang = true;
-
-            EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-            float stepSize = 0.15f;
-            float bonemerangDistance = 15;
-
-            Vector3f position = new Vector3f((float)p.posX, (float)p.posY + p.getEyeHeight(), (float)p.posZ);
-            Vec3 look = p.getLook(0);
-
-            Vector3f step = new Vector3f((float)look.xCoord, (float)look.yCoord, (float)look.zCoord);
-            step.scale(stepSize / step.length());
-
-            for(int i=0; i<Math.floor(bonemerangDistance/stepSize)-2; i++) {
-                AxisAlignedBB bb = new AxisAlignedBB(position.x - 0.75f, position.y - 0.1, position.z - 0.75f,
-                        position.x + 0.75f, position.y + 0.25, position.z + 0.75);
-
-                BlockPos blockPos = new BlockPos(position.x, position.y, position.z);
-
-                if(!Minecraft.getMinecraft().theWorld.isAirBlock(blockPos) &&
-                        Minecraft.getMinecraft().theWorld.getBlockState(blockPos).getBlock().isFullCube()) {
-                    if(NotEnoughUpdates.INSTANCE.config.itemOverlays.showBreak) {
-                        bonemerangBreak = true;
-                    }
-                    break;
-                }
-
-                if(NotEnoughUpdates.INSTANCE.config.itemOverlays.highlightTargeted) {
-                    List<Entity> entities = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABBExcludingEntity(Minecraft.getMinecraft().thePlayer, bb);
-                    for(Entity entity : entities) {
-                        if(entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand) && !entity.isInvisible()) {
-                            if(!bonemeragedEntities.contains(entity)) {
-                                bonemeragedEntities.add((EntityLivingBase)entity);
-                            }
-                        }
-                    }
-                }
-                position.translate(step.x, step.y, step.z);
-            }
-        }
     }
 
     private float lastPartialTicks = 0;
@@ -301,7 +252,7 @@ public class CustomItemEffects {
             ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
             String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
 
-            if(usingEtherwarp) {
+            if(usingEtherwarp && NotEnoughUpdates.INSTANCE.config.itemOverlays.enableEtherwarpHelperOverlay) {
                 String denyTpReason = null;
                 if(etherwarpRaycast == null) {
                     denyTpReason = "Too far!";
@@ -313,7 +264,10 @@ public class CustomItemEffects {
                         denyTpReason = "Not solid!";
                     } else {
                         WorldClient world = Minecraft.getMinecraft().theWorld;
-                        if(world.getBlockState(pos.add(0, 1, 0)).getBlock() != Blocks.air ||
+                        Block above = world.getBlockState(pos.add(0, 1, 0)).getBlock();
+                        if(above != Blocks.air && above.isCollidable() &&
+                                above.getCollisionBoundingBox(Minecraft.getMinecraft().theWorld, pos.add(0, 1, 0),
+                                        world.getBlockState(pos.add(0, 1, 0))) != null ||
                                 world.getBlockState(pos.add(0, 2, 0)).getBlock() != Blocks.air) {
                             denyTpReason = "No air above!";
                         }
@@ -329,16 +283,12 @@ public class CustomItemEffects {
                 }
             }
 
-            if(heldBonemerang) {
-                if(bonemerangBreak) {
-                    ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
-                    Utils.drawStringCentered(EnumChatFormatting.RED+"Bonemerang will break!",
-                            Minecraft.getMinecraft().fontRendererObj,
-                            scaledResolution.getScaledWidth()/2f, scaledResolution.getScaledHeight()/2f+10, true, 0);
-                }
-            } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay &&
+            boolean onPrivateIsland = SBInfo.getInstance().getLocation() == null || SBInfo.getInstance().getLocation().equals("dynamic");
+
+
+            if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay &&
                     Minecraft.getMinecraft().objectMouseOver != null &&
-                    Minecraft.getMinecraft().objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                    Minecraft.getMinecraft().objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && onPrivateIsland) {
 
                 IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(
                         Minecraft.getMinecraft().objectMouseOver.getBlockPos().offset(
@@ -580,6 +530,7 @@ public class CustomItemEffects {
         ItemStack held = Minecraft.getMinecraft().thePlayer.getHeldItem();
         String heldInternal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
         if(heldInternal != null) {
+            boolean onPrivateIsland = SBInfo.getInstance().getLocation() == null || SBInfo.getInstance().getLocation().equals("dynamic");
             EntityPlayer player = event.player;
             double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double)event.partialTicks;
             double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double)event.partialTicks;
@@ -600,41 +551,52 @@ public class CustomItemEffects {
                     }
 
                     if(usingEtherwarp) {
-                        etherwarpRaycast = raycast(Minecraft.getMinecraft().thePlayer, 1f, 60, 0.1f);
-
-                        if(etherwarpRaycast != null) {
-                            AxisAlignedBB bb = etherwarpRaycast.state.getBlock().getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, etherwarpRaycast.pos)
-                                    .expand(0.01D, 0.01D, 0.01D).offset(-d0, -d1, -d2);
-                            drawFilledBoundingBox(bb, 1f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);
-
-                            GlStateManager.disableDepth();
-                            drawOutlineBoundingBox(bb, 2f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);
-                            GlStateManager.enableDepth();
-
-                            GlStateManager.depthMask(true);
-                            GlStateManager.enableTexture2D();
-                            GlStateManager.disableBlend();
-
-                            if(NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpZoom) {
-                                float distFactor = 1 - (float)Math.sqrt(etherwarpRaycast.pos.distanceSq(Minecraft.getMinecraft().thePlayer.getPosition()))/60;
-
-                                targetFOVMult = distFactor*distFactor*distFactor*0.75f + 0.25f;
-                                if(targetFOVMult < 0.25f) targetFOVMult = 0.25f;
-
-                                targetSensMult = distFactor*0.76f + 0.25f;
+                        int dist = 0;
+                        for (String line : NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(held.getTagCompound())) {
+                            String cleaned = Utils.cleanColour(line);
+                            Matcher matcher = etherwarpDistancePattern.matcher(cleaned);
+                            if (matcher.matches()) {
+                                dist = Integer.parseInt(matcher.group("distance"));
+                                break;
                             }
-                        } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpZoom) {
-                            targetFOVMult = lastFOVMult;
                         }
+                        if (dist != 0) {
+                            etherwarpRaycast = raycast(Minecraft.getMinecraft().thePlayer, 1f, dist, 0.1f);
 
-                        return;
+                            if (etherwarpRaycast != null) {
+                                AxisAlignedBB bb = etherwarpRaycast.state.getBlock().getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, etherwarpRaycast.pos)
+                                        .expand(0.01D, 0.01D, 0.01D).offset(-d0, -d1, -d2);
+                                drawFilledBoundingBox(bb, 1f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);
+
+                                GlStateManager.disableDepth();
+                                drawOutlineBoundingBox(bb, 2f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);
+                                GlStateManager.enableDepth();
+
+                                GlStateManager.depthMask(true);
+                                GlStateManager.enableTexture2D();
+                                GlStateManager.disableBlend();
+
+                                if (NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpZoom) {
+                                    float distFactor = 1 - (float) Math.sqrt(etherwarpRaycast.pos.distanceSq(Minecraft.getMinecraft().thePlayer.getPosition())) / 60;
+
+                                    targetFOVMult = distFactor * distFactor * distFactor * 0.75f + 0.25f;
+                                    if (targetFOVMult < 0.25f) targetFOVMult = 0.25f;
+
+                                    targetSensMult = distFactor * 0.76f + 0.25f;
+                                }
+                            } else if (NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpZoom) {
+                                targetFOVMult = lastFOVMult;
+                            }
+
+                            return;
+                        }
                     }
                 }
             }
 
             if(heldInternal.equals("BLOCK_ZAPPER")) {
-                boolean privateIs = SBInfo.getInstance().getLocation() == null || SBInfo.getInstance().getLocation().equals("dynamic");
-                if (!privateIs || !NotEnoughUpdates.INSTANCE.config.itemOverlays.enableZapperOverlay ||
+
+                if (!onPrivateIsland || !NotEnoughUpdates.INSTANCE.config.itemOverlays.enableZapperOverlay ||
                         event.target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
                     zapperBlocks.clear();
                     return;
@@ -770,7 +732,7 @@ public class CustomItemEffects {
                     GlStateManager.disableBlend();
                 }
             } else if(NotEnoughUpdates.INSTANCE.config.itemOverlays.enableWandOverlay) {
-                if(heldInternal.equals("BUILDERS_WAND")) {
+                if(heldInternal.equals("BUILDERS_WAND") && onPrivateIsland) {
                     int maxBlocks = MAX_BUILDERS_BLOCKS;
                     if (event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                         IBlockState hover = Minecraft.getMinecraft().theWorld.getBlockState(event.target.getBlockPos().offset(event.target.sideHit, 1));
@@ -852,7 +814,7 @@ public class CustomItemEffects {
                         GlStateManager.enableTexture2D();
                         GlStateManager.disableBlend();
                     }
-                } else if((heldInternal.equals("WATER_BUCKET") || heldInternal.equals("MAGICAL_WATER_BUCKET")) &&
+                } else if((heldInternal.equals("WATER_BUCKET") || heldInternal.equals("MAGICAL_WATER_BUCKET") && NotEnoughUpdates.INSTANCE.config.itemOverlays.enablePrismapumpOverlay && onPrivateIsland) &&
                         event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                     BlockPos hover = event.target.getBlockPos().offset(event.target.sideHit, 1);
 
@@ -934,7 +896,7 @@ public class CustomItemEffects {
                     GlStateManager.depthMask(true);
                     GlStateManager.enableTexture2D();
                     GlStateManager.disableBlend();
-                }  else if((heldInternal.equals("HOE_OF_GREAT_TILLING") || heldInternal.equals("HOE_OF_GREATER_TILLING")) &&
+                }  else if((heldInternal.equals("HOE_OF_GREAT_TILLING") || heldInternal.equals("HOE_OF_GREATER_TILLING") && onPrivateIsland) &&
                         event.target.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
                     BlockPos target = event.target.getBlockPos();
                     IBlockState targetState = Minecraft.getMinecraft().theWorld.getBlockState(target);

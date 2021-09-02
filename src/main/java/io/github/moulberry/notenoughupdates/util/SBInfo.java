@@ -125,7 +125,7 @@ public class SBInfo {
     private static final Pattern SKILL_LEVEL_PATTERN = Pattern.compile("([^0-9:]+) (\\d{1,2})");
 
     public void tick() {
-        isInDungeon = false;
+        Boolean tempIsInDungeon = false;
 
         long currentTime = System.currentTimeMillis();
 
@@ -171,13 +171,16 @@ public class SBInfo {
                 ScorePlayerTeam scoreplayerteam1 = scoreboard.getPlayersTeam(score.getPlayerName());
                 String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
                 line = Utils.cleanDuplicateColourCodes(line);
+                
+                String cleanLine = Utils.cleanColour(line);
 
-                if(Utils.cleanColour(line).contains("Dungeon Cleared: ")) {
-                    isInDungeon = true;
+                if(cleanLine.contains("Dungeon") &&  cleanLine.contains("Cleared:") && cleanLine.contains("%")) {
+                    tempIsInDungeon = true;
                 }
 
                 lines.add(line);
             }
+            isInDungeon= tempIsInDungeon;
 
             if(lines.size() >= 5) {
                 date = Utils.cleanColour(lines.get(1)).trim();
@@ -191,7 +194,13 @@ public class SBInfo {
                         currentTimeDate = parseFormat.parse(timeSpace);
                     } catch (ParseException e) {}
                 }
-                location = Utils.cleanColour(lines.get(3)).replaceAll("[^A-Za-z0-9() ]", "").trim();
+                //Replaced with for loop because in crystal hollows with events the line it's on can shift.
+                for (String line : lines){
+                    if (line.contains("⏣")) {
+                        location = Utils.cleanColour(line).replaceAll("[^A-Za-z0-9() ]", "").trim();
+                        break;
+                    }
+                }
             }
             objective = null;
 

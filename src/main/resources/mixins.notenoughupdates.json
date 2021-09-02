@@ -3,6 +3,7 @@
   "refmap": "mixins.notenoughupdates.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MixinMinecraft",
     "MixinAbstractClientPlayer",
     "MixinContainer",
     "MixinEffectRenderer",
@@ -21,7 +22,7 @@
     "MixinItemStack",
     "MixinLayerArmorBase",
     "MixinLayerCustomHead",
-    "MixinLoadingScreenRenderer",
+
     "MixinMouseHelper",
     "MixinNetHandlerPlayClient",
     "MixinPlayerControllerMP",

@@ -55,7 +55,7 @@ NotEnoughUpdates (NEU) is a feature rich 1.8.9 Minecraft forge mod for Hypixel S
 4. Then, hop onto Skyblock and run the command `/api new`. Your api key is automatically filled out and all features should work.
 5. Type `/neu`. If you see the NotEnoughUpdates menu, you have done this correctly!
 
-*If you need further assistance feel free to join the [discord](https://discord.gg/moulberry) and ask for help in [#neu-support-1](discord://discord.com/channels/516977525906341928/714332750156660756)*
+*If you need further assistance feel free to join the [discord](https://discord.gg/moulberry) and ask for help in [#neu-support](discord://discord.com/channels/516977525906341928/714332750156660756)*
 
 ## Features
 

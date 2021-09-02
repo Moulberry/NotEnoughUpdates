@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import org.lwjgl.input.Keyboard;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,11 +63,47 @@ public class TooltipTweaks {
 
     @Expose
     @ConfigOption(
+            name = "Price info keybind",
+            desc = "Only show price info if holding a key."
+    )
+    @ConfigEditorBoolean
+    public boolean disablePriceKey = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Price info Keybind",
+            desc = "Hold this key to show a price info tooltip"
+    )
+    @ConfigEditorKeybind(defaultKey = Keyboard.KEY_NONE)
+    public int disablePriceKeyKeybind = Keyboard.KEY_NONE;
+
+
+
+    @Expose
+    @ConfigOption(
+            name = "Show reforge stats",
+            desc = "Show statistics a reforge stone will apply."
+    )
+    @ConfigEditorBoolean
+    public boolean showReforgeStats = true;
+
+    @Expose
+    @ConfigOption(
             name = "Missing Enchant List",
             desc = "Show which enchants are missing on an item when pressing LSHIFT"
     )
     @ConfigEditorBoolean
     public boolean missingEnchantList = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Expand Pet Exp Requirement",
+            desc = "Show which the full amount of pet xp required"
+    )
+    @ConfigEditorBoolean
+    public boolean petExtendExp = true;
+
+
 
     @Expose
     @ConfigOption(

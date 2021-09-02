@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.overlays;
 
+import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
@@ -13,6 +14,8 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -82,7 +85,9 @@ public class TimersOverlay extends TextOverlay {
 
     @Override
     protected Vector2f getSize(List<String> strings) {
-        return super.getSize(strings).translate(12, 0);
+        if(NotEnoughUpdates.INSTANCE.config.miscOverlays.todoIcons)
+            return super.getSize(strings).translate(12, 0);
+        return super.getSize(strings);
     }
 
     private static final ItemStack CAKES_ICON = new ItemStack(Items.cake);
@@ -129,7 +134,10 @@ public class TimersOverlay extends TextOverlay {
 
                 ZonedDateTime currentTimeEST = ZonedDateTime.now(ZoneId.of("America/Atikokan"));
 
-                long fetchurIndex = (currentTimeEST.getDayOfMonth() % 13)-1;
+                long fetchurIndex = ((currentTimeEST.getDayOfMonth()+1) % 13)-1;
+                //Added because disabled fetchur and enabled it again but it was showing the wrong item
+                //Lets see if this stays correct
+
                 if(fetchurIndex < 0) fetchurIndex += 13;
 
                 icon = FETCHUR_ICONS[(int)fetchurIndex];
@@ -190,10 +198,26 @@ public class TimersOverlay extends TextOverlay {
                     if (stack.getItem() == Items.blaze_powder) {
                         if (hidden.experimentsCompleted == 0) {
                             hidden.experimentsCompleted = currentTime;
+                            return;
                         }
-                    } else {
-                        hidden.experimentsCompleted = 0;
                     }
+                }
+                ItemStack stackSuperPairs = lower.getStackInSlot(22);
+                if(stackSuperPairs != null && stackSuperPairs.getItem() == Items.skull && stackSuperPairs.getTagCompound() != null){
+                    String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stackSuperPairs.getTagCompound());
+                    String text = lore[lore.length-1];
+                    String cleanText = Utils.cleanColour(text);
+                    if(cleanText.equals("Experiments on cooldown!")){
+                        hidden.experimentsCompleted = currentTime;
+                        return;
+                    }
+                }
+                hidden.experimentsCompleted = 0;
+                return;
+            } else if(containerName.equals("Superpairs Rewards") && lower.getSizeInventory() >= 27){
+                ItemStack stack = lower.getStackInSlot(13);
+                if(Utils.cleanColour(stack.getDisplayName()).equals("Superpairs")){
+                    hidden.experimentsCompleted = currentTime;
                 }
             }
         }
@@ -224,7 +248,6 @@ public class TimersOverlay extends TextOverlay {
                         }
                         if (godpotRemaingTimeUnformatted.length >= 1) {
                             godPotDuration = godPotDuration + (long) Integer.parseInt(godpotRemaingTimeUnformatted[i]) * 1000;
-
                         }
                     } catch (Exception ignored) {
                     }
@@ -349,7 +372,7 @@ public class TimersOverlay extends TextOverlay {
                     hidden.godPotionDuration < TimeEnums.DAY.time) {
                 map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(hidden.godPotionDuration));
             } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
-                map.put(2, DARK_AQUA + "Godpotf: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(hidden.godPotionDuration));
+                map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(hidden.godPotionDuration));
             }
     }
 

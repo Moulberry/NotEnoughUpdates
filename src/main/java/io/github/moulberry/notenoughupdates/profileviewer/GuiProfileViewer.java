@@ -11,15 +11,17 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
-import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Constants;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.SkinManager;
@@ -32,7 +34,9 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
-import net.minecraft.util.*;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.Matrix4f;
+import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -42,9 +46,15 @@ import org.lwjgl.opengl.GL20;
 
 import java.awt.*;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
-import java.util.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -63,6 +73,7 @@ public class GuiProfileViewer extends GuiScreen {
     public static final ResourceLocation pv_dropdown = new ResourceLocation("notenoughupdates:pv_dropdown.png");
     public static final ResourceLocation pv_bg = new ResourceLocation("notenoughupdates:pv_bg.png");
     public static final ResourceLocation pv_elements = new ResourceLocation("notenoughupdates:pv_elements.png");
+    public static final ResourceLocation pv_ironman = new ResourceLocation("notenoughupdates:pv_ironman.png");
     public static final ResourceLocation resource_packs = new ResourceLocation("minecraft:textures/gui/resource_packs.png");
     public static final ResourceLocation icons = new ResourceLocation("textures/gui/icons.png");
 
@@ -138,6 +149,12 @@ public class GuiProfileViewer extends GuiScreen {
         if(profileId == null && profile != null && profile.getLatestProfile() != null) {
             profileId = profile.getLatestProfile();
         }
+        {
+            //this is just to cache the guild info
+            if(profile != null) {
+                JsonObject guildinfo = profile.getGuildInfo(null);
+            }
+        }
 
         this.sizeX = 431;
         this.sizeY = 202;
@@ -175,12 +192,29 @@ public class GuiProfileViewer extends GuiScreen {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
             if(profile != null) {
+                JsonObject currProfileInfo = profile.getProfileInformation(profileId);
+                //Render Profile chooser button
                 renderBlurredBackground(width, height, guiLeft+2, guiTop+sizeY+3+2, 100-4, 20-4);
                 Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
                 Utils.drawTexturedRect(guiLeft, guiTop+sizeY+3, 100, 20,
                         0, 100/200f, 0, 20/185f, GL11.GL_NEAREST);
                 Utils.drawStringCenteredScaledMaxWidth(profileId, Minecraft.getMinecraft().fontRendererObj, guiLeft+50,
                         guiTop+sizeY+3+10, true, 90, new Color(63, 224, 208, 255).getRGB());
+                if(currProfileInfo != null && currProfileInfo.has("game_mode") && currProfileInfo.get("game_mode").getAsString().equals("ironman")) {
+                    GlStateManager.color(1, 1, 1, 1);
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(pv_ironman);
+                    Utils.drawTexturedRect(guiLeft-16-5, guiTop+sizeY+5, 16, 16, GL11.GL_NEAREST);
+                }
+                //Render Open In Skycrypt button
+                renderBlurredBackground(width, height, guiLeft+100+6+2, guiTop+sizeY+3+2, 100-4, 20-4);
+                Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
+                Utils.drawTexturedRect(guiLeft+100+6, guiTop+sizeY+3, 100, 20,
+                        0, 100/200f, 0, 20/185f, GL11.GL_NEAREST);
+                Utils.drawStringCenteredScaledMaxWidth("Open in Skycrypt", Minecraft.getMinecraft().fontRendererObj, guiLeft+50+100+6,
+                        guiTop+sizeY+3+10, true, 90, new Color(63, 224, 208, 255).getRGB());
+
+
+
 
                 if(profileDropdownSelected && !profile.getProfileIds().isEmpty() && scaledResolution.getScaleFactor() != 4) {
                     int dropdownOptionSize = scaledResolution.getScaleFactor()==3?10:20;
@@ -200,6 +234,12 @@ public class GuiProfileViewer extends GuiScreen {
                         String otherProfileId = profile.getProfileIds().get(yIndex);
                         Utils.drawStringCenteredScaledMaxWidth(otherProfileId, Minecraft.getMinecraft().fontRendererObj, guiLeft+50,
                                 guiTop+sizeY+23+dropdownOptionSize/2f+dropdownOptionSize*yIndex, true, 90, new Color(33, 112, 104, 255).getRGB());
+                        currProfileInfo = profile.getProfileInformation(otherProfileId);
+                        if(currProfileInfo != null && currProfileInfo.has("game_mode") && currProfileInfo.get("game_mode").getAsString().equals("ironman")) {
+                            GlStateManager.color(1, 1, 1, 1);
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(pv_ironman);
+                            Utils.drawTexturedRect(guiLeft-16-5, guiTop+sizeY+2+23+dropdownOptionSize*yIndex, 16, 16, GL11.GL_NEAREST);
+                        }
                     }
 
                 }
@@ -382,6 +422,21 @@ public class GuiProfileViewer extends GuiScreen {
                 return;
             }
         }
+        if(mouseX > guiLeft+106 && mouseX < guiLeft+106+100 && profile != null && !profile.getProfileIds().isEmpty() && profileId != null) {
+            if(mouseY > guiTop+sizeY+3 && mouseY < guiTop+sizeY+23) {
+                try{
+                    Desktop desk = Desktop.getDesktop();
+                    desk.browse(new URI("https://sky.shiiyu.moe/stats/"+profile.getHypixelProfile().get("displayname").getAsString()+"/"+profileId));
+                    Utils.playPressSound();
+                    return;
+                } catch (IOException | URISyntaxException ignored) {
+                    //no idea how this sounds, but ya know just in case
+                    Utils.playSound(new ResourceLocation("game.player.hurt"), true);
+                    return;
+                }
+            }
+        }
+
         if(mouseX > guiLeft && mouseX < guiLeft+100 && profile != null && !profile.getProfileIds().isEmpty()) {
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
             if(mouseY > guiTop+sizeY+3 && mouseY < guiTop+sizeY+23) {
@@ -500,6 +555,15 @@ public class GuiProfileViewer extends GuiScreen {
                     floorTime = i;
                     return;
                 }
+            }
+        }
+        if(mouseX >= guiLeft-29 && mouseX <= guiLeft){
+            if(mouseY >= guiTop && mouseY<= guiTop+28){
+                onMasterMode = false;
+                return;
+            } else if(mouseY+28 >= guiTop && mouseY<= guiTop+28*2){
+                onMasterMode = true;
+                return;
             }
         }
     }
@@ -703,6 +767,13 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
+    private static final LinkedHashMap<String, ItemStack> dungeonsModeIcons = new LinkedHashMap<>();
+    static {
+        dungeonsModeIcons.put("catacombs", Utils.editItemStackInfo(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DUNGEON_STONE")),EnumChatFormatting.GRAY+"Normal Mode", true));
+        dungeonsModeIcons.put("master_catacombs", Utils.editItemStackInfo(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MASTER_SKULL_TIER_7")),EnumChatFormatting.GRAY+"Master Mode", true));
+
+    }
+
     private void drawDungPage(int mouseX, int mouseY, float partialTicks) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dung);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
@@ -716,6 +787,13 @@ public class GuiProfileViewer extends GuiScreen {
         if(leveling == null)  return;
 
         int sectionWidth = 110;
+
+        String dungeonString = onMasterMode?"master_catacombs":"catacombs";
+
+        //Utils.drawStringCentered((onMasterMode?"Master Mode":"Catacombs"),fontRendererObj,(guiLeft+sizeX/2), guiTop+10, true, 0xffff0000);
+        Utils.renderShadowedString(EnumChatFormatting.RED+(onMasterMode?"Master Mode":"Catacombs"),
+                (guiLeft+sizeX/2), guiTop+5, sectionWidth);
+
 
         ProfileViewer.Level levelObjCata = levelObjCatas.get(profileId);
         //Catacombs level thingy
@@ -814,35 +892,58 @@ public class GuiProfileViewer extends GuiScreen {
 
             float secrets = Utils.getElementAsFloat(Utils.getElement(hypixelInfo,
                     "achievements.skyblock_treasure_hunter"), 0);
-
             float totalRuns = 0;
+            float totalRunsF = 0;
             float totalRunsF5 = 0;
             for(int i=1; i<=7; i++) {
                 float runs = Utils.getElementAsFloat(Utils.getElement(profileInfo,
                         "dungeons.dungeon_types.catacombs.tier_completions."+i), 0);
-                totalRuns += runs;
+                totalRunsF += runs;
                 if(i >= 5) {
                     totalRunsF5 += runs;
                 }
             }
+            float totalRunsM = 0;
+            float totalRunsM5 = 0;
+            for(int i=1; i<=7; i++) {
+                float runs = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.tier_completions."+i), 0);
+                totalRunsM += runs;
+                if(i >= 5) {
+                    totalRunsM5 += runs;
+                }
+            }
+            totalRuns=totalRunsF+totalRunsM;
 
             float mobKills = 0;
+            float mobKillsF = 0;
             float mobKillsF5 = 0;
             for(int i=1; i<=7; i++) {
                 float kills = Utils.getElementAsFloat(Utils.getElement(profileInfo,
                         "dungeons.dungeon_types.catacombs.mobs_killed."+i), 0);
-                mobKills += kills;
+                mobKillsF += kills;
                 if(i >= 5) {
                     mobKillsF5 += kills;
                 }
             }
+            float mobKillsM = 0;
+            float mobKillsM5 = 0;
+            for(int i=1; i<=7; i++) {
+                float kills = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.mobs_killed."+i), 0);
+                mobKillsM += kills;
+                if(i >= 5) {
+                    mobKillsM5 += kills;
+                }
+            }
+            mobKills = mobKillsF+mobKillsM;
 
             int miscTopY = y+55;
 
-            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs  ",
-                    EnumChatFormatting.WHITE.toString()+((int)(totalRuns)), x, miscTopY, sectionWidth);
-            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs (F5-7)  ",
-                    EnumChatFormatting.WHITE.toString()+((int)(totalRunsF5)), x, miscTopY+10, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs "+(onMasterMode?"M":"F"),
+                    EnumChatFormatting.WHITE.toString()+((int)(onMasterMode?totalRunsM:totalRunsF)), x, miscTopY, sectionWidth);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs ("+(onMasterMode?"M":"F")+ "5-7)  ",
+                    EnumChatFormatting.WHITE.toString()+((int)(onMasterMode?totalRunsM5:totalRunsF5)), x, miscTopY+10, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (Total)  ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(secrets, 0), x, miscTopY+20, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (/Run)  ",
@@ -873,11 +974,11 @@ public class GuiProfileViewer extends GuiScreen {
             }
 
             float timeNorm = Utils.getElementAsFloat(Utils.getElement(profileInfo,
-                    "dungeons.dungeon_types.catacombs.fastest_time."+floorTime), 0);
+                    "dungeons.dungeon_types."+dungeonString+".fastest_time."+floorTime), 0);
             float timeS = Utils.getElementAsFloat(Utils.getElement(profileInfo,
-                    "dungeons.dungeon_types.catacombs.fastest_time_s."+floorTime), 0);
+                    "dungeons.dungeon_types."+dungeonString+".fastest_time_s."+floorTime), 0);
             float timeSPLUS = Utils.getElementAsFloat(Utils.getElement(profileInfo,
-                    "dungeons.dungeon_types.catacombs.fastest_time_s_plus."+floorTime), 0);
+                    "dungeons.dungeon_types."+dungeonString+".fastest_time_s_plus."+floorTime), 0);
             String timeNormStr = timeNorm <= 0 ? "N/A" : Utils.prettyTime((long)timeNorm);
             String timeSStr = timeS <= 0 ? "N/A" : Utils.prettyTime((long)timeS);
             String timeSPlusStr = timeSPLUS <= 0 ? "N/A" : Utils.prettyTime((long)timeSPLUS);
@@ -898,7 +999,7 @@ public class GuiProfileViewer extends GuiScreen {
                     x+sectionWidth/2, y, sectionWidth);
             for(int i=1; i<=7; i++) {
                 float compl = Utils.getElementAsFloat(Utils.getElement(profileInfo,
-                        "dungeons.dungeon_types.catacombs.tier_completions."+i), 0);
+                        "dungeons.dungeon_types."+dungeonString+".tier_completions."+i), 0);
 
                 if(BOSS_HEADS[i-1] == null) {
                     String textureLink = bossFloorHeads[i-1];
@@ -934,7 +1035,7 @@ public class GuiProfileViewer extends GuiScreen {
                 Utils.drawItemStack(BOSS_HEADS[i-1], 0, 0);
                 GlStateManager.popMatrix();
 
-                Utils.renderAlignedString(String.format(EnumChatFormatting.YELLOW+"%s (F%d) ", bossFloorArr[i-1], i),
+                Utils.renderAlignedString(String.format(EnumChatFormatting.YELLOW+"%s ("+(onMasterMode?"M":"F")+"%d) ", bossFloorArr[i-1], i),
                         EnumChatFormatting.WHITE.toString()+(int)compl,
                         x+16, y+18+20*(i-1), sectionWidth-15);
 
@@ -980,6 +1081,89 @@ public class GuiProfileViewer extends GuiScreen {
                 renderXpBar(colour+skillName, dungSkillsStack[i], x, y+20+29*i, sectionWidth, levelObj, mouseX, mouseY);
             }
         }
+
+        drawSideButtons();
+
+        //drawSideButton(0, dungeonsModeIcons.get("catacombs"), true);
+        //drawSideButton(1, dungeonsModeIcons.get("master_catacombs"), true);
+        //drawSideButton(1, dungeonsModeIcons.get("catacombs"), true);
+        //drawSideButton(2, dungeonsModeIcons.get("catacombs"), false);
+
+
+    }
+
+    private boolean onMasterMode = false;
+
+    //TODO: improve this shit
+    private void drawSideButtons(){
+       // GlStateManager.pushMatrix();
+        GlStateManager.enableDepth();
+        GlStateManager.translate(0, 0, 5);
+        if(onMasterMode){
+            drawSideButton(1, dungeonsModeIcons.get("master_catacombs"), true);
+        } else {
+            drawSideButton(0, dungeonsModeIcons.get("catacombs"), true);
+        }
+        GlStateManager.translate(0, 0, -3);
+
+        GlStateManager.translate(0, 0, -2);
+        if(!onMasterMode){
+            drawSideButton(1, dungeonsModeIcons.get("master_catacombs"), false);
+        } else {
+            drawSideButton(0, dungeonsModeIcons.get("catacombs"), false);
+        }
+        GlStateManager.disableDepth();
+        //GlStateManager.popMatrix();
+    }
+
+
+
+
+    private void drawSideButton(int yIndex, ItemStack itemStack, boolean pressed){
+        GlStateManager.disableLighting();
+        GlStateManager.enableBlend();
+        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+
+        int x = guiLeft-28;
+        int y = guiTop+yIndex*28;
+
+        float uMin = 193/256f;
+        float uMax = 223/256f;
+        float vMin = 200/256f;
+        float vMax = 228/256f;
+        if(pressed) {
+            uMin = 224/256f;
+            uMax = 1f;
+
+
+            if(yIndex != 0) {
+                vMin = 228/256f;
+                vMax = 1f;
+            }
+
+            renderBlurredBackground(width, height, x+2, y+2, 30, 28-4);
+        } else {
+            renderBlurredBackground(width, height, x+2, y+2, 28-2, 28-4);
+        }
+
+        GlStateManager.disableLighting();
+        GlStateManager.enableBlend();
+        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
+
+        Utils.drawTexturedRect(x, y, pressed?32:28, 28, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
+
+        GlStateManager.enableDepth();
+        Utils.drawItemStack(itemStack, x+8, y+7);
+
+
+
+
     }
 
     private void renderXpBar(String skillName, ItemStack stack, int x, int y, int xSize, ProfileViewer.Level levelObj, int mouseX, int mouseY) {
@@ -1025,7 +1209,65 @@ public class GuiProfileViewer extends GuiScreen {
         public float totalXp;
     }
 
-    public static PetLevel getPetLevel(JsonArray levels, int offset, float exp) {
+    private static JsonObject getPetInfo(String pet_name, String rarity){
+        JsonObject petInfo = new JsonObject();
+        //System.out.println(pet_name);
+        //System.out.println(rarity);
+
+        if(Constants.PETS.has("custom_pet_leveling") && Constants.PETS.getAsJsonObject("custom_pet_leveling").has(pet_name)){
+            JsonObject pet = Constants.PETS.getAsJsonObject("custom_pet_leveling").getAsJsonObject(pet_name);
+            if(pet.has("type") && pet.has("pet_levels")){
+                int type = pet.get("type").getAsInt();
+                switch (type) {
+                    case 1:
+                        JsonArray defaultLevels = Constants.PETS.getAsJsonArray("pet_levels");
+                        defaultLevels.addAll(pet.getAsJsonArray("pet_levels"));
+                        petInfo.add("pet_levels", Constants.PETS.getAsJsonArray("pet_levels"));
+                        break;
+                    case 2:
+                        petInfo.add("pet_levels", pet.getAsJsonArray("pet_levels"));
+                        break;
+                    default:
+                        petInfo.add("pet_levels", Constants.PETS.getAsJsonArray("pet_levels"));
+                        break;
+                }
+            } else {
+                petInfo.add("pet_levels", Constants.PETS.getAsJsonArray("pet_levels"));
+            }
+            if(pet.has("max_level")){
+                petInfo.add("max_level", pet.get("max_level"));
+            } else {
+                petInfo.add("max_level", new JsonPrimitive(100));
+            }
+
+            if(pet.has("pet_rarity_offset")){
+                petInfo.add("offset", pet.get("pet_rarity_offset"));
+            } else {
+                petInfo.add("offset", Constants.PETS.getAsJsonObject("pet_rarity_offset").get(rarity));
+            }
+
+        } else {
+            //System.out.println("Default Path");
+            petInfo.add("offset", Constants.PETS.getAsJsonObject("pet_rarity_offset").get(rarity));
+            petInfo.add("max_level", new JsonPrimitive(100));
+            petInfo.add("pet_levels", Constants.PETS.getAsJsonArray("pet_levels"));
+        }
+
+
+        return petInfo;
+
+    }
+
+    public static PetLevel getPetLevel(String pet_name, String rarity, float exp) {
+
+        JsonObject petInfo = getPetInfo(pet_name, rarity);
+        int offset = petInfo.get("offset").getAsInt();
+        int maxPetLevel = petInfo.get("max_level").getAsInt();
+        JsonArray levels = petInfo.getAsJsonArray("pet_levels");
+        System.out.println("Offset: "+offset);
+        System.out.println("MaxPetLevel: "+maxPetLevel);
+
+
         float xpTotal = 0;
         float level = 1;
         float currentLevelRequirement = 0;
@@ -1033,7 +1275,7 @@ public class GuiProfileViewer extends GuiScreen {
 
         boolean addLevel = true;
 
-        for(int i=offset; i<offset+99; i++) {
+        for(int i=offset; i<offset+maxPetLevel-1; i++) {
             if(addLevel) {
                 currentLevelRequirement = levels.get(i).getAsFloat();
                 xpTotal += currentLevelRequirement;
@@ -1044,15 +1286,17 @@ public class GuiProfileViewer extends GuiScreen {
                     level += 1;
                 }
             } else {
+
                 xpTotal += levels.get(i).getAsFloat();
+
             }
         }
 
         level += currentLevelProgress/currentLevelRequirement;
         if(level <= 0) {
             level = 1;
-        } else if(level > 100) {
-            level = 100;
+        } else if(level > maxPetLevel) {
+            level = maxPetLevel;
         }
         PetLevel levelObj = new PetLevel();
         levelObj.level = level;
@@ -1160,6 +1404,8 @@ public class GuiProfileViewer extends GuiScreen {
                 String petname = pet.get("type").getAsString();
                 String tier = pet.get("tier").getAsString();
                 String heldItem = Utils.getElementAsString(pet.get("heldItem"), null);
+                String skin = Utils.getElementAsString(pet.get("skin"), null);
+                int candy = pet.get("candyUsed").getAsInt();
                 JsonObject heldItemJson = heldItem==null?null:NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(heldItem);
                 String tierNum = MINION_RARITY_TO_NUM.get(tier);
                 float exp = pet.get("exp").getAsFloat();
@@ -1169,10 +1415,8 @@ public class GuiProfileViewer extends GuiScreen {
                     tierNum = ""+(Integer.parseInt(tierNum)+1);
                 }
 
-                int petRarityOffset = petsJson.get("pet_rarity_offset").getAsJsonObject().get(tier).getAsInt();
-                JsonArray levelsArr = petsJson.get("pet_levels").getAsJsonArray();
+                PetLevel levelObj = GuiProfileViewer.getPetLevel(petname, tier, exp);
 
-                PetLevel levelObj = getPetLevel(levelsArr, petRarityOffset, exp);
                 float level = levelObj.level;
                 float currentLevelRequirement = levelObj.currentLevelRequirement;
                 float maxXP = levelObj.maxXP;
@@ -1212,7 +1456,6 @@ public class GuiProfileViewer extends GuiScreen {
                 if(tag.hasKey("display", 10)) {
                     NBTTagCompound display = tag.getCompoundTag("display");
                     if(display.hasKey("Lore", 9)) {
-                        NBTTagList newNewLore = new NBTTagList();
                         NBTTagList newLore = new NBTTagList();
                         NBTTagList lore = display.getTagList("Lore", 8);
                         HashMap<Integer, Integer> blankLocations = new HashMap<>();
@@ -1227,33 +1470,60 @@ public class GuiProfileViewer extends GuiScreen {
                             newLore.appendTag(new NBTTagString(line));
                         }
                         Integer secondLastBlank = blankLocations.get(blankLocations.size()-2);
-                        if(heldItemJson != null && secondLastBlank != null) {
-                            for(int j=0; j<newLore.tagCount(); j++) {
-                                String line = newLore.getStringTagAt(j);
-
-                                if(j == secondLastBlank.intValue()) {
-                                    newNewLore.appendTag(new NBTTagString(""));
-                                    newNewLore.appendTag(new NBTTagString(EnumChatFormatting.GOLD+"Held Item: "+heldItemJson.get("displayname").getAsString()));
+                        if(skin != null){
+                            JsonObject petSkin = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PET_SKIN_" + skin);
+                            if(petSkin != null){
+                                try {
+                                    NBTTagCompound nbt = JsonToNBT.getTagFromJson(petSkin.get("nbttag").getAsString());
+                                    tag.setTag("SkullOwner", nbt.getTag("SkullOwner"));
+                                    String name = petSkin.get("displayname").getAsString();
+                                    if(name != null){
+                                        name = Utils.cleanColour(name);
+                                        newLore.set(0, new NBTTagString(newLore.get(0).toString().replace("\"" , "") + ", " + name));
+                                    }
+                                } catch (NBTException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        for (int i = 0; i < newLore.tagCount() ; i++){
+                            String cleaned = Utils.cleanColour(newLore.get(i).toString());
+                            if (cleaned.equals("\"Right-click to add this pet to\"")){
+                                newLore.removeTag(i + 1);
+                                newLore.removeTag(i);
+                                secondLastBlank = i - 1;
+                                break;
+                            }
+                        }
+                        NBTTagList temp = new NBTTagList();
+                        for (int i = 0; i < newLore.tagCount(); i++) {
+                            temp.appendTag(newLore.get(i));
+                            if(secondLastBlank != null && i == secondLastBlank) {
+                                if (heldItem != null) {
+                                    temp.appendTag(new NBTTagString(EnumChatFormatting.GOLD + "Held Item: " + heldItemJson.get("displayname").getAsString()));
                                     int blanks = 0;
                                     JsonArray heldItemLore = heldItemJson.get("lore").getAsJsonArray();
-                                    for(int k=0; k<heldItemLore.size(); k++) {
+                                    for (int k = 0; k < heldItemLore.size(); k++) {
                                         String heldItemLine = heldItemLore.get(k).getAsString();
-                                        if(heldItemLine.trim().isEmpty()) {
+                                        if (heldItemLine.trim().isEmpty()) {
                                             blanks++;
-                                        } else if(blanks==2) {
-                                            newNewLore.appendTag(new NBTTagString(heldItemLine));
-                                        } else if(blanks>2) {
+                                        } else if (blanks == 2) {
+                                            temp.appendTag(new NBTTagString(heldItemLine));
+                                        } else if (blanks > 2) {
                                             break;
                                         }
                                     }
+                                    temp.appendTag(new NBTTagString());
                                 }
-
-                                newNewLore.appendTag(new NBTTagString(line));
+                                if (candy != 0) {
+                                    temp.appendTag(new NBTTagString(EnumChatFormatting.GREEN + "(" + candy + "/10) Pet Candy Used"));
+                                    temp.appendTag(new NBTTagString());
+                                }
+                                temp.removeTag(temp.tagCount() - 1);
                             }
-                            display.setTag("Lore", newNewLore);
-                        } else {
-                            display.setTag("Lore", newLore);
                         }
+                        newLore = temp;
+                        display.setTag("Lore", newLore);
                     }
                     if(display.hasKey("Name", 8)) {
                         String displayName = display.getString("Name");
@@ -1316,7 +1586,14 @@ public class GuiProfileViewer extends GuiScreen {
         for(int i=petsPage*20; i<Math.min(petsPage*20+20, Math.min(sortedPetsStack.size(), sortedPets.size())); i++) {
             JsonObject pet = sortedPets.get(i);
             ItemStack stack = sortedPetsStack.get(i);
+
+
             if(pet != null) {
+                {
+                    NBTTagCompound tag = stack.getTagCompound();
+                    tag.setBoolean("DisablePetExp", true);
+                    stack.setTagCompound(tag);
+                }
                 int xIndex = (i%20) % COLLS_XCOUNT;
                 int yIndex = (i%20) / COLLS_XCOUNT;
 
@@ -1348,33 +1625,25 @@ public class GuiProfileViewer extends GuiScreen {
             ItemStack petStack = sortedPetsStack.get(selectedPet);
             String display = petStack.getDisplayName();
             JsonObject pet = sortedPets.get(selectedPet);
-            String type = pet.get("type").getAsString();
 
-            for(int i=0; i<4; i++) {
-                JsonObject item = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(type+";"+i);
-                if(item != null) {
-                    int x = guiLeft+280;
-                    float y = guiTop+67+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
+            int x = guiLeft+280;
+            float y = guiTop+67+15*(float)Math.sin(((currentTime-startTime)/800f)%(2*Math.PI));
 
-                    int displayLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(display);
-                    int halfDisplayLen = displayLen/2;
+            int displayLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(display);
+            int halfDisplayLen = displayLen/2;
 
-                    GlStateManager.pushMatrix();
-                    GlStateManager.translate(x, y, 0);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(x, y, 0);
 
-                    drawRect(-halfDisplayLen-1-28, -1, halfDisplayLen+1-28, 8, new Color(0, 0, 0, 100).getRGB());
+            drawRect(-halfDisplayLen-1-28, -1, halfDisplayLen+1-28, 8, new Color(0, 0, 0, 100).getRGB());
 
-                    Minecraft.getMinecraft().fontRendererObj.drawString(display, -halfDisplayLen-28, 0, 0, true);
+            Minecraft.getMinecraft().fontRendererObj.drawString(display, -halfDisplayLen-28, 0, 0, true);
 
-                    ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item);
-                    GlStateManager.enableDepth();
-                    GlStateManager.translate(-55, 0, 0);
-                    GlStateManager.scale(3.5f, 3.5f, 1);
-                    Utils.drawItemStack(stack, 0, 0);
-                    GlStateManager.popMatrix();
-                    break;
-                }
-            }
+            GlStateManager.enableDepth();
+            GlStateManager.translate(-55, 0, 0);
+            GlStateManager.scale(3.5f, 3.5f, 1);
+            Utils.drawItemStack(petStack, 0, 0);
+            GlStateManager.popMatrix();
 
             float level = pet.get("level").getAsFloat();
             float currentLevelRequirement = pet.get("currentLevelRequirement").getAsFloat();
@@ -1524,7 +1793,7 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.drawStringCentered(selectedCollectionCategory.getDisplayName() + " Minions", Minecraft.getMinecraft().fontRendererObj,
                 guiLeft+326, guiTop+14, true, 4210752);
 
-      
+
         List<String> minions = ProfileViewer.getCollectionCatToMinionMap().get(selectedCollectionCategory);
         if(minions != null) {
             for(int i=0; i<minions.size(); i++) {
@@ -1602,13 +1871,14 @@ public class GuiProfileViewer extends GuiScreen {
         invNameToDisplayMap.put("inv_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.chest), EnumChatFormatting.GRAY+"Inventory"));
         invNameToDisplayMap.put("ender_chest_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.ender_chest), EnumChatFormatting.GRAY+"Ender Chest"));
         //invNameToDisplayMap.put("backpack_contents", Utils.createItemStack(Item.getItemFromBlock(Blocks.dropper), EnumChatFormatting.GRAY+"Backpacks"));
-        invNameToDisplayMap.put("backpack_contents", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("JUMBO_BACKPACK")).setStackDisplayName(EnumChatFormatting.GRAY+"Backpacks"));
-        invNameToDisplayMap.put("personal_vault_contents", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("IRON_CHEST")).setStackDisplayName(EnumChatFormatting.GRAY+"Personal vault"));
+        invNameToDisplayMap.put("backpack_contents", Utils.editItemStackInfo(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("JUMBO_BACKPACK")),EnumChatFormatting.GRAY+"Backpacks", true));
+        invNameToDisplayMap.put("personal_vault_contents", Utils.editItemStackInfo(NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("IRON_CHEST")),EnumChatFormatting.GRAY+"Personal vault", true));
         invNameToDisplayMap.put("talisman_bag", Utils.createItemStack(Items.golden_apple, EnumChatFormatting.GRAY+"Accessory Bag"));
         invNameToDisplayMap.put("wardrobe_contents", Utils.createItemStack(Items.leather_chestplate, EnumChatFormatting.GRAY+"Wardrobe"));
         invNameToDisplayMap.put("fishing_bag", Utils.createItemStack(Items.fish, EnumChatFormatting.GRAY+"Fishing Bag"));
         invNameToDisplayMap.put("potion_bag", Utils.createItemStack(Items.potionitem, EnumChatFormatting.GRAY+"Potion Bag"));
     }
+
 
     public int countItemsInInventory(String internalname, JsonObject inventoryInfo, String... invsToSearch) {
         int count = 0;
@@ -1704,6 +1974,9 @@ public class GuiProfileViewer extends GuiScreen {
         return 0;
     }
 
+    //unused function
+    //Data has been removed from the repo
+    @Deprecated
     private int getAvailableSlotsForInventory(JsonObject inventoryInfo, JsonObject collectionInfo, String invName) {
         if(collectionInfo == null) return -1;
         JsonObject misc = Constants.MISC;
@@ -2157,6 +2430,29 @@ public class GuiProfileViewer extends GuiScreen {
         Utils.renderAlignedString(EnumChatFormatting.GOLD+"Purse", EnumChatFormatting.WHITE.toString()+shortNumberFormat(purseBalance, 0),
                 guiLeft+xStart, guiTop+yStartTop+yOffset, 76);
 
+        {
+            String lastSaveText = this.getTimeSinceString(profileInfo, "last_save");
+            if(lastSaveText != null) {
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Last Seen", EnumChatFormatting.WHITE.toString() + lastSaveText,
+                        guiLeft + xStart, guiTop + yStartTop + yOffset * 2, 76);
+            }
+
+        }
+        {
+            String first_join = this.getTimeSinceString(profileInfo, "first_join");
+            if(first_join != null) {
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Joined", EnumChatFormatting.WHITE.toString() + first_join,
+                        guiLeft + xStart, guiTop + yStartTop + yOffset * 3, 76);
+            }
+
+        }
+        {
+            JsonObject guildInfo = profile.getGuildInfo(null);
+            if(guildInfo != null && guildInfo.has("name")){
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Guild", EnumChatFormatting.WHITE.toString() + guildInfo.get("name").getAsString(),
+                        guiLeft + xStart, guiTop + yStartTop + yOffset * 4, 76);
+            }
+        }
 
         float fairySouls = Utils.getElementAsFloat(Utils.getElement(profileInfo, "fairy_souls_collected"), 0);
 
@@ -2204,10 +2500,7 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
 
-          Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
-                    guiLeft+xStart, guiTop+yStartBottom+yOffset*2, 76);
-
-            Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE.toString() + Math.floor(totalSlayerXP * 10) / 10,
+            Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE.toString() + shortNumberFormat(totalSlayerXP, 0),
                     guiLeft + xStart, guiTop + yStartBottom + yOffset * 4, 76);
         }
 
@@ -2339,6 +2632,33 @@ public class GuiProfileViewer extends GuiScreen {
                 index++;
             }
         }
+    }
+
+    private String getTimeSinceString(JsonObject profileInfo, String path){
+        JsonElement lastSaveElement = Utils.getElement(profileInfo, path);
+
+        if (lastSaveElement.isJsonPrimitive()) {
+
+            Instant lastSave = Instant.ofEpochMilli(lastSaveElement.getAsLong());
+            LocalDateTime lastSaveTime = LocalDateTime.ofInstant(lastSave,TimeZone.getDefault().toZoneId());
+            long timeDiff = System.currentTimeMillis() - lastSave.toEpochMilli();
+            LocalDateTime  sinceOnline= LocalDateTime.ofInstant(Instant.ofEpochMilli(timeDiff), ZoneId.of("UTC"));
+            String renderText;
+
+            if(timeDiff < 60000L){
+                renderText = sinceOnline.getSecond()+" seconds ago.";
+            } else if(timeDiff < 3600000L){
+                renderText = sinceOnline.getMinute()+" minutes ago.";
+            } else if(timeDiff < 86400000L){
+                renderText = sinceOnline.getHour()+" hours ago.";
+            } else if(timeDiff < 31556952000L){
+                renderText = sinceOnline.getDayOfYear()+" days ago.";
+            } else {
+                renderText = lastSaveTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            }
+            return renderText;
+        }
+        return null;
     }
 
     private int backgroundClickedX = -1;

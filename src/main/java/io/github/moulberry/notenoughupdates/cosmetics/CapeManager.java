@@ -103,6 +103,7 @@ public class CapeManager {
         new CapeData("subreddit_light", true, false),
         new CapeData("packshq", true, false),
         new CapeData("skytils", true, false),
+        new CapeData("sbp", true, false),
 
             //Special Other
         new CapeData("contrib", true, false),
@@ -137,6 +138,7 @@ public class CapeManager {
     }
 
     private void updateCapes() {
+
         NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("activecapes.json", (jsonObject) -> {
             if(jsonObject.get("success").getAsBoolean()) {
                 lastJsonSync = jsonObject;
@@ -310,7 +312,9 @@ public class CapeManager {
         playerMap.clear();
         for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
             String uuid = player.getUniqueID().toString().replace("-", "");
-            playerMap.put(uuid, player);
+            try {
+                playerMap.put(uuid, player);
+            } catch(IllegalArgumentException ignored){}
         }
     }
 

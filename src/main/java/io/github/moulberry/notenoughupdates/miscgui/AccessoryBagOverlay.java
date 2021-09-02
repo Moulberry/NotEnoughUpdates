@@ -582,13 +582,19 @@ public class AccessoryBagOverlay {
             return o1.compareTo(o2);
         };
     }
+    private static boolean inAccessoryBag = false;
+    public static boolean isInAccessoryBag(){
+        return inAccessoryBag;
+    }
 
-    public static void renderOverlay() {
+    public static void  renderOverlay() {
+        inAccessoryBag = false;
         if(Minecraft.getMinecraft().currentScreen instanceof GuiChest && NEUEventListener.inventoryLoaded) {
             GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
             if(containerName.trim().startsWith("Accessory Bag")) {
+                inAccessoryBag = true;
                 try {
                     int xSize = (int) Utils.getField(GuiContainer.class, eventGui, "xSize", "field_146999_f");
                     int ySize = (int) Utils.getField(GuiContainer.class, eventGui, "ySize", "field_147000_g");
@@ -873,9 +879,9 @@ public class AccessoryBagOverlay {
         return stats;
     }
 
-    private static String[] rarityArr = new String[] {
-            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
-    };
+//    private static String[] rarityArr = new String[] {
+//            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME"
+//    };
     private static String[] rarityArrC = new String[] {
             EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
             EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
@@ -895,7 +901,7 @@ public class AccessoryBagOverlay {
                 NBTTagList list = display.getTagList("Lore", 8);
                 for (int i = list.tagCount()-1; i >= 0; i--) {
                     String line = list.getStringTagAt(i);
-                    for(String rarity : rarityArr) {
+                    for(String rarity : Utils.rarityArr) {
                         for(int j=0; j<typeMatches.length; j++) {
                             if(contains) {
                                 if(line.trim().contains(rarity + " " + typeMatches[j])) {
@@ -921,7 +927,7 @@ public class AccessoryBagOverlay {
         for(int i=lore.size()-1; i>=0; i--) {
             String line = lore.get(i).getAsString();
 
-            for(String rarity : rarityArr) {
+            for(String rarity : Utils.rarityArr) {
                 for(int j=0; j<typeMatches.length; j++) {
                     if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
                         return j;

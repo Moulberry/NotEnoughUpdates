@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.util;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
@@ -80,7 +81,9 @@ public class HypixelApi {
             try {
                 consumer.accept(getApiSync(getMyApiURL()+urlS));
             } catch(Exception e) {
-                e.printStackTrace();
+                if(NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+                    e.printStackTrace();
+                }
                 myApiError(current);
                 error.run();
             }

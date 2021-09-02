@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -197,7 +198,7 @@ public class DwarvenMinesWaypoints {
                 System.currentTimeMillis() - dynamicMillis < 30*1000) {
             for(Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
                 if(entry.getKey().equals(dynamicLocation)) {
-                    renderWayPoint(dynamicName, new Vector3f(entry.getValue()).translate(0, 15, 0), event.partialTicks);
+                    RenderUtils.renderWayPoint(dynamicName, new Vector3f(entry.getValue()).translate(0, 15, 0), event.partialTicks);
                     break;
                 }
             }
@@ -206,14 +207,14 @@ public class DwarvenMinesWaypoints {
         if(locWaypoint >= 1) {
             for(Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
                 if(locWaypoint >= 2) {
-                    renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
+                    RenderUtils.renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
                 } else {
                     for(String commissionName : MiningOverlay.commissionProgress.keySet()) {
                         if(commissionName.toLowerCase().contains(entry.getKey().toLowerCase())) {
                             if(commissionName.contains("Titanium")) {
-                                renderWayPoint(EnumChatFormatting.WHITE+entry.getKey(), entry.getValue(), event.partialTicks);
+                                RenderUtils.renderWayPoint(EnumChatFormatting.WHITE+entry.getKey(), entry.getValue(), event.partialTicks);
                             } else {
-                                renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
+                                RenderUtils.renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
                             }
                         }
                     }
@@ -247,7 +248,7 @@ public class DwarvenMinesWaypoints {
 
                         double distSq = dX*dX + dY*dY + dZ*dZ;
                         if(distSq >= 12*12) {
-                            renderWayPoint(EnumChatFormatting.GOLD+emissary.name,
+                            RenderUtils.renderWayPoint(EnumChatFormatting.GOLD+emissary.name,
                                     new Vector3f(emissary.loc).translate(0.5f, 2.488f, 0.5f),
                                     event.partialTicks);
                         }
@@ -256,83 +257,6 @@ public class DwarvenMinesWaypoints {
 
             }
         }
-    }
-
-    private void renderWayPoint(String str, Vector3f loc, float partialTicks) {
-        GlStateManager.alphaFunc(516, 0.1F);
-
-        GlStateManager.pushMatrix();
-
-        Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
-        double viewerX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * partialTicks;
-        double viewerY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * partialTicks;
-        double viewerZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * partialTicks;
-
-        double x = loc.x-viewerX+0.5f;
-        double y = loc.y-viewerY-viewer.getEyeHeight();
-        double z = loc.z-viewerZ+0.5f;
-
-        double distSq = x*x + y*y + z*z;
-        double dist = Math.sqrt(distSq);
-        if(distSq > 144) {
-            x *= 12/dist;
-            y *= 12/dist;
-            z *= 12/dist;
-        }
-        GlStateManager.translate(x, y, z);
-        GlStateManager.translate(0, viewer.getEyeHeight(), 0);
-
-        renderNametag(str);
-
-        GlStateManager.rotate(-Minecraft.getMinecraft().getRenderManager().playerViewY, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(Minecraft.getMinecraft().getRenderManager().playerViewX, 1.0F, 0.0F, 0.0F);
-        GlStateManager.translate(0, -0.25f, 0);
-        GlStateManager.rotate(-Minecraft.getMinecraft().getRenderManager().playerViewX, 1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(Minecraft.getMinecraft().getRenderManager().playerViewY, 0.0F, 1.0F, 0.0F);
-
-        renderNametag(EnumChatFormatting.YELLOW.toString()+Math.round(dist)+"m");
-
-        GlStateManager.popMatrix();
-
-        GlStateManager.disableLighting();
-    }
-
-    private void renderNametag(String str) {
-        FontRenderer fontrenderer = Minecraft.getMinecraft().fontRendererObj;
-        float f = 1.6F;
-        float f1 = 0.016666668F * f;
-        GlStateManager.pushMatrix();
-        GL11.glNormal3f(0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(-Minecraft.getMinecraft().getRenderManager().playerViewY, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(Minecraft.getMinecraft().getRenderManager().playerViewX, 1.0F, 0.0F, 0.0F);
-        GlStateManager.scale(-f1, -f1, f1);
-        GlStateManager.disableLighting();
-        GlStateManager.depthMask(false);
-        GlStateManager.disableDepth();
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-        Tessellator tessellator = Tessellator.getInstance();
-        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-        int i = 0;
-
-        int j = fontrenderer.getStringWidth(str) / 2;
-        GlStateManager.disableTexture2D();
-        worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        worldrenderer.pos((double)(-j - 1), (double)(-1 + i), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-        worldrenderer.pos((double)(-j - 1), (double)(8 + i), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-        worldrenderer.pos((double)(j + 1), (double)(8 + i), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-        worldrenderer.pos((double)(j + 1), (double)(-1 + i), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-        tessellator.draw();
-        GlStateManager.enableTexture2D();
-        fontrenderer.drawString(str, -fontrenderer.getStringWidth(str) / 2, i, 553648127);
-        GlStateManager.depthMask(true);
-
-        fontrenderer.drawString(str, -fontrenderer.getStringWidth(str) / 2, i, -1);
-
-        GlStateManager.enableDepth();
-        GlStateManager.enableBlend();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.popMatrix();
     }
 
 }

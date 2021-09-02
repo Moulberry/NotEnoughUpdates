@@ -199,7 +199,8 @@ public class GuiCustomEnchant extends Gui {
     }
 
     public boolean shouldOverride(String containerName) {
-        if(true) {
+        
+        if(!NotEnoughUpdates.INSTANCE.config.hidden.dev) {
             shouldOverrideFast = false;
             return false;
         }

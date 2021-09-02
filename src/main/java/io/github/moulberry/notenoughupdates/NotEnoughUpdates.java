@@ -6,11 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.authlib.Agent;
-import com.mojang.authlib.minecraft.MinecraftSessionService;
-import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
-import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
-import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.collectionlog.GuiCollectionLog;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
@@ -24,9 +19,9 @@ import io.github.moulberry.notenoughupdates.dungeons.DungeonMap;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
-import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
+import io.github.moulberry.notenoughupdates.miscgui.tutorials.NeuTutorial;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
 import io.github.moulberry.notenoughupdates.overlays.FuelBar;
@@ -68,8 +63,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClients;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
@@ -77,7 +70,8 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.net.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -232,6 +226,92 @@ public class NotEnoughUpdates {
             }
         }
     });*/
+
+    SimpleCommand neuHelp = new SimpleCommand("neuhelp", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            ArrayList<String> neuHelpMessages = Lists.newArrayList(
+                    "\u00a75\u00a7lNotEnoughUpdates commands",
+                    "\u00a76/neu \u00a77- Opens the main neu GUI.",
+                    "\u00a76/pv \u00a7b?{name} \u00a72\u2D35 \u00a7r\u00a77- Opens the profile viewer",
+                    "\u00a76/neusouls {on/off/clear/unclear} \u00a7r\u00a77- Shows waypoints to fairy souls.",
+                    "\u00a76/neubuttons \u00a7r\u00a77- Opens a GUI which allows you to customize inventory buttons.",
+                    "\u00a76/neuec \u00a7r\u00a77- Opens the enchant colour GUI.",
+
+                    "\u00a76/join {floor} \u00a7r\u00a77- Short Command to join a Dungeon. \u00a7lNeed a Party of 5 People\u00a7r\u00a77 {4/f7/m5}.",
+                    "\u00a76/neucosmetics \u00a7r\u00a77- Opens the cosmetic GUI.",
+                    "\u00a76/neurename \u00a7r\u00a77- Opens the NEU Item Customizer.",
+                    "\u00a76/cata \u00a7b?{name} \u00a72\u2D35 \u00a7r\u00a77- Opens the profile viewer's catacombs page.",
+                    "\u00a76/neulinks \u00a7r\u00a77- Shows links to neu/moulberry.",
+                    "\u00a76/neuoverlay \u00a7r\u00a77- Opens GUI Editor for quickcommands and searchbar.",
+                    "\u00a76/neuah \u00a7r\u00a77- Opens neu's custom ah GUI.",
+                    "\u00a76/neumap \u00a7r\u00a77- Opens the dungeon map GUI.",
+                    "\u00a76/neucalendar \u00a7r\u00a77- Opens neu's custom calendar GUI.",
+                    "",
+                    "\u00a76\u00a7lOld commands:",
+                    "\u00a76/peek \u00a7b?{user} \u00a72\u2D35 \u00a7r\u00a77- Shows quickly stats for a user.",
+                    "",
+                    "\u00a76\u00a7lDebug commands:",
+                    "\u00a76/neustats \u00a7r\u00a77- Copies helpful info to the clipboard.",
+                    "\u00a76/neustats modlist \u00a7r\u00a77- Copies modlist info to clipboard.",
+                    "\u00a76/neuresetrepo \u00a7r\u00a77- Deletes all repo files.",
+                    "\u00a76/neureloadrepo \u00a7r\u00a77- Debug command with repo.",
+                    "",
+                    "\u00a76\u00a7lDev commands:",
+                    "\u00a76/neupackdev \u00a7r\u00a77- pack creator command - getnpc");
+            for (int i = 0; i < neuHelpMessages.size(); i++) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuHelpMessages.get(i)
+                ));
+
+            }
+            if(NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+                ArrayList<String> neuDevHelpMessages = Lists.newArrayList(
+                        "\u00a76/neudevtest \u00a7r\u00a77- dev test command",
+                        "\u00a76/neuzeephere \u00a7r\u00a77- sphere",
+                        "\u00a76/neudungeonwintest \u00a7r\u00a77- displays the dungeon win screen");
+
+                for (int i = 0; i < neuDevHelpMessages.size(); i++) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuDevHelpMessages.get(i)
+                    ));
+
+                }
+            }
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a77Commands marked with a \u00a72\"\u2D35\"\u00a77 require are api key. You can set your api key via \"/api new\" or by manually putting it in the api field in \"/neu\""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a77Arguments marked with a \u00a7b\"?\"\u00a77 are optional."));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("\u00a76\u00a7lScroll up to see everything"));
+        }
+    });
+
+    SimpleCommand neuFeatures = new SimpleCommand("neufeatures", new SimpleCommand.ProcessCommandRunnable() {
+        public void processCommand(ICommandSender sender, String[] args) {
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+            if(Constants.MISC == null || !Constants.MISC.has("featureslist")){
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"WARNING: "+EnumChatFormatting.RESET+EnumChatFormatting.RED+"Could not load URL from repo."));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.RED+ "Please run "+EnumChatFormatting.BOLD+"/neuresetrepo"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" and "+EnumChatFormatting.BOLD+"restart your game"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" in order to fix. "+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"If that doesn't fix it"+EnumChatFormatting.RESET+EnumChatFormatting.RED+", please join discord.gg/moulberry and post in #neu-support"));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                return;
+            }
+            String url = Constants.MISC.get("featureslist").getAsString();
+
+            Desktop desk = Desktop.getDesktop();
+            try {
+                desk.browse(new URI(url));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.DARK_PURPLE+""+EnumChatFormatting.BOLD+"NEU"+EnumChatFormatting.RESET+EnumChatFormatting.GOLD+"> Opening Feature List in browser."));
+            } catch (URISyntaxException | IOException ignored){
+
+                ChatComponentText clickTextFeatures = new ChatComponentText(
+                        EnumChatFormatting.DARK_PURPLE+""+EnumChatFormatting.BOLD+"NEU"+EnumChatFormatting.RESET+EnumChatFormatting.GOLD+"> Click here to open the Feature List in your browser.");
+                clickTextFeatures.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, url));
+                Minecraft.getMinecraft().thePlayer.addChatMessage(clickTextFeatures);
+
+            }
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+
+        }
+    });
+
 
     SimpleCommand stWhyCommand = new SimpleCommand("neustwhy", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
@@ -609,21 +689,10 @@ public class NotEnoughUpdates {
 
     SimpleCommand.ProcessCommandRunnable viewProfileRunnable = new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(Loader.isModLoaded("optifine") &&
-                    new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
-                try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            if(!OpenGlHelper.isFramebufferEnabled()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                        "Some parts of the profile viewer do not work with OF Fast Render. Go to ESC > Options > Video Settings > Performance > Fast Render to disable it."));
 
-                    String line;
-                    while((line = reader.readLine()) != null) {
-                        if(line.contains("ofFastRender:true")) {
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                                    "Some parts of the profile viewer do not work with OF Fast Render. Go to Video > Performance to disable it."));
-                            break;
-                        }
-                    }
-                } catch(Exception e) {
-                }
             }
             if (config.apiKey.apiKey == null || config.apiKey.apiKey.trim().isEmpty()) {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
@@ -664,9 +733,13 @@ public class NotEnoughUpdates {
             } else {
                 if(args.length != 1) {
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                            EnumChatFormatting.RED+"Example Usage: /join f7 or /join 7"));
+                            EnumChatFormatting.RED+"Example Usage: /join f7, /join m6 or /join 7"));
                 } else {
-                    String cmd = "/joindungeon catacombs " + args[0].charAt(args[0].length()-1);
+                    String cataPrefix = "catacombs";
+                    if(args[0].startsWith("m")){
+                        cataPrefix = "master_catacombs";
+                    }
+                    String cmd = "/joindungeon "+cataPrefix+" " + args[0].charAt(args[0].length()-1);
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
                             EnumChatFormatting.YELLOW+"Running command: "+cmd));
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
@@ -940,7 +1013,7 @@ public class NotEnoughUpdates {
 
     SimpleCommand tutorialCommand = new SimpleCommand("neututorial", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            openGui = new HelpGUI();
+            openGui = new NeuTutorial();
         }
     });
 
@@ -1046,21 +1119,10 @@ public class NotEnoughUpdates {
 
     SimpleCommand cosmeticsCommand = new SimpleCommand("neucosmetics", new SimpleCommand.ProcessCommandRunnable() {
         public void processCommand(ICommandSender sender, String[] args) {
-            if(Loader.isModLoaded("optifine") &&
-                    new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt").exists()) {
-                try(InputStream in = new FileInputStream(new File(Minecraft.getMinecraft().mcDataDir, "optionsof.txt"))) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            if(!OpenGlHelper.isFramebufferEnabled()) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+                        "NEU cosmetics do not work with OF Fast Render. Go to ESC > Options > Video Settings > Performance > Fast Render to disable it."));
 
-                    String line;
-                    while((line = reader.readLine()) != null) {
-                        if(line.contains("ofFastRender:true")) {
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-                                    "NEU cosmetics do not work with OF Fast Render. Go to Video > Performance to disable it."));
-                            return;
-                        }
-                    }
-                } catch(Exception e) {
-                }
             }
 
             openGui = new GuiCosmetics();
@@ -1167,7 +1229,7 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new NEUEventListener(this));
         MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
-        MinecraftForge.EVENT_BUS.register(new SBGamemodes());
+        //MinecraftForge.EVENT_BUS.register(new SBGamemodes());
         MinecraftForge.EVENT_BUS.register(new EnchantingSolvers());
         MinecraftForge.EVENT_BUS.register(new CalendarOverlay());
         MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
@@ -1201,7 +1263,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(nullzeeSphereCommand);
         ClientCommandHandler.instance.registerCommand(cosmeticsCommand);
         ClientCommandHandler.instance.registerCommand(linksCommand);
-        ClientCommandHandler.instance.registerCommand(gamemodesCommand);
+        //ClientCommandHandler.instance.registerCommand(gamemodesCommand);
         ClientCommandHandler.instance.registerCommand(stWhyCommand);
         ClientCommandHandler.instance.registerCommand(buttonsCommand);
         ClientCommandHandler.instance.registerCommand(resetRepoCommand);
@@ -1218,7 +1280,7 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(packDevCommand);
         if(!Loader.isModLoaded("skyblockextras")) ClientCommandHandler.instance.registerCommand(viewCataCommand);
         ClientCommandHandler.instance.registerCommand(peekCommand);
-        ClientCommandHandler.instance.registerCommand(tutorialCommand);
+//        ClientCommandHandler.instance.registerCommand(tutorialCommand);
         ClientCommandHandler.instance.registerCommand(overlayPlacementsCommand);
         ClientCommandHandler.instance.registerCommand(enchantColourCommand);
         ClientCommandHandler.instance.registerCommand(neuAhCommand);
@@ -1230,6 +1292,9 @@ public class NotEnoughUpdates {
         ClientCommandHandler.instance.registerCommand(dungeonWinTest);
         ClientCommandHandler.instance.registerCommand(calendarCommand);
         ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommand());
+        ClientCommandHandler.instance.registerCommand(new FairySouls.FairySoulsCommandAlt());
+        ClientCommandHandler.instance.registerCommand(neuHelp);
+        ClientCommandHandler.instance.registerCommand(neuFeatures);
 
         BackgroundBlur.registerListener();
 
@@ -1288,6 +1353,7 @@ public class NotEnoughUpdates {
     public void displayLinks(JsonObject update) {
         String discord_link = update.get("discord_link").getAsString();
         String youtube_link = update.get("youtube_link").getAsString();
+        String twitch_link = update.get("twitch_link").getAsString();
         String update_link = update.get("update_link").getAsString();
         String github_link = update.get("github_link").getAsString();
         String other_text = update.get("other_text").getAsString();
@@ -1300,11 +1366,13 @@ public class NotEnoughUpdates {
         }
         ChatComponentText links = new ChatComponentText("");
         ChatComponentText separator = new ChatComponentText(
-                EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"---":"--"));
+                EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"--":"-"));
         ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+"Discord"+EnumChatFormatting.GRAY+"]");
         discord.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, discord_link));
         ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.RED+"YouTube"+EnumChatFormatting.GRAY+"]");
         youtube.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, youtube_link));
+        ChatComponentText twitch = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"Twitch"+EnumChatFormatting.GRAY+"]");
+        twitch.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, twitch_link));
         ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.GREEN+"Release"+EnumChatFormatting.GRAY+"]");
         release.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, update_link));
         ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"GitHub"+EnumChatFormatting.GRAY+"]");
@@ -1314,6 +1382,8 @@ public class NotEnoughUpdates {
         links.appendSibling(discord);
         links.appendSibling(separator);
         links.appendSibling(youtube);
+        links.appendSibling(separator);
+        links.appendSibling(twitch);
         links.appendSibling(separator);
         links.appendSibling(release);
         links.appendSibling(separator);

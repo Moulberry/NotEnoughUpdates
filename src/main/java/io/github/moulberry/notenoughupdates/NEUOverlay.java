@@ -15,7 +15,6 @@ import io.github.moulberry.notenoughupdates.mbgui.MBGuiElement;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupAligned;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupFloating;
 import io.github.moulberry.notenoughupdates.miscfeatures.SunTzu;
-import io.github.moulberry.notenoughupdates.miscgui.HelpGUI;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
 import io.github.moulberry.notenoughupdates.util.*;
 import net.minecraft.client.Minecraft;
@@ -52,7 +51,6 @@ import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -180,6 +178,9 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
+                    return;
+                }
                 if(Mouse.getEventButtonState()) {
                     setSearchBarFocus(true);
                     if(Mouse.getEventButton() == 1) { //Right mouse button down
@@ -188,6 +189,18 @@ public class NEUOverlay extends Gui {
                     } else {
                         if(System.currentTimeMillis() - millisLastLeftClick < 300) {
                             searchMode = !searchMode;
+                            if (searchMode && NotEnoughUpdates.INSTANCE.config.hidden.firstTimeSearchFocus) {
+                                NEUEventListener.displayNotification(Lists.newArrayList(
+                                        "\u00a7eSearch Highlight",
+                                        "\u00a77In this mode NEU will gray out non matching items in",
+                                        "\u00a77your inventory or chests.",
+                                        "\u00a77This allows you easily find items as the item will stand out.",
+                                        "\u00a77To toggle this please double click on the search bar in your inventory.",
+                                        "\u00a77",
+                                        "\u00a77Press X on your keyboard to close this notifcation"), true, true);
+                                NotEnoughUpdates.INSTANCE.config.hidden.firstTimeSearchFocus = false;
+
+                            }
                         }
                         textField.setCursorPosition(getClickedIndex(mouseX, mouseY));
                         millisLastLeftClick = System.currentTimeMillis();
@@ -202,6 +215,9 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void render(float x, float y) {
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
+                    return;
+                }
                 FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
                 int paddingUnscaled = getPaddingUnscaled();
 
@@ -282,6 +298,7 @@ public class NEUOverlay extends Gui {
                             (int)x + 5 + textBeforeSelectionWidth,
                             (int)y-4 + getHeight()/2, Color.BLACK.getRGB());
                 }
+
             }
 
             @Override
@@ -308,6 +325,9 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.enableSettingsButton) {
+                    return;
+                }
                 if(Mouse.getEventButtonState()) {
                     NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config));
                 }
@@ -322,15 +342,20 @@ public class NEUOverlay extends Gui {
                 int paddingUnscaled = getPaddingUnscaled();
                 int searchYSize = getSearchBarYSize();
 
+
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.enableSettingsButton) {
+                    return;
+                }
                 Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
                 GlStateManager.color(1, 1, 1, 1);
                 Utils.drawTexturedRect(x, y,
-                        searchYSize + paddingUnscaled*2, searchYSize + paddingUnscaled*2, GL11.GL_NEAREST);
+                        searchYSize + paddingUnscaled * 2, searchYSize + paddingUnscaled * 2, GL11.GL_NEAREST);
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(settings);
                 GlStateManager.color(1f, 1f, 1f, 1f);
-                Utils.drawTexturedRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                Utils.drawTexturedRect((int) x + paddingUnscaled, (int) y + paddingUnscaled,
                         searchYSize, searchYSize);
+
                 GlStateManager.bindTexture(0);
             }
         };
@@ -354,10 +379,14 @@ public class NEUOverlay extends Gui {
 
             @Override
             public void mouseClick(float x, float y, int mouseX, int mouseY) {
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.enableHelpButton){
+                    return;
+                }
                 if(Mouse.getEventButtonState()) {
                     //displayInformationPane(HTMLInfoPane.createFromWikiUrl(overlay, manager, "Help",
                     //        "https://moulberry.github.io/files/neu_help.html"));
-                    Minecraft.getMinecraft().displayGuiScreen(new HelpGUI());
+                    //Minecraft.getMinecraft().displayGuiScreen(new HelpGUI());
+                    ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neuhelp");
                     Utils.playPressSound();
                 }
             }
@@ -371,16 +400,21 @@ public class NEUOverlay extends Gui {
                 int paddingUnscaled = getPaddingUnscaled();
                 int searchYSize = getSearchBarYSize();
 
+                if(!NotEnoughUpdates.INSTANCE.config.toolbar.enableHelpButton) {
+                    return;
+                }
+
                 Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
                 GlStateManager.color(1, 1, 1, 1);
                 Utils.drawTexturedRect(x, y,
-                        searchYSize + paddingUnscaled*2, searchYSize + paddingUnscaled*2, GL11.GL_NEAREST);
+                        searchYSize + paddingUnscaled * 2, searchYSize + paddingUnscaled * 2, GL11.GL_NEAREST);
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(help);
                 GlStateManager.color(1f, 1f, 1f, 1f);
-                Utils.drawTexturedRect((int)x + paddingUnscaled, (int)y + paddingUnscaled,
+                Utils.drawTexturedRect((int) x + paddingUnscaled, (int) y + paddingUnscaled,
                         getSearchBarYSize(), getSearchBarYSize());
                 GlStateManager.bindTexture(0);
+
             }
         };
     }
@@ -517,20 +551,6 @@ public class NEUOverlay extends Gui {
             public int getPadding() {
                 return getPaddingUnscaled()*4;
             }
-
-            @Override
-            public void mouseClick(float x, float y, int mouseX, int mouseY) {
-                if(NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
-                    super.mouseClick(x, y, mouseX, mouseY);
-                }
-            }
-
-            @Override
-            public void render(float x, float y) {
-                if(NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
-                    super.render(x, y);
-                }
-            }
         };
     }
 
@@ -633,7 +653,7 @@ public class NEUOverlay extends Gui {
 
     public void mouseInputInv() {
         if(Minecraft.getMinecraft().currentScreen instanceof GuiContainer) {
-            if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
+            if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100 && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                 Slot slot = Utils.getSlotUnderMouse((GuiContainer)Minecraft.getMinecraft().currentScreen);
                 if(slot != null) {
                     ItemStack hover = slot.getStack();
@@ -691,7 +711,7 @@ public class NEUOverlay extends Gui {
                                 manager.showRecipe(item);
                             } else if(Mouse.getEventButton() == 1) {
                                 showInfo(item);
-                            } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
+                            } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100 && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                                 textField.setText("id:"+item.get("internalname").getAsString());
                                 updateSearch();
                                 searchMode = true;
@@ -724,7 +744,7 @@ public class NEUOverlay extends Gui {
                                     manager.showRecipe(item);
                                 } else if(Mouse.getEventButton() == 1) {
                                     showInfo(item);
-                                } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100) {
+                                } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100  && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                                     textField.setText("id:"+item.get("internalname").getAsString());
                                     updateSearch();
                                     searchMode = true;
@@ -1016,7 +1036,7 @@ public class NEUOverlay extends Gui {
                             Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
                                     internalname.get(), item));
                             return true;
-                        } else if(keyPressed == manager.keybindItemSelect.getKeyCode()) {
+                        } else if(keyPressed == manager.keybindItemSelect.getKeyCode() && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                             textField.setText("id:"+internalname.get());
                             itemPaneOpen = true;
                             updateSearch();
@@ -1965,7 +1985,14 @@ public class NEUOverlay extends Gui {
         //Render tooltip
         JsonObject json = tooltipToDisplay.get();
         if(json != null) {
+
             ItemStack stack = manager.jsonToStack(json);
+            {
+                NBTTagCompound tag = stack.getTagCompound();
+                tag.setBoolean("DisablePetExp", true);
+                stack.setTagCompound(tag);
+            }
+
             List<String> text = stack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
 
             String internalname = json.get("internalname").getAsString();
@@ -1985,6 +2012,7 @@ public class NEUOverlay extends Gui {
             if(hasClick || hasInfo) text.add("");
             if(hasClick) text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"LMB/R : View recipe!");
             if(hasInfo) text.add(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"RMB : View additional information!");
+
 
             textToDisplay = text;
         }

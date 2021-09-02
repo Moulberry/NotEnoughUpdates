@@ -68,7 +68,7 @@ public class GuiItemCustomize extends GuiScreen {
             this.enchantGlint = stackHasEffect;
         }
 
-        supportCustomLeatherColour = stack.getItem() instanceof ItemArmor && ((ItemArmor)stack.getItem()).hasColor(stack);
+        supportCustomLeatherColour = stack.getItem() instanceof ItemArmor && ((ItemArmor) stack.getItem()).getArmorMaterial() == ItemArmor.ArmorMaterial.LEATHER;
 
         enchantGlintCustomColourAnimation.setValue(enchantGlint ? 17 : 0);
         this.enchantGlintButton = new GuiElementBoolean(0, 0, enchantGlint, (bool) -> {
@@ -215,6 +215,7 @@ public class GuiItemCustomize extends GuiScreen {
                     EnumChatFormatting.LIGHT_PURPLE+"\u00B6d = Purple",
                     EnumChatFormatting.YELLOW+"\u00B6e = Yellow",
                     EnumChatFormatting.WHITE+"\u00B6f = White",
+                    "\u00A7Z\u00B6Z = SBA Chroma"+EnumChatFormatting.RESET+EnumChatFormatting.GRAY+" (Requires SBA)",
                     "",
                     EnumChatFormatting.GREEN+"Available formatting codes:",
                     EnumChatFormatting.GRAY+"\u00B6k = "+EnumChatFormatting.OBFUSCATED+"Obfuscated",

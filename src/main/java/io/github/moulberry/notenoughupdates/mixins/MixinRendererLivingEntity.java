@@ -1,7 +1,9 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
 import io.github.moulberry.notenoughupdates.miscfeatures.DamageCommas;
+import io.github.moulberry.notenoughupdates.overlays.BonemerangOverlay;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -30,7 +32,7 @@ public abstract class MixinRendererLivingEntity<T extends EntityLivingBase> {
     @Inject(method="getColorMultiplier", at=@At("HEAD"), cancellable = true)
     public void getColorMultiplier(T entitylivingbaseIn, float lightBrightness,
                                    float partialTickTime, CallbackInfoReturnable<Integer> cir) {
-        if(CustomItemEffects.INSTANCE.bonemeragedEntities.contains(entitylivingbaseIn)) {
+        if(BonemerangOverlay.INSTANCE.bonemeragedEntities.contains(entitylivingbaseIn) && NotEnoughUpdates.INSTANCE.config.itemOverlays.highlightTargeted) {
             cir.setReturnValue(0x80ff9500);
         }
     }

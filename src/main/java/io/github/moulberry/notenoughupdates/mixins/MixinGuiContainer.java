@@ -30,6 +30,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -101,7 +102,10 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Inject(method="drawScreen", at=@At("RETURN"))
     public void drawScreen(CallbackInfo ci) {
         if(theSlot != null && SlotLocking.getInstance().isSlotLocked(theSlot)) {
+            SlotLocking.getInstance().setRealSlot(theSlot);
             theSlot = null;
+        } else if( theSlot == null){
+            SlotLocking.getInstance().setRealSlot(null);
         }
     }
 
@@ -163,6 +167,12 @@ public abstract class MixinGuiContainer extends GuiScreen {
         }
         return slot.canBeHovered();
     }
+    @Inject(method="checkHotbarKeys", at=@At(value = "INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;handleMouseClick(Lnet/minecraft/inventory/Slot;III)V"), locals =  LocalCapture.CAPTURE_FAILSOFT ,cancellable = true)
+    public void checkHotbarKeys_Slotlock(int keyCode, CallbackInfoReturnable<Boolean> cir, int i){
+        if(SlotLocking.getInstance().isSlotIndexLocked(i)){
+            cir.setReturnValue(false);
+        }
+    }
 
     @Inject(method="handleMouseClick", at=@At(value="HEAD"), cancellable = true)
     public void handleMouseClick(Slot slotIn, int slotId, int clickedButton, int clickType, CallbackInfo ci) {
@@ -206,5 +216,4 @@ public abstract class MixinGuiContainer extends GuiScreen {
             }
         }
     }
-
 }

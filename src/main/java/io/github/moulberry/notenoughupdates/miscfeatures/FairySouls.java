@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.Constants;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.*;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -292,77 +294,87 @@ public class FairySouls {
         GlStateManager.enableDepth();
     }
 
+    public static class FairySoulsCommandAlt extends SimpleCommand {
+        public FairySoulsCommandAlt() {
+            super("fairysouls", fairysoulRunnable);
+        }
+    }
+
     public static class FairySoulsCommand extends SimpleCommand {
 
         public FairySoulsCommand() {
-            super("neusouls", new ProcessCommandRunnable() {
-                @Override
-                public void processCommand(ICommandSender sender, String[] args) {
-                    if(args.length != 1) {
-                        printHelp();
-                        return;
-                    }
-                    String subcommand = args[0].toLowerCase();
+            super("neusouls", fairysoulRunnable);
+        }
+    }
 
-                    switch (subcommand) {
-                        case "help":
-                            printHelp();
-                            return;
-                        case "on":
-                        case "enable":
-                            print(EnumChatFormatting.DARK_PURPLE+"Enabled fairy soul waypoints");
-                            enabled = true;
-                            return;
-                        case "off":
-                        case "disable":
-                            print(EnumChatFormatting.DARK_PURPLE+"Disabled fairy soul waypoints");
-                            enabled = false;
-                            return;
-                        case "clear": {
-                                String location = SBInfo.getInstance().getLocation();
-                                if(currentSoulList == null || location == null) {
-                                    print(EnumChatFormatting.RED+"No fairy souls found in your current world");
-                                } else {
-                                    Set<Integer> found = foundSouls.computeIfAbsent(location, k -> new HashSet<>());
-                                    for(int i=0; i<currentSoulList.size(); i++) {
-                                        found.add(i);
-                                    }
-                                    print(EnumChatFormatting.DARK_PURPLE+"Marked all fairy souls as found");
-                                }
-                            }
-                            return;
-                        case "unclear":
-                            String location = SBInfo.getInstance().getLocation();
-                            if(location == null) {
-                                print(EnumChatFormatting.RED+"No fairy souls found in your current world");
-                            } else {
-                                print(EnumChatFormatting.DARK_PURPLE+"Marked all fairy souls as not found");
-                                foundSouls.remove(location);
-                            }
-                            return;
-                    }
+    private static SimpleCommand.ProcessCommandRunnable fairysoulRunnable = new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            if(args.length != 1) {
+                printHelp();
+                return;
+            }
+            String subcommand = args[0].toLowerCase();
 
-                    print(EnumChatFormatting.RED+"Unknown subcommand: " + subcommand);
+            switch (subcommand) {
+                case "help":
+                    printHelp();
+                    return;
+                case "on":
+                case "enable":
+                    print(EnumChatFormatting.DARK_PURPLE+"Enabled fairy soul waypoints");
+                    enabled = true;
+                    return;
+                case "off":
+                case "disable":
+                    print(EnumChatFormatting.DARK_PURPLE+"Disabled fairy soul waypoints");
+                    enabled = false;
+                    return;
+                case "clear": {
+                    String location = SBInfo.getInstance().getLocation();
+                    if(currentSoulList == null || location == null) {
+                        print(EnumChatFormatting.RED+"No fairy souls found in your current world");
+                    } else {
+                        Set<Integer> found = foundSouls.computeIfAbsent(location, k -> new HashSet<>());
+                        for(int i=0; i<currentSoulList.size(); i++) {
+                            found.add(i);
+                        }
+                        print(EnumChatFormatting.DARK_PURPLE+"Marked all fairy souls as found");
+                    }
                 }
-            });
-        }
+                return;
+                case "unclear":
+                    String location = SBInfo.getInstance().getLocation();
+                    if(location == null) {
+                        print(EnumChatFormatting.RED+"No fairy souls found in your current world");
+                    } else {
+                        print(EnumChatFormatting.DARK_PURPLE+"Marked all fairy souls as not found");
+                        foundSouls.remove(location);
+                    }
+                    return;
+            }
 
-        private static void print(String s) {
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(s));
+            print(EnumChatFormatting.RED+"Unknown subcommand: " + subcommand);
         }
+    };
 
-        private static void printHelp() {
-            print("");
-            print(EnumChatFormatting.DARK_PURPLE.toString()+EnumChatFormatting.BOLD+"     NEU Fairy Soul Waypoint Guide");
-            print(EnumChatFormatting.LIGHT_PURPLE+"Shows waypoints for every fairy soul in your world");
-            print(EnumChatFormatting.LIGHT_PURPLE+"Clicking a fairy soul automatically removes it from the list");
-            print(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+"     Commands:");
-            print(EnumChatFormatting.YELLOW+"/neusouls help          - Display this message");
-            print(EnumChatFormatting.YELLOW+"/neusouls on/off        - Enable/disable the waypoint markers");
-            print(EnumChatFormatting.YELLOW+"/neusouls clear/unclear - Marks every waypoint in your current world as completed/uncompleted");
-            print("");
+    private static void print(String s) {
+        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(s));
+    }
+
+    private static void printHelp() {
+        print("");
+        print(EnumChatFormatting.DARK_PURPLE.toString()+EnumChatFormatting.BOLD+"     NEU Fairy Soul Waypoint Guide");
+        print(EnumChatFormatting.LIGHT_PURPLE+"Shows waypoints for every fairy soul in your world");
+        print(EnumChatFormatting.LIGHT_PURPLE+"Clicking a fairy soul automatically removes it from the list");
+        if(!NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+            print(EnumChatFormatting.DARK_RED + "" + EnumChatFormatting.OBFUSCATED + "Ab" + EnumChatFormatting.RESET + EnumChatFormatting.DARK_RED + "!" + EnumChatFormatting.RESET + EnumChatFormatting.RED + " This feature cannot and will not work in Dungeons. " + EnumChatFormatting.DARK_RED + "!" + EnumChatFormatting.OBFUSCATED + "Ab");
         }
-
+        print(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+"     Commands:");
+        print(EnumChatFormatting.YELLOW+"/neusouls help          - Display this message");
+        print(EnumChatFormatting.YELLOW+"/neusouls on/off        - Enable/disable the waypoint markers");
+        print(EnumChatFormatting.YELLOW+"/neusouls clear/unclear - Marks every waypoint in your current world as completed/uncompleted");
+        print("");
     }
 
 }
