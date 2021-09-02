@@ -1157,7 +1157,7 @@ public class NotEnoughUpdates {
             if(args.length > 0) {
                 openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config, StringUtils.join(args, " ")));
             } else {
-                openGui = new GuiScreenElementWrapper(new NEUConfigEditor(config));
+                openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor);
             }
         }
     };

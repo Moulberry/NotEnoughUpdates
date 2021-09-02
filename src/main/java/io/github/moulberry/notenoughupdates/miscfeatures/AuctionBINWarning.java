@@ -39,7 +39,7 @@ public class AuctionBINWarning extends GuiElement {
     private int lowestPrice;
 
     private boolean shouldPerformCheck() {
-        if(!NotEnoughUpdates.INSTANCE.config.auctionHouseBINWarning.enableBINWarning ||
+        if(!NotEnoughUpdates.INSTANCE.config.ahTweaks.enableBINWarning ||
                 !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
             sellingTooltip = null;
             showWarning = false;
@@ -105,7 +105,7 @@ public class AuctionBINWarning extends GuiElement {
 
             //TODO: Add option for warning if lowest price does not exist
 
-            float factor = 1 - NotEnoughUpdates.INSTANCE.config.auctionHouseBINWarning.warningThreshold/100;
+            float factor = 1 - NotEnoughUpdates.INSTANCE.config.ahTweaks.warningThreshold/100;
             if(factor < 0) factor = 0;
             if(factor > 1) factor = 1;
 

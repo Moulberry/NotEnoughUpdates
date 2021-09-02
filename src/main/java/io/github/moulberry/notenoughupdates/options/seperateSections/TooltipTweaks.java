@@ -101,9 +101,7 @@ public class TooltipTweaks {
             desc = "Show which the full amount of pet xp required"
     )
     @ConfigEditorBoolean
-    public boolean petExtendExp = true;
-
-
+    public boolean petExtendExp = false;
 
     @Expose
     @ConfigOption(

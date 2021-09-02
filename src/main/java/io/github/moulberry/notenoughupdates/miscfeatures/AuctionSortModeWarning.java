@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -20,8 +21,10 @@ public class AuctionSortModeWarning {
     }
 
     private boolean isAuctionBrowser() {
-        return Minecraft.getMinecraft().currentScreen instanceof GuiChest &&
-                SBInfo.getInstance().lastOpenContainerName.startsWith("Auctions Browser");
+        return NotEnoughUpdates.INSTANCE.config.ahTweaks.enableSortWarning &&
+                Minecraft.getMinecraft().currentScreen instanceof GuiChest &&
+                (SBInfo.getInstance().lastOpenContainerName.startsWith("Auctions Browser") ||
+                        SBInfo.getInstance().lastOpenContainerName.startsWith("Auctions: \""));
     }
 
     public void onPostGuiRender() {

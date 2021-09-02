@@ -966,21 +966,6 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.contains(" Profile") && cc.inventorySlots.size() >= 54){
-                if(cc.inventorySlots.get(22).getStack() != null && cc.inventorySlots.get(22).getStack().getTagCompound() != null){
-                    NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
-                    if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
-                        String tagName = tag.getCompoundTag("SkullOwner").getString("Name");
-                        String displayname = Utils.cleanColour(cc.inventorySlots.get(22).getStack().getDisplayName());
-                        if(tagName.equals(displayname.substring(displayname.length()-tagName.length()))){
-                            Slot slot = new Slot(cc.getLowerChestInventory(), 42, cc.inventorySlots.get(42).xDisplayPosition, cc.inventorySlots.get(42).yDisplayPosition);
-                            slot.putStack(Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block), EnumChatFormatting.GREEN + "Profile Viewer",
-                                    EnumChatFormatting.YELLOW + "Click to open NEU profile viewer!"));
-                            cc.inventorySlots.set(42, slot);
-                        }
-                    }
-                }
-            }
         }
 
         if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
@@ -1444,8 +1429,8 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.contains(" Profile") && eventGui.getSlotUnderMouse() != null &&
-                    eventGui.getSlotUnderMouse().getSlotIndex() == 42 && Mouse.getEventButton() >= 0) {
+            if(containerName.contains(" Profile") && eventGui.isMouseOverSlot(cc.inventorySlots.get(42), mouseX, mouseY)
+                    && Mouse.getEventButton() >= 0) {
                 event.setCanceled(true);
                 if(Mouse.getEventButtonState() && eventGui.inventorySlots.inventorySlots.get(22).getStack() != null &&
                         eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){
@@ -1861,7 +1846,6 @@ public class NEUEventListener {
         boolean dungeonProfit = false;
         int index = 0;
         List<String> newTooltip = new ArrayList<>();
-
 
         for(String line : event.toolTip) {
             if(line.endsWith(EnumChatFormatting.DARK_GRAY+"Reforge Stone") && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showReforgeStats) {
@@ -2410,7 +2394,6 @@ public class NEUEventListener {
 
     private void onItemToolTipInternalNameNull(ItemTooltipEvent event){
         petToolTipXPExtendPetMenu(event);
-
     }
 
     private List<String> petToolTipXPExtend(ItemTooltipEvent event) {
@@ -2423,7 +2406,6 @@ public class NEUEventListener {
             }
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
-
                 if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)).*")) {
 
                     GuiProfileViewer.PetLevel petlevel = null;
@@ -2443,8 +2425,6 @@ public class NEUEventListener {
                         }
                     }
 
-
-
                     if (petlevel != null) {
                         tooltipText.add("");
                         if(petlevel.totalXp > petlevel.maxXP) {
@@ -2453,7 +2433,8 @@ public class NEUEventListener {
                             tooltipText.add(EnumChatFormatting.GRAY+"Progress to Level "+(int)Math.floor(petlevel.level+1)+": "+EnumChatFormatting.YELLOW+Utils.round(petlevel.levelPercentage*100, 1)+"%");
                             int levelpercentage = Math.round(petlevel.levelPercentage*20);
                             tooltipText.add(EnumChatFormatting.DARK_GREEN+String.join("", Collections.nCopies(levelpercentage, "-"))+EnumChatFormatting.WHITE+String.join("", Collections.nCopies(20-levelpercentage, "-")));
-                            tooltipText.add(EnumChatFormatting.YELLOW + "" + myFormatter.format(petlevel.levelXp) + "/" + myFormatter.format(petlevel.currentLevelRequirement) + " EXP");
+                            tooltipText.add(EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW  + myFormatter.format(petlevel.levelXp) +
+                                    EnumChatFormatting.GOLD + "/" + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.currentLevelRequirement) + " EXP");
                         }
                     }
                 }
@@ -2462,9 +2443,7 @@ public class NEUEventListener {
         return tooltipText;
     }
 
-
     private void petToolTipXPExtendPetMenu(ItemTooltipEvent event) {
-
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
@@ -2493,7 +2472,8 @@ public class NEUEventListener {
                         return;
                     }
 
-                    event.toolTip.add(xpLine+1, EnumChatFormatting.YELLOW + "" + myFormatter.format(petlevel.levelXp) + "/" + myFormatter.format(petlevel.currentLevelRequirement) + " EXP");
+                    event.toolTip.add(xpLine+1, EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.levelXp) +
+                            EnumChatFormatting.GOLD + "/" + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.currentLevelRequirement));
 
                 }
             }
@@ -2502,9 +2482,6 @@ public class NEUEventListener {
 
     DecimalFormat myFormatter = new DecimalFormat("###,###.###");
 
-
-
-
     /**
      * This makes it so that holding LCONTROL while hovering over an item with NBT will show the NBT of the item.
      * @param event
@@ -2512,14 +2489,14 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
         if(!neu.isOnSkyblock()) return;
-        if(NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
+        /*if(NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
                 event.itemStack.getItem().equals(Item.getItemFromBlock(Blocks.stained_glass_pane))) {
             String first = Utils.cleanColour(event.toolTip.get(0));
             first = first.replaceAll("\\(.*\\)", "").trim();
             if(first.length() == 0) {
                 event.toolTip.clear();
             }
-        }
+        }*/
         //AH prices
         /*if(Minecraft.getMinecraft().currentScreen != null) {
             if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {

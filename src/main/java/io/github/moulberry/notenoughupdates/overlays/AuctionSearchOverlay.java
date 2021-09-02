@@ -69,10 +69,10 @@ public class AuctionSearchOverlay {
 
     public static boolean shouldReplace() {
         if(!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return false;
-        if(!NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.enableSearchOverlay) return false;
+        if(!NotEnoughUpdates.INSTANCE.config.ahTweaks.enableSearchOverlay) return false;
 
         if(!(Minecraft.getMinecraft().currentScreen instanceof GuiEditSign)) {
-            if(!NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.keepPreviousSearch) searchString = "";
+            if(!NotEnoughUpdates.INSTANCE.config.ahTweaks.keepPreviousSearch) searchString = "";
             return false;
         }
 
@@ -100,7 +100,7 @@ public class AuctionSearchOverlay {
 
         Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
 
-        int h = NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.showPastSearches ? 219 : 145;
+        int h = NotEnoughUpdates.INSTANCE.config.ahTweaks.showPastSearches ? 219 : 145;
 
         int topY = height/4;
         if(scaledResolution.getScaleFactor() >= 4) {
@@ -177,7 +177,7 @@ public class AuctionSearchOverlay {
             }
         }
 
-        if(NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.showPastSearches) {
+        if(NotEnoughUpdates.INSTANCE.config.ahTweaks.showPastSearches) {
             Minecraft.getMinecraft().fontRendererObj.drawString("Past Searches:", width/2-100, topY+25+ AUTOCOMPLETE_HEIGHT +5, 0xdddddd, true);
 
             for(int i=0; i<5; i++) {
@@ -195,7 +195,7 @@ public class AuctionSearchOverlay {
     }
 
     public static void close() {
-        if(NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.keepPreviousSearch) {
+        if(NotEnoughUpdates.INSTANCE.config.ahTweaks.keepPreviousSearch) {
             search();
         } else {
             synchronized(autocompletedItems) {
@@ -328,7 +328,7 @@ public class AuctionSearchOverlay {
         if(Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
             searchStringExtra = "";
             close();
-            if(NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.escFullClose) {
+            if(NotEnoughUpdates.INSTANCE.config.ahTweaks.escFullClose) {
                 Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(Minecraft.getMinecraft().thePlayer.openContainer.windowId));
             }
         } else if(Keyboard.getEventKey() == Keyboard.KEY_RETURN) {
@@ -351,7 +351,7 @@ public class AuctionSearchOverlay {
         int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
         int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-        int h = NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.showPastSearches ? 219 : 145;
+        int h = NotEnoughUpdates.INSTANCE.config.ahTweaks.showPastSearches ? 219 : 145;
 
         int topY = height/4;
         if(scaledResolution.getScaleFactor() >= 4) {
@@ -451,7 +451,7 @@ public class AuctionSearchOverlay {
                     }
                 }
 
-                if(NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.showPastSearches) {
+                if(NotEnoughUpdates.INSTANCE.config.ahTweaks.showPastSearches) {
                     for(int i=0; i<5; i++) {
                         if(i >= NotEnoughUpdates.INSTANCE.config.hidden.previousAuctionSearches.size()) break;
 

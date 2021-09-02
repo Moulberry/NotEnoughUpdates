@@ -14,11 +14,15 @@ import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.init.Blocks;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumChatFormatting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,6 +38,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Mixin(GuiContainer.class)
 public abstract class MixinGuiContainer extends GuiScreen {
 
+    private static boolean hasProfileViewerStack = false;
+    private static final ItemStack profileViewerStack = Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block),
+            EnumChatFormatting.GREEN + "Profile Viewer",
+                EnumChatFormatting.YELLOW + "Click to open NEU profile viewer!");
+
     @Inject(method="drawSlot", at=@At("RETURN"))
     public void drawSlotRet(Slot slotIn, CallbackInfo ci) {
         SlotLocking.getInstance().drawSlot(slotIn);
@@ -42,6 +51,41 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Inject(method="drawSlot", at=@At("HEAD"), cancellable = true)
     public void drawSlot(Slot slot, CallbackInfo ci) {
         if(slot == null) return;
+
+        GuiContainer $this = (GuiContainer)(Object)this;
+
+        if(slot.slotNumber == 42 && $this instanceof GuiChest) {
+            hasProfileViewerStack = false;
+
+            GuiChest eventGui = (GuiChest) $this;
+            ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+            String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if(containerName.contains(" Profile") && cc.inventorySlots.size() >= 54) {
+                if(cc.inventorySlots.get(22).getStack() != null && cc.inventorySlots.get(22).getStack().getTagCompound() != null){
+                    NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
+                    if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
+                        String tagName = tag.getCompoundTag("SkullOwner").getString("Name");
+                        String displayname = Utils.cleanColour(cc.inventorySlots.get(22).getStack().getDisplayName());
+                        if(tagName.equals(displayname.substring(displayname.length()-tagName.length()))) {
+                            ci.cancel();
+
+                            this.zLevel = 100.0F;
+                            this.itemRender.zLevel = 100.0F;
+
+                            GlStateManager.enableDepth();
+                            this.itemRender.renderItemAndEffectIntoGUI(profileViewerStack, slot.xDisplayPosition, slot.yDisplayPosition);
+                            this.itemRender.renderItemOverlayIntoGUI(this.fontRendererObj, profileViewerStack,
+                                    slot.xDisplayPosition, slot.yDisplayPosition, "");
+
+                            this.itemRender.zLevel = 0.0F;
+                            this.zLevel = 0.0F;
+
+                            hasProfileViewerStack = true;
+                        }
+                    }
+                }
+            }
+        }
 
         if(slot.getStack() == null && NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
             GlStateManager.pushMatrix();
@@ -53,7 +97,6 @@ public abstract class MixinGuiContainer extends GuiScreen {
             GlStateManager.popMatrix();
         }
 
-        GuiContainer $this = (GuiContainer)(Object)this;
         ItemStack stack = slot.getStack();
 
         if(stack != null) {
@@ -65,8 +108,19 @@ public abstract class MixinGuiContainer extends GuiScreen {
 
         RenderHelper.enableGUIStandardItemLighting();
 
-        if(BetterContainers.isOverriding() && !BetterContainers.shouldRenderStack(stack)) {
+        if(BetterContainers.isOverriding() && !BetterContainers.shouldRenderStack(slot.slotNumber, stack)) {
             ci.cancel();
+        }
+    }
+
+    @Redirect(method="drawScreen", at=@At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/inventory/GuiContainer;renderToolTip(Lnet/minecraft/item/ItemStack;II)V"))
+    public void drawScreen_renderTooltip(GuiContainer guiContainer, ItemStack stack, int x, int y) {
+        if(hasProfileViewerStack && theSlot.slotNumber == 42) {
+            this.renderToolTip(profileViewerStack, x, y);
+        } else {
+            this.renderToolTip(stack, x, y);
         }
     }
 
@@ -112,7 +166,7 @@ public abstract class MixinGuiContainer extends GuiScreen {
         if(theSlot != null && SlotLocking.getInstance().isSlotLocked(theSlot)) {
             SlotLocking.getInstance().setRealSlot(theSlot);
             theSlot = null;
-        } else if( theSlot == null){
+        } else if(theSlot == null){
             SlotLocking.getInstance().setRealSlot(null);
         }
     }
@@ -170,11 +224,12 @@ public abstract class MixinGuiContainer extends GuiScreen {
     @Redirect(method="drawScreen", at=@At(value="INVOKE", target=TARGET_CANBEHOVERED))
     public boolean drawScreen_canBeHovered(Slot slot) {
         if(NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
-                BetterContainers.isOverriding() && BetterContainers.isBlankStack(slot.getStack())) {
+                BetterContainers.isOverriding() && BetterContainers.isBlankStack(slot.slotNumber, slot.getStack())) {
             return false;
         }
         return slot.canBeHovered();
     }
+
     @Inject(method="checkHotbarKeys", at=@At(value = "INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;handleMouseClick(Lnet/minecraft/inventory/Slot;III)V"), locals =  LocalCapture.CAPTURE_FAILSOFT ,cancellable = true)
     public void checkHotbarKeys_Slotlock(int keyCode, CallbackInfoReturnable<Boolean> cir, int i){
         if(SlotLocking.getInstance().isSlotIndexLocked(i)){
@@ -217,11 +272,11 @@ public abstract class MixinGuiContainer extends GuiScreen {
                         slotId, clickedButton, clickType);
             }
         }
-        if(slotIn != null && BetterContainers.isOverriding() && (BetterContainers.isBlankStack(slotIn.getStack()) ||
-                BetterContainers.isButtonStack(slotIn.getStack()))) {
+        if(slotIn != null && BetterContainers.isOverriding() && (BetterContainers.isBlankStack(slotIn.slotNumber, slotIn.getStack()) ||
+                BetterContainers.isButtonStack(slotIn.slotNumber, slotIn.getStack()))) {
             BetterContainers.clickSlot(slotIn.getSlotIndex());
 
-            if(BetterContainers.isBlankStack(slotIn.getStack())) {
+            if(BetterContainers.isBlankStack(slotIn.slotNumber, slotIn.getStack())) {
                 $this.mc.playerController.windowClick($this.inventorySlots.windowId, slotId, 2, clickType, $this.mc.thePlayer);
                 ci.cancel();
             } else {
