@@ -2406,7 +2406,7 @@ public class NEUEventListener {
             }
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
-                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)).*")) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)|(Morph)).*")) {
 
                     GuiProfileViewer.PetLevel petlevel = null;
 
