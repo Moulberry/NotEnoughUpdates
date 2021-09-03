@@ -1968,7 +1968,7 @@ public class StorageOverlay extends GuiElement {
     }
 
     public void fastRenderCheck(){
-        if(!OpenGlHelper.isFramebufferEnabled()) {
+        if(!OpenGlHelper.isFramebufferEnabled() && NotEnoughUpdates.INSTANCE.config.storageGUI.enableStorageGUI3) {
             this.fastRender = true;
             NEUEventListener.displayNotification(Lists.newArrayList(
                     "\u00a74Fast Render Warning",
