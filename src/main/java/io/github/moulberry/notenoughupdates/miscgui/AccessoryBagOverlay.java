@@ -752,19 +752,21 @@ public class AccessoryBagOverlay {
         }
     }*/
 
-    private static final Pattern HEALTH_PATTERN_BONUS = Pattern.compile("^Health: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern DEFENCE_PATTERN_BONUS = Pattern.compile("^Defense: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern STRENGTH_PATTERN_BONUS = Pattern.compile("^Strength: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern SPEED_PATTERN_BONUS = Pattern.compile("^Speed: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern CC_PATTERN_BONUS = Pattern.compile("^Crit Chance: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern CD_PATTERN_BONUS = Pattern.compile("^Crit Damage: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern ATKSPEED_PATTERN_BONUS = Pattern.compile("^Bonus Attack Speed: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern INTELLIGENCE_PATTERN_BONUS = Pattern.compile("^Intelligence: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern SCC_PATTERN_BONUS = Pattern.compile("^Sea Creature Chance: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern FEROCITY_PATTERN_BONUS = Pattern.compile("^Ferocity: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern MINING_FORTUNE_PATTERN_BONUS = Pattern.compile("^Mining Fortune: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern MINING_SPEED_PATTERN_BONUS = Pattern.compile("^Mining Speed: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern MAGIC_FIND_PATTERN_BONUS = Pattern.compile("^Magic Find: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
+    private static final String STAT_PATTERN_BONUS_END = ": (?:\\+|-)[0-9]+(?:\\.[0-9]+)?\\%? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)%?";
+
+    private static final Pattern HEALTH_PATTERN_BONUS = Pattern.compile("^Health"+STAT_PATTERN_BONUS_END);
+    private static final Pattern DEFENCE_PATTERN_BONUS = Pattern.compile("^Defense"+STAT_PATTERN_BONUS_END);
+    private static final Pattern STRENGTH_PATTERN_BONUS = Pattern.compile("^Strength"+STAT_PATTERN_BONUS_END);
+    private static final Pattern SPEED_PATTERN_BONUS = Pattern.compile("^Speed"+STAT_PATTERN_BONUS_END);
+    private static final Pattern CC_PATTERN_BONUS = Pattern.compile("^Crit Chance"+STAT_PATTERN_BONUS_END);
+    private static final Pattern CD_PATTERN_BONUS = Pattern.compile("^Crit Damage"+STAT_PATTERN_BONUS_END);
+    private static final Pattern ATKSPEED_PATTERN_BONUS = Pattern.compile("^Bonus Attack Speed"+STAT_PATTERN_BONUS_END);
+    private static final Pattern INTELLIGENCE_PATTERN_BONUS = Pattern.compile("^Intelligence"+STAT_PATTERN_BONUS_END);
+    private static final Pattern SCC_PATTERN_BONUS = Pattern.compile("^Sea Creature Chance"+STAT_PATTERN_BONUS_END);
+    private static final Pattern FEROCITY_PATTERN_BONUS = Pattern.compile("^Ferocity"+STAT_PATTERN_BONUS_END);
+    private static final Pattern MINING_FORTUNE_PATTERN_BONUS = Pattern.compile("^Mining Fortune"+STAT_PATTERN_BONUS_END);
+    private static final Pattern MINING_SPEED_PATTERN_BONUS = Pattern.compile("^Mining Speed"+STAT_PATTERN_BONUS_END);
+    private static final Pattern MAGIC_FIND_PATTERN_BONUS = Pattern.compile("^Magic Find"+STAT_PATTERN_BONUS_END);
     private static final HashMap<String, Pattern> STAT_PATTERN_MAP_BONUS = new HashMap<>();
     static {
         STAT_PATTERN_MAP_BONUS.put("health", HEALTH_PATTERN_BONUS);
@@ -782,19 +784,22 @@ public class AccessoryBagOverlay {
         STAT_PATTERN_MAP_BONUS.put("magic_find", MAGIC_FIND_PATTERN_BONUS);
     }
 
-    private static final Pattern HEALTH_PATTERN = Pattern.compile("^Health: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern DEFENCE_PATTERN = Pattern.compile("^Defense: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern STRENGTH_PATTERN = Pattern.compile("^Strength: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern SPEED_PATTERN = Pattern.compile("^Speed: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern CC_PATTERN = Pattern.compile("^Crit Chance: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern CD_PATTERN = Pattern.compile("^Crit Damage: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern ATKSPEED_PATTERN = Pattern.compile("^Bonus Attack Speed: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern INTELLIGENCE_PATTERN = Pattern.compile("^Intelligence: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern SCC_PATTERN = Pattern.compile("^Sea Creature Chance: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern FEROCITY_PATTERN = Pattern.compile("^Ferocity: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern MINING_FORTUNE_PATTERN = Pattern.compile("^Mining Fortune: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern MINING_SPEED_PATTERN = Pattern.compile("^Mining Speed: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern MAGIC_FIND_PATTERN = Pattern.compile("^Magic Find: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
+
+    private static final String STAT_PATTERN_END = ": ((?:\\+|-)([0-9]+(\\.[0-9]+)?))%?";
+
+    private static final Pattern HEALTH_PATTERN = Pattern.compile("^Health"+STAT_PATTERN_END);
+    private static final Pattern DEFENCE_PATTERN = Pattern.compile("^Defense"+STAT_PATTERN_END);
+    private static final Pattern STRENGTH_PATTERN = Pattern.compile("^Strength"+STAT_PATTERN_END);
+    private static final Pattern SPEED_PATTERN = Pattern.compile("^Speed"+STAT_PATTERN_END);
+    private static final Pattern CC_PATTERN = Pattern.compile("^Crit Chance"+STAT_PATTERN_END);
+    private static final Pattern CD_PATTERN = Pattern.compile("^Crit Damage"+STAT_PATTERN_END);
+    private static final Pattern ATKSPEED_PATTERN = Pattern.compile("^Bonus Attack Speed"+STAT_PATTERN_END);
+    private static final Pattern INTELLIGENCE_PATTERN = Pattern.compile("^Intelligence"+STAT_PATTERN_END);
+    private static final Pattern SCC_PATTERN = Pattern.compile("^Sea Creature Chance"+STAT_PATTERN_END);
+    private static final Pattern FEROCITY_PATTERN = Pattern.compile("^Ferocity"+STAT_PATTERN_END);
+    private static final Pattern MINING_FORTUNE_PATTERN = Pattern.compile("^Mining Fortune"+STAT_PATTERN_END);
+    private static final Pattern MINING_SPEED_PATTERN = Pattern.compile("^Mining Speed"+STAT_PATTERN_END);
+    private static final Pattern MAGIC_FIND_PATTERN = Pattern.compile("^Magic Find"+STAT_PATTERN_END);
 
     private static final HashMap<String, Pattern> STAT_PATTERN_MAP = new HashMap<>();
     static {

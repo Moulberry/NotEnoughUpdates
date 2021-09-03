@@ -15,6 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -605,6 +606,9 @@ public class MiningOverlay extends TextOverlay {
             case "Goblin Raid":
             case "Goblin Raid Slayer":
                 icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GOLD"));
+                break;
+            case "Golden Goblin Slayer":
+                icon = new ItemStack(Items.golden_helmet, 1, 0);
                 break;
             case "2x Mithril Powder Collector":
                 icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GLOWSTONE_DUST"));
