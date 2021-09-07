@@ -46,7 +46,7 @@ public class Toolbar {
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 0)
-    public boolean enableHelpButton = false;
+    public boolean enableHelpButton = true;
 
     @Expose
     @ConfigOption(
