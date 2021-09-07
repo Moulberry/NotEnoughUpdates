@@ -27,6 +27,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Show in Item durability",
+            desc = "Show the cooldown of the Treecapitator in the item durability"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 0)
+    public boolean enableCooldownInItemDurability = true;
+
+    @Expose
+    @ConfigOption(
             name = "Overlay Colour",
             desc = "Change the colour of the overlay"
     )
