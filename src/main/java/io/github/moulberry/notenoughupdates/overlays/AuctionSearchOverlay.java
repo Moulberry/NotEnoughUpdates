@@ -20,6 +20,7 @@ import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -334,6 +335,17 @@ public class AuctionSearchOverlay {
         } else if(Keyboard.getEventKey() == Keyboard.KEY_RETURN) {
             searchStringExtra = "";
             close();
+        } else if(Keyboard.getEventKey() == Keyboard.KEY_TAB){
+            searchString = autocompletedItems.iterator().next();
+            JsonObject repoObject = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(autocompletedItems.iterator().next());
+            String displayname = repoObject.get("displayname").getAsString();
+            if (displayname.contains("Enchanted Book")){
+                String lore = repoObject.get("lore").getAsJsonArray().iterator().next().getAsString();
+                String name = lore.substring(0, lore.lastIndexOf(" "));
+                searchString = Utils.cleanColour(name);
+            } else {
+                searchString = Utils.cleanColour(displayname);
+            }
         } else if(Keyboard.getEventKeyState()) {
             textField.setFocus(true);
             textField.setText(searchString);
