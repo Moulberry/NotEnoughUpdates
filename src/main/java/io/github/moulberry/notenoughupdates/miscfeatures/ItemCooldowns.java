@@ -65,6 +65,10 @@ public class ItemCooldowns {
     }
 
     public static long getTreecapCooldownWithPet(){
+        if (!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCooldownInItemDurability){
+            return 0;
+        }
+
         PetInfoOverlay.Pet pet = PetInfoOverlay.getCurrentPet();
         if (NotEnoughUpdates.INSTANCE.config.itemOverlays.enableMonkeyCheck && pet != null) {
             if (pet.petLevel != null &&
