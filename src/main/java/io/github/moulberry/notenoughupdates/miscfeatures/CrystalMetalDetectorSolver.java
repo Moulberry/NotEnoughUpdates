@@ -16,7 +16,24 @@ public class CrystalMetalDetectorSolver {
     private static List<BlockPos> possibleBlocks = new ArrayList<>();
     private static final List<BlockPos> locations = new ArrayList<>();
 
+    private static Boolean chestRecentlyFound = false;
+    private static long chestLastFoundMillis = 0;
+
     public static void process(IChatComponent message) {
+        // Delay to keep old chest location from being treated as the new chest location
+        if (chestRecentlyFound) {
+            long currentTimeMillis = System.currentTimeMillis();
+            if (chestLastFoundMillis == 0) {
+                chestLastFoundMillis = currentTimeMillis;
+                return;
+            } else if(currentTimeMillis - chestLastFoundMillis < 1000) {
+                return;
+            }
+
+            chestLastFoundMillis = 0;
+            chestRecentlyFound = false;
+        }
+
         if (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")
                 && message.getUnformattedText().contains("TREASURE: ")) {
             double distToTreasure = Double.parseDouble(message.getUnformattedText().split("TREASURE: ")[1].split("m")[0].replaceAll("(?!\\.)\\D", ""));
@@ -81,10 +98,7 @@ public class CrystalMetalDetectorSolver {
     }
 
     public static void reset(Boolean chestFound) {
-        if (chestFound) {
-            // TODO: Add a delay to keep the old chest location from being treated as the new chest location
-        }
-
+        chestRecentlyFound = chestFound;
         possibleBlocks.clear();
         locations.clear();
     }
@@ -124,27 +138,28 @@ public class CrystalMetalDetectorSolver {
 
     private static void removeDuplicates() {
         if (possibleBlocks.size() > 1 && possibleBlocks.size() < 7) {
-            double firstX = possibleBlocks.get(0).getX();
-            double firstZ = possibleBlocks.get(0).getZ();
-            Boolean yOnlyDiffers = true;
+            Vec3 firstBlockVec = new Vec3( possibleBlocks.get(0).getX(), 0,  possibleBlocks.get(0).getZ());
+            Boolean allBlocksAreClose = true;
 
             double lowestY = possibleBlocks.get(0).getY();
             int lowestYIndex = 0;
 
             for (int i = 1; i < possibleBlocks.size(); i++) {
-                BlockPos block = possibleBlocks.get(i);
-                if (block.getX() != firstX || block.getZ() != firstZ) {
-                    yOnlyDiffers = false;
+                BlockPos blockPos = possibleBlocks.get(i);
+                Vec3 blockVec = new Vec3(blockPos.getX(), 0, blockPos.getZ());
+
+                if (firstBlockVec.distanceTo(blockVec) > 3) {
+                    allBlocksAreClose = false;
                     break;
                 }
 
-                if (block.getY() < lowestY) {
-                    lowestY = block.getY();
+                if (blockPos.getY() < lowestY) {
+                    lowestY = blockPos.getY();
                     lowestYIndex = i;
                 }
             }
 
-            if (yOnlyDiffers) {
+            if (allBlocksAreClose) {
                 List<BlockPos> temp = new ArrayList<>();
                 temp.add(possibleBlocks.get(lowestYIndex));
                 possibleBlocks = temp;
