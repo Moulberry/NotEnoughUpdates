@@ -118,7 +118,8 @@ public class CrystalMetalDetectorSolver {
 
                 RenderUtils.renderBeaconBeam(x, y, z, beaconRGB, 1.0f, partialTicks);
                 RenderUtils.renderWayPoint("Treasure", possibleBlocks.get(0).add(0, 2.5, 0), partialTicks);
-            } else if (possibleBlocks.size() > 1 && NotEnoughUpdates.INSTANCE.config.mining.metalDetectorShowPossible) {
+            } else if (possibleBlocks.size() > 1 && (locations.size() > 1 || possibleBlocks.size() < 10) &&
+                    NotEnoughUpdates.INSTANCE.config.mining.metalDetectorShowPossible) {
                 for (BlockPos block : possibleBlocks) {
                     double x = block.getX() - viewer.getX();
                     double y = block.getY() - viewer.getY();;
@@ -137,7 +138,7 @@ public class CrystalMetalDetectorSolver {
     }
 
     private static void removeDuplicates() {
-        if (possibleBlocks.size() > 1 && possibleBlocks.size() < 7) {
+        if (possibleBlocks.size() > 1 && possibleBlocks.size() < 10) {
             Vec3 firstBlockVec = new Vec3( possibleBlocks.get(0).getX(), 0,  possibleBlocks.get(0).getZ());
             Boolean allBlocksAreClose = true;
 
