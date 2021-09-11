@@ -6,26 +6,17 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.commands.SimpleCommand;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
-import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.*;
-import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Vector3f;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -177,32 +168,11 @@ public class FairySouls {
 
         Set<Integer> found = foundSouls.computeIfAbsent(location, k -> new HashSet<>());
 
-        BlockPos viewer = RenderUtils.getCurrentViewer(event.partialTicks);
-
         int rgb = 0xa839ce;
         for(int i=0; i<currentSoulListClose.size(); i++) {
             BlockPos currentSoul = currentSoulListClose.get(i);
-            double x = currentSoul.getX() - viewer.getX();
-            double y = currentSoul.getY() - viewer.getY();
-            double z = currentSoul.getZ() - viewer.getZ();
-
-            double distSq = x*x + y*y + z*z;
-
-            AxisAlignedBB bb = new AxisAlignedBB(x, y, z, x+1, y+1, z+1);
-
-            GlStateManager.disableDepth();
-            GlStateManager.disableCull();
-            GlStateManager.disableTexture2D();
-            CustomItemEffects.drawFilledBoundingBox(bb, 1f, SpecialColour.special(0, 100, rgb));
-
-            if(distSq > 10*10) {
-                RenderUtils.renderBeaconBeam(x, y, z, rgb, 1.0f, event.partialTicks);
-            }
+            RenderUtils.renderBeaconBeamOrBoundingBox(currentSoul, rgb, 1.0f, event.partialTicks);
         }
-
-        GlStateManager.disableLighting();
-        GlStateManager.enableTexture2D();
-        GlStateManager.enableDepth();
     }
 
     public static class FairySoulsCommandAlt extends SimpleCommand {

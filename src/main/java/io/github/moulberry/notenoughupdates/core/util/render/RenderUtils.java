@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.core.util.render;
 
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
+import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -12,10 +13,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Vector3f;
@@ -149,29 +147,10 @@ public class RenderUtils {
         GlStateManager.enableTexture2D();
     }
 
-    public static BlockPos getCurrentViewer(float partialTicks) {
-        double viewerX;
-        double viewerY;
-        double viewerZ;
-
-        Vector3f aoteInterpPos = CustomItemEffects.INSTANCE.getCurrentPosition();
-        if(aoteInterpPos != null) {
-            viewerX = aoteInterpPos.x;
-            viewerY = aoteInterpPos.y;
-            viewerZ = aoteInterpPos.z;
-        } else {
-            Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
-            viewerX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * partialTicks;
-            viewerY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * partialTicks;
-            viewerZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * partialTicks;
-        }
-
-        return new BlockPos(viewerX, viewerY, viewerZ);
-    }
-
     private static final ResourceLocation beaconBeam = new ResourceLocation("textures/entity/beacon_beam.png");
 
-    public static void renderBeaconBeam(double x, double y, double z, int rgb, float alphaMult, float partialTicks) {
+    private static void renderBeaconBeam(double x, double y, double z, int rgb, float alphaMult,
+                                        float partialTicks, Boolean disableDepth) {
         int height = 300;
         int bottomOffset = 0;
         int topOffset = bottomOffset + height;
@@ -179,8 +158,11 @@ public class RenderUtils {
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
 
-        Minecraft.getMinecraft().getTextureManager().bindTexture(beaconBeam);
+        if (disableDepth) {
+            GlStateManager.disableDepth();
+        }
 
+        Minecraft.getMinecraft().getTextureManager().bindTexture(beaconBeam);
         GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
         GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
         GlStateManager.disableLighting();
@@ -248,6 +230,84 @@ public class RenderUtils {
         worldrenderer.pos(x + 0.2D, y + bottomOffset, z + 0.2D).tex(0.0D, d12).color(r, g, b, 0.25F).endVertex();
         worldrenderer.pos(x + 0.2D, y + topOffset, z + 0.2D).tex(0.0D, d13).color(r, g, b, 0.25F*alphaMult).endVertex();
         tessellator.draw();
+
+        GlStateManager.disableLighting();
+        GlStateManager.enableTexture2D();
+        if (disableDepth) {
+            GlStateManager.enableDepth();
+        }
+    }
+
+    private static void renderBoundingBox(double x, double y, double z, int rgb, float alphaMult, float partialTicks) {
+        AxisAlignedBB bb = new AxisAlignedBB(x, y, z, x+1, y+1, z+1);
+
+        GlStateManager.disableDepth();
+        GlStateManager.disableCull();
+        GlStateManager.disableTexture2D();
+        CustomItemEffects.drawFilledBoundingBox(bb, 1f, SpecialColour.special(0, 100, rgb));
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableCull();
+        GlStateManager.enableDepth();
+    }
+
+    public static void renderBeaconBeam(BlockPos block, int rgb, float alphaMult, float partialTicks) {
+        double viewerX;
+        double viewerY;
+        double viewerZ;
+
+        Vector3f aoteInterpPos = CustomItemEffects.INSTANCE.getCurrentPosition();
+        if(aoteInterpPos != null) {
+            viewerX = aoteInterpPos.x;
+            viewerY = aoteInterpPos.y;
+            viewerZ = aoteInterpPos.z;
+        } else {
+            Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
+            viewerX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * partialTicks;
+            viewerY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * partialTicks;
+            viewerZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * partialTicks;
+        }
+
+        double x = block.getX() - viewerX;
+        double y = block.getY() - viewerY;
+        double z = block.getZ() - viewerZ;
+
+        double distSq = x*x + y*y + z*z;
+
+        if(distSq > 10*10) {
+            RenderUtils.renderBeaconBeam(x, y, z, rgb, 1.0f, partialTicks, true);
+        } else {
+            RenderUtils.renderBeaconBeam(x, y, z, rgb, 1.0f, partialTicks, false);
+        }
+    }
+
+    public static void renderBeaconBeamOrBoundingBox(BlockPos block, int rgb, float alphaMult, float partialTicks) {
+        double viewerX;
+        double viewerY;
+        double viewerZ;
+
+        Vector3f aoteInterpPos = CustomItemEffects.INSTANCE.getCurrentPosition();
+        if(aoteInterpPos != null) {
+            viewerX = aoteInterpPos.x;
+            viewerY = aoteInterpPos.y;
+            viewerZ = aoteInterpPos.z;
+        } else {
+            Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
+            viewerX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * partialTicks;
+            viewerY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * partialTicks;
+            viewerZ = viewer.lastTickPosZ + (viewer.posZ - viewer.lastTickPosZ) * partialTicks;
+        }
+
+        double x = block.getX() - viewerX;
+        double y = block.getY() - viewerY;
+        double z = block.getZ() - viewerZ;
+
+        double distSq = x*x + y*y + z*z;
+
+        if(distSq > 10*10) {
+            RenderUtils.renderBeaconBeam(x, y, z, rgb, 1.0f, partialTicks, true);
+        } else {
+            RenderUtils.renderBoundingBox(x, y, z, rgb, 1.0f, partialTicks);
+        }
     }
 
     public static void renderWayPoint(String str, BlockPos loc, float partialTicks) {

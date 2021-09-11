@@ -108,24 +108,16 @@ public class CrystalMetalDetectorSolver {
 
         if (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows") &&
                 SBInfo.getInstance().location.equals("Mines of Divan")) {
-            BlockPos viewer = RenderUtils.getCurrentViewer(partialTicks);
 
             if (possibleBlocks.size() == 1) {
                 BlockPos block = possibleBlocks.get(0);
-                double x = block.getX() - viewer.getX();
-                double y = block.getY() - viewer.getY();
-                double z = block.getZ() - viewer.getZ();
 
-                RenderUtils.renderBeaconBeam(x, y, z, beaconRGB, 1.0f, partialTicks);
+                RenderUtils.renderBeaconBeam(block, beaconRGB, 1.0f, partialTicks);
                 RenderUtils.renderWayPoint("Treasure", possibleBlocks.get(0).add(0, 2.5, 0), partialTicks);
             } else if (possibleBlocks.size() > 1 && (locations.size() > 1 || possibleBlocks.size() < 10) &&
                     NotEnoughUpdates.INSTANCE.config.mining.metalDetectorShowPossible) {
                 for (BlockPos block : possibleBlocks) {
-                    double x = block.getX() - viewer.getX();
-                    double y = block.getY() - viewer.getY();;
-                    double z = block.getZ() - viewer.getZ();;
-
-                    RenderUtils.renderBeaconBeam(x, y, z, beaconRGB, 1.0f, partialTicks);
+                    RenderUtils.renderBeaconBeam(block, beaconRGB, 1.0f, partialTicks);
                     RenderUtils.renderWayPoint("Possible Treasure Location", block.add(0, 2.5, 0), partialTicks);
                 }
             }
