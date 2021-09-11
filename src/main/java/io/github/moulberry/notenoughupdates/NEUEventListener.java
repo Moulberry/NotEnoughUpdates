@@ -166,7 +166,7 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Unload event) {
         NotEnoughUpdates.INSTANCE.saveConfig();
-        CrystalMetalDetectorSolver.reset();
+        CrystalMetalDetectorSolver.reset(false);
     }
 
     private static long notificationDisplayMillis = 0;
@@ -862,7 +862,7 @@ public class NEUEventListener {
             }
         }
         if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
-            CrystalMetalDetectorSolver.reset();
+            CrystalMetalDetectorSolver.reset(true);
         }
         if(unformatted.startsWith("[NPC] Keeper of ") | unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  ") || unformatted.startsWith("✦") ||
         unformatted.equals("  You've earned a Crystal Loot Bundle!"))
