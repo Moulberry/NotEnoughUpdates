@@ -279,6 +279,40 @@ public class GuiProfileViewer extends GuiScreen {
 
                 Utils.drawStringCentered(str, Minecraft.getMinecraft().fontRendererObj,
                         guiLeft+sizeX/2f, guiTop+101, true, 0);
+
+                //This is just here to inform the player what to do
+                //like typing /api new or telling them to go find a psychotherapist
+                long timeDiff = System.currentTimeMillis() - startTime;
+                if(timeDiff > 20000){
+                    Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Its taking a while...", Minecraft.getMinecraft().fontRendererObj,
+                            guiLeft+sizeX/2f, guiTop+111, true, 0);
+                    Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Try \"/api new\".", Minecraft.getMinecraft().fontRendererObj,
+                            guiLeft+sizeX/2f, guiTop+121, true, 0);
+                    if(timeDiff > 60000){
+                        Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Might be hypixel's fault.", Minecraft.getMinecraft().fontRendererObj,
+                                guiLeft+sizeX/2f, guiTop+131, true, 0);
+                        if(timeDiff > 180000){
+                            Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Wow you're still here?", Minecraft.getMinecraft().fontRendererObj,
+                                    guiLeft+sizeX/2f, guiTop+141, true, 0);
+                            if(timeDiff > 360000){
+                                long second = (timeDiff / 1000) % 60;
+                                long minute = (timeDiff / (1000 * 60)) % 60;
+                                long hour = (timeDiff / (1000 * 60 * 60)) % 24;
+
+                                String time = String.format("%02d:%02d:%02d", hour, minute, second);
+                                Utils.drawStringCentered(EnumChatFormatting.YELLOW+"You've wasted your time here for: "+time, Minecraft.getMinecraft().fontRendererObj,
+                                        guiLeft+sizeX/2f, guiTop+151, true, 0);
+                                Utils.drawStringCentered(EnumChatFormatting.YELLOW+""+EnumChatFormatting.BOLD+"What are you doing with your life?", Minecraft.getMinecraft().fontRendererObj,
+                                        guiLeft+sizeX/2f, guiTop+161, true, 0);
+                                if(timeDiff > 600000){
+                                    Utils.drawStringCentered(EnumChatFormatting.RED+""+EnumChatFormatting.BOLD+"Maniac", Minecraft.getMinecraft().fontRendererObj,
+                                            guiLeft+sizeX/2f, guiTop+171, true, 0);
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 break;
             case INVALID_NAME:
                 Utils.drawStringCentered(EnumChatFormatting.RED+"Invalid name or API is down!", Minecraft.getMinecraft().fontRendererObj,
