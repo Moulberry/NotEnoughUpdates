@@ -752,7 +752,7 @@ public class AccessoryBagOverlay {
         }
     }*/
 
-    private static final String STAT_PATTERN_BONUS_END = ": (?:\\+|-)[0-9]+(?:\\.[0-9]+)?\\%? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)%?";
+    private static final String STAT_PATTERN_BONUS_END = ": (?:\\+|-)[0-9]+(?:\\.[0-9]+)?\\%? \\(((?:\\+|-)[0-9]+)%?";
 
     private static final Pattern HEALTH_PATTERN_BONUS = Pattern.compile("^Health"+STAT_PATTERN_BONUS_END);
     private static final Pattern DEFENCE_PATTERN_BONUS = Pattern.compile("^Defense"+STAT_PATTERN_BONUS_END);
