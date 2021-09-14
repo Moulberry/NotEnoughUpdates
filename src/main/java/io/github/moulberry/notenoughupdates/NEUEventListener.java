@@ -2073,7 +2073,7 @@ public class NEUEventListener {
                     Pattern pattern;
                     try {
                         pattern = Pattern.compile("(\\u00A79|\\u00A79\\u00A7d\\u00A7l)("+enchantName+") " +
-                                "([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))(,|$)");
+                                "(?<level>[0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))((\\u00A79)?,|( \\u00A78(?:,?[0-9]+)*)?$)");
                     } catch(Exception e) {continue;} //malformed regex
                     Matcher matcher = pattern.matcher(line);
                     int matchCount = 0;
@@ -2082,7 +2082,7 @@ public class NEUEventListener {
 
                         matchCount++;
                         int level = -1;
-                        String levelStr = matcher.group(matcher.groupCount()-2);
+                        String levelStr = matcher.group("level");
                         if(levelStr == null) continue;
                         try {
                             level = Integer.parseInt(levelStr);
