@@ -76,6 +76,8 @@ public class CapeManager {
         new CapeData("zera", false, true),
         new CapeData("soldier", false, true),
         new CapeData("alexxoffi", false, true),
+        new CapeData("secondpfirsisch", false, true),
+
 
             //Patreon
         new CapeData("patreon1", false, false),
