@@ -77,6 +77,7 @@ public class CapeManager {
         new CapeData("soldier", false, true),
         new CapeData("alexxoffi", false, true),
         new CapeData("secondpfirsisch", false, true),
+        new CapeData("stormy_lh", false, true),
 
 
             //Patreon
