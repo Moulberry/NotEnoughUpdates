@@ -1910,14 +1910,15 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
 
-    public int countItemsInInventory(String internalname, JsonObject inventoryInfo, String... invsToSearch) {
+    public int countItemsInInventory(String internalname, JsonObject inventoryInfo, boolean specific, String... invsToSearch) {
         int count = 0;
         for(String inv : invsToSearch) {
             JsonArray invItems = inventoryInfo.get(inv).getAsJsonArray();
             for(int i=0; i<invItems.size(); i++) {
                 if(invItems.get(i) == null || !invItems.get(i).isJsonObject()) continue;
                 JsonObject item = invItems.get(i).getAsJsonObject();
-                if(item.get("internalname").getAsString().equals(internalname)) {
+                if((specific && item.get("internalname").getAsString().equals(internalname)) ||
+                        (!specific && item.get("internalname").getAsString().contains(internalname))) {
                     if(item.has("count")) {
                         count += item.get("count").getAsInt();
                     } else {
@@ -2276,13 +2277,13 @@ public class GuiProfileViewer extends GuiScreen {
         }
 
         if(arrowCount == -1) {
-            arrowCount = countItemsInInventory("ARROW", inventoryInfo, "quiver");
+            arrowCount = countItemsInInventory("ARROW", inventoryInfo, false,"quiver");
         }
         if(greenCandyCount == -1) {
-            greenCandyCount = countItemsInInventory("GREEN_CANDY", inventoryInfo, "candy_inventory_contents");
+            greenCandyCount = countItemsInInventory("GREEN_CANDY", inventoryInfo, true,"candy_inventory_contents");
         }
         if(purpleCandyCount == -1) {
-            purpleCandyCount = countItemsInInventory("PURPLE_CANDY", inventoryInfo, "candy_inventory_contents");
+            purpleCandyCount = countItemsInInventory("PURPLE_CANDY", inventoryInfo, true, "candy_inventory_contents");
         }
 
         Utils.drawItemStackWithText(NotEnoughUpdates.INSTANCE.manager.jsonToStack(
