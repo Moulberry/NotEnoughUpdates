@@ -2405,7 +2405,7 @@ public class NEUEventListener {
             }
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
-                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)|(Morph)).*")) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
 
                     GuiProfileViewer.PetLevel petlevel = null;
 
@@ -2441,12 +2441,14 @@ public class NEUEventListener {
         }
         return tooltipText;
     }
+    
+    private static final String petToolTipRegex = "((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)|(Morph)).*";
 
     private void petToolTipXPExtendPetMenu(ItemTooltipEvent event) {
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
-                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)).*")) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
                     GuiProfileViewer.PetLevel petlevel = null;
 
                     int xpLine = -1;
