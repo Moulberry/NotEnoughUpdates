@@ -26,7 +26,7 @@ public class CrystalMetalDetectorSolver {
             if (chestLastFoundMillis == 0) {
                 chestLastFoundMillis = currentTimeMillis;
                 return;
-            } else if(currentTimeMillis - chestLastFoundMillis < 1000) {
+            } else if (currentTimeMillis - chestLastFoundMillis < 1000) {
                 return;
             }
 
@@ -51,7 +51,8 @@ public class CrystalMetalDetectorSolver {
                                 BlockPos pos = new BlockPos(Math.floor(mc.thePlayer.posX) + xOffset,
                                         y, Math.floor(mc.thePlayer.posZ) + zOffset);
                                 calculatedDist = getPlayerPos().distanceTo(new Vec3(pos).addVector(0D, 1D, 0D));
-                                if (round(calculatedDist, 1) == distToTreasure && !possibleBlocks.contains(pos)) {
+                                if (round(calculatedDist, 1) == distToTreasure && !possibleBlocks.contains(pos) && treasureAllowed(pos) && mc.theWorld.
+                                        getBlockState(pos.add(0, 1, 0)).getBlock().getRegistryName().equals("minecraft:air")) {
                                     possibleBlocks.add(pos);
                                 }
                                 xOffset++;
@@ -62,14 +63,14 @@ public class CrystalMetalDetectorSolver {
                                 BlockPos pos = new BlockPos(Math.floor(mc.thePlayer.posX) - xOffset,
                                         y, Math.floor(mc.thePlayer.posZ) + zOffset);
                                 calculatedDist = getPlayerPos().distanceTo(new Vec3(pos).addVector(0D, 1D, 0D));
-                                if (round(calculatedDist, 1) == distToTreasure && !possibleBlocks.contains(pos)) {
+                                if (round(calculatedDist, 1) == distToTreasure && !possibleBlocks.contains(pos) && treasureAllowed(pos) && mc.theWorld.
+                                        getBlockState(pos.add(0, 1, 0)).getBlock().getRegistryName().equals("minecraft:air")) {
                                     possibleBlocks.add(pos);
                                 }
                                 xOffset++;
                             }
                         }
                     }
-                    removeDuplicates();
                     sendMessage();
                 } else if (possibleBlocks.size() != 1) {
                     locations.add(mc.thePlayer.getPosition());
@@ -80,11 +81,10 @@ public class CrystalMetalDetectorSolver {
                         }
                     }
                     possibleBlocks = temp;
-                    removeDuplicates();
                     sendMessage();
-                } else if (possibleBlocks.size() == 1) {
-                    BlockPos pos =  possibleBlocks.get(0);
-                    if (distToTreasure > (5 + getPlayerPos().distanceTo(new Vec3(pos)))) {
+                } else {
+                    BlockPos pos = possibleBlocks.get(0);
+                    if (Math.abs(distToTreasure - (getPlayerPos().distanceTo(new Vec3(pos)))) > 5) {
                         mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[NEU] Previous solution is invalid."));
                         reset(false);
                     }
@@ -104,7 +104,7 @@ public class CrystalMetalDetectorSolver {
     }
 
     public static void render(float partialTicks) {
-        int beaconRGB = 0xa839ce;
+        int beaconRGB = 0xffdf00;
 
         if (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows") &&
                 SBInfo.getInstance().location.equals("Mines of Divan")) {
@@ -112,12 +112,11 @@ public class CrystalMetalDetectorSolver {
             if (possibleBlocks.size() == 1) {
                 BlockPos block = possibleBlocks.get(0);
 
-                RenderUtils.renderBeaconBeam(block, beaconRGB, 1.0f, partialTicks);
+                RenderUtils.renderBeaconBeam(block.add(0,1,0), beaconRGB, 1.0f, partialTicks);
                 RenderUtils.renderWayPoint("Treasure", possibleBlocks.get(0).add(0, 2.5, 0), partialTicks);
-            } else if (possibleBlocks.size() > 1 && (locations.size() > 1 || possibleBlocks.size() < 10) &&
-                    NotEnoughUpdates.INSTANCE.config.mining.metalDetectorShowPossible) {
+            } else if (possibleBlocks.size() > 1 && NotEnoughUpdates.INSTANCE.config.mining.metalDetectorShowPossible) {
                 for (BlockPos block : possibleBlocks) {
-                    RenderUtils.renderBeaconBeam(block, beaconRGB, 1.0f, partialTicks);
+                    RenderUtils.renderBeaconBeam(block.add(0,1,0), beaconRGB, 1.0f, partialTicks);
                     RenderUtils.renderWayPoint("Possible Treasure Location", block.add(0, 2.5, 0), partialTicks);
                 }
             }
@@ -127,37 +126,6 @@ public class CrystalMetalDetectorSolver {
     private static double round(double value, int precision) {
         int scale = (int) Math.pow(10, precision);
         return (double) Math.round(value * scale) / scale;
-    }
-
-    private static void removeDuplicates() {
-        if (possibleBlocks.size() > 1 && possibleBlocks.size() < 10) {
-            Vec3 firstBlockVec = new Vec3( possibleBlocks.get(0).getX(), 0,  possibleBlocks.get(0).getZ());
-            Boolean allBlocksAreClose = true;
-
-            double lowestY = possibleBlocks.get(0).getY();
-            int lowestYIndex = 0;
-
-            for (int i = 1; i < possibleBlocks.size(); i++) {
-                BlockPos blockPos = possibleBlocks.get(i);
-                Vec3 blockVec = new Vec3(blockPos.getX(), 0, blockPos.getZ());
-
-                if (firstBlockVec.distanceTo(blockVec) > 3) {
-                    allBlocksAreClose = false;
-                    break;
-                }
-
-                if (blockPos.getY() < lowestY) {
-                    lowestY = blockPos.getY();
-                    lowestYIndex = i;
-                }
-            }
-
-            if (allBlocksAreClose) {
-                List<BlockPos> temp = new ArrayList<>();
-                temp.add(possibleBlocks.get(lowestYIndex));
-                possibleBlocks = temp;
-            }
-        }
     }
 
     private static void sendMessage() {
@@ -174,5 +142,15 @@ public class CrystalMetalDetectorSolver {
 
     private static Vec3 getPlayerPos() {
         return new Vec3(mc.thePlayer.posX, mc.thePlayer.posY + (mc.thePlayer.getEyeHeight() - mc.thePlayer.getDefaultEyeHeight()), mc.thePlayer.posZ);
+    }
+
+    private static boolean treasureAllowed(BlockPos pos) {
+        return mc.theWorld.getBlockState(pos).getBlock().getRegistryName().equals("minecraft:gold_block") ||
+                mc.theWorld.getBlockState(pos).getBlock().getRegistryName().equals("minecraft:prismarine") ||
+                mc.theWorld.getBlockState(pos).getBlock().getRegistryName().equals("minecraft:chest") ||
+                mc.theWorld.getBlockState(pos).getBlock().getRegistryName().equals("minecraft:stained_glass") ||
+                mc.theWorld.getBlockState(pos).getBlock().getRegistryName().equals("minecraft:stained_glass_pane") ||
+                mc.theWorld.getBlockState(pos).getBlock().getRegistryName().equals("minecraft:wool") ||
+                mc.theWorld.getBlockState(pos).getBlock().getRegistryName().equals("minecraft:stained_hardened_clay");
     }
 }
