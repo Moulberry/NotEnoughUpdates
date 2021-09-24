@@ -2071,13 +2071,14 @@ public class NEUEventListener {
                     //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
                     Pattern pattern;
                     try {
-                        pattern = Pattern.compile("(\\u00A79|\\u00A79\\u00A7d\\u00A7l)("+enchantName+") " +
+                        pattern = Pattern.compile("(\\u00A79|\\u00A7(9|l)\\u00A7d\\u00A7l)(?<enchantName>"+enchantName+") " +
                                 "(?<level>[0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))((\\u00A79)?,|( \\u00A78(?:,?[0-9]+)*)?$)");
                     } catch(Exception e) {continue;} //malformed regex
                     Matcher matcher = pattern.matcher(line);
                     int matchCount = 0;
                     while(matcher.find() && matchCount < 5) {
-                        if(Utils.cleanColour(matcher.group(2)).startsWith(" ")) continue;
+                        if(Utils.cleanColour(matcher.group("enchantName")).startsWith(" ")) continue;
+
 
                         matchCount++;
                         int level = -1;
@@ -2141,7 +2142,7 @@ public class NEUEventListener {
                             }
                         }
                         if(matches) {
-                            String enchantText = matcher.group(2);
+                            String enchantText = matcher.group("enchantName");
                             StringBuilder extraModifiersBuilder = new StringBuilder();
 
                             if((modifierI & GuiEnchantColour.BOLD_MODIFIER) != 0) {
@@ -2167,6 +2168,8 @@ public class NEUEventListener {
                                         "\u00A7"+colourCode+extraMods+enchantText);
                                 line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText,
                                         "\u00A7"+colourCode+extraMods+enchantText);
+                                line = line.replace("\u00A7l\u00A7d\u00A7l"+enchantText,
+                                        "\u00A7"+colourCode+extraMods+enchantText);
                             } else {
                                 int offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
                                         "\\u00A79"+enchantText+".*", ""));
@@ -2175,6 +2178,10 @@ public class NEUEventListener {
                                 offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
                                         "\\u00A79\\u00A7d\\u00A7l"+enchantText+".*", ""));
                                 line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
+                                        offset/12f+index, true));
+                                offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
+                                        "\\u00A7l\\u00A7d\\u00A7l"+enchantText+".*", ""));
+                                line = line.replace("\u00A7l\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
                                         offset/12f+index, true));
                             }
                         }
