@@ -19,10 +19,7 @@ import io.github.moulberry.notenoughupdates.overlays.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
@@ -206,7 +203,9 @@ public class NEUEventListener {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        Keyboard.enableRepeatEvents(false);
+        if(Minecraft.getMinecraft().currentScreen == null || !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
+            Keyboard.enableRepeatEvents(false);
+        }
         if(event.phase != TickEvent.Phase.START) return;
         if(Minecraft.getMinecraft().theWorld == null) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
@@ -2406,7 +2405,7 @@ public class NEUEventListener {
             }
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
-                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)|(Morph)).*")) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
 
                     GuiProfileViewer.PetLevel petlevel = null;
 
@@ -2442,12 +2441,14 @@ public class NEUEventListener {
         }
         return tooltipText;
     }
+    
+    private static final String petToolTipRegex = "((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)|(Morph)).*";
 
     private void petToolTipXPExtendPetMenu(ItemTooltipEvent event) {
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
-                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)).*")) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
                     GuiProfileViewer.PetLevel petlevel = null;
 
                     int xpLine = -1;

@@ -123,6 +123,10 @@ public class ItemCooldowns {
             if(lastChar >= '0' && lastChar <= '9') {
                 return true;
             }
+        } else if(internalname.equals("DIVAN_DRILL")){
+            return true;
+        } else if(internalname.equals("GEMSTONE_GAUNTLET")){
+            return true;
         }
         return false;
     }
