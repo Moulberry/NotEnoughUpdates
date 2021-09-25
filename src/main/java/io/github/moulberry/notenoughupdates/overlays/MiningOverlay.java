@@ -79,8 +79,10 @@ public class MiningOverlay extends TextOverlay {
                                 }
                             }
                         }
+
+                        NEUConfig.HiddenLocationSpecific locationSpecific = NotEnoughUpdates.INSTANCE.config.getLocationSpecific();
                         if(name != null && numberValue > 0) {
-                            NotEnoughUpdates.INSTANCE.config.hidden.commissionMaxes.put(name, numberValue);
+                            locationSpecific.commissionMaxes.put(name, numberValue);
                         }
                     }
                 }
@@ -237,12 +239,13 @@ public class MiningOverlay extends TextOverlay {
                 String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
                 if (name.contains("Mithril Powder:")) {
                     mithrilPowder = DARK_AQUA + Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
+                    continue;
                 }
                 if (name.contains("Gemstone Powder:")) {
                     gemstonePowder = DARK_AQUA + Utils.trimIgnoreColour(name).replaceAll("\u00a7[f|F|r]", "");
+                    continue;
                 }
 
-                
                 if (name.matches("\\xa7r\\xa79\\xa7lForges \\xa7r(?:\\xa7f\\(\\+1 more\\)\\xa7r)?")) {
                     commissions = false;
                     forges = true;
@@ -343,8 +346,9 @@ public class MiningOverlay extends TextOverlay {
                     } else if (entry.getValue() >= 0.25) {
                         col = GOLD;
                     }
-                    if (NotEnoughUpdates.INSTANCE.config.hidden.commissionMaxes.containsKey(entry.getKey())) {
-                        int max = NotEnoughUpdates.INSTANCE.config.hidden.commissionMaxes.get(entry.getKey());
+                    NEUConfig.HiddenLocationSpecific locationSpecific = NotEnoughUpdates.INSTANCE.config.getLocationSpecific();
+                    int max;
+                    if (-1 != (max = locationSpecific.commissionMaxes.getOrDefault(entry.getKey(), -1))) {
                         commissionsStrings.add(DARK_AQUA + entry.getKey() + ": " + col + Math.round(entry.getValue() * max) + "/" + max);
                     } else {
                         String valS = Utils.floatToString(entry.getValue() * 100, 1);
