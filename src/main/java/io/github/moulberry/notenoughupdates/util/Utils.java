@@ -470,8 +470,36 @@ public class Utils {
     }
 
     public static String[] rarityArr = new String[] {
-            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME"
+            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME", "DIVINE"
     };
+
+    public static String[] rarityArrC = new String[] {
+            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
+            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
+            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
+            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
+            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
+            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
+            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
+            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
+            EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
+
+    };
+    public static final HashMap<String, String> rarityArrMap = new HashMap<>();
+    static {
+        rarityArrMap.put("COMMON", rarityArrC[0]);
+        rarityArrMap.put("UNCOMMON", rarityArrC[1]);
+        rarityArrMap.put("RARE", rarityArrC[2]);
+        rarityArrMap.put("EPIC", rarityArrC[3]);
+        rarityArrMap.put("LEGENDARY", rarityArrC[4]);
+        rarityArrMap.put("MYTHIC", rarityArrC[5]);
+        rarityArrMap.put("SPECIAL", rarityArrC[6]);
+        rarityArrMap.put("VERY SPECIAL", rarityArrC[7]);
+        rarityArrMap.put("SUPREME", rarityArrC[8]);
+        rarityArrMap.put("DIVINE", rarityArrC[9]);
+
+    }
 
     public static String getRarityFromInt(int rarity){
         if(rarity < 0|| rarity >= rarityArr.length){ return rarityArr[0]; }

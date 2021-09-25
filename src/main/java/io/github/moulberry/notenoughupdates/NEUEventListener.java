@@ -1727,30 +1727,7 @@ public class NEUEventListener {
         }
     }
 
-    private static String[] rarityArrC = new String[] {
-            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
-            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
-            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
-            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
-            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
-            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
-            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
-    };
-    private static final HashMap<String, String> rarityArrMap = new HashMap<>();
-    static {
-        rarityArrMap.put("COMMON", rarityArrC[0]);
-        rarityArrMap.put("UNCOMMON", rarityArrC[1]);
-        rarityArrMap.put("RARE", rarityArrC[2]);
-        rarityArrMap.put("EPIC", rarityArrC[3]);
-        rarityArrMap.put("LEGENDARY", rarityArrC[4]);
-        rarityArrMap.put("MYTHIC", rarityArrC[5]);
-        rarityArrMap.put("SPECIAL", rarityArrC[6]);
-        rarityArrMap.put("VERY SPECIAL", rarityArrC[7]);
-        rarityArrMap.put("SUPREME", rarityArrC[8]);
 
-    }
 
     private HashSet<String> percentStats = new HashSet<>();
     {
@@ -1825,9 +1802,9 @@ public class NEUEventListener {
                         out:
                         for (int i = list.tagCount(); i >= 0; i--) {
                             String line = list.getStringTagAt(i);
-                            for(int j=0; j<rarityArrC.length; j++) {
+                            for(int j=0; j<Utils.rarityArrC.length; j++) {
                                 for(Map.Entry<String, JsonElement> entry : enchantsObj.entrySet()) {
-                                    if(line.contains(rarityArrC[j] + " " + entry.getKey()) || line.contains(rarityArrC[j] + " DUNGEON " + entry.getKey())) {
+                                    if(line.contains(Utils.rarityArrC[j] + " " + entry.getKey()) || line.contains(Utils.rarityArrC[j] + " DUNGEON " + entry.getKey())) {
                                         allItemEnchs = entry.getValue().getAsJsonArray();
                                         break out;
                                     }
@@ -1906,7 +1883,7 @@ public class NEUEventListener {
                         JsonElement statsE = reforgeInfo.get("reforgeStats");
 
 
-                        String rarityFormatted = rarityArrMap.getOrDefault(rarity, rarity);
+                        String rarityFormatted = Utils.rarityArrMap.getOrDefault(rarity, rarity);
 
                         JsonElement reforgeAbilityE = reforgeInfo.get("reforgeAbility");
                         String reforgeAbility = null;

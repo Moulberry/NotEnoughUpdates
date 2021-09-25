@@ -172,7 +172,7 @@ public class AccessoryBagOverlay {
 
         int yIndex = 0;
         for(Map.Entry<Integer, Integer> entry : talismanCountRarity.descendingMap().entrySet()) {
-            String rarityName = rarityArrC[entry.getKey()];
+            String rarityName = Utils.rarityArrC[entry.getKey()];
             Utils.renderAlignedString(rarityName, EnumChatFormatting.WHITE.toString()+entry.getValue(), x+5, y+20+11*yIndex, 70);
             yIndex++;
         }
@@ -887,17 +887,17 @@ public class AccessoryBagOverlay {
 //    private static String[] rarityArr = new String[] {
 //            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME"
 //    };
-    private static String[] rarityArrC = new String[] {
-            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
-            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
-            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
-            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
-            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
-            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
-            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
-    };
+//    private static String[] rarityArrC = new String[] {
+//            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
+//            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
+//            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
+//            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
+//            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
+//            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
+//            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+//            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
+//            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
+//    };
     public static int checkItemType(ItemStack stack, boolean contains, String... typeMatches) {
         NBTTagCompound tag = stack.getTagCompound();
         if(tag != null) {
@@ -955,8 +955,8 @@ public class AccessoryBagOverlay {
                 NBTTagList list = display.getTagList("Lore", 8);
                 for (int i = list.tagCount(); i >= 0; i--) {
                     String line = list.getStringTagAt(i);
-                    for(int j=0; j<rarityArrC.length; j++) {
-                        if(line.contains(rarityArrC[j])) {
+                    for(int j=0; j<Utils.rarityArrC.length; j++) {
+                        if(line.contains(Utils.rarityArrC[j])) {
                             return j;
                         }
                     }
