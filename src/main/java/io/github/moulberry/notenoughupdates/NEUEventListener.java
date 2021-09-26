@@ -27,12 +27,9 @@ import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
-import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -1428,8 +1425,8 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.contains(" Profile") && eventGui.isMouseOverSlot(cc.inventorySlots.get(42), mouseX, mouseY)
-                    && Mouse.getEventButton() >= 0) {
+            if(containerName.contains(" Profile") && BetterContainers.profileViewerStackIndex != -1 &&
+                    eventGui.isMouseOverSlot(cc.inventorySlots.get(BetterContainers.profileViewerStackIndex), mouseX, mouseY) && Mouse.getEventButton() >= 0) {
                 event.setCanceled(true);
                 if(Mouse.getEventButtonState() && eventGui.inventorySlots.inventorySlots.get(22).getStack() != null &&
                         eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){

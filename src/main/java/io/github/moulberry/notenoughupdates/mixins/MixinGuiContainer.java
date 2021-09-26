@@ -54,8 +54,10 @@ public abstract class MixinGuiContainer extends GuiScreen {
 
         GuiContainer $this = (GuiContainer)(Object)this;
 
-        if(slot.slotNumber == 42 && $this instanceof GuiChest) {
-            hasProfileViewerStack = false;
+        if(!hasProfileViewerStack && $this instanceof GuiChest && slot.getSlotIndex() > 9 && (slot.getSlotIndex() % 9 == 6 || slot.getSlotIndex() % 9 == 7) &&
+                BetterContainers.isBlankStack(-1, slot.getStack())) {
+            BetterContainers.profileViewerStackIndex = -1;
+            hasProfileViewerStack = true;
 
             GuiChest eventGui = (GuiChest) $this;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
@@ -80,12 +82,15 @@ public abstract class MixinGuiContainer extends GuiScreen {
                             this.itemRender.zLevel = 0.0F;
                             this.zLevel = 0.0F;
 
-                            hasProfileViewerStack = true;
+                            BetterContainers.profileViewerStackIndex = slot.getSlotIndex();
                         }
                     }
                 }
             }
-        }
+        } else if (slot.getSlotIndex() == 0)
+            hasProfileViewerStack = false;
+        else if(!($this instanceof GuiChest))
+            BetterContainers.profileViewerStackIndex = -1;
 
         if(slot.getStack() == null && NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
             GlStateManager.pushMatrix();
@@ -117,7 +122,7 @@ public abstract class MixinGuiContainer extends GuiScreen {
             value = "INVOKE",
             target = "Lnet/minecraft/client/gui/inventory/GuiContainer;renderToolTip(Lnet/minecraft/item/ItemStack;II)V"))
     public void drawScreen_renderTooltip(GuiContainer guiContainer, ItemStack stack, int x, int y) {
-        if(hasProfileViewerStack && theSlot.slotNumber == 42) {
+        if(theSlot.slotNumber == BetterContainers.profileViewerStackIndex) {
             this.renderToolTip(profileViewerStack, x, y);
         } else {
             this.renderToolTip(stack, x, y);
