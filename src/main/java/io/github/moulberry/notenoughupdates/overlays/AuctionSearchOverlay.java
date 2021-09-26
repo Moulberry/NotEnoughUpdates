@@ -344,7 +344,7 @@ public class AuctionSearchOverlay {
                     String name = lore.substring(0, lore.lastIndexOf(" "));
                     searchString = Utils.cleanColour(name);
                 } else {
-                    searchString = Utils.cleanColour(displayName);
+                    searchString = Utils.cleanColour(displayname);
                 }
             }
         } else if(Keyboard.getEventKeyState()) {
