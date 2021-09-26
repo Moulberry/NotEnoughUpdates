@@ -336,10 +336,10 @@ public class AuctionSearchOverlay {
             close();
         } else if(Keyboard.getEventKey() == Keyboard.KEY_TAB) {
             if (!autocompletedItems.isEmpty()) {
-                searchString = autocompletedItems.get(0);
+                searchString = autocompletedItems.iterator().next();
                 JsonObject repoObject = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(autocompletedItems.iterator().next());
-                String displayName = repoObject.get("displayname").getAsString();
-                if (displayName.contains("Enchanted Book")){
+                String displayname = repoObject.get("displayname").getAsString();
+                if (displayname.contains("Enchanted Book")){
                     String lore = repoObject.get("lore").getAsJsonArray().get(0).getAsString();
                     String name = lore.substring(0, lore.lastIndexOf(" "));
                     searchString = Utils.cleanColour(name);
