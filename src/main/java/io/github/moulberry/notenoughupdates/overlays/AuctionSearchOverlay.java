@@ -334,17 +334,17 @@ public class AuctionSearchOverlay {
         } else if(Keyboard.getEventKey() == Keyboard.KEY_RETURN) {
             searchStringExtra = "";
             close();
-        } else if(Keyboard.getEventKey() == Keyboard.KEY_TAB){
+        } else if(Keyboard.getEventKey() == Keyboard.KEY_TAB) {
             if (!autocompletedItems.isEmpty()) {
-                searchString = autocompletedItems.iterator().next();
+                searchString = autocompletedItems.get(0);
                 JsonObject repoObject = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(autocompletedItems.iterator().next());
-                String displayname = repoObject.get("displayname").getAsString();
-                if (displayname.contains("Enchanted Book")){
-                    String lore = repoObject.get("lore").getAsJsonArray().iterator().next().getAsString();
+                String displayName = repoObject.get("displayname").getAsString();
+                if (displayName.contains("Enchanted Book")){
+                    String lore = repoObject.get("lore").getAsJsonArray().get(0).getAsString();
                     String name = lore.substring(0, lore.lastIndexOf(" "));
                     searchString = Utils.cleanColour(name);
                 } else {
-                    searchString = Utils.cleanColour(displayname);
+                    searchString = Utils.cleanColour(displayName);
                 }
             }
         } else if(Keyboard.getEventKeyState()) {
