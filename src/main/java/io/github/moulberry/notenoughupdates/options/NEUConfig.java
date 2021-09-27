@@ -365,13 +365,19 @@ public class NEUConfig extends Config {
       }
 
       public HiddenLocationSpecific getLocationSpecific() {
-            if(SBInfo.getInstance().location == null) {
-                return null;
-            }
-            return hidden.locationSpecific.computeIfAbsent(SBInfo.getInstance().getLocation(), k-> new HiddenLocationSpecific());
+        String location = SBInfo.getInstance().getLocation();
+        if(location == null || location.isEmpty()) {
+            return null;
         }
 
-        public static class HiddenLocationSpecific {
+        return getLocationSpecific(location);
+    }
+
+    public HiddenLocationSpecific getLocationSpecific(String location) {
+        return hidden.locationSpecific.computeIfAbsent(location, k-> new HiddenLocationSpecific());
+    }
+
+    public static class HiddenLocationSpecific {
             @Expose public Map<String, Integer> commissionMaxes = new HashMap<>();
         }
 

@@ -723,6 +723,11 @@ public class NEUManager {
         return lore;
     }
 
+    public String getNameFromNBT(NBTTagCompound tag) {
+        NBTTagCompound display = tag.getCompoundTag("display");
+        return display.getString("Name");
+    }
+
     public JsonObject getJsonFromNBT(NBTTagCompound tag) {
         return getJsonFromNBTEntry(tag.getTagList("i", 10).getCompoundTagAt(0));
     }
