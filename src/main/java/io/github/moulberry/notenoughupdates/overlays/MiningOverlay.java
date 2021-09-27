@@ -128,7 +128,7 @@ public class MiningOverlay extends TextOverlay {
             return;
         }
 
-        String name = Utils.cleanColour(NotEnoughUpdates.INSTANCE.manager.getNameFromNBT((commTypeStack.getTagCompound()))).trim();
+        String name = Utils.cleanColour(commTypeStack.getDisplayName()).trim();
         if (!name.equals("Switch Type"))
         {
             return;
