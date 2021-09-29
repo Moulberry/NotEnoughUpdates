@@ -40,6 +40,8 @@ public class AuctionSearchOverlay {
     private static String searchString = "";
     private static String searchStringExtra = "";
     private static Splitter SPACE_SPLITTER = Splitter.on(" ").omitEmptyStrings().trimResults();
+    private static boolean tabCompleted = false;
+    private static int tabCompletionIndex = 0;
 
     private static int selectedStars = 0;
     private static boolean atLeast = true;
@@ -273,15 +275,35 @@ public class AuctionSearchOverlay {
     private static ExecutorService searchES = Executors.newSingleThreadExecutor();
     private static AtomicInteger searchId = new AtomicInteger(0);
 
+    private static String getItemIdAtIndex(int i) {
+        if (!autocompletedItems.isEmpty()) {
+            if ((i > autocompletedItems.size() - 1) || i < 0) {
+                return "";
+            }
+            String searchString = autocompletedItems.toArray()[i].toString();
+            JsonObject repoObject = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(searchString);
+            String displayname = repoObject.get("displayname").getAsString();
+            if (displayname.contains("Enchanted Book")) {
+                String lore = repoObject.get("lore").getAsJsonArray().get(0).getAsString();
+                String name = lore.substring(0, lore.lastIndexOf(" "));
+                return Utils.cleanColour(name);
+            } else {
+                return Utils.cleanColour(displayname);
+            }
+        } else {
+            return null;
+        }
+    }
+
     public static void search() {
         final int thisSearchId = searchId.incrementAndGet();
 
         searchES.submit(() -> {
-            if(thisSearchId != searchId.get()) return;
+            if (thisSearchId != searchId.get()) return;
 
-            List<String> title = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.search("title:"+searchString.trim()));
+            List<String> title = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.search("title:" + searchString.trim()));
 
-            if(thisSearchId != searchId.get()) return;
+            if (thisSearchId != searchId.get()) return;
 
             if(!searchString.trim().contains(" ")) {
                 StringBuilder sb = new StringBuilder();
@@ -335,19 +357,57 @@ public class AuctionSearchOverlay {
             searchStringExtra = "";
             close();
         } else if(Keyboard.getEventKey() == Keyboard.KEY_TAB) {
-            if (!autocompletedItems.isEmpty()) {
-                searchString = autocompletedItems.iterator().next();
-                JsonObject repoObject = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(autocompletedItems.iterator().next());
-                String displayname = repoObject.get("displayname").getAsString();
-                if (displayname.contains("Enchanted Book")){
-                    String lore = repoObject.get("lore").getAsJsonArray().get(0).getAsString();
-                    String name = lore.substring(0, lore.lastIndexOf(" "));
-                    searchString = Utils.cleanColour(name);
-                } else {
-                    searchString = Utils.cleanColour(displayname);
-                }
+            //autocomplete to first item in the list
+            tabCompleted = true;
+            String id = getItemIdAtIndex(0);
+            if (id == null) {
+                tabCompleted = false;
+                textField.setFocus(true);
+                textField.setText(searchString);
+            } else {
+                searchString = id;
             }
         } else if(Keyboard.getEventKeyState()) {
+            if (tabCompleted) {
+                String id;
+                switch (Keyboard.getEventKey()) {
+                    case Keyboard.KEY_DOWN:
+                        id = getItemIdAtIndex(tabCompletionIndex + 1);
+                        if (id == null) {
+                            textField.setFocus(true);
+                            textField.setText(searchString);
+                            tabCompleted = false;
+                            tabCompletionIndex = 0;
+                        } else if (id.equals("")) {
+                            //At the end of the autocompletion List, do nothing
+                            return;
+                        } else {
+                            searchString = id;
+                            tabCompletionIndex += 1;
+                            return;
+                        }
+                        break;
+                    case Keyboard.KEY_UP:
+                        id = getItemIdAtIndex(tabCompletionIndex - 1);
+                        if (id == null) {
+                            textField.setFocus(true);
+                            textField.setText(searchString);
+                            tabCompleted = false;
+                            tabCompletionIndex = 0;
+                        } else if (id.equals("")) {
+                            //At the end of the autocompletion List, do nothing
+                            return;
+                        } else {
+                            searchString = id;
+                            tabCompletionIndex -= 1;
+                            return;
+                        }
+                        break;
+                    default:
+                        tabCompletionIndex = 0;
+                        tabCompleted = false;
+                }
+            }
             textField.setFocus(true);
             textField.setText(searchString);
             textField.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
