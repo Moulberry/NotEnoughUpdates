@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AuctionSearchOverlay {
 
     private static final ResourceLocation SEARCH_OVERLAY_TEXTURE = new ResourceLocation("notenoughupdates:auc_search/ah_search_overlay.png");
+    private static final ResourceLocation SEARCH_OVERLAY_TEXTURE_TAB_COMPLETED = new ResourceLocation("notenoughupdates:auc_search/ah_search_overlay_tab_completed.png");
     private static final ResourceLocation STAR = new ResourceLocation("notenoughupdates:auc_search/star.png");
     private static final ResourceLocation STAR_BOARD = new ResourceLocation("notenoughupdates:auc_search/star_board.png");
 
@@ -41,7 +42,7 @@ public class AuctionSearchOverlay {
     private static String searchStringExtra = "";
     private static Splitter SPACE_SPLITTER = Splitter.on(" ").omitEmptyStrings().trimResults();
     private static boolean tabCompleted = false;
-    private static int tabCompletionIndex = 0;
+    private static int tabCompletionIndex = -1;
 
     private static int selectedStars = 0;
     private static boolean atLeast = true;
@@ -148,24 +149,31 @@ public class AuctionSearchOverlay {
 
         int num = 0;
         synchronized(autocompletedItems) {
-            for(String str : autocompletedItems) {
+            String[] autoCompletedItemsArray = autocompletedItems.toArray(new String[0]);
+            for (int i = 0; i < autocompletedItems.size(); i++) {
+                String str = autoCompletedItemsArray[i];
                 JsonObject obj = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(str);
-                if(obj != null) {
+                if (obj != null) {
                     ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(obj);
                     //Gui.drawRect(width/2-96, height/4+30+num*22, width/2+96, height/4+30+num*22+20, 0xff505050);
+                    if (i == tabCompletionIndex) {
+                        Minecraft.getMinecraft().getTextureManager().bindTexture(SEARCH_OVERLAY_TEXTURE_TAB_COMPLETED);
+                        GlStateManager.color(1, 1, 1, 1);
+                        Utils.drawTexturedRect(width / 2 - 96 + 1, topY + 30 + num * 22 + 1, 193, 21, 0 / 512f, 193 / 512f, 0, 21 / 256f, GL11.GL_NEAREST);
+                    } else {
+                        Minecraft.getMinecraft().getTextureManager().bindTexture(SEARCH_OVERLAY_TEXTURE);
+                        GlStateManager.color(1, 1, 1, 1);
+                        Utils.drawTexturedRect(width / 2 - 96 + 1, topY + 30 + num * 22 + 1, 193, 21, 214 / 512f, 407 / 512f, 0, 21 / 256f, GL11.GL_NEAREST);
 
-                    Minecraft.getMinecraft().getTextureManager().bindTexture(SEARCH_OVERLAY_TEXTURE);
-                    GlStateManager.color(1, 1, 1, 1);
-                    Utils.drawTexturedRect(width/2-96+1, topY+30+num*22+1, 193, 21, 214/512f, 407/512f, 0, 21/256f, GL11.GL_NEAREST);
-
+                    }
                     String itemName = Utils.trimIgnoreColour(stack.getDisplayName().replaceAll("\\[.+]", ""));
-                    if(itemName.contains("Enchanted Book") && str.contains(";")) {
+                    if (itemName.contains("Enchanted Book") && str.contains(";")) {
                         String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
                         itemName = lore[0].trim();
                     }
 
                     Minecraft.getMinecraft().fontRendererObj.drawString(Minecraft.getMinecraft().fontRendererObj.trimStringToWidth(itemName, 165),
-                            width/2-74, topY+35+num*22+1, 0xdddddd, true);
+                            width / 2 - 74, topY + 35 + num * 22 + 1, 0xdddddd, true);
 
                     GlStateManager.enableDepth();
                     Utils.drawItemStack(stack, width/2-94+2, topY+32+num*22+1);
@@ -277,7 +285,7 @@ public class AuctionSearchOverlay {
 
     private static String getItemIdAtIndex(int i) {
         if (!autocompletedItems.isEmpty()) {
-            if ((i > autocompletedItems.size() - 1) || i < 0) {
+            if ((i > autocompletedItems.size() - 1) || i < 0 || i > 4) {
                 return "";
             }
             String searchString = autocompletedItems.toArray()[i].toString();
@@ -365,6 +373,7 @@ public class AuctionSearchOverlay {
                 textField.setFocus(true);
                 textField.setText(searchString);
             } else {
+                tabCompletionIndex = 0;
                 searchString = id;
             }
         } else if(Keyboard.getEventKeyState()) {
@@ -377,7 +386,7 @@ public class AuctionSearchOverlay {
                             textField.setFocus(true);
                             textField.setText(searchString);
                             tabCompleted = false;
-                            tabCompletionIndex = 0;
+                            tabCompletionIndex = -1;
                         } else if (id.equals("")) {
                             //At the end of the autocompletion List, do nothing
                             return;
@@ -393,7 +402,7 @@ public class AuctionSearchOverlay {
                             textField.setFocus(true);
                             textField.setText(searchString);
                             tabCompleted = false;
-                            tabCompletionIndex = 0;
+                            tabCompletionIndex = -1;
                         } else if (id.equals("")) {
                             //At the end of the autocompletion List, do nothing
                             return;
@@ -404,7 +413,7 @@ public class AuctionSearchOverlay {
                         }
                         break;
                     default:
-                        tabCompletionIndex = 0;
+                        tabCompletionIndex = -1;
                         tabCompleted = false;
                 }
             }
