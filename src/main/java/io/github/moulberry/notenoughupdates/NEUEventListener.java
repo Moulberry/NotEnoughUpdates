@@ -1434,7 +1434,7 @@ public class NEUEventListener {
                     if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
                         String username = tag.getCompoundTag("SkullOwner").getString("Name");
                         Utils.playPressSound();
-                        NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{username});
+                        NotEnoughUpdates.INSTANCE.commands.viewProfileRunnable.processCommand(null, new String[]{username});
                     }
                 }
             }

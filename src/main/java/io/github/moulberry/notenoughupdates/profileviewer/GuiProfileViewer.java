@@ -283,6 +283,7 @@ public class GuiProfileViewer extends GuiScreen {
                 //This is just here to inform the player what to do
                 //like typing /api new or telling them to go find a psychotherapist
                 long timeDiff = System.currentTimeMillis() - startTime;
+
                 if(timeDiff > 20000){
                     Utils.drawStringCentered(EnumChatFormatting.YELLOW+"Its taking a while...", Minecraft.getMinecraft().fontRendererObj,
                             guiLeft+sizeX/2f, guiTop+111, true, 0);
@@ -307,6 +308,30 @@ public class GuiProfileViewer extends GuiScreen {
                                 if(timeDiff > 600000){
                                     Utils.drawStringCentered(EnumChatFormatting.RED+""+EnumChatFormatting.BOLD+"Maniac", Minecraft.getMinecraft().fontRendererObj,
                                             guiLeft+sizeX/2f, guiTop+171, true, 0);
+                                    if(timeDiff > 1200000){
+                                        Utils.drawStringCentered(EnumChatFormatting.RED+""+EnumChatFormatting.BOLD+"You're a menace to society", Minecraft.getMinecraft().fontRendererObj,
+                                                guiLeft+sizeX/2f, guiTop+181, true, 0);
+                                        if(timeDiff > 1800000){
+                                            Utils.drawStringCentered(EnumChatFormatting.RED+""+EnumChatFormatting.BOLD+"You dont know whats gonna happen to you", Minecraft.getMinecraft().fontRendererObj,
+                                                    guiLeft+sizeX/2f, guiTop+191, true, 0);
+                                            if(timeDiff > 3000000){
+                                                Utils.drawStringCentered(EnumChatFormatting.RED+""+EnumChatFormatting.BOLD+"You really want this?", Minecraft.getMinecraft().fontRendererObj,
+                                                        guiLeft+sizeX/2f, guiTop+91, true, 0);
+                                                if(timeDiff > 3300000){
+                                                    Utils.drawStringCentered(EnumChatFormatting.DARK_RED+""+EnumChatFormatting.BOLD+"OW LORD FORGIVE ME FOR THIS", Minecraft.getMinecraft().fontRendererObj,
+                                                            guiLeft+sizeX/2f, guiTop+71, true, 0);
+                                                    if(timeDiff > 3600000){
+                                                        throw new Error("Go do something productive") {
+                                                            @Override
+                                                            public void printStackTrace() {
+                                                                throw new Error("Go do something productive");
+                                                            }
+                                                        };
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
