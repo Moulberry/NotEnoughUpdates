@@ -87,6 +87,8 @@ public class CapeManager {
             new CapeData("packshq", true, false),
             new CapeData("skytils", true, false),
             new CapeData("sbp", true, false),
+            new CapeData("sharex", true, false),
+            new CapeData("sharex_white", true, false),
 
             //Content Creator
             new CapeData("jakethybro", false, true),
