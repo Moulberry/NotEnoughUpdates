@@ -104,6 +104,8 @@ public class CapeManager {
         new CapeData("packshq", true, false),
         new CapeData("skytils", true, false),
         new CapeData("sbp", true, false),
+        new CapeData("sharex", true, false),
+        new CapeData("sharex_white", true, false),
 
             //Special Other
         new CapeData("contrib", true, false),
