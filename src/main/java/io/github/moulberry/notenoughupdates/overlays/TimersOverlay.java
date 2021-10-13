@@ -213,7 +213,7 @@ public class TimersOverlay extends TextOverlay {
                 return;
             } else if(containerName.equals("Superpairs Rewards") && lower.getSizeInventory() >= 27){
                 ItemStack stack = lower.getStackInSlot(13);
-                if(Utils.cleanColour(stack.getDisplayName()).equals("Superpairs")){
+                if(stack != null && Utils.cleanColour(stack.getDisplayName()).equals("Superpairs")){
                     hidden.experimentsCompleted = currentTime;
                 }
             }

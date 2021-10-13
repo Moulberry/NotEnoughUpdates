@@ -67,7 +67,7 @@ public class GuiEnchantColour extends GuiScreen {
     public static int UNDERLINE_MODIFIER = 0b1000;
     public static int STRIKETHROUGH_MODIFIER = 0b10000;
     private Gson gson = new Gson();
-    private static final Pattern settingPattern = Pattern.compile(".*:[>=<]:[0-9]:[a-zA-Z0-9]:[0-9][0-9]?");
+    private static final Pattern settingPattern = Pattern.compile(".*:[>=<]:[0-9]+:[a-zA-Z0-9]+(:[a-zA-Z0-9])?");
 
     private List<String> getEnchantNamesPretty() {
         if(enchantNamesPretty == null) {
@@ -318,7 +318,7 @@ public class GuiEnchantColour extends GuiScreen {
             } catch (IllegalArgumentException e){
                 return false;
             }
-        } catch (HeadlessException | IOException | UnsupportedFlavorException e) {
+        } catch (HeadlessException | IOException | UnsupportedFlavorException | IllegalStateException e) {
             return false;
         }
     }

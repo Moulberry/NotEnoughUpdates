@@ -42,7 +42,7 @@ public class GuiElementTextField extends GuiElement {
     public GuiElementTextField(String initialText, int options) {
         textField.setFocused(true);
         textField.setCanLoseFocus(false);
-        textField.setMaxStringLength(999);
+        textField.setMaxStringLength(9999);
         textField.setText(initialText);
         this.options = options;
     }

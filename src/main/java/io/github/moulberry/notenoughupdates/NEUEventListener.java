@@ -19,10 +19,7 @@ import io.github.moulberry.notenoughupdates.overlays.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
@@ -30,12 +27,9 @@ import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
-import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -166,7 +160,7 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Unload event) {
         NotEnoughUpdates.INSTANCE.saveConfig();
-        CrystalMetalDetectorSolver.reset();
+        CrystalMetalDetectorSolver.reset(false);
     }
 
     private static long notificationDisplayMillis = 0;
@@ -206,7 +200,9 @@ public class NEUEventListener {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        Keyboard.enableRepeatEvents(false);
+        if(Minecraft.getMinecraft().currentScreen == null || !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
+            Keyboard.enableRepeatEvents(false);
+        }
         if(event.phase != TickEvent.Phase.START) return;
         if(Minecraft.getMinecraft().theWorld == null) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
@@ -862,7 +858,7 @@ public class NEUEventListener {
             }
         }
         if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
-            CrystalMetalDetectorSolver.reset();
+            CrystalMetalDetectorSolver.reset(true);
         }
         if(unformatted.startsWith("[NPC] Keeper of ") | unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  ") || unformatted.startsWith("✦") ||
         unformatted.equals("  You've earned a Crystal Loot Bundle!"))
@@ -1429,8 +1425,8 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.contains(" Profile") && eventGui.isMouseOverSlot(cc.inventorySlots.get(42), mouseX, mouseY)
-                    && Mouse.getEventButton() >= 0) {
+            if(containerName.contains(" Profile") && BetterContainers.profileViewerStackIndex != -1 &&
+                    eventGui.isMouseOverSlot(cc.inventorySlots.get(BetterContainers.profileViewerStackIndex), mouseX, mouseY) && Mouse.getEventButton() >= 0) {
                 event.setCanceled(true);
                 if(Mouse.getEventButtonState() && eventGui.inventorySlots.inventorySlots.get(22).getStack() != null &&
                         eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){
@@ -1438,7 +1434,7 @@ public class NEUEventListener {
                     if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
                         String username = tag.getCompoundTag("SkullOwner").getString("Name");
                         Utils.playPressSound();
-                        NotEnoughUpdates.INSTANCE.viewProfileRunnable.processCommand(null, new String[]{username});
+                        NotEnoughUpdates.INSTANCE.commands.viewProfileRunnable.processCommand(null, new String[]{username});
                     }
                 }
             }
@@ -1728,30 +1724,7 @@ public class NEUEventListener {
         }
     }
 
-    private static String[] rarityArrC = new String[] {
-            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
-            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
-            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
-            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
-            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
-            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
-            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
-    };
-    private static final HashMap<String, String> rarityArrMap = new HashMap<>();
-    static {
-        rarityArrMap.put("COMMON", rarityArrC[0]);
-        rarityArrMap.put("UNCOMMON", rarityArrC[1]);
-        rarityArrMap.put("RARE", rarityArrC[2]);
-        rarityArrMap.put("EPIC", rarityArrC[3]);
-        rarityArrMap.put("LEGENDARY", rarityArrC[4]);
-        rarityArrMap.put("MYTHIC", rarityArrC[5]);
-        rarityArrMap.put("SPECIAL", rarityArrC[6]);
-        rarityArrMap.put("VERY SPECIAL", rarityArrC[7]);
-        rarityArrMap.put("SUPREME", rarityArrC[8]);
 
-    }
 
     private HashSet<String> percentStats = new HashSet<>();
     {
@@ -1826,9 +1799,9 @@ public class NEUEventListener {
                         out:
                         for (int i = list.tagCount(); i >= 0; i--) {
                             String line = list.getStringTagAt(i);
-                            for(int j=0; j<rarityArrC.length; j++) {
+                            for(int j=0; j<Utils.rarityArrC.length; j++) {
                                 for(Map.Entry<String, JsonElement> entry : enchantsObj.entrySet()) {
-                                    if(line.contains(rarityArrC[j] + " " + entry.getKey()) || line.contains(rarityArrC[j] + " DUNGEON " + entry.getKey())) {
+                                    if(line.contains(Utils.rarityArrC[j] + " " + entry.getKey()) || line.contains(Utils.rarityArrC[j] + " DUNGEON " + entry.getKey())) {
                                         allItemEnchs = entry.getValue().getAsJsonArray();
                                         break out;
                                     }
@@ -1907,7 +1880,7 @@ public class NEUEventListener {
                         JsonElement statsE = reforgeInfo.get("reforgeStats");
 
 
-                        String rarityFormatted = rarityArrMap.getOrDefault(rarity, rarity);
+                        String rarityFormatted = Utils.rarityArrMap.getOrDefault(rarity, rarity);
 
                         JsonElement reforgeAbilityE = reforgeInfo.get("reforgeAbility");
                         String reforgeAbility = null;
@@ -2072,17 +2045,18 @@ public class NEUEventListener {
                     //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
                     Pattern pattern;
                     try {
-                        pattern = Pattern.compile("(\\u00A79|\\u00A79\\u00A7d\\u00A7l)("+enchantName+") " +
-                                "([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))(,|$)");
+                        pattern = Pattern.compile("(\\u00A79|\\u00A7(9|l)\\u00A7d\\u00A7l)(?<enchantName>"+enchantName+") " +
+                                "(?<level>[0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))((\\u00A79)?,|( \\u00A78(?:,?[0-9]+)*)?$)");
                     } catch(Exception e) {continue;} //malformed regex
                     Matcher matcher = pattern.matcher(line);
                     int matchCount = 0;
                     while(matcher.find() && matchCount < 5) {
-                        if(Utils.cleanColour(matcher.group(2)).startsWith(" ")) continue;
+                        if(Utils.cleanColour(matcher.group("enchantName")).startsWith(" ")) continue;
+
 
                         matchCount++;
                         int level = -1;
-                        String levelStr = matcher.group(matcher.groupCount()-2);
+                        String levelStr = matcher.group("level");
                         if(levelStr == null) continue;
                         try {
                             level = Integer.parseInt(levelStr);
@@ -2142,7 +2116,7 @@ public class NEUEventListener {
                             }
                         }
                         if(matches) {
-                            String enchantText = matcher.group(2);
+                            String enchantText = matcher.group("enchantName");
                             StringBuilder extraModifiersBuilder = new StringBuilder();
 
                             if((modifierI & GuiEnchantColour.BOLD_MODIFIER) != 0) {
@@ -2168,6 +2142,8 @@ public class NEUEventListener {
                                         "\u00A7"+colourCode+extraMods+enchantText);
                                 line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText,
                                         "\u00A7"+colourCode+extraMods+enchantText);
+                                line = line.replace("\u00A7l\u00A7d\u00A7l"+enchantText,
+                                        "\u00A7"+colourCode+extraMods+enchantText);
                             } else {
                                 int offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
                                         "\\u00A79"+enchantText+".*", ""));
@@ -2176,6 +2152,10 @@ public class NEUEventListener {
                                 offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
                                         "\\u00A79\\u00A7d\\u00A7l"+enchantText+".*", ""));
                                 line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
+                                        offset/12f+index, true));
+                                offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
+                                        "\\u00A7l\\u00A7d\\u00A7l"+enchantText+".*", ""));
+                                line = line.replace("\u00A7l\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
                                         offset/12f+index, true));
                             }
                         }
@@ -2406,7 +2386,7 @@ public class NEUEventListener {
             }
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
-                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)).*")) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
 
                     GuiProfileViewer.PetLevel petlevel = null;
 
@@ -2442,12 +2422,14 @@ public class NEUEventListener {
         }
         return tooltipText;
     }
+    
+    private static final String petToolTipRegex = "((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)|(Morph)).*";
 
     private void petToolTipXPExtendPetMenu(ItemTooltipEvent event) {
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
             //7 is just a random number i chose, prob no pets with less lines than 7
             if (event.toolTip.size() > 7) {
-                if (Utils.cleanColour(event.toolTip.get(1)).matches("((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)).*")) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
                     GuiProfileViewer.PetLevel petlevel = null;
 
                     int xpLine = -1;

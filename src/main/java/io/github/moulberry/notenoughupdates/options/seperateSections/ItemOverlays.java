@@ -27,6 +27,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Show in Item durability",
+            desc = "Show the cooldown of the Treecapitator in the item durability"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 0)
+    public boolean enableCooldownInItemDurability = true;
+
+    @Expose
+    @ConfigOption(
             name = "Overlay Colour",
             desc = "Change the colour of the overlay"
     )
@@ -37,7 +46,7 @@ public class ItemOverlays {
     @Expose
     @ConfigOption(
             name = "Enable Monkey Pet Check",
-            desc = "Will check use the API to check what pet you're using\nto determine the cooldown based off of if you have monkey pet."
+            desc = "Will check using the API to check what pet you're using\nto determine the cooldown based off of if you have a monkey pet."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 0)

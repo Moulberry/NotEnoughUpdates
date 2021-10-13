@@ -264,6 +264,8 @@ public class NEUConfig extends Config {
     public static class Hidden {
         @Expose
         public HashMap<String, NEUConfig.HiddenProfileSpecific> profileSpecific = new HashMap<>();
+        @Expose
+        public HashMap<String, NEUConfig.HiddenLocationSpecific> locationSpecific = new HashMap<>();
         @Expose public List<NEUConfig.InventoryButton> inventoryButtons = createDefaultInventoryButtons();
 
         @Expose public boolean enableItemEditing = false;
@@ -284,7 +286,6 @@ public class NEUConfig extends Config {
         @Expose public ArrayList<String> enchantColours = createDefaultEnchantColours();
         @Expose public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
         @Expose public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
-        @Expose public Map<String, Integer> commissionMaxes = new HashMap<>();
 
         @Expose public boolean firstTimeSearchFocus = true;
 
@@ -361,9 +362,26 @@ public class NEUConfig extends Config {
             put("Sapphire", 0);
             put("Topaz", 0);
         }};
+      }
+
+      public HiddenLocationSpecific getLocationSpecific() {
+        String location = SBInfo.getInstance().getLocation();
+        if(location == null || location.isEmpty()) {
+            return null;
+        }
+
+        return getLocationSpecific(location);
     }
 
-    public static List<InventoryButton> createDefaultInventoryButtons() {
+    public HiddenLocationSpecific getLocationSpecific(String location) {
+        return hidden.locationSpecific.computeIfAbsent(location, k-> new HiddenLocationSpecific());
+    }
+
+    public static class HiddenLocationSpecific {
+            @Expose public Map<String, Integer> commissionMaxes = new HashMap<>();
+        }
+
+        public static List<InventoryButton> createDefaultInventoryButtons() {
         List<InventoryButton> buttons = new ArrayList<>();
         //Below crafting
         buttons.add(new InventoryButton(87, 63, null, true, false, false, 0, ""));

@@ -57,6 +57,8 @@ public class BetterContainers {
 
     public static HashMap<Integer, ItemStack> itemCache = new HashMap<>();
 
+    public static int profileViewerStackIndex = -1;
+
     public static void clickSlot(int slot) {
         clickedSlotMillis = System.currentTimeMillis();
         clickedSlot = slot;
@@ -121,9 +123,7 @@ public class BetterContainers {
     }
 
     public static boolean isBlankStack(int index, ItemStack stack) {
-        if(index == 42 && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
-                (SBInfo.getInstance().lastOpenContainerName.contains("'s Profile") ||
-                        SBInfo.getInstance().lastOpenContainerName.contains("s' Profile"))) {
+        if(index != -1 && index == profileViewerStackIndex) {
             return false;
         }
 
@@ -137,9 +137,7 @@ public class BetterContainers {
     }
 
     public static boolean isButtonStack(int index, ItemStack stack) {
-        if(index == 42 && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
-                (SBInfo.getInstance().lastOpenContainerName.contains("'s Profile") ||
-                        SBInfo.getInstance().lastOpenContainerName.contains("s' Profile"))) {
+        if(index == profileViewerStackIndex) {
             return true;
         }
 
