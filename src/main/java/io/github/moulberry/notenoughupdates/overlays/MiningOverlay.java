@@ -264,7 +264,8 @@ public class MiningOverlay extends TextOverlay {
             }
         }*/
 
-        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay && NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints == 0) return;
+        if(!NotEnoughUpdates.INSTANCE.config.mining.dwarvenOverlay && NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints == 0 && !NotEnoughUpdates.INSTANCE.config.mining.titaniumAlert && NotEnoughUpdates.INSTANCE.config.mining.locWaypoints == 0) return;
+        //thanks to "Pure Genie#7250" for helping with this (makes tita alert and waypoints work without mine overlay)
         if(SBInfo.getInstance().getLocation() == null) return;
         if(SBInfo.getInstance().getLocation().equals("mining_3") || SBInfo.getInstance().getLocation().equals("crystal_hollows")) {
 

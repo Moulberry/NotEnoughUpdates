@@ -470,7 +470,7 @@ public class Utils {
     }
 
     public static String[] rarityArr = new String[] {
-            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME", "DIVINE"
+            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME", "^^ THAT ONE IS DIVINE ^^"//, "DIVINE"
     };
 
     public static String[] rarityArrC = new String[] {
@@ -482,8 +482,9 @@ public class Utils {
             EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
             EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
             EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
-            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
             EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
+            EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
+            //EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
 
     };
     public static final HashMap<String, String> rarityArrMap = new HashMap<>();
@@ -496,8 +497,8 @@ public class Utils {
         rarityArrMap.put("MYTHIC", rarityArrC[5]);
         rarityArrMap.put("SPECIAL", rarityArrC[6]);
         rarityArrMap.put("VERY SPECIAL", rarityArrC[7]);
-        rarityArrMap.put("SUPREME", rarityArrC[8]);
-        rarityArrMap.put("DIVINE", rarityArrC[9]);
+        rarityArrMap.put("DIVINE", rarityArrC[8]);
+        //rarityArrMap.put("DIVINE", rarityArrC[9]);
 
     }
 
