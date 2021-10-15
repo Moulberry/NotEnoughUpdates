@@ -138,8 +138,7 @@ public class GuiInvButtonEditor extends GuiScreen {
                     extraIcons.put(entry.getKey(), "extra:" + entry.getValue().getAsString());
                 }
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
     }
 
     private static void reloadPresets() {
@@ -161,8 +160,7 @@ public class GuiInvButtonEditor extends GuiScreen {
                     presets.put(entry.getKey(), buttons);
                 }
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
     }
 
     private static final Comparator<String> prioritisingComparator = (o1, o2) -> {
@@ -650,9 +648,8 @@ public class GuiInvButtonEditor extends GuiScreen {
                 List<NEUConfig.InventoryButton> result = NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons;
                 JsonArray jsonArray = new JsonArray();
 
-                for (int i = 0; i < result.size(); i++) {
-
-                    jsonArray.add(new JsonPrimitive(NotEnoughUpdates.INSTANCE.manager.gson.toJson(result.get(i), NEUConfig.InventoryButton.class)));
+                for (NEUConfig.InventoryButton inventoryButton : result) {
+                    jsonArray.add(new JsonPrimitive(NotEnoughUpdates.INSTANCE.manager.gson.toJson(inventoryButton, NEUConfig.InventoryButton.class)));
                 }
                 String base64String = Base64.getEncoder().encodeToString((sharePrefix + jsonArray).getBytes(StandardCharsets.UTF_8));
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(base64String), null);

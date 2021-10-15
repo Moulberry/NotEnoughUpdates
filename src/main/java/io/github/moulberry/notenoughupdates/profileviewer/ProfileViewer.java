@@ -430,8 +430,7 @@ public class ProfileViewer {
                                         }
                                     }
                                 }
-                            } catch (IOException ignored) {
-                            }
+                            } catch (IOException ignored) {}
 
                             int count = 1;
                             if (element.getAsJsonObject().has("count")) {
@@ -546,9 +545,7 @@ public class ProfileViewer {
                             latestProfile = backup;
                             if (runnable != null) runnable.run();
                         }
-                    }, () -> {
-                        updatingPlayerInfoState.set(false);
-                    }
+                    }, () -> updatingPlayerInfoState.set(false)
             );
 
             return null;
@@ -576,9 +573,7 @@ public class ProfileViewer {
                             if (guildInformation == null) return;
                             if (runnable != null) runnable.run();
                         }
-                    }, () -> {
-                        updatingGuildInfoState.set(false);
-                    }
+                    }, () -> updatingGuildInfoState.set(false)
             );
 
             return null;
@@ -932,8 +927,7 @@ public class ProfileViewer {
                         JsonObject item = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
                         contents.add(item);
                     }
-                } catch (IOException ignored) {
-                }
+                } catch (IOException ignored) {}
             }
 
             JsonObject bundledReturn = new JsonObject();
@@ -1259,9 +1253,7 @@ public class ProfileViewer {
                     if (jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
                         resourceCollection = jsonObject.get("collections").getAsJsonObject();
                     }
-                }, () -> {
-                    updatingResourceCollection.set(false);
-                }
+                }, () -> updatingResourceCollection.set(false)
         );
 
         return null;

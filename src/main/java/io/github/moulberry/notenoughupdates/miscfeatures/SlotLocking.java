@@ -82,8 +82,7 @@ public class SlotLocking {
     public void loadConfig(File file) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             config = GSON.fromJson(reader, SlotLockingConfig.class);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
         if (config == null) {
             config = new SlotLockingConfig();
         }
@@ -130,8 +129,8 @@ public class SlotLocking {
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
                 writer.write(GSON.toJson(config));
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

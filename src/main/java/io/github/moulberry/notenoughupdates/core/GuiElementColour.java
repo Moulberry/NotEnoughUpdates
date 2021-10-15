@@ -388,8 +388,7 @@ public class GuiElementColour extends GuiElement {
                     Color c = new Color(rgb);
                     float[] hsv = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
                     updateAngleAndRadius(hsv);
-                } catch (Exception e) {
-                }
+                } catch (Exception ignored) {}
             }
 
             return true;

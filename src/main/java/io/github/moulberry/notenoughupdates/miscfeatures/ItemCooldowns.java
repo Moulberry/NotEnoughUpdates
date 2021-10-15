@@ -140,8 +140,7 @@ public class ItemCooldowns {
                                 try {
                                     pickaxeCooldown = Integer.parseInt(matcher.group(1));
                                     return;
-                                } catch (Exception ignored) {
-                                }
+                                } catch (Exception ignored) {}
                             }
                         }
                     }

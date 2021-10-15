@@ -84,8 +84,7 @@ public class NPCRetexturing implements IResourceManagerReloadListener {
                     skinMap.put("skins/" + entry.getKey(), skin);
                 }
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
     }
 
     public static NPCRetexturing getInstance() {

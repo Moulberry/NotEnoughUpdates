@@ -56,7 +56,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
     private final Gson gson = new GsonBuilder().create();
 
-    private class CustomSkull {
+    private static class CustomSkull {
         private ModelBlock model;
         private IBakedModel modelBaked;
 
@@ -107,19 +107,16 @@ public class CustomSkulls implements IResourceManagerReloadListener {
             }
 
             Minecraft.getMinecraft().getTextureManager().loadTexture(atlas, textureMap);
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
     }
 
     private void loadSprites() {
         final Set<ResourceLocation> set = this.getAllTextureLocations();
         set.remove(TextureMap.LOCATION_MISSING_TEXTURE);
-        IIconCreator iiconcreator = new IIconCreator() {
-            public void registerSprites(TextureMap iconRegistry) {
-                for (ResourceLocation resourcelocation : set) {
-                    TextureAtlasSprite textureatlassprite = iconRegistry.registerSprite(resourcelocation);
-                    CustomSkulls.this.sprites.put(resourcelocation, textureatlassprite);
-                }
+        IIconCreator iiconcreator = iconRegistry -> {
+            for (ResourceLocation resourcelocation : set) {
+                TextureAtlasSprite textureatlassprite = iconRegistry.registerSprite(resourcelocation);
+                CustomSkulls.this.sprites.put(resourcelocation, textureatlassprite);
             }
         };
         this.textureMap.loadSprites(Minecraft.getMinecraft().getResourceManager(), iiconcreator);
@@ -264,8 +261,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
                             TextureUtil.uploadTexture(this.getGlTextureId(), rgb, size, size);
                         }
                     });
-                } catch (IOException ignored) {
-                }
+                } catch (IOException ignored) {}
             }
 
             Minecraft.getMinecraft().getTextureManager().bindTexture(skull.texture);

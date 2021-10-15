@@ -127,8 +127,7 @@ public class DungeonWin {
             }
             try {
                 confetti.removeAll(toRemove);
-            } catch (ConcurrentModificationException ignored) {
-            }
+            } catch (ConcurrentModificationException ignored) {}
         }
 
         Utils.pushGuiScale(-1);
@@ -183,9 +182,7 @@ public class DungeonWin {
                             break;
                     }
 
-                    SES.schedule(() -> {
-                        NotEnoughUpdates.INSTANCE.sendChatMessage("/showextrastats");
-                    }, 100L, TimeUnit.MILLISECONDS);
+                    SES.schedule(() -> NotEnoughUpdates.INSTANCE.sendChatMessage("/showextrastats"), 100L, TimeUnit.MILLISECONDS);
                 }
             }
         }

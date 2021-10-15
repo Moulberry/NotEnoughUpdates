@@ -25,7 +25,7 @@ public class ShaderManager {
         return INSTANCE;
     }
 
-    public class Shader {
+    public static class Shader {
         public final int program;
 
         public Shader(int program) {
@@ -150,8 +150,7 @@ public class ShaderManager {
                 source.append(line).append("\n");
             }
             return source.toString();
-        } catch (IOException e) {
-        }
+        } catch (IOException ignored) {}
         return "";
     }
 }

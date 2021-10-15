@@ -120,12 +120,10 @@ public class NEUManager {
     public void resetRepo() {
         try {
             Utils.recursiveDelete(new File(configLocation, "repo"));
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
         try {
             new File(configLocation, "currentCommit.json").delete();
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
     }
 
     /**
@@ -250,8 +248,7 @@ public class NEUManager {
                         newCurrentCommitJSON.addProperty("sha", latestRepoCommit);
                         try {
                             writeJson(newCurrentCommitJSON, new File(configLocation, "currentCommit.json"));
-                        } catch (IOException e) {
-                        }
+                        } catch (IOException ignored) {}
                     }
                 }
             } catch (Exception e) {
@@ -912,8 +909,7 @@ public class NEUManager {
 
         try {
             writeJson(json, new File(new File(repoLocation, "items"), internalname + ".json"));
-        } catch (IOException e) {
-        }
+        } catch (IOException ignored) {}
 
         loadItem(internalname);
     }
@@ -945,7 +941,7 @@ public class NEUManager {
                     String itemS = recipe.get(name).getAsString();
                     int count = 1;
                     if (itemS != null && itemS.split(":").length == 2) {
-                        count = Integer.valueOf(itemS.split(":")[1]);
+                        count = Integer.parseInt(itemS.split(":")[1]);
                         itemS = itemS.split(":")[0];
                     }
                     JsonObject craft = getItemInformation().get(itemS);
@@ -984,7 +980,7 @@ public class NEUManager {
                 String itemS = recipe.get(name).getAsString();
                 int count = 1;
                 if (itemS != null && itemS.split(":").length == 2) {
-                    count = Integer.valueOf(itemS.split(":")[1]);
+                    count = Integer.parseInt(itemS.split(":")[1]);
                     itemS = itemS.split(":")[0];
                 }
                 JsonObject craft = getItemInformation().get(itemS);
@@ -1430,8 +1426,7 @@ public class NEUManager {
                 try {
                     NBTTagCompound tag = JsonToNBT.getTagFromJson(json.get("nbttag").getAsString());
                     stack.setTagCompound(tag);
-                } catch (NBTException e) {
-                }
+                } catch (NBTException ignored) {}
             }
 
             HashMap<String, String> replacements = new HashMap<>();

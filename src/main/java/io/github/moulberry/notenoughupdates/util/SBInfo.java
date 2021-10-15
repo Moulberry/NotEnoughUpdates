@@ -150,8 +150,7 @@ public class SBInfo {
                         try {
                             int level = Integer.parseInt(matcher.group(2).trim());
                             XPInformation.getInstance().updateLevel(matcher.group(1).toLowerCase().trim(), level);
-                        } catch (Exception ignored) {
-                        }
+                        } catch (Exception ignored) {}
                     }
                 }
             }
@@ -193,8 +192,7 @@ public class SBInfo {
                         String timeSpace = time.replace("am", " am").replace("pm", " pm");
                         SimpleDateFormat parseFormat = new SimpleDateFormat("hh:mm a");
                         currentTimeDate = parseFormat.parse(timeSpace);
-                    } catch (ParseException e) {
-                    }
+                    } catch (ParseException ignored) {}
                 }
                 //Replaced with for loop because in crystal hollows with events the line it's on can shift.
                 for (String line : lines) {

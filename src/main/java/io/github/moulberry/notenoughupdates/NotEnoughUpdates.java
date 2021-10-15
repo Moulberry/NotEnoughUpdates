@@ -119,8 +119,7 @@ public class NotEnoughUpdates {
         if (configFile.exists()) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
                 config = gson.fromJson(reader, NEUConfig.class);
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
 
         ItemCustomizeManager.loadCustomization(new File(neuDir, "itemCustomization.json"));

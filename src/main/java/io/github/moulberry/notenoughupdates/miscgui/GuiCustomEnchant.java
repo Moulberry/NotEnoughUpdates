@@ -262,15 +262,13 @@ public class GuiCustomEnchant extends Gui {
                     try {
                         page = Integer.parseInt(Utils.getRawTooltip(pageDownStack).get(1).substring(11)) - 1;
                         expectedMaxPage = page + 1;
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
                 if (page == -1 && !upIsGlass) {
                     try {
                         page = Integer.parseInt(Utils.getRawTooltip(pageUpStack).get(1).substring(11)) + 1;
                         expectedMaxPage = page;
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
                 if (page == -1) {
                     currentPage = 1;
@@ -519,7 +517,7 @@ public class GuiCustomEnchant extends Gui {
             }
         }
 
-        List list = Lists.newArrayList(options);
+        List<String> list = Lists.newArrayList(options);
         list.add(0, "");
         list.add(0, EnumChatFormatting.GREEN + title);
         return list;
@@ -1284,7 +1282,6 @@ public class GuiCustomEnchant extends Gui {
 
                             cancelButtonAnimTime = System.currentTimeMillis();
                         }
-                        return true;
                     } else {
                         if (!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) return true;
                         GuiContainer chest = ((GuiContainer) Minecraft.getMinecraft().currentScreen);
@@ -1294,8 +1291,8 @@ public class GuiCustomEnchant extends Gui {
                         ItemStack stack = ((ContainerChest) chest.inventorySlots).getLowerChestInventory().getStackInSlot(click);
                         Minecraft.getMinecraft().getNetHandler().addToSendQueue(new C0EPacketClickWindow(
                                 chest.inventorySlots.windowId, click, 0, 0, stack, transactionID));
-                        return true;
                     }
+                    return true;
                 }
             }
         }

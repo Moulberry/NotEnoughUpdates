@@ -36,8 +36,7 @@ public class MixinGuiChest {
             return (int) Class.forName("codes.biscuit.skyblockaddons.asm.hooks.GuiChestHook")
                     .getDeclaredMethod("drawString", FontRenderer.class, String.class, int.class, int.class, int.class)
                     .invoke(null, fontRenderer, text, x, y, BetterContainers.isOverriding() ? BetterContainers.getTextColour() : color);
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
         return fontRenderer.drawString(text, x, y, BetterContainers.isOverriding() ? BetterContainers.getTextColour() : color);
     }
 

@@ -1368,7 +1368,7 @@ public class NEUOverlay extends Gui {
         return (int) (panePadding * 2 / Utils.peekGuiScale().getScaleFactor() + 5);
     }
 
-    private abstract class ItemSlotConsumer {
+    private abstract static class ItemSlotConsumer {
         public abstract void consume(int x, int y, int id);
     }
 
@@ -1747,7 +1747,7 @@ public class NEUOverlay extends Gui {
 
         GlStateManager.disableLighting();
 
-        /**
+        /*
          * Item selection (right) gui element rendering
          */
         int paneWidth = (int) (width / 3 * getWidthMult());
@@ -1967,13 +1967,13 @@ public class NEUOverlay extends Gui {
             GlStateManager.disableLighting();
         }
 
-        /**
+        /*
          * Search bar & quickcommand elements
          */
         guiGroup.render(0, 0);
         resetAnchors(true);
 
-        /**
+        /*
          * Item info (left) gui element rendering
          */
 

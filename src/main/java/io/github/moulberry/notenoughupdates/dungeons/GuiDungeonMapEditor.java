@@ -710,8 +710,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
                         Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
                 blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
                 blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (blurShaderVert == null) {
             try {
@@ -719,8 +718,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
                         blurOutputHorz, blurOutputVert);
                 blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
                 blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (blurShaderHorz != null && blurShaderVert != null) {
             if (15 != lastBgBlurFactor) {

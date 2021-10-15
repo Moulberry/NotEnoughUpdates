@@ -185,8 +185,7 @@ public class BackgroundBlur {
                         output.framebuffer, blurOutputHorz);
                 output.blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
                 output.blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (output.blurShaderVert == null) {
             try {
@@ -194,8 +193,7 @@ public class BackgroundBlur {
                         blurOutputHorz, output.framebuffer);
                 output.blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
                 output.blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (output.blurShaderHorz != null && output.blurShaderVert != null) {
             if (output.blurShaderHorz.getShaderManager().getShaderUniform("Radius") == null) {

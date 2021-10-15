@@ -136,8 +136,7 @@ public class PetInfoOverlay extends TextOverlay {
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
                 writer.write(GSON.toJson(config));
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 
     public static void clearPet() {
@@ -260,8 +259,7 @@ public class PetInfoOverlay extends TextOverlay {
                         Rarity talismanRarity = Rarity.valueOf(internalName.replace("BEASTMASTER_CREST_", ""));
                         if (talismanRarity.beastcreatMultiplyer > currentBeastRarity.beastcreatMultiplyer)
                             currentBeastRarity = talismanRarity;
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
             if (hasBeastmasterCrest) {
@@ -662,8 +660,7 @@ public class PetInfoOverlay extends TextOverlay {
                     int xpMaxThisLevel = (int) (Float.parseFloat(xpMaxThisLevelS) * mutiplier);
 
                     level = getLevel(Constants.PETS.get("pet_levels").getAsJsonArray(), rarity.petOffset, xpThisLevel, xpMaxThisLevel);
-                } catch (NumberFormatException ignored) {
-                }
+                } catch (NumberFormatException ignored) {}
             } else if (line.equals("\u00a7b\u00a7lMAX LEVEL")) {
                 level = getMaxLevel(Constants.PETS.get("pet_levels").getAsJsonArray(), rarity.petOffset);
             }
@@ -708,8 +705,7 @@ public class PetInfoOverlay extends TextOverlay {
                             page = Integer.parseInt(matcher.group(1)) - 1;
                             maxPage = Integer.parseInt(matcher.group(2));
                             isPets = true;
-                        } catch (NumberFormatException ignored) {
-                        }
+                        } catch (NumberFormatException ignored) {}
                     }
                 }
 
@@ -912,8 +908,7 @@ public class PetInfoOverlay extends TextOverlay {
                         try {
                             page = Integer.parseInt(matcher.group(1)) - 1;
                             isPets = true;
-                        } catch (NumberFormatException ignored) {
-                        }
+                        } catch (NumberFormatException ignored) {}
                     }
                 }
 
@@ -1082,8 +1077,7 @@ public class PetInfoOverlay extends TextOverlay {
 
                     try {
                         lastLevelHovered = Integer.parseInt(levelStr.trim());
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             } else if (line.startsWith("\u00a75\u00a7o\u00a76Held Item: ")) {
                 String after = line.substring("\u00a75\u00a7o\u00a76Held Item: ".length());
@@ -1120,8 +1114,7 @@ public class PetInfoOverlay extends TextOverlay {
                 if (autopetMatcher.matches()) {
                     try {
                         lastLevelHovered = Integer.parseInt(autopetMatcher.group(1));
-                    } catch (NumberFormatException ignored) {
-                    }
+                    } catch (NumberFormatException ignored) {}
 
                     String petStringMatch = autopetMatcher.group(2);
                     char colChar = petStringMatch.charAt(0);

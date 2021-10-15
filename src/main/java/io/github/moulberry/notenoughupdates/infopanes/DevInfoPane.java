@@ -672,8 +672,7 @@ public class DevInfoPane extends TextInfoPane {
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + internalname));
             manager.writeJsonDefaultDir(json, internalname + ".json");
             manager.loadItem(internalname);
-        } catch (IOException e) {
-        }
+        } catch (IOException ignored) {}
     }
 
     @Override
@@ -900,8 +899,7 @@ public class DevInfoPane extends TextInfoPane {
                                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + internalname));
                                 manager.writeJsonDefaultDir(json, internalname + ".json");
                                 manager.loadItem(internalname);
-                            } catch (IOException e) {
-                            }
+                            } catch (IOException ignored) {}
                         } else {
                             System.out.println("writing with recipe:" + internalname);
                             for (Map.Entry<Integer, JsonObject> entry : recipeJsonForDamage.entrySet()) {
@@ -935,8 +933,7 @@ public class DevInfoPane extends TextInfoPane {
                                         manager.writeJsonDefaultDir(json, internalname + ".json");
                                     }
                                     manager.loadItem(internalname);
-                                } catch (IOException e) {
-                                }
+                                } catch (IOException ignored) {}
                             }
                         }
                     }

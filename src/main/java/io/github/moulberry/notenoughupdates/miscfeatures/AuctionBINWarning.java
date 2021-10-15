@@ -77,8 +77,7 @@ public class AuctionBINWarning extends GuiElement {
                 if (priceMatcher.matches()) {
                     try {
                         sellingPrice = Integer.parseInt(priceMatcher.group(1).replace(",", ""));
-                    } catch (NumberFormatException ignored) {
-                    }
+                    } catch (NumberFormatException ignored) {}
                 }
             }
 
@@ -212,10 +211,8 @@ public class AuctionBINWarning extends GuiElement {
                     GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
                     Minecraft.getMinecraft().playerController.windowClick(chest.inventorySlots.windowId,
                             29, 0, 0, Minecraft.getMinecraft().thePlayer);
-                    showWarning = false;
-                } else {
-                    showWarning = false;
                 }
+                showWarning = false;
             }
 
             if (mouseX < width / 2 - 90 || mouseX > width / 2 + 90 ||

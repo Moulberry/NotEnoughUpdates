@@ -75,8 +75,7 @@ public class MiscUtils {
         currentCursor = null;
         try {
             Mouse.setNativeCursor(null);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 
     public static void setCursor(ResourceLocation loc, int hotspotX, int hotspotY) {

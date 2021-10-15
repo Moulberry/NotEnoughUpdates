@@ -479,7 +479,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         framebuffer.unbindFramebufferTexture();
     }
 
-    private abstract class ItemSlotConsumer {
+    private abstract static class ItemSlotConsumer {
         public abstract void consume(int x, int y, int id);
     }
 

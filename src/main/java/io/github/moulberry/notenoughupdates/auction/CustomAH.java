@@ -229,7 +229,7 @@ public class CustomAH extends Gui {
         }
     }
 
-    public class Category {
+    public static class Category {
         public String categoryMatch;
         public Category[] subcategories;
         public String displayName;
@@ -891,8 +891,7 @@ public class CustomAH extends Gui {
                                 tooltipToRender = getTooltipForAucId(aucid);
                             }
                         }
-                    } catch (Exception e) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
         }
@@ -1794,22 +1793,20 @@ public class CustomAH extends Gui {
                     if (mouseX < auctionViewLeft + 16 + 32) {
                         //top left
                         increasePriceByFactor(2);
-                        Utils.playPressSound();
                     } else {
                         //top right
                         increasePriceByFactor(1.5f);
-                        Utils.playPressSound();
                     }
+                    Utils.playPressSound();
                 } else if (mouseY > guiTop + 50 && mouseY < guiTop + 50 + 16) {
                     if (mouseX < auctionViewLeft + 16 + 32) {
                         //mid left
                         increasePriceByFactor(1.25f);
-                        Utils.playPressSound();
                     } else {
                         //mid right
                         increasePriceByFactor(1.1f);
-                        Utils.playPressSound();
                     }
+                    Utils.playPressSound();
                 } else if (mouseY > guiTop + 68 && mouseY < guiTop + 68 + 16) {
                     //bottom
                     Utils.playPressSound();

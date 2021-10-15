@@ -148,9 +148,7 @@ public class CapeManager {
                     }
                 }
             }
-        }, () -> {
-            System.out.println("[MBAPI] Update capes errored");
-        });
+        }, () -> System.out.println("[MBAPI] Update capes errored"));
 
         if (Minecraft.getMinecraft().thePlayer != null && permSyncTries > 0) {
             String uuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
@@ -179,9 +177,7 @@ public class CapeManager {
                         }
                     }
                 }
-            }, () -> {
-                System.out.println("[MBAPI] Update capes errored - perms");
-            });
+            }, () -> System.out.println("[MBAPI] Update capes errored - perms"));
         }
     }
 
@@ -350,22 +346,17 @@ public class CapeManager {
                             continue;
                         }
                         capeMap.get(playerUUID).getLeft().setCapeTexture(capeName);
-                        capeTicker.submit(() -> {
-                            capeMap.get(playerUUID).getLeft().onTick(event, player);
-                        });
+                        capeTicker.submit(() -> capeMap.get(playerUUID).getLeft().onTick(event, player));
                     } else {
                         toRemove.add(playerUUID);
                     }
                 }
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
 
         if (hasLocalCape) {
             localCape.getLeft().setCapeTexture(localCape.getValue());
-            capeTicker.submit(() -> {
-                localCape.getLeft().onTick(event, Minecraft.getMinecraft().thePlayer);
-            });
+            capeTicker.submit(() -> localCape.getLeft().onTick(event, Minecraft.getMinecraft().thePlayer));
         }
         for (String playerName : toRemove) {
             capeMap.remove(playerName);

@@ -108,16 +108,16 @@ public class StorageManager {
             NBTTagIntArray listTag = (NBTTagIntArray) tag;
             int[] arr = listTag.getIntArray();
             JsonArray jsonArray = new JsonArray();
-            for (int i = 0; i < arr.length; i++) {
-                jsonArray.add(new JsonPrimitive(arr[i]));
+            for (int j : arr) {
+                jsonArray.add(new JsonPrimitive(j));
             }
             return jsonArray;
         } else if (tag instanceof NBTTagByteArray) {
             NBTTagByteArray listTag = (NBTTagByteArray) tag;
             byte[] arr = listTag.getByteArray();
             JsonArray jsonArray = new JsonArray();
-            for (int i = 0; i < arr.length; i++) {
-                jsonArray.add(new JsonPrimitive(arr[i]));
+            for (byte b : arr) {
+                jsonArray.add(new JsonPrimitive(b));
             }
             return jsonArray;
         } else if (tag instanceof NBTTagShort) {
@@ -193,8 +193,7 @@ public class StorageManager {
     public void loadConfig(File file) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)), StandardCharsets.UTF_8))) {
             storageConfig = GSON.fromJson(reader, StorageConfig.class);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
         if (storageConfig == null) {
             storageConfig = new StorageConfig();
         }
@@ -206,8 +205,8 @@ public class StorageManager {
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(file)), StandardCharsets.UTF_8))) {
                 writer.write(GSON.toJson(storageConfig));
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

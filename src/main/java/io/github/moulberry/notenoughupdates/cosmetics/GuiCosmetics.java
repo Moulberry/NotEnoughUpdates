@@ -145,14 +145,11 @@ public class GuiCosmetics extends GuiScreen {
             String equipMsg;
             if (wantToEquipCape != null) {
                 equipMsg = EnumChatFormatting.GREEN + "Equip Cape";
-                if (System.currentTimeMillis() - lastCapeEquip < 20 * 1000) {
-                    equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip) / 1000) + "s";
-                }
             } else {
                 equipMsg = EnumChatFormatting.GREEN + "Unequip";
-                if (System.currentTimeMillis() - lastCapeEquip < 20 * 1000) {
-                    equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip) / 1000) + "s";
-                }
+            }
+            if (System.currentTimeMillis() - lastCapeEquip < 20 * 1000) {
+                equipMsg += " - " + (20 - (System.currentTimeMillis() - lastCapeEquip) / 1000) + "s";
             }
 
             Utils.drawStringCenteredScaledMaxWidth(equipMsg, Minecraft.getMinecraft().fontRendererObj,
@@ -346,18 +343,10 @@ public class GuiCosmetics extends GuiScreen {
 
                             if (wantToEquipCape == null) {
                                 NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType=null&serverId=" +
-                                        serverId + "&username=" + userName, (jsonObject) -> {
-                                    System.out.println(jsonObject);
-                                }, () -> {
-                                    System.out.println("Change cape error");
-                                });
+                                        serverId + "&username=" + userName, System.out::println, () -> System.out.println("Change cape error"));
                             } else {
                                 NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("cgi-bin/changecape.py?capeType=" + wantToEquipCape + "&serverId=" +
-                                        serverId + "&username=" + userName, (jsonObject) -> {
-                                    System.out.println(jsonObject);
-                                }, () -> {
-                                    System.out.println("Change cape error");
-                                });
+                                        serverId + "&username=" + userName, System.out::println, () -> System.out.println("Change cape error"));
                             }
                         } catch (Exception e) {
                             System.out.println("Exception while generating mojang shared secret");
@@ -539,8 +528,7 @@ public class GuiCosmetics extends GuiScreen {
                         Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
                 blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
                 blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (blurShaderVert == null) {
             try {
@@ -548,8 +536,7 @@ public class GuiCosmetics extends GuiScreen {
                         blurOutputHorz, blurOutputVert);
                 blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
                 blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (blurShaderHorz != null && blurShaderVert != null) {
             if (15 != lastBgBlurFactor) {

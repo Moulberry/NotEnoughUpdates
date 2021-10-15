@@ -49,7 +49,7 @@ public class HTMLInfoPane extends TextInfoPane {
 
     private static boolean hasAttemptedDownload = false;
 
-    /**
+    /*
      * Creates a wiki model and sets the configuration to work with hypixel-skyblock wikia.
      */
     static {
@@ -127,8 +127,7 @@ public class HTMLInfoPane extends TextInfoPane {
         wiki = "__NOTOC__\n" + wiki; //Remove TOC
         try (PrintWriter out = new PrintWriter(new File(manager.configLocation, "debug/parsed.txt"))) {
             out.println(wiki);
-        } catch (IOException e) {
-        }
+        } catch (IOException ignored) {}
         String html;
         try {
             html = wikiModel.render(wiki);
@@ -137,8 +136,7 @@ public class HTMLInfoPane extends TextInfoPane {
         }
         try (PrintWriter out = new PrintWriter(new File(manager.configLocation, "debug/html.txt"))) {
             out.println(html);
-        } catch (IOException e) {
-        }
+        } catch (IOException ignored) {}
         return new HTMLInfoPane(overlay, manager, name, filename, html);
     }
 
@@ -183,13 +181,11 @@ public class HTMLInfoPane extends TextInfoPane {
         try {
             Process p = runtime.exec(chmodCommand);
             p.waitFor();
-        } catch (IOException | InterruptedException e) {
-        }
+        } catch (IOException | InterruptedException ignored) {}
 
         if (!wkHtmlToImage.exists()) {
             if (hasAttemptedDownload) {
                 text = EnumChatFormatting.RED + "Downloading web renderer failed? Or still downloading? Not sure what to do";
-                return;
             } else {
                 hasAttemptedDownload = true;
                 Utils.recursiveDelete(new File(manager.configLocation, "wkhtmltox-" + osId));
@@ -217,8 +213,8 @@ public class HTMLInfoPane extends TextInfoPane {
                 });
 
                 text = EnumChatFormatting.YELLOW + "Downloading web renderer... try again soon";
-                return;
             }
+            return;
         }
 
         File input = new File(manager.configLocation, "tmp/input.html");
@@ -255,8 +251,7 @@ public class HTMLInfoPane extends TextInfoPane {
                     new FileOutputStream(input), StandardCharsets.UTF_8)), false)) {
 
                 out.println(encodeNonAscii(html));
-            } catch (IOException e) {
-            }
+            } catch (IOException ignored) {}
 
             try {
                 text = EnumChatFormatting.GRAY + "Rendering webpage (" + name + EnumChatFormatting.RESET +

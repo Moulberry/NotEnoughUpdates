@@ -104,8 +104,7 @@ public class TutorialBase extends GuiScreen {
 
     protected void drawButtons() {
 
-        for (int i = 0; i < buttons.size(); i++) {
-            JsonObject button = buttons.get(i);
+        for (JsonObject button : buttons) {
             JsonArray pages = button.get("pages").getAsJsonArray();
             boolean drawButton = false;
             for (int i1 = 0; i1 < pages.size(); i1++) {
@@ -135,8 +134,7 @@ public class TutorialBase extends GuiScreen {
         int width = 88;
         int height = 20;
 
-        for (int i = 0; i < buttons.size(); i++) {
-            JsonObject button = buttons.get(i);
+        for (JsonObject button : buttons) {
             JsonArray pages = button.get("pages").getAsJsonArray();
             boolean drawButton = false;
             for (int i1 = 0; i1 < pages.size(); i1++) {
@@ -162,15 +160,15 @@ public class TutorialBase extends GuiScreen {
         }
     }
 
-    protected static List<JsonArray> texts = new ArrayList<JsonArray>();
+    protected static List<JsonArray> texts = new ArrayList<>();
 
     protected static List<JsonObject> buttons = new ArrayList<>();
 
     protected static JsonObject createNewButton(float x, float y, int[] pages, String text, String command) {
         JsonObject button = new JsonObject();
         JsonArray pagesArray = new JsonArray();
-        for (int i = 0; i < pages.length; i++) {
-            pagesArray.add(new JsonPrimitive(pages[i]));
+        for (int j : pages) {
+            pagesArray.add(new JsonPrimitive(j));
         }
         button.add("pages", pagesArray);
         button.add("x", new JsonPrimitive(x));
@@ -182,8 +180,8 @@ public class TutorialBase extends GuiScreen {
 
     protected static JsonArray createNewTexts(JsonObject... texts) {
         JsonArray textArray = new JsonArray();
-        for (int i = 0; i < texts.length; i++) {
-            textArray.add(texts[i]);
+        for (JsonObject text : texts) {
+            textArray.add(text);
         }
         return textArray;
     }
@@ -193,8 +191,8 @@ public class TutorialBase extends GuiScreen {
         tooltip.add("x", new JsonPrimitive(x));
         tooltip.add("y", new JsonPrimitive(y));
         JsonArray lines = new JsonArray();
-        for (int i = 0; i < texts.length; i++) {
-            lines.add(new JsonPrimitive(texts[i]));
+        for (String text : texts) {
+            lines.add(new JsonPrimitive(text));
         }
         tooltip.add("lines", lines);
         return tooltip;
@@ -205,8 +203,8 @@ public class TutorialBase extends GuiScreen {
         tooltip.add("x", new JsonPrimitive(x));
         tooltip.add("y", new JsonPrimitive(y));
         JsonArray lines = new JsonArray();
-        for (int i = 0; i < texts.size(); i++) {
-            lines.add(new JsonPrimitive(texts.get(i)));
+        for (String text : texts) {
+            lines.add(new JsonPrimitive(text));
         }
         tooltip.add("lines", lines);
         return tooltip;

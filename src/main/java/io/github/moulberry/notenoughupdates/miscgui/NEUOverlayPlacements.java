@@ -212,8 +212,7 @@ public class NEUOverlayPlacements extends GuiScreen {
             }
             try {
                 MBDeserializer.serializeAndSave(mainGroup, "overlay");
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
             mainGroup.recalculate();
         }
     }

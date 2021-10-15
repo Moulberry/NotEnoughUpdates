@@ -50,8 +50,7 @@ public class FairySouls {
                 }
 
                 return;
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         foundSouls = new HashMap<>();
     }
@@ -63,8 +62,7 @@ public class FairySouls {
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
                 writer.write(gson.toJson(foundSouls));
             }
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
     }
 
     @SubscribeEvent
@@ -172,8 +170,7 @@ public class FairySouls {
         Set<Integer> found = foundSouls.computeIfAbsent(location, k -> new HashSet<>());
 
         int rgb = 0xa839ce;
-        for (int i = 0; i < currentSoulListClose.size(); i++) {
-            BlockPos currentSoul = currentSoulListClose.get(i);
+        for (BlockPos currentSoul : currentSoulListClose) {
             RenderUtils.renderBeaconBeamOrBoundingBox(currentSoul, rgb, 1.0f, event.partialTicks);
         }
     }

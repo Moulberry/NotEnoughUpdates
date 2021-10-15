@@ -64,8 +64,7 @@ public class FuelBar {
                                 break;
                             }
                         }
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
         }

@@ -98,7 +98,7 @@ public class DungeonMap {
 
     private final Map<String, ResourceLocation> playerSkinMap = new HashMap<>();
 
-    private class RoomOffset {
+    private static class RoomOffset {
         int x;
         int y;
 
@@ -145,7 +145,7 @@ public class DungeonMap {
         NONE, WALL, CORRIDOR, ROOM_DIVIDER
     }
 
-    private class RoomConnection {
+    private static class RoomConnection {
         RoomConnectionType type;
         Color colour;
 
@@ -389,8 +389,7 @@ public class DungeonMap {
 
             borderRadiusCache.put(style, radiusSq);
             return radiusSq;
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
 
         borderRadiusCache.put(style, 1f);
         return 1f;
@@ -741,8 +740,7 @@ public class DungeonMap {
                             mapShader.setProjectionMatrix(projectionMatrix);
                             mapShader.loadShader(0);
                             renderFromBuffer = mapFramebuffer2;
-                        } catch (Exception e) {
-                        }
+                        } catch (Exception ignored) {}
                     }
                     GlStateManager.popMatrix();
                 }
@@ -968,8 +966,7 @@ public class DungeonMap {
 
             try {
                 entry.getValue().colour = colourMap[x][y];
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
     }
 

@@ -156,8 +156,7 @@ public class NEUEventListener {
 
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                 }
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
     }
 
@@ -1730,8 +1729,7 @@ public class NEUEventListener {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + resInternalname));
                         neu.manager.writeJsonDefaultDir(json, resInternalname + ".json");
                         neu.manager.loadItem(resInternalname);
-                    } catch (IOException e) {
-                    }
+                    } catch (IOException ignored) {}
                 }
             }
         }
@@ -1824,8 +1822,7 @@ public class NEUEventListener {
                         }
                     }
                 }
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
 
         boolean gotToEnchants = false;
@@ -2411,7 +2408,7 @@ public class NEUEventListener {
     }
 
     private List<String> petToolTipXPExtend(ItemTooltipEvent event) {
-        List<String> tooltipText = new ArrayList();
+        List<String> tooltipText = new ArrayList<>();
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
             if (event.itemStack.getTagCompound().hasKey("DisablePetExp")) {
                 if (event.itemStack.getTagCompound().getBoolean("DisablePetExp")) {

@@ -186,21 +186,21 @@ public class BetterContainers {
                 try {
                     bufferedImageBase = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(
                             new ResourceLocation("notenoughupdates:dynamic_54/style"+ backgroundStyle+"/dynamic_54.png")).getInputStream());
-                } catch(Exception e) {}
+                } catch(Exception ignored) {}
                 BufferedImage bufferedImageSlot = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(DYNAMIC_54_SLOT).getInputStream());
                 try {
                     int buttonStyle = NotEnoughUpdates.INSTANCE.config.improvedSBMenu.buttonStyle+1;
                     buttonStyle = Math.max(1, Math.min(10, buttonStyle));
                     bufferedImageSlot = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(
                             new ResourceLocation("notenoughupdates:dynamic_54/style"+buttonStyle+"/dynamic_54_slot_ctm.png")).getInputStream());
-                } catch(Exception e) {}
+                } catch(Exception ignored) {}
                 BufferedImage bufferedImageButton = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(DYNAMIC_54_BUTTON).getInputStream());
                 try {
                     int buttonStyle = NotEnoughUpdates.INSTANCE.config.improvedSBMenu.buttonStyle+1;
                     buttonStyle = Math.max(1, Math.min(10, buttonStyle));
                     bufferedImageButton = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(
                             new ResourceLocation("notenoughupdates:dynamic_54/style"+buttonStyle+"/dynamic_54_button_ctm.png")).getInputStream());
-                } catch(Exception e) {}
+                } catch(Exception ignored) {}
 
                 int horzTexMult = bufferedImageBase.getWidth()/256;
                 int vertTexMult = bufferedImageBase.getWidth()/256;

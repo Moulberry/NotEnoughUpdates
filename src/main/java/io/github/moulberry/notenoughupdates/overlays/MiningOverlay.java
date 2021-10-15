@@ -70,8 +70,7 @@ public class MiningOverlay extends TextOverlay {
             if (stack != null) {
                 String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
 
-                for (int i1 = 0; i1 < lore.length; i1++) {
-                    String line = lore[i1];
+                for (String line : lore) {
                     Matcher matcher = timeRemainingForge.matcher(line);
                     if (stack.getDisplayName().matches("\\xA7cSlot #([1-5])")) {
                         ForgeItem newForgeItem = new ForgeItem(i, 1, false);
@@ -103,8 +102,7 @@ public class MiningOverlay extends TextOverlay {
                                 if (matcher.group("seconds") != null && !matcher.group("seconds").equals("")) {
                                     duration = duration + (long) Integer.parseInt(matcher.group("seconds")) * 1000;
                                 }
-                            } catch (Exception ignored) {
-                            }
+                            } catch (Exception ignored) {}
                             if (duration > 0) {
                                 ForgeItem newForgeItem = new ForgeItem(Utils.cleanColour(stack.getDisplayName()), System.currentTimeMillis() + duration, i, false);
                                 replaceForgeOrAdd(newForgeItem, hidden.forgeItems, true);
@@ -169,8 +167,7 @@ public class MiningOverlay extends TextOverlay {
                             if (matcher.find()) {
                                 try {
                                     numberValue = Integer.parseInt(matcher.group("number").replace(",", ""));
-                                } catch (NumberFormatException ignored) {
-                                }
+                                } catch (NumberFormatException ignored) {}
                             }
                         }
                     }
@@ -341,8 +338,7 @@ public class MiningOverlay extends TextOverlay {
                                         if (matcher.group("seconds") != null && !matcher.group("seconds").equals("")) {
                                             duration = duration + (long) Integer.parseInt(matcher.group("seconds")) * 1000;
                                         }
-                                    } catch (Exception ignored) {
-                                    }
+                                    } catch (Exception ignored) {}
                                     if (duration > 0) {
                                         duration = duration + 4000;
                                         ForgeItem item = new ForgeItem(Utils.cleanColour(itemName), System.currentTimeMillis() + duration, forgeInt, true);
@@ -361,8 +357,7 @@ public class MiningOverlay extends TextOverlay {
                                 float progress = Float.parseFloat(split[1].replace("%", "")) / 100;
                                 progress = LerpUtils.clampZeroOne(progress);
                                 commissionProgress.put(split[0], progress);
-                            } catch (Exception ignored) {
-                            }
+                            } catch (Exception ignored) {}
                         } else {
                             commissionProgress.put(split[0], 1.0f);
                         }
@@ -474,9 +469,9 @@ public class MiningOverlay extends TextOverlay {
         long currentTimeMillis = System.currentTimeMillis();
         forgeIDLabel:
         for (int i = 0; i < 5; i++) {
-            for (int y = 0; y < forgeItems.size(); y++) {
-                if (forgeItems.get(y).forgeID == i) {
-                    ForgeItem item = forgeItems.get(y);
+            for (ForgeItem forgeItem : forgeItems) {
+                if (forgeItem.forgeID == i) {
+                    ForgeItem item = forgeItem;
                     if (NotEnoughUpdates.INSTANCE.config.mining.forgeDisplay == 0) {
                         if (item.status == 2 && item.finishTime < currentTimeMillis) {
 

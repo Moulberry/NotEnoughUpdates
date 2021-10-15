@@ -357,7 +357,7 @@ public class CustomItemEffects {
     }
     //ethermerge
 
-    private class RaycastResult {
+    private static class RaycastResult {
         IBlockState state;
         BlockPos pos;
 
@@ -471,8 +471,7 @@ public class CustomItemEffects {
                             }
                         }
                     }
-                } catch (Exception e) {
-                }
+                } catch (Exception ignored) {}
             }
         }
 

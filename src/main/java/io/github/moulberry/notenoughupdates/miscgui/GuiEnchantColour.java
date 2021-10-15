@@ -454,8 +454,8 @@ public class GuiEnchantColour extends GuiScreen {
                 ArrayList<String> result = NotEnoughUpdates.INSTANCE.config.hidden.enchantColours;
                 JsonArray jsonArray = new JsonArray();
 
-                for (int i = 0; i < result.size(); i++) {
-                    jsonArray.add(new JsonPrimitive(result.get(i)));
+                for (String s : result) {
+                    jsonArray.add(new JsonPrimitive(s));
                 }
                 String base64String = Base64.getEncoder().encodeToString((sharePrefix + jsonArray).getBytes(StandardCharsets.UTF_8));
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(base64String), null);

@@ -260,8 +260,7 @@ public class ItemCustomizeManager {
     public static void loadCustomization(File file) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             itemDataMap = GSON.fromJson(reader, ItemDataMap.class);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
         if (itemDataMap == null) {
             itemDataMap = new ItemDataMap();
         }
@@ -273,8 +272,7 @@ public class ItemCustomizeManager {
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
                 writer.write(GSON.toJson(itemDataMap));
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 
 }

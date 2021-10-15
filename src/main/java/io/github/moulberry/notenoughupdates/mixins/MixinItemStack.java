@@ -45,8 +45,7 @@ public class MixinItemStack {
                     returnable.setReturnValue(customName);
                 }
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
     }
 
 }

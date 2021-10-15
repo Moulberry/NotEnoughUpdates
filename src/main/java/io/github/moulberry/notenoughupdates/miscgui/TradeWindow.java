@@ -168,8 +168,7 @@ public class TradeWindow {
 
                     return coins;
 
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) {}
             }
         } else {
             int pricePer = getPrice(internalname);
@@ -213,8 +212,7 @@ public class TradeWindow {
                                     priceInclBackpack += processTopItems(stack2, topItems, topItemsStack, topItemsCount);
                                 }
                             }
-                        } catch (Exception e) {
-                        }
+                        } catch (Exception ignored) {}
                     }
                 }
 
@@ -272,8 +270,7 @@ public class TradeWindow {
                             }
                         }
                     }
-                } catch (Exception e) {
-                }
+                } catch (Exception ignored) {}
             }
         }
         return price;

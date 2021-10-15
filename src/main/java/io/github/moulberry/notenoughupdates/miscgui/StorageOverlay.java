@@ -1435,7 +1435,7 @@ public class StorageOverlay extends GuiElement {
             }
         }
 
-        List list = Lists.newArrayList(options);
+        List<String> list = Lists.newArrayList(options);
         list.add(0, "");
         list.add(0, EnumChatFormatting.GREEN + title);
         return list;

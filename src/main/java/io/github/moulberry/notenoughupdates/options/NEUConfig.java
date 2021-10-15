@@ -356,7 +356,7 @@ public class NEUConfig extends Config {
         @Expose
         public long cookieBuffRemaining = 0L;
         @Expose
-        public List<MiningOverlay.ForgeItem> forgeItems = new ArrayList<MiningOverlay.ForgeItem>();
+        public List<MiningOverlay.ForgeItem> forgeItems = new ArrayList<>();
 
         @Expose
         public int commissionMilestone = 0;

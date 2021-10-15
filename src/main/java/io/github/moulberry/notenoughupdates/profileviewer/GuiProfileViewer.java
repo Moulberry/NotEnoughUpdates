@@ -1493,8 +1493,7 @@ public class GuiProfileViewer extends GuiScreen {
                             try {
                                 float value = Float.parseFloat(replacements.get(entryBoost.getKey()));
                                 replacements.put(entryBoost.getKey(), String.valueOf((int) Math.floor(value + entryBoost.getValue())));
-                            } catch (Exception ignored) {
-                            }
+                            } catch (Exception ignored) {}
                         }
 
                     }
@@ -1659,13 +1658,10 @@ public class GuiProfileViewer extends GuiScreen {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
                 if (i == selectedPet) {
                     GlStateManager.color(1, 185 / 255f, 0, 1);
-                    Utils.drawTexturedRect(guiLeft + x, guiTop + y, 20, 20,
-                            0, 20 / 256f, 0, 20 / 256f, GL11.GL_NEAREST);
                 } else {
                     GlStateManager.color(1, 1, 1, 1);
-                    Utils.drawTexturedRect(guiLeft + x, guiTop + y, 20, 20,
-                            0, 20 / 256f, 0, 20 / 256f, GL11.GL_NEAREST);
                 }
+                Utils.drawTexturedRect(guiLeft + x, guiTop + y, 20, 20, 0, 20 / 256f, 0, 20 / 256f, GL11.GL_NEAREST);
 
                 Utils.drawItemStack(stack, guiLeft + (int) x + 2, guiTop + (int) y + 2);
 
@@ -2878,8 +2874,7 @@ public class GuiProfileViewer extends GuiScreen {
                         }
                     }
                 }
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
 
         if (status != null) {
@@ -2969,25 +2964,22 @@ public class GuiProfileViewer extends GuiScreen {
 
         if (entityPlayer != null && playerLocationSkin == null) {
             try {
-                Minecraft.getMinecraft().getSkinManager().loadProfileTextures(entityPlayer.getGameProfile(), new SkinManager.SkinAvailableCallback() {
-                    public void skinAvailable(MinecraftProfileTexture.Type type, ResourceLocation location, MinecraftProfileTexture profileTexture) {
-                        switch (type) {
-                            case SKIN:
-                                playerLocationSkin = location;
-                                skinType = profileTexture.getMetadata("model");
+                Minecraft.getMinecraft().getSkinManager().loadProfileTextures(entityPlayer.getGameProfile(), (type, location1, profileTexture) -> {
+                    switch (type) {
+                        case SKIN:
+                            playerLocationSkin = location1;
+                            skinType = profileTexture.getMetadata("model");
 
-                                if (skinType == null) {
-                                    skinType = "default";
-                                }
+                            if (skinType == null) {
+                                skinType = "default";
+                            }
 
-                                break;
-                            case CAPE:
-                                playerLocationCape = location;
-                        }
+                            break;
+                        case CAPE:
+                            playerLocationCape = location1;
                     }
                 }, false);
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
 
         GlStateManager.color(1, 1, 1, 1);
@@ -3336,8 +3328,7 @@ public class GuiProfileViewer extends GuiScreen {
                         Minecraft.getMinecraft().getFramebuffer(), blurOutputHorz);
                 blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
                 blurShaderHorz.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (blurShaderVert == null) {
             try {
@@ -3345,8 +3336,7 @@ public class GuiProfileViewer extends GuiScreen {
                         blurOutputHorz, blurOutputVert);
                 blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
                 blurShaderVert.setProjectionMatrix(createProjectionMatrix(width, height));
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (blurShaderHorz != null && blurShaderVert != null) {
             if (15 != lastBgBlurFactor) {

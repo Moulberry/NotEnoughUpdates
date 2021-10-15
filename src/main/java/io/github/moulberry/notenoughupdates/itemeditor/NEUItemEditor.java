@@ -61,8 +61,7 @@ public class NEUItemEditor extends GuiScreen {
         if (item.has("nbttag")) {
             try {
                 nbttag = JsonToNBT.getTagFromJson(item.get("nbttag").getAsString());
-            } catch (NBTException e) {
-            }
+            } catch (NBTException ignored) {}
         }
 
         internalname = internalname == null ? "" : internalname;
@@ -105,9 +104,8 @@ public class NEUItemEditor extends GuiScreen {
         String damage = item.has("damage") ? item.get("damage").getAsString() : "";
         this.damage = addTextFieldWithSupplier(damage, NO_SPACE | NUM_ONLY);
 
-        rightOptions.add(new GuiElementButton("Close (discards changes)", Color.LIGHT_GRAY.getRGB(), () -> {
-            Minecraft.getMinecraft().displayGuiScreen(null);
-        }));
+        rightOptions.add(new GuiElementButton("Close (discards changes)", Color.LIGHT_GRAY.getRGB(), () ->
+                Minecraft.getMinecraft().displayGuiScreen(null)));
         GuiElementButton button = new Object() { //Used to make the compiler shut the fuck up
             final GuiElementButton b = new GuiElementButton("Save to local disk", Color.GREEN.getRGB(), new Runnable() {
                 public void run() {
@@ -127,9 +125,7 @@ public class NEUItemEditor extends GuiScreen {
             nbttag.removeTag("ench");
             nbttag.getCompoundTag("ExtraAttributes").removeTag("enchantments");
         }));
-        rightOptions.add(new GuiElementButton("Add enchant glint", Color.ORANGE.getRGB(), () -> {
-            nbttag.setTag("ench", new NBTTagList());
-        }));
+        rightOptions.add(new GuiElementButton("Add enchant glint", Color.ORANGE.getRGB(), () -> nbttag.setTag("ench", new NBTTagList())));
 
         resetScrollToTop();
     }
@@ -137,9 +133,8 @@ public class NEUItemEditor extends GuiScreen {
     public boolean save() {
         int damageI = 0;
         try {
-            damageI = Integer.valueOf(damage.get());
-        } catch (NumberFormatException e) {
-        }
+            damageI = Integer.parseInt(damage.get());
+        } catch (NumberFormatException ignored) {}
         resyncNbttag();
         String[] infoA = info.get().trim().split("\n");
         if (infoA.length == 0 || infoA[0].isEmpty()) {
@@ -156,7 +151,7 @@ public class NEUItemEditor extends GuiScreen {
     public Supplier<String> addTextFieldWithSupplier(String initialText, int options) {
         GuiElementTextField textField = new GuiElementTextField(initialText, options);
         this.options.add(textField);
-        return () -> textField.toString();
+        return textField::toString;
     }
 
     public void resyncNbttag() {
@@ -261,9 +256,8 @@ public class NEUItemEditor extends GuiScreen {
 
         if (stack.getItem() != null) {
             try {
-                stack.setItemDamage(Integer.valueOf(damage.get()));
-            } catch (NumberFormatException e) {
-            }
+                stack.setItemDamage(Integer.parseInt(damage.get()));
+            } catch (NumberFormatException ignored) {}
 
             resyncNbttag();
             stack.setTagCompound(nbttag);

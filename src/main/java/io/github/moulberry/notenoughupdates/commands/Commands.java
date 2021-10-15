@@ -248,10 +248,8 @@ public class Commands {
                     "",
                     "\u00a76\u00a7lDev commands:",
                     "\u00a76/neupackdev \u00a7r\u00a77- pack creator command - getnpc");
-            for (int i = 0; i < neuHelpMessages.size(); i++) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuHelpMessages.get(i)
-                ));
-
+            for (String neuHelpMessage : neuHelpMessages) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuHelpMessage));
             }
             if (NotEnoughUpdates.INSTANCE.config.hidden.dev) {
                 ArrayList<String> neuDevHelpMessages = Lists.newArrayList(
@@ -259,10 +257,8 @@ public class Commands {
                         "\u00a76/neuzeephere \u00a7r\u00a77- sphere",
                         "\u00a76/neudungeonwintest \u00a7r\u00a77- displays the dungeon win screen");
 
-                for (int i = 0; i < neuDevHelpMessages.size(); i++) {
-                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuDevHelpMessages.get(i)
-                    ));
-
+                for (String neuDevHelpMessage : neuDevHelpMessages) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuDevHelpMessage));
                 }
             }
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
@@ -368,8 +364,7 @@ public class Commands {
             if (NotEnoughUpdates.INSTANCE.getConfigFile().exists()) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(NotEnoughUpdates.INSTANCE.getConfigFile()), StandardCharsets.UTF_8))) {
                     NotEnoughUpdates.INSTANCE.config = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, NEUConfig.class);
-                } catch (Exception e) {
-                }
+                } catch (Exception ignored) {}
             }
         }
     });

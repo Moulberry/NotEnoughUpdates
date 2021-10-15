@@ -415,7 +415,7 @@ public class GuiElementTextField {
 
         GlStateManager.disableLighting();
 
-        /**
+        /*
          * Search bar
          */
         int paddingUnscaled = searchBarPadding / scaledresolution.getScaleFactor();

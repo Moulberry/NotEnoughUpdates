@@ -392,9 +392,8 @@ public class APIManager {
             }
         };
 
-        manager.hypixelApi.getMyApiGZIPAsync("auctionLast.json.gz", process, () -> {
-            System.out.println("Error downloading auction from Moulberry's jank API. :(");
-        });
+        manager.hypixelApi.getMyApiGZIPAsync("auctionLast.json.gz", process, () ->
+                System.out.println("Error downloading auction from Moulberry's jank API. :("));
 
         manager.hypixelApi.getMyApiGZIPAsync("auction.json.gz", jsonObject -> {
             if (jsonObject.get("success").getAsBoolean()) {
@@ -406,9 +405,7 @@ public class APIManager {
 
                 process.accept(jsonObject);
             }
-        }, () -> {
-            System.out.println("Error downloading auction from Moulberry's jank API. :(");
-        });
+        }, () -> System.out.println("Error downloading auction from Moulberry's jank API. :("));
 
     }
 
@@ -428,8 +425,7 @@ public class APIManager {
                 }
             }
             taggedAuctions = aucs.size();
-        } catch (Exception e) {
-        }
+        } catch (Exception ignored) {}
     }
 
 //    String[] rarityArr = new String[] {
@@ -630,9 +626,7 @@ public class APIManager {
                     } else {
                         pagesToDownload.addLast(page);
                     }
-                }, () -> {
-                    pagesToDownload.addLast(page);
-                }
+                }, () -> pagesToDownload.addLast(page)
         );
     }
 
@@ -680,9 +674,7 @@ public class APIManager {
             auctionPricesJson = jsonObject;
             lastAuctionAvgUpdate = System.currentTimeMillis();
         }, () -> {});
-        manager.hypixelApi.getMyApiGZIPAsync("auction_averages_lbin/1day.json.gz", (jsonObject) -> {
-            auctionPricesAvgLowestBinJson = jsonObject;
-        }, () -> {});
+        manager.hypixelApi.getMyApiGZIPAsync("auction_averages_lbin/1day.json.gz", (jsonObject) -> auctionPricesAvgLowestBinJson = jsonObject, () -> {});
     }
 
     public Set<String> getItemAuctionInfoKeySet() {
@@ -748,7 +740,7 @@ public class APIManager {
         return Item.itemRegistry.getObject(new ResourceLocation(vanillaName)) != null;
     }
 
-    public class CraftInfo {
+    public static class CraftInfo {
         public boolean fromRecipe = false;
         public boolean vanillaItem = false;
         public float craftCost = -1;
@@ -905,10 +897,10 @@ public class APIManager {
         }
 
         if (idLevel.startsWith("LE")) {
-            int idLevelI = Integer.valueOf(idLevel.substring(2));
+            int idLevelI = Integer.parseInt(idLevel.substring(2));
             return level <= idLevelI;
         } else if (idLevel.startsWith("GE")) {
-            int idLevelI = Integer.valueOf(idLevel.substring(2));
+            int idLevelI = Integer.parseInt(idLevel.substring(2));
             return level >= idLevelI;
         }
 

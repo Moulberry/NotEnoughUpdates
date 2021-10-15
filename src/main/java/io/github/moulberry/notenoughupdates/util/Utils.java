@@ -44,9 +44,7 @@ import java.lang.reflect.Method;
 import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,7 +61,7 @@ public class Utils {
 
     public static <T> ArrayList<T> createList(T... values) {
         ArrayList<T> list = new ArrayList<>();
-        for (T value : values) list.add(value);
+        Collections.addAll(list, values);
         return list;
     }
 
@@ -399,8 +397,7 @@ public class Utils {
         for (String methodName : methodNames) {
             try {
                 return clazz.getDeclaredMethod(methodName, params);
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         return null;
     }
@@ -411,15 +408,13 @@ public class Utils {
             try {
                 field = clazz.getDeclaredField(fieldName);
                 break;
-            } catch (Exception e) {
-            }
+            } catch (Exception ignored) {}
         }
         if (field != null) {
             field.setAccessible(true);
             try {
                 return field.get(o);
-            } catch (IllegalAccessException e) {
-            }
+            } catch (IllegalAccessException ignored) {}
         }
         return null;
     }
@@ -1168,7 +1163,7 @@ public class Utils {
 
             if (needsWrap) {
                 int wrappedTooltipWidth = 0;
-                List<String> wrappedTextLines = new ArrayList<String>();
+                List<String> wrappedTextLines = new ArrayList<>();
                 for (int i = 0; i < textLines.size(); i++) {
                     String textLine = textLines.get(i);
                     List<String> wrappedLine = font.listFormattedStringToWidth(textLine, tooltipTextWidth);

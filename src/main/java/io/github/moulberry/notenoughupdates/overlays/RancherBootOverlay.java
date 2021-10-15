@@ -20,9 +20,7 @@ public class RancherBootOverlay {
     private static int selectedIndex = 0;
 
     private static final HashMap<Integer, Integer> currentSpeeds = new HashMap<>();
-    private static final GuiElementSlider slider = new GuiElementSlider(0, 0, 145, 100, 400, 1, 300, (val) -> {
-        setValue(val.intValue());
-    });
+    private static final GuiElementSlider slider = new GuiElementSlider(0, 0, 145, 100, 400, 1, 300, (val) -> setValue(val.intValue()));
     private static final GuiElementTextField textField = new GuiElementTextField("", 48, 20, GuiElementTextField.NUM_ONLY);
     private static boolean textFieldClicked = false;
 

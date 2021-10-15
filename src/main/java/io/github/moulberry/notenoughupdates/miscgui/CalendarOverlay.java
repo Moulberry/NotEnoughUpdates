@@ -65,7 +65,7 @@ public class CalendarOverlay {
     private int xSize = 168;
     private int ySize = 170;
 
-    private class SBEvent {
+    private static class SBEvent {
         String id;
         String display;
         ItemStack stack;
@@ -147,8 +147,7 @@ public class CalendarOverlay {
                             offset += num * SECOND;
                             continue;
                     }
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) {}
                 numS = new StringBuilder();
             }
         }
@@ -300,8 +299,8 @@ public class CalendarOverlay {
                         NotEnoughUpdates.INSTANCE.manager.writeJson(farmingEventTypes, f);
                     }
                 }
-            } catch (Exception ignored) {
-                ignored.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
@@ -987,8 +986,7 @@ public class CalendarOverlay {
         GlStateManager.popMatrix();
     }
 
-    private void renderBlurredBackground(float blurStrength, int screenWidth, int screenHeight,
-                                         int x, int y, int blurWidth, int blurHeight) {
+    private void renderBlurredBackground(float blurStrength, int screenWidth, int screenHeight, int x, int y, int blurWidth, int blurHeight) {
         BackgroundBlur.renderBlurredBackground(blurStrength, screenWidth, screenHeight, x, y, blurWidth, blurHeight);
         Gui.drawRect(x, y, x + blurWidth, y + blurHeight, 0xc8101010);
         GlStateManager.color(1, 1, 1, 1);
