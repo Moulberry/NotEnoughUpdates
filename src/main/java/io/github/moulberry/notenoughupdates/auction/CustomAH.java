@@ -144,7 +144,7 @@ public class CustomAH extends Gui {
     private static final int SORT_MODE_LOW = 1;
     private static final int SORT_MODE_SOON = 2;
 
-//    private static final String[] rarities = {"COMMON", "UNCOMMON", "RARE", "EPIC",
+    //    private static final String[] rarities = {"COMMON", "UNCOMMON", "RARE", "EPIC",
 //            "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME"};
     private static final String[] rarityColours = {"" + EnumChatFormatting.WHITE,
             "" + EnumChatFormatting.GREEN, "" + EnumChatFormatting.BLUE, "" + EnumChatFormatting.DARK_PURPLE,
@@ -1725,7 +1725,6 @@ public class CustomAH extends Gui {
             GuiChest auctionView = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest container = (ContainerChest) auctionView.inventorySlots;
             String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
-
 
             if (containerName.trim().equals("Auction View") || containerName.trim().equals("BIN Auction View")) {
 

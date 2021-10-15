@@ -12,8 +12,6 @@ public class Toolbar {
     @ConfigEditorButton(runnableId = 6, buttonText = "Edit")
     public boolean positionButton = true;
 
-
-
     @ConfigOption(
             name = "Search Bar",
             desc = ""

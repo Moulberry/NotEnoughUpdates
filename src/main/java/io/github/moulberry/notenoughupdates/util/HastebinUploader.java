@@ -26,12 +26,12 @@ public class HastebinUploader {
      * @param mode the mode in which the thing should return NORMAL = returns the url, RAW = returns the raw url, NO_URL = returns the slug.
      * @return The url if mode is NORMAL OR RAW, the slug if mode is NO_URL, and null if an error occurred.
      */
-    public static String upload(String data, Mode mode){
+    public static String upload(String data, Mode mode) {
         try {
             byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
-            HttpURLConnection connection = (HttpURLConnection)new URL(UPLOAD_URL).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) new URL(UPLOAD_URL).openConnection();
             connection.setRequestMethod("POST");
-            connection.addRequestProperty("User-Agent", "Minecraft Mod ("+ NotEnoughUpdates.MODID +"/"+NotEnoughUpdates.VERSION+")");
+            connection.addRequestProperty("User-Agent", "Minecraft Mod (" + NotEnoughUpdates.MODID + "/" + NotEnoughUpdates.VERSION + ")");
             connection.addRequestProperty("Content-Length", String.valueOf(bytes.length));
             connection.setReadTimeout(15000);
             connection.setConnectTimeout(15000);
@@ -41,9 +41,12 @@ public class HastebinUploader {
             if (!json.has("key")) return null;
             final String key = json.get("key").getAsString();
             switch (mode) {
-                case RAW: return RAW_RETURN_URL + key;
-                case NORMAL: return RETURN_URL + key;
-                case NO_URL: return key;
+                case RAW:
+                    return RAW_RETURN_URL + key;
+                case NORMAL:
+                    return RETURN_URL + key;
+                case NO_URL:
+                    return key;
             }
         } catch (Exception e) {
             e.printStackTrace();

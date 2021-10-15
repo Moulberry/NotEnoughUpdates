@@ -43,48 +43,46 @@ public class TimersOverlay extends TextOverlay {
     private static final Pattern FETCHUR_PATTERN = Pattern.compile("\u00a7e\\[NPC] Fetchur\u00a7f: \u00a7rthanks thats probably what i needed\u00a7r");
     private static final Pattern FETCHUR2_PATTERN = Pattern.compile("\u00a7e\\[NPC] Fetchur\u00a7f: \u00a7rcome back another time, maybe tmrw\u00a7r");
 
-
     private final boolean hideGodpot = false;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onChatMessageReceived(ClientChatReceivedEvent event) {
         NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
-        if(hidden == null) return;
+        if (hidden == null) return;
 
-        if(event.type == 0) {
+        if (event.type == 0) {
             long currentTime = System.currentTimeMillis();
 
             Matcher cakeMatcher = CAKE_PATTERN.matcher(event.message.getFormattedText());
-            if(cakeMatcher.matches()) {
+            if (cakeMatcher.matches()) {
                 hidden.firstCakeAte = currentTime;
                 return;
             }
 
             Matcher puzzlerMatcher = PUZZLER_PATTERN.matcher(event.message.getFormattedText());
-            if(puzzlerMatcher.matches()) {
+            if (puzzlerMatcher.matches()) {
                 hidden.puzzlerCompleted = currentTime;
                 return;
             }
 
             Matcher fetchurMatcher = FETCHUR_PATTERN.matcher(event.message.getFormattedText());
-            if(fetchurMatcher.matches()) {
+            if (fetchurMatcher.matches()) {
                 hidden.fetchurCompleted = currentTime;
                 return;
             }
 
             Matcher fetchur2Matcher = FETCHUR2_PATTERN.matcher(event.message.getFormattedText());
-            if(fetchur2Matcher.matches()) {
+            if (fetchur2Matcher.matches()) {
                 hidden.fetchurCompleted = currentTime;
                 return;
             }
-
 
         }
     }
 
     @Override
     protected Vector2f getSize(List<String> strings) {
-        if(NotEnoughUpdates.INSTANCE.config.miscOverlays.todoIcons)
+        if (NotEnoughUpdates.INSTANCE.config.miscOverlays.todoIcons)
             return super.getSize(strings).translate(12, 0);
         return super.getSize(strings);
     }
@@ -98,7 +96,7 @@ public class TimersOverlay extends TextOverlay {
 
     @Override
     protected void renderLine(String line, Vector2f position, boolean dummy) {
-        if(!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoIcons) {
+        if (!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoIcons) {
             return;
         }
         GlStateManager.enableDepth();
@@ -107,13 +105,19 @@ public class TimersOverlay extends TextOverlay {
 
         String clean = Utils.cleanColour(line);
         String beforeColon = clean.split(":")[0];
-        switch(beforeColon) {
-            case "Cakes": icon = CAKES_ICON; break;
-            case "Puzzler": icon = PUZZLER_ICON; break;
-            case "Godpot": icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("GOD_POTION")); break;
+        switch (beforeColon) {
+            case "Cakes":
+                icon = CAKES_ICON;
+                break;
+            case "Puzzler":
+                icon = PUZZLER_ICON;
+                break;
+            case "Godpot":
+                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("GOD_POTION"));
+                break;
             case "Fetchur": {
-                if(FETCHUR_ICONS == null) {
-                    FETCHUR_ICONS = new ItemStack[] {
+                if (FETCHUR_ICONS == null) {
+                    FETCHUR_ICONS = new ItemStack[]{
                             new ItemStack(Blocks.wool, 50, 14),
                             new ItemStack(Blocks.stained_glass, 20, 4),
                             new ItemStack(Items.compass, 1, 0),
@@ -133,21 +137,27 @@ public class TimersOverlay extends TextOverlay {
 
                 ZonedDateTime currentTimeEST = ZonedDateTime.now(ZoneId.of("America/Atikokan"));
 
-                long fetchurIndex = ((currentTimeEST.getDayOfMonth()+1) % 13)-1;
+                long fetchurIndex = ((currentTimeEST.getDayOfMonth() + 1) % 13) - 1;
                 //Added because disabled fetchur and enabled it again but it was showing the wrong item
                 //Lets see if this stays correct
 
-                if(fetchurIndex < 0) fetchurIndex += 13;
+                if (fetchurIndex < 0) fetchurIndex += 13;
 
-                icon = FETCHUR_ICONS[(int)fetchurIndex];
+                icon = FETCHUR_ICONS[(int) fetchurIndex];
                 break;
             }
-            case "Commissions": icon = COMMISSIONS_ICON; break;
-            case "Experiments": icon = EXPERIMENTS_ICON; break;
-            case "Cookie Buff": icon = COOKIE_ICON; break;
+            case "Commissions":
+                icon = COMMISSIONS_ICON;
+                break;
+            case "Experiments":
+                icon = EXPERIMENTS_ICON;
+                break;
+            case "Cookie Buff":
+                icon = COOKIE_ICON;
+                break;
         }
 
-        if(icon != null) {
+        if (icon != null) {
             GlStateManager.pushMatrix();
             GlStateManager.translate(position.x, position.y, 0);
             GlStateManager.scale(0.5f, 0.5f, 1f);
@@ -162,7 +172,6 @@ public class TimersOverlay extends TextOverlay {
 
     @Override
     public void update() {
-
 
         long currentTime = System.currentTimeMillis();
 
@@ -202,20 +211,20 @@ public class TimersOverlay extends TextOverlay {
                     }
                 }
                 ItemStack stackSuperPairs = lower.getStackInSlot(22);
-                if(stackSuperPairs != null && stackSuperPairs.getItem() == Items.skull && stackSuperPairs.getTagCompound() != null){
+                if (stackSuperPairs != null && stackSuperPairs.getItem() == Items.skull && stackSuperPairs.getTagCompound() != null) {
                     String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stackSuperPairs.getTagCompound());
-                    String text = lore[lore.length-1];
+                    String text = lore[lore.length - 1];
                     String cleanText = Utils.cleanColour(text);
-                    if(cleanText.equals("Experiments on cooldown!")){
+                    if (cleanText.equals("Experiments on cooldown!")) {
                         hidden.experimentsCompleted = currentTime;
                         return;
                     }
                 }
                 hidden.experimentsCompleted = 0;
                 return;
-            } else if(containerName.equals("Superpairs Rewards") && lower.getSizeInventory() >= 27){
+            } else if (containerName.equals("Superpairs Rewards") && lower.getSizeInventory() >= 27) {
                 ItemStack stack = lower.getStackInSlot(13);
-                if(stack != null && Utils.cleanColour(stack.getDisplayName()).equals("Superpairs")){
+                if (stack != null && Utils.cleanColour(stack.getDisplayName()).equals("Superpairs")) {
                     hidden.experimentsCompleted = currentTime;
                 }
             }
@@ -312,7 +321,6 @@ public class TimersOverlay extends TextOverlay {
             hidden.godPotionDuration = 0;
         }
 
-
         if (!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay2) {
             overlayStrings = null;
             return;
@@ -354,11 +362,10 @@ public class TimersOverlay extends TextOverlay {
             map.put(1, DARK_AQUA + "Cookie Buff: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(hidden.cookieBuffRemaining));
         }
 
-
         long godpotEnd = hidden.godPotionDuration;
         //Godpot Display
         //do not display in dungeons due to dungeons not having
-        if (!(SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon"))){
+        if (!(SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon"))) {
             if (hidden.godPotionDuration <= 0) {
                 map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.goneColour] + "Inactive!");
             } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
@@ -373,90 +380,89 @@ public class TimersOverlay extends TextOverlay {
             } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.godpotDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
                 map.put(2, DARK_AQUA + "Godpot: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(hidden.godPotionDuration));
             }
-    }
-
-        long puzzlerEnd = hidden.puzzlerCompleted + 1000*60*60*24 - currentTime;
-        //Puzzler Display
-        if((hidden.puzzlerCompleted + TimeEnums.DAY.time) < currentTime) {
-            map.put(3, DARK_AQUA+"Puzzler: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour]+"Ready!");
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.puzzlerDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-                (hidden.puzzlerCompleted + (TimeEnums.DAY.time - TimeEnums.HALFANHOUR.time)) < currentTime){
-            map.put(3, DARK_AQUA+"Puzzler: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour]+Utils.prettyTime(puzzlerEnd));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.puzzlerDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-                (hidden.puzzlerCompleted + (TimeEnums.DAY.time - TimeEnums.HOUR.time)) < currentTime){
-            map.put(3, DARK_AQUA+"Puzzler: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour]+Utils.prettyTime(puzzlerEnd));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.puzzlerDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
-                (hidden.puzzlerCompleted + (TimeEnums.DAY.time - (TimeEnums.HOUR.time)*3)) < currentTime) {
-            map.put(3, DARK_AQUA+"Puzzler: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour]+Utils.prettyTime(puzzlerEnd));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.puzzlerDisplay >= DISPLAYTYPE.ALWAYS.ordinal()){
-            map.put(3, DARK_AQUA+"Puzzler: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour]+Utils.prettyTime(puzzlerEnd));
         }
 
-        long midnightReset = (currentTime-18000000)/86400000*86400000+18000000;
+        long puzzlerEnd = hidden.puzzlerCompleted + 1000 * 60 * 60 * 24 - currentTime;
+        //Puzzler Display
+        if ((hidden.puzzlerCompleted + TimeEnums.DAY.time) < currentTime) {
+            map.put(3, DARK_AQUA + "Puzzler: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready!");
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.puzzlerDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+                (hidden.puzzlerCompleted + (TimeEnums.DAY.time - TimeEnums.HALFANHOUR.time)) < currentTime) {
+            map.put(3, DARK_AQUA + "Puzzler: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] + Utils.prettyTime(puzzlerEnd));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.puzzlerDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+                (hidden.puzzlerCompleted + (TimeEnums.DAY.time - TimeEnums.HOUR.time)) < currentTime) {
+            map.put(3, DARK_AQUA + "Puzzler: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] + Utils.prettyTime(puzzlerEnd));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.puzzlerDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+                (hidden.puzzlerCompleted + (TimeEnums.DAY.time - (TimeEnums.HOUR.time) * 3)) < currentTime) {
+            map.put(3, DARK_AQUA + "Puzzler: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(puzzlerEnd));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.puzzlerDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+            map.put(3, DARK_AQUA + "Puzzler: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(puzzlerEnd));
+        }
+
+        long midnightReset = (currentTime - 18000000) / 86400000 * 86400000 + 18000000;
         long fetchurComplete = hidden.fetchurCompleted;
 
         long timeDiffMidnightNow = midnightReset + 86400000 - currentTime;
 
         //Fetchur Display
-        if(fetchurComplete < midnightReset) {
-            map.put(4, DARK_AQUA+"Fetchur: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour]+"Ready!");
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.fetchurDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-                (fetchurComplete < (midnightReset-TimeEnums.HALFANHOUR.time))){
-            map.put(4, DARK_AQUA+"Fetchur: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.fetchurDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-                (fetchurComplete < (midnightReset-TimeEnums.HOUR.time))){
-            map.put(4, DARK_AQUA+"Fetchur: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.fetchurDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
-                (fetchurComplete < (midnightReset-(TimeEnums.HOUR.time*3)))) {
-            map.put(4, DARK_AQUA+"Fetchur: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.fetchurDisplay >= DISPLAYTYPE.ALWAYS.ordinal()){
-            map.put(4, DARK_AQUA+"Fetchur: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour]+Utils.prettyTime(timeDiffMidnightNow));
+        if (fetchurComplete < midnightReset) {
+            map.put(4, DARK_AQUA + "Fetchur: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready!");
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.fetchurDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+                (fetchurComplete < (midnightReset - TimeEnums.HALFANHOUR.time))) {
+            map.put(4, DARK_AQUA + "Fetchur: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.fetchurDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+                (fetchurComplete < (midnightReset - TimeEnums.HOUR.time))) {
+            map.put(4, DARK_AQUA + "Fetchur: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.fetchurDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+                (fetchurComplete < (midnightReset - (TimeEnums.HOUR.time * 3)))) {
+            map.put(4, DARK_AQUA + "Fetchur: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.fetchurDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+            map.put(4, DARK_AQUA + "Fetchur: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(timeDiffMidnightNow));
         }
 
         //Commissions Display
-        if(hidden.commissionsCompleted < midnightReset) {
-            map.put(5, DARK_AQUA+"Commissions: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour]+"Ready!");
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-                (hidden.commissionsCompleted < (midnightReset-TimeEnums.HALFANHOUR.time))){
-            map.put(5, DARK_AQUA+"Commissions: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-                (hidden.commissionsCompleted < (midnightReset-TimeEnums.HOUR.time))){
-            map.put(5, DARK_AQUA+"Commissions: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
-                (hidden.commissionsCompleted < (midnightReset-(TimeEnums.HOUR.time*3)))) {
-            map.put(5, DARK_AQUA+"Commissions: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.ALWAYS.ordinal()){
-            map.put(5, DARK_AQUA+"Commissions: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour]+Utils.prettyTime(timeDiffMidnightNow));
+        if (hidden.commissionsCompleted < midnightReset) {
+            map.put(5, DARK_AQUA + "Commissions: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready!");
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+                (hidden.commissionsCompleted < (midnightReset - TimeEnums.HALFANHOUR.time))) {
+            map.put(5, DARK_AQUA + "Commissions: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+                (hidden.commissionsCompleted < (midnightReset - TimeEnums.HOUR.time))) {
+            map.put(5, DARK_AQUA + "Commissions: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+                (hidden.commissionsCompleted < (midnightReset - (TimeEnums.HOUR.time * 3)))) {
+            map.put(5, DARK_AQUA + "Commissions: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+            map.put(5, DARK_AQUA + "Commissions: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(timeDiffMidnightNow));
         }
 
         //Experiment Display
-        if(hidden.experimentsCompleted < midnightReset) {
-            map.put(6, DARK_AQUA+"Experiments: "+ EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour]+"Ready!");
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-                (hidden.experimentsCompleted < (midnightReset-TimeEnums.HALFANHOUR.time))){
-            map.put(6, DARK_AQUA+"Experiments: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-                (hidden.experimentsCompleted < (midnightReset-TimeEnums.HOUR.time))){
-            map.put(6, DARK_AQUA+"Experiments: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
-                (hidden.experimentsCompleted < (midnightReset-(TimeEnums.HOUR.time*3)))) {
-            map.put(6, DARK_AQUA+"Experiments: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour]+Utils.prettyTime(timeDiffMidnightNow));
-        } else if(NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.ALWAYS.ordinal()){
-            map.put(6, DARK_AQUA+"Experiments: "+EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour]+Utils.prettyTime(timeDiffMidnightNow));
+        if (hidden.experimentsCompleted < midnightReset) {
+            map.put(6, DARK_AQUA + "Experiments: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready!");
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+                (hidden.experimentsCompleted < (midnightReset - TimeEnums.HALFANHOUR.time))) {
+            map.put(6, DARK_AQUA + "Experiments: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+                (hidden.experimentsCompleted < (midnightReset - TimeEnums.HOUR.time))) {
+            map.put(6, DARK_AQUA + "Experiments: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+                (hidden.experimentsCompleted < (midnightReset - (TimeEnums.HOUR.time * 3)))) {
+            map.put(6, DARK_AQUA + "Experiments: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] + Utils.prettyTime(timeDiffMidnightNow));
+        } else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+            map.put(6, DARK_AQUA + "Experiments: " + EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] + Utils.prettyTime(timeDiffMidnightNow));
         }
 
         overlayStrings = new ArrayList<>();
-        for(int index : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText2) {
-            if(map.containsKey(index)) {
+        for (int index : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText2) {
+            if (map.containsKey(index)) {
                 overlayStrings.add(map.get(index));
             }
         }
-        if(overlayStrings.isEmpty()) overlayStrings = null;
+        if (overlayStrings.isEmpty()) overlayStrings = null;
     }
 
-
     private enum TimeEnums {
-        DAY (86400000),
+        DAY(86400000),
         HALFDAY(43200000),
         HOUR(3600000),
         HALFANHOUR(1800000);

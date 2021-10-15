@@ -34,14 +34,14 @@ public class ShaderManager {
     }
 
     public int getShader(String name) {
-        if(!shaderMap.containsKey(name)) {
+        if (!shaderMap.containsKey(name)) {
             reloadShader(name);
         }
         return shaderMap.get(name).program;
     }
 
     public int loadShader(String name) {
-        if(!shaderMap.containsKey(name)) {
+        if (!shaderMap.containsKey(name)) {
             reloadShader(name);
         }
         GL20.glUseProgram(shaderMap.get(name).program);
@@ -51,17 +51,17 @@ public class ShaderManager {
     public void loadData(String name, String var, Object value) {
         int location = GL20.glGetUniformLocation(shaderMap.get(name).program, var);
 
-        if(value instanceof Integer) {
+        if (value instanceof Integer) {
             GL20.glUniform1i(location, (Integer) value);
-        } else if(value instanceof Float) {
+        } else if (value instanceof Float) {
             GL20.glUniform1f(location, (Float) value);
-        } else if(value instanceof Vector2f) {
+        } else if (value instanceof Vector2f) {
             Vector2f vec = (Vector2f) value;
             GL20.glUniform2f(location, vec.x, vec.y);
-        } else if(value instanceof Vector3f) {
+        } else if (value instanceof Vector3f) {
             Vector3f vec = (Vector3f) value;
             GL20.glUniform3f(location, vec.x, vec.y, vec.z);
-        } else if(value instanceof Vector4f) {
+        } else if (value instanceof Vector4f) {
             Vector4f vec = (Vector4f) value;
             GL20.glUniform4f(location, vec.x, vec.y, vec.z, vec.w);
         } else {
@@ -72,7 +72,7 @@ public class ShaderManager {
     private void reloadShader(String name) {
         int vertex = -1;
         String sourceVert = getShaderSource(name, GL20.GL_VERTEX_SHADER);
-        if(!sourceVert.isEmpty()) {
+        if (!sourceVert.isEmpty()) {
             vertex = GL20.glCreateShader(GL20.GL_VERTEX_SHADER);
             GL20.glShaderSource(vertex, sourceVert);
             GL20.glCompileShader(vertex);
@@ -84,7 +84,7 @@ public class ShaderManager {
 
         int fragment = -1;
         String sourceFrag = getShaderSource(name, GL20.GL_FRAGMENT_SHADER);
-        if(!sourceFrag.isEmpty()) {
+        if (!sourceFrag.isEmpty()) {
             fragment = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER);
             GL20.glShaderSource(fragment, sourceFrag);
             GL20.glCompileShader(fragment);
@@ -96,7 +96,7 @@ public class ShaderManager {
 
         int compute = -1;
         String sourceCompute = getShaderSource(name, GL43.GL_COMPUTE_SHADER);
-        if(!sourceCompute.isEmpty()) {
+        if (!sourceCompute.isEmpty()) {
             compute = GL20.glCreateShader(GL43.GL_COMPUTE_SHADER);
             GL20.glShaderSource(compute, sourceCompute);
             GL20.glCompileShader(compute);
@@ -107,15 +107,15 @@ public class ShaderManager {
         }
 
         int program = GL20.glCreateProgram();
-        if(vertex != -1) GL20.glAttachShader(program, vertex);
-        if(fragment != -1) GL20.glAttachShader(program, fragment);
-        if(compute != -1) GL20.glAttachShader(program, compute);
+        if (vertex != -1) GL20.glAttachShader(program, vertex);
+        if (fragment != -1) GL20.glAttachShader(program, fragment);
+        if (compute != -1) GL20.glAttachShader(program, compute);
 
         GL20.glLinkProgram(program);
 
-        if(vertex != -1) GL20.glDeleteShader(vertex);
-        if(fragment != -1) GL20.glDeleteShader(fragment);
-        if(compute != -1) GL20.glDeleteShader(compute);
+        if (vertex != -1) GL20.glDeleteShader(vertex);
+        if (fragment != -1) GL20.glDeleteShader(fragment);
+        if (compute != -1) GL20.glDeleteShader(compute);
 
         if (GL20.glGetProgrami(program, 35714) == 0) {
             System.err.println(GL20.glGetProgramInfoLog(program, 100));
@@ -130,27 +130,27 @@ public class ShaderManager {
 
     public String getShaderSource(String name, int type) {
         String ext = "";
-        if(type == GL20.GL_VERTEX_SHADER) {
+        if (type == GL20.GL_VERTEX_SHADER) {
             ext = ".vert";
-        } else if(type == GL20.GL_FRAGMENT_SHADER) {
+        } else if (type == GL20.GL_FRAGMENT_SHADER) {
             ext = ".frag";
-        } else if(type == GL43.GL_COMPUTE_SHADER) {
+        } else if (type == GL43.GL_COMPUTE_SHADER) {
             ext = ".compute";
         } else {
             return "";
         }
         ResourceLocation location = new ResourceLocation(shaderLocation.getResourceDomain(),
-                shaderLocation.getResourcePath()+"/"+name+ext);
-        try(InputStream is = Minecraft.getMinecraft().getResourceManager().getResource(location).getInputStream()) {
+                shaderLocation.getResourcePath() + "/" + name + ext);
+        try (InputStream is = Minecraft.getMinecraft().getResourceManager().getResource(location).getInputStream()) {
             StringBuilder source = new StringBuilder();
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
             String line;
-            while((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null) {
                 source.append(line).append("\n");
             }
             return source.toString();
-        } catch(IOException e) {
+        } catch (IOException e) {
         }
         return "";
     }

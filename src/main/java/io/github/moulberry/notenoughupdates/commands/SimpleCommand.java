@@ -49,7 +49,7 @@ public class SimpleCommand extends CommandBase {
     }
 
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
-        if(tabRunnable != null) return tabRunnable.tabComplete(sender, args, pos);
+        if (tabRunnable != null) return tabRunnable.tabComplete(sender, args, pos);
         return null;
     }
 }

@@ -32,13 +32,13 @@ public class HypixelApi {
     }
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer, Runnable error) {
-        getApiAsync(generateApiUrl(apiKey!=null?apiKey.trim():null, method, args), consumer, error);
+        getApiAsync(generateApiUrl(apiKey != null ? apiKey.trim() : null, method, args), consumer, error);
     }
 
     private String getMyApiURL() {
-        if(currentUrl == 0) {
+        if (currentUrl == 0) {
             lastPrimaryUrl = System.currentTimeMillis();
-        } else if(System.currentTimeMillis() - lastPrimaryUrl > 1000*60*30) { //Try switch back to main url after 30m
+        } else if (System.currentTimeMillis() - lastPrimaryUrl > 1000 * 60 * 30) { //Try switch back to main url after 30m
             currentUrl = 0;
         }
 
@@ -49,12 +49,12 @@ public class HypixelApi {
     private void myApiError(int index) {
         myApiSuccesses[index] = myApiSuccesses[index] - 2;
 
-        if(myApiSuccesses[index] < 0) {
+        if (myApiSuccesses[index] < 0) {
             myApiSuccesses[index] = 0;
 
-            if(index == currentUrl) {
+            if (index == currentUrl) {
                 currentUrl++;
-                if(currentUrl >= myApiURLs.length) {
+                if (currentUrl >= myApiURLs.length) {
                     currentUrl = 0;
                 }
             }
@@ -65,7 +65,7 @@ public class HypixelApi {
         es.submit(() -> {
             try {
                 consumer.accept(getApiSync(urlS));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 error.run();
             }
         });
@@ -75,9 +75,9 @@ public class HypixelApi {
         es.submit(() -> {
             int current = currentUrl;
             try {
-                consumer.accept(getApiSync(getMyApiURL()+urlS));
-            } catch(Exception e) {
-                if(NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+                consumer.accept(getApiSync(getMyApiURL() + urlS));
+            } catch (Exception e) {
+                if (NotEnoughUpdates.INSTANCE.config.hidden.dev) {
                     e.printStackTrace();
                 }
                 myApiError(current);
@@ -90,8 +90,8 @@ public class HypixelApi {
         es.submit(() -> {
             int current = currentUrl;
             try {
-                consumer.accept(getApiGZIPSync(getMyApiURL()+urlS));
-            } catch(Exception e) {
+                consumer.accept(getApiGZIPSync(getMyApiURL() + urlS));
+            } catch (Exception e) {
                 myApiError(current);
                 error.run();
             }
@@ -102,7 +102,7 @@ public class HypixelApi {
         es.submit(() -> {
             try {
                 consumer.accept(getApiGZIPSync(urlS));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 error.run();
             }
         });
@@ -117,7 +117,7 @@ public class HypixelApi {
         String response = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
 
         JsonObject json = gson.fromJson(response, JsonObject.class);
-        if(json == null) throw new ConnectException("Invalid JSON");
+        if (json == null) throw new ConnectException("Invalid JSON");
         return json;
     }
 
@@ -136,8 +136,8 @@ public class HypixelApi {
     public String generateApiUrl(String apiKey, String method, HashMap<String, String> args) {
         StringBuilder url = new StringBuilder("https://api.hypixel.net/" + method + (apiKey != null ? ("?key=" + apiKey.replace(" ", "")) : ""));
         boolean first = true;
-        for(Map.Entry<String, String> entry : args.entrySet()) {
-            if(first && apiKey == null) {
+        for (Map.Entry<String, String> entry : args.entrySet()) {
+            if (first && apiKey == null) {
                 url.append("?");
                 first = false;
             } else {

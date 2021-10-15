@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(ItemRenderer.class)
 public abstract class MixinItemRenderer {
 
-    @Redirect(method="updateEquippedItem", at=@At(
+    @Redirect(method = "updateEquippedItem", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/player/InventoryPlayer;getCurrentItem()Lnet/minecraft/item/ItemStack;"
     ))
     public ItemStack modifyStackToRender(InventoryPlayer player) {
-        if(InventoryStorageSelector.getInstance().isSlotSelected()) {
+        if (InventoryStorageSelector.getInstance().isSlotSelected()) {
             return InventoryStorageSelector.getInstance().getHeldItemOverride();
         }
         return player.getCurrentItem();

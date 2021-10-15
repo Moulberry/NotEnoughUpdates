@@ -58,10 +58,11 @@ public class NEUItemEditor extends GuiScreen {
         this.manager = manager;
         this.item = item;
 
-        if(item.has("nbttag")) {
+        if (item.has("nbttag")) {
             try {
                 nbttag = JsonToNBT.getTagFromJson(item.get("nbttag").getAsString());
-            } catch(NBTException e) {}
+            } catch (NBTException e) {
+            }
         }
 
         internalname = internalname == null ? "" : internalname;
@@ -79,7 +80,7 @@ public class NEUItemEditor extends GuiScreen {
         options.add(new GuiElementText("Lore: ", Color.WHITE.getRGB()));
         JsonArray lore = item.has("lore") ? item.get("lore").getAsJsonArray() : new JsonArray();
         String[] loreA = new String[lore.size()];
-        for(int i=0; i<lore.size(); i++) loreA[i] = lore.get(i).getAsString();
+        for (int i = 0; i < lore.size(); i++) loreA[i] = lore.get(i).getAsString();
         this.lore = addTextFieldWithSupplier(String.join("\n", loreA), COLOUR | MULTILINE);
 
         options.add(new GuiElementText("Craft text: ", Color.WHITE.getRGB()));
@@ -93,7 +94,7 @@ public class NEUItemEditor extends GuiScreen {
         options.add(new GuiElementText("Additional information: ", Color.WHITE.getRGB()));
         JsonArray info = item.has("info") ? item.get("info").getAsJsonArray() : new JsonArray();
         String[] infoA = new String[info.size()];
-        for(int i=0; i<info.size(); i++) infoA[i] = info.get(i).getAsString();
+        for (int i = 0; i < info.size(); i++) infoA[i] = info.get(i).getAsString();
         this.info = addTextFieldWithSupplier(String.join("\n", infoA), COLOUR | MULTILINE);
 
         options.add(new GuiElementText("Click-command (viewrecipe or viewpotion): ", Color.WHITE.getRGB()));
@@ -110,7 +111,7 @@ public class NEUItemEditor extends GuiScreen {
         GuiElementButton button = new Object() { //Used to make the compiler shut the fuck up
             final GuiElementButton b = new GuiElementButton("Save to local disk", Color.GREEN.getRGB(), new Runnable() {
                 public void run() {
-                    if(save()) {
+                    if (save()) {
                         b.setText("Save to local disk (SUCCESS)");
                     } else {
                         b.setText("Save to local disk (FAILED)");
@@ -137,10 +138,11 @@ public class NEUItemEditor extends GuiScreen {
         int damageI = 0;
         try {
             damageI = Integer.valueOf(damage.get());
-        } catch(NumberFormatException e) {}
+        } catch (NumberFormatException e) {
+        }
         resyncNbttag();
         String[] infoA = info.get().trim().split("\n");
-        if(infoA.length == 0 || infoA[0].isEmpty()) {
+        if (infoA.length == 0 || infoA[0].isEmpty()) {
             infoA = new String[0];
         }
         return manager.writeItemJson(item, internalname.get(), itemid.get(), displayname.get(), lore.get().split("\n"),
@@ -158,11 +160,11 @@ public class NEUItemEditor extends GuiScreen {
     }
 
     public void resyncNbttag() {
-        if(nbttag == null) nbttag = new NBTTagCompound();
+        if (nbttag == null) nbttag = new NBTTagCompound();
 
         //Item lore
         NBTTagList list = new NBTTagList();
-        for(String lore : this.lore.get().split("\n")) {
+        for (String lore : this.lore.get().split("\n")) {
             list.appendTag(new NBTTagString(lore));
         }
 
@@ -181,14 +183,14 @@ public class NEUItemEditor extends GuiScreen {
 
     public void resetScrollToTop() {
         int totalHeight = PADDING;
-        for(GuiElement gui : options) {
+        for (GuiElement gui : options) {
             totalHeight += gui.getHeight();
         }
 
         ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
         int height = scaledresolution.getScaledHeight();
 
-        scrollHeight.setValue(totalHeight-height+PADDING);
+        scrollHeight.setValue(totalHeight - height + PADDING);
     }
 
     public int calculateYScroll() {
@@ -196,21 +198,21 @@ public class NEUItemEditor extends GuiScreen {
         int height = scaledresolution.getScaledHeight();
 
         int totalHeight = PADDING;
-        for(GuiElement gui : options) {
+        for (GuiElement gui : options) {
             totalHeight += gui.getHeight();
         }
 
-        if(scrollHeight.getValue() < 0) scrollHeight.setValue(0);
+        if (scrollHeight.getValue() < 0) scrollHeight.setValue(0);
 
         int yScroll = 0;
-        if(totalHeight > height-PADDING) {
-            yScroll = totalHeight-height+PADDING-scrollHeight.getValue();
+        if (totalHeight > height - PADDING) {
+            yScroll = totalHeight - height + PADDING - scrollHeight.getValue();
         } else {
             scrollHeight.setValue(0);
         }
-        if(yScroll < 0) {
+        if (yScroll < 0) {
             yScroll = 0;
-            scrollHeight.setValue(totalHeight-height+PADDING);
+            scrollHeight.setValue(totalHeight - height + PADDING);
         }
 
         return yScroll;
@@ -230,19 +232,19 @@ public class NEUItemEditor extends GuiScreen {
         drawRect(0, 0, width, height, backgroundColour.getRGB());
 
         int yScroll = calculateYScroll();
-        if(yScroll > 0){
+        if (yScroll > 0) {
             //Render scroll bar
         }
 
-        int currentY = PADDING-yScroll;
-        for(GuiElement gui : options) {
+        int currentY = PADDING - yScroll;
+        for (GuiElement gui : options) {
             gui.render(PADDING, currentY);
             currentY += gui.getHeight();
         }
 
         currentY = PADDING;
-        for(GuiElement gui : rightOptions) {
-            gui.render(width-PADDING-gui.getWidth(), currentY);
+        for (GuiElement gui : rightOptions) {
+            gui.render(width - PADDING - gui.getWidth(), currentY);
             currentY += gui.getHeight();
         }
 
@@ -251,24 +253,25 @@ public class NEUItemEditor extends GuiScreen {
         int itemSize = 128;
         Color itemBorder = new Color(100, 50, 150, 255);
         Color itemBackground = new Color(120, 120, 120, 255);
-        drawRect(itemX-10, itemY-10, itemX+itemSize+10, itemY+itemSize+10, Color.DARK_GRAY.getRGB());
-        drawRect(itemX-9, itemY-9, itemX+itemSize+9, itemY+itemSize+9, itemBorder.getRGB());
-        drawRect(itemX-6, itemY-6, itemX+itemSize+6, itemY+itemSize+6, Color.DARK_GRAY.getRGB());
-        drawRect(itemX-5, itemY-5, itemX+itemSize+5, itemY+itemSize+5, itemBackground.getRGB());
+        drawRect(itemX - 10, itemY - 10, itemX + itemSize + 10, itemY + itemSize + 10, Color.DARK_GRAY.getRGB());
+        drawRect(itemX - 9, itemY - 9, itemX + itemSize + 9, itemY + itemSize + 9, itemBorder.getRGB());
+        drawRect(itemX - 6, itemY - 6, itemX + itemSize + 6, itemY + itemSize + 6, Color.DARK_GRAY.getRGB());
+        drawRect(itemX - 5, itemY - 5, itemX + itemSize + 5, itemY + itemSize + 5, itemBackground.getRGB());
         ItemStack stack = new ItemStack(Item.itemRegistry.getObject(new ResourceLocation(itemid.get())));
 
-        if(stack.getItem() != null) {
+        if (stack.getItem() != null) {
             try {
                 stack.setItemDamage(Integer.valueOf(damage.get()));
-            } catch(NumberFormatException e) {}
+            } catch (NumberFormatException e) {
+            }
 
             resyncNbttag();
             stack.setTagCompound(nbttag);
 
-            int scaleFactor = itemSize/16;
+            int scaleFactor = itemSize / 16;
             GL11.glPushMatrix();
             GlStateManager.scale(scaleFactor, scaleFactor, 1);
-            drawItemStack(stack, itemX/scaleFactor, itemY/scaleFactor, null);
+            drawItemStack(stack, itemX / scaleFactor, itemY / scaleFactor, null);
             GL11.glPopMatrix();
         }
 
@@ -277,7 +280,7 @@ public class NEUItemEditor extends GuiScreen {
         text.add(displayname.get());
         text.addAll(Arrays.asList(lore.get().split("\n")));
 
-        Utils.drawHoveringText(text, itemX-20, itemY+itemSize+28, width, height, -1,
+        Utils.drawHoveringText(text, itemX - 20, itemY + itemSize + 28, width, height, -1,
                 Minecraft.getMinecraft().fontRendererObj);
 
         GlStateManager.disableLighting();
@@ -285,7 +288,7 @@ public class NEUItemEditor extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) {
-        for(GuiElement gui : options) {
+        for (GuiElement gui : options) {
             gui.keyTyped(typedChar, keyCode);
         }
     }
@@ -296,9 +299,9 @@ public class NEUItemEditor extends GuiScreen {
         int width = scaledresolution.getScaledWidth();
 
         int yScroll = calculateYScroll();
-        int currentY = PADDING-yScroll;
-        for(GuiElement gui : options) {
-            if(mouseY > currentY && mouseY < currentY+gui.getHeight()
+        int currentY = PADDING - yScroll;
+        for (GuiElement gui : options) {
+            if (mouseY > currentY && mouseY < currentY + gui.getHeight()
                     && mouseX < gui.getWidth()) {
                 gui.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
                 return;
@@ -307,9 +310,9 @@ public class NEUItemEditor extends GuiScreen {
         }
 
         currentY = PADDING;
-        for(GuiElement gui : rightOptions) {
-            if(mouseY > currentY && mouseY < currentY+gui.getHeight()
-                    && mouseX > width-PADDING-gui.getWidth()) {
+        for (GuiElement gui : rightOptions) {
+            if (mouseY > currentY && mouseY < currentY + gui.getHeight()
+                    && mouseX > width - PADDING - gui.getWidth()) {
                 gui.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
                 return;
             }
@@ -322,18 +325,18 @@ public class NEUItemEditor extends GuiScreen {
         ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
 
         int maxWidth = 0;
-        for(GuiElement gui : options) {
-            if(gui.getWidth() > maxWidth) maxWidth = gui.getWidth();
+        for (GuiElement gui : options) {
+            if (gui.getWidth() > maxWidth) maxWidth = gui.getWidth();
         }
 
-        if(Mouse.getX() < maxWidth*scaledresolution.getScaleFactor()) {
+        if (Mouse.getX() < maxWidth * scaledresolution.getScaleFactor()) {
             int dWheel = Mouse.getEventDWheel();
 
-            if(dWheel < 0) {
-                scrollHeight.setTarget(scrollHeight.getTarget()-SCROLL_AMOUNT);
+            if (dWheel < 0) {
+                scrollHeight.setTarget(scrollHeight.getTarget() - SCROLL_AMOUNT);
                 scrollHeight.resetTimer();
-            } else if(dWheel > 0) {
-                scrollHeight.setTarget(scrollHeight.getTarget()+SCROLL_AMOUNT);
+            } else if (dWheel > 0) {
+                scrollHeight.setTarget(scrollHeight.getTarget() + SCROLL_AMOUNT);
                 scrollHeight.resetTimer();
             }
         }
@@ -347,18 +350,18 @@ public class NEUItemEditor extends GuiScreen {
         int width = scaledresolution.getScaledWidth();
 
         int yScroll = calculateYScroll();
-        int currentY = PADDING-yScroll;
-        for(GuiElement gui : options) {
-            if(mouseY > currentY && mouseY < currentY+gui.getHeight()
+        int currentY = PADDING - yScroll;
+        for (GuiElement gui : options) {
+            if (mouseY > currentY && mouseY < currentY + gui.getHeight()
                     && mouseX < gui.getWidth()) {
                 gui.mouseClicked(mouseX, mouseY, mouseButton);
-                for(GuiElement gui2 : options) {
-                    if(gui2 != gui) {
+                for (GuiElement gui2 : options) {
+                    if (gui2 != gui) {
                         gui2.otherComponentClick();
                     }
                 }
-                for(GuiElement gui2 : rightOptions) {
-                    if(gui2 != gui) {
+                for (GuiElement gui2 : rightOptions) {
+                    if (gui2 != gui) {
                         gui2.otherComponentClick();
                     }
                 }
@@ -368,17 +371,17 @@ public class NEUItemEditor extends GuiScreen {
         }
 
         currentY = PADDING;
-        for(GuiElement gui : rightOptions) {
-            if(mouseY > currentY && mouseY < currentY+gui.getHeight()
-                    && mouseX > width-PADDING-gui.getWidth()) {
+        for (GuiElement gui : rightOptions) {
+            if (mouseY > currentY && mouseY < currentY + gui.getHeight()
+                    && mouseX > width - PADDING - gui.getWidth()) {
                 gui.mouseClicked(mouseX, mouseY, mouseButton);
-                for(GuiElement gui2 : options) {
-                    if(gui2 != gui) {
+                for (GuiElement gui2 : options) {
+                    if (gui2 != gui) {
                         gui2.otherComponentClick();
                     }
                 }
-                for(GuiElement gui2 : rightOptions) {
-                    if(gui2 != gui) {
+                for (GuiElement gui2 : rightOptions) {
+                    if (gui2 != gui) {
                         gui2.otherComponentClick();
                     }
                 }

@@ -1,16 +1,6 @@
 package io.github.moulberry.notenoughupdates.util;
 
 import com.google.common.primitives.Floats;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Comparator;
-
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
@@ -18,6 +8,11 @@ import net.minecraft.util.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
+
+import java.nio.*;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Comparator;
 
 @SideOnly(Side.CLIENT)
 public class ReverseWorldRenderer {

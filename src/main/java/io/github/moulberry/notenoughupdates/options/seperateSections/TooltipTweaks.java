@@ -77,8 +77,6 @@ public class TooltipTweaks {
     @ConfigEditorKeybind(defaultKey = Keyboard.KEY_NONE)
     public int disablePriceKeyKeybind = Keyboard.KEY_NONE;
 
-
-
     @Expose
     @ConfigOption(
             name = "Show reforge stats",

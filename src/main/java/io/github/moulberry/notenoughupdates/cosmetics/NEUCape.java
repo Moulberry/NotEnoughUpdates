@@ -66,20 +66,20 @@ public class NEUCape {
     }
 
     public void setCapeTexture(String capeName) {
-        if(this.capeName != null && this.capeName.equalsIgnoreCase(capeName)) return;
+        if (this.capeName != null && this.capeName.equalsIgnoreCase(capeName)) return;
 
         startTime = System.currentTimeMillis();
         boolean defaultBehaviour = true;
 
-        if(NotEnoughUpdates.INSTANCE.config.hidden.disableBrokenCapes){
-            if(capeName.equals("negative")){
+        if (NotEnoughUpdates.INSTANCE.config.hidden.disableBrokenCapes) {
+            if (capeName.equals("negative")) {
                 defaultBehaviour = false;
                 this.capeName = "fade";
                 this.shaderName = "fade_cape";
             }
-        
+
         }
-        if(defaultBehaviour){
+        if (defaultBehaviour) {
             this.capeName = capeName;
 
             if (capeName.equalsIgnoreCase("fade")) {
@@ -88,7 +88,7 @@ public class NEUCape {
                 shaderName = "space_cape";
             } else if (capeName.equalsIgnoreCase("mcworld")) {
                 shaderName = "mcworld_cape";
-            } else if(capeName.equalsIgnoreCase("lava") || capeName.equalsIgnoreCase("skyclient")) {
+            } else if (capeName.equalsIgnoreCase("lava") || capeName.equalsIgnoreCase("skyclient")) {
                 shaderName = "lava_cape";
             } else if (capeName.equalsIgnoreCase("lightning")) {
                 shaderName = "lightning_cape";
@@ -113,29 +113,29 @@ public class NEUCape {
     }
 
     private void bindTexture() {
-        if(capeName.equalsIgnoreCase("negative")) {
+        if (capeName.equalsIgnoreCase("negative")) {
             CapeManager.getInstance().updateWorldFramebuffer = true;
-            if(CapeManager.getInstance().backgroundFramebuffer != null) {
+            if (CapeManager.getInstance().backgroundFramebuffer != null) {
                 CapeManager.getInstance().backgroundFramebuffer.bindFramebufferTexture();
             }
-        } else if(capeTextures != null && capeTextures.length > 0) {
+        } else if (capeTextures != null && capeTextures.length > 0) {
             long currentTime = System.currentTimeMillis();
-            if(currentTime - lastFrameUpdate > 100) {
+            if (currentTime - lastFrameUpdate > 100) {
                 lastFrameUpdate = currentTime / 100 * 100;
                 currentFrame++;
 
-                if(animMode == ANIM_MODE_PINGPONG) {
-                    if(capeTextures.length == 1) {
+                if (animMode == ANIM_MODE_PINGPONG) {
+                    if (capeTextures.length == 1) {
                         currentFrame = displayFrame = 0;
                     } else {
                         int frameCount = 2 * capeTextures.length - 2;
                         currentFrame %= frameCount;
                         displayFrame = currentFrame;
-                        if(currentFrame >= capeTextures.length) {
+                        if (currentFrame >= capeTextures.length) {
                             displayFrame = frameCount - displayFrame;
                         }
                     }
-                } else if(animMode == ANIM_MODE_LOOP) {
+                } else if (animMode == ANIM_MODE_LOOP) {
                     currentFrame %= capeTextures.length;
                     displayFrame = currentFrame;
                 }
@@ -163,11 +163,11 @@ public class NEUCape {
         float vMaxSide = 404 / 1024f;
         float vMaxCenter = 419 / 1024f;
 
-        for(int i = 0; i < VERT_NODES; i++) {
+        for (int i = 0; i < VERT_NODES; i++) {
             float uMin = uMinTop + (uMinBottom - uMinTop) * i / (float) (VERT_NODES - 1);
             float uMax = uMaxTop + (uMaxBottom - uMaxTop) * i / (float) (VERT_NODES - 1);
 
-            for(int j = 0; j < HORZ_NODES; j++) {
+            for (int j = 0; j < HORZ_NODES; j++) {
                 float vMin = 0f;
                 float centerMult = 1 - Math.abs(j - (HORZ_NODES - 1) / 2f) / ((HORZ_NODES - 1) / 2f);//0-(horzCapeNodes)  -> 0-1-0
                 float vMax = vMaxSide + (vMaxCenter - vMaxSide) * centerMult;
@@ -178,36 +178,36 @@ public class NEUCape {
 
                 node.horzDistMult = 2f + 1f * i / (float) (VERT_NODES - 1);
 
-                if(j == 0 || j == HORZ_NODES - 1) {
+                if (j == 0 || j == HORZ_NODES - 1) {
                     node.horzSideTexU = 406 / 1024f * i / (float) (VERT_NODES - 1);
-                    if(j == 0) {
+                    if (j == 0) {
                         node.horzSideTexVTop = 1 - 20 / 1024f;
                     } else {
                         node.horzSideTexVTop = 1 - 40 / 1024f;
                     }
                 }
-                if(i == 0) {
+                if (i == 0) {
                     node.vertSideTexU = 198 / 1024f * j / (float) (HORZ_NODES - 1);
                     node.vertSideTexVTop = 1 - 60 / 1024f;
-                } else if(i == VERT_NODES - 1) {
+                } else if (i == VERT_NODES - 1) {
                     node.vertSideTexU = 300 / 1024f * j / (float) (HORZ_NODES - 1);
                     node.vertSideTexVTop = 1 - 80 / 1024f;
                 }
                 nodes[j + i * HORZ_NODES] = node;
             }
         }
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 CapeNode node = nodes[x + y * HORZ_NODES];
 
-                for(Direction dir : Direction.values()) {
-                    for(int i = 1; i <= 2; i++) {
+                for (Direction dir : Direction.values()) {
+                    for (int i = 1; i <= 2; i++) {
                         Offset offset = new Offset(dir, i);
 
                         int xNeighbor = x + offset.getXOffset();
                         int yNeighbor = y + offset.getYOffset();
 
-                        if(xNeighbor >= 0 && xNeighbor < HORZ_NODES
+                        if (xNeighbor >= 0 && xNeighbor < HORZ_NODES
                                 && yNeighbor >= 0 && yNeighbor < VERT_NODES) {
                             CapeNode neighbor = nodes[xNeighbor + yNeighbor * HORZ_NODES];
                             node.setNeighbor(offset, neighbor);
@@ -219,7 +219,7 @@ public class NEUCape {
     }
 
     public void ensureCapeNodesCreated(EntityPlayer player) {
-        if(nodes == null) createCapeNodes(player);
+        if (nodes == null) createCapeNodes(player);
     }
 
     public enum Direction {
@@ -243,8 +243,8 @@ public class NEUCape {
         public Direction rotateRight90() {
             int wantXOff = -yOff;
             int wantYOff = xOff;
-            for(Direction dir : values()) {
-                if(dir.xOff == wantXOff && dir.yOff == wantYOff) {
+            for (Direction dir : values()) {
+                if (dir.xOff == wantXOff && dir.yOff == wantYOff) {
                     return dir;
                 }
             }
@@ -254,8 +254,8 @@ public class NEUCape {
         public Direction rotateLeft90() {
             int wantXOff = yOff;
             int wantYOff = -xOff;
-            for(Direction dir : values()) {
-                if(dir.xOff == wantXOff && dir.yOff == wantYOff) {
+            for (Direction dir : values()) {
+                if (dir.xOff == wantXOff && dir.yOff == wantYOff) {
                     return dir;
                 }
             }
@@ -281,7 +281,7 @@ public class NEUCape {
         }
 
         public boolean equals(Object obj) {
-            if(obj instanceof Offset) {
+            if (obj instanceof Offset) {
                 Offset other = (Offset) obj;
                 return other.direction == direction && other.steps == steps;
             }
@@ -296,27 +296,27 @@ public class NEUCape {
 
     private void loadShaderUniforms(ShaderManager shaderManager) {
         String shaderId = "capes/" + shaderName + "/" + shaderName;
-        if(shaderName.equalsIgnoreCase("fade_cape") || shaderName.equalsIgnoreCase("planets")) {
+        if (shaderName.equalsIgnoreCase("fade_cape") || shaderName.equalsIgnoreCase("planets")) {
             shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
-        } else if(shaderName.equalsIgnoreCase("space_cape")) {
+        } else if (shaderName.equalsIgnoreCase("space_cape")) {
             shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
             shaderManager.loadData(shaderId, "eventMillis", (int) (System.currentTimeMillis() - eventMillis));
             shaderManager.loadData(shaderId, "eventRand", eventRandom);
-        } else if(shaderName.equalsIgnoreCase("mcworld_cape")) {
+        } else if (shaderName.equalsIgnoreCase("mcworld_cape")) {
             shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
-        } else if(shaderName.equalsIgnoreCase("lava_cape")) {
+        } else if (shaderName.equalsIgnoreCase("lava_cape")) {
             shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
-        } else if(shaderName.equalsIgnoreCase("tunnel")) {
+        } else if (shaderName.equalsIgnoreCase("tunnel")) {
             shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
-        } else if(shaderName.equalsIgnoreCase("biscuit_cape") || shaderName.equalsIgnoreCase("shiny_cape")) {
+        } else if (shaderName.equalsIgnoreCase("biscuit_cape") || shaderName.equalsIgnoreCase("shiny_cape")) {
             shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
             shaderManager.loadData(shaderId, "eventMillis", (int) (System.currentTimeMillis() - eventMillis));
-        } else if(shaderName.equalsIgnoreCase("negative")) {
+        } else if (shaderName.equalsIgnoreCase("negative")) {
             shaderManager.loadData(shaderId, "screensize", new Vector2f(
                     Minecraft.getMinecraft().displayWidth,
                     Minecraft.getMinecraft().displayHeight
             ));
-        } else if(shaderName.equalsIgnoreCase("void")) {
+        } else if (shaderName.equalsIgnoreCase("void")) {
             shaderManager.loadData(shaderId, "millis", (int) (System.currentTimeMillis() - startTime));
             shaderManager.loadData(shaderId, "screensize", new Vector2f(
                     Minecraft.getMinecraft().displayWidth,
@@ -330,10 +330,10 @@ public class NEUCape {
     public void onRenderPlayer(RenderPlayerEvent.Post e) {
         EntityPlayer player = e.entityPlayer;
 
-        if(currentPlayer != null && keepCurrentPlayer && currentPlayer != player) return;
+        if (currentPlayer != null && keepCurrentPlayer && currentPlayer != player) return;
 
-        if(player.getActivePotionEffect(Potion.invisibility) != null) return;
-        if(player.isSpectator() || player.isInvisible()) return;
+        if (player.getActivePotionEffect(Potion.invisibility) != null) return;
+        if (player.isSpectator() || player.isInvisible()) return;
 
         ensureCapeNodesCreated(player);
 
@@ -353,7 +353,7 @@ public class NEUCape {
         GlStateManager.disableLighting();
         GlStateManager.color(1, 1, 1, 1);
 
-        if(shaderName.equals("mcworld_cape")) {
+        if (shaderName.equals("mcworld_cape")) {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
         } else {
@@ -384,21 +384,21 @@ public class NEUCape {
     }
 
     public void onTick(TickEvent.ClientTickEvent event, EntityPlayer player) {
-        if(player == null) return;
-        if(Minecraft.getMinecraft().isGamePaused()) return;
+        if (player == null) return;
+        if (Minecraft.getMinecraft().isGamePaused()) return;
 
-        if(System.currentTimeMillis() - lastRender < 500) {
-            if(currentPlayer == null || !keepCurrentPlayer) {
+        if (System.currentTimeMillis() - lastRender < 500) {
+            if (currentPlayer == null || !keepCurrentPlayer) {
                 keepCurrentPlayer = true;
                 currentPlayer = player;
-            } else if(currentPlayer != player) {
+            } else if (currentPlayer != player) {
                 return;
             }
 
             ensureCapeNodesCreated(player);
 
-            for(int y = 0; y < VERT_NODES; y++) {
-                for(int x = 0; x < HORZ_NODES; x++) {
+            for (int y = 0; y < VERT_NODES; y++) {
+                for (int x = 0; x < HORZ_NODES; x++) {
                     CapeNode node = nodes[x + y * HORZ_NODES];
                     node.lastPosition.x = node.position.x;
                     node.lastPosition.y = node.position.y;
@@ -414,10 +414,10 @@ public class NEUCape {
     private static double interpolateRotation(float a, float b, float amount) {
         double f;
 
-        for(f = b - a; f < -180.0F; f += 360.0F) {
+        for (f = b - a; f < -180.0F; f += 360.0F) {
         }
 
-        while(f >= 180.0F) {
+        while (f >= 180.0F) {
             f -= 360.0F;
         }
 
@@ -427,24 +427,24 @@ public class NEUCape {
     private double getPlayerRenderAngle(EntityPlayer player, float partialRenderTick) {
         double angle = interpolateRotation(player.prevRenderYawOffset, player.renderYawOffset, partialRenderTick);
 
-        if(player.isRiding() && player.ridingEntity instanceof EntityLivingBase && player.ridingEntity.shouldRiderSit()) {
+        if (player.isRiding() && player.ridingEntity instanceof EntityLivingBase && player.ridingEntity.shouldRiderSit()) {
 
             EntityLivingBase entitylivingbase = (EntityLivingBase) player.ridingEntity;
             double head = interpolateRotation(player.prevRotationYawHead, player.rotationYawHead, partialRenderTick);
             angle = interpolateRotation(entitylivingbase.prevRenderYawOffset, entitylivingbase.renderYawOffset, partialRenderTick);
             double wrapped = MathHelper.wrapAngleTo180_double(head - angle);
 
-            if(wrapped < -85.0F) {
+            if (wrapped < -85.0F) {
                 wrapped = -85.0F;
             }
 
-            if(wrapped >= 85.0F) {
+            if (wrapped >= 85.0F) {
                 wrapped = 85.0F;
             }
 
             angle = head - wrapped;
 
-            if(wrapped * wrapped > 2500.0F) {
+            if (wrapped * wrapped > 2500.0F) {
                 angle += wrapped * 0.2F;
             }
         }
@@ -469,7 +469,7 @@ public class NEUCape {
         float totalDZ = 0;
         int totalMovements = 0;
 
-        for(int i = 0; i < HORZ_NODES; i++) {
+        for (int i = 0; i < HORZ_NODES; i++) {
             float mult = 1 - 2f * i / (HORZ_NODES - 1); //1 -> -1
             float widthMult = 1.25f - (1.414f * i / (HORZ_NODES - 1) - 0.707f) * (1.414f * i / (HORZ_NODES - 1) - 0.707f);
             CapeNode node = nodes[i];
@@ -505,7 +505,7 @@ public class NEUCape {
         float xOff = (float) (Math.cos(angle) * shoulderLength);
         float zOff = (float) (Math.sin(angle) * shoulderLength);
 
-        for(int i = 0; i < HORZ_NODES; i++) {
+        for (int i = 0; i < HORZ_NODES; i++) {
             float mult = 1 - 2f * i / (HORZ_NODES - 1); //1 -> -1
             float widthMult = 1.25f - (1.414f * i / (HORZ_NODES - 1) - 0.707f) * (1.414f * i / (HORZ_NODES - 1) - 0.707f);
             CapeNode node = nodes[i];
@@ -524,16 +524,16 @@ public class NEUCape {
     private void updateCape(EntityPlayer player) {
         Vector3f capeTranslation = updateFixedCapeNodes(player);
 
-        if(shaderName.equals("space_cape")) {
+        if (shaderName.equals("space_cape")) {
             long currentTime = System.currentTimeMillis();
-            if(currentTime - startTime > eventMillis - startTime + eventLength) {
+            if (currentTime - startTime > eventMillis - startTime + eventLength) {
                 eventMillis = currentTime;
                 eventLength = random.nextFloat() * 2000 + 4000;
                 eventRandom = random.nextFloat();
             }
-        } else if(shaderName.equals("biscuit_cape") || shaderName.equals("shiny_cape")) {
+        } else if (shaderName.equals("biscuit_cape") || shaderName.equals("shiny_cape")) {
             long currentTime = System.currentTimeMillis();
-            if(currentTime - startTime > eventMillis - startTime + eventLength) {
+            if (currentTime - startTime > eventMillis - startTime + eventLength) {
                 eventMillis = currentTime;
                 eventLength = random.nextFloat() * 3000 + 3000;
             }
@@ -541,10 +541,10 @@ public class NEUCape {
 
         double playerAngle = getPlayerRenderAngle(player, 0);
         double deltaAngle = playerAngle - oldPlayerAngle;
-        if(deltaAngle > Math.PI) {
+        if (deltaAngle > Math.PI) {
             deltaAngle = 2 * Math.PI - deltaAngle;
         }
-        if(deltaAngle < -Math.PI) {
+        if (deltaAngle < -Math.PI) {
             deltaAngle = 2 * Math.PI + deltaAngle;
         }
         deltaAngleAccum *= 0.5f;
@@ -558,17 +558,17 @@ public class NEUCape {
         float capeTransLength = capeTranslation.length();
 
         float capeTranslationFactor = 0f;
-        if(capeTransLength > 0.5f) {
+        if (capeTransLength > 0.5f) {
             capeTranslationFactor = (capeTransLength - 0.5f) / capeTransLength;
         }
         Vector3f lookDir = new Vector3f(dX, 0, dZ);
         Vector3f lookDirNorm = lookDir.normalise(null);
         float dot = Vector3f.dot(capeTranslation, lookDirNorm);
-        if(dot < 0) { //Moving backwards
-            for(int y = 0; y < VERT_NODES; y++) {
-                for(int x = 0; x < HORZ_NODES; x++) {
+        if (dot < 0) { //Moving backwards
+            for (int y = 0; y < VERT_NODES; y++) {
+                for (int x = 0; x < HORZ_NODES; x++) {
                     CapeNode node = nodes[x + y * HORZ_NODES];
-                    if(!node.fixed) {
+                    if (!node.fixed) {
                         node.position.x += lookDirNorm.x * dot;
                         node.position.y += lookDirNorm.y * dot;
                         node.position.z += lookDirNorm.z * dot;
@@ -579,23 +579,23 @@ public class NEUCape {
             factor = 0.05f;
         }
 
-        if(factor > 0) {
-            for(int y = 0; y < VERT_NODES; y++) {
-                for(int x = 0; x < HORZ_NODES; x++) {
+        if (factor > 0) {
+            for (int y = 0; y < VERT_NODES; y++) {
+                for (int x = 0; x < HORZ_NODES; x++) {
                     nodes[x + y * HORZ_NODES].applyForce(-dX * factor, 0, -dZ * factor);
                 }
             }
         }
 
-        if(capeTranslationFactor > 0f) {
+        if (capeTranslationFactor > 0f) {
             float capeDX = capeTranslation.x * capeTranslationFactor;
             float capeDY = capeTranslation.y * capeTranslationFactor;
             float capeDZ = capeTranslation.z * capeTranslationFactor;
 
-            for(int y = 0; y < VERT_NODES; y++) {
-                for(int x = 0; x < HORZ_NODES; x++) {
+            for (int y = 0; y < VERT_NODES; y++) {
+                for (int x = 0; x < HORZ_NODES; x++) {
                     CapeNode node = nodes[x + y * HORZ_NODES];
-                    if(!node.fixed) {
+                    if (!node.fixed) {
                         node.position.x += capeDX;
                         node.position.y += capeDY;
                         node.position.z += capeDZ;
@@ -611,20 +611,20 @@ public class NEUCape {
 
         float windDX = (float) Math.cos(windDir + Math.PI / 2f);
         float windDZ = (float) Math.sin(windDir + Math.PI / 2f);
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 nodes[x + y * HORZ_NODES].applyForce(-windDX * windRandom * 0.01f, 0, -windDZ * windRandom * 0.01f);
             }
         }
 
-        if(player.isSneaking()) {
+        if (player.isSneaking()) {
             crouchTicks++;
             float mult = 0.5f;
-            if(crouchTicks < 5) {
+            if (crouchTicks < 5) {
                 mult = 2f;
             }
-            for(int y = 0; y < 8; y++) {
-                for(int x = 0; x < HORZ_NODES; x++) {
+            for (int y = 0; y < 8; y++) {
+                for (int x = 0; x < HORZ_NODES; x++) {
                     nodes[x + y * HORZ_NODES].applyForce(-dX * mult, 0, -dZ * mult);
                 }
             }
@@ -633,13 +633,13 @@ public class NEUCape {
         }
 
         Vector3f avgPosition = avgFixedPosition();
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 CapeNode node = nodes[x + y * HORZ_NODES];
 
                 Vector3f delta = Vector3f.sub(node.position, avgPosition, null);
 
-                if(delta.lengthSquared() > 5 * 5) {
+                if (delta.lengthSquared() > 5 * 5) {
                     Vector3f norm = delta.normalise(null);
                     node.position = Vector3f.add(avgPosition, norm, null);
                 }
@@ -648,15 +648,15 @@ public class NEUCape {
 
         oldPlayerAngle = playerAngle;
 
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 nodes[x + y * HORZ_NODES].update();
             }
         }
         int updates = 50;
-        for(int i = 0; i < updates; i++) {
-            for(int y = 0; y < VERT_NODES; y++) {
-                for(int x = 0; x < HORZ_NODES; x++) {
+        for (int i = 0; i < updates; i++) {
+            for (int y = 0; y < VERT_NODES; y++) {
+                for (int x = 0; x < HORZ_NODES; x++) {
                     nodes[x + y * HORZ_NODES].resolveAll(2 + 1f * y / VERT_NODES, false);
                 }
             }
@@ -672,8 +672,8 @@ public class NEUCape {
 
     private void loadSBBO() {
         FloatBuffer buff = BufferUtils.createFloatBuffer(CapeNode.FLOAT_NUM * HORZ_NODES * VERT_NODES);
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 nodes[x + y * HORZ_NODES].loadIntoBuffer(buff);
             }
         }
@@ -685,7 +685,7 @@ public class NEUCape {
     }
 
     private void resolveAllCompute() {
-        if(ssbo == -1) {
+        if (ssbo == -1) {
             generateSSBO();
         }
         loadSBBO();
@@ -700,7 +700,7 @@ public class NEUCape {
 
         GL20.glUseProgram(program);
 
-        for(int i = 0; i < 30; i++) {
+        for (int i = 0; i < 30; i++) {
             GL43.glDispatchCompute(VERT_NODES, 1, 1);
             GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
         }
@@ -713,8 +713,8 @@ public class NEUCape {
         GL15.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buff);
         GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 nodes[x + y * HORZ_NODES].readFromBuffer(buff);
             }
         }
@@ -723,14 +723,14 @@ public class NEUCape {
     private Vector3f avgRenderPosition() {
         Vector3f accum = new Vector3f();
         int num = 0;
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 CapeNode node = nodes[x + y * HORZ_NODES];
                 Vector3f.add(accum, node.renderPosition, accum);
                 num++;
             }
         }
-        if(num != 0) {
+        if (num != 0) {
             accum.scale(1f / num);
         }
         return accum;
@@ -739,14 +739,14 @@ public class NEUCape {
     private Vector3f avgNormal() {
         Vector3f accum = new Vector3f();
         int num = 0;
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 CapeNode node = nodes[x + y * HORZ_NODES];
                 Vector3f.add(accum, node.normal(), accum);
                 num++;
             }
         }
-        if(num != 0) {
+        if (num != 0) {
             accum.scale(1f / num);
         }
         return accum;
@@ -755,16 +755,16 @@ public class NEUCape {
     private Vector3f avgFixedRenderPosition() {
         Vector3f accum = new Vector3f();
         int numFixed = 0;
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 CapeNode node = nodes[x + y * HORZ_NODES];
-                if(node.fixed) {
+                if (node.fixed) {
                     Vector3f.add(accum, node.renderPosition, accum);
                     numFixed++;
                 }
             }
         }
-        if(numFixed != 0) {
+        if (numFixed != 0) {
             accum.scale(1f / numFixed);
         }
         return accum;
@@ -773,29 +773,29 @@ public class NEUCape {
     private Vector3f avgFixedPosition() {
         Vector3f accum = new Vector3f();
         int numFixed = 0;
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 CapeNode node = nodes[x + y * HORZ_NODES];
-                if(node.fixed) {
+                if (node.fixed) {
                     Vector3f.add(accum, node.position, accum);
                     numFixed++;
                 }
             }
         }
-        if(numFixed != 0) {
+        if (numFixed != 0) {
             accum.scale(1f / numFixed);
         }
         return accum;
     }
 
     private void renderBackAndDoFrontStencil() {
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 nodes[x + y * HORZ_NODES].renderNode(CapeNode.DRAW_MASK_BACK | CapeNode.DRAW_MASK_SIDES);
             }
         }
 
-        if(!Minecraft.getMinecraft().getFramebuffer().isStencilEnabled())
+        if (!Minecraft.getMinecraft().getFramebuffer().isStencilEnabled())
             Minecraft.getMinecraft().getFramebuffer().enableStencil();
 
         GL11.glEnable(GL11.GL_STENCIL_TEST);
@@ -806,8 +806,8 @@ public class NEUCape {
         GlStateManager.enableDepth();
 
         GL11.glColorMask(false, false, false, false);
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 nodes[x + y * HORZ_NODES].renderNode(CapeNode.DRAW_MASK_FRONT);
             }
         }
@@ -820,25 +820,25 @@ public class NEUCape {
 
     private Vector3f getPoint(Vector3f point, Vector3f... vectors) {
         Vector3f res = new Vector3f(point);
-        for(Vector3f vec : vectors) Vector3f.add(res, vec, res);
+        for (Vector3f vec : vectors) Vector3f.add(res, vec, res);
         return res;
     }
 
     private static void renderVBO(WorldRenderer worldRenderer) {
-        if(worldRenderer != null && worldRenderer.getVertexCount() > 0) {
+        if (worldRenderer != null && worldRenderer.getVertexCount() > 0) {
             VertexFormat vertexformat = worldRenderer.getVertexFormat();
             int stride = vertexformat.getNextOffset();
             ByteBuffer bytebuffer = worldRenderer.getByteBuffer();
             List<VertexFormatElement> list = vertexformat.getElements();
 
-            for(int index = 0; index < list.size(); index++) {
+            for (int index = 0; index < list.size(); index++) {
                 VertexFormatElement vertexformatelement = list.get(index);
                 vertexformatelement.getUsage().preDraw(vertexformat, index, stride, bytebuffer);
             }
 
             GL11.glDrawArrays(worldRenderer.getDrawMode(), 0, worldRenderer.getVertexCount());
 
-            for(int index = 0; index < list.size(); index++) {
+            for (int index = 0; index < list.size(); index++) {
                 VertexFormatElement vertexformatelement = list.get(index);
                 vertexformatelement.getUsage().postDraw(vertexformat, index, stride, bytebuffer);
             }
@@ -848,7 +848,7 @@ public class NEUCape {
     private static WorldRenderer sphereVBO = null;
 
     private void renderNodes() {
-        if(capeName.equalsIgnoreCase("planets")) {
+        if (capeName.equalsIgnoreCase("planets")) {
             renderBackAndDoFrontStencil();
 
             Vector3f pointNorm = avgNormal();
@@ -858,8 +858,8 @@ public class NEUCape {
             pointNorm.scale(1 - pointNorm.y / 1.3f);
             Vector3f point = Vector3f.sub(capeAvgPos, pointNorm, null);
 
-            if(sphereVBO == null || Keyboard.isKeyDown(Keyboard.KEY_K)) {
-                if(sphereVBO != null) sphereVBO.reset();
+            if (sphereVBO == null || Keyboard.isKeyDown(Keyboard.KEY_K)) {
+                if (sphereVBO != null) sphereVBO.reset();
 
                 int arcSegments = 24;
                 int rotationSegments = 24;
@@ -870,14 +870,14 @@ public class NEUCape {
                 double diameterUnitArcLen = 0;
 
                 double arcAngle = 0;
-                for(int i = 0; i < arcSegments; i++) {
+                for (int i = 0; i < arcSegments; i++) {
                     diameterUnitArcLen += Math.sin(arcAngle);
                     arcAngle += arcAngleDelta;
                 }
                 double arcLength = 2f / diameterUnitArcLen;
 
                 List<List<Vector3f>> arcs = new ArrayList<>();
-                for(int angleI = 0; angleI < rotationSegments; angleI++) {
+                for (int angleI = 0; angleI < rotationSegments; angleI++) {
                     double angle = Math.PI * 2 * angleI / rotationSegments;
 
                     List<Vector3f> arc = new ArrayList<>();
@@ -887,7 +887,7 @@ public class NEUCape {
                     arc.add(arcPos);
 
                     arcAngle = 0;
-                    for(int segmentI = 0; segmentI < arcSegments; segmentI++) {
+                    for (int segmentI = 0; segmentI < arcSegments; segmentI++) {
 
                         double deltaZ = Math.sin(arcAngle) * arcLength;
                         double deltaY = Math.cos(arcAngle) * Math.cos(angle) * arcLength;
@@ -910,8 +910,8 @@ public class NEUCape {
                 sphereVBO.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
 
                 double maxXYRad = 0;
-                for(int angleI = 0; angleI < rotationSegments; angleI++) {
-                    for(int segmentI = 0; segmentI <= arcSegments; segmentI++) {
+                for (int angleI = 0; angleI < rotationSegments; angleI++) {
+                    for (int segmentI = 0; segmentI <= arcSegments; segmentI++) {
                         List<Vector3f> thisArc = arcs.get(angleI);
                         Vector3f point1 = thisArc.get(segmentI);
                         double rad = Math.sqrt(point1.x * point1.x + point1.y * point1.y);
@@ -919,10 +919,10 @@ public class NEUCape {
                     }
                 }
 
-                for(int angleI = 0; angleI < rotationSegments; angleI++) {
+                for (int angleI = 0; angleI < rotationSegments; angleI++) {
 
                     int nextAngleI = angleI + 1;
-                    if(angleI == rotationSegments - 1) {
+                    if (angleI == rotationSegments - 1) {
                         nextAngleI = 0;
                     }
 
@@ -933,7 +933,7 @@ public class NEUCape {
                     List<Vector3f> thisArc = arcs.get(angleI);
                     List<Vector3f> nextArc = arcs.get(nextAngleI);
 
-                    for(int segmentI = 1; segmentI <= arcSegments; segmentI++) {
+                    for (int segmentI = 1; segmentI <= arcSegments; segmentI++) {
                         Vector3f point1 = thisArc.get(segmentI);
                         Vector3f point2 = thisArc.get(segmentI - 1);
                         Vector3f point3 = nextArc.get(segmentI - 1);
@@ -992,29 +992,29 @@ public class NEUCape {
             orbitals.put(mercuryDist, 2);
 
             double delta = Minecraft.getMinecraft().getRenderViewEntity().getRotationYawHead() % 360;
-            while(delta < 0) delta += 360;
+            while (delta < 0) delta += 360;
 
             double jupDelta = (delta + Math.toDegrees(jupiterAngle)) % 360;
-            while(jupDelta < 0) jupDelta += 360;
-            if(jupDelta > 250 || jupDelta < 110) orbitals.put(jupiterDist, 3);
+            while (jupDelta < 0) jupDelta += 360;
+            if (jupDelta > 250 || jupDelta < 110) orbitals.put(jupiterDist, 3);
 
             double nepDelta = (delta + Math.toDegrees(-earthAngle)) % 360;
-            while(nepDelta < 0) nepDelta += 360;
-            if(nepDelta > 250 || nepDelta < 110) orbitals.put(neptuneDist, 4);
+            while (nepDelta < 0) nepDelta += 360;
+            if (nepDelta > 250 || nepDelta < 110) orbitals.put(neptuneDist, 4);
 
             GlStateManager.disableDepth();
             GlStateManager.enableCull();
 
-            for(int planetId : orbitals.descendingMap().values()) {
+            for (int planetId : orbitals.descendingMap().values()) {
                 GlStateManager.pushMatrix();
-                switch(planetId) {
+                switch (planetId) {
                     case 0: {
                         GlStateManager.translate(point.x, point.y, point.z);
                         GlStateManager.scale(0.2f, 0.2f, 0.2f);
                         break;
                     }
                     case 1: {
-                        Vector3f sunVec = new Vector3f((float) earthX,  (float) earthY, (float) earthZ);
+                        Vector3f sunVec = new Vector3f((float) earthX, (float) earthY, (float) earthZ);
                         ShaderManager.getInstance().loadData(shaderId, "sunVec", sunVec);
                         GlStateManager.translate(point.x + earthX, point.y + earthY, point.z + earthZ);
                         GlStateManager.scale(0.1f, 0.1f, 0.1f);
@@ -1047,12 +1047,11 @@ public class NEUCape {
                 GlStateManager.popMatrix();
             }
 
-
             GlStateManager.disableCull();
             GlStateManager.enableDepth();
 
             GL11.glDisable(GL11.GL_STENCIL_TEST);
-        } else if(capeName.equalsIgnoreCase("parallax")) {
+        } else if (capeName.equalsIgnoreCase("parallax")) {
             renderBackAndDoFrontStencil();
 
             Vector3f pointNorm = avgNormal();
@@ -1115,12 +1114,11 @@ public class NEUCape {
 
             tessellator.draw();
 
-
             GlStateManager.disableCull();
             GlStateManager.enableDepth();
 
             GL11.glDisable(GL11.GL_STENCIL_TEST);
-        } else if(capeName.equalsIgnoreCase("tunnel")) {
+        } else if (capeName.equalsIgnoreCase("tunnel")) {
             renderBackAndDoFrontStencil();
 
             Vector3f pointNorm = avgNormal();
@@ -1133,7 +1131,7 @@ public class NEUCape {
             List<Vector2f> edgeCoords = new ArrayList<>();
 
             //Left edge
-            for(int y = 0; y < VERT_NODES; y++) {
+            for (int y = 0; y < VERT_NODES; y++) {
                 edgeNodes.add(nodes[y * HORZ_NODES]);
                 edgeCoords.add(new Vector2f(0, (float) y / (VERT_NODES - 1)));
             }
@@ -1142,14 +1140,14 @@ public class NEUCape {
             //Bottom edge
             int bottomIndex = VERT_NODES - 1;
             int botSize = HORZ_NODES;
-            for(int x = 0; x < botSize; x++) {
+            for (int x = 0; x < botSize; x++) {
                 edgeNodes.add(getNode(x, bottomIndex));
                 edgeCoords.add(new Vector2f((float) x / (botSize - 1), 1));
             }
             edgeNodes.add(null);
             edgeCoords.add(null);
             //Right edge
-            for(int y = VERT_NODES - 1; y >= 0; y--) {
+            for (int y = VERT_NODES - 1; y >= 0; y--) {
                 edgeNodes.add(getNode(HORZ_NODES - 1, y));
                 edgeCoords.add(new Vector2f(1, (float) y / VERT_NODES));
             }
@@ -1157,7 +1155,7 @@ public class NEUCape {
             edgeCoords.add(null);
             //Top edge
             int topSize = HORZ_NODES;
-            for(int x = topSize - 1; x >= 0; x--) {
+            for (int x = topSize - 1; x >= 0; x--) {
                 edgeNodes.add(getNode(x, 0));
                 edgeCoords.add(new Vector2f((float) x / (topSize - 1), 0));
             }
@@ -1165,9 +1163,9 @@ public class NEUCape {
             GlStateManager.disableDepth();
             GlStateManager.enableCull();
             CapeNode last = null;
-            for(int i = 0; i < edgeNodes.size(); i++) {
+            for (int i = 0; i < edgeNodes.size(); i++) {
                 CapeNode node = edgeNodes.get(i);
-                if(last != null && node != null) {
+                if (last != null && node != null) {
                     Vector2f lastCoord = edgeCoords.get(i - 1);
                     Vector2f coord = edgeCoords.get(i);
 
@@ -1198,8 +1196,8 @@ public class NEUCape {
 
             GL11.glDisable(GL11.GL_STENCIL_TEST);
         } else {
-            for(int y = 0; y < VERT_NODES; y++) {
-                for(int x = 0; x < HORZ_NODES; x++) {
+            for (int y = 0; y < VERT_NODES; y++) {
+                for (int x = 0; x < HORZ_NODES; x++) {
                     nodes[x + y * HORZ_NODES].renderNode();
                 }
             }
@@ -1214,13 +1212,13 @@ public class NEUCape {
         Vector3f avgPositionFixed = avgFixedRenderPosition();
         Vector3f delta = Vector3f.sub(avgPositionFixed, avgPositionFixedBefore, null);
 
-        if(delta.lengthSquared() > 9) {
+        if (delta.lengthSquared() > 9) {
             updateFixedCapeNodes(player);
 
-            for(int y = 0; y < VERT_NODES; y++) {
-                for(int x = 0; x < HORZ_NODES; x++) {
+            for (int y = 0; y < VERT_NODES; y++) {
+                for (int x = 0; x < HORZ_NODES; x++) {
                     CapeNode node = nodes[x + y * HORZ_NODES];
-                    if(!node.fixed) {
+                    if (!node.fixed) {
                         Vector3f.add(node.renderPosition, delta, node.renderPosition);
                         node.position.set(node.renderPosition);
                         node.lastPosition.set(node.renderPosition);
@@ -1234,13 +1232,13 @@ public class NEUCape {
             return;
         }
 
-        for(int y = 0; y < VERT_NODES; y++) {
-            for(int x = 0; x < HORZ_NODES; x++) {
+        for (int y = 0; y < VERT_NODES; y++) {
+            for (int x = 0; x < HORZ_NODES; x++) {
                 CapeNode node = nodes[x + y * HORZ_NODES];
 
                 node.resetNormal();
 
-                if(node.fixed) continue;
+                if (node.fixed) continue;
 
                 Vector3f newPosition = new Vector3f();
                 newPosition.x = node.lastPosition.x + (node.position.x - node.lastPosition.x) * partialRenderTick;
@@ -1250,18 +1248,18 @@ public class NEUCape {
                 int length = node.oldRenderPosition.length;
 
                 int fps = Minecraft.getDebugFPS();
-                if(fps < 50) {
+                if (fps < 50) {
                     length = 2;
-                } else if(fps < 100) {
+                } else if (fps < 100) {
                     length = 2 + (int) ((fps - 50) / 50f * 3);
                 }
 
-                if(node.oldRenderPosition[length - 1] == null) {
+                if (node.oldRenderPosition[length - 1] == null) {
                     Arrays.fill(node.oldRenderPosition, Vector3f.sub(newPosition, avgPositionFixed, null));
                     node.renderPosition = newPosition;
                 } else {
                     Vector3f accum = new Vector3f();
-                    for(int i = 0; i < length; i++) {
+                    for (int i = 0; i < length; i++) {
                         Vector3f.add(accum, node.oldRenderPosition[i], accum);
                         Vector3f.add(accum, avgPositionFixed, accum);
                     }
@@ -1274,9 +1272,9 @@ public class NEUCape {
                     node.renderPosition = accum;
                 }
 
-                if(!Minecraft.getMinecraft().isGamePaused()) {
-                    for(int i = node.oldRenderPosition.length - 1; i >= 0; i--) {
-                        if(i > 0) {
+                if (!Minecraft.getMinecraft().isGamePaused()) {
+                    for (int i = node.oldRenderPosition.length - 1; i >= 0; i--) {
+                        if (i > 0) {
                             node.oldRenderPosition[i] = node.oldRenderPosition[i - 1];
                         } else {
                             node.oldRenderPosition[i] = Vector3f.sub(node.renderPosition, avgPositionFixed, null);

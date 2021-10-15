@@ -99,5 +99,4 @@ public class GuiTextures {
     public static final ResourceLocation slider_on_segment = new ResourceLocation("notenoughupdates:core/slider/slider_on_segment.png");
     public static final ResourceLocation slider_button_new = new ResourceLocation("notenoughupdates:core/slider/slider_button.png");
 
-
 }

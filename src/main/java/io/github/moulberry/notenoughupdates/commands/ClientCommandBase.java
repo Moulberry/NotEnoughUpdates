@@ -18,7 +18,7 @@ public abstract class ClientCommandBase extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/"+name;
+        return "/" + name;
     }
 
     @Override

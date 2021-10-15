@@ -1,13 +1,11 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.gson.*;
-import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GlScissorStack;
 import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
-import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -31,8 +29,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,10 +61,11 @@ public class GuiInvButtonEditor extends GuiScreen {
     private int editorLeft;
     private int editorTop;
 
-    private final GuiElementTextField commandTextField = new GuiElementTextField("", editorXSize-14, 16, GuiElementTextField.SCALE_TEXT);
-    private final GuiElementTextField iconTextField = new GuiElementTextField("", editorXSize-14, 16, GuiElementTextField.SCALE_TEXT);
+    private final GuiElementTextField commandTextField = new GuiElementTextField("", editorXSize - 14, 16, GuiElementTextField.SCALE_TEXT);
+    private final GuiElementTextField iconTextField = new GuiElementTextField("", editorXSize - 14, 16, GuiElementTextField.SCALE_TEXT);
 
     private static final HashSet<String> prioritisedIcons = new HashSet<>();
+
     static {
         prioritisedIcons.add("WORKBENCH");
         prioritisedIcons.add("LEATHER_CHESTPLATE");
@@ -91,6 +90,7 @@ public class GuiInvButtonEditor extends GuiScreen {
     private static HashMap<String, String> extraIcons = null;
 
     private static final HashMap<String, String> skullIcons = new HashMap<>();
+
     static {
         skullIcons.put("personal bank", "skull:e36e94f6c34a35465fce4a90f2e25976389eb9709a12273574ff70fd4daa6852");
         skullIcons.put("skyblock hub", "skull:d7cc6687423d0570d556ac53e0676cb563bbdd9717cd8269bdebed6f6d4e7bf8");
@@ -129,31 +129,31 @@ public class GuiInvButtonEditor extends GuiScreen {
     private static void reloadExtraIcons() {
         extraIcons = new HashMap<>();
 
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 Minecraft.getMinecraft().getResourceManager().getResource(EXTRA_ICONS_JSON).getInputStream(), StandardCharsets.UTF_8))) {
             JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
 
-            for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
-                if(entry.getValue().isJsonPrimitive()) {
-                    extraIcons.put(entry.getKey(), "extra:"+entry.getValue().getAsString());
+            for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                if (entry.getValue().isJsonPrimitive()) {
+                    extraIcons.put(entry.getKey(), "extra:" + entry.getValue().getAsString());
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
         }
     }
 
     private static void reloadPresets() {
         presets = new LinkedHashMap<>();
 
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 Minecraft.getMinecraft().getResourceManager().getResource(PRESETS_JSON).getInputStream(), StandardCharsets.UTF_8))) {
             JsonObject json = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(reader, JsonObject.class);
 
-            for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
-                if(entry.getValue().isJsonArray()) {
+            for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                if (entry.getValue().isJsonArray()) {
                     JsonArray arr = entry.getValue().getAsJsonArray();
                     List<NEUConfig.InventoryButton> buttons = new ArrayList<>();
-                    for(int i=0; i<arr.size(); i++) {
+                    for (int i = 0; i < arr.size(); i++) {
                         JsonObject o = arr.get(i).getAsJsonObject();
                         NEUConfig.InventoryButton button = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(o, NEUConfig.InventoryButton.class);
                         buttons.add(button);
@@ -161,7 +161,7 @@ public class GuiInvButtonEditor extends GuiScreen {
                     presets.put(entry.getKey(), buttons);
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
         }
     }
 
@@ -169,8 +169,8 @@ public class GuiInvButtonEditor extends GuiScreen {
         boolean c1 = prioritisedIcons.contains(o1);
         boolean c2 = prioritisedIcons.contains(o2);
 
-        if(c1 && !c2) return -1;
-        if(!c1 && c2) return 1;
+        if (c1 && !c2) return -1;
+        if (!c1 && c2) return 1;
 
         return o1.compareTo(o2);
     };
@@ -184,13 +184,13 @@ public class GuiInvButtonEditor extends GuiScreen {
     private static final HashMap<String, ItemStack> skullMap = new HashMap<>();
 
     public static void renderIcon(String icon, int x, int y) {
-        if(extraIcons == null) {
+        if (extraIcons == null) {
             reloadExtraIcons();
         }
 
-        if(icon.startsWith("extra:")) {
+        if (icon.startsWith("extra:")) {
             String name = icon.substring("extra:".length());
-            ResourceLocation resourceLocation = new ResourceLocation("notenoughupdates:invbuttons/extraicons/"+name+".png");
+            ResourceLocation resourceLocation = new ResourceLocation("notenoughupdates:invbuttons/extraicons/" + name + ".png");
             Minecraft.getMinecraft().getTextureManager().bindTexture(resourceLocation);
             GlStateManager.color(1, 1, 1, 1);
             Utils.drawTexturedRect(x, y, 16, 16, GL11.GL_NEAREST);
@@ -198,11 +198,11 @@ public class GuiInvButtonEditor extends GuiScreen {
             ItemStack stack = getStack(icon);
 
             float scale = 1;
-            if(icon.startsWith("skull:")) {
+            if (icon.startsWith("skull:")) {
                 scale = 1.2f;
             }
             GlStateManager.pushMatrix();
-            GlStateManager.translate(x+8, y+8, 0);
+            GlStateManager.translate(x + 8, y + 8, 0);
             GlStateManager.scale(scale, scale, 1);
             GlStateManager.translate(-8, -8, 0);
             Utils.drawItemStack(stack, 0, 0);
@@ -211,11 +211,11 @@ public class GuiInvButtonEditor extends GuiScreen {
     }
 
     public static ItemStack getStack(String icon) {
-        if(icon.startsWith("extra:")) {
+        if (icon.startsWith("extra:")) {
             return null;
-        } else if(icon.startsWith("skull:")) {
+        } else if (icon.startsWith("skull:")) {
             String link = icon.substring("skull:".length());
-            if(skullMap.containsKey(link)) return skullMap.get(link);
+            if (skullMap.containsKey(link)) return skullMap.get(link);
 
             ItemStack render = new ItemStack(Items.skull, 1, 3);
             NBTTagCompound nbt = new NBTTagCompound();
@@ -228,7 +228,7 @@ public class GuiInvButtonEditor extends GuiScreen {
             skullOwner.setString("Id", uuid);
             skullOwner.setString("Name", uuid);
 
-            String display = "{\"textures\":{\"SKIN\":{\"url\":\"http://textures.minecraft.net/texture/"+link+"\"}}}";
+            String display = "{\"textures\":{\"SKIN\":{\"url\":\"http://textures.minecraft.net/texture/" + link + "\"}}}";
             String displayB64 = Base64.getEncoder().encodeToString(display.getBytes());
 
             textures_0.setString("Value", displayB64);
@@ -252,26 +252,26 @@ public class GuiInvButtonEditor extends GuiScreen {
 
         super.drawDefaultBackground();
 
-        guiLeft = width/2 - xSize/2;
-        guiTop = height/2 - ySize/2;
+        guiLeft = width / 2 - xSize / 2;
+        guiTop = height / 2 - ySize / 2;
 
         GlStateManager.enableDepth();
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(INVENTORY);
         GlStateManager.color(1, 1, 1, 1);
-        Utils.drawTexturedRect(guiLeft, guiTop, xSize, ySize, 0, xSize/256f, 0, ySize/256f, GL11.GL_NEAREST);
+        Utils.drawTexturedRect(guiLeft, guiTop, xSize, ySize, 0, xSize / 256f, 0, ySize / 256f, GL11.GL_NEAREST);
 
-        for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
-            int x = guiLeft+button.x;
-            int y = guiTop+button.y;
-            if(button.anchorRight) {
+        for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+            int x = guiLeft + button.x;
+            int y = guiTop + button.y;
+            if (button.anchorRight) {
                 x += xSize;
             }
-            if(button.anchorBottom) {
+            if (button.anchorBottom) {
                 y += ySize;
             }
 
-            if(button.isActive()) {
+            if (button.isActive()) {
                 GlStateManager.color(1, 1, 1, 1f);
             } else {
                 GlStateManager.color(1, 1, 1, 0.5f);
@@ -279,177 +279,178 @@ public class GuiInvButtonEditor extends GuiScreen {
 
             Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
             Utils.drawTexturedRect(x, y, 18, 18,
-                    button.backgroundIndex*18/256f, (button.backgroundIndex*18+18)/256f, 18/256f, 36/256f, GL11.GL_NEAREST);
+                    button.backgroundIndex * 18 / 256f, (button.backgroundIndex * 18 + 18) / 256f, 18 / 256f, 36 / 256f, GL11.GL_NEAREST);
 
-            if(button.isActive()) {
-                if(button.icon != null && !button.icon.trim().isEmpty()) {
+            if (button.isActive()) {
+                if (button.icon != null && !button.icon.trim().isEmpty()) {
                     GlStateManager.enableDepth();
 
-                    renderIcon(button.icon, x+1, y+1);
+                    renderIcon(button.icon, x + 1, y + 1);
                 }
             } else {
-                fontRendererObj.drawString("+", x+6, y+5, 0xffcccccc);
+                fontRendererObj.drawString("+", x + 6, y + 5, 0xffcccccc);
             }
         }
         Minecraft.getMinecraft().getTextureManager().bindTexture(custom_ench_colour);
         GlStateManager.color(1, 1, 1, 1);
-        Utils.drawTexturedRect(guiLeft-88-2-22, guiTop+2, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
-        Utils.drawTexturedRect(guiLeft-88-2-22, guiTop+2+24, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
-        Utils.drawStringCenteredScaledMaxWidth("Load preset", fontRendererObj, guiLeft-44-2-22, guiTop+8, false, 86, 4210752);
-        Utils.drawStringCenteredScaledMaxWidth("from Clipboard", fontRendererObj, guiLeft-44-2-22, guiTop+16, false, 86, 4210752);
-        Utils.drawStringCenteredScaledMaxWidth("Save preset", fontRendererObj, guiLeft-44-2-22, guiTop+8+24, false, 86, 4210752);
-        Utils.drawStringCenteredScaledMaxWidth("to Clipboard", fontRendererObj, guiLeft-44-2-22, guiTop+16+24, false, 86, 4210752);
+        Utils.drawTexturedRect(guiLeft - 88 - 2 - 22, guiTop + 2, 88, 20, 64 / 217f, 152 / 217f, 48 / 78f, 68 / 78f, GL11.GL_NEAREST);
+        Utils.drawTexturedRect(guiLeft - 88 - 2 - 22, guiTop + 2 + 24, 88, 20, 64 / 217f, 152 / 217f, 48 / 78f, 68 / 78f, GL11.GL_NEAREST);
+        Utils.drawStringCenteredScaledMaxWidth("Load preset", fontRendererObj, guiLeft - 44 - 2 - 22, guiTop + 8, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("from Clipboard", fontRendererObj, guiLeft - 44 - 2 - 22, guiTop + 16, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("Save preset", fontRendererObj, guiLeft - 44 - 2 - 22, guiTop + 8 + 24, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("to Clipboard", fontRendererObj, guiLeft - 44 - 2 - 22, guiTop + 16 + 24, false, 86, 4210752);
 
-        if(!validShareContents()) {
-            Gui.drawRect(guiLeft-88-2-22, guiTop+2, guiLeft-2-22, guiTop+2+20, 0x80000000);
+        if (!validShareContents()) {
+            Gui.drawRect(guiLeft - 88 - 2 - 22, guiTop + 2, guiLeft - 2 - 22, guiTop + 2 + 20, 0x80000000);
         }
 
         GlStateManager.color(1, 1, 1, 1);
 
-        if(presets != null) {
+        if (presets != null) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
-            Utils.drawTexturedRect(guiLeft+xSize+22, guiTop, 80, ySize,
-                    editorXSize/256f, (editorXSize+80)/256f, 41/256f, (41+ySize)/256f, GL11.GL_NEAREST);
-            Utils.drawStringCenteredScaledMaxWidth("\u00a7nPresets", fontRendererObj, guiLeft+xSize+22+40, guiTop+10, false, 70, 0xffa0a0a0);
+            Utils.drawTexturedRect(guiLeft + xSize + 22, guiTop, 80, ySize,
+                    editorXSize / 256f, (editorXSize + 80) / 256f, 41 / 256f, (41 + ySize) / 256f, GL11.GL_NEAREST);
+            Utils.drawStringCenteredScaledMaxWidth("\u00a7nPresets", fontRendererObj, guiLeft + xSize + 22 + 40, guiTop + 10, false, 70, 0xffa0a0a0);
 
             int index = 0;
-            for(String presetName : presets.keySet()) {
-                Utils.drawStringCenteredScaledMaxWidth(presetName, fontRendererObj, guiLeft+xSize+22+40, guiTop+25+10*(index++),
+            for (String presetName : presets.keySet()) {
+                Utils.drawStringCenteredScaledMaxWidth(presetName, fontRendererObj, guiLeft + xSize + 22 + 40, guiTop + 25 + 10 * (index++),
                         false, 70, 0xff909090);
             }
         }
 
-        if(editingButton != null) {
-            int x = guiLeft+editingButton.x;
-            int y = guiTop+editingButton.y;
-            if(editingButton.anchorRight) {
+        if (editingButton != null) {
+            int x = guiLeft + editingButton.x;
+            int y = guiTop + editingButton.y;
+            if (editingButton.anchorRight) {
                 x += xSize;
             }
-            if(editingButton.anchorBottom) {
+            if (editingButton.anchorBottom) {
                 y += ySize;
             }
 
             GlStateManager.translate(0, 0, 300);
-            editorLeft = x + 8 - editorXSize/2;
+            editorLeft = x + 8 - editorXSize / 2;
             editorTop = y + 18 + 2;
 
             boolean showArrow = true;
-            if(editorTop+editorYSize+5 > height) {
-                editorTop = height-editorYSize-5;
+            if (editorTop + editorYSize + 5 > height) {
+                editorTop = height - editorYSize - 5;
                 showArrow = false;
             }
-            if(editorLeft < 5) {
+            if (editorLeft < 5) {
                 editorLeft = 5;
                 showArrow = false;
             }
-            if(editorLeft+editorXSize+5 > width) {
-                editorLeft = width-editorXSize-5;
+            if (editorLeft + editorXSize + 5 > width) {
+                editorLeft = width - editorXSize - 5;
                 showArrow = false;
             }
 
             Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
             GlStateManager.color(1, 1, 1, 1f);
-            Utils.drawTexturedRect(editorLeft, editorTop, editorXSize, editorYSize, 0, editorXSize/256f, 41/256f, (41+editorYSize)/256f, GL11.GL_NEAREST);
+            Utils.drawTexturedRect(editorLeft, editorTop, editorXSize, editorYSize, 0, editorXSize / 256f, 41 / 256f, (41 + editorYSize) / 256f, GL11.GL_NEAREST);
 
-            if(showArrow) Utils.drawTexturedRect(x+8-3, y+18, 10, 5, 0, 6/256f, 36/256f, 41/256f, GL11.GL_NEAREST);
+            if (showArrow)
+                Utils.drawTexturedRect(x + 8 - 3, y + 18, 10, 5, 0, 6 / 256f, 36 / 256f, 41 / 256f, GL11.GL_NEAREST);
 
-            fontRendererObj.drawString("Command", editorLeft+7, editorTop+7, 0xffa0a0a0, false);
+            fontRendererObj.drawString("Command", editorLeft + 7, editorTop + 7, 0xffa0a0a0, false);
 
-            commandTextField.setSize(editorXSize-14, 16);
+            commandTextField.setSize(editorXSize - 14, 16);
             commandTextField.setText(commandTextField.getText().replaceAll("^ +", ""));
-            if(commandTextField.getText().startsWith("/")) {
+            if (commandTextField.getText().startsWith("/")) {
                 commandTextField.setPrependText("");
             } else {
                 commandTextField.setPrependText("\u00a77/\u00a7r");
             }
-            commandTextField.render(editorLeft+7, editorTop+19);
+            commandTextField.render(editorLeft + 7, editorTop + 19);
 
-            fontRendererObj.drawString("Background", editorLeft+7, editorTop+40, 0xffa0a0a0, false);
+            fontRendererObj.drawString("Background", editorLeft + 7, editorTop + 40, 0xffa0a0a0, false);
 
-            for(int i=0; i<BACKGROUND_TYPES; i++) {
-                if(i == editingButton.backgroundIndex) {
-                    Gui.drawRect(editorLeft+7+20*i-1, editorTop+50-1, editorLeft+7+20*i+19, editorTop+50+19, 0xff0000ff);
+            for (int i = 0; i < BACKGROUND_TYPES; i++) {
+                if (i == editingButton.backgroundIndex) {
+                    Gui.drawRect(editorLeft + 7 + 20 * i - 1, editorTop + 50 - 1, editorLeft + 7 + 20 * i + 19, editorTop + 50 + 19, 0xff0000ff);
                 }
                 Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
                 GlStateManager.color(1, 1, 1, 1);
-                Utils.drawTexturedRect(editorLeft+7+20*i, editorTop+50, 18, 18,
-                        i*18/256f, (i*18+18)/256f, 0/256f, 18/256f, GL11.GL_NEAREST);
+                Utils.drawTexturedRect(editorLeft + 7 + 20 * i, editorTop + 50, 18, 18,
+                        i * 18 / 256f, (i * 18 + 18) / 256f, 0 / 256f, 18 / 256f, GL11.GL_NEAREST);
             }
 
-            fontRendererObj.drawString("Icon Type", editorLeft+7, editorTop+50+24, 0xffa0a0a0, false);
+            fontRendererObj.drawString("Icon Type", editorLeft + 7, editorTop + 50 + 24, 0xffa0a0a0, false);
 
             Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
             GlStateManager.color(1, 1, 1, 1);
-            float uMin = 18/256f;
-            float uMax = 36/256f;
+            float uMin = 18 / 256f;
+            float uMax = 36 / 256f;
             float vMin = 0;
-            float vMax = 18/256f;
+            float vMax = 18 / 256f;
 
-            for(int i=0; i<ICON_TYPES; i++) {
+            for (int i = 0; i < ICON_TYPES; i++) {
                 boolean flip = iconTypeIndex == i;
 
                 Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
                 GlStateManager.color(1, 1, 1, 1);
-                Utils.drawTexturedRect(editorLeft+7+20*i, editorTop+50+34, 18, 18,
+                Utils.drawTexturedRect(editorLeft + 7 + 20 * i, editorTop + 50 + 34, 18, 18,
                         flip ? uMax : uMin, flip ? uMin : uMax, flip ? vMax : vMin, flip ? vMin : vMax, GL11.GL_NEAREST);
 
                 ItemStack stack = null;
-                if(i == 0) {
+                if (i == 0) {
                     stack = new ItemStack(Items.diamond_sword);
-                } else if(i == 1) {
+                } else if (i == 1) {
                     stack = getStack("skull:c9c8881e42915a9d29bb61a16fb26d059913204d265df5b439b3d792acd56");
-                } else if(i == 2) {
+                } else if (i == 2) {
                     stack = new ItemStack(Items.lead);
                 }
-                if(stack != null) Utils.drawItemStack(stack, editorLeft+8+20*i, editorTop+50+35);
+                if (stack != null) Utils.drawItemStack(stack, editorLeft + 8 + 20 * i, editorTop + 50 + 35);
             }
 
-            fontRendererObj.drawString("Icon Selector", editorLeft+7, editorTop+50+55, 0xffa0a0a0, false);
+            fontRendererObj.drawString("Icon Selector", editorLeft + 7, editorTop + 50 + 55, 0xffa0a0a0, false);
 
-            iconTextField.render(editorLeft+7, editorTop+50+65);
+            iconTextField.render(editorLeft + 7, editorTop + 50 + 65);
 
             GlStateManager.enableDepth();
 
             itemScroll.tick();
 
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
-            GlScissorStack.push(0, editorTop+136, width, editorTop+196, scaledResolution);
+            GlScissorStack.push(0, editorTop + 136, width, editorTop + 196, scaledResolution);
 
-            synchronized(searchedIcons) {
-                if(iconTextField.getText().trim().isEmpty() && searchedIcons.isEmpty()) {
+            synchronized (searchedIcons) {
+                if (iconTextField.getText().trim().isEmpty() && searchedIcons.isEmpty()) {
                     searchedIcons.addAll(NotEnoughUpdates.INSTANCE.manager.getItemInformation().keySet());
                     searchedIcons.sort(prioritisingComparator);
                 }
 
-                int max = (searchedIcons.size()-1)/6*20-40;
+                int max = (searchedIcons.size() - 1) / 6 * 20 - 40;
                 int scroll = itemScroll.getValue();
-                if(scroll > max) scroll = max;
+                if (scroll > max) scroll = max;
 
-                int scrollBarHeight = (int)Math.ceil(3f*54f/(searchedIcons.size()-18));
-                if(scrollBarHeight < 0) scrollBarHeight = 54;
-                if(scrollBarHeight < 2) scrollBarHeight = 2;
-                int scrollY = (int)Math.floor(54f*((scroll/20f) / ((searchedIcons.size()-18)/6f)));
-                if(scrollY+scrollBarHeight > 54) scrollY = 54-scrollBarHeight;
+                int scrollBarHeight = (int) Math.ceil(3f * 54f / (searchedIcons.size() - 18));
+                if (scrollBarHeight < 0) scrollBarHeight = 54;
+                if (scrollBarHeight < 2) scrollBarHeight = 2;
+                int scrollY = (int) Math.floor(54f * ((scroll / 20f) / ((searchedIcons.size() - 18) / 6f)));
+                if (scrollY + scrollBarHeight > 54) scrollY = 54 - scrollBarHeight;
 
-                Gui.drawRect(editorLeft+137, editorTop+139+scrollY, editorLeft+139, editorTop+139+scrollY+scrollBarHeight, 0xff202020);
+                Gui.drawRect(editorLeft + 137, editorTop + 139 + scrollY, editorLeft + 139, editorTop + 139 + scrollY + scrollBarHeight, 0xff202020);
 
                 int endIndex = searchedIcons.size();
-                int startIndex = scroll/20*6;
-                if(startIndex < 0) startIndex = 0;
-                if(endIndex > startIndex+24) endIndex = startIndex+24;
+                int startIndex = scroll / 20 * 6;
+                if (startIndex < 0) startIndex = 0;
+                if (endIndex > startIndex + 24) endIndex = startIndex + 24;
 
-                for(int i=startIndex; i<endIndex; i++) {
+                for (int i = startIndex; i < endIndex; i++) {
                     String iconS = searchedIcons.get(i);
 
-                    int iconX = editorLeft+12+((i-startIndex)%6)*20;
-                    int iconY = editorTop+137+((i-startIndex)/6)*20 - (itemScroll.getValue()%20);
+                    int iconX = editorLeft + 12 + ((i - startIndex) % 6) * 20;
+                    int iconY = editorTop + 137 + ((i - startIndex) / 6) * 20 - (itemScroll.getValue() % 20);
 
                     Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
                     GlStateManager.color(1, 1, 1, 1);
                     Utils.drawTexturedRect(iconX, iconY, 18, 18,
-                            18/256f, 36/256f, 0/256f, 18/256f, GL11.GL_NEAREST);
+                            18 / 256f, 36 / 256f, 0 / 256f, 18 / 256f, GL11.GL_NEAREST);
 
-                    renderIcon(iconS, iconX+1, iconY+1);
+                    renderIcon(iconS, iconX + 1, iconY + 1);
                 }
             }
 
@@ -462,20 +463,20 @@ public class GuiInvButtonEditor extends GuiScreen {
     @Override
     public void handleMouseInput() throws IOException {
         int scroll = Mouse.getEventDWheel();
-        if(scroll != 0) {
+        if (scroll != 0) {
             scroll = -scroll;
-            if(scroll > 1) scroll = 8;
-            if(scroll < -1) scroll = -8;
+            if (scroll > 1) scroll = 8;
+            if (scroll < -1) scroll = -8;
 
             int delta = Math.abs(itemScroll.getTarget() - itemScroll.getValue());
-            float acc = delta/20+1;
+            float acc = delta / 20 + 1;
             scroll *= acc;
 
-            int max = (searchedIcons.size()-1)/6*20-40;
+            int max = (searchedIcons.size() - 1) / 6 * 20 - 40;
             int newTarget = itemScroll.getTarget() + scroll;
 
-            if(newTarget > max) newTarget = max;
-            if(newTarget < 0) newTarget = 0;
+            if (newTarget > max) newTarget = max;
+            if (newTarget < 0) newTarget = 0;
 
             itemScroll.setTarget(newTarget);
             itemScroll.resetTimer();
@@ -486,13 +487,13 @@ public class GuiInvButtonEditor extends GuiScreen {
 
     private boolean validShareContents() {
         try {
-            String base64 = (String)Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+            String base64 = (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
 
-            if(base64.length() <= sharePrefix.length()) return false;
+            if (base64.length() <= sharePrefix.length()) return false;
 
             try {
                 return new String(Base64.getDecoder().decode(base64)).startsWith(sharePrefix);
-            } catch (IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 return false;
             }
         } catch (HeadlessException | IOException | UnsupportedFlavorException | IllegalStateException e) {
@@ -504,64 +505,64 @@ public class GuiInvButtonEditor extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
 
-        if(editingButton != null) {
-            if(mouseX >= editorLeft && mouseX <= editorLeft+editorXSize &&
+        if (editingButton != null) {
+            if (mouseX >= editorLeft && mouseX <= editorLeft + editorXSize &&
                     mouseY >= editorTop & mouseY <= editorTop + editorYSize) {
-                if(mouseX >= editorLeft+7 && mouseX <= editorLeft+7+commandTextField.getWidth() &&
-                        mouseY >= editorTop+12 && mouseY <= editorTop+12+commandTextField.getHeight()) {
+                if (mouseX >= editorLeft + 7 && mouseX <= editorLeft + 7 + commandTextField.getWidth() &&
+                        mouseY >= editorTop + 12 && mouseY <= editorTop + 12 + commandTextField.getHeight()) {
                     commandTextField.mouseClicked(mouseX, mouseY, mouseButton);
                     iconTextField.unfocus();
                     editingButton.command = commandTextField.getText();
                     return;
                 }
-                if(mouseX >= editorLeft+7 && mouseX <= editorLeft+7+iconTextField.getWidth() &&
-                        mouseY >= editorTop+50+65 && mouseY <= editorTop+50+65+iconTextField.getHeight()) {
+                if (mouseX >= editorLeft + 7 && mouseX <= editorLeft + 7 + iconTextField.getWidth() &&
+                        mouseY >= editorTop + 50 + 65 && mouseY <= editorTop + 50 + 65 + iconTextField.getHeight()) {
                     iconTextField.mouseClicked(mouseX, mouseY, mouseButton);
 
-                    if(mouseButton == 1) {
+                    if (mouseButton == 1) {
                         search();
                     }
 
                     commandTextField.unfocus();
                     return;
                 }
-                if(mouseY >= editorTop+50 && mouseY <= editorTop+50+18) {
-                    for(int i=0; i<BACKGROUND_TYPES; i++) {
-                        if(mouseX >= editorLeft+7+20*i && mouseX <= editorLeft+7+20*i+18) {
+                if (mouseY >= editorTop + 50 && mouseY <= editorTop + 50 + 18) {
+                    for (int i = 0; i < BACKGROUND_TYPES; i++) {
+                        if (mouseX >= editorLeft + 7 + 20 * i && mouseX <= editorLeft + 7 + 20 * i + 18) {
                             editingButton.backgroundIndex = i;
                             return;
                         }
                     }
                 }
-                for(int i=0; i<ICON_TYPES; i++) {
-                    if(mouseX >= editorLeft+7+20*i && mouseX <= editorLeft+7+20*i+18 &&
-                            mouseY >= editorTop+50+34 && mouseY <= editorTop+50+34+18) {
-                        if(iconTypeIndex != i) {
+                for (int i = 0; i < ICON_TYPES; i++) {
+                    if (mouseX >= editorLeft + 7 + 20 * i && mouseX <= editorLeft + 7 + 20 * i + 18 &&
+                            mouseY >= editorTop + 50 + 34 && mouseY <= editorTop + 50 + 34 + 18) {
+                        if (iconTypeIndex != i) {
                             iconTypeIndex = i;
                             search();
                         }
                         return;
                     }
                 }
-                if(mouseX > editorLeft+8 && mouseX < editorLeft+editorXSize-16 && mouseY > editorTop+136 && mouseY < editorTop+196) {
-                    synchronized(searchedIcons) {
-                        int max = (searchedIcons.size()-1)/6*20-40;
+                if (mouseX > editorLeft + 8 && mouseX < editorLeft + editorXSize - 16 && mouseY > editorTop + 136 && mouseY < editorTop + 196) {
+                    synchronized (searchedIcons) {
+                        int max = (searchedIcons.size() - 1) / 6 * 20 - 40;
                         int scroll = itemScroll.getValue();
-                        if(scroll > max) scroll = max;
+                        if (scroll > max) scroll = max;
 
                         int endIndex = searchedIcons.size();
-                        int startIndex = scroll/20*6;
-                        if(startIndex < 0) startIndex = 0;
-                        if(endIndex > startIndex+24) endIndex = startIndex+24;
+                        int startIndex = scroll / 20 * 6;
+                        if (startIndex < 0) startIndex = 0;
+                        if (endIndex > startIndex + 24) endIndex = startIndex + 24;
 
-                        for(int i=startIndex; i<endIndex; i++) {
+                        for (int i = startIndex; i < endIndex; i++) {
                             String iconS = searchedIcons.get(i);
 
-                            int x = editorLeft+12+((i-startIndex)%6)*20;
-                            int y = editorTop+137+((i-startIndex)/6)*20 - (itemScroll.getValue()%20);
+                            int x = editorLeft + 12 + ((i - startIndex) % 6) * 20;
+                            int y = editorTop + 137 + ((i - startIndex) / 6) * 20 - (itemScroll.getValue() % 20);
 
-                            if(mouseX >= x && mouseX <= x+18 &&
-                                    mouseY >= y && mouseY <= y+18) {
+                            if (mouseX >= x && mouseX <= x + 18 &&
+                                    mouseY >= y && mouseY <= y + 18) {
                                 editingButton.icon = iconS;
                                 return;
                             }
@@ -572,19 +573,19 @@ public class GuiInvButtonEditor extends GuiScreen {
             }
         }
 
-        for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
-            int x = guiLeft+button.x;
-            int y = guiTop+button.y;
-            if(button.anchorRight) {
+        for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+            int x = guiLeft + button.x;
+            int y = guiTop + button.y;
+            if (button.anchorRight) {
                 x += xSize;
             }
-            if(button.anchorBottom) {
+            if (button.anchorBottom) {
                 y += ySize;
             }
 
-            if(mouseX >= x && mouseY >= y &&
-                    mouseX <= x+18 && mouseY <= y+18) {
-                if(editingButton == button) {
+            if (mouseX >= x && mouseY >= y &&
+                    mouseX <= x + 18 && mouseY <= y + 18) {
+                if (editingButton == button) {
                     editingButton = null;
                 } else {
                     editingButton = button;
@@ -594,7 +595,7 @@ public class GuiInvButtonEditor extends GuiScreen {
             }
         }
 
-        if(mouseX > guiLeft-2-88-22 && mouseX< guiLeft-2-22) {
+        if (mouseX > guiLeft - 2 - 88 - 22 && mouseX < guiLeft - 2 - 22) {
             if (mouseY > guiTop + 2 && mouseY < guiTop + 22) {
 
                 String base64;
@@ -605,12 +606,12 @@ public class GuiInvButtonEditor extends GuiScreen {
                     return;
                 }
 
-                if(base64.length() <= sharePrefix.length()) return;
+                if (base64.length() <= sharePrefix.length()) return;
 
                 String jsonString;
                 try {
                     jsonString = new String(Base64.getDecoder().decode(base64));
-                    if(!jsonString.startsWith(sharePrefix)) return;
+                    if (!jsonString.startsWith(sharePrefix)) return;
                     jsonString = jsonString.substring(sharePrefix.length());
                 } catch (IllegalArgumentException e) {
                     return;
@@ -623,12 +624,10 @@ public class GuiInvButtonEditor extends GuiScreen {
                     return;
                 }
 
-
                 List<NEUConfig.InventoryButton> buttons = new ArrayList<>();
                 System.out.println(presetArray.size());
                 try {
                     for (int i = 0; i < presetArray.size(); i++) {
-
 
                         JsonElement shittyO = presetArray.get(i);
                         JsonElement lessShittyO = new JsonParser().parse(shittyO.getAsString());
@@ -642,10 +641,9 @@ public class GuiInvButtonEditor extends GuiScreen {
 
                     NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons = buttons;
                     return;
-                } catch(JsonParseException | ClassCastException | IllegalStateException e){
+                } catch (JsonParseException | ClassCastException | IllegalStateException e) {
                     return;
                 }
-
 
             } else if (mouseY > guiTop + 26 && mouseY < guiTop + 26 + 20) {
 
@@ -656,17 +654,17 @@ public class GuiInvButtonEditor extends GuiScreen {
 
                     jsonArray.add(new JsonPrimitive(NotEnoughUpdates.INSTANCE.manager.gson.toJson(result.get(i), NEUConfig.InventoryButton.class)));
                 }
-                String base64String = Base64.getEncoder().encodeToString((sharePrefix+jsonArray).getBytes(StandardCharsets.UTF_8));
+                String base64String = Base64.getEncoder().encodeToString((sharePrefix + jsonArray).getBytes(StandardCharsets.UTF_8));
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(base64String), null);
                 return;
             }
         }
 
-        if(editingButton == null) {
+        if (editingButton == null) {
             int index = 0;
-            for(List<NEUConfig.InventoryButton> buttons : presets.values()) {
-                if(mouseX >= guiLeft+xSize+22 && mouseX <= guiLeft+xSize+22+80 &&
-                        mouseY >= guiTop+21+10*index && mouseY <= guiTop+21+10*index+10) {
+            for (List<NEUConfig.InventoryButton> buttons : presets.values()) {
+                if (mouseX >= guiLeft + xSize + 22 && mouseX <= guiLeft + xSize + 22 + 80 &&
+                        mouseY >= guiTop + 21 + 10 * index && mouseY <= guiTop + 21 + 10 * index + 10) {
                     NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons = buttons;
                     return;
                 }
@@ -681,15 +679,15 @@ public class GuiInvButtonEditor extends GuiScreen {
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
 
-        if(editingButton != null && commandTextField.getFocus()) {
+        if (editingButton != null && commandTextField.getFocus()) {
             commandTextField.keyTyped(typedChar, keyCode);
             editingButton.command = commandTextField.getText();
-        } else if(editingButton != null && iconTextField.getFocus()) {
+        } else if (editingButton != null && iconTextField.getFocus()) {
             String old = iconTextField.getText().trim();
             iconTextField.keyTyped(typedChar, keyCode);
             String newText = iconTextField.getText().trim();
 
-            if(!old.equalsIgnoreCase(newText)) {
+            if (!old.equalsIgnoreCase(newText)) {
                 search();
             }
         }
@@ -702,9 +700,9 @@ public class GuiInvButtonEditor extends GuiScreen {
         final int thisSearchId = searchId.incrementAndGet();
         final String searchString = iconTextField.getText();
 
-        if(iconTypeIndex == 0) {
-            if(searchString.trim().isEmpty()) {
-                synchronized(searchedIcons) {
+        if (iconTypeIndex == 0) {
+            if (searchString.trim().isEmpty()) {
+                synchronized (searchedIcons) {
                     searchedIcons.clear();
 
                     List<String> unsorted = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.getItemInformation().keySet());
@@ -715,64 +713,64 @@ public class GuiInvButtonEditor extends GuiScreen {
             }
 
             searchES.submit(() -> {
-                if(thisSearchId != searchId.get()) return;
+                if (thisSearchId != searchId.get()) return;
 
                 List<String> title = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.search("title:" + searchString.trim()));
 
-                if(thisSearchId != searchId.get()) return;
+                if (thisSearchId != searchId.get()) return;
 
-                if(!searchString.trim().contains(" ")) {
+                if (!searchString.trim().contains(" ")) {
                     StringBuilder sb = new StringBuilder();
-                    for(char c : searchString.toCharArray()) {
+                    for (char c : searchString.toCharArray()) {
                         sb.append(c).append(" ");
                     }
                     title.addAll(NotEnoughUpdates.INSTANCE.manager.search("title:" + sb.toString().trim()));
                 }
 
-                if(thisSearchId != searchId.get()) return;
+                if (thisSearchId != searchId.get()) return;
 
                 List<String> desc = new ArrayList<>(NotEnoughUpdates.INSTANCE.manager.search("desc:" + searchString.trim()));
                 desc.removeAll(title);
 
-                if(thisSearchId != searchId.get()) return;
+                if (thisSearchId != searchId.get()) return;
 
                 title.sort(prioritisingComparator);
                 desc.sort(prioritisingComparator);
 
-                if(thisSearchId != searchId.get()) return;
+                if (thisSearchId != searchId.get()) return;
 
-                synchronized(searchedIcons) {
+                synchronized (searchedIcons) {
                     searchedIcons.clear();
                     searchedIcons.addAll(title);
                     searchedIcons.addAll(desc);
                 }
             });
-        } else if(iconTypeIndex == 1) {
-            if(searchString.trim().isEmpty()) {
+        } else if (iconTypeIndex == 1) {
+            if (searchString.trim().isEmpty()) {
                 searchedIcons.clear();
                 searchedIcons.addAll(skullIcons.values());
                 return;
             }
 
-            synchronized(searchedIcons) {
+            synchronized (searchedIcons) {
                 searchedIcons.clear();
-                for(Map.Entry<String, String> entry : skullIcons.entrySet()) {
-                    if(NotEnoughUpdates.INSTANCE.manager.searchString(entry.getKey(), searchString)) {
+                for (Map.Entry<String, String> entry : skullIcons.entrySet()) {
+                    if (NotEnoughUpdates.INSTANCE.manager.searchString(entry.getKey(), searchString)) {
                         searchedIcons.add(entry.getValue());
                     }
                 }
             }
-        } else if(iconTypeIndex == 2) {
-            if(searchString.trim().isEmpty()) {
+        } else if (iconTypeIndex == 2) {
+            if (searchString.trim().isEmpty()) {
                 searchedIcons.clear();
                 searchedIcons.addAll(extraIcons.values());
                 return;
             }
 
-            synchronized(searchedIcons) {
+            synchronized (searchedIcons) {
                 searchedIcons.clear();
-                for(Map.Entry<String, String> entry : extraIcons.entrySet()) {
-                    if(NotEnoughUpdates.INSTANCE.manager.searchString(entry.getKey(), searchString)) {
+                for (Map.Entry<String, String> entry : extraIcons.entrySet()) {
+                    if (NotEnoughUpdates.INSTANCE.manager.searchString(entry.getKey(), searchString)) {
                         searchedIcons.add(entry.getValue());
                     }
                 }

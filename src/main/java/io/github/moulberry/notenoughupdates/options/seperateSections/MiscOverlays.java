@@ -58,12 +58,11 @@ public class MiscOverlays {
             desc = "Change the way the experimentation timer displays\n" +
                     "Only when ready, When very Soon, When soon, When kinda soon or always."
     )
-    @ConfigAccordionId(id =1)
+    @ConfigAccordionId(id = 1)
     @ConfigEditorDropdown(
             values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
     )
     public int experimentationDisplay = 0;
-
 
     @Expose
     @ConfigOption(
@@ -71,7 +70,7 @@ public class MiscOverlays {
             desc = "Change the way the puzzler reset timer displays\n" +
                     "Only when ready, When very Soon, When soon, When kinda soon or always."
     )
-    @ConfigAccordionId(id =1)
+    @ConfigAccordionId(id = 1)
     @ConfigEditorDropdown(
             values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
     )
@@ -83,7 +82,7 @@ public class MiscOverlays {
             desc = "Change the way the fetchur reset timer displays\n" +
                     "Only when ready, When very Soon, When soon, When kinda soon or always."
     )
-    @ConfigAccordionId(id =1)
+    @ConfigAccordionId(id = 1)
     @ConfigEditorDropdown(
             values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
     )
@@ -95,7 +94,7 @@ public class MiscOverlays {
             desc = "Change the way the Commission timer displays\n" +
                     "Only when ready, When very Soon, When soon, When kinda soon or always."
     )
-    @ConfigAccordionId(id =1)
+    @ConfigAccordionId(id = 1)
     @ConfigEditorDropdown(
             values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
     )
@@ -107,7 +106,7 @@ public class MiscOverlays {
             desc = "Change the way the cake buff timer displays\n" +
                     "Only when ready, When very Soon, When soon, When kinda soon or always."
     )
-    @ConfigAccordionId(id =1)
+    @ConfigAccordionId(id = 1)
     @ConfigEditorDropdown(
             values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
     )
@@ -119,7 +118,7 @@ public class MiscOverlays {
             desc = "Change the way the cookie buff displays\n" +
                     "Only when ready, When very Soon, When soon, When kinda soon or always."
     )
-    @ConfigAccordionId(id =1)
+    @ConfigAccordionId(id = 1)
     @ConfigEditorDropdown(
             values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
     )
@@ -131,7 +130,7 @@ public class MiscOverlays {
             desc = "Change the way the god pot displays\n" +
                     "Only when ready, When very Soon, When soon, When kinda soon or always."
     )
-    @ConfigAccordionId(id =1)
+    @ConfigAccordionId(id = 1)
     @ConfigEditorDropdown(
             values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
     )
@@ -206,7 +205,6 @@ public class MiscOverlays {
     @ConfigAccordionId(id = 2)
     public int kindaSoonColour = 1;
 
-
     @Expose
     @ConfigOption(
             name = "Default Colour",
@@ -220,7 +218,6 @@ public class MiscOverlays {
     @ConfigAccordionId(id = 2)
     public int defaultColour = 15;
 
-
     @Expose
     @ConfigOption(
             name = "Todo Position",
@@ -232,7 +229,6 @@ public class MiscOverlays {
     )
     @ConfigAccordionId(id = 0)
     public Position todoPosition = new Position(100, 0);
-
 
     @Expose
     @ConfigOption(

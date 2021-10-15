@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 public @interface ConfigEditorSlider {
 
     float minValue();
+
     float maxValue();
 
     float minStep();

@@ -13,7 +13,6 @@ public class TradeMenu {
     @ConfigEditorBoolean
     public boolean enableCustomTrade = true;
 
-
     @Expose
     @ConfigOption(
             name = "Price Information",

@@ -31,16 +31,17 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
         super(renderManager);
     }
 
-    @Inject(method = "doRender(Lnet/minecraft/entity/projectile/EntityFishHook;DDDFF)V", at=@At(value = "HEAD"), cancellable = true)
+    @Inject(method = "doRender(Lnet/minecraft/entity/projectile/EntityFishHook;DDDFF)V", at = @At(value = "HEAD"), cancellable = true)
     public void render(EntityFishHook entity, double x, double y, double z, float entityYaw, float partialTicks, CallbackInfo ci) {
-        if(NotEnoughUpdates.INSTANCE.config.fishing.hideOtherPlayerAll &&
+        if (NotEnoughUpdates.INSTANCE.config.fishing.hideOtherPlayerAll &&
                 entity != null && entity.angler != Minecraft.getMinecraft().thePlayer) {
             ci.cancel();
             return;
         }
 
-        if((!NotEnoughUpdates.INSTANCE.config.fishing.enableRodColours &&
-                FishingHelper.getInstance().warningState == FishingHelper.PlayerWarningState.NOTHING) || entity == null) return;
+        if ((!NotEnoughUpdates.INSTANCE.config.fishing.enableRodColours &&
+                FishingHelper.getInstance().warningState == FishingHelper.PlayerWarningState.NOTHING) || entity == null)
+            return;
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(entity.angler.getHeldItem());
         if (NotEnoughUpdates.INSTANCE.isOnSkyblock() && internalname != null && entity.angler != null &&
@@ -49,7 +50,7 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
                 ci.cancel();
 
                 GlStateManager.pushMatrix();
-                GlStateManager.translate((float)x, (float)y, (float)z);
+                GlStateManager.translate((float) x, (float) y, (float) z);
                 GlStateManager.enableRescaleNormal();
                 GlStateManager.scale(0.5F, 0.5F, 0.5F);
                 GlStateManager.rotate(180.0F - this.renderManager.playerViewY, 0.0F, 1.0F, 0.0F);
@@ -74,37 +75,37 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
                 double playerVecY;
                 double playerVecZ;
                 double startY;
-                if(this.renderManager.options.thirdPersonView == 0 && entity.angler == Minecraft.getMinecraft().thePlayer) {
+                if (this.renderManager.options.thirdPersonView == 0 && entity.angler == Minecraft.getMinecraft().thePlayer) {
                     float f7 = entity.angler.getSwingProgress(partialTicks);
-                    float sqrtSinSwing = MathHelper.sin(MathHelper.sqrt_float(f7) * (float)Math.PI);
+                    float sqrtSinSwing = MathHelper.sin(MathHelper.sqrt_float(f7) * (float) Math.PI);
 
                     double decimalFov = (this.renderManager.options.fovSetting / 110.0D);
                     Vec3 fppOffset = new Vec3((-decimalFov + (decimalFov / 2.5) - (decimalFov / 8)) + 0.025, -0.045D * (this.renderManager.options.fovSetting / 100.0D), 0.4D);
-                    fppOffset = fppOffset.rotatePitch(-mathLerp(partialTicks, entity.angler.prevRotationPitch, entity.angler.rotationPitch) * ((float)Math.PI / 180.0F));
-                    fppOffset = fppOffset.rotateYaw(-mathLerp(partialTicks, entity.angler.prevRotationYaw, entity.angler.rotationYaw) * ((float)Math.PI / 180.0F));
+                    fppOffset = fppOffset.rotatePitch(-mathLerp(partialTicks, entity.angler.prevRotationPitch, entity.angler.rotationPitch) * ((float) Math.PI / 180.0F));
+                    fppOffset = fppOffset.rotateYaw(-mathLerp(partialTicks, entity.angler.prevRotationYaw, entity.angler.rotationYaw) * ((float) Math.PI / 180.0F));
                     fppOffset = fppOffset.rotateYaw(sqrtSinSwing * 0.5F);
                     fppOffset = fppOffset.rotatePitch(-sqrtSinSwing * 0.7F);
 
-                    playerVecX = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * (double)partialTicks + fppOffset.xCoord;
-                    playerVecY = entity.angler.prevPosY + (entity.angler.posY - entity.angler.prevPosY) * (double)partialTicks + fppOffset.yCoord;
-                    playerVecZ = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * (double)partialTicks + fppOffset.zCoord;
+                    playerVecX = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * (double) partialTicks + fppOffset.xCoord;
+                    playerVecY = entity.angler.prevPosY + (entity.angler.posY - entity.angler.prevPosY) * (double) partialTicks + fppOffset.yCoord;
+                    playerVecZ = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * (double) partialTicks + fppOffset.zCoord;
                     startY = entity.angler.getEyeHeight();
                 } else {
-                    float angle = (entity.angler.prevRenderYawOffset + (entity.angler.renderYawOffset - entity.angler.prevRenderYawOffset) * partialTicks) * (float)Math.PI / 180.0F;
+                    float angle = (entity.angler.prevRenderYawOffset + (entity.angler.renderYawOffset - entity.angler.prevRenderYawOffset) * partialTicks) * (float) Math.PI / 180.0F;
                     double d4 = MathHelper.sin(angle);
                     double d6 = MathHelper.cos(angle);
-                    playerVecX = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * (double)partialTicks - d6 * 0.35D - d4 * 0.8D;
-                    playerVecY = entity.angler.prevPosY + entity.angler.getEyeHeight() + (entity.angler.posY - entity.angler.prevPosY) * (double)partialTicks - 0.45D;
-                    playerVecZ = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * (double)partialTicks - d4 * 0.35D + d6 * 0.8D;
+                    playerVecX = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * (double) partialTicks - d6 * 0.35D - d4 * 0.8D;
+                    playerVecY = entity.angler.prevPosY + entity.angler.getEyeHeight() + (entity.angler.posY - entity.angler.prevPosY) * (double) partialTicks - 0.45D;
+                    playerVecZ = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * (double) partialTicks - d4 * 0.35D + d6 * 0.8D;
                     startY = entity.angler.isSneaking() ? -0.1875D : 0.0D;
                 }
 
-                double d13 = entity.prevPosX + (entity.posX - entity.prevPosX) * (double)partialTicks;
-                double d5 = entity.prevPosY + (entity.posY - entity.prevPosY) * (double)partialTicks + 0.25D;
-                double d7 = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * (double)partialTicks;
-                double d9 = (float)(playerVecX - d13);
-                double d11 = (double)((float)(playerVecY - d5)) + startY;
-                double d12 = (float)(playerVecZ - d7);
+                double d13 = entity.prevPosX + (entity.posX - entity.prevPosX) * (double) partialTicks;
+                double d5 = entity.prevPosY + (entity.posY - entity.prevPosY) * (double) partialTicks + 0.25D;
+                double d7 = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * (double) partialTicks;
+                double d9 = (float) (playerVecX - d13);
+                double d11 = (double) ((float) (playerVecY - d5)) + startY;
+                double d12 = (float) (playerVecZ - d7);
                 GlStateManager.disableTexture2D();
                 GlStateManager.disableLighting();
                 GlStateManager.enableBlend();
@@ -120,13 +121,13 @@ public abstract class MixinRenderFish extends Render<EntityFishHook> {
                 int colourI = SpecialColour.specialToChromaRGB(specialColour);
 
                 for (int l = 0; l <= 16; ++l) {
-                    if(SpecialColour.getSpeed(specialColour) > 0) { //has chroma
+                    if (SpecialColour.getSpeed(specialColour) > 0) { //has chroma
                         colourI = SpecialColour.rotateHue(colourI, 10);
                     }
                     Color colour = new Color(colourI, true);
 
-                    float f10 = (float)l / 16.0F;
-                    worldrenderer.pos(x + d9 * (double)f10, y + d11 * (double)(f10 * f10 + f10) * 0.5D + 0.25D, z + d12 * (double)f10)
+                    float f10 = (float) l / 16.0F;
+                    worldrenderer.pos(x + d9 * (double) f10, y + d11 * (double) (f10 * f10 + f10) * 0.5D + 0.25D, z + d12 * (double) f10)
                             .color(colour.getRed(), colour.getGreen(), colour.getBlue(), colour.getAlpha()).endVertex();
                 }
 

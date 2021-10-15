@@ -65,7 +65,6 @@ public class Dungeons {
     @ConfigAccordionId(id = 1)
     public int profitDisplayLoc = 0;
 
-
     @ConfigOption(
             name = "Dungeon Win Overlay",
             desc = ""
@@ -194,5 +193,4 @@ public class Dungeons {
     @ConfigAccordionId(id = 2)
     public String dungBatColour = "0:255:12:255:0";
 
-    
 }

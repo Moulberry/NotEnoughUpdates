@@ -85,7 +85,7 @@ public class NEUEventListener {
 
     private void displayUpdateMessageIfOutOfDate() {
         File repo = neu.manager.repoLocation;
-        if(repo.exists()) {
+        if (repo.exists()) {
             File updateJson = new File(repo, "update.json");
             try {
                 JsonObject o = neu.manager.getJsonFromFile(updateJson);
@@ -96,7 +96,7 @@ public class NEUEventListener {
                 boolean shouldUpdate = !NotEnoughUpdates.VERSION.equalsIgnoreCase(version);
                 boolean shouldPreUpdate = !NotEnoughUpdates.PRE_VERSION.equalsIgnoreCase(preVersion);
 
-                if(o.has("version_id") && o.get("version_id").isJsonPrimitive()) {
+                if (o.has("version_id") && o.get("version_id").isJsonPrimitive()) {
                     int version_id = o.get("version_id").getAsInt();
                     shouldUpdate = version_id > NotEnoughUpdates.VERSION_ID;
                 }
@@ -105,20 +105,20 @@ public class NEUEventListener {
                     shouldPreUpdate = pre_version_id > NotEnoughUpdates.PRE_VERSION_ID;
                 }
 
-                if(shouldUpdate) {
+                if (shouldUpdate) {
                     String update_msg = o.get("update_msg").getAsString();
 
                     int first_len = -1;
-                    for(String line : update_msg.split("\n")) {
+                    for (String line : update_msg.split("\n")) {
                         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
                         int len = fr.getStringWidth(line);
-                        if(first_len == -1) {
+                        if (first_len == -1) {
                             first_len = len;
                         }
-                        int missing_len = first_len-len;
-                        if(missing_len > 0) {
+                        int missing_len = first_len - len;
+                        if (missing_len > 0) {
                             StringBuilder sb = new StringBuilder(line);
-                            for(int i=0; i<missing_len/8; i++) {
+                            for (int i = 0; i < missing_len / 8; i++) {
                                 sb.insert(0, " ");
                             }
                             line = sb.toString();
@@ -156,7 +156,8 @@ public class NEUEventListener {
 
                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                 }
-            } catch(Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -187,12 +188,13 @@ public class NEUEventListener {
     private int inventoryLoadedTicks = 0;
     private String loadedInvName = "";
     public static boolean inventoryLoaded = false;
+
     public static void displayNotification(List<String> lines, boolean showForever) {
         displayNotification(lines, showForever, false);
     }
 
     public static void displayNotification(List<String> lines, boolean showForever, boolean overInventory) {
-        if(showForever) {
+        if (showForever) {
             notificationDisplayMillis = -420;
         } else {
             notificationDisplayMillis = System.currentTimeMillis();
@@ -203,30 +205,30 @@ public class NEUEventListener {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if(Minecraft.getMinecraft().currentScreen == null || !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
+        if (Minecraft.getMinecraft().currentScreen == null || !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
             Keyboard.enableRepeatEvents(false);
         }
-        if(event.phase != TickEvent.Phase.START) return;
-        if(Minecraft.getMinecraft().theWorld == null) return;
-        if(Minecraft.getMinecraft().thePlayer == null) return;
+        if (event.phase != TickEvent.Phase.START) return;
+        if (Minecraft.getMinecraft().theWorld == null) return;
+        if (Minecraft.getMinecraft().thePlayer == null) return;
 
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest cc = (ContainerChest) chest.inventorySlots;
 
-            if(!loadedInvName.equals(cc.getLowerChestInventory().getDisplayName().getUnformattedText())) {
+            if (!loadedInvName.equals(cc.getLowerChestInventory().getDisplayName().getUnformattedText())) {
                 loadedInvName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
                 inventoryLoaded = false;
                 inventoryLoadedTicks = 3;
             }
 
-            if(!inventoryLoaded) {
-                if(cc.getLowerChestInventory().getStackInSlot(cc.getLowerChestInventory().getSizeInventory()-1) != null) {
+            if (!inventoryLoaded) {
+                if (cc.getLowerChestInventory().getStackInSlot(cc.getLowerChestInventory().getSizeInventory() - 1) != null) {
                     inventoryLoaded = true;
                 } else {
-                    for(ItemStack stack : chest.inventorySlots.getInventory()) {
-                        if(stack != null) {
-                            if(--inventoryLoadedTicks <= 0) {
+                    for (ItemStack stack : chest.inventorySlots.getInventory()) {
+                        if (stack != null) {
+                            if (--inventoryLoadedTicks <= 0) {
                                 inventoryLoaded = true;
                             }
                             break;
@@ -239,7 +241,7 @@ public class NEUEventListener {
             inventoryLoadedTicks = 3;
         }
 
-        if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD1) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD4) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD9)) {
+        if (Keyboard.isKeyDown(Keyboard.KEY_NUMPAD1) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD4) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD9)) {
             ChatComponentText component = new ChatComponentText("\u00a7cYou are permanently banned from this server!");
             component.appendText("\n");
             component.appendText("\n\u00a77Reason: \u00a7rSuspicious account activity/Other");
@@ -251,51 +253,51 @@ public class NEUEventListener {
             return;
         }
 
-        if(neu.hasSkyblockScoreboard()) {
-            if(!preloadedItems) {
+        if (neu.hasSkyblockScoreboard()) {
+            if (!preloadedItems) {
                 preloadedItems = true;
                 List<JsonObject> list = new ArrayList<>(neu.manager.getItemInformation().values());
-                for(JsonObject json : list) {
+                for (JsonObject json : list) {
                     itemPreloader.submit(() -> {
                         ItemStack stack = neu.manager.jsonToStack(json, true, true);
-                        if(stack.getItem() == Items.skull) toPreload.add(stack);
+                        if (stack.getItem() == Items.skull) toPreload.add(stack);
                     });
                 }
-            } else if(!toPreload.isEmpty()) {
+            } else if (!toPreload.isEmpty()) {
                 Utils.drawItemStack(toPreload.get(0), -100, -100);
                 toPreload.remove(0);
             } else {
                 itemPreloader.shutdown();
             }
 
-            for(TextOverlay overlay : OverlayManager.textOverlays) {
+            for (TextOverlay overlay : OverlayManager.textOverlays) {
                 overlay.shouldUpdateFrequent = true;
             }
         }
 
         boolean longUpdate = false;
         long currentTime = System.currentTimeMillis();
-        if(currentTime - lastLongUpdate > 1000) {
+        if (currentTime - lastLongUpdate > 1000) {
             longUpdate = true;
             lastLongUpdate = currentTime;
         }
-        if(!NotEnoughUpdates.INSTANCE.config.dungeons.slowDungeonBlocks) {
+        if (!NotEnoughUpdates.INSTANCE.config.dungeons.slowDungeonBlocks) {
             DungeonBlocks.tick();
         }
         DungeonWin.tick();
 
         String containerName = null;
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
 
-            if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
+            if (GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
                 GuiCustomEnchant.getInstance().tick();
             }
         }
 
-        if(longUpdate) {
+        if (longUpdate) {
             CrystalOverlay.tick();
             DwarvenMinesTextures.tick();
             FairySouls.tick();
@@ -306,8 +308,8 @@ public class NEUEventListener {
             NPCRetexturing.getInstance().tick();
             StorageOverlay.getInstance().markDirty();
 
-            if(neu.hasSkyblockScoreboard()) {
-                for(TextOverlay overlay : OverlayManager.textOverlays) {
+            if (neu.hasSkyblockScoreboard()) {
+                for (TextOverlay overlay : OverlayManager.textOverlays) {
                     overlay.tick();
                 }
             }
@@ -318,58 +320,57 @@ public class NEUEventListener {
             NotEnoughUpdates.profileViewer.putNameUuid(Minecraft.getMinecraft().thePlayer.getName(),
                     Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
 
-            if(NotEnoughUpdates.INSTANCE.config.dungeons.slowDungeonBlocks) {
+            if (NotEnoughUpdates.INSTANCE.config.dungeons.slowDungeonBlocks) {
                 DungeonBlocks.tick();
             }
 
-            if(System.currentTimeMillis() - SBInfo.getInstance().joinedWorld > 500 &&
+            if (System.currentTimeMillis() - SBInfo.getInstance().joinedWorld > 500 &&
                     System.currentTimeMillis() - SBInfo.getInstance().unloadedWorld > 500) {
                 neu.updateSkyblockScoreboard();
             }
             CapeManager.getInstance().tick();
 
-            if(containerName != null) {
-                if(!containerName.trim().startsWith("Accessory Bag")) {
+            if (containerName != null) {
+                if (!containerName.trim().startsWith("Accessory Bag")) {
                     AccessoryBagOverlay.resetCache();
                 }
             } else {
                 AccessoryBagOverlay.resetCache();
             }
 
-            if(neu.hasSkyblockScoreboard()) {
+            if (neu.hasSkyblockScoreboard()) {
                 SBInfo.getInstance().tick();
                 lastSkyblockScoreboard = currentTime;
-                if(!joinedSB) {
+                if (!joinedSB) {
                     joinedSB = true;
 
                     //SBGamemodes.loadFromFile();
 
-
-                    if(NotEnoughUpdates.INSTANCE.config.notifications.showUpdateMsg) {
+                    if (NotEnoughUpdates.INSTANCE.config.notifications.showUpdateMsg) {
                         displayUpdateMessageIfOutOfDate();
                     }
 
-                    if(NotEnoughUpdates.INSTANCE.config.notifications.doRamNotif) {
-                        long maxMemoryMB = Runtime.getRuntime().maxMemory()/1024L/1024L;
-                        if(maxMemoryMB > 4100) {
+                    if (NotEnoughUpdates.INSTANCE.config.notifications.doRamNotif) {
+                        long maxMemoryMB = Runtime.getRuntime().maxMemory() / 1024L / 1024L;
+                        if (maxMemoryMB > 4100) {
                             notificationDisplayMillis = System.currentTimeMillis();
                             notificationLines = new ArrayList<>();
-                            notificationLines.add(EnumChatFormatting.GRAY+"Too much memory allocated!");
-                            notificationLines.add(String.format(EnumChatFormatting.DARK_GRAY+"NEU has detected %03dMB of memory allocated to Minecraft!", maxMemoryMB));
-                            notificationLines.add(EnumChatFormatting.GRAY+"It is recommended to allocated between 2-4GB of memory");
-                            notificationLines.add(EnumChatFormatting.GRAY+"More than 4GB MAY cause FPS issues, EVEN if you have 16GB+ available");
+                            notificationLines.add(EnumChatFormatting.GRAY + "Too much memory allocated!");
+                            notificationLines.add(String.format(EnumChatFormatting.DARK_GRAY + "NEU has detected %03dMB of memory allocated to Minecraft!", maxMemoryMB));
+                            notificationLines.add(EnumChatFormatting.GRAY + "It is recommended to allocated between 2-4GB of memory");
+                            notificationLines.add(EnumChatFormatting.GRAY + "More than 4GB MAY cause FPS issues, EVEN if you have 16GB+ available");
                             notificationLines.add("");
-                            notificationLines.add(EnumChatFormatting.GRAY+"For more information, visit #ram-info in discord.gg/moulberry");
+                            notificationLines.add(EnumChatFormatting.GRAY + "For more information, visit #ram-info in discord.gg/moulberry");
                         }
                     }
 
-                    if(!NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore) {
+                    if (!NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore) {
                         NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore = true;
-                        if(Constants.MISC == null || !Constants.MISC.has("featureslist")){
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"WARNING: "+EnumChatFormatting.RESET+EnumChatFormatting.RED+"Could not load Feature List URL from repo."));
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.RED+ "Please run "+EnumChatFormatting.BOLD+"/neuresetrepo"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" and "+EnumChatFormatting.BOLD+"restart your game"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" in order to fix. "+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"If that doesn't fix it"+EnumChatFormatting.RESET+EnumChatFormatting.RED+", please join discord.gg/moulberry and post in #neu-support"));
+                        if (Constants.MISC == null || !Constants.MISC.has("featureslist")) {
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("" + EnumChatFormatting.DARK_RED + EnumChatFormatting.BOLD + "WARNING: " + EnumChatFormatting.RESET + EnumChatFormatting.RED + "Could not load Feature List URL from repo."));
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("" + EnumChatFormatting.RED + "Please run " + EnumChatFormatting.BOLD + "/neuresetrepo" + EnumChatFormatting.RESET + EnumChatFormatting.RED + " and " + EnumChatFormatting.BOLD + "restart your game" + EnumChatFormatting.RESET + EnumChatFormatting.RED + " in order to fix. " + EnumChatFormatting.DARK_RED + EnumChatFormatting.BOLD + "If that doesn't fix it" + EnumChatFormatting.RESET + EnumChatFormatting.RED + ", please join discord.gg/moulberry and post in #neu-support"));
                             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
-                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.GOLD+"To view the feature list after restarting type /neufeatures"));
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("" + EnumChatFormatting.GOLD + "To view the feature list after restarting type /neufeatures"));
                         } else {
                             String url = Constants.MISC.get("featureslist").getAsString();
                             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
@@ -382,14 +383,14 @@ public class NEUEventListener {
                         }
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                         ChatComponentText clickTextHelp = new ChatComponentText(
-                                EnumChatFormatting.YELLOW+"Click this message if you would like to view a list of NotEnoughUpdate's commands.");
+                                EnumChatFormatting.YELLOW + "Click this message if you would like to view a list of NotEnoughUpdate's commands.");
                         clickTextHelp.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/neuhelp"));
                         Minecraft.getMinecraft().thePlayer.addChatMessage(clickTextHelp);
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                     }
                 }
             }
-            if(currentTime - lastSkyblockScoreboard < 5*60*1000) { //5 minutes
+            if (currentTime - lastSkyblockScoreboard < 5 * 60 * 1000) { //5 minutes
                 neu.manager.auctionManager.tick();
             } else {
                 neu.manager.auctionManager.markNeedsUpdate();
@@ -475,10 +476,10 @@ public class NEUEventListener {
         }
     }*/
 
-    @SubscribeEvent(priority= EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderEntitySpecials(RenderLivingEvent.Specials.Pre<EntityPlayer> event) {
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiProfileViewer) {
-            if(((GuiProfileViewer)Minecraft.getMinecraft().currentScreen).getEntityPlayer() == event.entity) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiProfileViewer) {
+            if (((GuiProfileViewer) Minecraft.getMinecraft().currentScreen).getEntityPlayer() == event.entity) {
                 event.setCanceled(true);
             }
         }
@@ -490,19 +491,19 @@ public class NEUEventListener {
                 Minecraft.getMinecraft().currentScreen instanceof GuiContainer && neu.overlay.isUsingMobsFilter()) {
             event.setCanceled(true);
         }
-        if(event.type != null && event.type.equals(RenderGameOverlayEvent.ElementType.PLAYER_LIST)) {
+        if (event.type != null && event.type.equals(RenderGameOverlayEvent.ElementType.PLAYER_LIST)) {
             GlStateManager.enableDepth();
         }
     }
 
     @SubscribeEvent
     public void onRenderGameOverlayPost(RenderGameOverlayEvent.Post event) {
-        if(neu.hasSkyblockScoreboard() && event.type.equals(RenderGameOverlayEvent.ElementType.ALL)) {
+        if (neu.hasSkyblockScoreboard() && event.type.equals(RenderGameOverlayEvent.ElementType.ALL)) {
             DungeonWin.render(event.partialTicks);
             GlStateManager.pushMatrix();
             GlStateManager.translate(0, 0, -200);
-            for(TextOverlay overlay : OverlayManager.textOverlays) {
-                if(OverlayManager.dontRenderOverlay != null && OverlayManager.dontRenderOverlay.isAssignableFrom(overlay.getClass())) {
+            for (TextOverlay overlay : OverlayManager.textOverlays) {
+                if (OverlayManager.dontRenderOverlay != null && OverlayManager.dontRenderOverlay.isAssignableFrom(overlay.getClass())) {
                     continue;
                 }
                 GlStateManager.translate(0, 0, -1);
@@ -512,55 +513,56 @@ public class NEUEventListener {
             GlStateManager.popMatrix();
             OverlayManager.dontRenderOverlay = null;
         }
-        if(Keyboard.isKeyDown(Keyboard.KEY_X)) {
+        if (Keyboard.isKeyDown(Keyboard.KEY_X)) {
             notificationDisplayMillis = 0;
         }
 
-        if(event.type == RenderGameOverlayEvent.ElementType.ALL){
+        if (event.type == RenderGameOverlayEvent.ElementType.ALL) {
             renderNotification();
         }
 
     }
-    private static void renderNotification(){
+
+    private static void renderNotification() {
 
         long timeRemaining = 15000 - (System.currentTimeMillis() - notificationDisplayMillis);
         boolean display = timeRemaining > 0 || notificationDisplayMillis == -420;
-        if(display && notificationLines != null && notificationLines.size() > 0) {
+        if (display && notificationLines != null && notificationLines.size() > 0) {
             int width = 0;
-            int height = notificationLines.size()*10+10;
+            int height = notificationLines.size() * 10 + 10;
 
-            for(String line : notificationLines) {
+            for (String line : notificationLines) {
                 int len = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line) + 8;
-                if(len > width) {
+                if (len > width) {
                     width = len;
                 }
             }
 
             ScaledResolution sr = Utils.pushGuiScale(2);
 
-            int midX = sr.getScaledWidth()/2;
-            int topY = sr.getScaledHeight()*3/4-height/2;
-            RenderUtils.drawFloatingRectDark(midX-width/2, sr.getScaledHeight()*3/4-height/2, width, height);
+            int midX = sr.getScaledWidth() / 2;
+            int topY = sr.getScaledHeight() * 3 / 4 - height / 2;
+            RenderUtils.drawFloatingRectDark(midX - width / 2, sr.getScaledHeight() * 3 / 4 - height / 2, width, height);
             /*Gui.drawRect(midX-width/2, sr.getScaledHeight()*3/4-height/2,
                     midX+width/2, sr.getScaledHeight()*3/4+height/2, 0xFF3C3C3C);
             Gui.drawRect(midX-width/2+2, sr.getScaledHeight()*3/4-height/2+2,
                     midX+width/2-2, sr.getScaledHeight()*3/4+height/2-2, 0xFFC8C8C8);*/
 
             int xLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth("[X] Close");
-            Minecraft.getMinecraft().fontRendererObj.drawString("[X] Close", midX+width/2f-3-xLen,
-                    topY+3, 0xFFFF5555, false);
+            Minecraft.getMinecraft().fontRendererObj.drawString("[X] Close", midX + width / 2f - 3 - xLen,
+                    topY + 3, 0xFFFF5555, false);
 
-            if(notificationDisplayMillis > 0) {
-                Minecraft.getMinecraft().fontRendererObj.drawString((timeRemaining/1000)+"s", midX-width/2f+3,
-                        topY+3, 0xFFaaaaaa, false);
+            if (notificationDisplayMillis > 0) {
+                Minecraft.getMinecraft().fontRendererObj.drawString((timeRemaining / 1000) + "s", midX - width / 2f + 3,
+                        topY + 3, 0xFFaaaaaa, false);
             }
 
             Utils.drawStringCentered(notificationLines.get(0), Minecraft.getMinecraft().fontRendererObj,
-                    midX, topY+4+5, false, -1);
-            for(int i=1; i<notificationLines.size(); i++) {
+                    midX, topY + 4 + 5, false, -1);
+            for (int i = 1; i < notificationLines.size(); i++) {
                 String line = notificationLines.get(i);
                 Utils.drawStringCentered(line, Minecraft.getMinecraft().fontRendererObj,
-                        midX, topY+4+5+2+i*10, false, -1);
+                        midX, topY + 4 + 5 + 2 + i * 10, false, -1);
             }
 
             Utils.pushGuiScale(-1);
@@ -575,12 +577,13 @@ public class NEUEventListener {
      * Also includes a dev feature used for automatically acquiring crafting information from the "Crafting Table" GUI.
      */
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
+
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
         CraftingOverlay.shouldRender = false;
         NEUApi.disableInventoryButtons = false;
 
-        if((Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper ||
+        if ((Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper ||
                 Minecraft.getMinecraft().currentScreen instanceof GuiItemRecipe) &&
                 event.gui == null && !(Keyboard.getEventKeyState() && Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) &&
                 System.currentTimeMillis() - NotEnoughUpdates.INSTANCE.lastOpenedGui < 500) {
@@ -589,11 +592,11 @@ public class NEUEventListener {
             return;
         }
 
-        if(!(event.gui instanceof GuiContainer) && Minecraft.getMinecraft().currentScreen != null) {
+        if (!(event.gui instanceof GuiContainer) && Minecraft.getMinecraft().currentScreen != null) {
             CalendarOverlay.setEnabled(false);
         }
 
-        if(Minecraft.getMinecraft().currentScreen != null) {
+        if (Minecraft.getMinecraft().currentScreen != null) {
             lastGuiClosed = System.currentTimeMillis();
         }
 
@@ -602,15 +605,15 @@ public class NEUEventListener {
         inventoryLoaded = false;
         inventoryLoadedTicks = 3;
 
-        if(event.gui == null && neu.manager.auctionManager.customAH.isRenderOverAuctionView() &&
+        if (event.gui == null && neu.manager.auctionManager.customAH.isRenderOverAuctionView() &&
                 !(Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)) {
             event.gui = new CustomAHGui();
         }
 
-        if(!(event.gui instanceof GuiChest || event.gui instanceof GuiEditSign)) {
+        if (!(event.gui instanceof GuiChest || event.gui instanceof GuiEditSign)) {
             neu.manager.auctionManager.customAH.setRenderOverAuctionView(false);
-        } else if(event.gui instanceof GuiChest && (neu.manager.auctionManager.customAH.isRenderOverAuctionView() ||
-                Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)){
+        } else if (event.gui instanceof GuiChest && (neu.manager.auctionManager.customAH.isRenderOverAuctionView() ||
+                Minecraft.getMinecraft().currentScreen instanceof CustomAHGui)) {
             GuiChest chest = (GuiChest) event.gui;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
             String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
@@ -621,46 +624,46 @@ public class NEUEventListener {
         }
 
         //OPEN
-        if(Minecraft.getMinecraft().currentScreen == null
+        if (Minecraft.getMinecraft().currentScreen == null
                 && event.gui instanceof GuiContainer) {
             neu.overlay.reset();
         }
-        if(event.gui != null && NotEnoughUpdates.INSTANCE.config.hidden.dev) {
-            if(event.gui instanceof GuiChest) {
+        if (event.gui != null && NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+            if (event.gui instanceof GuiChest) {
                 GuiChest eventGui = (GuiChest) event.gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
                 IInventory lower = cc.getLowerChestInventory();
                 ses.schedule(() -> {
-                    if(Minecraft.getMinecraft().currentScreen != event.gui) {
+                    if (Minecraft.getMinecraft().currentScreen != event.gui) {
                         return;
                     }
-                    if(lower.getStackInSlot(23).getDisplayName().endsWith("Crafting Table")) {
+                    if (lower.getStackInSlot(23).getDisplayName().endsWith("Crafting Table")) {
                         try {
                             ItemStack res = lower.getStackInSlot(25);
                             String resInternalname = neu.manager.getInternalNameForItem(res);
 
-                            if(lower.getStackInSlot(48) != null) {
+                            if (lower.getStackInSlot(48) != null) {
                                 String backName = null;
                                 NBTTagCompound tag = lower.getStackInSlot(48).getTagCompound();
-                                if(tag.hasKey("display", 10)) {
+                                if (tag.hasKey("display", 10)) {
                                     NBTTagCompound nbttagcompound = tag.getCompoundTag("display");
-                                    if(nbttagcompound.getTagId("Lore") == 9){
+                                    if (nbttagcompound.getTagId("Lore") == 9) {
                                         NBTTagList nbttaglist1 = nbttagcompound.getTagList("Lore", 8);
                                         backName = nbttaglist1.getStringTagAt(0);
                                     }
                                 }
 
-                                if(backName != null) {
+                                if (backName != null) {
                                     String[] split = backName.split(" ");
-                                    if(split[split.length-1].contains("Rewards")) {
-                                        String col = backName.substring(split[0].length()+1,
-                                                backName.length()-split[split.length-1].length()-1);
+                                    if (split[split.length - 1].contains("Rewards")) {
+                                        String col = backName.substring(split[0].length() + 1,
+                                                backName.length() - split[split.length - 1].length() - 1);
 
                                         JsonObject json = neu.manager.getItemInformation().get(resInternalname);
                                         json.addProperty("crafttext", "Requires: " + col);
 
                                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + resInternalname));
-                                        neu.manager.writeJsonDefaultDir(json, resInternalname+".json");
+                                        neu.manager.writeJsonDefaultDir(json, resInternalname + ".json");
                                         neu.manager.loadItem(resInternalname);
                                     }
                                 }
@@ -716,7 +719,7 @@ public class NEUEventListener {
                             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + resInternalname));
                             neu.manager.writeJsonDefaultDir(json, resInternalname+".json");
                             neu.manager.loadItem(resInternalname);*/
-                        } catch(Exception e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
@@ -745,22 +748,22 @@ public class NEUEventListener {
 
     private IChatComponent processChatComponent(IChatComponent chatComponent) {
         IChatComponent newComponent;
-        if(chatComponent instanceof ChatComponentText) {
+        if (chatComponent instanceof ChatComponentText) {
             ChatComponentText text = (ChatComponentText) chatComponent;
 
             newComponent = new ChatComponentText(processText(text.getUnformattedTextForChat()));
             newComponent.setChatStyle(text.getChatStyle().createShallowCopy());
 
-            for(IChatComponent sibling : text.getSiblings()) {
+            for (IChatComponent sibling : text.getSiblings()) {
                 newComponent.appendSibling(processChatComponent(sibling));
             }
-        } else if(chatComponent instanceof ChatComponentTranslation) {
+        } else if (chatComponent instanceof ChatComponentTranslation) {
             ChatComponentTranslation trans = (ChatComponentTranslation) chatComponent;
 
             Object[] args = trans.getFormatArgs();
             Object[] newArgs = new Object[args.length];
-            for(int i=0; i<trans.getFormatArgs().length; i++) {
-                if(args[i] instanceof IChatComponent) {
+            for (int i = 0; i < trans.getFormatArgs().length; i++) {
+                if (args[i] instanceof IChatComponent) {
                     newArgs[i] = processChatComponent((IChatComponent) args[i]);
                 } else {
                     newArgs[i] = args[i];
@@ -768,7 +771,7 @@ public class NEUEventListener {
             }
             newComponent = new ChatComponentTranslation(trans.getKey(), newArgs);
 
-            for(IChatComponent sibling : trans.getSiblings()) {
+            for (IChatComponent sibling : trans.getSiblings()) {
                 newComponent.appendSibling(processChatComponent(sibling));
             }
         } else {
@@ -779,27 +782,27 @@ public class NEUEventListener {
     }
 
     private String processText(String text) {
-        if(SBInfo.getInstance().getLocation() == null) return text;
-        if(!SBInfo.getInstance().getLocation().startsWith("mining_")&&!SBInfo.getInstance().getLocation().equals("crystal_hollows")) return text;
+        if (SBInfo.getInstance().getLocation() == null) return text;
+        if (!SBInfo.getInstance().getLocation().startsWith("mining_") && !SBInfo.getInstance().getLocation().equals("crystal_hollows"))
+            return text;
 
-        if(Minecraft.getMinecraft().thePlayer == null) return text;
-        if(!NotEnoughUpdates.INSTANCE.config.mining.drillFuelBar) return text;
+        if (Minecraft.getMinecraft().thePlayer == null) return text;
+        if (!NotEnoughUpdates.INSTANCE.config.mining.drillFuelBar) return text;
 
-        return Utils.trimIgnoreColour(text.replaceAll(EnumChatFormatting.DARK_GREEN+"\\S+ Drill Fuel", ""));
+        return Utils.trimIgnoreColour(text.replaceAll(EnumChatFormatting.DARK_GREEN + "\\S+ Drill Fuel", ""));
     }
 
+    private IChatComponent replaceSocialControlsWithPV(IChatComponent chatComponent) {
 
-    private IChatComponent replaceSocialControlsWithPV(IChatComponent chatComponent){
-
-        if(NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions && chatComponent.getChatStyle() != null && chatComponent.getChatStyle().getChatClickEvent() != null && chatComponent.getChatStyle().getChatClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND){
-            if(chatComponent.getChatStyle().getChatClickEvent().getValue().startsWith("/socialoptions")){
+        if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions && chatComponent.getChatStyle() != null && chatComponent.getChatStyle().getChatClickEvent() != null && chatComponent.getChatStyle().getChatClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND) {
+            if (chatComponent.getChatStyle().getChatClickEvent().getValue().startsWith("/socialoptions")) {
                 String username = chatComponent.getChatStyle().getChatClickEvent().getValue().substring(15);
 
-                chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv "+username, ""+EnumChatFormatting.YELLOW+"Click to open "+EnumChatFormatting.AQUA+EnumChatFormatting.BOLD+username+EnumChatFormatting.RESET+EnumChatFormatting.YELLOW+"'s profile in "+EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD+"NEU's"+EnumChatFormatting.RESET+EnumChatFormatting.YELLOW+ " profile viewer."));
+                chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv " + username, "" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD + username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s profile in " + EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD + "NEU's" + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + " profile viewer."));
                 return chatComponent;
             }
         }
-        return  chatComponent;
+        return chatComponent;
     }
 
     /**
@@ -809,11 +812,11 @@ public class NEUEventListener {
      */
     @SubscribeEvent(priority = EventPriority.LOW, receiveCanceled = true)
     public void onGuiChat(ClientChatReceivedEvent e) {
-        if(e.type == 2) {
+        if (e.type == 2) {
             CrystalMetalDetectorSolver.process(e.message);
             e.message = processChatComponent(e.message);
             return;
-        } else if(e.type == 0){
+        } else if (e.type == 0) {
             e.message = replaceSocialControlsWithPV(e.message);
         }
 
@@ -821,50 +824,50 @@ public class NEUEventListener {
 
         String r = null;
         String unformatted = Utils.cleanColour(e.message.getUnformattedText());
-        if(unformatted.startsWith("You are playing on profile: ")) {
+        if (unformatted.startsWith("You are playing on profile: ")) {
             neu.manager.setCurrentProfile(unformatted.substring("You are playing on profile: ".length()).split(" ")[0].trim());
-        } else if(unformatted.startsWith("Your profile was changed to: ")) {//Your profile was changed to:
+        } else if (unformatted.startsWith("Your profile was changed to: ")) {//Your profile was changed to:
             neu.manager.setCurrentProfile(unformatted.substring("Your profile was changed to: ".length()).split(" ")[0].trim());
-        } else if(unformatted.startsWith("Your new API key is ")) {
+        } else if (unformatted.startsWith("Your new API key is ")) {
             NotEnoughUpdates.INSTANCE.config.apiKey.apiKey = unformatted.substring("Your new API key is ".length());
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW+
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW +
                     "[NEU] API Key automatically configured"));
         }
-        if(e.message.getFormattedText().equals(EnumChatFormatting.RESET.toString()+
-                EnumChatFormatting.RED+"You haven't unlocked this recipe!"+EnumChatFormatting.RESET)) {
-            r =  EnumChatFormatting.RED+"You haven't unlocked this recipe!";
-        } else if(e.message.getFormattedText().startsWith(EnumChatFormatting.RESET.toString()+
-                EnumChatFormatting.RED+"Invalid recipe ")) {
+        if (e.message.getFormattedText().equals(EnumChatFormatting.RESET.toString() +
+                EnumChatFormatting.RED + "You haven't unlocked this recipe!" + EnumChatFormatting.RESET)) {
+            r = EnumChatFormatting.RED + "You haven't unlocked this recipe!";
+        } else if (e.message.getFormattedText().startsWith(EnumChatFormatting.RESET.toString() +
+                EnumChatFormatting.RED + "Invalid recipe ")) {
             r = "";
         }
-        if(e.message.getFormattedText().contains(EnumChatFormatting.YELLOW+"Visit the Auction House to collect your item!")) {
-            if(NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBid != null &&
+        if (e.message.getFormattedText().contains(EnumChatFormatting.YELLOW + "Visit the Auction House to collect your item!")) {
+            if (NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBid != null &&
                     System.currentTimeMillis() - NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBidMillis < 5000) {
                 NotEnoughUpdates.INSTANCE.sendChatMessage("/viewauction " +
                         NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.niceAucId(
                                 NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBid));
             }
         }
-        if(r != null) {
-            if(neu.manager.failViewItem(r)) {
+        if (r != null) {
+            if (neu.manager.failViewItem(r)) {
                 e.setCanceled(true);
             }
             missingRecipe.set(true);
         }
         //System.out.println(e.message);
-        if(unformatted.startsWith("Sending to server") &&
+        if (unformatted.startsWith("Sending to server") &&
                 neu.isOnSkyblock() && NotEnoughUpdates.INSTANCE.config.misc.streamerMode && e.message instanceof ChatComponentText) {
             String m = e.message.getFormattedText();
             String m2 = StreamerMode.filterChat(e.message.getFormattedText());
-            if(!m.equals(m2)) {
+            if (!m.equals(m2)) {
                 e.message = new ChatComponentText(m2);
             }
         }
-        if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
+        if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")) {
             CrystalMetalDetectorSolver.reset(true);
         }
-        if(unformatted.startsWith("[NPC] Keeper of ") | unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  ") || unformatted.startsWith("✦") ||
-        unformatted.equals("  You've earned a Crystal Loot Bundle!"))
+        if (unformatted.startsWith("[NPC] Keeper of ") | unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  ") || unformatted.startsWith("✦") ||
+                unformatted.equals("  You've earned a Crystal Loot Bundle!"))
             OverlayManager.crystalHollowOverlay.message(unformatted);
     }
 
@@ -873,67 +876,70 @@ public class NEUEventListener {
     /**
      * Sets hoverInv and focusInv variables, representing whether the NEUOverlay should render behind the inventory when
      * (hoverInv == true) and whether mouse/kbd inputs shouldn't be sent to NEUOverlay (focusInv == true).
-     *
+     * <p>
      * If hoverInv is true, will render the overlay immediately (resulting in the inventory being drawn over the GUI)
      * If hoverInv is false, the overlay will render in #onGuiScreenDraw (resulting in the GUI being drawn over the inv)
-     *
+     * <p>
      * All of this only matters if players are using gui scale auto which may result in the inventory being drawn
      * over the various panes.
+     *
      * @param event
      */
     @SubscribeEvent
     public void onGuiBackgroundDraw(GuiScreenEvent.BackgroundDrawnEvent event) {
-        if(showNotificationOverInv){
+        if (showNotificationOverInv) {
 
             renderNotification();
 
         }
-        if((shouldRenderOverlay(event.gui) || event.gui instanceof CustomAHGui) && neu.isOnSkyblock()) {
+        if ((shouldRenderOverlay(event.gui) || event.gui instanceof CustomAHGui) && neu.isOnSkyblock()) {
             ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
             int width = scaledresolution.getScaledWidth();
 
-            boolean hoverPane = event.getMouseX() < width*neu.overlay.getInfoPaneOffsetFactor() ||
-                    event.getMouseX() > width*neu.overlay.getItemPaneOffsetFactor();
+            boolean hoverPane = event.getMouseX() < width * neu.overlay.getInfoPaneOffsetFactor() ||
+                    event.getMouseX() > width * neu.overlay.getItemPaneOffsetFactor();
 
-            if(event.gui instanceof GuiContainer) {
+            if (event.gui instanceof GuiContainer) {
                 try {
-                    int xSize = ((GuiContainer)event.gui).xSize;
-                    int ySize = ((GuiContainer)event.gui).ySize;
-                    int guiLeft = ((GuiContainer)event.gui).guiLeft;
-                    int guiTop = ((GuiContainer)event.gui).guiTop;
+                    int xSize = ((GuiContainer) event.gui).xSize;
+                    int ySize = ((GuiContainer) event.gui).ySize;
+                    int guiLeft = ((GuiContainer) event.gui).guiLeft;
+                    int guiTop = ((GuiContainer) event.gui).guiTop;
 
                     hoverInv = event.getMouseX() > guiLeft && event.getMouseX() < guiLeft + xSize &&
                             event.getMouseY() > guiTop && event.getMouseY() < guiTop + ySize;
 
-                    if(hoverPane) {
-                        if(!hoverInv) focusInv = false;
+                    if (hoverPane) {
+                        if (!hoverInv) focusInv = false;
                     } else {
                         focusInv = true;
                     }
-                } catch(NullPointerException npe) {
+                } catch (NullPointerException npe) {
                     focusInv = !hoverPane;
                 }
             }
-            if(event.gui instanceof GuiItemRecipe) {
-                GuiItemRecipe guiItemRecipe = ((GuiItemRecipe)event.gui);
+            if (event.gui instanceof GuiItemRecipe) {
+                GuiItemRecipe guiItemRecipe = ((GuiItemRecipe) event.gui);
                 hoverInv = event.getMouseX() > guiItemRecipe.guiLeft && event.getMouseX() < guiItemRecipe.guiLeft + guiItemRecipe.xSize &&
                         event.getMouseY() > guiItemRecipe.guiTop && event.getMouseY() < guiItemRecipe.guiTop + guiItemRecipe.ySize;
 
-                if(hoverPane) {
-                    if(!hoverInv) focusInv = false;
+                if (hoverPane) {
+                    if (!hoverInv) focusInv = false;
                 } else {
                     focusInv = true;
                 }
             }
-            if(focusInv) {
+            if (focusInv) {
                 try {
                     neu.overlay.render(hoverInv);
-                } catch(ConcurrentModificationException e) {e.printStackTrace();}
+                } catch (ConcurrentModificationException e) {
+                    e.printStackTrace();
+                }
                 GL11.glTranslatef(0, 0, 10);
             }
-            if(hoverInv) {
+            if (hoverInv) {
                 renderDungeonChestOverlay(event.gui);
-                if(NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay) {
+                if (NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay) {
                     AccessoryBagOverlay.renderOverlay();
                 }
             }
@@ -948,12 +954,12 @@ public class NEUEventListener {
     public void onGuiScreenDrawPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
         doInventoryButtons = false;
 
-        if(AuctionSearchOverlay.shouldReplace()) {
+        if (AuctionSearchOverlay.shouldReplace()) {
             AuctionSearchOverlay.render();
             event.setCanceled(true);
             return;
         }
-        if(RancherBootOverlay.shouldReplace()) {
+        if (RancherBootOverlay.shouldReplace()) {
             RancherBootOverlay.render();
             event.setCanceled(true);
             return;
@@ -961,13 +967,13 @@ public class NEUEventListener {
 
         String containerName = null;
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
-        if(guiScreen instanceof GuiChest) {
+        if (guiScreen instanceof GuiChest) {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
         }
 
-        if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
+        if (GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
             GuiCustomEnchant.getInstance().render(event.renderPartialTicks);
             event.setCanceled(true);
             return;
@@ -977,13 +983,13 @@ public class NEUEventListener {
         boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
         boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
 
-        if(storageOverlayActive) {
+        if (storageOverlayActive) {
             StorageOverlay.getInstance().render();
             event.setCanceled(true);
             return;
         }
 
-        if(tradeWindowActive || customAhActive) {
+        if (tradeWindowActive || customAhActive) {
             event.setCanceled(true);
 
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
@@ -993,25 +999,25 @@ public class NEUEventListener {
             //Dark background
             Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
 
-            if(event.mouseX < width*neu.overlay.getWidthMult()/3 || event.mouseX > width-width*neu.overlay.getWidthMult()/3) {
-                if(customAhActive) {
+            if (event.mouseX < width * neu.overlay.getWidthMult() / 3 || event.mouseX > width - width * neu.overlay.getWidthMult() / 3) {
+                if (customAhActive) {
                     neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
-                } else if(tradeWindowActive) {
+                } else if (tradeWindowActive) {
                     TradeWindow.render(event.mouseX, event.mouseY);
                 }
                 neu.overlay.render(false);
             } else {
                 neu.overlay.render(false);
-                if(customAhActive) {
+                if (customAhActive) {
                     neu.manager.auctionManager.customAH.drawScreen(event.mouseX, event.mouseY);
-                } else if(tradeWindowActive) {
+                } else if (tradeWindowActive) {
                     TradeWindow.render(event.mouseX, event.mouseY);
                 }
             }
         }
 
-        if(CalendarOverlay.isEnabled() || event.isCanceled()) return;
-        if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui)
+        if (CalendarOverlay.isEnabled() || event.isCanceled()) return;
+        if (NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui)
                 && event.gui instanceof GuiContainer) {
             doInventoryButtons = true;
 
@@ -1063,11 +1069,11 @@ public class NEUEventListener {
 
     private static boolean shouldRenderOverlay(Gui gui) {
         boolean validGui = gui instanceof GuiContainer || gui instanceof GuiItemRecipe;
-        if(gui instanceof GuiChest) {
+        if (gui instanceof GuiChest) {
             GuiChest eventGui = (GuiChest) gui;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.trim().equals("Fast Travel")) {
+            if (containerName.trim().equals("Fast Travel")) {
                 validGui = false;
             }
         }
@@ -1082,6 +1088,7 @@ public class NEUEventListener {
     /**
      * Will draw the NEUOverlay over the inventory if focusInv == false. (z-translation of 300 is so that NEUOverlay
      * will draw over Items in the inventory (which render at a z value of about 250))
+     *
      * @param event
      */
     @SubscribeEvent
@@ -1091,7 +1098,7 @@ public class NEUEventListener {
 
         String containerName = null;
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
-        if(guiScreen instanceof GuiChest) {
+        if (guiScreen instanceof GuiChest) {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
@@ -1100,7 +1107,7 @@ public class NEUEventListener {
             }
         }
 
-        if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
+        if (GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
             return;
         }
 
@@ -1108,10 +1115,10 @@ public class NEUEventListener {
         boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
         boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
 
-        if(!(tradeWindowActive || storageOverlayActive || customAhActive)) {
-            if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
+        if (!(tradeWindowActive || storageOverlayActive || customAhActive)) {
+            if (shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
                 GlStateManager.pushMatrix();
-                if(!focusInv) {
+                if (!focusInv) {
                     GL11.glTranslatef(0, 0, 300);
                     neu.overlay.render(hoverInv && focusInv);
                     GL11.glTranslatef(0, 0, -300);
@@ -1120,16 +1127,16 @@ public class NEUEventListener {
             }
         }
 
-        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock() && !hoverInv) {
+        if (shouldRenderOverlay(event.gui) && neu.isOnSkyblock() && !hoverInv) {
             renderDungeonChestOverlay(event.gui);
-            if(NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay) {
+            if (NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay) {
                 AccessoryBagOverlay.renderOverlay();
             }
         }
 
         boolean hoveringButton = false;
-        if(!doInventoryButtons) return;
-        if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) &&
+        if (!doInventoryButtons) return;
+        if (NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) &&
                 event.gui instanceof GuiContainer) {
             int xSize = ((GuiContainer) event.gui).xSize;
             int ySize = ((GuiContainer) event.gui).ySize;
@@ -1182,91 +1189,92 @@ public class NEUEventListener {
                 }
             }
         }
-        if(!hoveringButton) buttonHovered = null;
+        if (!hoveringButton) buttonHovered = null;
 
-        if(AuctionBINWarning.getInstance().shouldShow()) {
+        if (AuctionBINWarning.getInstance().shouldShow()) {
             AuctionBINWarning.getInstance().render();
         }
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
-        if(NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 3) return;
+        if (NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 3) return;
 
-        if(gui instanceof GuiChest && NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc != 2) {
+        if (gui instanceof GuiChest && NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc != 2) {
             try {
-                int xSize = ((GuiContainer)gui).xSize;
-                int ySize = ((GuiContainer)gui).ySize;
-                int guiLeft = ((GuiContainer)gui).guiLeft;
-                int guiTop = ((GuiContainer)gui).guiTop;
+                int xSize = ((GuiContainer) gui).xSize;
+                int ySize = ((GuiContainer) gui).ySize;
+                int guiLeft = ((GuiContainer) gui).guiLeft;
+                int guiTop = ((GuiContainer) gui).guiTop;
 
                 GuiChest eventGui = (GuiChest) gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
                 IInventory lower = cc.getLowerChestInventory();
 
                 ItemStack rewardChest = lower.getStackInSlot(31);
-                if (rewardChest != null && rewardChest.getDisplayName().endsWith(EnumChatFormatting.GREEN+"Open Reward Chest")) {
+                if (rewardChest != null && rewardChest.getDisplayName().endsWith(EnumChatFormatting.GREEN + "Open Reward Chest")) {
                     int chestCost = 0;
                     try {
                         String line6 = Utils.cleanColour(neu.manager.getLoreFromNBT(rewardChest.getTagCompound())[6]);
                         StringBuilder cost = new StringBuilder();
-                        for(int i=0; i<line6.length(); i++) {
+                        for (int i = 0; i < line6.length(); i++) {
                             char c = line6.charAt(i);
-                            if("0123456789".indexOf(c) >= 0) {
+                            if ("0123456789".indexOf(c) >= 0) {
                                 cost.append(c);
                             }
                         }
-                        if(cost.length() > 0) {
+                        if (cost.length() > 0) {
                             chestCost = Integer.parseInt(cost.toString());
                         }
-                    } catch(Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
 
                     String missingItem = null;
                     int totalValue = 0;
                     HashMap<String, Float> itemValues = new HashMap<>();
-                    for(int i=0; i<5; i++) {
-                        ItemStack item = lower.getStackInSlot(11+i);
+                    for (int i = 0; i < 5; i++) {
+                        ItemStack item = lower.getStackInSlot(11 + i);
                         String internal = neu.manager.getInternalNameForItem(item);
-                        if(internal != null) {
+                        if (internal != null) {
                             internal = internal.replace("\u00CD", "I").replace("\u0130", "I");
                             float bazaarPrice = -1;
                             JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internal);
-                            if(bazaarInfo != null && bazaarInfo.has("curr_sell")) {
+                            if (bazaarInfo != null && bazaarInfo.has("curr_sell")) {
                                 bazaarPrice = bazaarInfo.get("curr_sell").getAsFloat();
                             }
-                            if(bazaarPrice < 5000000 && internal.equals("RECOMBOBULATOR_3000")) bazaarPrice = 5000000;
+                            if (bazaarPrice < 5000000 && internal.equals("RECOMBOBULATOR_3000")) bazaarPrice = 5000000;
 
                             float worth = -1;
-                            if(bazaarPrice > 0) {
+                            if (bazaarPrice > 0) {
                                 worth = bazaarPrice;
                             } else {
-                                switch(NotEnoughUpdates.INSTANCE.config.dungeons.profitType) {
+                                switch (NotEnoughUpdates.INSTANCE.config.dungeons.profitType) {
                                     case 1:
                                         worth = neu.manager.auctionManager.getItemAvgBin(internal);
                                         break;
                                     case 2:
                                         JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                                        if(auctionInfo != null) {
-                                            if(auctionInfo.has("clean_price")) {
-                                                worth = (int)auctionInfo.get("clean_price").getAsFloat();
+                                        if (auctionInfo != null) {
+                                            if (auctionInfo.has("clean_price")) {
+                                                worth = (int) auctionInfo.get("clean_price").getAsFloat();
                                             } else {
-                                                worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                                worth = (int) (auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
                                             }
                                         }
                                         break;
                                     default:
                                         worth = neu.manager.auctionManager.getLowestBin(internal);
                                 }
-                                if(worth <= 0) {
+                                if (worth <= 0) {
                                     worth = neu.manager.auctionManager.getLowestBin(internal);
-                                    if(worth <= 0) {
+                                    if (worth <= 0) {
                                         worth = neu.manager.auctionManager.getItemAvgBin(internal);
-                                        if(worth <= 0) {
+                                        if (worth <= 0) {
                                             JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                                            if(auctionInfo != null) {
-                                                if(auctionInfo.has("clean_price")) {
-                                                    worth = (int)auctionInfo.get("clean_price").getAsFloat();
+                                            if (auctionInfo != null) {
+                                                if (auctionInfo.has("clean_price")) {
+                                                    worth = (int) auctionInfo.get("clean_price").getAsFloat();
                                                 } else {
-                                                    worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                                    worth = (int) (auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
                                                 }
                                             }
                                         }
@@ -1274,21 +1282,21 @@ public class NEUEventListener {
                                 }
                             }
 
-                            if(worth > 0 && totalValue >= 0) {
+                            if (worth > 0 && totalValue >= 0) {
                                 totalValue += worth;
                                 String display = item.getDisplayName();
 
-                                if(display.contains("Enchanted Book")) {
+                                if (display.contains("Enchanted Book")) {
                                     NBTTagCompound tag = item.getTagCompound();
-                                    if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+                                    if (tag != null && tag.hasKey("ExtraAttributes", 10)) {
                                         NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
                                         NBTTagCompound enchants = ea.getCompoundTag("enchantments");
 
                                         int highestLevel = -1;
-                                        for(String enchname : enchants.getKeySet()) {
+                                        for (String enchname : enchants.getKeySet()) {
                                             int level = enchants.getInteger(enchname);
-                                            if(level > highestLevel) {
-                                                display = EnumChatFormatting.BLUE+WordUtils.capitalizeFully(
+                                            if (level > highestLevel) {
+                                                display = EnumChatFormatting.BLUE + WordUtils.capitalizeFully(
                                                         enchname.replace("_", " ")
                                                                 .replace("Ultimate", "")
                                                                 .trim()) + " " + level;
@@ -1299,7 +1307,7 @@ public class NEUEventListener {
 
                                 itemValues.put(display, worth);
                             } else {
-                                if(totalValue != -1) {
+                                if (totalValue != -1) {
                                     missingItem = internal;
                                 }
                                 totalValue = -1;
@@ -1310,32 +1318,32 @@ public class NEUEventListener {
                     NumberFormat format = NumberFormat.getInstance(Locale.US);
                     String valueStringBIN1;
                     String valueStringBIN2;
-                    if(totalValue >= 0) {
-                        valueStringBIN1 = EnumChatFormatting.YELLOW+"Value (BIN): ";
+                    if (totalValue >= 0) {
+                        valueStringBIN1 = EnumChatFormatting.YELLOW + "Value (BIN): ";
                         valueStringBIN2 = EnumChatFormatting.GOLD + format.format(totalValue) + " coins";
                     } else {
-                        valueStringBIN1 = EnumChatFormatting.YELLOW+"Can't find BIN: ";
+                        valueStringBIN1 = EnumChatFormatting.YELLOW + "Can't find BIN: ";
                         valueStringBIN2 = missingItem;
                     }
 
                     int profitLossBIN = totalValue - chestCost;
 
-                    String profitPrefix =  EnumChatFormatting.DARK_GREEN.toString();
+                    String profitPrefix = EnumChatFormatting.DARK_GREEN.toString();
                     String lossPrefix = EnumChatFormatting.RED.toString();
                     String prefix = profitLossBIN >= 0 ? profitPrefix : lossPrefix;
 
                     String plStringBIN;
-                    if(profitLossBIN >= 0) {
+                    if (profitLossBIN >= 0) {
                         plStringBIN = prefix + "+" + format.format(profitLossBIN) + " coins";
                     } else {
                         plStringBIN = prefix + "-" + format.format(-profitLossBIN) + " coins";
                     }
 
-                    if(NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 1 && !valueStringBIN2.equals(missingItem)) {
+                    if (NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 1 && !valueStringBIN2.equals(missingItem)) {
                         int w = Minecraft.getMinecraft().fontRendererObj.getStringWidth(plStringBIN);
                         GlStateManager.disableLighting();
                         GlStateManager.translate(0, 0, 200);
-                        Minecraft.getMinecraft().fontRendererObj.drawString(plStringBIN, guiLeft+xSize-5-w, guiTop+5,
+                        Minecraft.getMinecraft().fontRendererObj.drawString(plStringBIN, guiLeft + xSize - 5 - w, guiTop + 5,
                                 0xffffffff, true);
                         GlStateManager.translate(0, 0, -200);
                         return;
@@ -1344,36 +1352,36 @@ public class NEUEventListener {
                     Minecraft.getMinecraft().getTextureManager().bindTexture(dungeon_chest_worth);
                     GL11.glColor4f(1, 1, 1, 1);
                     GlStateManager.disableLighting();
-                    Utils.drawTexturedRect(guiLeft+xSize+4, guiTop, 180, 101, 0, 180/256f, 0, 101/256f, GL11.GL_NEAREST);
+                    Utils.drawTexturedRect(guiLeft + xSize + 4, guiTop, 180, 101, 0, 180 / 256f, 0, 101 / 256f, GL11.GL_NEAREST);
 
                     Utils.renderAlignedString(valueStringBIN1, valueStringBIN2,
-                            guiLeft+xSize+4+10, guiTop+14, 160);
-                    if(totalValue >= 0) {
-                        Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Profit/Loss: ", plStringBIN,
-                                guiLeft+xSize+4+10, guiTop+24, 160);
+                            guiLeft + xSize + 4 + 10, guiTop + 14, 160);
+                    if (totalValue >= 0) {
+                        Utils.renderAlignedString(EnumChatFormatting.YELLOW + "Profit/Loss: ", plStringBIN,
+                                guiLeft + xSize + 4 + 10, guiTop + 24, 160);
                     }
 
-                    int index=0;
-                    for(Map.Entry<String, Float> entry : itemValues.entrySet()) {
-                        Utils.renderAlignedString(entry.getKey(), prefix+
+                    int index = 0;
+                    for (Map.Entry<String, Float> entry : itemValues.entrySet()) {
+                        Utils.renderAlignedString(entry.getKey(), prefix +
                                         format.format(entry.getValue().intValue()),
-                                guiLeft+xSize+4+10, guiTop+29+(++index)*10, 160);
+                                guiLeft + xSize + 4 + 10, guiTop + 29 + (++index) * 10, 160);
                     }
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
     public void drawStringShadow(String str, float x, float y, int len) {
-        for(int xOff=-2; xOff<=2; xOff++) {
-            for(int yOff=-2; yOff<=2; yOff++) {
-                if(Math.abs(xOff) != Math.abs(yOff)) {
+        for (int xOff = -2; xOff <= 2; xOff++) {
+            for (int yOff = -2; yOff <= 2; yOff++) {
+                if (Math.abs(xOff) != Math.abs(yOff)) {
                     Utils.drawStringCenteredScaledMaxWidth(Utils.cleanColourNotModifiers(str),
                             Minecraft.getMinecraft().fontRendererObj,
-                            x+xOff/2f, y+yOff/2f, false, len,
-                            new Color(20, 20, 20, 100/Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB());
+                            x + xOff / 2f, y + yOff / 2f, false, len,
+                            new Color(20, 20, 20, 100 / Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB());
                 }
             }
         }
@@ -1387,11 +1395,12 @@ public class NEUEventListener {
     /**
      * Sends a mouse event to NEUOverlay if the inventory isn't hovered AND focused.
      * Will also cancel the event if if NEUOverlay#mouseInput returns true.
+     *
      * @param event
      */
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onGuiScreenMouse(GuiScreenEvent.MouseInputEvent.Pre event) {
-        if(Mouse.getEventButtonState() && StorageManager.getInstance().onAnyClick()) {
+        if (Mouse.getEventButtonState() && StorageManager.getInstance().onAnyClick()) {
             event.setCanceled(true);
             return;
         }
@@ -1402,21 +1411,21 @@ public class NEUEventListener {
         int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
         int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
 
-        if(AuctionBINWarning.getInstance().shouldShow()) {
+        if (AuctionBINWarning.getInstance().shouldShow()) {
             AuctionBINWarning.getInstance().mouseInput(mouseX, mouseY);
             event.setCanceled(true);
             return;
         }
 
-        if(!event.isCanceled()) {
+        if (!event.isCanceled()) {
             Utils.scrollTooltip(Mouse.getEventDWheel());
         }
-        if(AuctionSearchOverlay.shouldReplace()) {
+        if (AuctionSearchOverlay.shouldReplace()) {
             AuctionSearchOverlay.mouseEvent();
             event.setCanceled(true);
             return;
         }
-        if(RancherBootOverlay.shouldReplace()) {
+        if (RancherBootOverlay.shouldReplace()) {
             RancherBootOverlay.mouseEvent();
             event.setCanceled(true);
             return;
@@ -1424,17 +1433,17 @@ public class NEUEventListener {
 
         String containerName = null;
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
-        if(guiScreen instanceof GuiChest) {
+        if (guiScreen instanceof GuiChest) {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(containerName.contains(" Profile") && BetterContainers.profileViewerStackIndex != -1 &&
+            if (containerName.contains(" Profile") && BetterContainers.profileViewerStackIndex != -1 &&
                     eventGui.isMouseOverSlot(cc.inventorySlots.get(BetterContainers.profileViewerStackIndex), mouseX, mouseY) && Mouse.getEventButton() >= 0) {
                 event.setCanceled(true);
-                if(Mouse.getEventButtonState() && eventGui.inventorySlots.inventorySlots.get(22).getStack() != null &&
-                        eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){
+                if (Mouse.getEventButtonState() && eventGui.inventorySlots.inventorySlots.get(22).getStack() != null &&
+                        eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null) {
                     NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
-                    if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
+                    if (tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")) {
                         String username = tag.getCompoundTag("SkullOwner").getString("Name");
                         Utils.playPressSound();
                         NotEnoughUpdates.INSTANCE.commands.viewProfileRunnable.processCommand(null, new String[]{username});
@@ -1443,7 +1452,7 @@ public class NEUEventListener {
             }
         }
 
-        if(GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
+        if (GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
                 GuiCustomEnchant.getInstance().mouseInput(mouseX, mouseY)) {
             event.setCanceled(true);
             return;
@@ -1453,28 +1462,28 @@ public class NEUEventListener {
         boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
         boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
 
-        if(storageOverlayActive) {
-            if(StorageOverlay.getInstance().mouseInput(mouseX, mouseY)) {
+        if (storageOverlayActive) {
+            if (StorageOverlay.getInstance().mouseInput(mouseX, mouseY)) {
                 event.setCanceled(true);
             }
             return;
         }
 
-        if(tradeWindowActive || customAhActive) {
+        if (tradeWindowActive || customAhActive) {
             event.setCanceled(true);
-            if(customAhActive) {
+            if (customAhActive) {
                 neu.manager.auctionManager.customAH.handleMouseInput();
-            } else if(tradeWindowActive) {
+            } else if (tradeWindowActive) {
                 TradeWindow.handleMouseInput();
             }
             neu.overlay.mouseInput();
             return;
         }
 
-        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            if(!NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay || !AccessoryBagOverlay.mouseClick()) {
-                if(!(hoverInv && focusInv)) {
-                    if(neu.overlay.mouseInput()) {
+        if (shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
+            if (!NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay || !AccessoryBagOverlay.mouseClick()) {
+                if (!(hoverInv && focusInv)) {
+                    if (neu.overlay.mouseInput()) {
                         event.setCanceled(true);
                     }
                 } else {
@@ -1482,15 +1491,15 @@ public class NEUEventListener {
                 }
             }
         }
-        if(event.isCanceled()) return;
-        if(!doInventoryButtons) return;
-        if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) && Mouse.getEventButton() >= 0
+        if (event.isCanceled()) return;
+        if (!doInventoryButtons) return;
+        if (NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) && Mouse.getEventButton() >= 0
                 && event.gui instanceof GuiContainer) {
-            int xSize = ((GuiContainer)event.gui).xSize;
-            int ySize = ((GuiContainer)event.gui).ySize;
-            int guiLeft = ((GuiContainer)event.gui).guiLeft;
-            int guiTop = ((GuiContainer)event.gui).guiTop;
-            if(!NEUApi.disableInventoryButtons) {
+            int xSize = ((GuiContainer) event.gui).xSize;
+            int ySize = ((GuiContainer) event.gui).ySize;
+            int guiLeft = ((GuiContainer) event.gui).guiLeft;
+            int guiTop = ((GuiContainer) event.gui).guiTop;
+            if (!NEUApi.disableInventoryButtons) {
                 for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
                     if (!button.isActive()) continue;
                     if (button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
@@ -1541,18 +1550,18 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-        if(AuctionBINWarning.getInstance().shouldShow()) {
+        if (AuctionBINWarning.getInstance().shouldShow()) {
             AuctionBINWarning.getInstance().keyboardInput();
             event.setCanceled(true);
             return;
         }
 
-        if(AuctionSearchOverlay.shouldReplace()) {
+        if (AuctionSearchOverlay.shouldReplace()) {
             AuctionSearchOverlay.keyEvent();
             event.setCanceled(true);
             return;
         }
-        if(RancherBootOverlay.shouldReplace()) {
+        if (RancherBootOverlay.shouldReplace()) {
             RancherBootOverlay.keyEvent();
             event.setCanceled(true);
             return;
@@ -1560,16 +1569,16 @@ public class NEUEventListener {
 
         String containerName = null;
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
-        if(guiScreen instanceof GuiChest) {
+        if (guiScreen instanceof GuiChest) {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-            if(CraftingOverlay.shouldRender && containerName.equals("Craft Item")){
+            if (CraftingOverlay.shouldRender && containerName.equals("Craft Item")) {
                 CraftingOverlay.keyInput();
             }
         }
 
-        if(GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
+        if (GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
                 GuiCustomEnchant.getInstance().keyboardInput()) {
             event.setCanceled(true);
             return;
@@ -1579,24 +1588,24 @@ public class NEUEventListener {
         boolean storageOverlayActive = StorageManager.getInstance().shouldRenderStorageOverlay(containerName);
         boolean customAhActive = event.gui instanceof CustomAHGui || neu.manager.auctionManager.customAH.isRenderOverAuctionView();
 
-        if(storageOverlayActive) {
-            if(StorageOverlay.getInstance().keyboardInput()) {
+        if (storageOverlayActive) {
+            if (StorageOverlay.getInstance().keyboardInput()) {
                 event.setCanceled(true);
                 return;
             }
         }
 
-        if(tradeWindowActive || customAhActive) {
-            if(customAhActive) {
-                if(neu.manager.auctionManager.customAH.keyboardInput()) {
+        if (tradeWindowActive || customAhActive) {
+            if (customAhActive) {
+                if (neu.manager.auctionManager.customAH.keyboardInput()) {
                     event.setCanceled(true);
                     Minecraft.getMinecraft().dispatchKeypresses();
-                } else if(neu.overlay.keyboardInput(focusInv)) {
+                } else if (neu.overlay.keyboardInput(focusInv)) {
                     event.setCanceled(true);
                 }
-            } else if(tradeWindowActive) {
+            } else if (tradeWindowActive) {
                 TradeWindow.keyboardInput();
-                if(Keyboard.getEventKey() != Keyboard.KEY_ESCAPE) {
+                if (Keyboard.getEventKey() != Keyboard.KEY_ESCAPE) {
                     event.setCanceled(true);
                     Minecraft.getMinecraft().dispatchKeypresses();
                     neu.overlay.keyboardInput(focusInv);
@@ -1605,58 +1614,58 @@ public class NEUEventListener {
             return;
         }
 
-        if(shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
-            if(neu.overlay.keyboardInput(focusInv)) {
+        if (shouldRenderOverlay(event.gui) && neu.isOnSkyblock()) {
+            if (neu.overlay.keyboardInput(focusInv)) {
                 event.setCanceled(true);
             }
         }
-        if(NotEnoughUpdates.INSTANCE.config.hidden.dev && NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
+        if (NotEnoughUpdates.INSTANCE.config.hidden.dev && NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
                 Keyboard.getEventKey() == Keyboard.KEY_N && Keyboard.getEventKeyState()) {
             GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-            if(gui instanceof GuiChest) {
+            if (gui instanceof GuiChest) {
                 GuiChest eventGui = (GuiChest) event.gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
                 IInventory lower = cc.getLowerChestInventory();
 
-                if(!lower.getDisplayName().getUnformattedText().endsWith("Essence")) return;
+                if (!lower.getDisplayName().getUnformattedText().endsWith("Essence")) return;
 
-                for(int i=0; i<lower.getSizeInventory(); i++) {
+                for (int i = 0; i < lower.getSizeInventory(); i++) {
                     ItemStack stack = lower.getStackInSlot(i);
 
                     String internalname = neu.manager.getInternalNameForItem(stack);
-                    if(internalname != null) {
+                    if (internalname != null) {
                         String[] lore = neu.manager.getLoreFromNBT(stack.getTagCompound());
 
-                        for(String line : lore) {
-                            if(line.contains(":") && (line.startsWith("\u00A77Upgrade to") ||
+                        for (String line : lore) {
+                            if (line.contains(":") && (line.startsWith("\u00A77Upgrade to") ||
                                     line.startsWith("\u00A77Convert to Dungeon Item"))) {
                                 String[] split = line.split(":");
                                 String after = Utils.cleanColour(split[1]);
                                 StringBuilder costS = new StringBuilder();
-                                for(char c : after.toCharArray()) {
-                                    if(c >= '0' && c <= '9') {
+                                for (char c : after.toCharArray()) {
+                                    if (c >= '0' && c <= '9') {
                                         costS.append(c);
                                     }
                                 }
                                 int cost = Integer.parseInt(costS.toString());
                                 String[] afterSplit = after.split(" ");
-                                String type = afterSplit[afterSplit.length-2];
+                                String type = afterSplit[afterSplit.length - 2];
 
-                                if(!essenceJson.has(internalname)) {
+                                if (!essenceJson.has(internalname)) {
                                     essenceJson.add(internalname, new JsonObject());
                                 }
                                 JsonObject obj = essenceJson.get(internalname).getAsJsonObject();
                                 obj.addProperty("type", type);
 
-                                if(line.startsWith("\u00A77Convert to Dungeon Item")) {
+                                if (line.startsWith("\u00A77Convert to Dungeon Item")) {
                                     obj.addProperty("dungeonize", cost);
-                                } else if(line.startsWith("\u00A77Upgrade to")) {
+                                } else if (line.startsWith("\u00A77Upgrade to")) {
                                     int stars = 0;
-                                    for(char c : line.toCharArray()) {
-                                        if(c == '\u272A') stars++;
+                                    for (char c : line.toCharArray()) {
+                                        if (c == '\u272A') stars++;
                                     }
-                                    if(stars > 0) {
-                                        obj.addProperty(stars+"", cost);
+                                    if (stars > 0) {
+                                        obj.addProperty(stars + "", cost);
                                     }
                                 }
                             }
@@ -1666,15 +1675,15 @@ public class NEUEventListener {
                 System.out.println(essenceJson);
             }
         }
-        if(NotEnoughUpdates.INSTANCE.config.hidden.dev && NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
+        if (NotEnoughUpdates.INSTANCE.config.hidden.dev && NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Minecraft.getMinecraft().theWorld != null &&
                 Keyboard.getEventKey() == Keyboard.KEY_O && Keyboard.getEventKeyState()) {
             GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-            if(gui instanceof GuiChest) {
+            if (gui instanceof GuiChest) {
                 GuiChest eventGui = (GuiChest) event.gui;
                 ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
                 IInventory lower = cc.getLowerChestInventory();
 
-                if(lower.getStackInSlot(23) != null &&
+                if (lower.getStackInSlot(23) != null &&
                         lower.getStackInSlot(23).getDisplayName().endsWith("Crafting Table")) {
                     ItemStack res = lower.getStackInSlot(25);
                     String resInternalname = neu.manager.getInternalNameForItem(res);
@@ -1688,27 +1697,27 @@ public class NEUEventListener {
                             JOptionPane.PLAIN_MESSAGE,
                             null, new String[]{"Enter"}, "Enter");
                     resInternalname = tf.getText();
-                    if(resInternalname.trim().length() == 0) {
+                    if (resInternalname.trim().length() == 0) {
                         return;
                     }
 
                     JsonObject recipe = new JsonObject();
 
-                    String[] x = {"1","2","3"};
-                    String[] y = {"A","B","C"};
+                    String[] x = {"1", "2", "3"};
+                    String[] y = {"A", "B", "C"};
 
-                    for(int i=0; i<=18; i+=9) {
-                        for(int j=0; j<3; j++) {
-                            ItemStack stack = lower.getStackInSlot(10+i+j);
+                    for (int i = 0; i <= 18; i += 9) {
+                        for (int j = 0; j < 3; j++) {
+                            ItemStack stack = lower.getStackInSlot(10 + i + j);
                             String internalname = "";
-                            if(stack != null) {
+                            if (stack != null) {
                                 internalname = neu.manager.getInternalNameForItem(stack);
-                                if(!neu.manager.getItemInformation().containsKey(internalname)) {
+                                if (!neu.manager.getItemInformation().containsKey(internalname)) {
                                     neu.manager.writeItemToFile(stack);
                                 }
-                                internalname += ":"+stack.stackSize;
+                                internalname += ":" + stack.stackSize;
                             }
-                            recipe.addProperty(y[i/9]+x[j], internalname);
+                            recipe.addProperty(y[i / 9] + x[j], internalname);
                         }
                     }
 
@@ -1719,17 +1728,17 @@ public class NEUEventListener {
                     json.addProperty("modver", NotEnoughUpdates.VERSION);
                     try {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + resInternalname));
-                        neu.manager.writeJsonDefaultDir(json, resInternalname+".json");
+                        neu.manager.writeJsonDefaultDir(json, resInternalname + ".json");
                         neu.manager.loadItem(resInternalname);
-                    } catch(IOException e) {}
+                    } catch (IOException e) {
+                    }
                 }
             }
         }
     }
 
-
-
     private final HashSet<String> percentStats = new HashSet<>();
+
     {
         percentStats.add("bonus_attack_speed");
         percentStats.add("crit_damage");
@@ -1747,9 +1756,10 @@ public class NEUEventListener {
 
     //just to try and optimize it a bit
     private int sbaloaded = -1;
-    private boolean isSbaloaded(){
-        if(sbaloaded == -1){
-            if(Loader.isModLoaded("skyblockaddons")) {
+
+    private boolean isSbaloaded() {
+        if (sbaloaded == -1) {
+            if (Loader.isModLoaded("skyblockaddons")) {
                 sbaloaded = 1;
             } else {
                 sbaloaded = 0;
@@ -1760,33 +1770,34 @@ public class NEUEventListener {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltipLow(ItemTooltipEvent event) {
-        if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
+        if (!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
-        if(internalname == null) {
+        if (internalname == null) {
             onItemToolTipInternalNameNull(event);
             return;
         }
 
         boolean hasEnchantments = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").hasKey("enchantments", 10);
         Set<String> enchantIds = new HashSet<>();
-        if(hasEnchantments) enchantIds = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").getCompoundTag("enchantments").getKeySet();
+        if (hasEnchantments)
+            enchantIds = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").getCompoundTag("enchantments").getKeySet();
 
         JsonObject enchantsConst = Constants.ENCHANTS;
         JsonArray allItemEnchs = null;
         Set<String> ignoreFromPool = new HashSet<>();
-        if(enchantsConst != null && hasEnchantments && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.missingEnchantList) {
+        if (enchantsConst != null && hasEnchantments && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.missingEnchantList) {
             try {
                 JsonArray enchantPools = enchantsConst.get("enchant_pools").getAsJsonArray();
-                for(JsonElement element : enchantPools) {
+                for (JsonElement element : enchantPools) {
                     Set<String> currentPool = new HashSet<>();
-                    for(JsonElement poolElement : element.getAsJsonArray()) {
+                    for (JsonElement poolElement : element.getAsJsonArray()) {
                         String poolS = poolElement.getAsString();
                         currentPool.add(poolS);
                     }
-                    for(JsonElement poolElement : element.getAsJsonArray()) {
+                    for (JsonElement poolElement : element.getAsJsonArray()) {
                         String poolS = poolElement.getAsString();
-                        if(enchantIds.contains(poolS)) {
+                        if (enchantIds.contains(poolS)) {
                             ignoreFromPool.addAll(currentPool);
                             break;
                         }
@@ -1795,16 +1806,16 @@ public class NEUEventListener {
 
                 JsonObject enchantsObj = enchantsConst.get("enchants").getAsJsonObject();
                 NBTTagCompound tag = event.itemStack.getTagCompound();
-                if(tag != null) {
+                if (tag != null) {
                     NBTTagCompound display = tag.getCompoundTag("display");
                     if (display.hasKey("Lore", 9)) {
                         NBTTagList list = display.getTagList("Lore", 8);
                         out:
                         for (int i = list.tagCount(); i >= 0; i--) {
                             String line = list.getStringTagAt(i);
-                            for(int j=0; j<Utils.rarityArrC.length; j++) {
-                                for(Map.Entry<String, JsonElement> entry : enchantsObj.entrySet()) {
-                                    if(line.contains(Utils.rarityArrC[j] + " " + entry.getKey()) || line.contains(Utils.rarityArrC[j] + " DUNGEON " + entry.getKey())) {
+                            for (int j = 0; j < Utils.rarityArrC.length; j++) {
+                                for (Map.Entry<String, JsonElement> entry : enchantsObj.entrySet()) {
+                                    if (line.contains(Utils.rarityArrC[j] + " " + entry.getKey()) || line.contains(Utils.rarityArrC[j] + " DUNGEON " + entry.getKey())) {
                                         allItemEnchs = entry.getValue().getAsJsonArray();
                                         break out;
                                     }
@@ -1813,7 +1824,8 @@ public class NEUEventListener {
                         }
                     }
                 }
-            } catch(Exception e) {}
+            } catch (Exception e) {
+            }
         }
 
         boolean gotToEnchants = false;
@@ -1823,42 +1835,41 @@ public class NEUEventListener {
         int index = 0;
         List<String> newTooltip = new ArrayList<>();
 
-        for(String line : event.toolTip) {
-            if(line.endsWith(EnumChatFormatting.DARK_GRAY+"Reforge Stone") && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showReforgeStats) {
+        for (String line : event.toolTip) {
+            if (line.endsWith(EnumChatFormatting.DARK_GRAY + "Reforge Stone") && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showReforgeStats) {
                 JsonObject reforgeStones = Constants.REFORGESTONES;
 
-
-                if(reforgeStones != null && reforgeStones.has(internalname)) {
+                if (reforgeStones != null && reforgeStones.has(internalname)) {
                     boolean shift = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
-                    if(!pressedShiftLast && shift) {
+                    if (!pressedShiftLast && shift) {
                         showReforgeStoneStats = !showReforgeStoneStats;
                     }
                     pressedShiftLast = shift;
 
                     newTooltip.add(line);
                     newTooltip.add("");
-                    if(!showReforgeStoneStats) {
-                        newTooltip.add(EnumChatFormatting.DARK_GRAY+"[Press SHIFT to show extra info]");
+                    if (!showReforgeStoneStats) {
+                        newTooltip.add(EnumChatFormatting.DARK_GRAY + "[Press SHIFT to show extra info]");
                     } else {
-                        newTooltip.add(EnumChatFormatting.DARK_GRAY+"[Press SHIFT to hide extra info]");
+                        newTooltip.add(EnumChatFormatting.DARK_GRAY + "[Press SHIFT to hide extra info]");
                     }
 
                     JsonObject reforgeInfo = reforgeStones.get(internalname).getAsJsonObject();
                     JsonArray requiredRaritiesArray = reforgeInfo.get("requiredRarities").getAsJsonArray();
 
-                    if(showReforgeStoneStats && requiredRaritiesArray.size() > 0) {
+                    if (showReforgeStoneStats && requiredRaritiesArray.size() > 0) {
                         String reforgeName = Utils.getElementAsString(reforgeInfo.get("reforgeName"), "");
 
                         String[] requiredRarities = new String[requiredRaritiesArray.size()];
-                        for(int i=0; i<requiredRaritiesArray.size(); i++) {
+                        for (int i = 0; i < requiredRaritiesArray.size(); i++) {
                             requiredRarities[i] = requiredRaritiesArray.get(i).getAsString();
                         }
 
-                        int rarityIndex = requiredRarities.length-1;
+                        int rarityIndex = requiredRarities.length - 1;
                         String rarity = requiredRarities[rarityIndex];
-                        for(int i=0; i<requiredRarities.length; i++) {
+                        for (int i = 0; i < requiredRarities.length; i++) {
                             String rar = requiredRarities[i];
-                            if(rar.equalsIgnoreCase(currentRarity)) {
+                            if (rar.equalsIgnoreCase(currentRarity)) {
                                 rarity = rar;
                                 rarityIndex = i;
                                 break;
@@ -1867,21 +1878,20 @@ public class NEUEventListener {
 
                         boolean left = Keyboard.isKeyDown(Keyboard.KEY_LEFT);
                         boolean right = Keyboard.isKeyDown(Keyboard.KEY_RIGHT);
-                        if(!pressedArrowLast && (left || right)) {
-                            if(left) {
+                        if (!pressedArrowLast && (left || right)) {
+                            if (left) {
                                 rarityIndex--;
-                            } else if(right) {
+                            } else if (right) {
                                 rarityIndex++;
                             }
-                            if(rarityIndex < 0) rarityIndex = 0;
-                            if(rarityIndex >= requiredRarities.length) rarityIndex = requiredRarities.length-1;
+                            if (rarityIndex < 0) rarityIndex = 0;
+                            if (rarityIndex >= requiredRarities.length) rarityIndex = requiredRarities.length - 1;
                             currentRarity = requiredRarities[rarityIndex];
                             rarity = currentRarity;
                         }
                         pressedArrowLast = left || right;
 
                         JsonElement statsE = reforgeInfo.get("reforgeStats");
-
 
                         String rarityFormatted = Utils.rarityArrMap.getOrDefault(rarity, rarity);
 
@@ -1911,7 +1921,7 @@ public class NEUEventListener {
 
                         newTooltip.add(EnumChatFormatting.BLUE + "Stats for " + rarityFormatted + "\u00a79: [\u00a7l\u00a7m< \u00a79Switch\u00a7l\u27a1\u00a79]");
 
-                        if(statsE != null && statsE.isJsonObject()) {
+                        if (statsE != null && statsE.isJsonObject()) {
                             JsonObject stats = statsE.getAsJsonObject();
 
                             JsonElement statsRarE = stats.get(rarity);
@@ -1963,50 +1973,49 @@ public class NEUEventListener {
 
                     }
 
-
                     continue;
                 }
 
-            } else if(line.contains("\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune")) {
+            } else if (line.contains("\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune")) {
                 line = line.replace("\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune",
-                        Utils.chromaString("Rainbow Rune", index, false)+EnumChatFormatting.BLUE);
-            } else if(hasEnchantments) {
-                if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.missingEnchantList) {
+                        Utils.chromaString("Rainbow Rune", index, false) + EnumChatFormatting.BLUE);
+            } else if (hasEnchantments) {
+                if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.missingEnchantList) {
                     boolean lineHasEnch = false;
-                    for(String s : enchantIds) {
+                    for (String s : enchantIds) {
                         String enchantName = WordUtils.capitalizeFully(s.replace("_", " "));
-                        if(line.contains(enchantName)) {
+                        if (line.contains(enchantName)) {
                             lineHasEnch = true;
                             break;
                         }
                     }
-                    if(lineHasEnch) {
+                    if (lineHasEnch) {
                         gotToEnchants = true;
                     } else {
-                        if(gotToEnchants && !passedEnchants && Utils.cleanColour(line).trim().length() == 0) {
-                            if(enchantsConst != null && allItemEnchs != null) {
+                        if (gotToEnchants && !passedEnchants && Utils.cleanColour(line).trim().length() == 0) {
+                            if (enchantsConst != null && allItemEnchs != null) {
                                 List<String> missing = new ArrayList<>();
-                                for(JsonElement enchIdElement : allItemEnchs) {
+                                for (JsonElement enchIdElement : allItemEnchs) {
                                     String enchId = enchIdElement.getAsString();
-                                    if(!enchId.startsWith("ultimate_") && !ignoreFromPool.contains(enchId) && !enchantIds.contains(enchId)) {
+                                    if (!enchId.startsWith("ultimate_") && !ignoreFromPool.contains(enchId) && !enchantIds.contains(enchId)) {
                                         missing.add(enchId);
                                     }
                                 }
                                 newTooltip.add("");
-                                StringBuilder currentLine = new StringBuilder(EnumChatFormatting.RED+"Missing: "+EnumChatFormatting.GRAY);
-                                for(int i=0; i<missing.size(); i++) {
+                                StringBuilder currentLine = new StringBuilder(EnumChatFormatting.RED + "Missing: " + EnumChatFormatting.GRAY);
+                                for (int i = 0; i < missing.size(); i++) {
                                     String enchName = WordUtils.capitalizeFully(missing.get(i).replace("_", " "));
-                                    if(currentLine.length() != 0 && (Utils.cleanColour(currentLine.toString()).length() + enchName.length()) > 40) {
+                                    if (currentLine.length() != 0 && (Utils.cleanColour(currentLine.toString()).length() + enchName.length()) > 40) {
                                         newTooltip.add(currentLine.toString());
                                         currentLine = new StringBuilder();
                                     }
-                                    if(currentLine.length() != 0 && i != 0) {
+                                    if (currentLine.length() != 0 && i != 0) {
                                         currentLine.append(", ").append(enchName);
                                     } else {
                                         currentLine.append(EnumChatFormatting.GRAY).append(enchName);
                                     }
                                 }
-                                if(currentLine.length() != 0) {
+                                if (currentLine.length() != 0) {
                                     newTooltip.add(currentLine.toString());
                                 }
                             }
@@ -2014,7 +2023,7 @@ public class NEUEventListener {
                         }
                     }
                 }
-                for(String op : NotEnoughUpdates.INSTANCE.config.hidden.enchantColours) {
+                for (String op : NotEnoughUpdates.INSTANCE.config.hidden.enchantColours) {
                     List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
                     String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
                     String comparator = GuiEnchantColour.getColourOpIndex(colourOps, 1);
@@ -2024,21 +2033,23 @@ public class NEUEventListener {
 
                     int modifierI = GuiEnchantColour.getIntModifier(modifier);
 
-                    if(enchantName.length() == 0) continue;
-                    if(comparator.length() == 0) continue;
-                    if(comparison.length() == 0) continue;
-                    if(colourCode.length() == 0) continue;
+                    if (enchantName.length() == 0) continue;
+                    if (comparator.length() == 0) continue;
+                    if (comparison.length() == 0) continue;
+                    if (colourCode.length() == 0) continue;
 
                     int comparatorI = ">=<".indexOf(comparator.charAt(0));
 
                     int levelToFind = -1;
                     try {
                         levelToFind = Integer.parseInt(comparison);
-                    } catch(Exception e) { continue; }
+                    } catch (Exception e) {
+                        continue;
+                    }
 
-                    if(comparatorI < 0) continue;
+                    if (comparatorI < 0) continue;
                     String regexText = "0123456789abcdefz";
-                    if(isSbaloaded()) {
+                    if (isSbaloaded()) {
                         regexText = regexText + "Z";
                     }
 
@@ -2048,118 +2059,142 @@ public class NEUEventListener {
                     //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
                     Pattern pattern;
                     try {
-                        pattern = Pattern.compile("(\\u00A79|\\u00A7(9|l)\\u00A7d\\u00A7l)(?<enchantName>"+enchantName+") " +
+                        pattern = Pattern.compile("(\\u00A79|\\u00A7(9|l)\\u00A7d\\u00A7l)(?<enchantName>" + enchantName + ") " +
                                 "(?<level>[0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))((\\u00A79)?,|( \\u00A78(?:,?[0-9]+)*)?$)");
-                    } catch(Exception e) {continue;} //malformed regex
+                    } catch (Exception e) {
+                        continue;
+                    } //malformed regex
                     Matcher matcher = pattern.matcher(line);
                     int matchCount = 0;
-                    while(matcher.find() && matchCount < 5) {
-                        if(Utils.cleanColour(matcher.group("enchantName")).startsWith(" ")) continue;
-
+                    while (matcher.find() && matchCount < 5) {
+                        if (Utils.cleanColour(matcher.group("enchantName")).startsWith(" ")) continue;
 
                         matchCount++;
                         int level = -1;
                         String levelStr = matcher.group("level");
-                        if(levelStr == null) continue;
+                        if (levelStr == null) continue;
                         try {
                             level = Integer.parseInt(levelStr);
-                        } catch(Exception e) {
-                            switch(levelStr) {
+                        } catch (Exception e) {
+                            switch (levelStr) {
                                 case "I":
-                                    level = 1; break;
+                                    level = 1;
+                                    break;
                                 case "II":
-                                    level = 2; break;
+                                    level = 2;
+                                    break;
                                 case "III":
-                                    level = 3; break;
+                                    level = 3;
+                                    break;
                                 case "IV":
-                                    level = 4; break;
+                                    level = 4;
+                                    break;
                                 case "V":
-                                    level = 5; break;
+                                    level = 5;
+                                    break;
                                 case "VI":
-                                    level = 6; break;
+                                    level = 6;
+                                    break;
                                 case "VII":
-                                    level = 7; break;
+                                    level = 7;
+                                    break;
                                 case "VIII":
-                                    level = 8; break;
+                                    level = 8;
+                                    break;
                                 case "IX":
-                                    level = 9; break;
+                                    level = 9;
+                                    break;
                                 case "X":
-                                    level = 10; break;
+                                    level = 10;
+                                    break;
                                 case "XI":
-                                    level = 11; break;
+                                    level = 11;
+                                    break;
                                 case "XII":
-                                    level = 12; break;
+                                    level = 12;
+                                    break;
                                 case "XIII":
-                                    level = 13; break;
+                                    level = 13;
+                                    break;
                                 case "XIV":
-                                    level = 14; break;
+                                    level = 14;
+                                    break;
                                 case "XV":
-                                    level = 15; break;
+                                    level = 15;
+                                    break;
                                 case "XVI":
-                                    level = 16; break;
+                                    level = 16;
+                                    break;
                                 case "XVII":
-                                    level = 17; break;
+                                    level = 17;
+                                    break;
                                 case "XVIII":
-                                    level = 18; break;
+                                    level = 18;
+                                    break;
                                 case "XIX":
-                                    level = 19; break;
+                                    level = 19;
+                                    break;
                                 case "XX":
-                                    level = 20; break;
+                                    level = 20;
+                                    break;
                             }
                         }
                         boolean matches = false;
-                        if(level > 0) {
-                            switch(comparator) {
+                        if (level > 0) {
+                            switch (comparator) {
                                 case ">":
-                                    matches = level > levelToFind; break;
+                                    matches = level > levelToFind;
+                                    break;
                                 case "=":
-                                    matches = level == levelToFind; break;
+                                    matches = level == levelToFind;
+                                    break;
                                 case "<":
-                                    matches = level < levelToFind; break;
+                                    matches = level < levelToFind;
+                                    break;
                             }
                         }
-                        if(matches) {
+                        if (matches) {
                             String enchantText = matcher.group("enchantName");
                             StringBuilder extraModifiersBuilder = new StringBuilder();
 
-                            if((modifierI & GuiEnchantColour.BOLD_MODIFIER) != 0) {
+                            if ((modifierI & GuiEnchantColour.BOLD_MODIFIER) != 0) {
                                 extraModifiersBuilder.append(EnumChatFormatting.BOLD);
                             }
-                            if((modifierI & GuiEnchantColour.ITALIC_MODIFIER) != 0) {
+                            if ((modifierI & GuiEnchantColour.ITALIC_MODIFIER) != 0) {
                                 extraModifiersBuilder.append(EnumChatFormatting.ITALIC);
                             }
-                            if((modifierI & GuiEnchantColour.UNDERLINE_MODIFIER) != 0) {
+                            if ((modifierI & GuiEnchantColour.UNDERLINE_MODIFIER) != 0) {
                                 extraModifiersBuilder.append(EnumChatFormatting.UNDERLINE);
                             }
-                            if((modifierI & GuiEnchantColour.OBFUSCATED_MODIFIER) != 0) {
+                            if ((modifierI & GuiEnchantColour.OBFUSCATED_MODIFIER) != 0) {
                                 extraModifiersBuilder.append(EnumChatFormatting.OBFUSCATED);
                             }
-                            if((modifierI & GuiEnchantColour.STRIKETHROUGH_MODIFIER) != 0) {
+                            if ((modifierI & GuiEnchantColour.STRIKETHROUGH_MODIFIER) != 0) {
                                 extraModifiersBuilder.append(EnumChatFormatting.STRIKETHROUGH);
                             }
 
                             String extraMods = extraModifiersBuilder.toString();
 
-                            if(!colourCode.equals("z")) {
-                                line = line.replace("\u00A79"+enchantText,
-                                        "\u00A7"+colourCode+extraMods+enchantText);
-                                line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText,
-                                        "\u00A7"+colourCode+extraMods+enchantText);
-                                line = line.replace("\u00A7l\u00A7d\u00A7l"+enchantText,
-                                        "\u00A7"+colourCode+extraMods+enchantText);
+                            if (!colourCode.equals("z")) {
+                                line = line.replace("\u00A79" + enchantText,
+                                        "\u00A7" + colourCode + extraMods + enchantText);
+                                line = line.replace("\u00A79\u00A7d\u00A7l" + enchantText,
+                                        "\u00A7" + colourCode + extraMods + enchantText);
+                                line = line.replace("\u00A7l\u00A7d\u00A7l" + enchantText,
+                                        "\u00A7" + colourCode + extraMods + enchantText);
                             } else {
                                 int offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
-                                        "\\u00A79"+enchantText+".*", ""));
-                                line = line.replace("\u00A79"+enchantText, Utils.chromaString(enchantText, offset/12f+index, false));
+                                        "\\u00A79" + enchantText + ".*", ""));
+                                line = line.replace("\u00A79" + enchantText, Utils.chromaString(enchantText, offset / 12f + index, false));
 
                                 offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
-                                        "\\u00A79\\u00A7d\\u00A7l"+enchantText+".*", ""));
-                                line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
-                                        offset/12f+index, true));
+                                        "\\u00A79\\u00A7d\\u00A7l" + enchantText + ".*", ""));
+                                line = line.replace("\u00A79\u00A7d\u00A7l" + enchantText, Utils.chromaString(enchantText,
+                                        offset / 12f + index, true));
                                 offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
-                                        "\\u00A7l\\u00A7d\\u00A7l"+enchantText+".*", ""));
-                                line = line.replace("\u00A7l\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
-                                        offset/12f+index, true));
+                                        "\\u00A7l\\u00A7d\\u00A7l" + enchantText + ".*", ""));
+                                line = line.replace("\u00A7l\u00A7d\u00A7l" + enchantText, Utils.chromaString(enchantText,
+                                        offset / 12f + index, true));
                             }
                         }
                     }
@@ -2168,25 +2203,24 @@ public class NEUEventListener {
 
             newTooltip.add(line);
 
+            if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoAucItem) {
+                if (line.contains(EnumChatFormatting.GRAY + "Buy it now: ") ||
+                        line.contains(EnumChatFormatting.GRAY + "Bidder: ") ||
+                        line.contains(EnumChatFormatting.GRAY + "Starting bid: ")) {
 
-            if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoAucItem) {
-                if(line.contains(EnumChatFormatting.GRAY+"Buy it now: ") ||
-                        line.contains(EnumChatFormatting.GRAY+"Bidder: ") ||
-                        line.contains(EnumChatFormatting.GRAY+"Starting bid: ")) {
-
-                    if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+                    if (!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
                         newTooltip.add("");
-                        newTooltip.add(EnumChatFormatting.GRAY+"[SHIFT for Price Info]");
+                        newTooltip.add(EnumChatFormatting.GRAY + "[SHIFT for Price Info]");
                     } else {
                         ItemPriceInformation.addToTooltip(newTooltip, internalname, event.itemStack);
                     }
                 }
             }
 
-            if(NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 2 && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
-                if(line.contains(EnumChatFormatting.GREEN+"Open Reward Chest")) {
+            if (NotEnoughUpdates.INSTANCE.config.dungeons.profitDisplayLoc == 2 && Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+                if (line.contains(EnumChatFormatting.GREEN + "Open Reward Chest")) {
                     dungeonProfit = true;
-                } else if(index == 7 && dungeonProfit) {
+                } else if (index == 7 && dungeonProfit) {
                     GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
                     ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
                     IInventory lower = cc.getLowerChestInventory();
@@ -2195,64 +2229,65 @@ public class NEUEventListener {
                     try {
                         String line6 = Utils.cleanColour(line);
                         StringBuilder cost = new StringBuilder();
-                        for(int i=0; i<line6.length(); i++) {
+                        for (int i = 0; i < line6.length(); i++) {
                             char c = line6.charAt(i);
-                            if("0123456789".indexOf(c) >= 0) {
+                            if ("0123456789".indexOf(c) >= 0) {
                                 cost.append(c);
                             }
                         }
-                        if(cost.length() > 0) {
+                        if (cost.length() > 0) {
                             chestCost = Integer.parseInt(cost.toString());
                         }
-                    } catch(Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
 
                     String missingItem = null;
                     int totalValue = 0;
                     HashMap<String, Float> itemValues = new HashMap<>();
-                    for(int i=0; i<5; i++) {
-                        ItemStack item = lower.getStackInSlot(11+i);
+                    for (int i = 0; i < 5; i++) {
+                        ItemStack item = lower.getStackInSlot(11 + i);
                         String internal = neu.manager.getInternalNameForItem(item);
-                        if(internal != null) {
+                        if (internal != null) {
                             internal = internal.replace("\u00CD", "I").replace("\u0130", "I");
                             float bazaarPrice = -1;
                             JsonObject bazaarInfo = neu.manager.auctionManager.getBazaarInfo(internal);
-                            if(bazaarInfo != null && bazaarInfo.has("curr_sell")) {
+                            if (bazaarInfo != null && bazaarInfo.has("curr_sell")) {
                                 bazaarPrice = bazaarInfo.get("curr_sell").getAsFloat();
                             }
-                            if(bazaarPrice < 5000000 && internal.equals("RECOMBOBULATOR_3000")) bazaarPrice = 5000000;
+                            if (bazaarPrice < 5000000 && internal.equals("RECOMBOBULATOR_3000")) bazaarPrice = 5000000;
 
                             float worth = -1;
-                            if(bazaarPrice > 0) {
+                            if (bazaarPrice > 0) {
                                 worth = bazaarPrice;
                             } else {
-                                switch(NotEnoughUpdates.INSTANCE.config.dungeons.profitType) {
+                                switch (NotEnoughUpdates.INSTANCE.config.dungeons.profitType) {
                                     case 1:
                                         worth = neu.manager.auctionManager.getItemAvgBin(internal);
                                         break;
                                     case 2:
                                         JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                                        if(auctionInfo != null) {
-                                            if(auctionInfo.has("clean_price")) {
-                                                worth = (int)auctionInfo.get("clean_price").getAsFloat();
+                                        if (auctionInfo != null) {
+                                            if (auctionInfo.has("clean_price")) {
+                                                worth = (int) auctionInfo.get("clean_price").getAsFloat();
                                             } else {
-                                                worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                                worth = (int) (auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
                                             }
                                         }
                                         break;
                                     default:
                                         worth = neu.manager.auctionManager.getLowestBin(internal);
                                 }
-                                if(worth <= 0) {
+                                if (worth <= 0) {
                                     worth = neu.manager.auctionManager.getLowestBin(internal);
-                                    if(worth <= 0) {
+                                    if (worth <= 0) {
                                         worth = neu.manager.auctionManager.getItemAvgBin(internal);
-                                        if(worth <= 0) {
+                                        if (worth <= 0) {
                                             JsonObject auctionInfo = neu.manager.auctionManager.getItemAuctionInfo(internal);
-                                            if(auctionInfo != null) {
-                                                if(auctionInfo.has("clean_price")) {
-                                                    worth = (int)auctionInfo.get("clean_price").getAsFloat();
+                                            if (auctionInfo != null) {
+                                                if (auctionInfo.has("clean_price")) {
+                                                    worth = (int) auctionInfo.get("clean_price").getAsFloat();
                                                 } else {
-                                                    worth = (int)(auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
+                                                    worth = (int) (auctionInfo.get("price").getAsFloat() / auctionInfo.get("count").getAsFloat());
                                                 }
                                             }
                                         }
@@ -2260,22 +2295,22 @@ public class NEUEventListener {
                                 }
                             }
 
-                            if(worth > 0 && totalValue >= 0) {
+                            if (worth > 0 && totalValue >= 0) {
                                 totalValue += worth;
 
                                 String display = item.getDisplayName();
 
-                                if(display.contains("Enchanted Book")) {
+                                if (display.contains("Enchanted Book")) {
                                     NBTTagCompound tag = item.getTagCompound();
-                                    if(tag != null && tag.hasKey("ExtraAttributes", 10)) {
+                                    if (tag != null && tag.hasKey("ExtraAttributes", 10)) {
                                         NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
                                         NBTTagCompound enchants = ea.getCompoundTag("enchantments");
 
                                         int highestLevel = -1;
-                                        for(String enchname : enchants.getKeySet()) {
+                                        for (String enchname : enchants.getKeySet()) {
                                             int level = enchants.getInteger(enchname);
-                                            if(level > highestLevel) {
-                                                display = EnumChatFormatting.BLUE+WordUtils.capitalizeFully(
+                                            if (level > highestLevel) {
+                                                display = EnumChatFormatting.BLUE + WordUtils.capitalizeFully(
                                                         enchname.replace("_", " ")
                                                                 .replace("Ultimate", "")
                                                                 .trim()) + " " + level;
@@ -2286,7 +2321,7 @@ public class NEUEventListener {
 
                                 itemValues.put(display, worth);
                             } else {
-                                if(totalValue != -1) {
+                                if (totalValue != -1) {
                                     missingItem = internal;
                                 }
                                 totalValue = -1;
@@ -2297,35 +2332,35 @@ public class NEUEventListener {
                     NumberFormat format = NumberFormat.getInstance(Locale.US);
                     String valueStringBIN1;
                     String valueStringBIN2;
-                    if(totalValue >= 0) {
-                        valueStringBIN1 = EnumChatFormatting.YELLOW+"Value (BIN): ";
+                    if (totalValue >= 0) {
+                        valueStringBIN1 = EnumChatFormatting.YELLOW + "Value (BIN): ";
                         valueStringBIN2 = EnumChatFormatting.GOLD + format.format(totalValue) + " coins";
                     } else {
-                        valueStringBIN1 = EnumChatFormatting.YELLOW+"Can't find BIN: ";
+                        valueStringBIN1 = EnumChatFormatting.YELLOW + "Can't find BIN: ";
                         valueStringBIN2 = missingItem;
                     }
 
                     int profitLossBIN = totalValue - chestCost;
-                    String profitPrefix =  EnumChatFormatting.DARK_GREEN.toString();
+                    String profitPrefix = EnumChatFormatting.DARK_GREEN.toString();
                     String lossPrefix = EnumChatFormatting.RED.toString();
                     String prefix = profitLossBIN >= 0 ? profitPrefix : lossPrefix;
 
                     String plStringBIN;
-                    if(profitLossBIN >= 0) {
+                    if (profitLossBIN >= 0) {
                         plStringBIN = prefix + "+" + format.format(profitLossBIN) + " coins";
                     } else {
-                        plStringBIN = prefix + "-"+ format.format(-profitLossBIN) + " coins";
+                        plStringBIN = prefix + "-" + format.format(-profitLossBIN) + " coins";
                     }
 
                     String neu = EnumChatFormatting.YELLOW + "[NEU] ";
 
                     newTooltip.add(neu + valueStringBIN1 + " " + valueStringBIN2);
-                    if(totalValue >= 0) {
-                        newTooltip.add(neu + EnumChatFormatting.YELLOW+"Profit/Loss: " + plStringBIN);
+                    if (totalValue >= 0) {
+                        newTooltip.add(neu + EnumChatFormatting.YELLOW + "Profit/Loss: " + plStringBIN);
                     }
 
-                    for(Map.Entry<String, Float> entry : itemValues.entrySet()) {
-                        newTooltip.add(neu + entry.getKey() + prefix+"+"+
+                    for (Map.Entry<String, Float> entry : itemValues.entrySet()) {
+                        newTooltip.add(neu + entry.getKey() + prefix + "+" +
                                 format.format(entry.getValue().intValue()));
                     }
                 }
@@ -2334,14 +2369,14 @@ public class NEUEventListener {
             index++;
         }
 
-        for (int i = newTooltip.size()-1; i >=0; i--) {
+        for (int i = newTooltip.size() - 1; i >= 0; i--) {
             String line = Utils.cleanColour(newTooltip.get(i));
             for (int i1 = 0; i1 < Utils.rarityArr.length; i1++) {
-                if(line.equals(Utils.rarityArr[i1])){
-                    if(i-2 <0){
+                if (line.equals(Utils.rarityArr[i1])) {
+                    if (i - 2 < 0) {
                         break;
                     }
-                    newTooltip.addAll(i-1, petToolTipXPExtend(event));
+                    newTooltip.addAll(i - 1, petToolTipXPExtend(event));
                     break;
                 }
             }
@@ -2363,27 +2398,23 @@ public class NEUEventListener {
         hypixelOrder.add("reforge_bonus");
         hypixelOrder.add("rarity");
 
-        if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoInvItem) {
+        if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoInvItem) {
             ItemPriceInformation.addToTooltip(event.toolTip, internalname, event.itemStack);
         }
-
-
-
-
 
     }
 
     private final Pattern xpLevelPattern = Pattern.compile("(.*) (\\xA7e(.*)\\xA76/\\xA7e(.*))");
 
-    private void onItemToolTipInternalNameNull(ItemTooltipEvent event){
+    private void onItemToolTipInternalNameNull(ItemTooltipEvent event) {
         petToolTipXPExtendPetMenu(event);
     }
 
     private List<String> petToolTipXPExtend(ItemTooltipEvent event) {
         List<String> tooltipText = new ArrayList();
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
-            if(event.itemStack.getTagCompound().hasKey("DisablePetExp")){
-                if(event.itemStack.getTagCompound().getBoolean("DisablePetExp")){
+            if (event.itemStack.getTagCompound().hasKey("DisablePetExp")) {
+                if (event.itemStack.getTagCompound().getBoolean("DisablePetExp")) {
                     return tooltipText;
                 }
             }
@@ -2402,7 +2433,7 @@ public class NEUEventListener {
                             if (petInfo.has("exp") && petInfo.get("exp").isJsonPrimitive()) {
                                 JsonPrimitive exp = petInfo.getAsJsonPrimitive("exp");
                                 String petName = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
-                                        //Utils.getRarityFromInt(Utils.checkItemTypePet(event.toolTip))).getAsInt();
+                                //Utils.getRarityFromInt(Utils.checkItemTypePet(event.toolTip))).getAsInt();
                                 petlevel = GuiProfileViewer.getPetLevel(petName, Utils.getRarityFromInt(Utils.checkItemTypePet(event.toolTip)), exp.getAsLong());
                             }
                         }
@@ -2410,13 +2441,13 @@ public class NEUEventListener {
 
                     if (petlevel != null) {
                         tooltipText.add("");
-                        if(petlevel.totalXp > petlevel.maxXP) {
-                            tooltipText.add(EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD +"MAX LEVEL");
+                        if (petlevel.totalXp > petlevel.maxXP) {
+                            tooltipText.add(EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD + "MAX LEVEL");
                         } else {
-                            tooltipText.add(EnumChatFormatting.GRAY+"Progress to Level "+(int)Math.floor(petlevel.level+1)+": "+EnumChatFormatting.YELLOW+Utils.round(petlevel.levelPercentage*100, 1)+"%");
-                            int levelpercentage = Math.round(petlevel.levelPercentage*20);
-                            tooltipText.add(EnumChatFormatting.DARK_GREEN+String.join("", Collections.nCopies(levelpercentage, "-"))+EnumChatFormatting.WHITE+String.join("", Collections.nCopies(20-levelpercentage, "-")));
-                            tooltipText.add(EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW  + myFormatter.format(petlevel.levelXp) +
+                            tooltipText.add(EnumChatFormatting.GRAY + "Progress to Level " + (int) Math.floor(petlevel.level + 1) + ": " + EnumChatFormatting.YELLOW + Utils.round(petlevel.levelPercentage * 100, 1) + "%");
+                            int levelpercentage = Math.round(petlevel.levelPercentage * 20);
+                            tooltipText.add(EnumChatFormatting.DARK_GREEN + String.join("", Collections.nCopies(levelpercentage, "-")) + EnumChatFormatting.WHITE + String.join("", Collections.nCopies(20 - levelpercentage, "-")));
+                            tooltipText.add(EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.levelXp) +
                                     EnumChatFormatting.GOLD + "/" + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.currentLevelRequirement) + " EXP");
                         }
                     }
@@ -2425,7 +2456,7 @@ public class NEUEventListener {
         }
         return tooltipText;
     }
-    
+
     private static final String petToolTipRegex = "((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)|(Morph)).*";
 
     private void petToolTipXPExtendPetMenu(ItemTooltipEvent event) {
@@ -2453,11 +2484,11 @@ public class NEUEventListener {
                     }
                     petlevel = pet.petLevel;
 
-                    if (petlevel == null||xpLine==-1) {
+                    if (petlevel == null || xpLine == -1) {
                         return;
                     }
 
-                    event.toolTip.add(xpLine+1, EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.levelXp) +
+                    event.toolTip.add(xpLine + 1, EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.levelXp) +
                             EnumChatFormatting.GOLD + "/" + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.currentLevelRequirement));
 
                 }
@@ -2469,11 +2500,12 @@ public class NEUEventListener {
 
     /**
      * This makes it so that holding LCONTROL while hovering over an item with NBT will show the NBT of the item.
+     *
      * @param event
      */
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
-        if(!neu.isOnSkyblock()) return;
+        if (!neu.isOnSkyblock()) return;
         /*if(NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
                 event.itemStack.getItem().equals(Item.getItemFromBlock(Blocks.stained_glass_pane))) {
             String first = Utils.cleanColour(event.toolTip.get(0));
@@ -2531,37 +2563,37 @@ public class NEUEventListener {
                 }
             }
         }*/
-        if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && NotEnoughUpdates.INSTANCE.config.hidden.dev &&
-                event.toolTip.size()>0&&event.toolTip.get(event.toolTip.size()-1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
-            event.toolTip.remove(event.toolTip.size()-1);
+        if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && NotEnoughUpdates.INSTANCE.config.hidden.dev &&
+                event.toolTip.size() > 0 && event.toolTip.get(event.toolTip.size() - 1).startsWith(EnumChatFormatting.DARK_GRAY + "NBT: ")) {
+            event.toolTip.remove(event.toolTip.size() - 1);
 
             StringBuilder sb = new StringBuilder();
             String nbt = event.itemStack.getTagCompound().toString();
             int indent = 0;
-            for(char c : nbt.toCharArray()) {
+            for (char c : nbt.toCharArray()) {
                 boolean newline = false;
-                if(c == '{' || c == '[') {
+                if (c == '{' || c == '[') {
                     indent++;
                     newline = true;
-                } else if(c == '}' || c == ']') {
+                } else if (c == '}' || c == ']') {
                     indent--;
                     sb.append("\n");
-                    for(int i=0; i<indent; i++) sb.append("  ");
-                } else if(c == ',') {
+                    for (int i = 0; i < indent; i++) sb.append("  ");
+                } else if (c == ',') {
                     newline = true;
-                } else if(c == '\"') {
+                } else if (c == '\"') {
                     sb.append(EnumChatFormatting.RESET.toString() + EnumChatFormatting.GRAY);
                 }
 
                 sb.append(c);
-                if(newline) {
+                if (newline) {
                     sb.append("\n");
-                    for(int i=0; i<indent; i++) sb.append("  ");
+                    for (int i = 0; i < indent; i++) sb.append("  ");
                 }
             }
             event.toolTip.add(sb.toString());
-            if(Keyboard.isKeyDown(Keyboard.KEY_H)) {
-                if(!copied) {
+            if (Keyboard.isKeyDown(Keyboard.KEY_H)) {
+                if (!copied) {
                     copied = true;
                     StringSelection selection = new StringSelection(sb.toString());
                     Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
@@ -2569,10 +2601,10 @@ public class NEUEventListener {
             } else {
                 copied = false;
             }
-        } else if(NotEnoughUpdates.INSTANCE.packDevEnabled) {
+        } else if (NotEnoughUpdates.INSTANCE.packDevEnabled) {
             event.toolTip.add("");
-            event.toolTip.add(EnumChatFormatting.AQUA+"NEU Pack Dev Info:");
-            event.toolTip.add("Press "+EnumChatFormatting.GOLD+"[KEY]"+EnumChatFormatting.GRAY+" to copy line");
+            event.toolTip.add(EnumChatFormatting.AQUA + "NEU Pack Dev Info:");
+            event.toolTip.add("Press " + EnumChatFormatting.GOLD + "[KEY]" + EnumChatFormatting.GRAY + " to copy line");
 
             String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
 
@@ -2580,20 +2612,20 @@ public class NEUEventListener {
             boolean m = Keyboard.isKeyDown(Keyboard.KEY_M);
             boolean n = Keyboard.isKeyDown(Keyboard.KEY_N);
 
-            event.toolTip.add(EnumChatFormatting.AQUA+"Internal Name: "+EnumChatFormatting.GRAY+internal+EnumChatFormatting.GOLD+" [K]");
-            if(!copied && k) {
+            event.toolTip.add(EnumChatFormatting.AQUA + "Internal Name: " + EnumChatFormatting.GRAY + internal + EnumChatFormatting.GOLD + " [K]");
+            if (!copied && k) {
                 MiscUtils.copyToClipboard(internal);
             }
 
-            if(event.itemStack.getTagCompound() != null) {
+            if (event.itemStack.getTagCompound() != null) {
                 NBTTagCompound tag = event.itemStack.getTagCompound();
 
                 if (tag.hasKey("SkullOwner", 10)) {
                     GameProfile gameprofile = NBTUtil.readGameProfileFromNBT(tag.getCompoundTag("SkullOwner"));
 
-                    if(gameprofile != null) {
-                        event.toolTip.add(EnumChatFormatting.AQUA+"Skull UUID: "+EnumChatFormatting.GRAY+gameprofile.getId()+EnumChatFormatting.GOLD+" [M]");
-                        if(!copied && m) {
+                    if (gameprofile != null) {
+                        event.toolTip.add(EnumChatFormatting.AQUA + "Skull UUID: " + EnumChatFormatting.GRAY + gameprofile.getId() + EnumChatFormatting.GOLD + " [M]");
+                        if (!copied && m) {
                             MiscUtils.copyToClipboard(gameprofile.getId().toString());
                         }
 
@@ -2601,9 +2633,9 @@ public class NEUEventListener {
 
                         if (map.containsKey(MinecraftProfileTexture.Type.SKIN)) {
                             MinecraftProfileTexture profTex = map.get(MinecraftProfileTexture.Type.SKIN);
-                            event.toolTip.add(EnumChatFormatting.AQUA+"Skull Texture Link: "+EnumChatFormatting.GRAY+profTex.getUrl()+EnumChatFormatting.GOLD+" [N]");
+                            event.toolTip.add(EnumChatFormatting.AQUA + "Skull Texture Link: " + EnumChatFormatting.GRAY + profTex.getUrl() + EnumChatFormatting.GOLD + " [N]");
 
-                            if(!copied && n) {
+                            if (!copied && n) {
                                 MiscUtils.copyToClipboard(profTex.getUrl());
                             }
                         }
@@ -2616,7 +2648,7 @@ public class NEUEventListener {
     }
 
     @SubscribeEvent
-    public void onRenderLast(RenderWorldLastEvent event){
+    public void onRenderLast(RenderWorldLastEvent event) {
         CrystalMetalDetectorSolver.render(event.partialTicks);
     }
 }

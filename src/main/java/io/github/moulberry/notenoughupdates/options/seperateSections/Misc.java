@@ -20,8 +20,6 @@ public class Misc {
     @ConfigEditorBoolean
     public boolean hidePotionEffect = true;
 
-
-
     @Expose
     @ConfigOption(
             name = "Streamer Mode",
@@ -38,7 +36,6 @@ public class Misc {
     @ConfigEditorBoolean
     public boolean guiButtonClicks = true;
 
-
     @Expose
     @ConfigOption(
             name = "Replace Chat Social Options",
@@ -46,8 +43,6 @@ public class Misc {
     )
     @ConfigEditorBoolean
     public boolean replaceSocialOptions = true;
-
-
 
     @Expose
     @ConfigOption(
@@ -86,7 +81,5 @@ public class Misc {
     )
     @ConfigEditorBoolean
     public boolean disableSkullRetexturing = false;
-
-
 
 }

@@ -57,10 +57,11 @@ public class NotEnoughUpdates {
 
     private File configFile;
 
-    public File getConfigFile(){
+    public File getConfigFile() {
         return this.configFile;
     }
-    public void newConfigFile(){
+
+    public void newConfigFile() {
         this.configFile = new File(NotEnoughUpdates.INSTANCE.getNeuDir(), "configNew.json");
     }
 
@@ -70,16 +71,15 @@ public class NotEnoughUpdates {
     private String currChatMessage = null;
 
     //Stolen from Biscut and used for detecting whether in skyblock
-    private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK","\u7A7A\u5C9B\u751F\u5B58", "\u7A7A\u5CF6\u751F\u5B58");
+    private static final Set<String> SKYBLOCK_IN_ALL_LANGUAGES = Sets.newHashSet("SKYBLOCK", "\u7A7A\u5C9B\u751F\u5B58", "\u7A7A\u5CF6\u751F\u5B58");
 
     public GuiScreen openGui = null;
     public long lastOpenedGui = 0;
 
     public Commands commands;
 
-
-
     public static HashMap<String, String> petRarityToColourMap = new HashMap<>();
+
     static {
         petRarityToColourMap.put("UNKNOWN", EnumChatFormatting.RED.toString());
 
@@ -98,12 +98,13 @@ public class NotEnoughUpdates {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     private File neuDir;
 
-    public File getNeuDir(){ return this.neuDir;}
+    public File getNeuDir() {return this.neuDir;}
 
     public Color[][] colourMap = null;
 
     /**
      * Instantiates NEUIo, NEUManager and NEUOverlay instances. Registers keybinds and adds a shutdown hook to clear tmp folder.
+     *
      * @param event
      */
     @EventHandler
@@ -115,10 +116,11 @@ public class NotEnoughUpdates {
 
         configFile = new File(neuDir, "configNew.json");
 
-        if(configFile.exists()) {
-            try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
+        if (configFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
                 config = gson.fromJson(reader, NEUConfig.class);
-            } catch(Exception e) { }
+            } catch (Exception e) {
+            }
         }
 
         ItemCustomizeManager.loadCustomization(new File(neuDir, "itemCustomization.json"));
@@ -127,7 +129,7 @@ public class NotEnoughUpdates {
         PetInfoOverlay.loadConfig(new File(neuDir, "petCache.json"));
         SlotLocking.getInstance().loadConfig(new File(neuDir, "slotLocking.json"));
 
-        if(config == null) {
+        if (config == null) {
             config = new NEUConfig();
             saveConfig();
         }
@@ -158,10 +160,10 @@ public class NotEnoughUpdates {
         MinecraftForge.EVENT_BUS.register(SlotLocking.getInstance());
         MinecraftForge.EVENT_BUS.register(FishingHelper.getInstance());
 
-        if(Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
-            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());
-            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(NPCRetexturing.getInstance());
-            ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(new ItemCustomizeManager.ReloadListener());
+        if (Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
+            ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CustomSkulls.getInstance());
+            ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(NPCRetexturing.getInstance());
+            ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(new ItemCustomizeManager.ReloadListener());
         }
 
         this.commands = new Commands();
@@ -173,14 +175,14 @@ public class NotEnoughUpdates {
         overlay = new NEUOverlay(manager);
         profileViewer = new ProfileViewer(manager);
 
-        for(KeyBinding kb : manager.keybinds) {
+        for (KeyBinding kb : manager.keybinds) {
             ClientRegistry.registerKeyBinding(kb);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             File tmp = new File(neuDir, "tmp");
-            if(tmp.exists()) {
-                for(File tmpFile : tmp.listFiles()) {
+            if (tmp.exists()) {
+                for (File tmpFile : tmp.listFiles()) {
                     tmpFile.delete();
                 }
                 tmp.delete();
@@ -193,16 +195,32 @@ public class NotEnoughUpdates {
         try {
             configFile.createNewFile();
 
-            try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
                 writer.write(gson.toJson(config));
             }
-        } catch(Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
-        try { ItemCustomizeManager.saveCustomization(new File(neuDir, "itemCustomization.json")); } catch(Exception ignored) {}
-        try { StorageManager.getInstance().saveConfig(new File(neuDir, "storageItems.json")); } catch(Exception ignored) {}
-        try { FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson); } catch(Exception ignored) {}
-        try { PetInfoOverlay.saveConfig(new File(neuDir, "petCache.json")); } catch(Exception ignored) {}
-        try { SlotLocking.getInstance().saveConfig(new File(neuDir, "slotLocking.json")); } catch(Exception ignored) {}
+        try {
+            ItemCustomizeManager.saveCustomization(new File(neuDir, "itemCustomization.json"));
+        } catch (Exception ignored) {
+        }
+        try {
+            StorageManager.getInstance().saveConfig(new File(neuDir, "storageItems.json"));
+        } catch (Exception ignored) {
+        }
+        try {
+            FairySouls.save(new File(neuDir, "collected_fairy_souls.json"), gson);
+        } catch (Exception ignored) {
+        }
+        try {
+            PetInfoOverlay.saveConfig(new File(neuDir, "petCache.json"));
+        } catch (Exception ignored) {
+        }
+        try {
+            SlotLocking.getInstance().saveConfig(new File(neuDir, "slotLocking.json"));
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -210,7 +228,7 @@ public class NotEnoughUpdates {
      * If the last chat message was sent <200 ago, will cache the message for #onTick to handle.
      */
     public void sendChatMessage(String message) {
-        if(System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN)  {
+        if (System.currentTimeMillis() - lastChatMessage > CHAT_MSG_COOLDOWN) {
             secondLastChatMessage = lastChatMessage;
             lastChatMessage = System.currentTimeMillis();
             Minecraft.getMinecraft().thePlayer.sendChatMessage(message);
@@ -230,22 +248,22 @@ public class NotEnoughUpdates {
         String other_link = update.get("other_link").getAsString();
 
         ChatComponentText other = null;
-        if(other_text.length() > 0) {
-            other = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+other_text+EnumChatFormatting.GRAY+"]");
+        if (other_text.length() > 0) {
+            other = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.BLUE + other_text + EnumChatFormatting.GRAY + "]");
             other.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, other_link));
         }
         ChatComponentText links = new ChatComponentText("");
         ChatComponentText separator = new ChatComponentText(
-                EnumChatFormatting.GRAY+EnumChatFormatting.BOLD.toString()+EnumChatFormatting.STRIKETHROUGH+(other==null?"--":"-"));
-        ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.BLUE+"Discord"+EnumChatFormatting.GRAY+"]");
+                EnumChatFormatting.GRAY + EnumChatFormatting.BOLD.toString() + EnumChatFormatting.STRIKETHROUGH + (other == null ? "--" : "-"));
+        ChatComponentText discord = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.BLUE + "Discord" + EnumChatFormatting.GRAY + "]");
         discord.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, discord_link));
-        ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.RED+"YouTube"+EnumChatFormatting.GRAY+"]");
+        ChatComponentText youtube = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.RED + "YouTube" + EnumChatFormatting.GRAY + "]");
         youtube.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, youtube_link));
-        ChatComponentText twitch = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"Twitch"+EnumChatFormatting.GRAY+"]");
+        ChatComponentText twitch = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.DARK_PURPLE + "Twitch" + EnumChatFormatting.GRAY + "]");
         twitch.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, twitch_link));
-        ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.GREEN+"Release"+EnumChatFormatting.GRAY+"]");
+        ChatComponentText release = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.GREEN + "Release" + EnumChatFormatting.GRAY + "]");
         release.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, update_link));
-        ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY+"["+EnumChatFormatting.DARK_PURPLE+"GitHub"+EnumChatFormatting.GRAY+"]");
+        ChatComponentText github = new ChatComponentText(EnumChatFormatting.GRAY + "[" + EnumChatFormatting.DARK_PURPLE + "GitHub" + EnumChatFormatting.GRAY + "]");
         github.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, github_link));
 
         links.appendSibling(separator);
@@ -259,7 +277,7 @@ public class NotEnoughUpdates {
         links.appendSibling(separator);
         links.appendSibling(github);
         links.appendSibling(separator);
-        if(other != null) {
+        if (other != null) {
             links.appendSibling(other);
             links.appendSibling(separator);
         }
@@ -270,7 +288,7 @@ public class NotEnoughUpdates {
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
-        if(Minecraft.getMinecraft().thePlayer == null) {
+        if (Minecraft.getMinecraft().thePlayer == null) {
             openGui = null;
             currChatMessage = null;
             return;
@@ -278,14 +296,14 @@ public class NotEnoughUpdates {
         long currentTime = System.currentTimeMillis();
 
         if (openGui != null) {
-            if(Minecraft.getMinecraft().thePlayer.openContainer != null) {
+            if (Minecraft.getMinecraft().thePlayer.openContainer != null) {
                 Minecraft.getMinecraft().thePlayer.closeScreen();
             }
             Minecraft.getMinecraft().displayGuiScreen(openGui);
             openGui = null;
             lastOpenedGui = System.currentTimeMillis();
         }
-        if(currChatMessage != null && currentTime - lastChatMessage > CHAT_MSG_COOLDOWN) {
+        if (currChatMessage != null && currentTime - lastChatMessage > CHAT_MSG_COOLDOWN) {
             lastChatMessage = currentTime;
             Minecraft.getMinecraft().thePlayer.sendChatMessage(currChatMessage);
             currChatMessage = null;
@@ -293,7 +311,7 @@ public class NotEnoughUpdates {
     }
 
     public boolean isOnSkyblock() {
-        if(!config.misc.onlyShowOnSkyblock) return true;
+        if (!config.misc.onlyShowOnSkyblock) return true;
         return hasSkyblockScoreboard();
     }
 

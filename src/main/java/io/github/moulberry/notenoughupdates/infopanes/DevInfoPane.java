@@ -61,9 +61,9 @@ public class DevInfoPane extends TextInfoPane {
         }*/
         //if(true) return text;
 
-        for(String internalname : manager.auctionManager.getItemAuctionInfoKeySet()) {
+        for (String internalname : manager.auctionManager.getItemAuctionInfoKeySet()) {
             if (internalname.matches("^.*-[0-9]{1,3}$")) continue;
-            if(!manager.getItemInformation().containsKey(internalname)) {
+            if (!manager.getItemInformation().containsKey(internalname)) {
                 text += internalname + "\n";
             }
         }
@@ -88,7 +88,7 @@ public class DevInfoPane extends TextInfoPane {
     AtomicBoolean running = new AtomicBoolean(false);
     ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
 
-    String[] bukkitList = new String[] {
+    String[] bukkitList = new String[]{
             "ACACIA_DOOR_ITEM",
             "ACACIA_FENCE",
             "ACACIA_FENCE_GATE",
@@ -425,116 +425,116 @@ public class DevInfoPane extends TextInfoPane {
     };
 
     private void addStack(ItemStack stackToAdd, int depth) {
-        if(depth > 16) return;
+        if (depth > 16) return;
 
         String regName2 = stackToAdd.getItem().getRegistryName().replace("minecraft:", "");
         String internalname = null;
-        for(String bukkit2 : bukkitList) {
-            if(bukkit2.equalsIgnoreCase(regName2) ||
+        for (String bukkit2 : bukkitList) {
+            if (bukkit2.equalsIgnoreCase(regName2) ||
                     (bukkit2.contains("@") && bukkit2.split("@")[1].equalsIgnoreCase(regName2))) {
                 internalname = bukkit2.split("@")[0];
                 break;
             }
         }
-        if(internalname == null) return;
+        if (internalname == null) return;
 
-        if(stackToAdd.getItemDamage() != 0 && stackToAdd.getItemDamage() < 32000) {
+        if (stackToAdd.getItemDamage() != 0 && stackToAdd.getItemDamage() < 32000) {
             internalname += "-" + stackToAdd.getItemDamage();
         }
 
-        if(manager.getItemInformation().containsKey(internalname)) return;
+        if (manager.getItemInformation().containsKey(internalname)) return;
 
         JsonObject recipeJson = null;
-        for(IRecipe recipe : CraftingManager.getInstance().getRecipeList()) {
+        for (IRecipe recipe : CraftingManager.getInstance().getRecipeList()) {
             ItemStack out = recipe.getRecipeOutput();
-            if(out != null && out.getItem() == stackToAdd.getItem() &&
+            if (out != null && out.getItem() == stackToAdd.getItem() &&
                     (stackToAdd.getItemDamage() >= 32000 || out.getItemDamage() == stackToAdd.getItemDamage())) {
                 recipeJson = new JsonObject();
 
                 if (recipe instanceof ShapedRecipes) {
                     ShapedRecipes shaped = (ShapedRecipes) recipe;
 
-                    String[] x = {"1","2","3"};
-                    String[] y = {"A","B","C"};
-                    for(int i=0; i<9; i++) {
-                        int xi = i%3;
-                        int yi = i/3;
+                    String[] x = {"1", "2", "3"};
+                    String[] y = {"A", "B", "C"};
+                    for (int i = 0; i < 9; i++) {
+                        int xi = i % 3;
+                        int yi = i / 3;
 
                         String stacki = "";
 
-                        int recipeIndex = i-(3-shaped.recipeWidth)*yi;
-                        if(xi < shaped.recipeWidth && recipeIndex < shaped.recipeItems.length) {
+                        int recipeIndex = i - (3 - shaped.recipeWidth) * yi;
+                        if (xi < shaped.recipeWidth && recipeIndex < shaped.recipeItems.length) {
                             ItemStack stack = shaped.recipeItems[recipeIndex];
-                            if(stack != null) {
-                                if(stack.getItem() != stackToAdd.getItem() ||
+                            if (stack != null) {
+                                if (stack.getItem() != stackToAdd.getItem() ||
                                         (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) {
-                                    addStack(stack, depth+1);
+                                    addStack(stack, depth + 1);
                                 }
 
                                 Item stackItem = stack.getItem();
                                 String regName = stackItem.getRegistryName().replace("minecraft:", "");
-                                for(String bukkit2 : bukkitList) {
-                                    if(bukkit2.equalsIgnoreCase(regName) ||
+                                for (String bukkit2 : bukkitList) {
+                                    if (bukkit2.equalsIgnoreCase(regName) ||
                                             (bukkit2.contains("@") && bukkit2.split("@")[1].equalsIgnoreCase(regName))) {
                                         stacki = bukkit2.split("@")[0];
                                         break;
                                     }
                                 }
-                                if(!stacki.isEmpty()) {
-                                    if(stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
+                                if (!stacki.isEmpty()) {
+                                    if (stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
                                         stacki += "-" + stack.getItemDamage();
                                     }
-                                    stacki += ":"+stack.stackSize;
+                                    stacki += ":" + stack.stackSize;
                                 }
                             }
                         }
 
-                        recipeJson.addProperty(y[yi]+x[xi], stacki);
+                        recipeJson.addProperty(y[yi] + x[xi], stacki);
                     }
                     break;
-                } else if(recipe instanceof ShapedOreRecipe) {
+                } else if (recipe instanceof ShapedOreRecipe) {
                     ShapedOreRecipe shaped = (ShapedOreRecipe) recipe;
-                    int width = (int)Utils.getField(ShapedOreRecipe.class, recipe, "width");
-                    String[] x = {"1","2","3"};
-                    String[] y = {"A","B","C"};
-                    for(int i=0; i<9; i++) {
-                        int xi = i%3;
-                        int yi = i/3;
+                    int width = (int) Utils.getField(ShapedOreRecipe.class, recipe, "width");
+                    String[] x = {"1", "2", "3"};
+                    String[] y = {"A", "B", "C"};
+                    for (int i = 0; i < 9; i++) {
+                        int xi = i % 3;
+                        int yi = i / 3;
 
                         String stacki = "";
 
                         int recipeIndex = i - (3 - width) * yi;
                         if (xi < width && recipeIndex < shaped.getRecipeSize()) {
                             ItemStack stack = null;
-                            if(recipeIndex < shaped.getRecipeSize()) {
+                            if (recipeIndex < shaped.getRecipeSize()) {
                                 Object o = shaped.getInput()[recipeIndex];
-                                if(o instanceof ItemStack) {
+                                if (o instanceof ItemStack) {
                                     stack = (ItemStack) o;
-                                } else if(o instanceof List<?>) {
-                                    for(Object o2 : (List<?>)o) {
-                                        if(o2 instanceof ItemStack) {
+                                } else if (o instanceof List<?>) {
+                                    for (Object o2 : (List<?>) o) {
+                                        if (o2 instanceof ItemStack) {
                                             stack = (ItemStack) o2;
                                             break;
                                         }
                                     }
                                 }
                             }
-                            if(stack != null) {
-                                if(stack.getItem() != stackToAdd.getItem() ||
+                            if (stack != null) {
+                                if (stack.getItem() != stackToAdd.getItem() ||
                                         (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) {
-                                    addStack(stack, depth+1);
+                                    addStack(stack, depth + 1);
                                 }
                                 Item stackItem = stack.getItem();
                                 String regName = stackItem.getRegistryName().replace("minecraft:", "");
-                                for(String bukkit2 : bukkitList) {
-                                    if(bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName+"_ITEM") ||
+                                for (String bukkit2 : bukkitList) {
+                                    if (bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName + "_ITEM") ||
                                             (bukkit2.contains("@") && bukkit2.split("@")[1].equalsIgnoreCase(regName))) {
                                         stacki = bukkit2.split("@")[0];
                                         break;
                                     }
                                 }
-                                if(!stacki.isEmpty()) {
-                                    if(stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
+                                if (!stacki.isEmpty()) {
+                                    if (stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
                                         stacki += "-" + stack.getItemDamage();
                                     }
                                     //stacki += ":"+stack.stackSize;
@@ -543,38 +543,38 @@ public class DevInfoPane extends TextInfoPane {
                             }
                         }
 
-                        recipeJson.addProperty(y[yi]+x[xi], stacki);
+                        recipeJson.addProperty(y[yi] + x[xi], stacki);
                     }
                 } else if (recipe instanceof ShapelessRecipes) {
                     ShapelessRecipes shapeless = (ShapelessRecipes) recipe;
-                    String[] x = {"1","2","3"};
-                    String[] y = {"A","B","C"};
-                    for(int i=0; i<9; i++) {
-                        int xi = i%3;
-                        int yi = i/3;
+                    String[] x = {"1", "2", "3"};
+                    String[] y = {"A", "B", "C"};
+                    for (int i = 0; i < 9; i++) {
+                        int xi = i % 3;
+                        int yi = i / 3;
 
                         String stacki = "";
 
                         ItemStack stack = null;
-                        if(i < shapeless.recipeItems.size()) {
+                        if (i < shapeless.recipeItems.size()) {
                             stack = shapeless.recipeItems.get(i);
                         }
-                        if(stack != null) {
-                            if(stack.getItem() != stackToAdd.getItem() ||
+                        if (stack != null) {
+                            if (stack.getItem() != stackToAdd.getItem() ||
                                     (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) {
                                 addStack(stack, depth + 1);
                             }
                             Item stackItem = stack.getItem();
                             String regName = stackItem.getRegistryName().replace("minecraft:", "");
-                            for(String bukkit2 : bukkitList) {
-                                if(bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName+"_ITEM") ||
+                            for (String bukkit2 : bukkitList) {
+                                if (bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName + "_ITEM") ||
                                         (bukkit2.contains("@") && bukkit2.split("@")[1].equalsIgnoreCase(regName))) {
                                     stacki = bukkit2.split("@")[0];
                                     break;
                                 }
                             }
-                            if(!stacki.isEmpty()) {
-                                if(stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
+                            if (!stacki.isEmpty()) {
+                                if (stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
                                     stacki += "-" + stack.getItemDamage();
                                 }
                                 //stacki += ":"+stack.stackSize;
@@ -582,49 +582,49 @@ public class DevInfoPane extends TextInfoPane {
                             }
                         }
 
-                        recipeJson.addProperty(y[yi]+x[xi], stacki);
+                        recipeJson.addProperty(y[yi] + x[xi], stacki);
                     }
                     break;
-                }  else if (recipe instanceof ShapelessOreRecipe) {
+                } else if (recipe instanceof ShapelessOreRecipe) {
                     ShapelessOreRecipe shapeless = (ShapelessOreRecipe) recipe;
-                    String[] x = {"1","2","3"};
-                    String[] y = {"A","B","C"};
-                    for(int i=0; i<9; i++) {
-                        int xi = i%3;
-                        int yi = i/3;
+                    String[] x = {"1", "2", "3"};
+                    String[] y = {"A", "B", "C"};
+                    for (int i = 0; i < 9; i++) {
+                        int xi = i % 3;
+                        int yi = i / 3;
 
                         String stacki = "";
 
                         ItemStack stack = null;
-                        if(i < shapeless.getRecipeSize()) {
+                        if (i < shapeless.getRecipeSize()) {
                             Object o = shapeless.getInput().get(i);
-                            if(o instanceof ItemStack) {
+                            if (o instanceof ItemStack) {
                                 stack = (ItemStack) o;
-                            } else if(o instanceof List<?>) {
-                                for(Object o2 : (List<?>)o) {
-                                    if(o2 instanceof ItemStack) {
+                            } else if (o instanceof List<?>) {
+                                for (Object o2 : (List<?>) o) {
+                                    if (o2 instanceof ItemStack) {
                                         stack = (ItemStack) o2;
                                         break;
                                     }
                                 }
                             }
                         }
-                        if(stack != null) {
-                            if(stack.getItem() != stackToAdd.getItem() ||
+                        if (stack != null) {
+                            if (stack.getItem() != stackToAdd.getItem() ||
                                     (stackToAdd.getItemDamage() < 32000 && stack.getItemDamage() != stackToAdd.getItemDamage())) {
-                                addStack(stack, depth+1);
+                                addStack(stack, depth + 1);
                             }
                             Item stackItem = stack.getItem();
                             String regName = stackItem.getRegistryName().replace("minecraft:", "");
-                            for(String bukkit2 : bukkitList) {
-                                if(bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName+"_ITEM") ||
+                            for (String bukkit2 : bukkitList) {
+                                if (bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName + "_ITEM") ||
                                         (bukkit2.contains("@") && bukkit2.split("@")[1].equalsIgnoreCase(regName))) {
                                     stacki = bukkit2.split("@")[0];
                                     break;
                                 }
                             }
-                            if(!stacki.isEmpty()) {
-                                if(stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
+                            if (!stacki.isEmpty()) {
+                                if (stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
                                     stacki += "-" + stack.getItemDamage();
                                 }
                                 //stacki += ":"+stack.stackSize;
@@ -632,7 +632,7 @@ public class DevInfoPane extends TextInfoPane {
                             }
                         }
 
-                        recipeJson.addProperty(y[yi]+x[xi], stacki);
+                        recipeJson.addProperty(y[yi] + x[xi], stacki);
                     }
                     break;
                 }
@@ -640,9 +640,9 @@ public class DevInfoPane extends TextInfoPane {
 
         }
         ItemStack res = Utils.createItemStack(stackToAdd.getItem(),
-                EnumChatFormatting.WHITE+stackToAdd.getItem().getItemStackDisplayName(stackToAdd),
-                EnumChatFormatting.WHITE.toString()+EnumChatFormatting.BOLD+"COMMON");
-        if(stackToAdd.getItemDamage() != 0 && stackToAdd.getItemDamage() < 32000) {
+                EnumChatFormatting.WHITE + stackToAdd.getItem().getItemStackDisplayName(stackToAdd),
+                EnumChatFormatting.WHITE.toString() + EnumChatFormatting.BOLD + "COMMON");
+        if (stackToAdd.getItemDamage() != 0 && stackToAdd.getItemDamage() < 32000) {
             res.setItemDamage(stackToAdd.getItemDamage());
         }
         res.getTagCompound().setInteger("HideFlags", 254);
@@ -650,9 +650,8 @@ public class DevInfoPane extends TextInfoPane {
         ea.setString("id", internalname);
         res.getTagCompound().setTag("ExtraAttributes", ea);
 
-
         JsonObject json = manager.getJsonForItem(res);
-        if(stackToAdd.getItemDamage() != 0 && stackToAdd.getItemDamage() < 32000) {
+        if (stackToAdd.getItemDamage() != 0 && stackToAdd.getItemDamage() < 32000) {
             json.addProperty("parent", internalname.split("-")[0]);
         }
 
@@ -660,7 +659,7 @@ public class DevInfoPane extends TextInfoPane {
         json.addProperty("modver", NotEnoughUpdates.VERSION);
         json.addProperty("vanilla", true);
 
-        if(recipeJson != null) {
+        if (recipeJson != null) {
             json.add("recipe", recipeJson);
             json.addProperty("clickcommand", "viewrecipe");
         } else {
@@ -671,34 +670,35 @@ public class DevInfoPane extends TextInfoPane {
 
         try {
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + internalname));
-            manager.writeJsonDefaultDir(json, internalname+".json");
+            manager.writeJsonDefaultDir(json, internalname + ".json");
             manager.loadItem(internalname);
-        } catch(IOException e) {}
+        } catch (IOException e) {
+        }
     }
 
     @Override
     public boolean keyboardInput() {
-        if(running.get() || true) return false;
-        if(Keyboard.isKeyDown(Keyboard.KEY_J)) {
+        if (running.get() || true) return false;
+        if (Keyboard.isKeyDown(Keyboard.KEY_J)) {
             running.set(!running.get());
 
-            for(String bukkit : bukkitList) {
+            for (String bukkit : bukkitList) {
                 String internalname = bukkit.split("@")[0];
-                if(true || !manager.getItemInformation().containsKey(internalname)) {
+                if (true || !manager.getItemInformation().containsKey(internalname)) {
                     //System.out.println("adding vanilla: " + internalname);
                     String vanilla = internalname.toLowerCase().replace("_item", "");
-                    if(bukkit.contains("@")) {
+                    if (bukkit.contains("@")) {
                         vanilla = bukkit.split("@")[1];
                     }
                     Item item = Item.itemRegistry.getObject(new ResourceLocation(vanilla));
-                    if(item == null) {
+                    if (item == null) {
                         item = Item.getItemFromBlock(Block.blockRegistry.getObject(new ResourceLocation(vanilla)));
                     }
-                    if(item != null) {
+                    if (item != null) {
                         HashMap<Integer, JsonObject> recipeJsonForDamage = new HashMap<>();
-                        for(IRecipe recipe : CraftingManager.getInstance().getRecipeList()) {
+                        for (IRecipe recipe : CraftingManager.getInstance().getRecipeList()) {
                             ItemStack out = recipe.getRecipeOutput();
-                            if(out != null && out.getItem() == item) {
+                            if (out != null && out.getItem() == item) {
                                 System.out.println("Found recipe for : " + internalname + ":" + recipe);
                                 JsonObject obj = new JsonObject();
 
@@ -739,46 +739,46 @@ public class DevInfoPane extends TextInfoPane {
                                         obj.addProperty(y[yi] + x[xi], stacki);
                                     }
                                     recipeJsonForDamage.put(out.getItemDamage() > 32000 ? 0 : out.getItemDamage(), obj);
-                                } else if(recipe instanceof ShapedOreRecipe) {
+                                } else if (recipe instanceof ShapedOreRecipe) {
                                     ShapedOreRecipe shaped = (ShapedOreRecipe) recipe;
-                                    int width = (int)Utils.getField(ShapedOreRecipe.class, recipe, "width");
-                                    String[] x = {"1","2","3"};
-                                    String[] y = {"A","B","C"};
-                                    for(int i=0; i<9; i++) {
-                                        int xi = i%3;
-                                        int yi = i/3;
+                                    int width = (int) Utils.getField(ShapedOreRecipe.class, recipe, "width");
+                                    String[] x = {"1", "2", "3"};
+                                    String[] y = {"A", "B", "C"};
+                                    for (int i = 0; i < 9; i++) {
+                                        int xi = i % 3;
+                                        int yi = i / 3;
 
                                         String stacki = "";
 
                                         int recipeIndex = i - (3 - width) * yi;
                                         if (xi < width && recipeIndex < shaped.getRecipeSize()) {
                                             ItemStack stack = null;
-                                            if(recipeIndex < shaped.getRecipeSize()) {
+                                            if (recipeIndex < shaped.getRecipeSize()) {
                                                 Object o = shaped.getInput()[recipeIndex];
-                                                if(o instanceof ItemStack) {
+                                                if (o instanceof ItemStack) {
                                                     stack = (ItemStack) o;
-                                                } else if(o instanceof List<?>) {
-                                                    for(Object o2 : (List<?>)o) {
-                                                        if(o2 instanceof ItemStack) {
+                                                } else if (o instanceof List<?>) {
+                                                    for (Object o2 : (List<?>) o) {
+                                                        if (o2 instanceof ItemStack) {
                                                             stack = (ItemStack) o2;
                                                             break;
                                                         }
                                                     }
                                                 }
                                             }
-                                            if(stack != null) {
+                                            if (stack != null) {
                                                 addStack(stack, 0);
                                                 Item stackItem = stack.getItem();
                                                 String regName = stackItem.getRegistryName().replace("minecraft:", "");
-                                                for(String bukkit2 : bukkitList) {
-                                                    if(bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName+"_ITEM") ||
+                                                for (String bukkit2 : bukkitList) {
+                                                    if (bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName + "_ITEM") ||
                                                             (bukkit2.contains("@") && bukkit2.split("@")[1].equalsIgnoreCase(regName))) {
                                                         stacki = bukkit2.split("@")[0];
                                                         break;
                                                     }
                                                 }
-                                                if(!stacki.isEmpty()) {
-                                                    if(stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
+                                                if (!stacki.isEmpty()) {
+                                                    if (stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
                                                         stacki += "-" + stack.getItemDamage();
                                                     }
                                                     //stacki += ":"+stack.stackSize;
@@ -787,36 +787,36 @@ public class DevInfoPane extends TextInfoPane {
                                             }
                                         }
 
-                                        obj.addProperty(y[yi]+x[xi], stacki);
+                                        obj.addProperty(y[yi] + x[xi], stacki);
                                     }
-                                    recipeJsonForDamage.put(out.getItemDamage()>32000?0:out.getItemDamage(), obj);
+                                    recipeJsonForDamage.put(out.getItemDamage() > 32000 ? 0 : out.getItemDamage(), obj);
                                 } else if (recipe instanceof ShapelessRecipes) {
                                     ShapelessRecipes shapeless = (ShapelessRecipes) recipe;
-                                    String[] x = {"1","2","3"};
-                                    String[] y = {"A","B","C"};
-                                    for(int i=0; i<9; i++) {
-                                        int xi = i%3;
-                                        int yi = i/3;
+                                    String[] x = {"1", "2", "3"};
+                                    String[] y = {"A", "B", "C"};
+                                    for (int i = 0; i < 9; i++) {
+                                        int xi = i % 3;
+                                        int yi = i / 3;
 
                                         String stacki = "";
 
                                         ItemStack stack = null;
-                                        if(i < shapeless.recipeItems.size()) {
+                                        if (i < shapeless.recipeItems.size()) {
                                             stack = shapeless.recipeItems.get(i);
                                         }
-                                        if(stack != null) {
+                                        if (stack != null) {
                                             addStack(stack, 0);
                                             Item stackItem = stack.getItem();
                                             String regName = stackItem.getRegistryName().replace("minecraft:", "");
-                                            for(String bukkit2 : bukkitList) {
-                                                if(bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName+"_ITEM") ||
+                                            for (String bukkit2 : bukkitList) {
+                                                if (bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName + "_ITEM") ||
                                                         (bukkit2.contains("@") && bukkit2.split("@")[1].equalsIgnoreCase(regName))) {
                                                     stacki = bukkit2.split("@")[0];
                                                     break;
                                                 }
                                             }
-                                            if(!stacki.isEmpty()) {
-                                                if(stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
+                                            if (!stacki.isEmpty()) {
+                                                if (stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
                                                     stacki += "-" + stack.getItemDamage();
                                                 }
                                                 //stacki += ":"+stack.stackSize;
@@ -824,47 +824,47 @@ public class DevInfoPane extends TextInfoPane {
                                             }
                                         }
 
-                                        obj.addProperty(y[yi]+x[xi], stacki);
+                                        obj.addProperty(y[yi] + x[xi], stacki);
                                     }
                                     recipeJsonForDamage.put(out.getItemDamage() > 32000 ? 0 : out.getItemDamage(), obj);
                                     break;
-                                }  else if (recipe instanceof ShapelessOreRecipe) {
+                                } else if (recipe instanceof ShapelessOreRecipe) {
                                     ShapelessOreRecipe shapeless = (ShapelessOreRecipe) recipe;
-                                    String[] x = {"1","2","3"};
-                                    String[] y = {"A","B","C"};
-                                    for(int i=0; i<9; i++) {
-                                        int xi = i%3;
-                                        int yi = i/3;
+                                    String[] x = {"1", "2", "3"};
+                                    String[] y = {"A", "B", "C"};
+                                    for (int i = 0; i < 9; i++) {
+                                        int xi = i % 3;
+                                        int yi = i / 3;
 
                                         String stacki = "";
 
                                         ItemStack stack = null;
-                                        if(i < shapeless.getRecipeSize()) {
+                                        if (i < shapeless.getRecipeSize()) {
                                             Object o = shapeless.getInput().get(i);
-                                            if(o instanceof ItemStack) {
+                                            if (o instanceof ItemStack) {
                                                 stack = (ItemStack) o;
-                                            } else if(o instanceof List<?>) {
-                                                for(Object o2 : (List<?>)o) {
-                                                    if(o2 instanceof ItemStack) {
+                                            } else if (o instanceof List<?>) {
+                                                for (Object o2 : (List<?>) o) {
+                                                    if (o2 instanceof ItemStack) {
                                                         stack = (ItemStack) o2;
                                                         break;
                                                     }
                                                 }
                                             }
                                         }
-                                        if(stack != null) {
+                                        if (stack != null) {
                                             addStack(stack, 0);
                                             Item stackItem = stack.getItem();
                                             String regName = stackItem.getRegistryName().replace("minecraft:", "");
-                                            for(String bukkit2 : bukkitList) {
-                                                if(bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName+"_ITEM") ||
+                                            for (String bukkit2 : bukkitList) {
+                                                if (bukkit2.equalsIgnoreCase(regName) || bukkit2.equalsIgnoreCase(regName + "_ITEM") ||
                                                         (bukkit2.contains("@") && bukkit2.split("@")[1].equalsIgnoreCase(regName))) {
                                                     stacki = bukkit2.split("@")[0];
                                                     break;
                                                 }
                                             }
-                                            if(!stacki.isEmpty()) {
-                                                if(stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
+                                            if (!stacki.isEmpty()) {
+                                                if (stack.getItemDamage() != 0 && stack.getItemDamage() < 32000) {
                                                     stacki += "-" + stack.getItemDamage();
                                                 }
                                                 //stacki += ":"+stack.stackSize;
@@ -872,7 +872,7 @@ public class DevInfoPane extends TextInfoPane {
                                             }
                                         }
 
-                                        obj.addProperty(y[yi]+x[xi], stacki);
+                                        obj.addProperty(y[yi] + x[xi], stacki);
                                     }
                                     recipeJsonForDamage.put(out.getItemDamage() > 32000 ? 0 : out.getItemDamage(), obj);
                                     break;
@@ -880,10 +880,10 @@ public class DevInfoPane extends TextInfoPane {
                             }
                         }
 
-                        if(recipeJsonForDamage.isEmpty()) {
+                        if (recipeJsonForDamage.isEmpty()) {
                             ItemStack res = Utils.createItemStack(item,
-                                    EnumChatFormatting.WHITE+item.getItemStackDisplayName(new ItemStack(item)),
-                                    EnumChatFormatting.WHITE.toString()+EnumChatFormatting.BOLD+"COMMON");
+                                    EnumChatFormatting.WHITE + item.getItemStackDisplayName(new ItemStack(item)),
+                                    EnumChatFormatting.WHITE.toString() + EnumChatFormatting.BOLD + "COMMON");
                             res.getTagCompound().setInteger("HideFlags", 254);
                             NBTTagCompound ea = new NBTTagCompound();
                             ea.setString("id", internalname);
@@ -898,15 +898,16 @@ public class DevInfoPane extends TextInfoPane {
                             json.addProperty("clickcommand", "");
                             try {
                                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + internalname));
-                                manager.writeJsonDefaultDir(json, internalname+".json");
+                                manager.writeJsonDefaultDir(json, internalname + ".json");
                                 manager.loadItem(internalname);
-                            } catch(IOException e) {}
+                            } catch (IOException e) {
+                            }
                         } else {
                             System.out.println("writing with recipe:" + internalname);
-                            for(Map.Entry<Integer, JsonObject> entry : recipeJsonForDamage.entrySet()) {
+                            for (Map.Entry<Integer, JsonObject> entry : recipeJsonForDamage.entrySet()) {
                                 ItemStack res = Utils.createItemStack(item,
-                                        EnumChatFormatting.WHITE+item.getItemStackDisplayName(new ItemStack(item, 1, entry.getKey())),
-                                        EnumChatFormatting.WHITE.toString()+EnumChatFormatting.BOLD+"COMMON");
+                                        EnumChatFormatting.WHITE + item.getItemStackDisplayName(new ItemStack(item, 1, entry.getKey())),
+                                        EnumChatFormatting.WHITE.toString() + EnumChatFormatting.BOLD + "COMMON");
                                 res.setItemDamage(entry.getKey());
                                 res.getTagCompound().setInteger("HideFlags", 254);
                                 NBTTagCompound ea = new NBTTagCompound();
@@ -915,8 +916,8 @@ public class DevInfoPane extends TextInfoPane {
 
                                 JsonObject json = manager.getJsonForItem(res);
 
-                                if(entry.getKey() != 0 && entry.getKey() < 32000) {
-                                    json.addProperty("internalname", internalname+"-"+entry.getKey());
+                                if (entry.getKey() != 0 && entry.getKey() < 32000) {
+                                    json.addProperty("internalname", internalname + "-" + entry.getKey());
                                     json.addProperty("parent", internalname);
                                 } else {
                                     json.addProperty("internalname", internalname);
@@ -928,13 +929,14 @@ public class DevInfoPane extends TextInfoPane {
                                 json.add("recipe", entry.getValue());
                                 try {
                                     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("Added: " + internalname));
-                                    if(entry.getKey() != 0 && entry.getKey() < 32000) {
-                                        manager.writeJsonDefaultDir(json, internalname+"-"+entry.getKey()+".json");
+                                    if (entry.getKey() != 0 && entry.getKey() < 32000) {
+                                        manager.writeJsonDefaultDir(json, internalname + "-" + entry.getKey() + ".json");
                                     } else {
-                                        manager.writeJsonDefaultDir(json, internalname+".json");
+                                        manager.writeJsonDefaultDir(json, internalname + ".json");
                                     }
                                     manager.loadItem(internalname);
-                                } catch(IOException e) {}
+                                } catch (IOException e) {
+                                }
                             }
                         }
                     }
@@ -1010,7 +1012,7 @@ public class DevInfoPane extends TextInfoPane {
                     } catch(IOException e){}
                     manager.loadItem(item.getKey());
                 }*/
-            }
+        }
 
             /*if(running.get()) {
                 List<String> add = new ArrayList<>();
