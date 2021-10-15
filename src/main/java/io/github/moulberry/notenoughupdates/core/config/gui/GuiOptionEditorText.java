@@ -1,9 +1,7 @@
 package io.github.moulberry.notenoughupdates.core.config.gui;
 
-import io.github.moulberry.notenoughupdates.core.GuiElementBoolean;
 import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.core.config.struct.ConfigProcessor;
-import io.github.moulberry.notenoughupdates.core.util.GuiElementSlider;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;

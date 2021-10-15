@@ -1,8 +1,6 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
@@ -27,8 +25,10 @@ import org.lwjgl.opengl.GL14;
 import java.awt.*;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Random;
 
 public class GuiCosmetics extends GuiScreen {
 

@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.infopanes;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
@@ -23,7 +22,9 @@ import net.minecraftforge.oredict.ShapelessOreRecipe;
 import org.lwjgl.input.Keyboard;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;

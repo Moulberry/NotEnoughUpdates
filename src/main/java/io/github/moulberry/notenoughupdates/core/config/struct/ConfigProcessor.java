@@ -4,7 +4,6 @@ import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
 import io.github.moulberry.notenoughupdates.core.config.gui.*;
-import io.github.moulberry.notenoughupdates.core.config.Config;
 
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;

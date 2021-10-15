@@ -6,9 +6,7 @@ import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
 
 public class GuiOptionEditorDropdown extends GuiOptionEditor {
 

@@ -1,7 +1,7 @@
 package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.RenderList;
 import net.minecraft.util.EnumWorldBlockLayer;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;

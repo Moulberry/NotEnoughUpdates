@@ -1,13 +1,7 @@
 package io.github.moulberry.notenoughupdates.miscgui.tutorials;
 
-import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.util.vector.Vector2f;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class NeuTutorial extends TutorialBase {
 

@@ -24,12 +24,13 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
-import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 
 import java.awt.*;
 import java.net.URI;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 
 public class NEUConfigEditor extends GuiElement {
 

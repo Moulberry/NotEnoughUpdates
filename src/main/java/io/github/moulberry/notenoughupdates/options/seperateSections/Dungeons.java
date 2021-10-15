@@ -2,7 +2,6 @@ package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
-import org.lwjgl.input.Keyboard;
 
 public class Dungeons {
     @ConfigOption(

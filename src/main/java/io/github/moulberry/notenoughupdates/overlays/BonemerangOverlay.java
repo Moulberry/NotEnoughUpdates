@@ -17,8 +17,6 @@ import org.lwjgl.util.vector.Vector3f;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static net.minecraft.util.EnumChatFormatting.DARK_AQUA;
-
 public class BonemerangOverlay extends TextOverlay {
     public BonemerangOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
         super(position, dummyStrings, styleSupplier);
