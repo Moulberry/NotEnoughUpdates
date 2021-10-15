@@ -37,7 +37,7 @@ public class GuiCosmetics extends GuiScreen {
     public static final ResourceLocation cosmetics_fg = new ResourceLocation("notenoughupdates:cosmetics_fg.png");
     public static final ResourceLocation pv_elements = new ResourceLocation("notenoughupdates:pv_elements.png");
 
-    private GuiElementTextField unlockTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
+    private final GuiElementTextField unlockTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
 
     private CosmeticsPage currentPage = CosmeticsPage.CAPES;
     private int sizeX;
@@ -393,7 +393,7 @@ public class GuiCosmetics extends GuiScreen {
         }
     }
 
-    private HashMap<String, ResourceLocation> capesLocation = new HashMap<>();
+    private final HashMap<String, ResourceLocation> capesLocation = new HashMap<>();
     private float scroll = 0f;
     private int scrollClickedX = -1;
     private void drawCapesPage(int mouseX, int mouseY, float partialTicks) {

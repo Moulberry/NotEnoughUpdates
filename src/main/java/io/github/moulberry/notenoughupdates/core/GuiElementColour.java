@@ -30,18 +30,18 @@ public class GuiElementColour extends GuiElement {
     private final GuiElementTextField hexField = new GuiElementTextField("",
             GuiElementTextField.SCALE_TEXT | GuiElementTextField.FORCE_CAPS | GuiElementTextField.NO_SPACE);
 
-    private int x;
-    private int y;
+    private final int x;
+    private final int y;
     private int xSize = 119;
-    private int ySize = 89;
+    private final int ySize = 89;
 
     private float wheelAngle = 0;
     private float wheelRadius = 0;
 
     private int clickedComponent = -1;
 
-    private Consumer<String> colourChangedCallback;
-    private Runnable closeCallback;
+    private final Consumer<String> colourChangedCallback;
+    private final Runnable closeCallback;
     private String colour;
 
     private final boolean opacitySlider;
@@ -167,7 +167,7 @@ public class GuiElementColour extends GuiElement {
         int chromaSpeed = ChromaColour.getSpeed(colour);
         int currentColourChroma = ChromaColour.specialToChromaRGB(colour);
         Color cChroma = new Color(currentColourChroma, true);
-        float hsvChroma[] = Color.RGBtoHSB(cChroma.getRed(), cChroma.getGreen(), cChroma.getBlue(), null);
+        float[] hsvChroma = Color.RGBtoHSB(cChroma.getRed(), cChroma.getGreen(), cChroma.getBlue(), null);
 
         if(chromaSpeed > 0) {
             Gui.drawRect(x+5+64+valueOffset+opacityOffset+5+1, y+5+1,
@@ -388,7 +388,7 @@ public class GuiElementColour extends GuiElement {
                     Color c = new Color(rgb);
                     float[] hsv = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
                     updateAngleAndRadius(hsv);
-                } catch(Exception e) {};
+                } catch(Exception e) {}
             }
 
             return true;

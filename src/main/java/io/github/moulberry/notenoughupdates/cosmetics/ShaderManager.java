@@ -16,8 +16,8 @@ import java.util.HashMap;
 
 public class ShaderManager {
 
-    private ResourceLocation shaderLocation = new ResourceLocation("notenoughupdates:shaders");
-    private HashMap<String, Shader> shaderMap = new HashMap<>();
+    private final ResourceLocation shaderLocation = new ResourceLocation("notenoughupdates:shaders");
+    private final HashMap<String, Shader> shaderMap = new HashMap<>();
 
     private static final ShaderManager INSTANCE = new ShaderManager();
 

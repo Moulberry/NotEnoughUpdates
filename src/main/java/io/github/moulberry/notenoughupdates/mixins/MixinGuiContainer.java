@@ -202,7 +202,7 @@ public abstract class MixinGuiContainer extends GuiScreen {
         }
 
         if($this instanceof GuiChest) {
-            Container container = ((GuiChest)$this).inventorySlots;
+            Container container = $this.inventorySlots;
             if(container instanceof ContainerChest) {
                 IInventory lower = ((ContainerChest)container).getLowerChestInventory();
                 int size = lower.getSizeInventory();

@@ -142,7 +142,7 @@ public class StorageManager {
         return INSTANCE;
     }
 
-    private AtomicInteger searchId = new AtomicInteger(0);
+    private final AtomicInteger searchId = new AtomicInteger(0);
 
     public static class StoragePage {
         public ItemStack[] items = new ItemStack[45];
@@ -182,7 +182,7 @@ public class StorageManager {
     public int desiredStoragePage = -1;
     public long storageOpenSwitchMillis = 0;
 
-    private ItemStack[] missingBackpackStacks = new ItemStack[18];
+    private final ItemStack[] missingBackpackStacks = new ItemStack[18];
 
     private boolean shouldRenderStorageOverlayCached = false;
 

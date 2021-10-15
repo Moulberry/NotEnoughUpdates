@@ -19,12 +19,12 @@ public class GuiElementSlider extends GuiElement {
     public int width;
     private static final int HEIGHT = 16;
 
-    private float minValue;
-    private float maxValue;
-    private float minStep;
+    private final float minValue;
+    private final float maxValue;
+    private final float minStep;
 
     private float value;
-    private Consumer<Float> setCallback;
+    private final Consumer<Float> setCallback;
 
     private boolean clicked = false;
 

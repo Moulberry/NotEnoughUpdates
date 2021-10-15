@@ -38,7 +38,7 @@ import java.util.List;
 
 public class FancyPortals {
 
-    private static ResourceLocation[] RENDERS = new ResourceLocation[6];
+    private static final ResourceLocation[] RENDERS = new ResourceLocation[6];
 
     static {
         for(int i=0; i<6; i++) {

@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 
 public class TradeWindow {
 
-    private static ResourceLocation location = new ResourceLocation("notenoughupdates", "custom_trade.png");
+    private static final ResourceLocation location = new ResourceLocation("notenoughupdates", "custom_trade.png");
 
     private static final int xSize = 176;
     private static final int ySize = 204;

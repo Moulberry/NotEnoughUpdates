@@ -4,7 +4,7 @@ public class LerpingFloat {
 
     private int timeSpent;
     private long lastMillis;
-    private int timeToReachTarget;
+    private final int timeToReachTarget;
 
     private float targetValue;
     private float lerpValue;

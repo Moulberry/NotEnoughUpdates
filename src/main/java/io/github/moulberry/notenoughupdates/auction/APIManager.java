@@ -31,14 +31,14 @@ import java.util.function.Consumer;
 
 public class APIManager {
 
-    private NEUManager manager;
+    private final NEUManager manager;
     public final CustomAH customAH;
 
-    private TreeMap<String, Auction> auctionMap = new TreeMap<>();
+    private final TreeMap<String, Auction> auctionMap = new TreeMap<>();
     public HashMap<String, HashSet<String>> internalnameToAucIdMap = new HashMap<>();
-    private HashSet<String> playerBids = new HashSet<>();
-    private HashSet<String> playerBidsNotified = new HashSet<>();
-    private HashSet<String> playerBidsFinishedNotified = new HashSet<>();
+    private final HashSet<String> playerBids = new HashSet<>();
+    private final HashSet<String> playerBidsNotified = new HashSet<>();
+    private final HashSet<String> playerBidsFinishedNotified = new HashSet<>();
 
     private JsonObject lowestBins = null;
     private JsonObject auctionPricesAvgLowestBinJson = null;
@@ -47,7 +47,7 @@ public class APIManager {
 
     private JsonObject bazaarJson = null;
     private JsonObject auctionPricesJson = null;
-    private HashMap<String, CraftInfo> craftCost = new HashMap<>();
+    private final HashMap<String, CraftInfo> craftCost = new HashMap<>();
 
     public TreeMap<String, HashMap<Integer, HashSet<String>>> extrasToAucIdMap = new TreeMap<>();
 
@@ -295,7 +295,7 @@ public class APIManager {
         }
     }
 
-    private ExecutorService es = Executors.newSingleThreadExecutor();
+    private final ExecutorService es = Executors.newSingleThreadExecutor();
     private void cleanup() {
         es.submit(() -> {
             try {
@@ -458,7 +458,7 @@ public class APIManager {
         return -1;
     }
 
-    private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
+    private final String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
             "XII","XIII","XIV","XV","XVI","XVII","XIX","XX"};
 
 

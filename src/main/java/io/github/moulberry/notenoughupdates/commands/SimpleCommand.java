@@ -10,8 +10,8 @@ import java.util.List;
 
 public class SimpleCommand extends CommandBase {
 
-    private String commandName;
-    private ProcessCommandRunnable runnable;
+    private final String commandName;
+    private final ProcessCommandRunnable runnable;
     private TabCompleteRunnable tabRunnable;
 
     public SimpleCommand(String commandName, ProcessCommandRunnable runnable) {

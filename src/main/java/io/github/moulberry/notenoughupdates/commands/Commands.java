@@ -395,7 +395,7 @@ public class Commands {
 
             Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
                     EnumChatFormatting.YELLOW+"[PEEK] Getting player information..."), id);
-            NotEnoughUpdates.INSTANCE.profileViewer.getProfileByName(name, profile -> {
+            NotEnoughUpdates.profileViewer.getProfileByName(name, profile -> {
                 if (profile == null) {
                     Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new ChatComponentText(
                             EnumChatFormatting.RED+"[PEEK] Unknown player or api is down."), id);
@@ -608,7 +608,7 @@ public class Commands {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "Can't view profile, apikey is not set. Run /api new and put the result in settings."));
             } else if (args.length == 0) {
-                NotEnoughUpdates.INSTANCE.profileViewer.getProfileByName(Minecraft.getMinecraft().thePlayer.getName(), profile -> {
+                NotEnoughUpdates.profileViewer.getProfileByName(Minecraft.getMinecraft().thePlayer.getName(), profile -> {
                     if(profile == null) {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                                 "Invalid player name/api key. Maybe api is down? Try /api new."));
@@ -621,7 +621,7 @@ public class Commands {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                         "Too many arguments. Usage: /neuprofile [name]"));
             } else {
-                NotEnoughUpdates.INSTANCE.profileViewer.getProfileByName(args[0], profile -> {
+                NotEnoughUpdates.profileViewer.getProfileByName(args[0], profile -> {
                     if(profile == null) {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
                                 "Invalid player name/api key. Maybe api is down? Try /api new."));
@@ -710,7 +710,7 @@ public class Commands {
         }
     });
 
-    private ScheduledExecutorService devES = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService devES = Executors.newSingleThreadScheduledExecutor();
     private static final String[] devFailStrings = {"No.", "I said no.", "You aren't allowed to use this.",
             "Are you sure you want to use this? Type 'Yes' in chat.", "Are you sure you want to use this? Type 'Yes' in chat.",
             "Lmao you thought", "Ok please stop", "What do you want from me?",

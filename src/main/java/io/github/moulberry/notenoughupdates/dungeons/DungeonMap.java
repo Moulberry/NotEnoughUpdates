@@ -86,13 +86,13 @@ public class DungeonMap {
     private long lastDecorationsMillis = -1;
     private long lastLastDecorationsMillis = -1;
 
-    private Map<String, MapPosition> playerEntityMapPositions = new HashMap<>();
-    private Map<String, MapPosition> playerMarkerMapPositions = new HashMap<>();
-    private Set<MapPosition> rawPlayerMarkerMapPositions = new HashSet<>();
-    private Map<String, MapPosition> playerMarkerMapPositionsLast = new HashMap<>();
-    private HashMap<String, Integer> playerIdMap = new HashMap<>();
+    private final Map<String, MapPosition> playerEntityMapPositions = new HashMap<>();
+    private final Map<String, MapPosition> playerMarkerMapPositions = new HashMap<>();
+    private final Set<MapPosition> rawPlayerMarkerMapPositions = new HashSet<>();
+    private final Map<String, MapPosition> playerMarkerMapPositionsLast = new HashMap<>();
+    private final HashMap<String, Integer> playerIdMap = new HashMap<>();
 
-    private Map<String, ResourceLocation> playerSkinMap = new HashMap<>();
+    private final Map<String, ResourceLocation> playerSkinMap = new HashMap<>();
     
     private class RoomOffset {
         int x;
@@ -362,12 +362,12 @@ public class DungeonMap {
     }
 
     public int getRenderConnSize() {
-        int roomSizeOption = (int)Math.round(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmRoomSize);
+        int roomSizeOption = Math.round(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmRoomSize);
         if(roomSizeOption <= 0) return 3;
         return 3 + roomSizeOption;
     }
 
-    private HashMap<Integer, Float> borderRadiusCache = new HashMap<>();
+    private final HashMap<Integer, Float> borderRadiusCache = new HashMap<>();
     public float getBorderRadius() {
         int borderSizeOption = Math.round(NotEnoughUpdates.INSTANCE.config.dungeonMap.dmBorderSize);
         String sizeId = borderSizeOption == 0 ? "small" : borderSizeOption == 2 ? "large" : "medium";

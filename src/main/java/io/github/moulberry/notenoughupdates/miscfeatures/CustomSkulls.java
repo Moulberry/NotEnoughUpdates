@@ -55,13 +55,13 @@ public class CustomSkulls implements IResourceManagerReloadListener {
         return INSTANCE;
     }
 
-    private ResourceLocation atlas = new ResourceLocation("notenoughupdates:custom_skull_textures_atlas");
-    private ResourceLocation configuration = new ResourceLocation("notenoughupdates:custom_skull_textures/customskull.json");
+    private final ResourceLocation atlas = new ResourceLocation("notenoughupdates:custom_skull_textures_atlas");
+    private final ResourceLocation configuration = new ResourceLocation("notenoughupdates:custom_skull_textures/customskull.json");
     protected final TextureMap textureMap = new TextureMap("custom_skull_textures");
 
     public static ItemCameraTransforms.TransformType mostRecentTransformType = ItemCameraTransforms.TransformType.NONE;
 
-    protected final Map<ResourceLocation, TextureAtlasSprite> sprites = Maps.<ResourceLocation, TextureAtlasSprite>newHashMap();
+    protected final Map<ResourceLocation, TextureAtlasSprite> sprites = Maps.newHashMap();
 
     private final FaceBakery faceBakery = new FaceBakery();
     private final ModelSkeletonHead humanoidHead = new ModelHumanoidHead();
@@ -153,7 +153,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
     }
 
     protected Set<ResourceLocation> getTextureLocations(ModelBlock modelBlock) {
-        Set<ResourceLocation> set = Sets.<ResourceLocation>newHashSet();
+        Set<ResourceLocation> set = Sets.newHashSet();
 
         for(BlockPart blockpart : modelBlock.getElements()) {
             for(BlockPartFace blockpartface : blockpart.mapFaces.values()) {

@@ -51,22 +51,22 @@ public class GuiEnchantColour extends GuiScreen {
 
     public static final Splitter splitter = Splitter.on(":").limit(5);
 
-    private HashMap<Integer, String> comparators = new HashMap<>();
-    private HashMap<Integer, String> modifiers = new HashMap<>();
-    private List<GuiElementTextField[]> guiElementTextFields = new ArrayList<>();
+    private final HashMap<Integer, String> comparators = new HashMap<>();
+    private final HashMap<Integer, String> modifiers = new HashMap<>();
+    private final List<GuiElementTextField[]> guiElementTextFields = new ArrayList<>();
 
     private List<String> enchantNamesPretty = null;
-    private JsonArray enchantPresets = null;
+    private final JsonArray enchantPresets = null;
 
-    private LerpingInteger scroll = new LerpingInteger(0, 100);
-    private LerpingInteger scrollSideBar = new LerpingInteger(0, 100);
+    private final LerpingInteger scroll = new LerpingInteger(0, 100);
+    private final LerpingInteger scrollSideBar = new LerpingInteger(0, 100);
 
     public static int BOLD_MODIFIER = 0b1;
     public static int ITALIC_MODIFIER = 0b10;
     public static int OBFUSCATED_MODIFIER = 0b100;
     public static int UNDERLINE_MODIFIER = 0b1000;
     public static int STRIKETHROUGH_MODIFIER = 0b10000;
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
     private static final Pattern settingPattern = Pattern.compile(".*:[>=<]:[0-9]+:[a-zA-Z0-9]+(:[a-zA-Z0-9])?");
 
     private List<String> getEnchantNamesPretty() {

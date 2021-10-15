@@ -130,7 +130,7 @@ public class GuiProfileViewer extends GuiScreen {
         }
     }
 
-    private GuiElementTextField playerNameTextField;
+    private final GuiElementTextField playerNameTextField;
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
@@ -774,10 +774,10 @@ public class GuiProfileViewer extends GuiScreen {
     private static final ItemStack DEADBUSH = new ItemStack(Item.getItemFromBlock(Blocks.deadbush));
     private static final ItemStack[] BOSS_HEADS = new ItemStack[7];
 
-    private HashMap<String, ProfileViewer.Level> levelObjCatas = new HashMap<>();
-    private HashMap<String, HashMap<String, ProfileViewer.Level>> levelObjClasseses = new HashMap<>();
+    private final HashMap<String, ProfileViewer.Level> levelObjCatas = new HashMap<>();
+    private final HashMap<String, HashMap<String, ProfileViewer.Level>> levelObjClasseses = new HashMap<>();
 
-    private GuiElementTextField dungeonLevelTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
+    private final GuiElementTextField dungeonLevelTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
 
     private static final String[] dungSkillsName = {"Healer", "Mage", "Berserk", "Archer", "Tank"};
     private static final ItemStack[] dungSkillsStack = { new ItemStack(Items.potionitem, 1, 16389),
@@ -880,7 +880,7 @@ public class GuiProfileViewer extends GuiScreen {
             renderXpBar(skillName, DEADBUSH, x, y, sectionWidth, levelObjCata, mouseX, mouseY);
 
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Until Cata "+floorLevelTo+": ",
-                    EnumChatFormatting.WHITE.toString()+shortNumberFormat(floorLevelToXP, 0), x, y+16, sectionWidth);
+                    EnumChatFormatting.WHITE +shortNumberFormat(floorLevelToXP, 0), x, y+16, sectionWidth);
 
             if(mouseX > x && mouseX < x + sectionWidth &&
                     mouseY > y+16 && mouseY < y+24) {
@@ -1004,11 +1004,11 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total Runs ("+(onMasterMode?"M":"F")+ "5-7)  ",
                     EnumChatFormatting.WHITE.toString()+((int)(onMasterMode?totalRunsM5:totalRunsF5)), x, miscTopY+10, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (Total)  ",
-                    EnumChatFormatting.WHITE.toString()+shortNumberFormat(secrets, 0), x, miscTopY+20, sectionWidth);
+                    EnumChatFormatting.WHITE +shortNumberFormat(secrets, 0), x, miscTopY+20, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Secrets (/Run)  ",
                     EnumChatFormatting.WHITE.toString()+(Math.round(secrets/Math.max(1, totalRuns)*100)/100f), x, miscTopY+30, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Mob Kills (Total)  ",
-                    EnumChatFormatting.WHITE.toString()+shortNumberFormat(mobKills, 0), x, miscTopY+40, sectionWidth);
+                    EnumChatFormatting.WHITE +shortNumberFormat(mobKills, 0), x, miscTopY+40, sectionWidth);
 
             int y3 = y+117;
 
@@ -1042,11 +1042,11 @@ public class GuiProfileViewer extends GuiScreen {
             String timeSStr = timeS <= 0 ? "N/A" : Utils.prettyTime((long)timeS);
             String timeSPlusStr = timeSPLUS <= 0 ? "N/A" : Utils.prettyTime((long)timeSPLUS);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" ",
-                    EnumChatFormatting.WHITE.toString()+timeNormStr, x, y3+10, sectionWidth);
+                    EnumChatFormatting.WHITE +timeNormStr, x, y3+10, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" S",
-                    EnumChatFormatting.WHITE.toString()+timeSStr, x, y3+20, sectionWidth);
+                    EnumChatFormatting.WHITE +timeSStr, x, y3+20, sectionWidth);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Floor "+floorTime+" S+",
-                    EnumChatFormatting.WHITE.toString()+timeSPlusStr, x, y3+30, sectionWidth);
+                    EnumChatFormatting.WHITE +timeSPlusStr, x, y3+30, sectionWidth);
         }
 
         //Completions
@@ -1244,7 +1244,7 @@ public class GuiProfileViewer extends GuiScreen {
                     levelStr = EnumChatFormatting.GOLD+"MAXED!";
                 } else {
                     int maxXp = (int)levelObj.maxXpForLevel;
-                    levelStr = EnumChatFormatting.DARK_PURPLE.toString() + shortNumberFormat(Math.round((level%1)*maxXp),
+                    levelStr = EnumChatFormatting.DARK_PURPLE + shortNumberFormat(Math.round((level%1)*maxXp),
                             0) + "/" + shortNumberFormat(maxXp, 0);
                 }
 
@@ -1720,14 +1720,14 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"To Max LVL", EnumChatFormatting.WHITE.toString()+Math.min(100, (int)(exp/maxXP*100))+"%", guiLeft+319, guiTop+64, 98);
             renderBar(guiLeft+319, guiTop+74, 98, exp/maxXP);
 
-            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(exp, 0), guiLeft+319, guiTop+125, 98);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Total XP", EnumChatFormatting.WHITE +shortNumberFormat(exp, 0), guiLeft+319, guiTop+125, 98);
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Current LVL XP",
-                        EnumChatFormatting.WHITE.toString()+shortNumberFormat((level%1)*currentLevelRequirement, 0), guiLeft+319, guiTop+143, 98);
-            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Required LVL XP", EnumChatFormatting.WHITE.toString()+shortNumberFormat(currentLevelRequirement, 0), guiLeft+319, guiTop+161, 98);
+                        EnumChatFormatting.WHITE +shortNumberFormat((level%1)*currentLevelRequirement, 0), guiLeft+319, guiTop+143, 98);
+            Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Required LVL XP", EnumChatFormatting.WHITE +shortNumberFormat(currentLevelRequirement, 0), guiLeft+319, guiTop+161, 98);
         }
     }
 
-    private String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
+    private final String[] romans = new String[]{"I","II","III","IV","V","VI","VII","VIII","IX","X","XI",
             "XII","XIII","XIV","XV","XVI","XVII","XIX","XX"};
 
     private final int COLLS_XCOUNT = 5;
@@ -2063,7 +2063,7 @@ public class GuiProfileViewer extends GuiScreen {
         return currentSlots;
     }
 
-    private ItemStack fillerStack = new ItemStack(Item.getItemFromBlock(Blocks.stained_glass_pane), 1, 15);
+    private final ItemStack fillerStack = new ItemStack(Item.getItemFromBlock(Blocks.stained_glass_pane), 1, 15);
     public ItemStack[][][] getItemsForInventory(JsonObject inventoryInfo, String invName) {
         if(inventoryItems.containsKey(invName)) return inventoryItems.get(invName);
 
@@ -2186,7 +2186,7 @@ public class GuiProfileViewer extends GuiScreen {
     private int arrowCount = -1;
     private int greenCandyCount = -1;
     private int purpleCandyCount = -1;
-    private GuiElementTextField inventoryTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
+    private final GuiElementTextField inventoryTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
     private ItemStack lastBackpack;
     private int lastBackpackX;
     private int lastBackpackY;
@@ -2427,7 +2427,7 @@ public class GuiProfileViewer extends GuiScreen {
     private ResourceLocation playerLocationCape = null;
     private String skinType = null;
 
-    private HashMap<String, ResourceLocation[]> panoramasMap = new HashMap<>();
+    private final HashMap<String, ResourceLocation[]> panoramasMap = new HashMap<>();
 
     public ResourceLocation[] getPanoramasForLocation(String location, String identifier) {
         if(panoramasMap.containsKey(location+identifier)) return panoramasMap.get(location+identifier);
@@ -2481,15 +2481,15 @@ public class GuiProfileViewer extends GuiScreen {
         float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), 0);
         float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
 
-        Utils.renderAlignedString(EnumChatFormatting.GOLD+"Bank Balance", EnumChatFormatting.WHITE.toString()+shortNumberFormat(bankBalance, 0),
+        Utils.renderAlignedString(EnumChatFormatting.GOLD+"Bank Balance", EnumChatFormatting.WHITE +shortNumberFormat(bankBalance, 0),
                 guiLeft+xStart, guiTop+yStartTop, 76);
-        Utils.renderAlignedString(EnumChatFormatting.GOLD+"Purse", EnumChatFormatting.WHITE.toString()+shortNumberFormat(purseBalance, 0),
+        Utils.renderAlignedString(EnumChatFormatting.GOLD+"Purse", EnumChatFormatting.WHITE +shortNumberFormat(purseBalance, 0),
                 guiLeft+xStart, guiTop+yStartTop+yOffset, 76);
 
         {
             String lastSaveText = this.getTimeSinceString(profileInfo, "last_save");
             if(lastSaveText != null) {
-                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Last Seen", EnumChatFormatting.WHITE.toString() + lastSaveText,
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Last Seen", EnumChatFormatting.WHITE + lastSaveText,
                         guiLeft + xStart, guiTop + yStartTop + yOffset * 2, 76);
             }
 
@@ -2497,7 +2497,7 @@ public class GuiProfileViewer extends GuiScreen {
         {
             String first_join = this.getTimeSinceString(profileInfo, "first_join");
             if(first_join != null) {
-                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Joined", EnumChatFormatting.WHITE.toString() + first_join,
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Joined", EnumChatFormatting.WHITE + first_join,
                         guiLeft + xStart, guiTop + yStartTop + yOffset * 3, 76);
             }
 
@@ -2505,7 +2505,7 @@ public class GuiProfileViewer extends GuiScreen {
         {
             JsonObject guildInfo = profile.getGuildInfo(null);
             if(guildInfo != null && guildInfo.has("name")){
-                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Guild", EnumChatFormatting.WHITE.toString() + guildInfo.get("name").getAsString(),
+                Utils.renderAlignedString(EnumChatFormatting.AQUA + "Guild", EnumChatFormatting.WHITE + guildInfo.get("name").getAsString(),
                         guiLeft + xStart, guiTop + yStartTop + yOffset * 4, 76);
             }
         }
@@ -2556,7 +2556,7 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.RED+"AVG Slayer Level", EnumChatFormatting.WHITE.toString()+Math.floor(avgSlayerLVL*10)/10,
                     guiLeft+xStart, guiTop+yStartBottom+yOffset*3, 76);
 
-            Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE.toString() + shortNumberFormat(totalSlayerXP, 0),
+            Utils.renderAlignedString(EnumChatFormatting.RED + "Total Slayer XP", EnumChatFormatting.WHITE + shortNumberFormat(totalSlayerXP, 0),
                     guiLeft + xStart, guiTop + yStartBottom + yOffset * 4, 76);
         }
 
@@ -2570,15 +2570,15 @@ public class GuiProfileViewer extends GuiScreen {
 
         Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auction Bids", EnumChatFormatting.WHITE.toString()+(int)auctions_bids,
                 guiLeft+xStart+xOffset, guiTop+yStartTop, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Highest Bid", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_highest_bid, 0),
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Highest Bid", EnumChatFormatting.WHITE +shortNumberFormat(auctions_highest_bid, 0),
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auctions Won", EnumChatFormatting.WHITE.toString()+(int)auctions_won,
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*2, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Auctions Created", EnumChatFormatting.WHITE.toString()+(int)auctions_created,
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*3, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Spent", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_gold_spent, 0),
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Spent", EnumChatFormatting.WHITE +shortNumberFormat(auctions_gold_spent, 0),
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*4, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Earned", EnumChatFormatting.WHITE.toString()+shortNumberFormat(auctions_gold_earned, 0),
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE+"Gold Earned", EnumChatFormatting.WHITE +shortNumberFormat(auctions_gold_earned, 0),
                 guiLeft+xStart+xOffset, guiTop+yStartTop+yOffset*5, 76);
 
 
@@ -2719,7 +2719,7 @@ public class GuiProfileViewer extends GuiScreen {
 
     private int backgroundClickedX = -1;
 
-    private static char[] c = new char[]{'k', 'm', 'b', 't'};
+    private static final char[] c = new char[]{'k', 'm', 'b', 't'};
 
     public static String shortNumberFormat(double n, int iteration) {
         if(n < 1000) {
@@ -2824,7 +2824,7 @@ public class GuiProfileViewer extends GuiScreen {
                             }
                         }
 
-                        playerName = EnumChatFormatting.GRAY.toString() + name;
+                        playerName = EnumChatFormatting.GRAY + name;
                         if(rankName != null) {
                             StringBuilder sb = new StringBuilder();
                             sb.append("\u00A7"+rankColor);
@@ -3104,7 +3104,7 @@ public class GuiProfileViewer extends GuiScreen {
                             tooltipToDisplay.add(EnumChatFormatting.GRAY+"Progress: "+EnumChatFormatting.GOLD+"MAXED!");
                         } else {
                             int maxXp = (int)skillInfo.get("maxxp_"+entry.getKey()).getAsFloat();
-                            tooltipToDisplay.add(EnumChatFormatting.GRAY+"Progress: "+EnumChatFormatting.DARK_PURPLE.toString() +
+                            tooltipToDisplay.add(EnumChatFormatting.GRAY+"Progress: "+ EnumChatFormatting.DARK_PURPLE +
                                     shortNumberFormat(Math.round((level%1)*maxXp), 0) + "/" + shortNumberFormat(maxXp, 0));
                         }
                         String totalXpS = NumberFormat.getIntegerInstance().format((int)skillInfo.get("experience_"+entry.getKey()).getAsFloat());
@@ -3194,9 +3194,9 @@ public class GuiProfileViewer extends GuiScreen {
         RenderHelper.enableStandardItemLighting();
         GlStateManager.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(25, 1.0F, 0.0F, 0.0F);
-        ent.renderYawOffset = (float)Math.atan((double)(mouseX / 40.0F)) * 20.0F;
-        ent.rotationYaw = (float)Math.atan((double)(mouseX / 40.0F)) * 40.0F;
-        ent.rotationPitch = -((float)Math.atan((double)(mouseY / 40.0F))) * 20.0F;
+        ent.renderYawOffset = (float)Math.atan(mouseX / 40.0F) * 20.0F;
+        ent.rotationYaw = (float)Math.atan(mouseX / 40.0F) * 40.0F;
+        ent.rotationPitch = -((float)Math.atan(mouseY / 40.0F)) * 20.0F;
         ent.rotationYawHead = ent.rotationYaw;
         ent.prevRotationYawHead = ent.rotationYaw;
         RenderManager rendermanager = Minecraft.getMinecraft().getRenderManager();

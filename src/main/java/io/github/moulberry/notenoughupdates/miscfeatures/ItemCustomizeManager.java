@@ -41,7 +41,7 @@ public class ItemCustomizeManager {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static ItemDataMap itemDataMap = new ItemDataMap();
-    private static HashMap<Integer, String> itemUuidCache = new HashMap<>();
+    private static final HashMap<Integer, String> itemUuidCache = new HashMap<>();
 
     public static class ItemDataMap {
         public HashMap<String, ItemData> itemData = new HashMap<>();

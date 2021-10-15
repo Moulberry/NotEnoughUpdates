@@ -9,11 +9,11 @@ import java.util.function.Consumer;
 
 public class ProfileApiSyncer {
 
-    private static ProfileApiSyncer INSTANCE = new ProfileApiSyncer();
+    private static final ProfileApiSyncer INSTANCE = new ProfileApiSyncer();
 
-    private HashMap<String, Long> resyncTimes = new HashMap<>();
-    private HashMap<String, Runnable> syncingCallbacks = new HashMap<>();
-    private HashMap<String, Consumer<ProfileViewer.Profile>> finishSyncCallbacks = new HashMap<>();
+    private final HashMap<String, Long> resyncTimes = new HashMap<>();
+    private final HashMap<String, Runnable> syncingCallbacks = new HashMap<>();
+    private final HashMap<String, Consumer<ProfileViewer.Profile>> finishSyncCallbacks = new HashMap<>();
     private long lastResync;
 
     public static ProfileApiSyncer getInstance() {

@@ -15,9 +15,9 @@ import static io.github.moulberry.notenoughupdates.util.GuiTextures.button_white
 
 public class GuiOptionEditorButton extends GuiOptionEditor {
 
-    private int runnableId;
+    private final int runnableId;
     private String buttonText;
-    private Config config;
+    private final Config config;
 
     public GuiOptionEditorButton(ConfigProcessor.ProcessedOption option, int runnableId, String buttonText, Config config) {
         super(option);

@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 
 public class DwarvenMinesWaypoints {
 
-    private HashMap<String, Vector3f> waypointsMap = new HashMap<>();
+    private final HashMap<String, Vector3f> waypointsMap = new HashMap<>();
     {
         waypointsMap.put("Dwarven Village", new Vector3f(-37, 199, -122));
         waypointsMap.put("Miner's Guild", new Vector3f(-74, 220, -122));

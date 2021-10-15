@@ -28,8 +28,8 @@ import static io.github.moulberry.notenoughupdates.util.GuiTextures.item_mask;
 
 public class CollectionLogInfoPane extends ScrollableInfoPane {
 
-    private String mobRegex = ".*?((_MONSTER)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
-    private String petRegex = ".*?;[0-4]$";
+    private final String mobRegex = ".*?((_MONSTER)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
+    private final String petRegex = ".*?;[0-4]$";
 
     TreeSet<String> items = new TreeSet<>(getItemComparator());
 
@@ -52,7 +52,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
     private static final int FILTER_SLAYER_WOLF = 7;
     private static final int FILTER_SLAYER_SPIDER = 8;
     private int filterMode = FILTER_ALL;
-    private String[] filterPrettyNames = new String[]{"ALL","WEAPON","ARMOR",
+    private final String[] filterPrettyNames = new String[]{"ALL","WEAPON","ARMOR",
             "ACCESSORY","PET","DUNGEON","ZOMBIE SLAYER","WOLF SLAYER","SPIDER SLAYER"};
 
     private Framebuffer itemFramebuffer = null;
@@ -177,7 +177,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         return own/(float)total;
     }
 
-    private EnumChatFormatting[] rainbow = new EnumChatFormatting[]{
+    private final EnumChatFormatting[] rainbow = new EnumChatFormatting[]{
             EnumChatFormatting.RED,
             EnumChatFormatting.GOLD,
             EnumChatFormatting.YELLOW,
@@ -485,7 +485,7 @@ public class CollectionLogInfoPane extends ScrollableInfoPane {
         int scrolledTop = top-scrollHeight.getValue();
 
         int id = 0;
-        int extraSize = overlay.ITEM_SIZE+overlay.ITEM_PADDING;
+        int extraSize = NEUOverlay.ITEM_SIZE + NEUOverlay.ITEM_PADDING;
         for(int y=scrolledTop; y<bottom; y+=extraSize) {
             for(int x=left; x<right-extraSize; x+=extraSize) {
                 if(y > top-extraSize) {

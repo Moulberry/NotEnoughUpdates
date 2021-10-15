@@ -19,14 +19,14 @@ import org.lwjgl.opengl.GL11;
 
 public class GuiGamemodes extends GuiScreen {
 
-    private String currentProfile;
+    private final String currentProfile;
     private SBGamemodes.Gamemode currentGamemode = null;
-    private boolean upgradeOverride;
+    private final boolean upgradeOverride;
 
     private int guiLeft = 100;
     private int guiTop = 100;
-    private int xSize = 200;
-    private int ySize = 232;
+    private final int xSize = 200;
+    private final int ySize = 232;
 
     public GuiGamemodes(boolean upgradeOverride) {
         this.currentProfile = NotEnoughUpdates.INSTANCE.manager.getCurrentProfile();

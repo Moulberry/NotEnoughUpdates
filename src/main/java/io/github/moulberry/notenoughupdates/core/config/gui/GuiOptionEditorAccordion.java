@@ -17,7 +17,7 @@ import static io.github.moulberry.notenoughupdates.util.GuiTextures.button_tex;
 
 public class GuiOptionEditorAccordion extends GuiOptionEditor {
 
-    private int accordionId;
+    private final int accordionId;
     private boolean accordionToggled;
 
     public GuiOptionEditorAccordion(ConfigProcessor.ProcessedOption option, int accordionId) {

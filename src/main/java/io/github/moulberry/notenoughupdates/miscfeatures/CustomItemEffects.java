@@ -54,7 +54,7 @@ public class CustomItemEffects {
 
     private static final int MAX_BUILDERS_BLOCKS = 241;
 
-    private HashSet<BlockPos> zapperBlocks = new HashSet<>();
+    private final HashSet<BlockPos> zapperBlocks = new HashSet<>();
     private boolean zapperDirty = false;
 
     public long aoteUseMillis = 0;

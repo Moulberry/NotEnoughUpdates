@@ -27,27 +27,27 @@ import static io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextFiel
 
 public class NEUItemEditor extends GuiScreen {
 
-    private NEUManager manager;
+    private final NEUManager manager;
 
-    private List<GuiElement> options = new ArrayList<>();
-    private List<GuiElement> rightOptions = new ArrayList<>();
+    private final List<GuiElement> options = new ArrayList<>();
+    private final List<GuiElement> rightOptions = new ArrayList<>();
 
-    private JsonObject item;
+    private final JsonObject item;
 
     private static final int PADDING = 10;
     private static final int SCROLL_AMOUNT = 20;
 
-    private LerpingInteger scrollHeight = new LerpingInteger(0);
+    private final LerpingInteger scrollHeight = new LerpingInteger(0);
 
-    private Supplier<String> internalname;
-    private Supplier<String> itemid;
-    private Supplier<String> displayname;
-    private Supplier<String> lore;
-    private Supplier<String> crafttext;
-    private Supplier<String> infoType;
-    private Supplier<String> info;
-    private Supplier<String> clickcommand;
-    private Supplier<String> damage;
+    private final Supplier<String> internalname;
+    private final Supplier<String> itemid;
+    private final Supplier<String> displayname;
+    private final Supplier<String> lore;
+    private final Supplier<String> crafttext;
+    private final Supplier<String> infoType;
+    private final Supplier<String> info;
+    private final Supplier<String> clickcommand;
+    private final Supplier<String> damage;
     private NBTTagCompound nbttag;
 
     public NEUItemEditor(NEUManager manager, String internalname, JsonObject item) {
@@ -104,7 +104,7 @@ public class NEUItemEditor extends GuiScreen {
             Minecraft.getMinecraft().displayGuiScreen(null);
         }));
         GuiElementButton button = new Object() { //Used to make the compiler shut the fuck up
-            GuiElementButton b = new GuiElementButton("Save to local disk", Color.GREEN.getRGB(), new Runnable() {
+            final GuiElementButton b = new GuiElementButton("Save to local disk", Color.GREEN.getRGB(), new Runnable() {
                 public void run() {
                     if(save()) {
                         b.setText("Save to local disk (SUCCESS)");

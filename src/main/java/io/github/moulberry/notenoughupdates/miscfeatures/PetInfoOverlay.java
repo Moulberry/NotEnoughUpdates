@@ -112,7 +112,7 @@ public class PetInfoOverlay extends TextOverlay {
     private static long lastUpdate = 0;
     private static float levelXpLast = 0;
 
-    private static LinkedList<Float> xpGainQueue = new LinkedList<>();
+    private static final LinkedList<Float> xpGainQueue = new LinkedList<>();
     private static float xpGainHourLast = -1;
     private static float xpGainHour = -1;
     private static int pauseCountdown = 0;

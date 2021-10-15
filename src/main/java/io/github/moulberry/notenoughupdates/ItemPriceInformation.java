@@ -59,7 +59,7 @@ public class ItemPriceInformation {
                         if(bazaarInfo.has("avg_buy")) {
                             if(!added) {
                                 tooltip.add("");
-                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY +"[SHIFT show x"+shiftStackMultiplier+"]");
                                 added = true;
                             }
                             int bazaarBuyPrice = (int)bazaarInfo.get("avg_buy").getAsFloat()*stackMultiplier;
@@ -71,7 +71,7 @@ public class ItemPriceInformation {
                         if(bazaarInfo.has("avg_sell")) {
                             if(!added) {
                                 tooltip.add("");
-                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY +"[SHIFT show x"+shiftStackMultiplier+"]");
                                 added = true;
                             }
                             int bazaarSellPrice = (int)bazaarInfo.get("avg_sell").getAsFloat()*stackMultiplier;
@@ -83,7 +83,7 @@ public class ItemPriceInformation {
                         if(bazaarInfo.has("curr_buy")) {
                             if(!added) {
                                 tooltip.add("");
-                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY +"[SHIFT show x"+shiftStackMultiplier+"]");
                                 added = true;
                             }
                             int bazaarInstantBuyPrice = (int)bazaarInfo.get("curr_buy").getAsFloat()*stackMultiplier;
@@ -95,7 +95,7 @@ public class ItemPriceInformation {
                         if(bazaarInfo.has("curr_sell")) {
                             if(!added) {
                                 tooltip.add("");
-                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY.toString()+"[SHIFT show x"+shiftStackMultiplier+"]");
+                                if(!shiftPressed) tooltip.add(EnumChatFormatting.DARK_GRAY +"[SHIFT show x"+shiftStackMultiplier+"]");
                                 added = true;
                             }
                             int bazaarInstantSellPrice = (int)bazaarInfo.get("curr_sell").getAsFloat()*stackMultiplier;

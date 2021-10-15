@@ -53,7 +53,7 @@ public class BetterContainers {
     public static long lastRenderMillis = 0;
 
     private static int lastInvHashcode = 0;
-    private static int lastHashcodeCheck = 0;
+    private static final int lastHashcodeCheck = 0;
 
     public static HashMap<Integer, ItemStack> itemCache = new HashMap<>();
 
@@ -153,9 +153,7 @@ public class BetterContainers {
         if(stack != null && stack.getTagCompound() != null && stack.getTagCompound().hasKey("display", 10) &&
                 stack.getTagCompound().getCompoundTag("display").hasKey("Lore", 9)) {
             NBTTagList lore = stack.getTagCompound().getCompoundTag("display").getTagList("Lore", 8);
-            if(lore.tagCount() == 1 && lore.getStringTagAt(0).equalsIgnoreCase(EnumChatFormatting.GRAY+"click to disable!")) {
-                return true;
-            }
+            return lore.tagCount() == 1 && lore.getStringTagAt(0).equalsIgnoreCase(EnumChatFormatting.GRAY + "click to disable!");
         }
         return false;
     }
@@ -164,9 +162,7 @@ public class BetterContainers {
         if(stack != null && stack.getTagCompound() != null && stack.getTagCompound().hasKey("display", 10) &&
                 stack.getTagCompound().getCompoundTag("display").hasKey("Lore", 9)) {
             NBTTagList lore = stack.getTagCompound().getCompoundTag("display").getTagList("Lore", 8);
-            if(lore.tagCount() == 1 && lore.getStringTagAt(0).equalsIgnoreCase(EnumChatFormatting.GRAY+"click to enable!")) {
-                return true;
-            }
+            return lore.tagCount() == 1 && lore.getStringTagAt(0).equalsIgnoreCase(EnumChatFormatting.GRAY + "click to enable!");
         }
         return false;
     }

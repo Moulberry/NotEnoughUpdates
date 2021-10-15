@@ -25,14 +25,14 @@ public class FarmingOverlay extends TextOverlay {
     private int counter = -1;
     private float cropsPerSecondLast = 0;
     private float cropsPerSecond = 0;
-    private LinkedList<Integer> counterQueue = new LinkedList<>();
+    private final LinkedList<Integer> counterQueue = new LinkedList<>();
 
     private XPInformation.SkillInfo skillInfo = null;
     private XPInformation.SkillInfo skillInfoLast = null;
 
     private float lastTotalXp = -1;
     private boolean isFarming = false;
-    private LinkedList<Float> xpGainQueue = new LinkedList<>();
+    private final LinkedList<Float> xpGainQueue = new LinkedList<>();
     private float xpGainHourLast = -1;
     private float xpGainHour = -1;
 

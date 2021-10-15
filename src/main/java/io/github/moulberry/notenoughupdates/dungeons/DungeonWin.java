@@ -33,7 +33,7 @@ public class DungeonWin {
         private int life = 0;
         private float xVel;
         private float yVel;
-        private int id;
+        private final int id;
 
         public Confetti(float x, float y, float xVel, float yVel) {
             this.x = x;

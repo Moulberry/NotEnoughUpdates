@@ -15,8 +15,8 @@ public class GuiElementBoolean extends GuiElement {
     public int x;
     public int y;
     private boolean value;
-    private int clickRadius;
-    private Consumer<Boolean> toggleCallback;
+    private final int clickRadius;
+    private final Consumer<Boolean> toggleCallback;
 
     private boolean previewValue;
     private int animation = 0;

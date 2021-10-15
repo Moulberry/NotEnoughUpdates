@@ -39,7 +39,7 @@ public class EnchantingSolvers {
     //Chronomatron
     private static boolean addToChronomatron = false;
     private static boolean chronomatronStartSeq = false;
-    private static List<String> chronomatronOrder = new ArrayList<>();
+    private static final List<String> chronomatronOrder = new ArrayList<>();
     private static int chronomatronReplayIndex = 0;
     private static int lastChronomatronSize = 0;
     private static long millisLastClick = 0;
@@ -55,15 +55,15 @@ public class EnchantingSolvers {
         }
     }
 
-    private static Map<Integer, UltrasequencerItem> ultraSequencerOrder = new HashMap<>();
+    private static final Map<Integer, UltrasequencerItem> ultraSequencerOrder = new HashMap<>();
     private static int ultrasequencerReplayIndex = 0;
 
     //Superpairs
-    private static Map<Integer, ItemStack> superpairStacks = new HashMap<>();
+    private static final Map<Integer, ItemStack> superpairStacks = new HashMap<>();
     private static int lastSlotClicked = -1;
-    private static HashSet<Integer> successfulMatches = new HashSet<>();
-    private static HashSet<Integer> possibleMatches = new HashSet<>();
-    private static HashSet<Integer> powerupMatches = new HashSet<>();
+    private static final HashSet<Integer> successfulMatches = new HashSet<>();
+    private static final HashSet<Integer> possibleMatches = new HashSet<>();
+    private static final HashSet<Integer> powerupMatches = new HashSet<>();
 
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {

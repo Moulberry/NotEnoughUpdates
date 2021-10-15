@@ -24,12 +24,12 @@ public class DungeonBlocks {
     private static Framebuffer framebufferBlocksTo = null;
     private static Framebuffer framebufferBlocksFrom = null;
 
-    private static HashMap<String, Framebuffer> framebuffersDynamicTo = new HashMap<>();
+    private static final HashMap<String, Framebuffer> framebuffersDynamicTo = new HashMap<>();
     public static HashMap<String, Framebuffer> framebuffersDynamicFrom = new HashMap<>();
-    private static HashSet<String> dynamicUpdated = new HashSet<>();
+    private static final HashSet<String> dynamicUpdated = new HashSet<>();
 
-    private static FloatBuffer projectionMatrixOld = BufferUtils.createFloatBuffer(16);
-    private static FloatBuffer modelviewMatrixOld = BufferUtils.createFloatBuffer(16);
+    private static final FloatBuffer projectionMatrixOld = BufferUtils.createFloatBuffer(16);
+    private static final FloatBuffer modelviewMatrixOld = BufferUtils.createFloatBuffer(16);
 
     public static boolean textureExists() {
         return framebufferBlocksFrom != null && isOverriding();
@@ -137,7 +137,7 @@ public class DungeonBlocks {
         return false;
     }
 
-    private static HashMap<ResourceLocation, String> dynamicPreloadMap = new HashMap<>();
+    private static final HashMap<ResourceLocation, String> dynamicPreloadMap = new HashMap<>();
 
     static {
         dynamicPreloadMap.put(new ResourceLocation("textures/entity/bat.png"),

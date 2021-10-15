@@ -22,7 +22,7 @@ import javax.swing.event.*;
  */
 public class RequestFocusListener implements AncestorListener
 {
-    private boolean removeListener;
+    private final boolean removeListener;
 
     /*
      *  Convenience constructor. The listener is only used once and then it is

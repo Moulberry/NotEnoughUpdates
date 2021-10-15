@@ -36,8 +36,8 @@ public class NPCRetexturing implements IResourceManagerReloadListener {
         }
     }
 
-    private HashMap<AbstractClientPlayer, Skin> skinOverrideCache = new HashMap<>();
-    private HashMap<String, Skin> skinMap = new HashMap<>();
+    private final HashMap<AbstractClientPlayer, Skin> skinOverrideCache = new HashMap<>();
+    private final HashMap<String, Skin> skinMap = new HashMap<>();
 
     private boolean gettingSkin = false;
 

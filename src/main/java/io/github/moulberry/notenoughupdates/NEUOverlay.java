@@ -66,22 +66,22 @@ public class NEUOverlay extends Gui {
     private static final ResourceLocation SEARCH_BAR = new ResourceLocation("notenoughupdates:search_bar.png");
     private static final ResourceLocation SEARCH_BAR_GOLD = new ResourceLocation("notenoughupdates:search_bar_gold.png");
 
-    private NEUManager manager;
+    private final NEUManager manager;
 
-    private String mobRegex = ".*?((_MONSTER)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
-    private String petRegex = ".*?;[0-5]$";
+    private final String mobRegex = ".*?((_MONSTER)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
+    private final String petRegex = ".*?;[0-5]$";
 
-    private ResourceLocation[] sortIcons = new ResourceLocation[] {
+    private final ResourceLocation[] sortIcons = new ResourceLocation[] {
         sort_all, sort_mob, sort_pet, sort_tool, sort_armor, sort_accessory
     };
-    private ResourceLocation[] sortIconsActive = new ResourceLocation[] {
+    private final ResourceLocation[] sortIconsActive = new ResourceLocation[] {
             sort_all_active, sort_mob_active, sort_pet_active, sort_tool_active, sort_armor_active, sort_accessory_active
     };
 
-    private ResourceLocation[] orderIcons = new ResourceLocation[] {
+    private final ResourceLocation[] orderIcons = new ResourceLocation[] {
             order_alphabetical, order_rarity, order_value
     };
-    private ResourceLocation[] orderIconsActive = new ResourceLocation[] {
+    private final ResourceLocation[] orderIconsActive = new ResourceLocation[] {
             order_alphabetical_active, order_rarity_active, order_value_active
     };
 
@@ -113,9 +113,9 @@ public class NEUOverlay extends Gui {
 
     private int page = 0;
 
-    private LerpingFloat itemPaneOffsetFactor = new LerpingFloat(1);
-    private LerpingInteger itemPaneTabOffset = new LerpingInteger(20, 50);
-    private LerpingFloat infoPaneOffsetFactor = new LerpingFloat(0);
+    private final LerpingFloat itemPaneOffsetFactor = new LerpingFloat(1);
+    private final LerpingInteger itemPaneTabOffset = new LerpingInteger(20, 50);
+    private final LerpingFloat infoPaneOffsetFactor = new LerpingFloat(0);
 
     public boolean searchMode = false;
     private long millisLastLeftClick = 0;
@@ -131,7 +131,7 @@ public class NEUOverlay extends Gui {
     private boolean redrawItems = false;
 
     private boolean searchBarHasFocus = false;
-    private GuiTextField textField = new GuiTextField(0, null, 0, 0, 0, 0);
+    private final GuiTextField textField = new GuiTextField(0, null, 0, 0, 0, 0);
 
     private static final int COMPARE_MODE_ALPHABETICAL = 0;
     private static final int COMPARE_MODE_RARITY = 1;
@@ -1217,9 +1217,9 @@ public class NEUOverlay extends Gui {
         return true;
     }
 
-    private HashMap<String, JsonObject> parentMap = new HashMap<>();
+    private final HashMap<String, JsonObject> parentMap = new HashMap<>();
 
-    private ExecutorService searchES = Executors.newSingleThreadExecutor();
+    private final ExecutorService searchES = Executors.newSingleThreadExecutor();
 
     /**
      * Clears the current item list, creating a new TreeSet if necessary.
@@ -2046,7 +2046,7 @@ public class NEUOverlay extends Gui {
         redrawItems = true;
     }
 
-    private Framebuffer[] itemFramebuffers = new Framebuffer[2];
+    private final Framebuffer[] itemFramebuffers = new Framebuffer[2];
 
     /**
      * Checks whether the screen size has changed, if so it reconstructs the itemPane framebuffer and marks that the

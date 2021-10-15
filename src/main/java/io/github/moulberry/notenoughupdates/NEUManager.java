@@ -40,10 +40,10 @@ public class NEUManager {
     public final Gson gson;
     public final APIManager auctionManager;
 
-    private TreeMap<String, JsonObject> itemMap = new TreeMap<>();
+    private final TreeMap<String, JsonObject> itemMap = new TreeMap<>();
 
-    private TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
-    private TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
+    private final TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
+    private final TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
 
     public final KeyBinding keybindGive = new KeyBinding("Add item to inventory (Creative-only)", Keyboard.KEY_L, "NotEnoughUpdates");
     public final KeyBinding keybindFavourite = new KeyBinding("Set item as favourite", Keyboard.KEY_F, "NotEnoughUpdates");
@@ -59,16 +59,16 @@ public class NEUManager {
     public long viewItemAttemptTime = 0;
 
     private String currentProfile = "";
-    private String currentProfileBackup = "";
+    private final String currentProfileBackup = "";
     public final HypixelApi hypixelApi = new HypixelApi();
 
-    private Map<String, ItemStack> itemstackCache = new HashMap<>();
+    private final Map<String, ItemStack> itemstackCache = new HashMap<>();
 
-    private ExecutorService repoLoaderES = Executors.newSingleThreadExecutor();
+    private final ExecutorService repoLoaderES = Executors.newSingleThreadExecutor();
 
     private static String GIT_COMMITS_URL;
 
-    private HashMap<String, Set<String>> usagesMap = new HashMap<>();
+    private final HashMap<String, Set<String>> usagesMap = new HashMap<>();
 
     public String latestRepoCommit = null;
 
@@ -259,7 +259,7 @@ public class NEUManager {
                     for(File f : itemFiles) {
                         String internalname = f.getName().substring(0, f.getName().length()-5);
                         synchronized(itemMap) {
-                            if(!itemMap.keySet().contains(internalname)) {
+                            if(!itemMap.containsKey(internalname)) {
                                 loadItem(internalname);
                             }
                         }
@@ -281,7 +281,7 @@ public class NEUManager {
                 for(File f : itemFiles) {
                     String internalname = f.getName().substring(0, f.getName().length()-5);
                     synchronized(itemMap) {
-                        if(!itemMap.keySet().contains(internalname)) {
+                        if(!itemMap.containsKey(internalname)) {
                             loadItem(internalname);
                         }
                     }
@@ -1019,7 +1019,7 @@ public class NEUManager {
         }
         try (BufferedInputStream inStream = new BufferedInputStream(new URL(url+"?action=raw&templates=expand").openStream());
              FileOutputStream fileOutputStream = new FileOutputStream(f)) {
-            byte dataBuffer[] = new byte[1024];
+            byte[] dataBuffer = new byte[1024];
             int bytesRead;
             while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
@@ -1134,7 +1134,7 @@ public class NEUManager {
         json.addProperty("damage", damage);
         json.addProperty("nbttag", nbttag.toString());
         json.addProperty("modver", NotEnoughUpdates.VERSION);
-        json.addProperty("infoType", infoType.toString());
+        json.addProperty("infoType", infoType);
 
         if(info != null && info.length > 0) {
             JsonArray jsoninfo = new JsonArray();

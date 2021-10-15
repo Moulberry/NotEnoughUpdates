@@ -19,7 +19,7 @@ public class GuiOptionEditorKeybind extends GuiOptionEditor {
     private static final ResourceLocation RESET = new ResourceLocation("notenoughupdates:itemcustomize/reset.png");
 
     private int keyCode;
-    private int defaultKeyCode;
+    private final int defaultKeyCode;
     private boolean editingKeycode;
 
     public GuiOptionEditorKeybind(ConfigProcessor.ProcessedOption option, int keyCode, int defaultKeyCode) {

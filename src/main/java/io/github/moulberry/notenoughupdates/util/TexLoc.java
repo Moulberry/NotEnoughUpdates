@@ -9,7 +9,7 @@ public class TexLoc {
 
     public int x;
     public int y;
-    private int toggleKey;
+    private final int toggleKey;
     private boolean toggled;
     private boolean pressedLastTick;
     private boolean dirPressed;

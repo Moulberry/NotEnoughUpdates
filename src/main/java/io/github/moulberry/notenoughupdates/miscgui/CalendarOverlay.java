@@ -88,7 +88,7 @@ public class CalendarOverlay {
 
     private int jingleIndex = -1;
 
-    private TreeMap<Long, Set<SBEvent>> eventMap = new TreeMap<>();
+    private final TreeMap<Long, Set<SBEvent>> eventMap = new TreeMap<>();
     private List<String> jfFavouriteSelect = null;
     private int jfFavouriteSelectIndex = 0;
     private int jfFavouriteSelectX = 0;
@@ -98,16 +98,16 @@ public class CalendarOverlay {
 
     private static long spookyStart = 0;
 
-    private static long SECOND = 1000;
-    private static long MINUTE = SECOND*60;
-    private static long HOUR = MINUTE*60;
-    private static long DAY = HOUR*24;
+    private static final long SECOND = 1000;
+    private static final long MINUTE = SECOND*60;
+    private static final long HOUR = MINUTE*60;
+    private static final long DAY = HOUR*24;
 
-    private static long DA_OFFSET = 1000*60*55;
-    private static long JF_OFFSET = 1000*60*15;
+    private static final long DA_OFFSET = 1000*60*55;
+    private static final long JF_OFFSET = 1000*60*15;
 
-    private static ItemStack DA_STACK;
-    private static ItemStack JF_STACK;
+    private static final ItemStack DA_STACK;
+    private static final ItemStack JF_STACK;
     static {
         NBTTagCompound tag = new NBTTagCompound();
         tag.setString("event_id", "dark_auction");
@@ -151,8 +151,8 @@ public class CalendarOverlay {
         return offset;
     }
 
-    private static Pattern CALENDAR_PATTERN = Pattern.compile("([A-Za-z ]+), Year ([0-9]+)");
-    private static long SKYBLOCK_START = 1559829300000L; //Day 0, Year 0
+    private static final Pattern CALENDAR_PATTERN = Pattern.compile("([A-Za-z ]+), Year ([0-9]+)");
+    private static final long SKYBLOCK_START = 1559829300000L; //Day 0, Year 0
 
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {

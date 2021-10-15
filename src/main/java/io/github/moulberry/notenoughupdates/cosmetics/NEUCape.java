@@ -48,21 +48,21 @@ public class NEUCape {
 
     private long lastFrameUpdate = 0;
 
-    private static int ANIM_MODE_LOOP = 0;
-    private static int ANIM_MODE_PINGPONG = 1;
-    private int animMode = ANIM_MODE_LOOP;
+    private static final int ANIM_MODE_LOOP = 0;
+    private static final int ANIM_MODE_PINGPONG = 1;
+    private final int animMode = ANIM_MODE_LOOP;
 
     private CapeNode[] nodes = null;
 
-    private Random random = new Random();
+    private final Random random = new Random();
 
     private long eventMillis;
     private float eventLength;
     private float eventRandom;
 
-    private static double vertOffset = 1.4;
-    private static double shoulderLength = 0.24;
-    private static double shoulderWidth = 0.13;
+    private static final double vertOffset = 1.4;
+    private static final double shoulderLength = 0.24;
+    private static final double shoulderWidth = 0.13;
 
     public static final int HORZ_NODES = 6;
     public static final int VERT_NODES = 22;
@@ -428,7 +428,6 @@ public class NEUCape {
         double f;
 
         for(f = b - a; f < -180.0F; f += 360.0F) {
-            ;
         }
 
         while(f >= 180.0F) {
@@ -667,7 +666,7 @@ public class NEUCape {
                 nodes[x + y * HORZ_NODES].update();
             }
         }
-        int updates = player == Minecraft.getMinecraft().thePlayer ? 50 : 50;
+        int updates = 50;
         for(int i = 0; i < updates; i++) {
             for(int y = 0; y < VERT_NODES; y++) {
                 for(int x = 0; x < HORZ_NODES; x++) {

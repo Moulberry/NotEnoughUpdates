@@ -17,12 +17,12 @@ import java.util.function.Supplier;
 
 public abstract class TextOverlay {
 
-    private Position position;
+    private final Position position;
     protected Supplier<TextOverlayStyle> styleSupplier;
     public int overlayWidth = -1;
     public int overlayHeight = -1;
     public List<String> overlayStrings = null;
-    private Supplier<List<String>> dummyStrings;
+    private final Supplier<List<String>> dummyStrings;
 
     public boolean shouldUpdateFrequent = false;
 

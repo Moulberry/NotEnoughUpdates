@@ -36,7 +36,7 @@ public class ProfileViewer {
     }
 
 
-    private static HashMap<String, String> petRarityToNumMap = new HashMap<>();
+    private static final HashMap<String, String> petRarityToNumMap = new HashMap<>();
     static {
         petRarityToNumMap.put("COMMON", "0");
         petRarityToNumMap.put("UNCOMMON", "1");
@@ -319,22 +319,22 @@ public class ProfileViewer {
         private final HashMap<String, JsonObject> skillInfoMap = new HashMap<>();
         private final HashMap<String, JsonObject> inventoryInfoMap = new HashMap<>();
         private final HashMap<String, JsonObject> collectionInfoMap = new HashMap<>();
-        private List<String> profileIds = new ArrayList<>();
+        private final List<String> profileIds = new ArrayList<>();
         private JsonObject playerStatus = null;
-        private HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
-        private HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
-        private HashMap<String, Long> networth = new HashMap<>();
+        private final HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
+        private final HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
+        private final HashMap<String, Long> networth = new HashMap<>();
 
         public Profile(String uuid) {
             this.uuid = uuid;
         }
 
-        private AtomicBoolean updatingPlayerInfoState = new AtomicBoolean(false);
+        private final AtomicBoolean updatingPlayerInfoState = new AtomicBoolean(false);
         private long lastPlayerInfoState = 0;
-        private AtomicBoolean updatingPlayerStatusState = new AtomicBoolean(false);
-        private AtomicBoolean updatingGuildInfoState = new AtomicBoolean(false);
+        private final AtomicBoolean updatingPlayerStatusState = new AtomicBoolean(false);
+        private final AtomicBoolean updatingGuildInfoState = new AtomicBoolean(false);
         private long lastGuildInfoState = 0;
-        private AtomicBoolean updatingGuildStatusState = new AtomicBoolean(false);
+        private final AtomicBoolean updatingGuildStatusState = new AtomicBoolean(false);
 
         public JsonObject getPlayerStatus() {
             if(playerStatus != null) return playerStatus;
@@ -1147,9 +1147,9 @@ public class ProfileViewer {
         }
     }
 
-    private HashMap<String, JsonObject> nameToHypixelProfile = new HashMap<>();
-    private HashMap<String, JsonObject> uuidToHypixelProfile = new HashMap<>();
-    private HashMap<String, Profile> uuidToProfileMap = new HashMap<>();
+    private final HashMap<String, JsonObject> nameToHypixelProfile = new HashMap<>();
+    private final HashMap<String, JsonObject> uuidToHypixelProfile = new HashMap<>();
+    private final HashMap<String, Profile> uuidToProfileMap = new HashMap<>();
 
     public void getHypixelProfile(String name, Consumer<JsonObject> callback) {
         String nameF = name.toLowerCase();
@@ -1245,7 +1245,7 @@ public class ProfileViewer {
     }
 
     private static JsonObject resourceCollection = null;
-    private static AtomicBoolean updatingResourceCollection = new AtomicBoolean(false);
+    private static final AtomicBoolean updatingResourceCollection = new AtomicBoolean(false);
     public static JsonObject getResourceCollectionInformation() {
         if(resourceCollection != null) return resourceCollection;
         if(updatingResourceCollection.get()) return null;

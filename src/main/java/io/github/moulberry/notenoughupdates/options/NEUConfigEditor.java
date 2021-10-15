@@ -59,16 +59,16 @@ public class NEUConfigEditor extends GuiElement {
     private final LerpingInteger optionsScroll = new LerpingInteger(0, 150);
     private final LerpingInteger categoryScroll = new LerpingInteger(0, 150);
 
-    private LinkedHashMap<String, ConfigProcessor.ProcessedCategory> processedConfig;
-    private TreeMap<String, Set<ConfigProcessor.ProcessedOption>> searchOptionMap = new TreeMap<>();
-    private HashMap<ConfigProcessor.ProcessedOption, ConfigProcessor.ProcessedCategory> categoryForOption = new HashMap<>();
+    private final LinkedHashMap<String, ConfigProcessor.ProcessedCategory> processedConfig;
+    private final TreeMap<String, Set<ConfigProcessor.ProcessedOption>> searchOptionMap = new TreeMap<>();
+    private final HashMap<ConfigProcessor.ProcessedOption, ConfigProcessor.ProcessedCategory> categoryForOption = new HashMap<>();
 
     private Set<ConfigProcessor.ProcessedCategory> searchedCategories = null;
     private Map<ConfigProcessor.ProcessedCategory, Set<Integer>> searchedAccordions = null;
     private Set<ConfigProcessor.ProcessedOption> searchedOptions = null;
 
-    private LerpingInteger minimumSearchSize = new LerpingInteger(0, 150);
-    private GuiElementTextField searchField = new GuiElementTextField("", 0, 20, 0);
+    private final LerpingInteger minimumSearchSize = new LerpingInteger(0, 150);
+    private final GuiElementTextField searchField = new GuiElementTextField("", 0, 20, 0);
 
     public NEUConfigEditor(Config config) {
         this(config, null);

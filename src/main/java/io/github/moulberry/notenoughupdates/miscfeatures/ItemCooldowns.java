@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 public class ItemCooldowns {
 
-    private static Map<ItemStack, Float> durabilityOverrideMap = new HashMap<>();
+    private static final Map<ItemStack, Float> durabilityOverrideMap = new HashMap<>();
     public static long pickaxeUseCooldownMillisRemaining = -1;
     private static long treecapitatorCooldownMillisRemaining = -1;
     private static long lastMillis = 0;
@@ -108,10 +108,10 @@ public class ItemCooldowns {
         }
     }
 
-    private static Pattern PICKAXE_ABILITY_REGEX = Pattern.compile("\\u00a7r\\u00a7aYou used your " +
+    private static final Pattern PICKAXE_ABILITY_REGEX = Pattern.compile("\\u00a7r\\u00a7aYou used your " +
             "\\u00a7r\\u00a7..+ \\u00a7r\\u00a7aPickaxe Ability!\\u00a7r");
 
-    private static Pattern PICKAXE_COOLDOWN_LORE_REGEX = Pattern.compile("\\u00a78Cooldown: \\u00a7a(\\d+)s");
+    private static final Pattern PICKAXE_COOLDOWN_LORE_REGEX = Pattern.compile("\\u00a78Cooldown: \\u00a7a(\\d+)s");
 
     private static boolean isPickaxe(String internalname) {
         if(internalname == null) return false;
@@ -120,15 +120,10 @@ public class ItemCooldowns {
             return true;
         } else if(internalname.contains("_DRILL_")) {
             char lastChar = internalname.charAt(internalname.length()-1);
-            if(lastChar >= '0' && lastChar <= '9') {
-                return true;
-            }
+            return lastChar >= '0' && lastChar <= '9';
         } else if(internalname.equals("DIVAN_DRILL")){
             return true;
-        } else if(internalname.equals("GEMSTONE_GAUNTLET")){
-            return true;
-        }
-        return false;
+        } else return internalname.equals("GEMSTONE_GAUNTLET");
     }
 
     private static void updatePickaxeCooldown() {

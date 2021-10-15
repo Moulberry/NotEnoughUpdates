@@ -106,38 +106,38 @@ public class CustomAH extends Gui {
     public int guiLeft = -1;
     public int guiTop = -1;
 
-    private Category CATEGORY_SWORD = new Category("sword", "Swords", "diamond_sword");
-    private Category CATEGORY_ARMOR = new Category("armor", "Armor", "diamond_chestplate");
-    private Category CATEGORY_BOWS = new Category("bow", "Bows", "bow");
-    private Category CATEGORY_ACCESSORIES = new Category("accessories", "Accessories", "diamond");
+    private final Category CATEGORY_SWORD = new Category("sword", "Swords", "diamond_sword");
+    private final Category CATEGORY_ARMOR = new Category("armor", "Armor", "diamond_chestplate");
+    private final Category CATEGORY_BOWS = new Category("bow", "Bows", "bow");
+    private final Category CATEGORY_ACCESSORIES = new Category("accessories", "Accessories", "diamond");
 
-    private Category CATEGORY_FISHING_ROD = new Category("fishingrod", "Fishing Rods", "fishing_rod");
-    private Category CATEGORY_PICKAXE = new Category("pickaxe", "Pickaxes", "iron_pickaxe");
-    private Category CATEGORY_AXE = new Category("axe", "Axes", "iron_axe");
-    private Category CATEGORY_SHOVEL = new Category("shovel", "Shovels", "iron_shovel");
+    private final Category CATEGORY_FISHING_ROD = new Category("fishingrod", "Fishing Rods", "fishing_rod");
+    private final Category CATEGORY_PICKAXE = new Category("pickaxe", "Pickaxes", "iron_pickaxe");
+    private final Category CATEGORY_AXE = new Category("axe", "Axes", "iron_axe");
+    private final Category CATEGORY_SHOVEL = new Category("shovel", "Shovels", "iron_shovel");
 
-    private Category CATEGORY_PET_ITEM = new Category("petitem", "Pet Items", "lead");
+    private final Category CATEGORY_PET_ITEM = new Category("petitem", "Pet Items", "lead");
 
-    private Category CATEGORY_EBOOKS = new Category("ebook", "Enchanted Books", "enchanted_book");
-    private Category CATEGORY_POTIONS = new Category("potion", "Potions", "potion");
-    private Category CATEGORY_TRAVEL_SCROLLS = new Category("travelscroll", "Travel Scrolls", "map");
+    private final Category CATEGORY_EBOOKS = new Category("ebook", "Enchanted Books", "enchanted_book");
+    private final Category CATEGORY_POTIONS = new Category("potion", "Potions", "potion");
+    private final Category CATEGORY_TRAVEL_SCROLLS = new Category("travelscroll", "Travel Scrolls", "map");
 
-    private Category CATEGORY_REFORGE_STONES = new Category("reforgestone", "Reforge Stones", "anvil");
-    private Category CATEGORY_RUNES = new Category("rune", "Runes", "magma_cream");
-    private Category CATEGORY_FURNITURE = new Category("furniture", "Furniture", "armor_stand");
+    private final Category CATEGORY_REFORGE_STONES = new Category("reforgestone", "Reforge Stones", "anvil");
+    private final Category CATEGORY_RUNES = new Category("rune", "Runes", "magma_cream");
+    private final Category CATEGORY_FURNITURE = new Category("furniture", "Furniture", "armor_stand");
 
-    private Category CATEGORY_COMBAT = new Category("weapon", "Combat", "golden_sword", CATEGORY_SWORD,
+    private final Category CATEGORY_COMBAT = new Category("weapon", "Combat", "golden_sword", CATEGORY_SWORD,
             CATEGORY_BOWS, CATEGORY_ARMOR, CATEGORY_ACCESSORIES);
-    private Category CATEGORY_TOOL = new Category("", "Tools", "diamond_pickaxe", CATEGORY_FISHING_ROD, CATEGORY_PICKAXE,
+    private final Category CATEGORY_TOOL = new Category("", "Tools", "diamond_pickaxe", CATEGORY_FISHING_ROD, CATEGORY_PICKAXE,
             CATEGORY_AXE, CATEGORY_SHOVEL);
-    private Category CATEGORY_PET = new Category("pet", "Pets", "bone", CATEGORY_PET_ITEM);
-    private Category CATEGORY_CONSUMABLES = new Category("consumables", "Consumables", "apple", CATEGORY_EBOOKS, CATEGORY_POTIONS,
+    private final Category CATEGORY_PET = new Category("pet", "Pets", "bone", CATEGORY_PET_ITEM);
+    private final Category CATEGORY_CONSUMABLES = new Category("consumables", "Consumables", "apple", CATEGORY_EBOOKS, CATEGORY_POTIONS,
             CATEGORY_TRAVEL_SCROLLS);
-    private Category CATEGORY_BLOCKS = new Category("blocks", "Blocks", "cobblestone");
-    private Category CATEGORY_MISC = new Category("misc", "Misc", "stick", CATEGORY_REFORGE_STONES, CATEGORY_RUNES,
+    private final Category CATEGORY_BLOCKS = new Category("blocks", "Blocks", "cobblestone");
+    private final Category CATEGORY_MISC = new Category("misc", "Misc", "stick", CATEGORY_REFORGE_STONES, CATEGORY_RUNES,
             CATEGORY_FURNITURE);
 
-    private Category[] mainCategories = new Category[]{CATEGORY_COMBAT, CATEGORY_TOOL, CATEGORY_PET,
+    private final Category[] mainCategories = new Category[]{CATEGORY_COMBAT, CATEGORY_TOOL, CATEGORY_PET,
             CATEGORY_CONSUMABLES, CATEGORY_BLOCKS, CATEGORY_MISC};
 
     private static final int SORT_MODE_HIGH = 0;
@@ -175,23 +175,23 @@ public class CustomAH extends Gui {
     private int binFilter = BIN_FILTER_ALL;
     private int enchFilter = ENCH_FILTER_ALL;
 
-    private static ItemStack DUNGEON_SORT = Utils.createItemStack(Item.getItemFromBlock(Blocks.deadbush),
+    private static final ItemStack DUNGEON_SORT = Utils.createItemStack(Item.getItemFromBlock(Blocks.deadbush),
             EnumChatFormatting.GREEN + "Dungeon Sorting");
-    private static ItemStack CONTROL_SORT = Utils.createItemStack(Item.getItemFromBlock(Blocks.hopper),
+    private static final ItemStack CONTROL_SORT = Utils.createItemStack(Item.getItemFromBlock(Blocks.hopper),
             EnumChatFormatting.GREEN + "Sort");
-    private static ItemStack CONTROL_TIER = Utils.createItemStack(Items.ender_eye,
+    private static final ItemStack CONTROL_TIER = Utils.createItemStack(Items.ender_eye,
             EnumChatFormatting.GREEN + "Item Tier");
-    private static ItemStack CONTROL_MYAUC = Utils.createItemStack(Items.gold_ingot,
+    private static final ItemStack CONTROL_MYAUC = Utils.createItemStack(Items.gold_ingot,
             EnumChatFormatting.GREEN + "My Auctions");
-    private static ItemStack CONTROL_BIN = Utils.createItemStack(Item.getItemFromBlock(Blocks.golden_rail),
+    private static final ItemStack CONTROL_BIN = Utils.createItemStack(Item.getItemFromBlock(Blocks.golden_rail),
             EnumChatFormatting.GREEN + "BIN Filter");
-    private static ItemStack CONTROL_ENCH = Utils.createItemStack(Items.enchanted_book,
+    private static final ItemStack CONTROL_ENCH = Utils.createItemStack(Items.enchanted_book,
             EnumChatFormatting.GREEN + "Enchant Filter");
-    private static ItemStack CONTROL_STATS = Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block),
+    private static final ItemStack CONTROL_STATS = Utils.createItemStack(Item.getItemFromBlock(Blocks.command_block),
             EnumChatFormatting.GREEN + "Stats for nerds");
-    private ItemStack[] controls = {DUNGEON_SORT, CONTROL_SORT, CONTROL_TIER, null, CONTROL_MYAUC, null, CONTROL_BIN, CONTROL_ENCH, CONTROL_STATS};
+    private final ItemStack[] controls = {DUNGEON_SORT, CONTROL_SORT, CONTROL_TIER, null, CONTROL_MYAUC, null, CONTROL_BIN, CONTROL_ENCH, CONTROL_STATS};
 
-    private NEUManager manager;
+    private final NEUManager manager;
 
     public CustomAH(NEUManager manager) {
         this.manager = manager;
@@ -439,7 +439,7 @@ public class CustomAH extends Gui {
         GlStateManager.disableBlend();
     }
 
-    private HashMap<Pattern, Long> timeParseMap = new HashMap<>();
+    private final HashMap<Pattern, Long> timeParseMap = new HashMap<>();
 
     public long prettyTimeToMillis(String endsInStr) {
         if (timeParseMap.isEmpty()) {
@@ -1345,7 +1345,7 @@ public class CustomAH extends Gui {
         return matches;
     }
 
-    private ExecutorService es = Executors.newSingleThreadExecutor();
+    private final ExecutorService es = Executors.newSingleThreadExecutor();
 
     public void updateSearch() {
         if (!NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse) {

@@ -14,7 +14,7 @@ import java.io.IOException;
 public class GuiPositionEditor extends GuiScreen {
 
     private final Position position;
-    private Position originalPosition;
+    private final Position originalPosition;
     private final int elementWidth;
     private final int elementHeight;
     private final Runnable renderCallback;

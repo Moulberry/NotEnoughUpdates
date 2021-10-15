@@ -57,14 +57,14 @@ public class SBGamemodes {
     public enum HardcoreMode {
         NORMAL("Normal", "Normal"),
         SOFTCORE(EnumChatFormatting.RED+"Soft"+EnumChatFormatting.DARK_RED+"core\n" +
-                "You only have 1 life.\nDying will remove your hardcore status.\nDeaths to the void or \'unknown\' are exempted.",
+                "You only have 1 life.\nDying will remove your hardcore status.\nDeaths to the void or 'unknown' are exempted.",
                 "You died.", "You fell into the void"),
         HARDCORE(EnumChatFormatting.DARK_RED+"Hardcore\n" +
                 "You only have 1 life.\nDying will remove your hardcore status.");
 
         public final String display;
         public final String desc;
-        private String[] exemptions;
+        private final String[] exemptions;
 
         HardcoreMode(String display, String... exemptions) {
             this.display = display.split("\n")[0];
@@ -145,7 +145,7 @@ public class SBGamemodes {
     }
 
     public static class GamemodeWrapper {
-        private HashMap<String, Gamemode> currentGamemode;
+        private final HashMap<String, Gamemode> currentGamemode;
 
         public GamemodeWrapper(HashMap<String, Gamemode> currentGamemode) {
             this.currentGamemode = currentGamemode;
@@ -247,11 +247,7 @@ public class SBGamemodes {
 
         boolean inDungeons = SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon");
 
-        if((EnumChatFormatting.YELLOW+"Break a log").equals(SBInfo.getInstance().objective)) {
-            getGamemode().locked = false;
-        } else {
-            getGamemode().locked = true;
-        }
+        getGamemode().locked = !(EnumChatFormatting.YELLOW + "Break a log").equals(SBInfo.getInstance().objective);
 
         IronmanMode ironmanMode = getGamemode().ironmanMode;
         GuiScreen gui = Minecraft.getMinecraft().currentScreen;

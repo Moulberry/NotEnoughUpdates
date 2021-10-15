@@ -98,7 +98,7 @@ public class SlotLocking {
 
     public void changedSlot(int slotNumber){
         int pingModifier = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSwapDelay;
-        if(pingModifier == 0){ return; };
+        if(pingModifier == 0){ return; }
         if(!isSlotIndexLocked(slotNumber)){ return;}
         long currentTimeMilis = System.currentTimeMillis();
 
@@ -112,7 +112,7 @@ public class SlotLocking {
 
     public boolean isSwapedSlotLocked(){
         int pingModifier = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSwapDelay;
-        if(pingModifier == 0){ return false; };
+        if(pingModifier == 0){ return false; }
         long currentTimeMilis = System.currentTimeMillis();
 
         for (int i = 0; i < slotChanges.length; i++) {
@@ -123,7 +123,7 @@ public class SlotLocking {
         return false;
     }
 
-    private long[] slotChanges = new long[9];
+    private final long[] slotChanges = new long[9];
 
     public void saveConfig(File file) {
         try {

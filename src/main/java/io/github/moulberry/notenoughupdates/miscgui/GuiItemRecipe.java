@@ -31,12 +31,12 @@ public class GuiItemRecipe extends GuiScreen {
     private static final ResourceLocation resourcePacksTexture = new ResourceLocation("textures/gui/resource_packs.png");
     private static final ResourceLocation craftingTableGuiTextures = new ResourceLocation("textures/gui/container/crafting_table.png");
 
-    private List<ItemStack[]> craftMatrices;
-    private List<JsonObject> results;
+    private final List<ItemStack[]> craftMatrices;
+    private final List<JsonObject> results;
     private int currentIndex = 0;
 
-    private String title;
-    private NEUManager manager;
+    private final String title;
+    private final NEUManager manager;
 
     public int guiLeft = 0;
     public int guiTop = 0;

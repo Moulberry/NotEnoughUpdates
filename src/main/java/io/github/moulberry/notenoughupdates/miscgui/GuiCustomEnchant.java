@@ -138,7 +138,7 @@ public class GuiCustomEnchant extends Gui {
         public int rotationDeg;
     }
 
-    private List<ExperienceOrb> orbs = new ArrayList<>();
+    private final List<ExperienceOrb> orbs = new ArrayList<>();
     private int orbTargetX = 0;
     private int orbTargetY = 0;
 
@@ -162,16 +162,16 @@ public class GuiCustomEnchant extends Gui {
 
     private int removingEnchantPlayerLevel = -1;
 
-    private GuiElementTextField searchField = new GuiElementTextField("", GuiElementTextField.SCISSOR_TEXT);
+    private final GuiElementTextField searchField = new GuiElementTextField("", GuiElementTextField.SCISSOR_TEXT);
 
-    private HashMap<String, Integer> playerEnchantIds = new HashMap<>();
+    private final HashMap<String, Integer> playerEnchantIds = new HashMap<>();
 
     private boolean searchRemovedFromApplicable = false;
     private boolean searchRemovedFromRemovable = false;
-    private List<Enchantment> applicable = new ArrayList<>();
-    private List<Enchantment> removable = new ArrayList<>();
+    private final List<Enchantment> applicable = new ArrayList<>();
+    private final List<Enchantment> removable = new ArrayList<>();
 
-    private HashMap<Integer, Enchantment> enchanterEnchLevels = new HashMap<>();
+    private final HashMap<Integer, Enchantment> enchanterEnchLevels = new HashMap<>();
     private Enchantment enchanterCurrentEnch = null;
 
     public Random random = new Random();
@@ -179,10 +179,10 @@ public class GuiCustomEnchant extends Gui {
     private EnchantState currentState = EnchantState.NO_ITEM;
     private EnchantState lastState = EnchantState.NO_ITEM;
 
-    private LerpingInteger leftScroll = new LerpingInteger(0, 150);
-    private LerpingInteger rightScroll = new LerpingInteger(0, 150);
+    private final LerpingInteger leftScroll = new LerpingInteger(0, 150);
+    private final LerpingInteger rightScroll = new LerpingInteger(0, 150);
 
-    private LerpingFloat arrowAmount = new LerpingFloat(0, 100);
+    private final LerpingFloat arrowAmount = new LerpingFloat(0, 100);
 
     private static final int X_SIZE = 364;
     private static final int Y_SIZE = 215;

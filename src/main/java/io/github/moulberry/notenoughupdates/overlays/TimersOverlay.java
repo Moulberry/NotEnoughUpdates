@@ -42,7 +42,7 @@ public class TimersOverlay extends TextOverlay {
     private static final Pattern FETCHUR2_PATTERN = Pattern.compile("\u00a7e\\[NPC] Fetchur\u00a7f: \u00a7rcome back another time, maybe tmrw\u00a7r");
 
 
-    private boolean hideGodpot = false;
+    private final boolean hideGodpot = false;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onChatMessageReceived(ClientChatReceivedEvent event) {

@@ -57,6 +57,6 @@ public abstract class GuiOptionEditor {
     public boolean mouseInputOverlay(int x, int y, int width, int mouseX, int mouseY) {
         return false;
     }
-    public void renderOverlay(int x, int y, int width) {};
+    public void renderOverlay(int x, int y, int width) {}
 
 }

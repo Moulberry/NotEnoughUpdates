@@ -48,8 +48,8 @@ public class GuiInvButtonEditor extends GuiScreen {
 
     private static final String sharePrefix = "NEUBUTTONS/";
 
-    private int xSize = 176;
-    private int ySize = 166;
+    private final int xSize = 176;
+    private final int ySize = 166;
 
     private int guiLeft;
     private int guiTop;
@@ -58,13 +58,13 @@ public class GuiInvButtonEditor extends GuiScreen {
     private static final int ICON_TYPES = 3;
     private int iconTypeIndex = 0;
 
-    private int editorXSize = 150;
-    private int editorYSize = 204;
+    private final int editorXSize = 150;
+    private final int editorYSize = 204;
     private int editorLeft;
     private int editorTop;
 
-    private GuiElementTextField commandTextField = new GuiElementTextField("", editorXSize-14, 16, GuiElementTextField.SCALE_TEXT);
-    private GuiElementTextField iconTextField = new GuiElementTextField("", editorXSize-14, 16, GuiElementTextField.SCALE_TEXT);
+    private final GuiElementTextField commandTextField = new GuiElementTextField("", editorXSize-14, 16, GuiElementTextField.SCALE_TEXT);
+    private final GuiElementTextField iconTextField = new GuiElementTextField("", editorXSize-14, 16, GuiElementTextField.SCALE_TEXT);
 
     private static final HashSet<String> prioritisedIcons = new HashSet<>();
     static {
@@ -177,11 +177,11 @@ public class GuiInvButtonEditor extends GuiScreen {
 
     private final List<String> searchedIcons = new ArrayList<>();
 
-    private LerpingInteger itemScroll = new LerpingInteger(0, 100);
+    private final LerpingInteger itemScroll = new LerpingInteger(0, 100);
 
     private NEUConfig.InventoryButton editingButton = null;
 
-    private static HashMap<String, ItemStack> skullMap = new HashMap<>();
+    private static final HashMap<String, ItemStack> skullMap = new HashMap<>();
 
     public static void renderIcon(String icon, int x, int y) {
         if(extraIcons == null) {
@@ -695,8 +695,8 @@ public class GuiInvButtonEditor extends GuiScreen {
         }
     }
 
-    private ExecutorService searchES = Executors.newSingleThreadExecutor();
-    private AtomicInteger searchId = new AtomicInteger(0);
+    private final ExecutorService searchES = Executors.newSingleThreadExecutor();
+    private final AtomicInteger searchId = new AtomicInteger(0);
 
     public void search() {
         final int thisSearchId = searchId.incrementAndGet();

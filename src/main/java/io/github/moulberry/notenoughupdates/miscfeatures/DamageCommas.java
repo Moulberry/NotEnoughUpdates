@@ -92,7 +92,7 @@ public class DamageCommas {
             newFormatted = newFormattedCrit;
         }
 
-        ChatComponentText finalComponent = new ChatComponentText(prefix+newFormatted.toString()+suffix);
+        ChatComponentText finalComponent = new ChatComponentText(prefix+ newFormatted +suffix);
 
         replacementMap.put(entity, finalComponent);
         return finalComponent;

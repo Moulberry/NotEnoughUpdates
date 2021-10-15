@@ -47,10 +47,7 @@ public class GuiOptionEditorColour extends GuiOptionEditor {
 
     @Override
     public boolean mouseInputOverlay(int x, int y, int width, int mouseX, int mouseY) {
-        if(colourElement != null && colourElement.mouseInput(mouseX, mouseY)) {
-            return true;
-        }
-        return false;
+        return colourElement != null && colourElement.mouseInput(mouseX, mouseY);
     }
 
     @Override
@@ -71,11 +68,7 @@ public class GuiOptionEditorColour extends GuiOptionEditor {
 
     @Override
     public boolean keyboardInput() {
-        if(colourElement != null && colourElement.keyboardInput()) {
-            return true;
-        }
-
-        return false;
+        return colourElement != null && colourElement.keyboardInput();
     }
 
 }

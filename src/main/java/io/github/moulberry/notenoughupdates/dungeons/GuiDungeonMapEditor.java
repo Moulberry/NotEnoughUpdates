@@ -45,20 +45,20 @@ public class GuiDungeonMapEditor extends GuiScreen {
     private int guiLeft;
     private int guiTop;
 
-    private List<Button> buttons = new ArrayList<>();
+    private final List<Button> buttons = new ArrayList<>();
 
-    private GuiElementTextField blurField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
+    private final GuiElementTextField blurField = new GuiElementTextField("", GuiElementTextField.NUM_ONLY | GuiElementTextField.NO_SPACE);
     private GuiElementColour activeColourEditor = null;
 
     private Field clickedSlider;
 
     class Button {
-        private int id;
-        private int x;
-        private int y;
+        private final int id;
+        private final int x;
+        private final int y;
         private String text;
         private Color colour = new Color(-1, true);
-        private Field option;
+        private final Field option;
         private String displayName;
         private String desc;
 
@@ -591,7 +591,7 @@ public class GuiDungeonMapEditor extends GuiScreen {
                 if(id >= 6 && id <= 17) {
                     options.dmBorderStyle = id-6; break;
                 }
-        };
+        }
     }
 
     private boolean isButtonPressed(int id) {

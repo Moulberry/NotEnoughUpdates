@@ -26,8 +26,8 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
 
     private static final ResourceLocation DELETE = new ResourceLocation("notenoughupdates:core/delete.png");
 
-    private String[] exampleText;
-    private List<Integer> activeText;
+    private final String[] exampleText;
+    private final List<Integer> activeText;
     private int currentDragging = -1;
     private int dragStartIndex = -1;
 

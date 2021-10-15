@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 public class HTMLInfoPane extends TextInfoPane {
 
-    private static WikiModel wikiModel;
+    private static final WikiModel wikiModel;
 
     private final int ZOOM_FACTOR = 2;
     private final int IMAGE_WIDTH = 400;
@@ -97,7 +97,7 @@ public class HTMLInfoPane extends TextInfoPane {
         File f = manager.getWebFile(wikiUrl);
         if(f == null) {
             return new HTMLInfoPane(overlay, manager, "error", "error","Failed to load wiki url: "+ wikiUrl);
-        };
+        }
 
         StringBuilder sb = new StringBuilder();
         try(BufferedReader br = new BufferedReader(new InputStreamReader(
@@ -205,7 +205,7 @@ public class HTMLInfoPane extends TextInfoPane {
                         }
 
                         try(InputStream is = new FileInputStream(itemsZip)) {
-                            manager.unzip(is, manager.configLocation);
+                            NEUManager.unzip(is, manager.configLocation);
                         }
 
                         itemsZip.delete();

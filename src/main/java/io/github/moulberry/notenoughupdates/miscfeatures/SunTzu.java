@@ -16,9 +16,9 @@ public class SunTzu {
     private static boolean enabled = false;
     private static int quoteNum = 0;
 
-    private static Random rand = new Random();
+    private static final Random rand = new Random();
 
-    private static String[] quotes = new String[] {
+    private static final String[] quotes = new String[] {
             "Appear weak when you are strong, and strong when you are weak.",
             "The supreme art of war is to subdue the enemy without fighting.",
             "If you know the enemy and know yourself, you need not fear the result of a hundred battles.",

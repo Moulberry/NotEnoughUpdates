@@ -6,7 +6,7 @@ import net.minecraft.client.gui.FontRenderer;
 public class GuiElementText extends GuiElement {
 
     protected String text;
-    private int colour;
+    private final int colour;
 
     public GuiElementText(String text, int colour) {
         this.text = text;

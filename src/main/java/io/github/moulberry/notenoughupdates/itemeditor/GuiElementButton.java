@@ -4,7 +4,7 @@ import java.awt.*;
 
 public class GuiElementButton extends GuiElementText {
 
-    private Runnable callback;
+    private final Runnable callback;
 
     public GuiElementButton(String text, int colour, Runnable callback) {
         super(text, colour);

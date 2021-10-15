@@ -34,7 +34,7 @@ public class GuiElementTextField extends GuiElement {
 
     private String prependText = "";
 
-    private GuiTextField textField = new GuiTextField(0, Minecraft.getMinecraft().fontRendererObj,
+    private final GuiTextField textField = new GuiTextField(0, Minecraft.getMinecraft().fontRendererObj,
             0 , 0, 0, 0);
 
     private int customBorderColour = -1;
@@ -469,8 +469,7 @@ public class GuiElementTextField extends GuiElement {
                         bold = c == 'l' || c == 'L';
                     }
                 }
-                sectionSignPrev = false;
-                if(c == '\u00B6') sectionSignPrev = true;
+                sectionSignPrev = c == '\u00B6';
 
                 if(c == '\n') {
                     if(i >= leftIndex && i < rightIndex) {

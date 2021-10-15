@@ -112,7 +112,7 @@ public class CrystalOverlay {
     private static double posLastUpdateY;
     private static double posLastUpdateZ;
 
-    private static HashMap<String, CrystalType> skullId = new HashMap<>();
+    private static final HashMap<String, CrystalType> skullId = new HashMap<>();
     static {
         skullId.put("d9c3168a-8654-3dd8-b297-4d3b7e55b95a", CrystalType.FARMING_MINION);
         skullId.put("949d100c-aa74-3b09-a642-af5529f808aa", CrystalType.MINING_MINION);

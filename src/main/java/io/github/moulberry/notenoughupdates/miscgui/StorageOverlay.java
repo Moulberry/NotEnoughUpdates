@@ -50,10 +50,10 @@ public class StorageOverlay extends GuiElement {
 
     private Framebuffer framebuffer = null;
 
-    private Set<Vector2f> enchantGlintRenderLocations = new HashSet<>();
+    private final Set<Vector2f> enchantGlintRenderLocations = new HashSet<>();
 
-    public static final ResourceLocation STORAGE_PREVIEW_TEXTURES[] = new ResourceLocation[4];
-    private static final ResourceLocation STORAGE_TEXTURES[] = new ResourceLocation[4];
+    public static final ResourceLocation[] STORAGE_PREVIEW_TEXTURES = new ResourceLocation[4];
+    private static final ResourceLocation[] STORAGE_TEXTURES = new ResourceLocation[4];
     private static final ResourceLocation STORAGE_ICONS_TEXTURE = new ResourceLocation("notenoughupdates:storage_gui/storage_icons.png");
     private static final ResourceLocation STORAGE_PANE_CTM_TEXTURE = new ResourceLocation("notenoughupdates:storage_gui/storage_gui_pane_ctm.png");
     private static final ResourceLocation[] LOAD_CIRCLE_SEQ = new ResourceLocation[11];
@@ -85,9 +85,9 @@ public class StorageOverlay extends GuiElement {
         return INSTANCE;
     }
 
-    private GuiElementTextField searchBar = new GuiElementTextField("", 88, 10,
+    private final GuiElementTextField searchBar = new GuiElementTextField("", 88, 10,
                     GuiElementTextField.SCALE_TEXT | GuiElementTextField.DISABLE_BG);
-    private GuiElementTextField renameStorageField = new GuiElementTextField("", 100, 13,
+    private final GuiElementTextField renameStorageField = new GuiElementTextField("", 100, 13,
             GuiElementTextField.COLOUR);
 
     private int editingNameId = -1;
@@ -110,8 +110,8 @@ public class StorageOverlay extends GuiElement {
     private int scrollVelocity = 0;
     private long lastScroll = 0;
 
-    private int[][] isPaneCaches = new int[40][];
-    private int[][] ctmIndexCaches = new int[40][];
+    private final int[][] isPaneCaches = new int[40][];
+    private final int[][] ctmIndexCaches = new int[40][];
 
     private int desiredHeightSwitch = -1;
     private int desiredHeightMX = -1;
@@ -122,7 +122,7 @@ public class StorageOverlay extends GuiElement {
 
     private int scrollGrabOffset = -1;
 
-    private LerpingInteger scroll = new LerpingInteger(0, 200);
+    private final LerpingInteger scroll = new LerpingInteger(0, 200);
 
     private int getMaximumScroll() {
         synchronized(StorageManager.getInstance().storageConfig.displayToStorageIdMapRender) {
@@ -1293,13 +1293,7 @@ public class StorageOverlay extends GuiElement {
     private static boolean shouldConnect(int paneIndex1, int paneIndex2) {
         if(paneIndex1 == 16 || paneIndex2 == 16) return false;
         if(paneIndex1 < 1 || paneIndex2 < 1) return false;
-        if(paneIndex1 == paneIndex2) {
-            return true;
-        }
-        /*if((paneIndex1 == 17) == (paneIndex2 == 17)) {
-            return true;
-        }*/
-        return false;
+        return paneIndex1 == paneIndex2;
 
     }
 
@@ -1334,7 +1328,7 @@ public class StorageOverlay extends GuiElement {
         return ctmIndex;
     }
 
-    private static String CHROMA_STR = "230:255:255:0:0";
+    private static final String CHROMA_STR = "230:255:255:0:0";
     public static int getRGBFromPane(int paneType) {
         int rgb = -1;
         EnumChatFormatting formatting = EnumChatFormatting.WHITE;
@@ -1904,9 +1898,7 @@ public class StorageOverlay extends GuiElement {
                         searchBar.getText().isEmpty()) {
                     searchBar.setFocus(false);
                 }
-            } else if(Keyboard.getEventKey() == Keyboard.KEY_E) {
-                return false;
-            }
+            } else return Keyboard.getEventKey() != Keyboard.KEY_E;
 
         }
 

@@ -42,11 +42,11 @@ public class CapeManager {
     public long lastCapeSynced = 0;
 
     public Pair<NEUCape, String> localCape = null;
-    private HashMap<String, Pair<NEUCape, String>> capeMap = new HashMap<>();
+    private final HashMap<String, Pair<NEUCape, String>> capeMap = new HashMap<>();
 
     private int permSyncTries = 5;
     private boolean allAvailable = false;
-    private HashSet<String> availableCapes = new HashSet<>();
+    private final HashSet<String> availableCapes = new HashSet<>();
 
     public JsonObject lastJsonSync = null;
 

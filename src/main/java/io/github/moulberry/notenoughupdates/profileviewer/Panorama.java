@@ -17,8 +17,8 @@ import org.lwjgl.util.glu.Project;
 
 public class Panorama {
 
-    private static TexLoc tl = new TexLoc(97, 19, Keyboard.KEY_P);
-    private static TexLoc tl2 = new TexLoc(37, 80, Keyboard.KEY_L);
+    private static final TexLoc tl = new TexLoc(97, 19, Keyboard.KEY_P);
+    private static final TexLoc tl2 = new TexLoc(37, 80, Keyboard.KEY_L);
 
     private static ResourceLocation backgroundTexture = null;
 

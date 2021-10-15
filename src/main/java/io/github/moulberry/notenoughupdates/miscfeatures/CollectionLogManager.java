@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
 
 public class CollectionLogManager {
 
-    private static CollectionLogManager INSTANCE = new CollectionLogManager();
+    private static final CollectionLogManager INSTANCE = new CollectionLogManager();
 
     public static CollectionLogManager getInstance() {
         return INSTANCE;

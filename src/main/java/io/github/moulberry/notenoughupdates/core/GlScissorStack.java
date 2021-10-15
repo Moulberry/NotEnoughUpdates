@@ -44,7 +44,7 @@ public class GlScissorStack {
         }
     }
 
-    private static LinkedList<Bounds> boundsStack = new LinkedList<>();
+    private static final LinkedList<Bounds> boundsStack = new LinkedList<>();
 
     public static void push(int left, int top, int right, int bottom, ScaledResolution scaledResolution) {
         if(right < left) {

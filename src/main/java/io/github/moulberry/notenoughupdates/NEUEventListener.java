@@ -1726,7 +1726,7 @@ public class NEUEventListener {
 
 
 
-    private HashSet<String> percentStats = new HashSet<>();
+    private final HashSet<String> percentStats = new HashSet<>();
     {
         percentStats.add("bonus_attack_speed");
         percentStats.add("crit_damage");
@@ -2370,7 +2370,7 @@ public class NEUEventListener {
 
     }
 
-    private Pattern xpLevelPattern = Pattern.compile("(.*) (\\xA7e(.*)\\xA76/\\xA7e(.*))");
+    private final Pattern xpLevelPattern = Pattern.compile("(.*) (\\xA7e(.*)\\xA76/\\xA7e(.*))");
 
     private void onItemToolTipInternalNameNull(ItemTooltipEvent event){
         petToolTipXPExtendPetMenu(event);
@@ -2608,11 +2608,7 @@ public class NEUEventListener {
                 }
             }
 
-            if(k || m || n) {
-                copied = true;
-            } else {
-                copied = false;
-            }
+            copied = k || m || n;
         }
     }
 

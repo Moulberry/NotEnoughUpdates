@@ -19,11 +19,11 @@ public class RancherBootOverlay {
 
     private static int selectedIndex = 0;
 
-    private static HashMap<Integer, Integer> currentSpeeds = new HashMap<>();
-    private static GuiElementSlider slider = new GuiElementSlider(0, 0, 145, 100, 400, 1, 300, (val) -> {
+    private static final HashMap<Integer, Integer> currentSpeeds = new HashMap<>();
+    private static final GuiElementSlider slider = new GuiElementSlider(0, 0, 145, 100, 400, 1, 300, (val) -> {
         setValue(val.intValue());
     });
-    private static GuiElementTextField textField = new GuiElementTextField("", 48, 20, GuiElementTextField.NUM_ONLY);
+    private static final GuiElementTextField textField = new GuiElementTextField("", 48, 20, GuiElementTextField.NUM_ONLY);
     private static boolean textFieldClicked = false;
 
     public static boolean shouldReplace() {
@@ -38,9 +38,7 @@ public class RancherBootOverlay {
         if(tes.getPos().getY() != 0) return false;
         if(!tes.signText[1].getUnformattedText().equals("^^^^^^")) return false;
         if(!tes.signText[2].getUnformattedText().equals("Set your")) return false;
-        if(!tes.signText[3].getUnformattedText().equals("speed cap!")) return false;
-
-        return true;
+        return tes.signText[3].getUnformattedText().equals("speed cap!");
     }
 
     public static void render() {

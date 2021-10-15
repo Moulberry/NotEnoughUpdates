@@ -22,8 +22,8 @@ import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 
 public class HypixelApi {
-    private Gson gson = new Gson();
-    private ExecutorService es = Executors.newFixedThreadPool(3);
+    private final Gson gson = new Gson();
+    private final ExecutorService es = Executors.newFixedThreadPool(3);
 
     private static final int FAILS_BEFORE_SWITCH = 3;
     private int currentUrl = 0;

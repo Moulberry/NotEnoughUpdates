@@ -31,7 +31,7 @@ public class TutorialBase extends GuiScreen {
     protected static String title;
 
     private int page = 0;
-    private ResourceLocation screenshotBorder = new ResourceLocation("notenoughupdates:ss_border.jpg");
+    private final ResourceLocation screenshotBorder = new ResourceLocation("notenoughupdates:ss_border.jpg");
 
     protected ResourceLocation[] screenshots = null;
 

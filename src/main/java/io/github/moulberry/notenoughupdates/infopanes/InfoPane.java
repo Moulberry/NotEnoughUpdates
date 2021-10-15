@@ -27,7 +27,7 @@ public abstract class InfoPane extends Gui  {
                            int mouseY);
 
     public abstract void mouseInput(int width, int height, int mouseX, int mouseY, boolean mouseDown);
-    public void mouseInputOutside(){};
+    public void mouseInputOutside(){}
 
     public abstract boolean keyboardInput();
 

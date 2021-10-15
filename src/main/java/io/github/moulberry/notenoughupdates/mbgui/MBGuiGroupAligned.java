@@ -8,8 +8,8 @@ import java.util.List;
 public abstract class MBGuiGroupAligned extends MBGuiGroup {
 
     //Serialized
-    private List<MBGuiElement> children;
-    private boolean vertical;
+    private final List<MBGuiElement> children;
+    private final boolean vertical;
 
     public MBGuiGroupAligned(List<MBGuiElement> children, boolean vertical) {
         this.children = children;

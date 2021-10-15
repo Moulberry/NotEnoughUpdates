@@ -15,10 +15,10 @@ import java.util.*;
 public class MBGuiGroupFloating extends MBGuiGroup {
 
     private GuiScreen lastScreen = null;
-    private HashMap<MBGuiElement, Vector2f> childrenPositionOffset = new HashMap<>();
+    private final HashMap<MBGuiElement, Vector2f> childrenPositionOffset = new HashMap<>();
 
     //Serialized
-    private LinkedHashMap<MBGuiElement, MBAnchorPoint> children;
+    private final LinkedHashMap<MBGuiElement, MBAnchorPoint> children;
 
     public MBGuiGroupFloating(int width, int height, LinkedHashMap<MBGuiElement, MBAnchorPoint> children) {
         this.width = width;
