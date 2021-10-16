@@ -8,13 +8,7 @@ import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.inventory.GuiChest;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
@@ -25,7 +19,6 @@ import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector3f;
 
 import java.util.HashMap;
@@ -189,32 +182,35 @@ public class DwarvenMinesWaypoints {
 
     @SubscribeEvent
     public void onRenderLast(RenderWorldLastEvent event) {
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
+        if (SBInfo.getInstance().getLocation() == null) return;
+        if (!SBInfo.getInstance().getLocation().equals("mining_3")) return;
 
         int locWaypoint = NotEnoughUpdates.INSTANCE.config.mining.locWaypoints;
-
-        if(dynamicLocation != null && dynamicName != null &&
-                System.currentTimeMillis() - dynamicMillis < 30*1000) {
-            for(Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
-                if(entry.getKey().equals(dynamicLocation)) {
+        if (dynamicLocation != null && dynamicName != null &&
+                System.currentTimeMillis() - dynamicMillis < 30 * 1000) {
+            for (Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
+                if (entry.getKey().equals(dynamicLocation)) {
                     RenderUtils.renderWayPoint(dynamicName, new Vector3f(entry.getValue()).translate(0, 15, 0), event.partialTicks);
                     break;
                 }
             }
         }
-
-        if(locWaypoint >= 1) {
-            for(Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
-                if(locWaypoint >= 2) {
-                    RenderUtils.renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
+        String skyblockLocation = SBInfo.getInstance().location.toLowerCase();
+        if (locWaypoint >= 1) {
+            for (Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
+                if (locWaypoint >= 2) {
+                    RenderUtils.renderWayPoint(EnumChatFormatting.AQUA + entry.getKey(), entry.getValue(), event.partialTicks);
                 } else {
-                    for(String commissionName : MiningOverlay.commissionProgress.keySet()) {
-                        if(commissionName.toLowerCase().contains(entry.getKey().toLowerCase())) {
-                            if(commissionName.contains("Titanium")) {
-                                RenderUtils.renderWayPoint(EnumChatFormatting.WHITE+entry.getKey(), entry.getValue(), event.partialTicks);
+                    String commissionLocation = entry.getKey().toLowerCase();
+                    for (String commissionName : MiningOverlay.commissionProgress.keySet()) {
+                        if (NotEnoughUpdates.INSTANCE.config.mining.hideWaypointIfAtLocation)
+                            if (commissionLocation.equals(skyblockLocation)) break;
+
+                        if (commissionName.toLowerCase().contains(commissionLocation)) {
+                            if (commissionName.contains("Titanium")) {
+                                RenderUtils.renderWayPoint(EnumChatFormatting.WHITE + entry.getKey(), entry.getValue(), event.partialTicks);
                             } else {
-                                RenderUtils.renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
+                                RenderUtils.renderWayPoint(EnumChatFormatting.AQUA + entry.getKey(), entry.getValue(), event.partialTicks);
                             }
                         }
                     }

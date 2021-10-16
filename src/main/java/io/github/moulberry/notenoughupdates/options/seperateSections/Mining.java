@@ -31,6 +31,16 @@ public class Mining {
 
     @Expose
     @ConfigOption(
+            name = "Hide waypoints when at Location",
+            desc = "Hides the Commission Waypoints if you are already at the location of the waypoint.\n" +
+                    "Only active if Waypoints are set to \"Commissions Only\""
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 0)
+    public boolean hideWaypointIfAtLocation = true;
+
+    @Expose
+    @ConfigOption(
             name = "Emissary Waypoints",
             desc = "Show waypoints in the Dwarven mines to emissaries\n" +
                     "Use \"Commission End\" to only show after finishing commissions"
@@ -493,20 +503,4 @@ public class Mining {
     )
     @ConfigEditorBoolean
     public boolean dwarvenTextures = false;
-
-        /*@Expose
-        @ConfigOption(
-                name = "Don't Mine Stone",
-                desc = "Prevent mining stone blocks in mining areas"
-        )
-        @ConfigEditorBoolean
-        public boolean dontMineStone = true;
-
-        @Expose
-        @ConfigOption(
-                name = "Reveal Mist Creepers",
-                desc = "Make the creepers in the Dwarven Mines mist visible"
-        )
-        @ConfigEditorBoolean
-        public boolean revealMistCreepers = true;*/
 }
