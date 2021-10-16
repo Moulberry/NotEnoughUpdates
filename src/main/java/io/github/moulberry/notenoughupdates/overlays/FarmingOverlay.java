@@ -77,6 +77,7 @@ public class FarmingOverlay extends TextOverlay {
                 NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
 
                 if(ea.hasKey("mined_crops", 99)) {
+                    //TODO make cult show separate gui option
                     counter = ea.getInteger("mined_crops");
                     counterQueue.add(0, counter);
                 } else if(ea.hasKey("farmed_cultivating", 99)) {

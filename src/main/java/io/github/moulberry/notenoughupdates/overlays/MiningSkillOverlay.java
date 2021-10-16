@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class MiningSkillOverlay extends TextOverlay {
+public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much better way to do this besides making another class ¯\_(ツ)_/¯
 
     private long lastUpdate = -1;
     private int compactLast = -1;
@@ -37,7 +37,7 @@ public class MiningSkillOverlay extends TextOverlay {
 
     private int xpGainTimer = 0;
 
-    private String skillType = "Mineing"; //yes ik its spelt wrong
+    private String skillType = "Mining";
 
     public MiningSkillOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
         super(position, dummyStrings, styleSupplier);
@@ -191,7 +191,7 @@ public class MiningSkillOverlay extends TextOverlay {
             }
 
             if(skillInfo != null) {
-                StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + skillType.substring(0, 4) + ": ");
+                StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + "Mineing".substring(0, 4) + ": "); //yes ik its spelt wrong
 
                 levelStr.append(EnumChatFormatting.YELLOW)
                         .append(skillInfo.level)
