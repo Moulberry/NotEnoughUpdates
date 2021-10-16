@@ -22,9 +22,4 @@ gradle.properties
 eclipse
 run
 .vscode
-/src/main/resources/assets/notenoughupdates/panoramas/deeper_caverns/panorama_0.jpg
-/src/main/resources/assets/notenoughupdates/panoramas/deeper_caverns/panorama_1.jpg
-/src/main/resources/assets/notenoughupdates/panoramas/deeper_caverns/panorama_2.jpg
-/src/main/resources/assets/notenoughupdates/panoramas/deeper_caverns/panorama_3.jpg
-/src/main/resources/assets/notenoughupdates/panoramas/deeper_caverns/panorama_4.jpg
-/src/main/resources/assets/notenoughupdates/panoramas/deeper_caverns/panorama_5.jpg
+
