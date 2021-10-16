@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.util;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
@@ -11,7 +10,7 @@ import java.util.Set;
 
 public class NEUResourceManager implements IResourceManager {
 
-    private IResourceManager parentResourceManager;
+    private final IResourceManager parentResourceManager;
 
     public NEUResourceManager(IResourceManager parentResourceManager) {
         this.parentResourceManager = parentResourceManager;

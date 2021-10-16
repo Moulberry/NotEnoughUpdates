@@ -41,7 +41,7 @@ public class ItemCustomizeManager {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static ItemDataMap itemDataMap = new ItemDataMap();
-    private static HashMap<Integer, String> itemUuidCache = new HashMap<>();
+    private static final HashMap<Integer, String> itemUuidCache = new HashMap<>();
 
     public static class ItemDataMap {
         public HashMap<String, ItemData> itemData = new HashMap<>();
@@ -86,7 +86,7 @@ public class ItemCustomizeManager {
         GlStateManager.matrixMode(5890);
         GlStateManager.pushMatrix();
         GlStateManager.scale(8.0F, 8.0F, 8.0F);
-        float f = (float)(Minecraft.getSystemTime() % 3000L) / 3000.0F / 8.0F;
+        float f = (float) (Minecraft.getSystemTime() % 3000L) / 3000.0F / 8.0F;
         GlStateManager.translate(f, 0.0F, 0.0F);
         GlStateManager.rotate(-50.0F, 0.0F, 0.0F, 1.0F);
         renderModelCallback.accept(color);
@@ -95,7 +95,7 @@ public class ItemCustomizeManager {
 
         GlStateManager.pushMatrix();
         GlStateManager.scale(8.0F, 8.0F, 8.0F);
-        float f1 = (float)(Minecraft.getSystemTime() % 4873L) / 4873.0F / 8.0F;
+        float f1 = (float) (Minecraft.getSystemTime() % 4873L) / 4873.0F / 8.0F;
         GlStateManager.translate(-f1, 0.0F, 0.0F);
         GlStateManager.rotate(10.0F, 0.0F, 0.0F, 1.0F);
         renderModelCallback.accept(color);
@@ -122,8 +122,7 @@ public class ItemCustomizeManager {
         float f1 = 0.5F;
         GlStateManager.color(f1, f1, f1, 1.0F);
 
-        for (int i = 0; i < 2; ++i)
-        {
+        for (int i = 0; i < 2; ++i) {
             GlStateManager.disableLighting();
 
             float red = ((color >> 16) & 0xFF) / 255f;
@@ -136,8 +135,8 @@ public class ItemCustomizeManager {
             GlStateManager.loadIdentity();
             float f3 = 0.33333334F;
             GlStateManager.scale(f3, f3, f3);
-            GlStateManager.rotate(30.0F - (float)i * 60.0F, 0.0F, 0.0F, 1.0F);
-            GlStateManager.translate(0.0F, existed * (0.001F + (float)i * 0.003F) * 20.0F, 0.0F);
+            GlStateManager.rotate(30.0F - (float) i * 60.0F, 0.0F, 0.0F, 1.0F);
+            GlStateManager.translate(0.0F, existed * (0.001F + (float) i * 0.003F) * 20.0F, 0.0F);
             GlStateManager.matrixMode(5888);
             renderModelCallback.run();
         }
@@ -156,14 +155,14 @@ public class ItemCustomizeManager {
     }
 
     public static boolean render3DGlint(String customEnchantGlint, float existed, Runnable renderModelCallback) {
-        if(customEnchantGlint != null) {
+        if (customEnchantGlint != null) {
             int colour = ChromaColour.specialToChromaRGB(customEnchantGlint);
 
             float[] hsv = Color.RGBtoHSB((colour >> 16) & 0xff, (colour >> 8) & 0xff, colour & 0xff, null);
             GL14.glBlendColor(1, 1, 1, hsv[2]);
 
             GlStateManager.tryBlendFuncSeparate(GL11.GL_ZERO, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            int alphaValue = (int)((1-hsv[2]*hsv[2])*0xff) * ((colour >> 24) & 0xff) / 0xff;
+            int alphaValue = (int) ((1 - hsv[2] * hsv[2]) * 0xff) * ((colour >> 24) & 0xff) / 0xff;
             renderArmorGlint(renderModelCallback, existed, alphaValue << 24);
             GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ONE);
             renderArmorGlint(renderModelCallback, existed, colour);
@@ -174,7 +173,7 @@ public class ItemCustomizeManager {
     }
 
     public static boolean renderEffectHook(String customEnchantGlint, Consumer<Integer> renderModelCallback) {
-        if(customEnchantGlint != null) {
+        if (customEnchantGlint != null) {
             int colour = ChromaColour.specialToChromaRGB(customEnchantGlint);
 
             float[] hsv = Color.RGBtoHSB((colour >> 16) & 0xff, (colour >> 8) & 0xff, colour & 0xff, null);
@@ -183,7 +182,7 @@ public class ItemCustomizeManager {
             GL11.glPushMatrix();
 
             GlStateManager.tryBlendFuncSeparate(GL11.GL_ZERO, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            int alphaValue = (int)((1-hsv[2]*hsv[2])*0xff) * ((colour >> 24) & 0xff) / 0xff;
+            int alphaValue = (int) ((1 - hsv[2] * hsv[2]) * 0xff) * ((colour >> 24) & 0xff) / 0xff;
             renderEffect(renderModelCallback, alphaValue << 24);
             GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ONE);
             renderEffect(renderModelCallback, colour);
@@ -196,7 +195,7 @@ public class ItemCustomizeManager {
     }
 
     public static ResourceLocation getCustomGlintTexture() {
-        if(!loadedCustomGlintTexture) {
+        if (!loadedCustomGlintTexture) {
             loadedCustomGlintTexture = true;
 
             final ResourceLocation RES_ITEM_GLINT = new ResourceLocation("textures/misc/enchanted_item_glint.png");
@@ -205,11 +204,11 @@ public class ItemCustomizeManager {
                 BufferedImage originalGlint = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(RES_ITEM_GLINT).getInputStream());
                 BufferedImage newGlint = new BufferedImage(originalGlint.getWidth(), originalGlint.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
-                for(int x=0; x<originalGlint.getWidth(); x++) {
-                    for(int y=0; y<originalGlint.getHeight(); y++) {
+                for (int x = 0; x < originalGlint.getWidth(); x++) {
+                    for (int y = 0; y < originalGlint.getHeight(); y++) {
                         int argb = originalGlint.getRGB(x, y);
 
-                        int avgRGB = ((((argb >> 16) & 0xff) + ((argb >> 8) & 0xff) + (argb & 0xff))/3) & 0xff;
+                        int avgRGB = ((((argb >> 16) & 0xff) + ((argb >> 8) & 0xff) + (argb & 0xff)) / 3) & 0xff;
 
                         int newArgb = (avgRGB << 24) | (avgRGB << 16) | (avgRGB << 8) | avgRGB;
 
@@ -218,7 +217,7 @@ public class ItemCustomizeManager {
                 }
 
                 Minecraft.getMinecraft().getTextureManager().loadTexture(CUSTOM_GLINT_TEXTURE, new DynamicTexture(newGlint));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 CUSTOM_GLINT_TEXTURE = RES_ITEM_GLINT;
             }
@@ -227,11 +226,11 @@ public class ItemCustomizeManager {
     }
 
     private static String getUuidForItem(ItemStack stack) {
-        if(!stack.hasTagCompound()) return null;
+        if (!stack.hasTagCompound()) return null;
 
         int nbtHash = stack.getTagCompound().hashCode();
 
-        if(itemUuidCache.containsKey(nbtHash)) {
+        if (itemUuidCache.containsKey(nbtHash)) {
             return itemUuidCache.get(nbtHash);
         }
 
@@ -242,11 +241,11 @@ public class ItemCustomizeManager {
     }
 
     public static ItemData getDataForItem(ItemStack stack) {
-        if(stack == null) return null;
+        if (stack == null) return null;
 
         String uuid = getUuidForItem(stack);
 
-        if(uuid == null) {
+        if (uuid == null) {
             return null;
         } else {
             return itemDataMap.itemData.get(uuid);
@@ -259,10 +258,10 @@ public class ItemCustomizeManager {
     }
 
     public static void loadCustomization(File file) {
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             itemDataMap = GSON.fromJson(reader, ItemDataMap.class);
-        } catch(Exception ignored) {}
-        if(itemDataMap == null) {
+        } catch (Exception ignored) {}
+        if (itemDataMap == null) {
             itemDataMap = new ItemDataMap();
         }
     }
@@ -270,10 +269,10 @@ public class ItemCustomizeManager {
     public static void saveCustomization(File file) {
         try {
             file.createNewFile();
-            try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
                 writer.write(GSON.toJson(itemDataMap));
             }
-        } catch(Exception ignored) {}
+        } catch (Exception ignored) {}
     }
 
 }

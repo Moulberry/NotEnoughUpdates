@@ -5,10 +5,7 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import org.apache.commons.io.IOUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -17,13 +14,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 
 public class HypixelApi {
-    private Gson gson = new Gson();
-    private ExecutorService es = Executors.newFixedThreadPool(3);
+    private final Gson gson = new Gson();
+    private final ExecutorService es = Executors.newFixedThreadPool(3);
 
     private static final int FAILS_BEFORE_SWITCH = 3;
     private int currentUrl = 0;
@@ -36,13 +32,13 @@ public class HypixelApi {
     }
 
     public void getHypixelApiAsync(String apiKey, String method, HashMap<String, String> args, Consumer<JsonObject> consumer, Runnable error) {
-        getApiAsync(generateApiUrl(apiKey!=null?apiKey.trim():null, method, args), consumer, error);
+        getApiAsync(generateApiUrl(apiKey != null ? apiKey.trim() : null, method, args), consumer, error);
     }
 
     private String getMyApiURL() {
-        if(currentUrl == 0) {
+        if (currentUrl == 0) {
             lastPrimaryUrl = System.currentTimeMillis();
-        } else if(System.currentTimeMillis() - lastPrimaryUrl > 1000*60*30) { //Try switch back to main url after 30m
+        } else if (System.currentTimeMillis() - lastPrimaryUrl > 1000 * 60 * 30) { //Try switch back to main url after 30m
             currentUrl = 0;
         }
 
@@ -53,12 +49,12 @@ public class HypixelApi {
     private void myApiError(int index) {
         myApiSuccesses[index] = myApiSuccesses[index] - 2;
 
-        if(myApiSuccesses[index] < 0) {
+        if (myApiSuccesses[index] < 0) {
             myApiSuccesses[index] = 0;
 
-            if(index == currentUrl) {
+            if (index == currentUrl) {
                 currentUrl++;
-                if(currentUrl >= myApiURLs.length) {
+                if (currentUrl >= myApiURLs.length) {
                     currentUrl = 0;
                 }
             }
@@ -69,7 +65,7 @@ public class HypixelApi {
         es.submit(() -> {
             try {
                 consumer.accept(getApiSync(urlS));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 error.run();
             }
         });
@@ -79,9 +75,9 @@ public class HypixelApi {
         es.submit(() -> {
             int current = currentUrl;
             try {
-                consumer.accept(getApiSync(getMyApiURL()+urlS));
-            } catch(Exception e) {
-                if(NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+                consumer.accept(getApiSync(getMyApiURL() + urlS));
+            } catch (Exception e) {
+                if (NotEnoughUpdates.INSTANCE.config.hidden.dev) {
                     e.printStackTrace();
                 }
                 myApiError(current);
@@ -94,8 +90,8 @@ public class HypixelApi {
         es.submit(() -> {
             int current = currentUrl;
             try {
-                consumer.accept(getApiGZIPSync(getMyApiURL()+urlS));
-            } catch(Exception e) {
+                consumer.accept(getApiGZIPSync(getMyApiURL() + urlS));
+            } catch (Exception e) {
                 myApiError(current);
                 error.run();
             }
@@ -106,7 +102,7 @@ public class HypixelApi {
         es.submit(() -> {
             try {
                 consumer.accept(getApiGZIPSync(urlS));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 error.run();
             }
         });
@@ -121,7 +117,7 @@ public class HypixelApi {
         String response = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
 
         JsonObject json = gson.fromJson(response, JsonObject.class);
-        if(json == null) throw new ConnectException("Invalid JSON");
+        if (json == null) throw new ConnectException("Invalid JSON");
         return json;
     }
 
@@ -140,8 +136,8 @@ public class HypixelApi {
     public String generateApiUrl(String apiKey, String method, HashMap<String, String> args) {
         StringBuilder url = new StringBuilder("https://api.hypixel.net/" + method + (apiKey != null ? ("?key=" + apiKey.replace(" ", "")) : ""));
         boolean first = true;
-        for(Map.Entry<String, String> entry : args.entrySet()) {
-            if(first && apiKey == null) {
+        for (Map.Entry<String, String> entry : args.entrySet()) {
+            if (first && apiKey == null) {
                 url.append("?");
                 first = false;
             } else {

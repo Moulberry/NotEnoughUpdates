@@ -112,11 +112,11 @@ public class CrystalMetalDetectorSolver {
             if (possibleBlocks.size() == 1) {
                 BlockPos block = possibleBlocks.get(0);
 
-                RenderUtils.renderBeaconBeam(block.add(0,1,0), beaconRGB, 1.0f, partialTicks);
+                RenderUtils.renderBeaconBeam(block.add(0, 1, 0), beaconRGB, 1.0f, partialTicks);
                 RenderUtils.renderWayPoint("Treasure", possibleBlocks.get(0).add(0, 2.5, 0), partialTicks);
             } else if (possibleBlocks.size() > 1 && NotEnoughUpdates.INSTANCE.config.mining.metalDetectorShowPossible) {
                 for (BlockPos block : possibleBlocks) {
-                    RenderUtils.renderBeaconBeam(block.add(0,1,0), beaconRGB, 1.0f, partialTicks);
+                    RenderUtils.renderBeaconBeam(block.add(0, 1, 0), beaconRGB, 1.0f, partialTicks);
                     RenderUtils.renderWayPoint("Possible Treasure Location", block.add(0, 2.5, 0), partialTicks);
                 }
             }

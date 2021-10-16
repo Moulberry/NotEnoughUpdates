@@ -8,9 +8,9 @@ import info.bliki.wiki.model.WikiModel;
 import info.bliki.wiki.tags.HTMLBlockTag;
 import info.bliki.wiki.tags.HTMLTag;
 import info.bliki.wiki.tags.IgnoreTag;
-import io.github.moulberry.notenoughupdates.util.AllowEmptyHTMLTag;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
+import io.github.moulberry.notenoughupdates.util.AllowEmptyHTMLTag;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 public class HTMLInfoPane extends TextInfoPane {
 
-    private static WikiModel wikiModel;
+    private static final WikiModel wikiModel;
 
     private final int ZOOM_FACTOR = 2;
     private final int IMAGE_WIDTH = 400;
@@ -49,7 +49,7 @@ public class HTMLInfoPane extends TextInfoPane {
 
     private static boolean hasAttemptedDownload = false;
 
-    /**
+    /*
      * Creates a wiki model and sets the configuration to work with hypixel-skyblock wikia.
      */
     static {
@@ -57,11 +57,11 @@ public class HTMLInfoPane extends TextInfoPane {
         conf.addTokenTag("img", new HTMLTag("img"));
         conf.addTokenTag("code", new HTMLTag("code"));
         conf.addTokenTag("span", new AllowEmptyHTMLTag("span"));
-        conf.addTokenTag("table", new HTMLBlockTag("table", Configuration.SPECIAL_BLOCK_TAGS+"span|"));
+        conf.addTokenTag("table", new HTMLBlockTag("table", Configuration.SPECIAL_BLOCK_TAGS + "span|"));
         conf.addTokenTag("infobox", new IgnoreTag("infobox"));
         conf.addTokenTag("tabber", new IgnoreTag("tabber"));
         conf.addTokenTag("kbd", new HTMLTag("kbd"));
-        wikiModel = new WikiModel(conf,"https://hypixel-skyblock.fandom.com/wiki/Special:Filepath/${image}",
+        wikiModel = new WikiModel(conf, "https://hypixel-skyblock.fandom.com/wiki/Special:Filepath/${image}",
                 "https://hypixel-skyblock.fandom.com/wiki/${title}") {
             {
                 TagNode.addAllowedAttribute("style");
@@ -82,7 +82,7 @@ public class HTMLInfoPane extends TextInfoPane {
 
             public void parseInternalImageLink(String imageNamespace, String rawImageLink) {
                 rawImageLink = rawImageLink.replaceFirst("\\|x([0-9]+)px", "\\|$1x$1px");
-                if(!rawImageLink.split("\\|")[0].toLowerCase().endsWith(".jpg")) {
+                if (!rawImageLink.split("\\|")[0].toLowerCase().endsWith(".jpg")) {
                     super.parseInternalImageLink(imageNamespace, rawImageLink);
                 }
             }
@@ -95,19 +95,19 @@ public class HTMLInfoPane extends TextInfoPane {
     public static HTMLInfoPane createFromWikiUrl(NEUOverlay overlay, NEUManager manager, String name,
                                                  String wikiUrl) {
         File f = manager.getWebFile(wikiUrl);
-        if(f == null) {
-            return new HTMLInfoPane(overlay, manager, "error", "error","Failed to load wiki url: "+ wikiUrl);
-        };
+        if (f == null) {
+            return new HTMLInfoPane(overlay, manager, "error", "error", "Failed to load wiki url: " + wikiUrl);
+        }
 
         StringBuilder sb = new StringBuilder();
-        try(BufferedReader br = new BufferedReader(new InputStreamReader(
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
                 new FileInputStream(f), StandardCharsets.UTF_8))) {
             String l;
-            while((l = br.readLine()) != null){
+            while ((l = br.readLine()) != null) {
                 sb.append(l).append("\n");
             }
-        } catch(IOException e) {
-            return new HTMLInfoPane(overlay, manager, "error", "error","Failed to load wiki url: "+ wikiUrl);
+        } catch (IOException e) {
+            return new HTMLInfoPane(overlay, manager, "error", "error", "Failed to load wiki url: " + wikiUrl);
         }
         return createFromWiki(overlay, manager, name, f.getName(), sb.toString());
     }
@@ -127,18 +127,16 @@ public class HTMLInfoPane extends TextInfoPane {
         wiki = "__NOTOC__\n" + wiki; //Remove TOC
         try (PrintWriter out = new PrintWriter(new File(manager.configLocation, "debug/parsed.txt"))) {
             out.println(wiki);
-        } catch (IOException e) {
-        }
+        } catch (IOException ignored) {}
         String html;
         try {
             html = wikiModel.render(wiki);
-        } catch(IOException e) {
+        } catch (IOException e) {
             return new HTMLInfoPane(overlay, manager, "error", "error", "Could not render wiki.");
         }
         try (PrintWriter out = new PrintWriter(new File(manager.configLocation, "debug/html.txt"))) {
             out.println(html);
-        } catch (IOException e) {
-        }
+        } catch (IOException ignored) {}
         return new HTMLInfoPane(overlay, manager, name, filename, html);
     }
 
@@ -159,44 +157,43 @@ public class HTMLInfoPane extends TextInfoPane {
         this.title = name;
 
         String osId;
-        if(SystemUtils.IS_OS_WINDOWS) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             osId = "win";
-        } else if(SystemUtils.IS_OS_MAC) {
+        } else if (SystemUtils.IS_OS_MAC) {
             osId = "mac";
-        } else if(SystemUtils.IS_OS_LINUX) {
+        } else if (SystemUtils.IS_OS_LINUX) {
             osId = "linux";
         } else {
-            text = EnumChatFormatting.RED+"Unsupported operating system.";
+            text = EnumChatFormatting.RED + "Unsupported operating system.";
             return;
         }
 
         File cssFile = new File(manager.configLocation, "wikia.css");
-        File wkHtmlToImage = new File(manager.configLocation, "wkhtmltox-"+osId+"/bin/wkhtmltoimage");
+        File wkHtmlToImage = new File(manager.configLocation, "wkhtmltox-" + osId + "/bin/wkhtmltoimage");
 
         //Use old binary folder
-        if(new File(manager.configLocation, "wkhtmltox/bin/wkhtmltoimage").exists() && SystemUtils.IS_OS_WINDOWS) {
+        if (new File(manager.configLocation, "wkhtmltox/bin/wkhtmltoimage").exists() && SystemUtils.IS_OS_WINDOWS) {
             wkHtmlToImage = new File(manager.configLocation, "wkhtmltox/bin/wkhtmltoimage");
         }
 
         Runtime runtime = Runtime.getRuntime();
-        String[] chmodCommand = new String[]{ "chmod", "-R", "777", new File(manager.configLocation, "wkhtmltox-"+osId).getAbsolutePath() };
+        String[] chmodCommand = new String[]{"chmod", "-R", "777", new File(manager.configLocation, "wkhtmltox-" + osId).getAbsolutePath()};
         try {
             Process p = runtime.exec(chmodCommand);
             p.waitFor();
-        } catch(IOException | InterruptedException e) {}
+        } catch (IOException | InterruptedException ignored) {}
 
-        if(!wkHtmlToImage.exists()) {
-            if(hasAttemptedDownload) {
-                text = EnumChatFormatting.RED+"Downloading web renderer failed? Or still downloading? Not sure what to do";
-                return;
+        if (!wkHtmlToImage.exists()) {
+            if (hasAttemptedDownload) {
+                text = EnumChatFormatting.RED + "Downloading web renderer failed? Or still downloading? Not sure what to do";
             } else {
                 hasAttemptedDownload = true;
-                Utils.recursiveDelete(new File(manager.configLocation, "wkhtmltox-"+osId));
+                Utils.recursiveDelete(new File(manager.configLocation, "wkhtmltox-" + osId));
                 wkDownloadES.submit(() -> {
                     try {
-                        File itemsZip = new File(manager.configLocation, "wkhtmltox-"+osId+".zip");
-                        if(!itemsZip.exists()) {
-                            URL url = new URL("https://moulberry.codes/wkhtmltox/wkhtmltox-"+osId+".zip");
+                        File itemsZip = new File(manager.configLocation, "wkhtmltox-" + osId + ".zip");
+                        if (!itemsZip.exists()) {
+                            URL url = new URL("https://moulberry.codes/wkhtmltox/wkhtmltox-" + osId + ".zip");
                             URLConnection urlConnection = url.openConnection();
                             urlConnection.setConnectTimeout(15000);
                             urlConnection.setReadTimeout(60000);
@@ -204,8 +201,8 @@ public class HTMLInfoPane extends TextInfoPane {
                             FileUtils.copyInputStreamToFile(urlConnection.getInputStream(), itemsZip);
                         }
 
-                        try(InputStream is = new FileInputStream(itemsZip)) {
-                            manager.unzip(is, manager.configLocation);
+                        try (InputStream is = new FileInputStream(itemsZip)) {
+                            NEUManager.unzip(is, manager.configLocation);
                         }
 
                         itemsZip.delete();
@@ -215,53 +212,53 @@ public class HTMLInfoPane extends TextInfoPane {
                     }
                 });
 
-                text = EnumChatFormatting.YELLOW+"Downloading web renderer... try again soon";
-                return;
+                text = EnumChatFormatting.YELLOW + "Downloading web renderer... try again soon";
             }
+            return;
         }
 
         File input = new File(manager.configLocation, "tmp/input.html");
         String outputFileName = filename.replaceAll("(?i)\\u00A7.", "")
                 .replaceAll("[^a-zA-Z0-9_\\-]", "_");
-        File output = new File(manager.configLocation, "tmp/"+
-                outputFileName+".png");
-        File outputExt = new File(manager.configLocation, "tmp/"+
-                outputFileName+"_ext.png");
+        File output = new File(manager.configLocation, "tmp/" +
+                outputFileName + ".png");
+        File outputExt = new File(manager.configLocation, "tmp/" +
+                outputFileName + "_ext.png");
 
         input.deleteOnExit();
         output.deleteOnExit();
 
         File tmp = new File(manager.configLocation, "tmp");
-        if(!tmp.exists()) {
+        if (!tmp.exists()) {
             tmp.mkdir();
         }
 
-        if(output.exists()) {
+        if (output.exists()) {
             try {
                 imageTemp = ImageIO.read(output);
-                text = EnumChatFormatting.RED+"Creating dynamic texture.";
-            } catch(IOException e) {
+                text = EnumChatFormatting.RED + "Creating dynamic texture.";
+            } catch (IOException e) {
                 e.printStackTrace();
-                text = EnumChatFormatting.RED+"Failed to read image.";
+                text = EnumChatFormatting.RED + "Failed to read image.";
                 return;
             }
         } else {
-            html = "<div id=\"mw-content-text\" lang=\"en\" dir=\"ltr\" class=\"mw-content-ltr mw-content-text\">"+html+"</div>";
-            html = "<div id=\"WikiaArticle\" class=\"WikiaArticle\">"+html+"</div>";
-            html = "<link rel=\"stylesheet\" href=\"file:///"+cssFile.getAbsolutePath().replaceAll("^/", "")+"\">\n"+html;
+            html = "<div id=\"mw-content-text\" lang=\"en\" dir=\"ltr\" class=\"mw-content-ltr mw-content-text\">" + html + "</div>";
+            html = "<div id=\"WikiaArticle\" class=\"WikiaArticle\">" + html + "</div>";
+            html = "<link rel=\"stylesheet\" href=\"file:///" + cssFile.getAbsolutePath().replaceAll("^/", "") + "\">\n" + html;
 
-            try(PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(input), StandardCharsets.UTF_8)), false)) {
 
                 out.println(encodeNonAscii(html));
-            } catch(IOException e) {}
+            } catch (IOException ignored) {}
 
             try {
-                text = EnumChatFormatting.GRAY+"Rendering webpage (" + name + EnumChatFormatting.RESET+
-                        EnumChatFormatting.GRAY+"), please wait...";
+                text = EnumChatFormatting.GRAY + "Rendering webpage (" + name + EnumChatFormatting.RESET +
+                        EnumChatFormatting.GRAY + "), please wait...";
 
-                String[] wkCommand = new String[]{ wkHtmlToImage.getAbsolutePath(), "--width", ""+IMAGE_WIDTH*ZOOM_FACTOR,
-                        "--transparent", "--allow", manager.configLocation.getAbsolutePath(), "--zoom", ""+ZOOM_FACTOR, input.getAbsolutePath(), output.getAbsolutePath()};
+                String[] wkCommand = new String[]{wkHtmlToImage.getAbsolutePath(), "--width", "" + IMAGE_WIDTH * ZOOM_FACTOR,
+                        "--transparent", "--allow", manager.configLocation.getAbsolutePath(), "--zoom", "" + ZOOM_FACTOR, input.getAbsolutePath(), output.getAbsolutePath()};
                 Process p = runtime.exec(wkCommand);
                 /*Process p = runtime.exec(spaceEscape(wkHtmlToImage.getAbsolutePath()) + " --width "+
                         IMAGE_WIDTH*ZOOM_FACTOR+" --transparent --zoom "+ZOOM_FACTOR + " " + spaceEscape(input.getAbsolutePath()) +
@@ -274,9 +271,9 @@ public class HTMLInfoPane extends TextInfoPane {
                         "\" \"" + outputExt.getAbsolutePath() + "\"");*/
                 rendererES.submit(() -> {
                     try {
-                        if(p.waitFor(15, TimeUnit.SECONDS)) {
+                        if (p.waitFor(15, TimeUnit.SECONDS)) {
                             //if(p2.waitFor(5, TimeUnit.SECONDS)) {
-                            if(overlay.getActiveInfoPane() != this) return;
+                            if (overlay.getActiveInfoPane() != this) return;
 
                             try {
                                 imageTemp = ImageIO.read(output);
@@ -307,24 +304,24 @@ public class HTMLInfoPane extends TextInfoPane {
                                         imageTemp.setRGB(x, y, col);
                                     }
                                 }*/
-                                text = EnumChatFormatting.RED+"Creating dynamic texture.";
-                            } catch(IOException e) {
+                                text = EnumChatFormatting.RED + "Creating dynamic texture.";
+                            } catch (IOException e) {
                                 e.printStackTrace();
-                                text = EnumChatFormatting.RED+"Failed to read image.";
+                                text = EnumChatFormatting.RED + "Failed to read image.";
                                 return;
                             }
                         } else {
-                            if(overlay.getActiveInfoPane() != this) return;
+                            if (overlay.getActiveInfoPane() != this) return;
 
-                            text = EnumChatFormatting.RED+"Webpage render timed out (>15sec). Maybe it's too large?";
+                            text = EnumChatFormatting.RED + "Webpage render timed out (>15sec). Maybe it's too large?";
                         }
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 });
-            } catch(IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
-                text = EnumChatFormatting.RED+"Failed to exec webpage renderer.";
+                text = EnumChatFormatting.RED + "Failed to exec webpage renderer.";
             }
         }
     }
@@ -334,51 +331,51 @@ public class HTMLInfoPane extends TextInfoPane {
      */
     @Override
     public void render(int width, int height, Color bg, Color fg, ScaledResolution scaledresolution, int mouseX, int mouseY) {
-        if(imageTemp != null && imageTexture == null) {
+        if (imageTemp != null && imageTexture == null) {
             DynamicTexture tex = new DynamicTexture(imageTemp);
             imageTexture = Minecraft.getMinecraft().getTextureManager().getDynamicTextureLocation(
                     "notenoughupdates/informationPaneImage", tex);
             imageHeight = imageTemp.getHeight();
             imageWidth = imageTemp.getWidth();
         }
-        if(imageTexture == null) {
+        if (imageTexture == null) {
             super.render(width, height, bg, fg, scaledresolution, mouseX, mouseY);
             return;
         }
 
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
-        int paneWidth = (int)(width/3*overlay.getWidthMult());
-        int rightSide = (int)(width*overlay.getInfoPaneOffsetFactor());
+        int paneWidth = (int) (width / 3 * overlay.getWidthMult());
+        int rightSide = (int) (width * overlay.getInfoPaneOffsetFactor());
         int leftSide = rightSide - paneWidth;
 
         int titleLen = fr.getStringWidth(title);
-        fr.drawString(title, (leftSide+rightSide-titleLen)/2, overlay.getBoxPadding() + 5, Color.WHITE.getRGB());
+        fr.drawString(title, (leftSide + rightSide - titleLen) / 2, overlay.getBoxPadding() + 5, Color.WHITE.getRGB());
 
-        drawRect(leftSide+overlay.getBoxPadding()-5, overlay.getBoxPadding()-5, rightSide-overlay.getBoxPadding()+5,
-                height-overlay.getBoxPadding()+5, bg.getRGB());
+        drawRect(leftSide + overlay.getBoxPadding() - 5, overlay.getBoxPadding() - 5, rightSide - overlay.getBoxPadding() + 5,
+                height - overlay.getBoxPadding() + 5, bg.getRGB());
 
-        int imageW = paneWidth - overlay.getBoxPadding()*2;
-        float scaleF = IMAGE_WIDTH*ZOOM_FACTOR/(float)imageW;
+        int imageW = paneWidth - overlay.getBoxPadding() * 2;
+        float scaleF = IMAGE_WIDTH * ZOOM_FACTOR / (float) imageW;
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(imageTexture);
         GlStateManager.color(1f, 1f, 1f, 1f);
-        if(height-overlay.getBoxPadding()*3 < imageHeight/scaleF) {
-            if(scrollHeight.getValue() > imageHeight/scaleF-height+overlay.getBoxPadding()*3) {
-                scrollHeight.setValue((int)(imageHeight/scaleF-height+overlay.getBoxPadding()*3));
+        if (height - overlay.getBoxPadding() * 3 < imageHeight / scaleF) {
+            if (scrollHeight.getValue() > imageHeight / scaleF - height + overlay.getBoxPadding() * 3) {
+                scrollHeight.setValue((int) (imageHeight / scaleF - height + overlay.getBoxPadding() * 3));
             }
             int yScroll = scrollHeight.getValue();
 
-            float vMin = yScroll/(imageHeight/scaleF);
-            float vMax = (yScroll+height-overlay.getBoxPadding()*3)/(imageHeight/scaleF);
-            Utils.drawTexturedRect(leftSide+overlay.getBoxPadding(), overlay.getBoxPadding()*2, imageW,
-                    height-overlay.getBoxPadding()*3,
+            float vMin = yScroll / (imageHeight / scaleF);
+            float vMax = (yScroll + height - overlay.getBoxPadding() * 3) / (imageHeight / scaleF);
+            Utils.drawTexturedRect(leftSide + overlay.getBoxPadding(), overlay.getBoxPadding() * 2, imageW,
+                    height - overlay.getBoxPadding() * 3,
                     0, 1, vMin, vMax);
         } else {
             scrollHeight.setValue(0);
 
-            Utils.drawTexturedRect(leftSide+overlay.getBoxPadding(), overlay.getBoxPadding()*2, imageW,
-                    (int)(imageHeight/scaleF));
+            Utils.drawTexturedRect(leftSide + overlay.getBoxPadding(), overlay.getBoxPadding() * 2, imageW,
+                    (int) (imageHeight / scaleF));
         }
         GlStateManager.bindTexture(0);
     }

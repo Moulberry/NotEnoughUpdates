@@ -38,18 +38,18 @@ public class ItemRarityHalo {
     private static int oldScaledResolution = 0;
 
     public static void onItemRender(ItemStack stack, int x, int y) {
-        if(x == 0 && y == 0) return;
+        if (x == 0 && y == 0) return;
 
-        if(!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
+        if (!OpenGlHelper.isFramebufferEnabled() || !OpenGlHelper.areShadersSupported()) return;
         NotEnoughUpdates neu = NotEnoughUpdates.INSTANCE;
-        if(!neu.isOnSkyblock()) return;
+        if (!neu.isOnSkyblock()) return;
         //if(neu.manager.config.itemHighlightOpacity.value <= 1) return;
-        if(neu.manager.getInternalNameForItem(stack) == null) return;
+        if (neu.manager.getInternalNameForItem(stack) == null) return;
 
         ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-        int size = 16*scaledresolution.getScaleFactor();
+        int size = 16 * scaledresolution.getScaleFactor();
 
-        if(projectionMatrix == null) {
+        if (projectionMatrix == null) {
             projectionMatrix = Utils.createProjectionMatrix(size, size);
         }
 
@@ -57,13 +57,13 @@ public class ItemRarityHalo {
         itemFramebuffer2 = checkFramebufferSizes(itemFramebuffer2, size, size);
 
         try {
-            if(colourShader == null) {
+            if (colourShader == null) {
                 colourShader = new Shader(new NEUResourceManager(Minecraft.getMinecraft().getResourceManager()),
                         "setrgbtoalpha", itemFramebuffer1, itemFramebuffer2);
                 upload(colourShader, size, size);
             }
 
-            if(blurShaderHorz == null) {
+            if (blurShaderHorz == null) {
                 blurShaderHorz = new Shader(new NEUResourceManager(Minecraft.getMinecraft().getResourceManager()),
                         "blur", itemFramebuffer2, itemFramebuffer1);
                 blurShaderHorz.getShaderManager().getShaderUniform("BlurDir").set(1, 0);
@@ -72,7 +72,7 @@ public class ItemRarityHalo {
                 upload(blurShaderHorz, size, size);
             }
 
-            if(blurShaderVert == null) {
+            if (blurShaderVert == null) {
                 blurShaderVert = new Shader(new NEUResourceManager(Minecraft.getMinecraft().getResourceManager()),
                         "blur", itemFramebuffer1, itemFramebuffer2);
                 blurShaderVert.getShaderManager().getShaderUniform("BlurDir").set(0, 1);
@@ -80,9 +80,11 @@ public class ItemRarityHalo {
                 blurShaderVert.getShaderManager().getShaderUniform("AlphaMult").set(2f);
                 upload(blurShaderVert, size, size);
             }
-        } catch(Exception e) { return; }
+        } catch (Exception e) {
+            return;
+        }
 
-        if(oldScaledResolution != scaledresolution.getScaleFactor()) {
+        if (oldScaledResolution != scaledresolution.getScaleFactor()) {
             resetItemHaloCache();
             oldScaledResolution = scaledresolution.getScaleFactor();
         }
@@ -91,24 +93,25 @@ public class ItemRarityHalo {
         IntBuffer currentViewport = BufferUtils.createIntBuffer(16);
         GL11.glGetInteger(GL11.GL_VIEWPORT, currentViewport);
         try {
-            if(!itemHaloTexMap.containsKey(stack)) {
+            if (!itemHaloTexMap.containsKey(stack)) {
                 int texture1 = TextureUtil.glGenTextures();
                 int texture2 = TextureUtil.glGenTextures();
 
                 GlStateManager.bindTexture(texture1);
-                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, size, size, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, ((ByteBuffer)null));
+                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, size, size, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, ((ByteBuffer) null));
                 itemFramebuffer1.bindFramebuffer(false);
                 OpenGlHelper.glFramebufferTexture2D(OpenGlHelper.GL_FRAMEBUFFER, OpenGlHelper.GL_COLOR_ATTACHMENT0, 3553, texture1, 0);
 
                 GlStateManager.bindTexture(texture2);
-                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, size, size, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, ((ByteBuffer)null));
+                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, size, size, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, ((ByteBuffer) null));
                 itemFramebuffer2.bindFramebuffer(false);
                 OpenGlHelper.glFramebufferTexture2D(OpenGlHelper.GL_FRAMEBUFFER, OpenGlHelper.GL_COLOR_ATTACHMENT0, 3553, texture2, 0);
 
                 itemFramebuffer1.framebufferClear();
                 itemFramebuffer2.framebufferClear();
 
-                GlStateManager.pushMatrix(); {
+                GlStateManager.pushMatrix();
+                {
                     GlStateManager.matrixMode(5889);
                     GlStateManager.loadIdentity();
                     GlStateManager.ortho(0.0D, size, size, 0.0D, 1000.0D, 3000.0D);
@@ -127,17 +130,22 @@ public class ItemRarityHalo {
                     itemRender.renderItemAndEffectIntoGUI(stack, 0, 0);
                     itemRender.zLevel = zLevel;
                     RenderHelper.disableStandardItemLighting();
-                } GlStateManager.popMatrix();
+                }
+                GlStateManager.popMatrix();
 
-                GlStateManager.pushMatrix(); {
-                    GL45.glTextureBarrier(); GL11.glFlush(); GL11.glFinish();
+                GlStateManager.pushMatrix();
+                {
+                    GL45.glTextureBarrier();
+                    GL11.glFlush();
+                    GL11.glFinish();
                     executeShader(colourShader);
                     //GL45.glTextureBarrier(); GL11.glFlush(); GL11.glFinish();
                     //executeShader(blurShaderHorz);
                     //GL45.glTextureBarrier(); GL11.glFlush(); GL11.glFinish();
                     //executeShader(blurShaderVert);
                     //GL45.glTextureBarrier(); GL11.glFlush(); GL11.glFinish();
-                } GlStateManager.popMatrix();
+                }
+                GlStateManager.popMatrix();
 
                 GlStateManager.matrixMode(5889);
                 GlStateManager.loadIdentity();
@@ -161,7 +169,7 @@ public class ItemRarityHalo {
             Utils.drawTexturedRect(x, y, 16, 16,
                     0, 1, 1, 0, GL11.GL_NEAREST);
             GlStateManager.bindTexture(0);
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             OpenGlHelper.glBindFramebuffer(OpenGlHelper.GL_FRAMEBUFFER, currentBuffer);
             GlStateManager.viewport(currentViewport.get(), currentViewport.get(), currentViewport.get(), currentViewport.get());
@@ -169,8 +177,8 @@ public class ItemRarityHalo {
     }
 
     private static Framebuffer checkFramebufferSizes(Framebuffer framebuffer, int width, int height) {
-        if(framebuffer == null || framebuffer.framebufferWidth != width || framebuffer.framebufferHeight != height) {
-            if(framebuffer == null) {
+        if (framebuffer == null || framebuffer.framebufferWidth != width || framebuffer.framebufferHeight != height) {
+            if (framebuffer == null) {
                 framebuffer = new Framebuffer(width, height, true);
             } else {
                 framebuffer.createBindFramebuffer(width, height);
@@ -182,14 +190,14 @@ public class ItemRarityHalo {
 
     public static void resetItemHaloCache() {
         ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-        int size = 16*scaledresolution.getScaleFactor();
+        int size = 16 * scaledresolution.getScaleFactor();
 
-        for(int tex : itemHaloTexMap.values()) {
+        for (int tex : itemHaloTexMap.values()) {
             TextureUtil.deleteTexture(tex);
         }
         itemHaloTexMap.clear();
 
-        if(NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
+        if (NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
             projectionMatrix = Utils.createProjectionMatrix(size, size);
             upload(colourShader, size, size);
             upload(blurShaderHorz, size, size);
@@ -198,11 +206,11 @@ public class ItemRarityHalo {
     }
 
     private static void upload(Shader shader, int width, int height) {
-        if(shader == null) return;
+        if (shader == null) return;
         shader.getShaderManager().getShaderUniformOrDefault("ProjMat").set(projectionMatrix);
         shader.getShaderManager().getShaderUniformOrDefault("InSize").set(width, height);
         shader.getShaderManager().getShaderUniformOrDefault("OutSize").set(width, height);
-        shader.getShaderManager().getShaderUniformOrDefault("ScreenSize").set((float)width, (float)height);
+        shader.getShaderManager().getShaderUniformOrDefault("ScreenSize").set((float) width, (float) height);
     }
 
     private static void executeShader(Shader shader) {
@@ -216,9 +224,9 @@ public class ItemRarityHalo {
         GlStateManager.enableTexture2D();
         GlStateManager.bindTexture(0);
 
-        float f = (float)shader.framebufferOut.framebufferTextureWidth;
-        float f1 = (float)shader.framebufferOut.framebufferTextureHeight;
-        GlStateManager.viewport(0, 0, (int)f, (int)f1);
+        float f = (float) shader.framebufferOut.framebufferTextureWidth;
+        float f1 = (float) shader.framebufferOut.framebufferTextureHeight;
+        GlStateManager.viewport(0, 0, (int) f, (int) f1);
 
         shader.getShaderManager().useShader();
         shader.getShaderManager().addSamplerTexture("DiffuseSampler", shader.framebufferIn);
@@ -235,9 +243,9 @@ public class ItemRarityHalo {
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        worldrenderer.pos(0.0D, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
-        worldrenderer.pos((double)f, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
-        worldrenderer.pos((double)f, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
+        worldrenderer.pos(0.0D, f1, 500.0D).color(255, 255, 255, 255).endVertex();
+        worldrenderer.pos(f, f1, 500.0D).color(255, 255, 255, 255).endVertex();
+        worldrenderer.pos(f, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
         worldrenderer.pos(0.0D, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
         tessellator.draw();
 

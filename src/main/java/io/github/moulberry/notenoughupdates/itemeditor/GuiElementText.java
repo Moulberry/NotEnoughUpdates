@@ -6,7 +6,7 @@ import net.minecraft.client.gui.FontRenderer;
 public class GuiElementText extends GuiElement {
 
     protected String text;
-    private int colour;
+    private final int colour;
 
     public GuiElementText(String text, int colour) {
         this.text = text;
@@ -36,7 +36,7 @@ public class GuiElementText extends GuiElement {
     public void render(int x, int y) {
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
-        fr.drawString(text, x, y+6, colour);
+        fr.drawString(text, x, y + 6, colour);
     }
 
 }

@@ -115,7 +115,6 @@ public class StorageGUI {
     @ConfigAccordionId(id = 1)
     public int cancelScrollKey = 0;
 
-
     @ConfigOption(
             name = "Inventory Backpacks",
             desc = ""

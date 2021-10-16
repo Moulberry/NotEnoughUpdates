@@ -53,14 +53,12 @@ public class Enchanting {
     @ConfigAccordionId(id = 1)
     public int enchantOrdering = 0;
 
-
     @ConfigOption(
             name = "Enchanting Solvers",
             desc = ""
     )
     @ConfigEditorAccordion(id = 0)
     public boolean enchantingSolversAccordion = false;
-
 
     @Expose
     @ConfigOption(
@@ -79,7 +77,7 @@ public class Enchanting {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 0)
         public boolean preventMisclicks = true;*/
-	
+
     @Expose
     @ConfigOption(
             name = "Hide Tooltips",

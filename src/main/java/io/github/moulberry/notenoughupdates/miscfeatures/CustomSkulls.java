@@ -7,37 +7,23 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.util.TexLoc;
-import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelHumanoidHead;
 import net.minecraft.client.model.ModelSkeletonHead;
-import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.*;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraft.client.resources.model.IBakedModel;
-import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelRotation;
 import net.minecraft.client.resources.model.SimpleBakedModel;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -55,13 +41,13 @@ public class CustomSkulls implements IResourceManagerReloadListener {
         return INSTANCE;
     }
 
-    private ResourceLocation atlas = new ResourceLocation("notenoughupdates:custom_skull_textures_atlas");
-    private ResourceLocation configuration = new ResourceLocation("notenoughupdates:custom_skull_textures/customskull.json");
+    private final ResourceLocation atlas = new ResourceLocation("notenoughupdates:custom_skull_textures_atlas");
+    private final ResourceLocation configuration = new ResourceLocation("notenoughupdates:custom_skull_textures/customskull.json");
     protected final TextureMap textureMap = new TextureMap("custom_skull_textures");
 
     public static ItemCameraTransforms.TransformType mostRecentTransformType = ItemCameraTransforms.TransformType.NONE;
 
-    protected final Map<ResourceLocation, TextureAtlasSprite> sprites = Maps.<ResourceLocation, TextureAtlasSprite>newHashMap();
+    protected final Map<ResourceLocation, TextureAtlasSprite> sprites = Maps.newHashMap();
 
     private final FaceBakery faceBakery = new FaceBakery();
     private final ModelSkeletonHead humanoidHead = new ModelHumanoidHead();
@@ -70,7 +56,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
     private final Gson gson = new GsonBuilder().create();
 
-    private class CustomSkull {
+    private static class CustomSkull {
         private ModelBlock model;
         private IBakedModel modelBaked;
 
@@ -81,16 +67,16 @@ public class CustomSkulls implements IResourceManagerReloadListener {
     public void onResourceManagerReload(IResourceManager resourceManager) {
         customSkulls.clear();
 
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 Minecraft.getMinecraft().getResourceManager().getResource(configuration).getInputStream(), StandardCharsets.UTF_8))) {
             JsonObject json = gson.fromJson(reader, JsonObject.class);
 
-            if(json == null) return;
+            if (json == null) return;
 
-            for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
-                if(entry.getValue().isJsonObject()) {
+            for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                if (entry.getValue().isJsonObject()) {
                     JsonObject obj = entry.getValue().getAsJsonObject();
-                    if(obj.has("model")) {
+                    if (obj.has("model")) {
                         String location = obj.get("model").getAsString();
                         ResourceLocation loc = new ResourceLocation("notenoughupdates:custom_skull_textures/" + location + ".json");
 
@@ -98,7 +84,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
                         skull.model = ModelBlock.deserialize(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(loc).getInputStream()));
 
                         customSkulls.put(entry.getKey(), skull);
-                    } else if(obj.has("texture")) {
+                    } else if (obj.has("texture")) {
                         String location = obj.get("texture").getAsString();
                         ResourceLocation loc = new ResourceLocation("notenoughupdates:custom_skull_textures/" + location + ".png");
 
@@ -114,26 +100,23 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
             loadSprites();
 
-            for(CustomSkull skull : customSkulls.values()) {
-                if(skull.model != null) {
+            for (CustomSkull skull : customSkulls.values()) {
+                if (skull.model != null) {
                     skull.modelBaked = bakeModel(skull.model, ModelRotation.X0_Y0, false);
                 }
             }
 
             Minecraft.getMinecraft().getTextureManager().loadTexture(atlas, textureMap);
-        } catch(Exception e) {
-        }
+        } catch (Exception ignored) {}
     }
 
     private void loadSprites() {
         final Set<ResourceLocation> set = this.getAllTextureLocations();
         set.remove(TextureMap.LOCATION_MISSING_TEXTURE);
-        IIconCreator iiconcreator = new IIconCreator() {
-            public void registerSprites(TextureMap iconRegistry) {
-                for(ResourceLocation resourcelocation : set) {
-                    TextureAtlasSprite textureatlassprite = iconRegistry.registerSprite(resourcelocation);
-                    CustomSkulls.this.sprites.put(resourcelocation, textureatlassprite);
-                }
+        IIconCreator iiconcreator = iconRegistry -> {
+            for (ResourceLocation resourcelocation : set) {
+                TextureAtlasSprite textureatlassprite = iconRegistry.registerSprite(resourcelocation);
+                CustomSkulls.this.sprites.put(resourcelocation, textureatlassprite);
             }
         };
         this.textureMap.loadSprites(Minecraft.getMinecraft().getResourceManager(), iiconcreator);
@@ -143,8 +126,8 @@ public class CustomSkulls implements IResourceManagerReloadListener {
     protected Set<ResourceLocation> getAllTextureLocations() {
         Set<ResourceLocation> set = new HashSet<>();
 
-        for(CustomSkull skull : customSkulls.values()) {
-            if(skull.model != null) {
+        for (CustomSkull skull : customSkulls.values()) {
+            if (skull.model != null) {
                 set.addAll(getTextureLocations(skull.model));
             }
         }
@@ -153,10 +136,10 @@ public class CustomSkulls implements IResourceManagerReloadListener {
     }
 
     protected Set<ResourceLocation> getTextureLocations(ModelBlock modelBlock) {
-        Set<ResourceLocation> set = Sets.<ResourceLocation>newHashSet();
+        Set<ResourceLocation> set = Sets.newHashSet();
 
-        for(BlockPart blockpart : modelBlock.getElements()) {
-            for(BlockPartFace blockpartface : blockpart.mapFaces.values()) {
+        for (BlockPart blockpart : modelBlock.getElements()) {
+            for (BlockPartFace blockpartface : blockpart.mapFaces.values()) {
                 ResourceLocation resourcelocation = new ResourceLocation("notenoughupdates", modelBlock.resolveTextureName(blockpartface.texture));
                 set.add(resourcelocation);
             }
@@ -170,12 +153,12 @@ public class CustomSkulls implements IResourceManagerReloadListener {
         TextureAtlasSprite textureatlassprite = this.sprites.get(new ResourceLocation("notenoughupdates", modelBlockIn.resolveTextureName("particle")));
         SimpleBakedModel.Builder simplebakedmodel$builder = (new SimpleBakedModel.Builder(modelBlockIn)).setTexture(textureatlassprite);
 
-        for(BlockPart blockpart : modelBlockIn.getElements()) {
-            for(EnumFacing enumfacing : blockpart.mapFaces.keySet()) {
+        for (BlockPart blockpart : modelBlockIn.getElements()) {
+            for (EnumFacing enumfacing : blockpart.mapFaces.keySet()) {
                 BlockPartFace blockpartface = blockpart.mapFaces.get(enumfacing);
                 TextureAtlasSprite textureatlassprite1 = this.sprites.get(new ResourceLocation("notenoughupdates", modelBlockIn.resolveTextureName(blockpartface.texture)));
 
-                if(blockpartface.cullFace == null || !net.minecraftforge.client.model.TRSRTransformation.isInteger(modelRotationIn.getMatrix())) {
+                if (blockpartface.cullFace == null || !net.minecraftforge.client.model.TRSRTransformation.isInteger(modelRotationIn.getMatrix())) {
                     simplebakedmodel$builder.addGeneralQuad(this.makeBakedQuad(blockpart, blockpartface, textureatlassprite1, enumfacing, modelRotationIn, uvLocked));
                 } else {
                     simplebakedmodel$builder.addFaceQuad(modelRotationIn.rotate(blockpartface.cullFace), this.makeBakedQuad(blockpart, blockpartface, textureatlassprite1, enumfacing, modelRotationIn, uvLocked));
@@ -199,7 +182,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
         worldrenderer.begin(7, DefaultVertexFormats.ITEM);
 
-        for(EnumFacing enumfacing : EnumFacing.values()) {
+        for (EnumFacing enumfacing : EnumFacing.values()) {
             this.renderQuads(worldrenderer, model.getFaceQuads(enumfacing), color);
         }
 
@@ -210,7 +193,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
     private void renderQuads(WorldRenderer renderer, List<BakedQuad> quads, int color) {
         int i = 0;
 
-        for(int j = quads.size(); i < j; ++i) {
+        for (int j = quads.size(); i < j; ++i) {
             BakedQuad bakedquad = quads.get(i);
             int k = color;
 
@@ -220,22 +203,22 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
     public boolean renderSkull(float xOffset, float yOffset, float zOffset, EnumFacing placedDirection,
                                float rotationDeg, int skullType, GameProfile skullOwner, int damage) {
-        if(NotEnoughUpdates.INSTANCE.config.misc.disableSkullRetexturing) {
+        if (NotEnoughUpdates.INSTANCE.config.misc.disableSkullRetexturing) {
             return false;
         }
-        if(placedDirection != EnumFacing.UP || skullType != 3) {
+        if (placedDirection != EnumFacing.UP || skullType != 3) {
             return false;
         }
-        if(skullOwner == null || skullOwner.getId() == null) {
+        if (skullOwner == null || skullOwner.getId() == null) {
             return false;
         }
 
         CustomSkull skull = customSkulls.get(skullOwner.getId().toString());
-        if(skull == null) {
+        if (skull == null) {
             return false;
         }
 
-        if(skull.modelBaked != null && skull.model != null) {
+        if (skull.modelBaked != null && skull.model != null) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(atlas);
             GlStateManager.pushMatrix();
             GlStateManager.disableCull();
@@ -250,7 +233,7 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
             GlStateManager.translate(0, 0.25f, 0);
 
-            if(xOffset == -0.5 && yOffset == 0 && zOffset == -0.5 && rotationDeg == 180) {
+            if (xOffset == -0.5 && yOffset == 0 && zOffset == -0.5 && rotationDeg == 180) {
                 skull.model.getAllTransforms().applyTransform(ItemCameraTransforms.TransformType.HEAD);
             } else {
                 skull.model.getAllTransforms().applyTransform(mostRecentTransformType);
@@ -260,8 +243,8 @@ public class CustomSkulls implements IResourceManagerReloadListener {
 
             renderModel(skull.modelBaked, 0xffffffff);
             GlStateManager.popMatrix();
-        } else if(skull.texture != null) {
-            if( Minecraft.getMinecraft().getTextureManager().getTexture(skull.texture) == null) {
+        } else if (skull.texture != null) {
+            if (Minecraft.getMinecraft().getTextureManager().getTexture(skull.texture) == null) {
                 try {
                     BufferedImage image = ImageIO.read(Minecraft.getMinecraft().getResourceManager().getResource(skull.texture).getInputStream());
                     int size = Math.max(image.getHeight(), image.getWidth());
@@ -271,14 +254,14 @@ public class CustomSkulls implements IResourceManagerReloadListener {
                         public void loadTexture(IResourceManager resourceManager) {
                             TextureUtil.allocateTexture(this.getGlTextureId(), size, size);
 
-                            int[] rgb = new int[size*size];
+                            int[] rgb = new int[size * size];
 
                             image.getRGB(0, 0, image.getWidth(), image.getHeight(), rgb, 0, image.getWidth());
 
                             TextureUtil.uploadTexture(this.getGlTextureId(), rgb, size, size);
                         }
                     });
-                } catch(IOException ignored) {}
+                } catch (IOException ignored) {}
             }
 
             Minecraft.getMinecraft().getTextureManager().bindTexture(skull.texture);

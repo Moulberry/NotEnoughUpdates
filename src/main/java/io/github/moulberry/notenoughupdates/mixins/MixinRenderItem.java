@@ -4,8 +4,8 @@ import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.ChromaColour;
-import io.github.moulberry.notenoughupdates.miscfeatures.ItemCustomizeManager;
 import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
+import io.github.moulberry.notenoughupdates.miscfeatures.ItemCustomizeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinRenderItem {
 
     private static void func_181565_a(WorldRenderer w, int x, int y, float width, int height,
-                               int r, int g, int b, int a) {
+                                      int r, int g, int b, int a) {
         w.begin(7, DefaultVertexFormats.POSITION_COLOR);
         w.pos((x + 0), (y + 0), 0.0D)
                 .color(r, g, b, a).endVertex();
@@ -46,17 +46,17 @@ public abstract class MixinRenderItem {
 
     private static String customEnchGlint = null;
 
-    @Redirect(method="renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/resources/model/IBakedModel;)V",
-                at=@At(
-                        value = "INVOKE",
-                        target = "Lnet/minecraft/item/ItemStack;hasEffect()Z"
-                )
+    @Redirect(method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/resources/model/IBakedModel;)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/item/ItemStack;hasEffect()Z"
+            )
     )
     public boolean renderItem_hasEffect(ItemStack stack) {
         ItemCustomizeManager.ItemData data = ItemCustomizeManager.getDataForItem(stack);
-        if(data != null) {
+        if (data != null) {
             customEnchGlint = data.customGlintColour;
-            if(data.overrideEnchantGlint) {
+            if (data.overrideEnchantGlint) {
                 return data.enchantGlintValue;
             }
         } else {
@@ -66,8 +66,8 @@ public abstract class MixinRenderItem {
         return stack.hasEffect();
     }
 
-    @Redirect(method="renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/resources/model/IBakedModel;)V",
-            at=@At(
+    @Redirect(method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/resources/model/IBakedModel;)V",
+            at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/renderer/tileentity/TileEntityItemStackRenderer;renderByItem(Lnet/minecraft/item/ItemStack;)V"
             )
@@ -78,8 +78,8 @@ public abstract class MixinRenderItem {
         GL11.glPopMatrix();
 
         ItemCustomizeManager.ItemData data = ItemCustomizeManager.getDataForItem(stack);
-        if(data != null) {
-            if(data.overrideEnchantGlint && data.enchantGlintValue) {
+        if (data != null) {
+            if (data.overrideEnchantGlint && data.enchantGlintValue) {
                 ItemCustomizeManager.renderEffectHook(data.customGlintColour, (color) -> {
                     float red = ((color >> 16) & 0xFF) / 255f;
                     float green = ((color >> 8) & 0xFF) / 255f;
@@ -88,7 +88,7 @@ public abstract class MixinRenderItem {
 
                     GlStateManager.color(red, green, blue, alpha);
 
-                    GlStateManager.scale(1/8f, 1/8f, 1/8f);
+                    GlStateManager.scale(1 / 8f, 1 / 8f, 1 / 8f);
                     GlStateManager.matrixMode(GL11.GL_MODELVIEW);
                     GL11.glPushMatrix();
                     ItemCustomizeManager.disableTextureBinding = true;
@@ -101,16 +101,16 @@ public abstract class MixinRenderItem {
         }
     }
 
-    @Redirect(method="renderQuads",
-            at=@At(
+    @Redirect(method = "renderQuads",
+            at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/item/Item;getColorFromItemStack(Lnet/minecraft/item/ItemStack;I)I"
             )
     )
     public int renderItem_renderByItem(Item item, ItemStack stack, int renderPass) {
-        if(renderPass == 0) {
+        if (renderPass == 0) {
             ItemCustomizeManager.ItemData data = ItemCustomizeManager.getDataForItem(stack);
-            if(data != null && data.customLeatherColour != null) {
+            if (data != null && data.customLeatherColour != null) {
                 return ChromaColour.specialToChromaRGB(data.customLeatherColour);
             }
         }
@@ -118,11 +118,9 @@ public abstract class MixinRenderItem {
         return item.getColorFromItemStack(stack, renderPass);
     }
 
-    @Inject(method="renderEffect", at=@At("HEAD"), cancellable = true)
+    @Inject(method = "renderEffect", at = @At("HEAD"), cancellable = true)
     public void renderEffect(IBakedModel model, CallbackInfo ci) {
-        if(ItemCustomizeManager.renderEffectHook(customEnchGlint, (color) -> {
-            renderModel(model, color);
-        })) {
+        if (ItemCustomizeManager.renderEffectHook(customEnchGlint, (color) -> renderModel(model, color))) {
             ci.cancel();
         }
     }
@@ -175,88 +173,88 @@ public abstract class MixinRenderItem {
         }
     }*/
 
-    @Inject(method="renderItemIntoGUI", at=@At("HEAD"))
+    @Inject(method = "renderItemIntoGUI", at = @At("HEAD"))
     public void renderItemHead(ItemStack stack, int x, int y, CallbackInfo ci) {
-        if(NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+        if (NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
             boolean matches = false;
 
             GuiTextField textField = NotEnoughUpdates.INSTANCE.overlay.getTextField();
 
-            if(textField.getText().trim().isEmpty()) {
+            if (textField.getText().trim().isEmpty()) {
                 matches = true;
-            } else if(stack != null) {
-                for(String search : textField.getText().split("\\|")) {
+            } else if (stack != null) {
+                for (String search : textField.getText().split("\\|")) {
                     matches |= NotEnoughUpdates.INSTANCE.manager.doesStackMatchSearch(stack, search.trim());
                 }
             }
-            if(matches) {
+            if (matches) {
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(0, 0, 100 + Minecraft.getMinecraft().getRenderItem().zLevel);
                 GlStateManager.depthMask(false);
-                Gui.drawRect(x, y, x+16, y+16, NEUOverlay.overlayColourLight);
+                Gui.drawRect(x, y, x + 16, y + 16, NEUOverlay.overlayColourLight);
                 GlStateManager.depthMask(true);
                 GlStateManager.popMatrix();
             }
         }
     }
 
-    @Inject(method="renderItemIntoGUI", at=@At("RETURN"))
+    @Inject(method = "renderItemIntoGUI", at = @At("RETURN"))
     public void renderItemReturn(ItemStack stack, int x, int y, CallbackInfo ci) {
-        if(stack != null && stack.stackSize != 1) return;
-        if(NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+        if (stack != null && stack.stackSize != 1) return;
+        if (NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
             boolean matches = false;
 
             GuiTextField textField = NotEnoughUpdates.INSTANCE.overlay.getTextField();
 
-            if(textField.getText().trim().isEmpty()) {
+            if (textField.getText().trim().isEmpty()) {
                 matches = true;
-            } else if(stack != null) {
-                for(String search : textField.getText().split("\\|")) {
+            } else if (stack != null) {
+                for (String search : textField.getText().split("\\|")) {
                     matches |= NotEnoughUpdates.INSTANCE.manager.doesStackMatchSearch(stack, search.trim());
                 }
             }
-            if(!matches) {
+            if (!matches) {
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(0, 0, 110 + Minecraft.getMinecraft().getRenderItem().zLevel);
-                Gui.drawRect(x, y, x+16, y+16, NEUOverlay.overlayColourDark);
+                Gui.drawRect(x, y, x + 16, y + 16, NEUOverlay.overlayColourDark);
                 GlStateManager.popMatrix();
             }
         }
     }
 
-    @Inject(method="renderItemOverlayIntoGUI", at=@At("RETURN"))
+    @Inject(method = "renderItemOverlayIntoGUI", at = @At("RETURN"))
     public void renderItemOverlayIntoGUI(FontRenderer fr, ItemStack stack, int xPosition, int yPosition, String text, CallbackInfo ci) {
-        if(stack != null && stack.stackSize != 1) {
-            if(NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+        if (stack != null && stack.stackSize != 1) {
+            if (NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
                 boolean matches = false;
 
                 GuiTextField textField = NotEnoughUpdates.INSTANCE.overlay.getTextField();
 
-                if(textField.getText().trim().isEmpty()) {
+                if (textField.getText().trim().isEmpty()) {
                     matches = true;
                 } else {
-                    for(String search : textField.getText().split("\\|")) {
+                    for (String search : textField.getText().split("\\|")) {
                         matches |= NotEnoughUpdates.INSTANCE.manager.doesStackMatchSearch(stack, search.trim());
                     }
                 }
-                if(!matches) {
+                if (!matches) {
                     GlStateManager.pushMatrix();
                     GlStateManager.translate(0, 0, 110 + Minecraft.getMinecraft().getRenderItem().zLevel);
                     GlStateManager.disableDepth();
-                    Gui.drawRect(xPosition, yPosition, xPosition+16, yPosition+16, NEUOverlay.overlayColourDark);
+                    Gui.drawRect(xPosition, yPosition, xPosition + 16, yPosition + 16, NEUOverlay.overlayColourDark);
                     GlStateManager.enableDepth();
                     GlStateManager.popMatrix();
                 }
             }
         }
 
-        if(stack == null) return;
+        if (stack == null) return;
 
         float damageOverride = ItemCooldowns.getDurabilityOverride(stack);
 
-        if(damageOverride >= 0) {
+        if (damageOverride >= 0) {
             float barX = 13.0f - damageOverride * 13.0f;
-            int col = (int)Math.round(255.0D - damageOverride * 255.0D);
+            int col = (int) Math.round(255.0D - damageOverride * 255.0D);
             GlStateManager.disableLighting();
             GlStateManager.disableDepth();
             GlStateManager.disableTexture2D();
