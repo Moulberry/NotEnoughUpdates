@@ -87,6 +87,9 @@ public class NEUConfig extends Config {
                 return;
             case 10:
                 editOverlay(activeConfigCategory, OverlayManager.crystalHollowOverlay, mining.crystalHollowOverlayPosition);
+                return;
+            case 11:
+                editOverlay(activeConfigCategory, OverlayManager.miningSkillOverlay, skillOverlays.miningPosition);
         }
     }
 
