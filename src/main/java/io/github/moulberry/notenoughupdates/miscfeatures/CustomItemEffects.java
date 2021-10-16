@@ -563,7 +563,7 @@ public class CustomItemEffects {
                         if (dist != 0) {
                             etherwarpRaycast = raycast(Minecraft.getMinecraft().thePlayer, 1f, dist, 0.1f);
 
-                            if (etherwarpRaycast != null && NotEnoughUpdates.INSTANCE.config.itemOverlays.enableEtherwarpHelperOverlay) {
+                            if (etherwarpRaycast != null && NotEnoughUpdates.INSTANCE.config.itemOverlays.enableEtherwarpBlockOverlay) {
                                 AxisAlignedBB bb = etherwarpRaycast.state.getBlock().getSelectedBoundingBox(Minecraft.getMinecraft().theWorld, etherwarpRaycast.pos)
                                         .expand(0.01D, 0.01D, 0.01D).offset(-d0, -d1, -d2);
                                 drawFilledBoundingBox(bb, 1f, NotEnoughUpdates.INSTANCE.config.itemOverlays.etherwarpHighlightColour);

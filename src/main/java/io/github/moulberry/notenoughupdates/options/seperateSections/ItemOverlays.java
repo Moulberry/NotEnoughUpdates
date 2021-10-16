@@ -198,6 +198,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Enable etherwarp block overlay",
+            desc = "Display an overlay that tells you what block you will TP to."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 7)
+    public boolean enableEtherwarpBlockOverlay = true;
+
+    @Expose
+    @ConfigOption(
             name = "Highlight Colour",
             desc = "Change the colour of the etherwarp target block outline"
     )
