@@ -92,6 +92,9 @@ public class NEUConfig extends Config {
                 return;
             case 13:
                 ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/pv");
+                return;
+            case 14:
+                editOverlay(activeConfigCategory, OverlayManager.fishingSkillOverlay, skillOverlays.fishingPosition);
         }
     }
 

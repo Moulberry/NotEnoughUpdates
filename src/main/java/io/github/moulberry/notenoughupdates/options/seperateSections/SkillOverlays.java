@@ -21,7 +21,7 @@ public class SkillOverlays {
             name = "Skill display info",
             desc = "The skill trackers need you to have an \u00A72api key\u00A77 set (if you dont have one set do \u00A72/api new\u00A77)\n" +
                     "For the overlays to show you need a \u00A7bmathematical hoe\u00A77 or an axe with \u00A7bcultivating\u00A77 " +
-                    "enchant for farming or a pickaxe with \u00A7bcompact\u00A77 for mining"
+                    "enchant for farming, a pickaxe with \u00A7bcompact\u00A77 for mining or a rod with \u00A7bexpertise\u00A77"
     )
     @ConfigEditorButton(
     runnableId = 12,
@@ -69,7 +69,7 @@ public class SkillOverlays {
             desc = "Change the position of the Farming overlay"
     )
     @ConfigEditorButton(
-            runnableId = 3,
+            runnableId = 14,
             buttonText = "Edit"
     )
     @ConfigAccordionId(id = 0)
@@ -141,4 +141,61 @@ public class SkillOverlays {
     )
     @ConfigAccordionId(id = 1)
     public int miningStyle = 0;
+
+    @ConfigOption(
+            name = "Fishing",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 3)
+    public boolean fishingAccordion = false;
+    @Expose
+    @ConfigOption(
+            name = "Enable Fishing Overlay",
+            desc = "Show an overlay while Fishing with useful information"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 3)
+    public boolean FishingSkillOverlay = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Fishing Text",
+            desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
+                    "\u00a7rHold a fishing rod with expertise enchantment while gaining fishing xp to show the overlay"
+    )
+    @ConfigEditorDraggableList(
+            exampleText = {"\u00a7bCatches: \u00a7e547,860",
+                    //"\u00a7bCatches/m: \u00a7e38.29",
+                    "\u00a7bFish: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+                    "\u00a7bCurrent XP: \u00a7e6,734",
+                    "\u00a7bRemaining XP: \u00a7e3,265",
+                    "\u00a7bXP/h: \u00a7e238,129",
+                    //"\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52",
+                    "\u00a7bETA: \u00a7e13h12m"}
+    )
+    @ConfigAccordionId(id = 3)
+    public List<Integer> fishingText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5));
+
+    @Expose
+    @ConfigOption(
+            name = "Fishing Position",
+            desc = "Change the position of the Fishing overlay"
+    )
+    @ConfigEditorButton(
+            runnableId = 14,
+            buttonText = "Edit"
+    )
+    @ConfigAccordionId(id = 3)
+    public Position fishingPosition = new Position(10, 200);
+
+    @Expose
+    @ConfigOption(
+            name = "Fishing Style",
+            desc = "Change the style of the Fishing overlay"
+    )
+    @ConfigEditorDropdown(
+            values = {"Background", "No Shadow", "Shadow", "Full Shadow"}
+    )
+    @ConfigAccordionId(id = 3)
+    public int fishingStyle = 0;
 }
