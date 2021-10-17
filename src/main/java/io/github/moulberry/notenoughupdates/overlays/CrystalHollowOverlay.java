@@ -13,10 +13,7 @@ import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -333,54 +330,9 @@ public class CrystalHollowOverlay extends TextOverlay {
         ItemStack icon = null;
         String cleaned = Utils.cleanColour(line);
         String beforeColon = cleaned.split(":")[0];
-        switch (beforeColon) {
-            case "Scavenged Lapis Sword":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_LAPIS_SWORD"));
-                break;
-            case "Scavenged Golden Hammer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_GOLD_HAMMER"));
-                break;
-            case "Scavenged Diamond Axe":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_DIAMOND_AXE"));
-                break;
-            case "Scavenged Emerald Hammer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_EMERALD_HAMMER"));
-                break;
-            case "Electron Transmitter":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ELECTRON_TRANSMITTER"));
-                break;
-            case "FTX 3070":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("FTX_3070"));
-                break;
-            case "Robotron Reflector":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ROBOTRON_REFLECTOR"));
-                break;
-            case "Superlite Motor":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SUPERLITE_MOTOR"));
-                break;
-            case "Control Switch":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("CONTROL_SWITCH"));
-                break;
-            case "Synthetic Heart":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SYNTHETIC_HEART"));
-                break;
-            case "Amber":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_AMBER_GEM"));
-                break;
-            case "Sapphire":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_SAPPHIRE_GEM"));
-                break;
-            case "Jade":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_JADE_GEM"));
-                break;
-            case "Amethyst":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_AMETHYST_GEM"));
-                break;
-            case "Topaz":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_TOPAZ_GEM"));
-                break;
+        if (crystallHollowsIcons.containsKey(beforeColon)) {
+            icon = crystallHollowsIcons.get(beforeColon);
         }
-
         if (icon != null) {
             GlStateManager.pushMatrix();
             GlStateManager.translate(position.x, position.y, 0);
@@ -392,6 +344,25 @@ public class CrystalHollowOverlay extends TextOverlay {
         }
 
         super.renderLine(line, position, dummy);
+    }
+
+    private static Map<String, ItemStack> crystallHollowsIcons = new HashMap<String, ItemStack>(){};
+    {
+        crystallHollowsIcons.put("Scavenged Lapis Sword", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_LAPIS_SWORD")));
+        crystallHollowsIcons.put("Scavenged Golden Hammer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_GOLD_HAMMER")));
+        crystallHollowsIcons.put("Scavenged Diamond Axe", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_DIAMOND_AXE")));
+        crystallHollowsIcons.put("Scavenged Emerald Hammer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_EMERALD_HAMMER")));
+        crystallHollowsIcons.put("Electron Transmitter", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ELECTRON_TRANSMITTER")));
+        crystallHollowsIcons.put("FTX 3070", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("FTX_3070")));
+        crystallHollowsIcons.put("Robotron Reflector", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ROBOTRON_REFLECTOR")));
+        crystallHollowsIcons.put("Superlite Motor", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SUPERLITE_MOTOR")));
+        crystallHollowsIcons.put("Control Switch", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("CONTROL_SWITCH")));
+        crystallHollowsIcons.put("Synthetic Heart", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SYNTHETIC_HEART")));
+        crystallHollowsIcons.put("Amber", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_AMBER_GEM")));
+        crystallHollowsIcons.put("Sapphire", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_SAPPHIRE_GEM")));
+        crystallHollowsIcons.put("Jade", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_JADE_GEM")));
+        crystallHollowsIcons.put("Amethyst", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_AMETHYST_GEM")));
+        crystallHollowsIcons.put("Topaz", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_TOPAZ_GEM")));
     }
 
     @Override

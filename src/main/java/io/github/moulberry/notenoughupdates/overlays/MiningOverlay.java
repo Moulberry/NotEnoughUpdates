@@ -617,77 +617,35 @@ public class MiningOverlay extends TextOverlay {
         ItemStack icon = null;
         String cleaned = Utils.cleanColour(line);
         String beforeColon = cleaned.split(":")[0];
-        switch (beforeColon) {
-            case "Mithril Powder":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("INK_SACK-10"));
-                break;
-            case "Gemstone Powder":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("INK_SACK-9"));
-                break;
-            case "Lucky Raffle":
-            case "Raffle":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MINING_RAFFLE_TICKET"));
-                break;
-            case "Pickaxe CD":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DIAMOND_PICKAXE"));
-                break;
-            case "Thyst Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("THYST_MONSTER"));
-                break;
-            case "Hard Stone Miner":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("HARD_STONE"));
-                break;
-            case "Ice Walker Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_ICE"));
-                break;
-            case "Goblin Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("GOBLIN_MONSTER"));
-                break;
-            case "Star Sentry Puncher":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("NETHER_STAR"));
-                break;
-            case "Goblin Raid":
-            case "Goblin Raid Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GOLD"));
-                break;
-            case "Golden Goblin Slayer":
-                icon = new ItemStack(Items.golden_helmet, 1, 0);
-                break;
-            case "2x Mithril Powder Collector":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GLOWSTONE_DUST"));
-                break;
-            case "Automaton Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("AUTOMATON_MONSTER"));
-                break;
-            case "Sludge Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SLUDGE_MONSTER"));
-                break;
-            case "Team Treasurite Member Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("EXECUTIVE_WENDY_MONSTER"));
-                break;
-            case "Yog Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("YOG_MONSTER"));
-                break;
-            case "Boss Corleone Slayer":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("BOSS_CORLEONE_BOSS"));
-                break;
-            case "Chest Looter":
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("CHEST"));
-                break;
-        }
-        if (icon == null) {
+
+
+        if (miningOverlayCommisionItems.containsKey(beforeColon)) {
+            icon = miningOverlayCommisionItems.get(beforeColon);
+        } else {
             if (beforeColon.startsWith("Forge")) {
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ANVIL"));
+                icon = miningOverlayCommisionItems.get("Forge");
             } else if (beforeColon.contains("Mithril")) {
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MITHRIL_ORE"));
+                icon = miningOverlayCommisionItems.get("Mithril");
             } else if (beforeColon.endsWith(" Gemstone Collector")) {
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ROUGH_"
-                        + beforeColon.replace(" Gemstone Collector", "").toUpperCase() + "_GEM"));
+                String gemName = "ROUGH_"
+                        + beforeColon.replace(" Gemstone Collector", "").toUpperCase() + "_GEM";
+                if(miningOverlayRoughGems.containsKey(gemName)){
+                    icon = miningOverlayRoughGems.get(gemName);
+                } else {
+                    icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(gemName));
+                    miningOverlayRoughGems.put(gemName, icon);
+                }
             } else if (beforeColon.endsWith(" Crystal Hunter")) {
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("PERFECT_"
-                        + beforeColon.replace(" Crystal Hunter", "").toUpperCase() + "_GEM"));
+                String gemName = "PERFECT_"
+                        + beforeColon.replace(" Crystal Hunter", "").toUpperCase() + "_GEM";
+                if(miningOverlayPerfectGems.containsKey(gemName)){
+                    icon = miningOverlayPerfectGems.get(gemName);
+                } else {
+                    icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(gemName));
+                    miningOverlayPerfectGems.put(gemName, icon);
+                }
             } else if (beforeColon.contains("Titanium")) {
-                icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("TITANIUM_ORE"));
+                icon = miningOverlayCommisionItems.get("Titanium");
             }
         }
 
@@ -702,5 +660,36 @@ public class MiningOverlay extends TextOverlay {
         }
 
         super.renderLine(line, position, dummy);
+    }
+
+    private static HashMap<String, ItemStack> miningOverlayRoughGems = new HashMap<String, ItemStack>() {};
+    private static HashMap<String, ItemStack> miningOverlayPerfectGems = new HashMap<String, ItemStack>() {};
+
+
+    private static HashMap<String, ItemStack> miningOverlayCommisionItems = new HashMap<String, ItemStack>() {};
+    {
+        miningOverlayCommisionItems.put("Mithril Powder", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("INK_SACK-10")));
+        miningOverlayCommisionItems.put("Gemstone Powder", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("INK_SACK-9")));
+        miningOverlayCommisionItems.put("Lucky Raffle", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MINING_RAFFLE_TICKET")));
+        miningOverlayCommisionItems.put("Raffle", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MINING_RAFFLE_TICKET")));
+        miningOverlayCommisionItems.put("Pickaxe CD", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DIAMOND_PICKAXE")));
+        miningOverlayCommisionItems.put("Thyst Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("THYST_MONSTER")));
+        miningOverlayCommisionItems.put("Hard Stone Miner", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("HARD_STONE")));
+        miningOverlayCommisionItems.put("Ice Walker Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_ICE")));
+        miningOverlayCommisionItems.put("Goblin Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("GOBLIN_MONSTER")));
+        miningOverlayCommisionItems.put("Star Sentry Puncher", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("NETHER_STAR")));
+        miningOverlayCommisionItems.put("Goblin Raid", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GOLD")));
+        miningOverlayCommisionItems.put("Goblin Raid Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GOLD")));
+        miningOverlayCommisionItems.put("Golden Goblin Slayer", new ItemStack(Items.golden_helmet, 1, 0));
+        miningOverlayCommisionItems.put("2x Mithril Powder Collector", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ENCHANTED_GLOWSTONE_DUST")));
+        miningOverlayCommisionItems.put("Automaton Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("AUTOMATON_MONSTER")));
+        miningOverlayCommisionItems.put("Sludge Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("SLUDGE_MONSTER")));
+        miningOverlayCommisionItems.put("Team Treasurite Member Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("EXECUTIVE_WENDY_MONSTER")));
+        miningOverlayCommisionItems.put("Yog Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("YOG_MONSTER")));
+        miningOverlayCommisionItems.put("Boss Corleone Slayer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("BOSS_CORLEONE_BOSS")));
+        miningOverlayCommisionItems.put("Chest Looter", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("CHEST")));
+        miningOverlayCommisionItems.put("Titanium", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("TITANIUM_ORE")));
+        miningOverlayCommisionItems.put("Mithril", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MITHRIL_ORE")));
+        miningOverlayCommisionItems.put("Forge", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ANVIL")));
     }
 }
