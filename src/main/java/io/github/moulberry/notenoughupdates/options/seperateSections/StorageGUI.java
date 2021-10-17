@@ -14,7 +14,17 @@ public class StorageGUI {
 
     @Expose
     public int selectedIndex = 0;
-
+    @ConfigOption(
+            name = "\u00A7cWarning",
+            desc = "You need Fast Render and Antialiasing off for these settings to work\n" +
+                    "You can find these in your video settings"
+    )
+    @ConfigEditorButton(
+            runnableId = 12,
+            buttonText = "Info"
+    )
+    @ConfigAccordionId(id = 1)
+    public boolean storageGUIWarning = false;
     @Expose
     @ConfigOption(
             name = "Enable Storage GUI",

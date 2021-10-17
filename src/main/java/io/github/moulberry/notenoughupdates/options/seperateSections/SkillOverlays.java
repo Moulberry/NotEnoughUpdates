@@ -3,12 +3,32 @@ package io.github.moulberry.notenoughupdates.options.seperateSections;
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import net.minecraft.util.EnumChatFormatting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class SkillOverlays {
+    @ConfigOption(
+            name = "Skill Overlay Info",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 2)
+    public boolean infoAccordion = false;
+    @Expose
+    @ConfigOption(
+            name = "Skill display info",
+            desc = "The skill trackers need you to have an \u00A72api key\u00A77 set (if you dont have one set do \u00A72/api new\u00A77)\n" +
+                    "For the overlays to show you need a \u00A7bmathematical hoe\u00A77 or an axe with \u00A7bcultivating\u00A77 " +
+                    "enchant for farming or a pickaxe with \u00A7bcompact\u00A77 for mining"
+    )
+    @ConfigEditorButton(
+    runnableId = 12,
+    buttonText = "Info"
+    )
+    @ConfigAccordionId(id = 2)
+    public boolean skillInfo = false;
     @ConfigOption(
             name = "Farming",
             desc = ""
@@ -84,7 +104,7 @@ public class SkillOverlays {
     @ConfigOption(
             name = "Mining Text",
             desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
-                    "\u00a7rHold a pickaxe while gaining mining xp to show the overlay"
+                    "\u00a7rHold a pickaxe with compact while gaining mining xp to show the overlay"
     )
     @ConfigEditorDraggableList(
             exampleText = {"\u00a7bCompact: \u00a7e547,860",

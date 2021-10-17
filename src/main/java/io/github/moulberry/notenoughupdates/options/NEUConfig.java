@@ -86,6 +86,12 @@ public class NEUConfig extends Config {
                 return;
             case 11:
                 editOverlay(activeConfigCategory, OverlayManager.miningSkillOverlay, skillOverlays.miningPosition);
+                return;
+            case 12:
+                ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/dn");
+                return;
+            case 13:
+                ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/pv");
         }
     }
 

@@ -10,6 +10,17 @@ public class Dungeons {
     )
     @ConfigEditorAccordion(id = 0)
     public boolean dungeonMapAccordion = false;
+    @Expose
+    @ConfigOption(
+            name = "\u00A7cWarning",
+            desc = "If you are on Entrance, Floor 1 or Master 1 the map wont work properly"
+    )
+    @ConfigEditorButton(
+            runnableId = 12,
+            buttonText = "Info"
+    )
+    @ConfigAccordionId(id = 0)
+    public boolean dungeonF1Warning = false;
 
     @Expose
     @ConfigOption(
@@ -98,8 +109,20 @@ public class Dungeons {
             name = "Dungeon Block Overlay",
             desc = ""
     )
+
     @ConfigEditorAccordion(id = 2)
     public boolean dungeonBlocksAccordion = false;
+    @ConfigOption(
+            name = "\u00A7cWarning",
+            desc = "You need Fast Render and Antialiasing off for these settings to work\n" +
+                    "You can find these in your video settings"
+    )
+    @ConfigEditorButton(
+            runnableId = 12,
+            buttonText = "Info"
+    )
+    @ConfigAccordionId(id = 2)
+    public boolean dungeonBlockWarning = false;
 
     @Expose
     @ConfigOption(

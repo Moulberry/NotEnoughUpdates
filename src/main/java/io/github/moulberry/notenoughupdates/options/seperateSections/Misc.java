@@ -47,7 +47,8 @@ public class Misc {
     @Expose
     @ConfigOption(
             name = "Damage Indicator Style",
-            desc = "Change the style of Skyblock damage indicators to be easier to read"
+            desc = "Change the style of Skyblock damage indicators to be easier to read\n" +
+                    "\u00A7cSome old animations mods breaks this feature"
     )
     @ConfigEditorDropdown(
             values = {"Off", "Commas", "Shortened"}
@@ -56,8 +57,17 @@ public class Misc {
 
     @Expose
     @ConfigOption(
+            name = "Profile Viewer",
+            desc = "Brings up the profile viewer (/pv)\n" +
+                    "Shows stats and networth of players"
+    )
+    @ConfigEditorButton(runnableId = 13, buttonText = "Open")
+    public boolean openPV = true;
+
+    @Expose
+    @ConfigOption(
             name = "Edit Enchant Colours",
-            desc = "Change the colours of certain skyblock enchants"
+            desc = "Change the colours of certain skyblock enchants (/neuec)"
     )
     @ConfigEditorButton(runnableId = 8, buttonText = "Open")
     public boolean editEnchantColoursButton = true;
