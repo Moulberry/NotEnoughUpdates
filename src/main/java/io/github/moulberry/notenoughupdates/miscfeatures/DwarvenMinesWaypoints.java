@@ -208,10 +208,10 @@ public class DwarvenMinesWaypoints {
                 if (locWaypoint >= 2) {
                     RenderUtils.renderWayPoint(EnumChatFormatting.AQUA + entry.getKey(), entry.getValue(), event.partialTicks);
                 } else {
-                    String commissionLocation = entry.getKey().toLowerCase().replace("'", "");
+                    String commissionLocation = entry.getKey().toLowerCase();
                     for (String commissionName : MiningOverlay.commissionProgress.keySet()) {
                         if (NotEnoughUpdates.INSTANCE.config.mining.hideWaypointIfAtLocation)
-                            if (commissionLocation.equals(skyblockLocation)) continue;
+                            if (commissionLocation.replace("'", "").equals(skyblockLocation)) continue;
                         if (commissionName.toLowerCase().contains(commissionLocation)) {
                             if (commissionName.contains("Titanium")) {
                                 RenderUtils.renderWayPoint(EnumChatFormatting.WHITE + entry.getKey(), entry.getValue(), event.partialTicks);
