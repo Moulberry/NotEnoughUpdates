@@ -115,10 +115,11 @@ public class SkillOverlays {
                     "\u00a7bRemaining XP: \u00a7e3,265",
                     "\u00a7bXP/h: \u00a7e238,129",
                     "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52",
-                    "\u00a7bETA: \u00a7e13h12m"}
+                    "\u00a7bETA: \u00a7e13h12m",
+                    "\u00a7bCompact Progress: \u00a7e137,945/150,000"}
     )
     @ConfigAccordionId(id = 1)
-    public List<Integer> miningText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 7));
+    public List<Integer> miningText = new ArrayList<>(Arrays.asList(0, 8, 1, 2, 3, 4, 5, 7));
 
     @Expose
     @ConfigOption(

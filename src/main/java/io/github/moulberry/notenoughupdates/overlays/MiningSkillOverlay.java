@@ -22,6 +22,8 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
     private long lastUpdate = -1;
     private int compactLast = -1;
     private int compact = -1;
+    private int compactTier = -1;
+    private String compactTierAmount = "1";
     private float minedPerSecondLast = 0;
     private float minedPerSecond = 0;
     private LinkedList<Integer> compactQueue = new LinkedList<>();
@@ -81,6 +83,51 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
                 }
             }
         }
+        if (compact < 100){
+            compactTier = 1;
+        } else if (compact < 500){
+            compactTier = 2;
+        } else if (compact < 1500){
+            compactTier = 3;
+        } else if (compact < 5000){
+            compactTier = 4;
+        } else if (compact < 15000){
+            compactTier = 5;
+        } else if (compact < 50000){
+            compactTier = 6;
+        } else if (compact < 150000){
+            compactTier = 7;
+        } else if (compact < 500000){
+            compactTier = 8;
+        } else if (compact < 1000000){
+            compactTier = 9;
+        } else if (compact > 1000000){
+            compactTier = 10;
+        }
+
+        if (compactTier == 1){
+            compactTierAmount = "100";
+        } else if (compactTier == 2){
+            compactTierAmount = "500";
+        } else if (compactTier == 3){
+            compactTierAmount = "1,500";
+        } else if (compactTier == 4){
+            compactTierAmount = "5,000";
+        } else if (compactTier == 5){
+            compactTierAmount = "15,000";
+        } else if (compactTier == 6){
+            compactTierAmount = "50,000";
+        } else if (compactTier == 7){
+            compactTierAmount = "150,000";
+        } else if (compactTier == 8){
+            compactTierAmount = "500,000";
+        } else if (compactTier == 9){
+            compactTierAmount = "1,000,000";
+        } else if (compactTier == 10){
+            compactTierAmount = "Maxed";
+        }
+
+
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
 
         skillInfoLast = skillInfo;
@@ -163,34 +210,43 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
 
             NumberFormat format = NumberFormat.getIntegerInstance();
 
-            if(compact >= 0) {
-                int counterInterp = (int)interp(compact, compactLast);
+            if (compact >= 0) {
+                int counterInterp = (int) interp(compact, compactLast);
 
-                lineMap.put(0, EnumChatFormatting.AQUA+"Compact: "+EnumChatFormatting.YELLOW+format.format(counterInterp));
+                lineMap.put(0, EnumChatFormatting.AQUA + "Compact: " + EnumChatFormatting.YELLOW + format.format(counterInterp));
             }
 
-            if(compact >= 0) {
-                if(minedPerSecondLast == minedPerSecond && minedPerSecond <= 0) {
-                    lineMap.put(1, EnumChatFormatting.AQUA+"Blocks/m: "+EnumChatFormatting.YELLOW+"N/A");
+            if (compact >= 0) {
+                if (minedPerSecondLast == minedPerSecond && minedPerSecond <= 0) {
+                    lineMap.put(1, EnumChatFormatting.AQUA + "Blocks/m: " + EnumChatFormatting.YELLOW + "N/A");
                 } else {
                     float cpsInterp = interp(minedPerSecond, minedPerSecondLast);
 
-                    lineMap.put(1, EnumChatFormatting.AQUA+"Blocks/m: "+EnumChatFormatting.YELLOW+
-                            String.format("%.2f", cpsInterp*60));
+                    lineMap.put(1, EnumChatFormatting.AQUA + "Blocks/m: " + EnumChatFormatting.YELLOW +
+                            String.format("%.2f", cpsInterp * 60));
                 }
             }
 
+            if (compactTier <= 9) {
+                int counterInterp = (int) interp(compact, compactLast);
+                lineMap.put(8, EnumChatFormatting.AQUA + "Compact Progress: " + EnumChatFormatting.YELLOW + format.format(counterInterp) + "/" + compactTierAmount);
+            }
+            if (compactTier == 10) {
+                int counterInterp = (int) interp(compact, compactLast);
+                lineMap.put(8, EnumChatFormatting.AQUA + "Compact Progress: " + EnumChatFormatting.RED + compactTierAmount);
+            }
+
             float xpInterp = xpGainHour;
-            if(xpGainHourLast == xpGainHour && xpGainHour <= 0) {
-                lineMap.put(5, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+"N/A");
+            if (xpGainHourLast == xpGainHour && xpGainHour <= 0) {
+                lineMap.put(5, EnumChatFormatting.AQUA + "XP/h: " + EnumChatFormatting.YELLOW + "N/A");
             } else {
                 xpInterp = interp(xpGainHour, xpGainHourLast);
 
-                lineMap.put(5, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+
-                        format.format(xpInterp)+(isMining ? "" : EnumChatFormatting.RED + " (PAUSED)"));
+                lineMap.put(5, EnumChatFormatting.AQUA + "XP/h: " + EnumChatFormatting.YELLOW +
+                        format.format(xpInterp) + (isMining ? "" : EnumChatFormatting.RED + " (PAUSED)"));
             }
 
-            if(skillInfo != null) {
+            if (skillInfo != null && skillInfo.level < 60) {
                 StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + "Mineing".substring(0, 4) + ": "); //yes ik its spelt wrong
 
                 levelStr.append(EnumChatFormatting.YELLOW)
@@ -199,13 +255,13 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
                         .append(" [");
 
                 float progress = skillInfo.currentXp / skillInfo.currentXpMax;
-                if(skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
+                if (skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
                     progress = interp(progress, skillInfoLast.currentXp / skillInfoLast.currentXpMax);
                 }
 
                 float lines = 25;
-                for(int i=0; i<lines; i++) {
-                    if(i/lines < progress) {
+                for (int i = 0; i < lines; i++) {
+                    if (i / lines < progress) {
                         levelStr.append(EnumChatFormatting.YELLOW);
                     } else {
                         levelStr.append(EnumChatFormatting.DARK_GRAY);
@@ -216,34 +272,44 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
                 levelStr.append(EnumChatFormatting.GRAY)
                         .append("] ")
                         .append(EnumChatFormatting.YELLOW)
-                        .append((int)(progress*100))
+                        .append((int) (progress * 100))
                         .append("%");
 
-                int current = (int)skillInfo.currentXp;
-                if(skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
-                    current = (int)interp(current, skillInfoLast.currentXp);
+                int current = (int) skillInfo.currentXp;
+                if (skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
+                    current = (int) interp(current, skillInfoLast.currentXp);
                 }
 
-                int remaining = (int)(skillInfo.currentXpMax - skillInfo.currentXp);
-                if(skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
-                    remaining = (int)interp(remaining, (int)(skillInfoLast.currentXpMax - skillInfoLast.currentXp));
+                int remaining = (int) (skillInfo.currentXpMax - skillInfo.currentXp);
+                if (skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
+                    remaining = (int) interp(remaining, (int) (skillInfoLast.currentXpMax - skillInfoLast.currentXp));
                 }
 
                 lineMap.put(2, levelStr.toString());
-                lineMap.put(3, EnumChatFormatting.AQUA+"Current XP: " + EnumChatFormatting.YELLOW+ format.format(current));
-                if(remaining < 0) {
-                    lineMap.put(4, EnumChatFormatting.AQUA+"Remaining XP: " + EnumChatFormatting.YELLOW+ "MAXED!");
-                    lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ "MAXED!");
+                lineMap.put(3, EnumChatFormatting.AQUA + "Current XP: " + EnumChatFormatting.YELLOW + format.format(current));
+                if (remaining < 0) {
+                    lineMap.put(4, EnumChatFormatting.AQUA + "Remaining XP: " + EnumChatFormatting.YELLOW + "MAXED!");
+                    lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + "MAXED!");
                 } else {
-                    lineMap.put(4, EnumChatFormatting.AQUA+"Remaining XP: " + EnumChatFormatting.YELLOW+ format.format(remaining));
-                    if(xpGainHour < 1000) {
-                        lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ "N/A");
+                    lineMap.put(4, EnumChatFormatting.AQUA + "Remaining XP: " + EnumChatFormatting.YELLOW + format.format(remaining));
+                    if (xpGainHour < 1000) {
+                        lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + "N/A");
                     } else {
-                        lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ Utils.prettyTime((long)(remaining)*1000*60*60/(long)xpInterp));
+                        lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + Utils.prettyTime((long) (remaining) * 1000 * 60 * 60 / (long) xpInterp));
                     }
                 }
 
             }
+
+            if (skillInfo != null && skillInfo.level == 60) {
+                StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + "Mineing".substring(0, 4) + ": "); //yes ik its spelt wrong
+
+                levelStr.append(EnumChatFormatting.YELLOW)
+                        .append(skillInfo.level)
+                        .append(EnumChatFormatting.RED + "Maxed");
+
+            }
+
 
             float yaw = Minecraft.getMinecraft().thePlayer.rotationYawHead;
             yaw %= 360;
