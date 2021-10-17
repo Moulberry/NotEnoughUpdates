@@ -882,8 +882,7 @@ public class GuiProfileViewer extends GuiScreen {
             Utils.renderAlignedString(EnumChatFormatting.YELLOW+"Until Cata "+floorLevelTo+": ",
                     EnumChatFormatting.WHITE.toString()+shortNumberFormat(floorLevelToXP, 0), x, y+16, sectionWidth);
 
-            if(mouseX > x && mouseX < x + sectionWidth &&
-                    mouseY > y+16 && mouseY < y+24) {
+            if(mouseX > x && mouseX < x + sectionWidth && mouseY > y+16 && mouseY < y+24 && !onMasterMode) {
                 float F5 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.catacombs.tier_completions."+5), 0)); //this can prob be done better
                 float F6 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.catacombs.tier_completions."+6), 0));
                 float F7 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.catacombs.tier_completions."+7), 0));
@@ -945,7 +944,76 @@ public class GuiProfileViewer extends GuiScreen {
                     tooltipToDisplay.add("The [XP per Run] is the average xp gained from an S+ run");
                     tooltipToDisplay.add("The "+EnumChatFormatting.DARK_PURPLE+"Catacombs Expert Ring"+EnumChatFormatting.GRAY+
                             " is assumed to be used, unless "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" is held.");
-                    tooltipToDisplay.add("[Time per run] is calculated using fastestSPlus x 120%");
+                    tooltipToDisplay.add("[Time per run] is calculated using Fastest S+ x 120%");
+                } else {
+                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"CTRL"+EnumChatFormatting.GRAY+" to see details]");
+                }
+            }
+
+            if(mouseX > x && mouseX < x + sectionWidth && mouseY > y+16 && mouseY < y+24 && onMasterMode) {
+                float xpM3 = 50000;
+                float xpM4 = 80000;
+                float xpM5 = 90000;
+                float xpM6 = 150000;
+                //No clue if these xp values are right
+                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                    xpM3 *= 1.1;
+                    xpM4 *= 1.1;
+                    xpM5 *= 1.1;
+                    xpM6 *= 1.1;
+                }
+
+                long runsM3 = (int)Math.ceil(floorLevelToXP/xpM3);
+                long runsM4 = (int)Math.ceil(floorLevelToXP/xpM4);
+                long runsM5 = (int)Math.ceil(floorLevelToXP/xpM5);
+                long runsM6 = (int)Math.ceil(floorLevelToXP/xpM6);
+
+                float timeM3 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.fastest_time_s_plus.3"), 0);
+                float timeM4 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.fastest_time_s_plus.4"), 0);
+                float timeM5 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.fastest_time_s_plus.5"), 0);
+                float timeM6 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.fastest_time_s_plus.6"), 0);
+
+                tooltipToDisplay = Lists.newArrayList(
+                        String.format("# M3 Runs (%s xp) : %d", shortNumberFormat(xpM3, 0), runsM3),
+                        String.format("# M4 Runs (%s xp) : %d", shortNumberFormat(xpM4, 0), runsM4),
+                        String.format("# M5 Runs (%s xp) : %d", shortNumberFormat(xpM5, 0), runsM5),
+                        String.format("# M6 Runs (%s xp) : %d", shortNumberFormat(xpM6, 0), runsM6),
+                        ""
+                );
+                boolean hasTime = false;
+                if(timeM3 > 1000) {
+                    tooltipToDisplay.add(String.format("Expected Time (M3) : %s", Utils.prettyTime(runsM3*(long)(timeM3*1.2))));
+                    hasTime = true;
+                }
+                if(timeM4 > 1000) {
+                    tooltipToDisplay.add(String.format("Expected Time (M4) : %s", Utils.prettyTime(runsM4*(long)(timeM4*1.2))));
+                    hasTime = true;
+                }
+                if(timeM5 > 1000) {
+                    tooltipToDisplay.add(String.format("Expected Time (M5) : %s", Utils.prettyTime(runsM5*(long)(timeM5*1.2))));
+                    hasTime = true;
+                }
+                if(timeM6 > 1000) {
+                    tooltipToDisplay.add(String.format("Expected Time (M6) : %s", Utils.prettyTime(runsM6*(long)(timeM6*1.2))));
+                    hasTime = true;
+                }
+                if(hasTime) {
+                    tooltipToDisplay.add("");
+                }
+                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" to show without Expert Ring]");
+                }
+                if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)) {
+                    if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) tooltipToDisplay.add("");
+                    tooltipToDisplay.add("Number of runs is calculated as [Remaining XP]/[XP per Run].");
+                    tooltipToDisplay.add("The [XP per Run] is the average xp gained from an S+ run");
+                    tooltipToDisplay.add("The "+EnumChatFormatting.DARK_PURPLE+"Catacombs Expert Ring"+EnumChatFormatting.GRAY+
+                            " is assumed to be used, unless "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" is held.");
+                    tooltipToDisplay.add("[Time per run] is calculated using Fastest S+ x 120%");
                 } else {
                     tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"CTRL"+EnumChatFormatting.GRAY+" to see details]");
                 }
