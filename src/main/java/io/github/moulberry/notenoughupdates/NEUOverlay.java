@@ -1302,6 +1302,7 @@ public class NEUOverlay extends Gui {
                 case "credits":
                 case "credit":
                 case "who made this mod":
+                case "whomst created this modification for the forge minecraft client":
                     searchedItems.add(CustomItems.CREDITS);
                     break;
                 case "ironmoon":
