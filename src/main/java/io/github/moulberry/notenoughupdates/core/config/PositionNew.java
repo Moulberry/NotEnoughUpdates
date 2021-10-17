@@ -64,9 +64,9 @@ public class PositionNew {
 
     public int moveX(ScaledResolution scaledResolution, int deltaX, int sizeX) {
         int originalX = resolveX(scaledResolution, sizeX);
-        AtomicInteger atomicInteger = new AtomicInteger(x+deltaX);
+        AtomicInteger atomicInteger = new AtomicInteger(x + deltaX);
         AtomicReference<Anchor> atomicReference = new AtomicReference<>(anchorX);
-        move(atomicInteger, atomicReference, anchorY, (int)Math.ceil(sizeX*scaleX), scaledResolution.getScaledWidth(), 176);
+        move(atomicInteger, atomicReference, anchorY, (int) Math.ceil(sizeX * scaleX), scaledResolution.getScaledWidth(), 176);
         x = atomicInteger.get();
         anchorX = atomicReference.get();
         return resolveX(scaledResolution, sizeX) - originalX;
@@ -74,25 +74,25 @@ public class PositionNew {
 
     public int moveY(ScaledResolution scaledResolution, int deltaY, int sizeY) {
         int originalY = resolveY(scaledResolution, sizeY);
-        AtomicInteger atomicInteger = new AtomicInteger(y+deltaY);
+        AtomicInteger atomicInteger = new AtomicInteger(y + deltaY);
         AtomicReference<Anchor> atomicReference = new AtomicReference<>(anchorY);
-        move(atomicInteger, atomicReference, anchorY, (int)Math.ceil(sizeY*scaleY), scaledResolution.getScaledHeight(), 166);
+        move(atomicInteger, atomicReference, anchorY, (int) Math.ceil(sizeY * scaleY), scaledResolution.getScaledHeight(), 166);
         y = atomicInteger.get();
         anchorY = atomicReference.get();
         return resolveY(scaledResolution, sizeY) - originalY;
     }
 
     private void move(AtomicInteger coord, AtomicReference<Anchor> anchor, Anchor oppositeAnchor, int elementSize, int screenSize, int guiSize) {
-        int centerCoord = resolve(coord.get(), anchor.get(), elementSize, screenSize, guiSize) + elementSize/2;
+        int centerCoord = resolve(coord.get(), anchor.get(), elementSize, screenSize, guiSize) + elementSize / 2;
 
-        if(centerCoord < screenSize/2-guiSize/2) {
-            if(pinned && centerCoord > screenSize/4-guiSize/4 && oppositeAnchor == Anchor.MID) {
+        if (centerCoord < screenSize / 2 - guiSize / 2) {
+            if (pinned && centerCoord > screenSize / 4 - guiSize / 4 && oppositeAnchor == Anchor.MID) {
                 anchor.set(Anchor.GUI_MIN);
             } else {
                 anchor.set(Anchor.MIN);
             }
-        } else if(centerCoord > screenSize/2+guiSize/2) {
-            if(pinned && centerCoord < screenSize-(screenSize/4-guiSize/4) && oppositeAnchor == Anchor.MID) {
+        } else if (centerCoord > screenSize / 2 + guiSize / 2) {
+            if (pinned && centerCoord < screenSize - (screenSize / 4 - guiSize / 4) && oppositeAnchor == Anchor.MID) {
                 anchor.set(Anchor.GUI_MAX);
             } else {
                 anchor.set(Anchor.MAX);
@@ -101,33 +101,33 @@ public class PositionNew {
             anchor.set(Anchor.MID);
         }
 
-        if(centerCoord - elementSize/2 < 0) centerCoord = elementSize/2;
-        if(centerCoord + elementSize/2 > screenSize) centerCoord = screenSize - elementSize/2;
+        if (centerCoord - elementSize / 2 < 0) centerCoord = elementSize / 2;
+        if (centerCoord + elementSize / 2 > screenSize) centerCoord = screenSize - elementSize / 2;
 
         Anchor newAnchor = anchor.get();
-        coord.set(Math.round(centerCoord - (elementSize*(newAnchor.elementMult+0.5f)) - screenSize*newAnchor.screenMult - guiSize*newAnchor.guiMult));
+        coord.set(Math.round(centerCoord - (elementSize * (newAnchor.elementMult + 0.5f)) - screenSize * newAnchor.screenMult - guiSize * newAnchor.guiMult));
     }
 
     public int resolveX(ScaledResolution scaledResolution, int sizeX) {
-        return resolve(x, anchorX, (int)Math.ceil(sizeX*scaleX), scaledResolution.getScaledWidth(), 176);
+        return resolve(x, anchorX, (int) Math.ceil(sizeX * scaleX), scaledResolution.getScaledWidth(), 176);
     }
 
     public int resolveY(ScaledResolution scaledResolution, int sizeY) {
-        return resolve(y, anchorY, (int)Math.ceil(sizeY*scaleY), scaledResolution.getScaledHeight(), 166);
+        return resolve(y, anchorY, (int) Math.ceil(sizeY * scaleY), scaledResolution.getScaledHeight(), 166);
     }
 
     private int resolve(int coord, Anchor anchor, int elementSize, int screenSize, int guiSize) {
-        return Math.round(screenSize*anchor.screenMult + elementSize*anchor.elementMult + guiSize*anchor.guiMult + coord);
+        return Math.round(screenSize * anchor.screenMult + elementSize * anchor.elementMult + guiSize * anchor.guiMult + coord);
     }
 
     public void setScaleX(float scaleX) {
-        if(allowResize) {
+        if (allowResize) {
             this.scaleX = scaleX;
         }
     }
 
     public void setScaleY(float scaleY) {
-        if(allowResize) {
+        if (allowResize) {
             this.scaleY = scaleY;
         }
     }
@@ -141,7 +141,7 @@ public class PositionNew {
     }
 
     public void setPinned(boolean pinned) {
-        if(allowPinToggle) {
+        if (allowPinToggle) {
             this.pinned = pinned;
         }
     }

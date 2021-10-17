@@ -1,6 +1,5 @@
 package io.github.moulberry.notenoughupdates.profileviewer;
 
-import com.google.common.base.Splitter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -35,8 +34,8 @@ public class ProfileViewer {
         this.manager = manager;
     }
 
+    private static final HashMap<String, String> petRarityToNumMap = new HashMap<>();
 
-    private static HashMap<String, String> petRarityToNumMap = new HashMap<>();
     static {
         petRarityToNumMap.put("COMMON", "0");
         petRarityToNumMap.put("UNCOMMON", "1");
@@ -47,31 +46,33 @@ public class ProfileViewer {
     }
 
     private static final LinkedHashMap<String, ItemStack> skillToSkillDisplayMap = new LinkedHashMap<>();
+
     static {
-        skillToSkillDisplayMap.put("skill_taming", Utils.createItemStack(Items.spawn_egg, EnumChatFormatting.LIGHT_PURPLE+"Taming"));
-        skillToSkillDisplayMap.put("skill_mining", Utils.createItemStack(Items.stone_pickaxe, EnumChatFormatting.GRAY+"Mining"));
-        skillToSkillDisplayMap.put("skill_foraging", Utils.createItemStack(Item.getItemFromBlock(Blocks.sapling), EnumChatFormatting.DARK_GREEN+"Foraging"));
-        skillToSkillDisplayMap.put("skill_enchanting", Utils.createItemStack(Item.getItemFromBlock(Blocks.enchanting_table), EnumChatFormatting.GREEN+"Enchanting"));
-        skillToSkillDisplayMap.put("skill_carpentry", Utils.createItemStack(Item.getItemFromBlock(Blocks.crafting_table), EnumChatFormatting.DARK_RED+"Carpentry"));
-        skillToSkillDisplayMap.put("skill_farming", Utils.createItemStack(Items.golden_hoe, EnumChatFormatting.YELLOW+"Farming"));
-        skillToSkillDisplayMap.put("skill_combat", Utils.createItemStack(Items.stone_sword, EnumChatFormatting.RED+"Combat"));
-        skillToSkillDisplayMap.put("skill_fishing", Utils.createItemStack(Items.fishing_rod, EnumChatFormatting.AQUA+"Fishing"));
-        skillToSkillDisplayMap.put("skill_alchemy", Utils.createItemStack(Items.brewing_stand, EnumChatFormatting.BLUE+"Alchemy"));
-        skillToSkillDisplayMap.put("skill_runecrafting", Utils.createItemStack(Items.magma_cream, EnumChatFormatting.DARK_PURPLE+"Runecrafting"));
+        skillToSkillDisplayMap.put("skill_taming", Utils.createItemStack(Items.spawn_egg, EnumChatFormatting.LIGHT_PURPLE + "Taming"));
+        skillToSkillDisplayMap.put("skill_mining", Utils.createItemStack(Items.stone_pickaxe, EnumChatFormatting.GRAY + "Mining"));
+        skillToSkillDisplayMap.put("skill_foraging", Utils.createItemStack(Item.getItemFromBlock(Blocks.sapling), EnumChatFormatting.DARK_GREEN + "Foraging"));
+        skillToSkillDisplayMap.put("skill_enchanting", Utils.createItemStack(Item.getItemFromBlock(Blocks.enchanting_table), EnumChatFormatting.GREEN + "Enchanting"));
+        skillToSkillDisplayMap.put("skill_carpentry", Utils.createItemStack(Item.getItemFromBlock(Blocks.crafting_table), EnumChatFormatting.DARK_RED + "Carpentry"));
+        skillToSkillDisplayMap.put("skill_farming", Utils.createItemStack(Items.golden_hoe, EnumChatFormatting.YELLOW + "Farming"));
+        skillToSkillDisplayMap.put("skill_combat", Utils.createItemStack(Items.stone_sword, EnumChatFormatting.RED + "Combat"));
+        skillToSkillDisplayMap.put("skill_fishing", Utils.createItemStack(Items.fishing_rod, EnumChatFormatting.AQUA + "Fishing"));
+        skillToSkillDisplayMap.put("skill_alchemy", Utils.createItemStack(Items.brewing_stand, EnumChatFormatting.BLUE + "Alchemy"));
+        skillToSkillDisplayMap.put("skill_runecrafting", Utils.createItemStack(Items.magma_cream, EnumChatFormatting.DARK_PURPLE + "Runecrafting"));
         //skillToSkillDisplayMap.put("skill_catacombs", Utils.createItemStack(Item.getItemFromBlock(Blocks.deadbush), EnumChatFormatting.GOLD+"Catacombs"));
-        skillToSkillDisplayMap.put("slayer_zombie", Utils.createItemStack(Items.rotten_flesh, EnumChatFormatting.GOLD+"Rev Slayer"));
-        skillToSkillDisplayMap.put("slayer_spider", Utils.createItemStack(Items.spider_eye, EnumChatFormatting.GOLD+"Tara Slayer"));
-        skillToSkillDisplayMap.put("slayer_wolf", Utils.createItemStack(Items.bone, EnumChatFormatting.GOLD+"Sven Slayer"));
-        skillToSkillDisplayMap.put("slayer_enderman", Utils.createItemStack(Items.ender_pearl, EnumChatFormatting.GOLD+"Ender Slayer"));
+        skillToSkillDisplayMap.put("slayer_zombie", Utils.createItemStack(Items.rotten_flesh, EnumChatFormatting.GOLD + "Rev Slayer"));
+        skillToSkillDisplayMap.put("slayer_spider", Utils.createItemStack(Items.spider_eye, EnumChatFormatting.GOLD + "Tara Slayer"));
+        skillToSkillDisplayMap.put("slayer_wolf", Utils.createItemStack(Items.bone, EnumChatFormatting.GOLD + "Sven Slayer"));
+        skillToSkillDisplayMap.put("slayer_enderman", Utils.createItemStack(Items.ender_pearl, EnumChatFormatting.GOLD + "Ender Slayer"));
     }
 
-    private static final ItemStack CAT_FARMING = Utils.createItemStack(Items.golden_hoe, EnumChatFormatting.YELLOW+"Farming");
-    private static final ItemStack CAT_MINING = Utils.createItemStack(Items.stone_pickaxe, EnumChatFormatting.GRAY+"Mining");
-    private static final ItemStack CAT_COMBAT = Utils.createItemStack(Items.stone_sword, EnumChatFormatting.RED+"Combat");
-    private static final ItemStack CAT_FORAGING = Utils.createItemStack(Item.getItemFromBlock(Blocks.sapling), EnumChatFormatting.DARK_GREEN+"Foraging");
-    private static final ItemStack CAT_FISHING = Utils.createItemStack(Items.fishing_rod, EnumChatFormatting.AQUA+"Fishing");
+    private static final ItemStack CAT_FARMING = Utils.createItemStack(Items.golden_hoe, EnumChatFormatting.YELLOW + "Farming");
+    private static final ItemStack CAT_MINING = Utils.createItemStack(Items.stone_pickaxe, EnumChatFormatting.GRAY + "Mining");
+    private static final ItemStack CAT_COMBAT = Utils.createItemStack(Items.stone_sword, EnumChatFormatting.RED + "Combat");
+    private static final ItemStack CAT_FORAGING = Utils.createItemStack(Item.getItemFromBlock(Blocks.sapling), EnumChatFormatting.DARK_GREEN + "Foraging");
+    private static final ItemStack CAT_FISHING = Utils.createItemStack(Items.fishing_rod, EnumChatFormatting.AQUA + "Fishing");
 
     private static final LinkedHashMap<ItemStack, List<String>> collectionCatToCollectionMap = new LinkedHashMap<>();
+
     static {
         collectionCatToCollectionMap.put(CAT_FARMING,
                 Utils.createList("WHEAT", "CARROT_ITEM", "POTATO_ITEM", "PUMPKIN", "MELON", "SEEDS", "MUSHROOM_COLLECTION",
@@ -80,7 +81,7 @@ public class ProfileViewer {
         collectionCatToCollectionMap.put(CAT_MINING,
                 Utils.createList("COBBLESTONE", "COAL", "IRON_INGOT", "GOLD_INGOT", "DIAMOND", "INK_SACK:4",
                         "EMERALD", "REDSTONE", "QUARTZ", "OBSIDIAN", "GLOWSTONE_DUST", "GRAVEL", "ICE", "NETHERRACK",
-                        "SAND", "ENDER_STONE", null ,"MITHRIL_ORE", "HARD_STONE", "GEMSTONE_COLLECTION"));
+                        "SAND", "ENDER_STONE", null, "MITHRIL_ORE", "HARD_STONE", "GEMSTONE_COLLECTION"));
         collectionCatToCollectionMap.put(CAT_COMBAT,
                 Utils.createList("ROTTEN_FLESH", "BONE", "STRING", "SPIDER_EYE", "SULPHUR", "ENDER_PEARL",
                         "GHAST_TEAR", "SLIME_BALL", "BLAZE_ROD", "MAGMA_CREAM", null, null, null));
@@ -92,6 +93,7 @@ public class ProfileViewer {
     }
 
     private static final LinkedHashMap<ItemStack, List<String>> collectionCatToMinionMap = new LinkedHashMap<>();
+
     static {
         collectionCatToMinionMap.put(CAT_FARMING,
                 Utils.createList("WHEAT", "CARROT", "POTATO", "PUMPKIN", "MELON", null, "MUSHROOM",
@@ -112,144 +114,145 @@ public class ProfileViewer {
     }
 
     private static final LinkedHashMap<String, ItemStack> collectionToCollectionDisplayMap = new LinkedHashMap<>();
+
     static {
         /* FARMING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("WHEAT", Utils.createItemStack(Items.wheat,
-                EnumChatFormatting.YELLOW+"Wheat"));
+                EnumChatFormatting.YELLOW + "Wheat"));
         collectionToCollectionDisplayMap.put("CARROT_ITEM", Utils.createItemStack(Items.carrot,
-                EnumChatFormatting.YELLOW+"Carrot"));
+                EnumChatFormatting.YELLOW + "Carrot"));
         collectionToCollectionDisplayMap.put("POTATO_ITEM", Utils.createItemStack(Items.potato,
-                EnumChatFormatting.YELLOW+"Potato"));
+                EnumChatFormatting.YELLOW + "Potato"));
         collectionToCollectionDisplayMap.put("PUMPKIN", Utils.createItemStack(Item.getItemFromBlock(Blocks.pumpkin),
-                EnumChatFormatting.YELLOW+"Pumpkin"));
+                EnumChatFormatting.YELLOW + "Pumpkin"));
         collectionToCollectionDisplayMap.put("MELON", Utils.createItemStack(Items.melon,
-                EnumChatFormatting.YELLOW+"Melon"));
+                EnumChatFormatting.YELLOW + "Melon"));
         collectionToCollectionDisplayMap.put("SEEDS", Utils.createItemStack(Items.wheat_seeds,
-                EnumChatFormatting.YELLOW+"Seeds"));
+                EnumChatFormatting.YELLOW + "Seeds"));
         collectionToCollectionDisplayMap.put("MUSHROOM_COLLECTION",
                 Utils.createItemStack(Item.getItemFromBlock(Blocks.red_mushroom)
-                        , EnumChatFormatting.YELLOW+"Mushroom"));
+                        , EnumChatFormatting.YELLOW + "Mushroom"));
         collectionToCollectionDisplayMap.put("INK_SACK:3", Utils.createItemStack(Items.dye,
-                EnumChatFormatting.YELLOW+"Cocoa Beans", 3));
+                EnumChatFormatting.YELLOW + "Cocoa Beans", 3));
         collectionToCollectionDisplayMap.put("CACTUS", Utils.createItemStack(Item.getItemFromBlock(Blocks.cactus),
-                EnumChatFormatting.YELLOW+"Cactus"));
+                EnumChatFormatting.YELLOW + "Cactus"));
         collectionToCollectionDisplayMap.put("SUGAR_CANE", Utils.createItemStack(Items.reeds,
-                EnumChatFormatting.YELLOW+"Sugar Cane"));
+                EnumChatFormatting.YELLOW + "Sugar Cane"));
         collectionToCollectionDisplayMap.put("FEATHER", Utils.createItemStack(Items.feather,
-                EnumChatFormatting.YELLOW+"Feather"));
+                EnumChatFormatting.YELLOW + "Feather"));
         collectionToCollectionDisplayMap.put("LEATHER", Utils.createItemStack(Items.leather,
-                EnumChatFormatting.YELLOW+"Leather"));
+                EnumChatFormatting.YELLOW + "Leather"));
         collectionToCollectionDisplayMap.put("PORK", Utils.createItemStack(Items.porkchop,
-                EnumChatFormatting.YELLOW+"Porkchop"));
+                EnumChatFormatting.YELLOW + "Porkchop"));
         collectionToCollectionDisplayMap.put("RAW_CHICKEN", Utils.createItemStack(Items.chicken,
-                EnumChatFormatting.YELLOW+"Chicken"));
+                EnumChatFormatting.YELLOW + "Chicken"));
         collectionToCollectionDisplayMap.put("MUTTON", Utils.createItemStack(Items.mutton,
-                EnumChatFormatting.YELLOW+"Mutton"));
+                EnumChatFormatting.YELLOW + "Mutton"));
         collectionToCollectionDisplayMap.put("RABBIT", Utils.createItemStack(Items.rabbit,
-                EnumChatFormatting.YELLOW+"Rabbit"));
+                EnumChatFormatting.YELLOW + "Rabbit"));
         collectionToCollectionDisplayMap.put("NETHER_STALK", Utils.createItemStack(Items.nether_wart,
-                EnumChatFormatting.YELLOW+"Nether Wart"));
+                EnumChatFormatting.YELLOW + "Nether Wart"));
 
         /* MINING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("COBBLESTONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.cobblestone),
-                EnumChatFormatting.GRAY+"Cobblestone"));
+                EnumChatFormatting.GRAY + "Cobblestone"));
         collectionToCollectionDisplayMap.put("COAL", Utils.createItemStack(Items.coal,
-                EnumChatFormatting.GRAY+"Coal"));
+                EnumChatFormatting.GRAY + "Coal"));
         collectionToCollectionDisplayMap.put("IRON_INGOT", Utils.createItemStack(Items.iron_ingot,
-                EnumChatFormatting.GRAY+"Iron Ingot"));
+                EnumChatFormatting.GRAY + "Iron Ingot"));
         collectionToCollectionDisplayMap.put("GOLD_INGOT", Utils.createItemStack(Items.gold_ingot,
-                EnumChatFormatting.GRAY+"Gold Ingot"));
+                EnumChatFormatting.GRAY + "Gold Ingot"));
         collectionToCollectionDisplayMap.put("DIAMOND", Utils.createItemStack(Items.diamond,
-                EnumChatFormatting.GRAY+"Diamond"));
+                EnumChatFormatting.GRAY + "Diamond"));
         collectionToCollectionDisplayMap.put("INK_SACK:4", Utils.createItemStack(Items.dye,
-                EnumChatFormatting.GRAY+"Lapis Lazuli", 4));
+                EnumChatFormatting.GRAY + "Lapis Lazuli", 4));
         collectionToCollectionDisplayMap.put("EMERALD", Utils.createItemStack(Items.emerald,
-                EnumChatFormatting.GRAY+"Emerald"));
+                EnumChatFormatting.GRAY + "Emerald"));
         collectionToCollectionDisplayMap.put("REDSTONE", Utils.createItemStack(Items.redstone,
-                EnumChatFormatting.GRAY+"Redstone"));
+                EnumChatFormatting.GRAY + "Redstone"));
         collectionToCollectionDisplayMap.put("QUARTZ", Utils.createItemStack(Items.quartz,
-                EnumChatFormatting.GRAY+"Nether Quartz"));
+                EnumChatFormatting.GRAY + "Nether Quartz"));
         collectionToCollectionDisplayMap.put("OBSIDIAN", Utils.createItemStack(Item.getItemFromBlock(Blocks.obsidian),
-                EnumChatFormatting.GRAY+"Obsidian"));
+                EnumChatFormatting.GRAY + "Obsidian"));
         collectionToCollectionDisplayMap.put("GLOWSTONE_DUST", Utils.createItemStack(Items.glowstone_dust,
-                EnumChatFormatting.GRAY+"Glowstone"));
+                EnumChatFormatting.GRAY + "Glowstone"));
         collectionToCollectionDisplayMap.put("GRAVEL", Utils.createItemStack(Item.getItemFromBlock(Blocks.gravel),
-                EnumChatFormatting.GRAY+"Gravel"));
+                EnumChatFormatting.GRAY + "Gravel"));
         collectionToCollectionDisplayMap.put("ICE", Utils.createItemStack(Item.getItemFromBlock(Blocks.ice),
-                EnumChatFormatting.GRAY+"Ice"));
+                EnumChatFormatting.GRAY + "Ice"));
         collectionToCollectionDisplayMap.put("NETHERRACK", Utils.createItemStack(Item.getItemFromBlock(Blocks.netherrack),
-                EnumChatFormatting.GRAY+"Netherrack"));
+                EnumChatFormatting.GRAY + "Netherrack"));
         collectionToCollectionDisplayMap.put("SAND", Utils.createItemStack(Item.getItemFromBlock(Blocks.sand),
-                EnumChatFormatting.GRAY+"Sand"));
+                EnumChatFormatting.GRAY + "Sand"));
         collectionToCollectionDisplayMap.put("ENDER_STONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.end_stone),
-                EnumChatFormatting.GRAY+"End Stone"));
+                EnumChatFormatting.GRAY + "End Stone"));
         collectionToCollectionDisplayMap.put("MITHRIL_ORE", Utils.createItemStack(Items.prismarine_crystals,
-                EnumChatFormatting.GRAY+"Mithril"));
+                EnumChatFormatting.GRAY + "Mithril"));
         collectionToCollectionDisplayMap.put("HARD_STONE", Utils.createItemStack(Item.getItemFromBlock(Blocks.stone),
-                EnumChatFormatting.GRAY+"Hard Stone"));
+                EnumChatFormatting.GRAY + "Hard Stone"));
         ItemStack gemstone = Utils.createItemStack(Item.getItemFromBlock(Blocks.stained_glass),
-                EnumChatFormatting.GRAY+"Gem Stones");
+                EnumChatFormatting.GRAY + "Gem Stones");
         gemstone.setItemDamage(14);
         collectionToCollectionDisplayMap.put("GEMSTONE_COLLECTION", gemstone);
 
 
         /* COMBAT COLLECTIONS **/
         collectionToCollectionDisplayMap.put("ROTTEN_FLESH", Utils.createItemStack(Items.rotten_flesh,
-                EnumChatFormatting.RED+"Rotten Flesh"));
+                EnumChatFormatting.RED + "Rotten Flesh"));
         collectionToCollectionDisplayMap.put("BONE", Utils.createItemStack(Items.bone,
-                EnumChatFormatting.RED+"Bone"));
+                EnumChatFormatting.RED + "Bone"));
         collectionToCollectionDisplayMap.put("STRING", Utils.createItemStack(Items.string,
-                EnumChatFormatting.RED+"String"));
+                EnumChatFormatting.RED + "String"));
         collectionToCollectionDisplayMap.put("SPIDER_EYE", Utils.createItemStack(Items.spider_eye,
-                EnumChatFormatting.RED+"Spider Eye"));
+                EnumChatFormatting.RED + "Spider Eye"));
         collectionToCollectionDisplayMap.put("SULPHUR", Utils.createItemStack(Items.gunpowder,
-                EnumChatFormatting.RED+"Gunpowder"));
+                EnumChatFormatting.RED + "Gunpowder"));
         collectionToCollectionDisplayMap.put("ENDER_PEARL", Utils.createItemStack(Items.ender_pearl,
-                EnumChatFormatting.RED+"Ender Pearl"));
+                EnumChatFormatting.RED + "Ender Pearl"));
         collectionToCollectionDisplayMap.put("GHAST_TEAR", Utils.createItemStack(Items.ghast_tear,
-                EnumChatFormatting.RED+"Ghast Tear"));
+                EnumChatFormatting.RED + "Ghast Tear"));
         collectionToCollectionDisplayMap.put("SLIME_BALL", Utils.createItemStack(Items.slime_ball,
-                EnumChatFormatting.RED+"Slimeball"));
+                EnumChatFormatting.RED + "Slimeball"));
         collectionToCollectionDisplayMap.put("BLAZE_ROD", Utils.createItemStack(Items.blaze_rod,
-                EnumChatFormatting.RED+"Blaze Rod"));
+                EnumChatFormatting.RED + "Blaze Rod"));
         collectionToCollectionDisplayMap.put("MAGMA_CREAM", Utils.createItemStack(Items.magma_cream,
-                EnumChatFormatting.RED+"Magma Cream"));
+                EnumChatFormatting.RED + "Magma Cream"));
 
         /* FORAGING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("LOG", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Oak"));
+                EnumChatFormatting.DARK_GREEN + "Oak"));
         collectionToCollectionDisplayMap.put("LOG:1", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Spruce", 1));
+                EnumChatFormatting.DARK_GREEN + "Spruce", 1));
         collectionToCollectionDisplayMap.put("LOG:2", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Birch", 2));
+                EnumChatFormatting.DARK_GREEN + "Birch", 2));
         collectionToCollectionDisplayMap.put("LOG_2:1", Utils.createItemStack(Item.getItemFromBlock(Blocks.log2),
-                EnumChatFormatting.DARK_GREEN+"Dark Oak", 1));
+                EnumChatFormatting.DARK_GREEN + "Dark Oak", 1));
         collectionToCollectionDisplayMap.put("LOG_2", Utils.createItemStack(Item.getItemFromBlock(Blocks.log2),
-                EnumChatFormatting.DARK_GREEN+"Acacia"));
+                EnumChatFormatting.DARK_GREEN + "Acacia"));
         collectionToCollectionDisplayMap.put("LOG:3", Utils.createItemStack(Item.getItemFromBlock(Blocks.log),
-                EnumChatFormatting.DARK_GREEN+"Jungle", 3));
+                EnumChatFormatting.DARK_GREEN + "Jungle", 3));
 
         /* FISHING COLLECTIONS **/
         collectionToCollectionDisplayMap.put("RAW_FISH", Utils.createItemStack(Items.fish,
-                EnumChatFormatting.AQUA+"Fish"));
+                EnumChatFormatting.AQUA + "Fish"));
         collectionToCollectionDisplayMap.put("RAW_FISH:1", Utils.createItemStack(Items.fish,
-                EnumChatFormatting.AQUA+"Salmon", 1));
+                EnumChatFormatting.AQUA + "Salmon", 1));
         collectionToCollectionDisplayMap.put("RAW_FISH:2", Utils.createItemStack(Items.fish,
-                EnumChatFormatting.AQUA+"Clownfish", 2));
+                EnumChatFormatting.AQUA + "Clownfish", 2));
         collectionToCollectionDisplayMap.put("RAW_FISH:3", Utils.createItemStack(Items.fish,
-                EnumChatFormatting.AQUA+"Pufferfish", 3));
+                EnumChatFormatting.AQUA + "Pufferfish", 3));
         collectionToCollectionDisplayMap.put("PRISMARINE_SHARD", Utils.createItemStack(Items.prismarine_shard,
-                EnumChatFormatting.AQUA+"Prismarine Shard"));
+                EnumChatFormatting.AQUA + "Prismarine Shard"));
         collectionToCollectionDisplayMap.put("PRISMARINE_CRYSTALS", Utils.createItemStack(Items.prismarine_crystals,
-                EnumChatFormatting.AQUA+"Prismarine Crystals"));
+                EnumChatFormatting.AQUA + "Prismarine Crystals"));
         collectionToCollectionDisplayMap.put("CLAY_BALL", Utils.createItemStack(Items.clay_ball,
-                EnumChatFormatting.AQUA+"Clay"));
+                EnumChatFormatting.AQUA + "Clay"));
         collectionToCollectionDisplayMap.put("WATER_LILY", Utils.createItemStack(Item.getItemFromBlock(Blocks.waterlily),
-                EnumChatFormatting.AQUA+"Lilypad"));
+                EnumChatFormatting.AQUA + "Lilypad"));
         collectionToCollectionDisplayMap.put("INK_SACK", Utils.createItemStack(Items.dye,
-                EnumChatFormatting.AQUA+"Ink Sack"));
+                EnumChatFormatting.AQUA + "Ink Sack"));
         collectionToCollectionDisplayMap.put("SPONGE", Utils.createItemStack(Item.getItemFromBlock(Blocks.sponge),
-                EnumChatFormatting.AQUA+"Sponge"));
+                EnumChatFormatting.AQUA + "Sponge"));
     }
 
     public static LinkedHashMap<ItemStack, List<String>> getCollectionCatToMinionMap() {
@@ -276,29 +279,29 @@ public class ProfileViewer {
 
     public static Level getLevel(JsonArray levelingArray, float xp, int levelCap, boolean cumulative) {
         Level levelObj = new Level();
-        for(int level=0; level<levelingArray.size(); level++) {
+        for (int level = 0; level < levelingArray.size(); level++) {
             float levelXp = levelingArray.get(level).getAsFloat();
-            if(levelXp > xp) {
-                if(cumulative) {
+            if (levelXp > xp) {
+                if (cumulative) {
                     float previous = 0;
-                    if(level > 0) previous = levelingArray.get(level-1).getAsFloat();
-                    levelObj.maxXpForLevel = (levelXp-previous);
-                    levelObj.level = 1 + level + (xp-levelXp)/levelObj.maxXpForLevel;
+                    if (level > 0) previous = levelingArray.get(level - 1).getAsFloat();
+                    levelObj.maxXpForLevel = (levelXp - previous);
+                    levelObj.level = 1 + level + (xp - levelXp) / levelObj.maxXpForLevel;
                 } else {
                     levelObj.maxXpForLevel = levelXp;
-                    levelObj.level = level + xp/levelXp;
+                    levelObj.level = level + xp / levelXp;
                 }
-                if(levelObj.level > levelCap) {
+                if (levelObj.level > levelCap) {
                     levelObj.level = levelCap;
                     levelObj.maxed = true;
                 }
                 return levelObj;
             } else {
-                if(!cumulative) xp -= levelXp;
+                if (!cumulative) xp -= levelXp;
             }
         }
         levelObj.level = levelingArray.size();
-        if(levelObj.level > levelCap) {
+        if (levelObj.level > levelCap) {
             levelObj.level = levelCap;
         }
         levelObj.maxed = true;
@@ -319,37 +322,37 @@ public class ProfileViewer {
         private final HashMap<String, JsonObject> skillInfoMap = new HashMap<>();
         private final HashMap<String, JsonObject> inventoryInfoMap = new HashMap<>();
         private final HashMap<String, JsonObject> collectionInfoMap = new HashMap<>();
-        private List<String> profileIds = new ArrayList<>();
+        private final List<String> profileIds = new ArrayList<>();
         private JsonObject playerStatus = null;
-        private HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
-        private HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
-        private HashMap<String, Long> networth = new HashMap<>();
+        private final HashMap<String, PlayerStats.Stats> stats = new HashMap<>();
+        private final HashMap<String, PlayerStats.Stats> passiveStats = new HashMap<>();
+        private final HashMap<String, Long> networth = new HashMap<>();
 
         public Profile(String uuid) {
             this.uuid = uuid;
         }
 
-        private AtomicBoolean updatingPlayerInfoState = new AtomicBoolean(false);
+        private final AtomicBoolean updatingPlayerInfoState = new AtomicBoolean(false);
         private long lastPlayerInfoState = 0;
-        private AtomicBoolean updatingPlayerStatusState = new AtomicBoolean(false);
-        private AtomicBoolean updatingGuildInfoState = new AtomicBoolean(false);
+        private final AtomicBoolean updatingPlayerStatusState = new AtomicBoolean(false);
+        private final AtomicBoolean updatingGuildInfoState = new AtomicBoolean(false);
         private long lastGuildInfoState = 0;
-        private AtomicBoolean updatingGuildStatusState = new AtomicBoolean(false);
+        private final AtomicBoolean updatingGuildStatusState = new AtomicBoolean(false);
 
         public JsonObject getPlayerStatus() {
-            if(playerStatus != null) return playerStatus;
-            if(updatingPlayerStatusState.get()) return null;
+            if (playerStatus != null) return playerStatus;
+            if (updatingPlayerStatusState.get()) return null;
 
             updatingPlayerStatusState.set(true);
 
             HashMap<String, String> args = new HashMap<>();
-            args.put("uuid", ""+uuid);
+            args.put("uuid", "" + uuid);
             manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "status",
                     args, jsonObject -> {
-                        if(jsonObject == null) return;
+                        if (jsonObject == null) return;
 
                         updatingPlayerStatusState.set(false);
-                        if(jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
+                        if (jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
                             playerStatus = jsonObject.get("session").getAsJsonObject();
                         }
                     }, () -> updatingPlayerStatusState.set(false)
@@ -358,12 +361,11 @@ public class ProfileViewer {
             return null;
         }
 
-
         public long getNetWorth(String profileId) {
-            if(profileId == null) profileId = latestProfile;
-            if(networth.get(profileId) != null) return networth.get(profileId);
-            if(getProfileInformation(profileId) == null) return -1;
-            if(getInventoryInfo(profileId) == null) return -1;
+            if (profileId == null) profileId = latestProfile;
+            if (networth.get(profileId) != null) return networth.get(profileId);
+            if (getProfileInformation(profileId) == null) return -1;
+            if (getInventoryInfo(profileId) == null) return -1;
 
             JsonObject inventoryInfo = getInventoryInfo(profileId);
             JsonObject profileInfo = getProfileInformation(profileId);
@@ -371,29 +373,29 @@ public class ProfileViewer {
             HashMap<String, Long> mostExpensiveInternal = new HashMap<>();
 
             long networth = 0;
-            for(Map.Entry<String, JsonElement> entry : inventoryInfo.entrySet()) {
-                if(entry.getValue().isJsonArray()) {
-                    for(JsonElement element : entry.getValue().getAsJsonArray()) {
-                        if(element != null && element.isJsonObject()) {
+            for (Map.Entry<String, JsonElement> entry : inventoryInfo.entrySet()) {
+                if (entry.getValue().isJsonArray()) {
+                    for (JsonElement element : entry.getValue().getAsJsonArray()) {
+                        if (element != null && element.isJsonObject()) {
                             JsonObject item = element.getAsJsonObject();
                             String internalname = item.get("internalname").getAsString();
 
-                            if(manager.auctionManager.isVanillaItem(internalname)) continue;
+                            if (manager.auctionManager.isVanillaItem(internalname)) continue;
 
                             JsonObject bzInfo = manager.auctionManager.getBazaarInfo(internalname);
 
                             int auctionPrice;
-                            if(bzInfo != null && bzInfo.has("curr_sell")) {
-                                auctionPrice = (int)bzInfo.get("curr_sell").getAsFloat();
+                            if (bzInfo != null && bzInfo.has("curr_sell")) {
+                                auctionPrice = (int) bzInfo.get("curr_sell").getAsFloat();
                             } else {
-                                auctionPrice = (int)manager.auctionManager.getItemAvgBin(internalname);
-                                if(auctionPrice <= 0) {
+                                auctionPrice = (int) manager.auctionManager.getItemAvgBin(internalname);
+                                if (auctionPrice <= 0) {
                                     auctionPrice = manager.auctionManager.getLowestBin(internalname);
                                 }
                             }
 
                             try {
-                                if(item.has("item_contents")) {
+                                if (item.has("item_contents")) {
                                     JsonArray bytesArr = item.get("item_contents").getAsJsonArray();
                                     byte[] bytes = new byte[bytesArr.size()];
                                     for (int bytesArrI = 0; bytesArrI < bytesArr.size(); bytesArrI++) {
@@ -401,21 +403,21 @@ public class ProfileViewer {
                                     }
                                     NBTTagCompound contents_nbt = CompressedStreamTools.readCompressed(new ByteArrayInputStream(bytes));
                                     NBTTagList items = contents_nbt.getTagList("i", 10);
-                                    for(int j=0; j<items.tagCount(); j++) {
-                                        if(items.getCompoundTagAt(j).getKeySet().size() > 0) {
+                                    for (int j = 0; j < items.tagCount(); j++) {
+                                        if (items.getCompoundTagAt(j).getKeySet().size() > 0) {
                                             NBTTagCompound nbt = items.getCompoundTagAt(j).getCompoundTag("tag");
                                             String internalname2 = manager.getInternalnameFromNBT(nbt);
-                                            if(internalname2 != null) {
-                                                if(manager.auctionManager.isVanillaItem(internalname2)) continue;
+                                            if (internalname2 != null) {
+                                                if (manager.auctionManager.isVanillaItem(internalname2)) continue;
 
                                                 JsonObject bzInfo2 = manager.auctionManager.getBazaarInfo(internalname2);
 
                                                 int auctionPrice2;
-                                                if(bzInfo2 != null && bzInfo2.has("curr_sell")) {
-                                                    auctionPrice2 = (int)bzInfo2.get("curr_sell").getAsFloat();
+                                                if (bzInfo2 != null && bzInfo2.has("curr_sell")) {
+                                                    auctionPrice2 = (int) bzInfo2.get("curr_sell").getAsFloat();
                                                 } else {
-                                                    auctionPrice2 = (int)manager.auctionManager.getItemAvgBin(internalname2);
-                                                    if(auctionPrice2 <= 0) {
+                                                    auctionPrice2 = (int) manager.auctionManager.getItemAvgBin(internalname2);
+                                                    if (auctionPrice2 <= 0) {
                                                         auctionPrice2 = manager.auctionManager.getLowestBin(internalname2);
                                                     }
                                                 }
@@ -428,10 +430,10 @@ public class ProfileViewer {
                                         }
                                     }
                                 }
-                            } catch(IOException ignored) {}
+                            } catch (IOException ignored) {}
 
                             int count = 1;
-                            if(element.getAsJsonObject().has("count")) {
+                            if (element.getAsJsonObject().has("count")) {
                                 count = element.getAsJsonObject().get("count").getAsInt();
                             }
                             mostExpensiveInternal.put(internalname, auctionPrice * count + mostExpensiveInternal.getOrDefault(internalname, 0L));
@@ -440,31 +442,31 @@ public class ProfileViewer {
                     }
                 }
             }
-            if(networth == 0) return -1;
+            if (networth == 0) return -1;
 
             //System.out.println(profileId);
-            for(Map.Entry<String, Long> entry : mostExpensiveInternal.entrySet()) {
+            for (Map.Entry<String, Long> entry : mostExpensiveInternal.entrySet()) {
                 //System.out.println(entry.getKey() + ":" + entry.getValue());
             }
 
-            networth = (int)(networth*1.3f);
+            networth = (int) (networth * 1.3f);
 
             JsonObject petsInfo = getPetsInfo(profileId);
-            if(petsInfo != null && petsInfo.has("pets")) {
-                if(petsInfo.get("pets").isJsonArray()) {
+            if (petsInfo != null && petsInfo.has("pets")) {
+                if (petsInfo.get("pets").isJsonArray()) {
                     JsonArray pets = petsInfo.get("pets").getAsJsonArray();
-                    for(JsonElement element : pets) {
-                        if(element.isJsonObject()) {
+                    for (JsonElement element : pets) {
+                        if (element.isJsonObject()) {
                             JsonObject pet = element.getAsJsonObject();
 
                             String petname = pet.get("type").getAsString();
                             String tier = pet.get("tier").getAsString();
                             String tierNum = petRarityToNumMap.get(tier);
-                            if(tierNum != null) {
-                                String internalname2 = petname+";"+tierNum;
+                            if (tierNum != null) {
+                                String internalname2 = petname + ";" + tierNum;
                                 JsonObject info2 = manager.auctionManager.getItemAuctionInfo(internalname2);
-                                if(info2 == null || !info2.has("price") || !info2.has("count")) continue;
-                                int auctionPrice2 = (int)(info2.get("price").getAsFloat() / info2.get("count").getAsFloat());
+                                if (info2 == null || !info2.has("price") || !info2.has("count")) continue;
+                                int auctionPrice2 = (int) (info2.get("price").getAsFloat() / info2.get("count").getAsFloat());
 
                                 networth += auctionPrice2;
                             }
@@ -476,7 +478,7 @@ public class ProfileViewer {
             float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), 0);
             float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
 
-            networth += bankBalance+purseBalance;
+            networth += bankBalance + purseBalance;
 
             this.networth.put(profileId, networth);
             return networth;
@@ -491,7 +493,7 @@ public class ProfileViewer {
 
             long currentTime = System.currentTimeMillis();
 
-            if (currentTime - lastPlayerInfoState < 15*1000 && updatingPlayerInfoState.get()) return null;
+            if (currentTime - lastPlayerInfoState < 15 * 1000 && updatingPlayerInfoState.get()) return null;
 
             lastPlayerInfoState = currentTime;
             updatingPlayerInfoState.set(true);
@@ -520,13 +522,12 @@ public class ProfileViewer {
                                 if (members.has(uuid)) {
                                     JsonObject member = members.get(uuid).getAsJsonObject();
 
-                                    if(member.has("coop_invitation")) {
+                                    if (member.has("coop_invitation")) {
                                         JsonObject coop_invitation = member.get("coop_invitation").getAsJsonObject();
-                                        if(!coop_invitation.get("confirmed").getAsBoolean()) {
+                                        if (!coop_invitation.get("confirmed").getAsBoolean()) {
                                             continue;
                                         }
                                     }
-
 
                                     String cute_name = profile.get("cute_name").getAsString();
                                     if (backup == null) backup = cute_name;
@@ -544,19 +545,18 @@ public class ProfileViewer {
                             latestProfile = backup;
                             if (runnable != null) runnable.run();
                         }
-                    }, () -> {
-                        updatingPlayerInfoState.set(false);
-                    }
+                    }, () -> updatingPlayerInfoState.set(false)
             );
 
-                return null;
+            return null;
         }
+
         public JsonObject getGuildInfo(Runnable runnable) {
             if (guildInformation != null) return guildInformation;
 
             long currentTime = System.currentTimeMillis();
 
-            if (currentTime - lastGuildInfoState < 15*1000 && updatingGuildInfoState.get()) return null;
+            if (currentTime - lastGuildInfoState < 15 * 1000 && updatingGuildInfoState.get()) return null;
 
             lastGuildInfoState = currentTime;
             updatingGuildInfoState.set(true);
@@ -573,9 +573,7 @@ public class ProfileViewer {
                             if (guildInformation == null) return;
                             if (runnable != null) runnable.run();
                         }
-                    }, () -> {
-                        updatingGuildInfoState.set(false);
-                    }
+                    }, () -> updatingGuildInfoState.set(false)
             );
 
             return null;
@@ -587,25 +585,25 @@ public class ProfileViewer {
 
         public JsonObject getProfileInformation(String profileId) {
             JsonArray playerInfo = getPlayerInformation(() -> {});
-            if(playerInfo == null) return null;
-            if(profileId == null) profileId = latestProfile;
-            if(profileMap.containsKey(profileId)) return profileMap.get(profileId);
+            if (playerInfo == null) return null;
+            if (profileId == null) profileId = latestProfile;
+            if (profileMap.containsKey(profileId)) return profileMap.get(profileId);
 
-            for(int i=0; i<playerInformation.size(); i++) {
-                if(!playerInformation.get(i).isJsonObject()) {
+            for (int i = 0; i < playerInformation.size(); i++) {
+                if (!playerInformation.get(i).isJsonObject()) {
                     playerInformation = null;
                     return null;
                 }
                 JsonObject profile = playerInformation.get(i).getAsJsonObject();
-                if(profile.get("cute_name").getAsString().equalsIgnoreCase(profileId)) {
-                    if(!profile.has("members")) return null;
+                if (profile.get("cute_name").getAsString().equalsIgnoreCase(profileId)) {
+                    if (!profile.has("members")) return null;
                     JsonObject members = profile.get("members").getAsJsonObject();
-                    if(!members.has(uuid)) continue;
+                    if (!members.has(uuid)) continue;
                     JsonObject profileInfo = members.get(uuid).getAsJsonObject();
-                    if(profile.has("banking")) {
+                    if (profile.has("banking")) {
                         profileInfo.add("banking", profile.get("banking").getAsJsonObject());
                     }
-                    if(profile.has("game_mode")){
+                    if (profile.has("game_mode")) {
                         profileInfo.add("game_mode", profile.get("game_mode"));
                     }
                     profileMap.put(profileId, profileInfo);
@@ -618,23 +616,23 @@ public class ProfileViewer {
 
         public List<JsonObject> getCoopProfileInformation(String profileId) {
             JsonArray playerInfo = getPlayerInformation(() -> {});
-            if(playerInfo == null) return null;
-            if(profileId == null) profileId = latestProfile;
-            if(coopProfileMap.containsKey(profileId)) return coopProfileMap.get(profileId);
+            if (playerInfo == null) return null;
+            if (profileId == null) profileId = latestProfile;
+            if (coopProfileMap.containsKey(profileId)) return coopProfileMap.get(profileId);
 
-            for(int i=0; i<playerInformation.size(); i++) {
-                if(!playerInformation.get(i).isJsonObject()) {
+            for (int i = 0; i < playerInformation.size(); i++) {
+                if (!playerInformation.get(i).isJsonObject()) {
                     playerInformation = null;
                     return null;
                 }
                 JsonObject profile = playerInformation.get(i).getAsJsonObject();
-                if(profile.get("cute_name").getAsString().equalsIgnoreCase(profileId)) {
-                    if(!profile.has("members")) return null;
+                if (profile.get("cute_name").getAsString().equalsIgnoreCase(profileId)) {
+                    if (!profile.has("members")) return null;
                     JsonObject members = profile.get("members").getAsJsonObject();
-                    if(!members.has(uuid)) return null;
+                    if (!members.has(uuid)) return null;
                     List<JsonObject> coopList = new ArrayList<>();
-                    for(Map.Entry<String, JsonElement> islandMember : members.entrySet()) {
-                        if(!islandMember.getKey().equals(uuid)) {
+                    for (Map.Entry<String, JsonElement> islandMember : members.entrySet()) {
+                        if (!islandMember.getKey().equals(uuid)) {
                             JsonObject coopProfileInfo = islandMember.getValue().getAsJsonObject();
                             coopList.add(coopProfileInfo);
                         }
@@ -666,11 +664,11 @@ public class ProfileViewer {
 
         public int getCap(JsonObject leveling, String skillName) {
             JsonElement capsElement = Utils.getElement(leveling, "leveling_caps");
-            if(capsElement == null || !capsElement.isJsonObject()) {
+            if (capsElement == null || !capsElement.isJsonObject()) {
                 return 50;
             }
             JsonObject caps = capsElement.getAsJsonObject();
-            if(caps.has(skillName)) {
+            if (caps.has(skillName)) {
                 return caps.get(skillName).getAsInt();
             }
             return 50;
@@ -678,11 +676,11 @@ public class ProfileViewer {
 
         public JsonObject getSkillInfo(String profileId) {
             JsonObject profileInfo = getProfileInformation(profileId);
-            if(profileInfo == null) return null;
-            if(profileId == null) profileId = latestProfile;
-            if(skillInfoMap.containsKey(profileId)) return skillInfoMap.get(profileId);
+            if (profileInfo == null) return null;
+            if (profileId == null) profileId = latestProfile;
+            if (skillInfoMap.containsKey(profileId)) return skillInfoMap.get(profileId);
             JsonObject leveling = Constants.LEVELING;
-            if(leveling == null)  return null;
+            if (leveling == null) return null;
 
             float experience_skill_taming = Utils.getElementAsFloat(Utils.getElement(profileInfo, "experience_skill_taming"), 0);
             float experience_skill_mining = Utils.getElementAsFloat(Utils.getElement(profileInfo, "experience_skill_mining"), 0);
@@ -702,13 +700,12 @@ public class ProfileViewer {
             float experience_slayer_wolf = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.wolf.xp"), 0);
             float experience_slayer_enderman = Utils.getElementAsFloat(Utils.getElement(profileInfo, "slayer_bosses.enderman.xp"), 0);
 
-
             float totalSkillXP = experience_skill_taming + experience_skill_mining + experience_skill_foraging
                     + experience_skill_enchanting + experience_skill_carpentry + experience_skill_farming
                     + experience_skill_combat + experience_skill_fishing + experience_skill_alchemy
                     + experience_skill_runecrafting;
 
-            if(totalSkillXP <= 0) {
+            if (totalSkillXP <= 0) {
                 return null;
             }
 
@@ -733,13 +730,13 @@ public class ProfileViewer {
             skillInfo.addProperty("experience_slayer_enderman", experience_slayer_enderman);
 
             JsonArray levelingArray = Utils.getElement(leveling, "leveling_xp").getAsJsonArray();
-            int farmingCap = getCap(leveling, "farming") + (int)Utils.getElementAsFloat(
+            int farmingCap = getCap(leveling, "farming") + (int) Utils.getElementAsFloat(
                     Utils.getElement(profileInfo, "jacob2.perks.farming_level_cap"), 0);
             Level level_skill_taming = getLevel(levelingArray, experience_skill_taming, getCap(leveling, "taming"), false);
             Level level_skill_mining = getLevel(levelingArray, experience_skill_mining, getCap(leveling, "mining"), false);
             Level level_skill_foraging = getLevel(levelingArray, experience_skill_foraging, getCap(leveling, "foraging"), false);
-            Level level_skill_enchanting = getLevel(levelingArray, experience_skill_enchanting, getCap(leveling, "enchanting"),  false);
-            Level level_skill_carpentry = getLevel(levelingArray, experience_skill_carpentry,getCap(leveling, "carpentry"),  false);
+            Level level_skill_enchanting = getLevel(levelingArray, experience_skill_enchanting, getCap(leveling, "enchanting"), false);
+            Level level_skill_carpentry = getLevel(levelingArray, experience_skill_carpentry, getCap(leveling, "carpentry"), false);
             Level level_skill_farming = getLevel(levelingArray, experience_skill_farming, farmingCap, false);
             Level level_skill_combat = getLevel(levelingArray, experience_skill_combat, getCap(leveling, "combat"), false);
             Level level_skill_fishing = getLevel(levelingArray, experience_skill_fishing, getCap(leveling, "fishing"), false);
@@ -751,13 +748,13 @@ public class ProfileViewer {
                     experience_skill_catacombs, getCap(leveling, "catacombs"), false);
 
             Level level_slayer_zombie = getLevel(Utils.getElement(leveling, "slayer_xp.zombie").getAsJsonArray(),
-                    experience_slayer_zombie, 9,true);
+                    experience_slayer_zombie, 9, true);
             Level level_slayer_spider = getLevel(Utils.getElement(leveling, "slayer_xp.spider").getAsJsonArray(),
-                    experience_slayer_spider, 9,true);
+                    experience_slayer_spider, 9, true);
             Level level_slayer_wolf = getLevel(Utils.getElement(leveling, "slayer_xp.wolf").getAsJsonArray(),
-                    experience_slayer_wolf, 9,true);
+                    experience_slayer_wolf, 9, true);
             Level level_slayer_enderman = getLevel(Utils.getElement(leveling, "slayer_xp.enderman").getAsJsonArray(),
-                    experience_slayer_enderman, 9,true);
+                    experience_slayer_enderman, 9, true);
 
             skillInfo.addProperty("level_skill_taming", level_skill_taming.level);
             skillInfo.addProperty("level_skill_mining", level_skill_mining.level);
@@ -818,9 +815,9 @@ public class ProfileViewer {
 
         public JsonObject getInventoryInfo(String profileId) {
             JsonObject profileInfo = getProfileInformation(profileId);
-            if(profileInfo == null) return null;
-            if(profileId == null) profileId = latestProfile;
-            if(inventoryInfoMap.containsKey(profileId)) return inventoryInfoMap.get(profileId);
+            if (profileInfo == null) return null;
+            if (profileId == null) profileId = latestProfile;
+            if (inventoryInfoMap.containsKey(profileId)) return inventoryInfoMap.get(profileId);
 
             String inv_armor_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "inv_armor.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String fishing_bag_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "fishing_bag.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
@@ -838,20 +835,19 @@ public class ProfileViewer {
             String talisman_bag_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "talisman_bag.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
             String candy_inventory_contents_bytes = Utils.getElementAsString(Utils.getElement(profileInfo, "candy_inventory_contents.data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
 
-
             JsonObject inventoryInfo = new JsonObject();
 
             String[] inv_names = new String[]{"inv_armor", "fishing_bag", "quiver", "ender_chest_contents", "backpack_contents", "personal_vault_contents", "wardrobe_contents",
                     "potion_bag", "inv_contents", "talisman_bag", "candy_inventory_contents"};
             String[] inv_bytes = new String[]{inv_armor_bytes, fishing_bag_bytes, quiver_bytes, ender_chest_contents_bytes, backpack_contents_json_fake, personal_vault_contents_bytes, wardrobe_contents_bytes,
                     potion_bag_bytes, inv_contents_bytes, talisman_bag_bytes, candy_inventory_contents_bytes};
-            for(int i=0; i<inv_bytes.length; i++) {
+            for (int i = 0; i < inv_bytes.length; i++) {
                 try {
                     String bytes = inv_bytes[i];
 
                     JsonArray contents = new JsonArray();
 
-                    if(inv_names[i].equals("backpack_contents")){
+                    if (inv_names[i].equals("backpack_contents")) {
                         JsonObject temp = getBackpackData(backpack_contents_json, backpack_icons);
                         contents = (JsonArray) temp.get("contents");
                         inventoryInfo.add("backpack_sizes", temp.get("backpack_sizes"));
@@ -866,7 +862,7 @@ public class ProfileViewer {
                         }
                     }
                     inventoryInfo.add(inv_names[i], contents);
-                } catch(IOException e) {
+                } catch (IOException e) {
                     inventoryInfo.add(inv_names[i], new JsonArray());
                 }
             }
@@ -876,14 +872,14 @@ public class ProfileViewer {
             return inventoryInfo;
         }
 
-        public boolean checkIfValidJson(JsonElement element){
+        public boolean checkIfValidJson(JsonElement element) {
             return element != null;
         }
 
         public JsonObject getBackpackData(JsonObject backpack_contents_json, JsonObject backpack_icons) {
 
             JsonArray contents = new JsonArray();
-            if(!(checkIfValidJson(backpack_contents_json) && checkIfValidJson(backpack_icons))){
+            if (!(checkIfValidJson(backpack_contents_json) && checkIfValidJson(backpack_icons))) {
                 JsonObject bundledReturn = new JsonObject();
                 bundledReturn.add("contents", new JsonArray());
                 bundledReturn.add("backpack_sizes", new JsonArray());
@@ -894,14 +890,13 @@ public class ProfileViewer {
             String[] backpackArray = new String[0];
 
             //Create backpack array which sizes up
-            for(Map.Entry<String, JsonElement> backpackIcon : backpack_icons.entrySet()) {
-                if(backpackIcon.getValue() instanceof JsonObject){
-                    JsonObject backpackData = (JsonObject)backpack_contents_json.get(backpackIcon.getKey());
+            for (Map.Entry<String, JsonElement> backpackIcon : backpack_icons.entrySet()) {
+                if (backpackIcon.getValue() instanceof JsonObject) {
+                    JsonObject backpackData = (JsonObject) backpack_contents_json.get(backpackIcon.getKey());
                     String bytes = Utils.getElementAsString(backpackData.get("data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
                     backpackArray = growArray(bytes, Integer.parseInt(backpackIcon.getKey()), backpackArray);
                 }
             }
-
 
             //reduce backpack array to filter out not existent backpacks
             {
@@ -932,10 +927,8 @@ public class ProfileViewer {
                         JsonObject item = manager.getJsonFromNBTEntry(items.getCompoundTagAt(j));
                         contents.add(item);
                     }
-                } catch (IOException ignored) {
-                }
+                } catch (IOException ignored) {}
             }
-
 
             JsonObject bundledReturn = new JsonObject();
             bundledReturn.add("contents", contents);
@@ -944,8 +937,8 @@ public class ProfileViewer {
             return bundledReturn;
         }
 
-        public String[] growArray(String bytes, int index, String[] oldArray){
-            int newSize = Math.max(index+1, oldArray.length);
+        public String[] growArray(String bytes, int index, String[] oldArray) {
+            int newSize = Math.max(index + 1, oldArray.length);
 
             String[] newArray = new String[newSize];
             for (int i = 0; i < oldArray.length; i++) {
@@ -956,21 +949,19 @@ public class ProfileViewer {
             return newArray;
         }
 
-
-
         public JsonObject getPetsInfo(String profileId) {
             JsonObject profileInfo = getProfileInformation(profileId);
-            if(profileInfo == null) return null;
-            if(petsInfoMap.containsKey(profileId)) return petsInfoMap.get(profileId);
+            if (profileInfo == null) return null;
+            if (petsInfoMap.containsKey(profileId)) return petsInfoMap.get(profileId);
 
             JsonObject petsInfo = new JsonObject();
             JsonElement petsElement = profileInfo.get("pets");
-            if(petsElement != null && petsElement.isJsonArray()) {
+            if (petsElement != null && petsElement.isJsonArray()) {
                 JsonObject activePet = null;
                 JsonArray pets = petsElement.getAsJsonArray();
-                for(int i=0; i<pets.size(); i++) {
+                for (int i = 0; i < pets.size(); i++) {
                     JsonObject pet = pets.get(i).getAsJsonObject();
-                    if(pet.has("active") && pet.get("active").getAsJsonPrimitive().getAsBoolean()) {
+                    if (pet.has("active") && pet.get("active").getAsJsonPrimitive().getAsBoolean()) {
                         activePet = pet;
                         break;
                     }
@@ -984,19 +975,20 @@ public class ProfileViewer {
         }
 
         private final Pattern COLL_TIER_PATTERN = Pattern.compile("_(-?[0-9]+)");
+
         public JsonObject getCollectionInfo(String profileId) {
             JsonObject profileInfo = getProfileInformation(profileId);
-            if(profileInfo == null) return null;
+            if (profileInfo == null) return null;
             JsonObject resourceCollectionInfo = getResourceCollectionInformation();
-            if(resourceCollectionInfo == null) return null;
-            if(profileId == null) profileId = latestProfile;
-            if(collectionInfoMap.containsKey(profileId)) return collectionInfoMap.get(profileId);
+            if (resourceCollectionInfo == null) return null;
+            if (profileId == null) profileId = latestProfile;
+            if (collectionInfoMap.containsKey(profileId)) return collectionInfoMap.get(profileId);
 
             JsonElement unlocked_coll_tiers_element = Utils.getElement(profileInfo, "unlocked_coll_tiers");
             JsonElement crafted_generators_element = Utils.getElement(profileInfo, "crafted_generators");
             JsonElement collectionInfoElement = Utils.getElement(profileInfo, "collection");
 
-            if(unlocked_coll_tiers_element == null || collectionInfoElement == null) {
+            if (unlocked_coll_tiers_element == null || collectionInfoElement == null) {
                 return null;
             }
 
@@ -1006,57 +998,57 @@ public class ProfileViewer {
             JsonObject personalAmounts = new JsonObject();
             JsonObject totalAmounts = new JsonObject();
 
-            if(collectionInfoElement.isJsonObject()) {
+            if (collectionInfoElement.isJsonObject()) {
                 personalAmounts = collectionInfoElement.getAsJsonObject();
             }
 
-            for(Map.Entry<String, JsonElement> entry : personalAmounts.entrySet()) {
+            for (Map.Entry<String, JsonElement> entry : personalAmounts.entrySet()) {
                 totalAmounts.addProperty(entry.getKey(), entry.getValue().getAsInt());
             }
 
             List<JsonObject> coopProfiles = getCoopProfileInformation(profileId);
-            if(coopProfiles != null) {
-                for(JsonObject coopProfile : coopProfiles) {
+            if (coopProfiles != null) {
+                for (JsonObject coopProfile : coopProfiles) {
                     JsonElement coopCollectionInfoElement = Utils.getElement(coopProfile, "collection");
-                    if(coopCollectionInfoElement != null && coopCollectionInfoElement.isJsonObject()) {
-                        for(Map.Entry<String, JsonElement> entry : coopCollectionInfoElement.getAsJsonObject().entrySet()) {
+                    if (coopCollectionInfoElement != null && coopCollectionInfoElement.isJsonObject()) {
+                        for (Map.Entry<String, JsonElement> entry : coopCollectionInfoElement.getAsJsonObject().entrySet()) {
                             float existing = Utils.getElementAsFloat(totalAmounts.get(entry.getKey()), 0);
-                            totalAmounts.addProperty(entry.getKey(), existing+entry.getValue().getAsInt());
+                            totalAmounts.addProperty(entry.getKey(), existing + entry.getValue().getAsInt());
                         }
                     }
                 }
             }
 
-            if(unlocked_coll_tiers_element.isJsonArray()) {
+            if (unlocked_coll_tiers_element.isJsonArray()) {
                 JsonArray unlocked_coll_tiers = unlocked_coll_tiers_element.getAsJsonArray();
-                for(int i=0; i<unlocked_coll_tiers.size(); i++) {
+                for (int i = 0; i < unlocked_coll_tiers.size(); i++) {
                     String unlocked = unlocked_coll_tiers.get(i).getAsString();
 
                     Matcher matcher = COLL_TIER_PATTERN.matcher(unlocked);
 
-                    if(matcher.find()) {
+                    if (matcher.find()) {
                         String tier_str = matcher.group(1);
                         int tier = Integer.parseInt(tier_str);
-                        String coll = unlocked.substring(0, unlocked.length()-(matcher.group().length()));
-                        if(!collectionTiers.has(coll) || collectionTiers.get(coll).getAsInt() < tier) {
+                        String coll = unlocked.substring(0, unlocked.length() - (matcher.group().length()));
+                        if (!collectionTiers.has(coll) || collectionTiers.get(coll).getAsInt() < tier) {
                             collectionTiers.addProperty(coll, tier);
                         }
                     }
                 }
             }
 
-            if(crafted_generators_element != null && crafted_generators_element.isJsonArray()) {
+            if (crafted_generators_element != null && crafted_generators_element.isJsonArray()) {
                 JsonArray crafted_generators = crafted_generators_element.getAsJsonArray();
-                for(int i=0; i<crafted_generators.size(); i++) {
+                for (int i = 0; i < crafted_generators.size(); i++) {
                     String unlocked = crafted_generators.get(i).getAsString();
 
                     Matcher matcher = COLL_TIER_PATTERN.matcher(unlocked);
 
-                    if(matcher.find()) {
+                    if (matcher.find()) {
                         String tier_str = matcher.group(1);
                         int tier = Integer.parseInt(tier_str);
-                        String coll = unlocked.substring(0, unlocked.length()-(matcher.group().length()));
-                        if(!minionTiers.has(coll) || minionTiers.get(coll).getAsInt() < tier) {
+                        String coll = unlocked.substring(0, unlocked.length() - (matcher.group().length()));
+                        if (!minionTiers.has(coll) || minionTiers.get(coll).getAsInt() < tier) {
                             minionTiers.addProperty(coll, tier);
                         }
                     }
@@ -1065,28 +1057,28 @@ public class ProfileViewer {
 
             JsonObject maxAmount = new JsonObject();
             JsonObject updatedCollectionTiers = new JsonObject();
-            for(Map.Entry<String, JsonElement> totalAmountsEntry : totalAmounts.entrySet()) {
+            for (Map.Entry<String, JsonElement> totalAmountsEntry : totalAmounts.entrySet()) {
                 String collName = totalAmountsEntry.getKey();
-                int collTier = (int)Utils.getElementAsFloat(collectionTiers.get(collName), 0);
+                int collTier = (int) Utils.getElementAsFloat(collectionTiers.get(collName), 0);
 
-                int currentAmount = (int)Utils.getElementAsFloat(totalAmounts.get(collName), 0);
-                if(currentAmount > 0) {
-                    for(Map.Entry<String, JsonElement> resourceEntry : resourceCollectionInfo.entrySet()) {
-                        JsonElement tiersElement = Utils.getElement(resourceEntry.getValue(), "items."+collName+".tiers");
-                        if(tiersElement != null && tiersElement.isJsonArray()) {
+                int currentAmount = (int) Utils.getElementAsFloat(totalAmounts.get(collName), 0);
+                if (currentAmount > 0) {
+                    for (Map.Entry<String, JsonElement> resourceEntry : resourceCollectionInfo.entrySet()) {
+                        JsonElement tiersElement = Utils.getElement(resourceEntry.getValue(), "items." + collName + ".tiers");
+                        if (tiersElement != null && tiersElement.isJsonArray()) {
                             JsonArray tiers = tiersElement.getAsJsonArray();
                             int maxTierAcquired = -1;
                             int maxAmountRequired = -1;
-                            for(int i=0; i<tiers.size(); i++) {
+                            for (int i = 0; i < tiers.size(); i++) {
                                 JsonObject tierInfo = tiers.get(i).getAsJsonObject();
                                 int tier = tierInfo.get("tier").getAsInt();
                                 int amountRequired = tierInfo.get("amountRequired").getAsInt();
-                                if(currentAmount >= amountRequired) {
+                                if (currentAmount >= amountRequired) {
                                     maxTierAcquired = tier;
                                 }
                                 maxAmountRequired = amountRequired;
                             }
-                            if(maxTierAcquired >= 0 && maxTierAcquired > collTier) {
+                            if (maxTierAcquired >= 0 && maxTierAcquired > collTier) {
                                 updatedCollectionTiers.addProperty(collName, maxTierAcquired);
                             }
                             maxAmount.addProperty(collName, maxAmountRequired);
@@ -1095,7 +1087,7 @@ public class ProfileViewer {
                 }
             }
 
-            for(Map.Entry<String, JsonElement> collectionTiersEntry : updatedCollectionTiers.entrySet()) {
+            for (Map.Entry<String, JsonElement> collectionTiersEntry : updatedCollectionTiers.entrySet()) {
                 collectionTiers.add(collectionTiersEntry.getKey(), collectionTiersEntry.getValue());
             }
 
@@ -1109,13 +1101,13 @@ public class ProfileViewer {
         }
 
         public PlayerStats.Stats getPassiveStats(String profileId) {
-            if(passiveStats.get(profileId) != null) return passiveStats.get(profileId);
+            if (passiveStats.get(profileId) != null) return passiveStats.get(profileId);
             JsonObject profileInfo = getProfileInformation(profileId);
-            if(profileInfo == null) return null;
+            if (profileInfo == null) return null;
 
             PlayerStats.Stats passiveStats = PlayerStats.getPassiveBonuses(getSkillInfo(profileId), profileInfo);
 
-            if(passiveStats != null) {
+            if (passiveStats != null) {
                 passiveStats.add(PlayerStats.getBaseStats());
             }
 
@@ -1127,7 +1119,7 @@ public class ProfileViewer {
         public PlayerStats.Stats getStats(String profileId) {
             //if(stats.get(profileId) != null) return stats.get(profileId);
             JsonObject profileInfo = getProfileInformation(profileId);
-            if(profileInfo == null) {
+            if (profileInfo == null) {
                 return null;
             }
 
@@ -1141,29 +1133,30 @@ public class ProfileViewer {
             return uuid;
         }
 
-        public @Nullable JsonObject getHypixelProfile() {
-            if(uuidToHypixelProfile.containsKey(uuid)) return uuidToHypixelProfile.get(uuid);
+        public @Nullable
+        JsonObject getHypixelProfile() {
+            if (uuidToHypixelProfile.containsKey(uuid)) return uuidToHypixelProfile.get(uuid);
             return null;
         }
     }
 
-    private HashMap<String, JsonObject> nameToHypixelProfile = new HashMap<>();
-    private HashMap<String, JsonObject> uuidToHypixelProfile = new HashMap<>();
-    private HashMap<String, Profile> uuidToProfileMap = new HashMap<>();
+    private final HashMap<String, JsonObject> nameToHypixelProfile = new HashMap<>();
+    private final HashMap<String, JsonObject> uuidToHypixelProfile = new HashMap<>();
+    private final HashMap<String, Profile> uuidToProfileMap = new HashMap<>();
 
     public void getHypixelProfile(String name, Consumer<JsonObject> callback) {
         String nameF = name.toLowerCase();
         HashMap<String, String> args = new HashMap<>();
-        args.put("name", ""+nameF);
+        args.put("name", "" + nameF);
         manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "player",
                 args, jsonObject -> {
-                    if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()
+                    if (jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()
                             && jsonObject.get("player").isJsonObject()) {
                         nameToUuid.put(nameF, jsonObject.get("player").getAsJsonObject().get("uuid").getAsString());
                         uuidToHypixelProfile.put(jsonObject.get("player").getAsJsonObject().get("uuid").getAsString(), jsonObject.get("player").getAsJsonObject());
-                        if(callback != null) callback.accept(jsonObject);
+                        if (callback != null) callback.accept(jsonObject);
                     } else {
-                        if(callback != null) callback.accept(null);
+                        if (callback != null) callback.accept(null);
                     }
                 }
         );
@@ -1177,15 +1170,15 @@ public class ProfileViewer {
 
     public void getPlayerUUID(String name, Consumer<String> uuidCallback) {
         String nameF = name.toLowerCase();
-        if(nameToUuid.containsKey(nameF)) {
+        if (nameToUuid.containsKey(nameF)) {
             uuidCallback.accept(nameToUuid.get(nameF));
             return;
         }
 
-        manager.hypixelApi.getApiAsync("https://api.mojang.com/users/profiles/minecraft/"+nameF,
+        manager.hypixelApi.getApiAsync("https://api.mojang.com/users/profiles/minecraft/" + nameF,
                 (jsonObject) -> {
-                    if(jsonObject.has("id") && jsonObject.get("id").isJsonPrimitive() &&
-                            ((JsonPrimitive)jsonObject.get("id")).isString()) {
+                    if (jsonObject.has("id") && jsonObject.get("id").isJsonPrimitive() &&
+                            ((JsonPrimitive) jsonObject.get("id")).isString()) {
                         String uuid = jsonObject.get("id").getAsString();
                         nameToUuid.put(nameF, uuid);
                         uuidCallback.accept(uuid);
@@ -1199,15 +1192,15 @@ public class ProfileViewer {
     public void getProfileByName(String name, Consumer<Profile> callback) {
         String nameF = name.toLowerCase();
 
-        if(nameToUuid.containsKey(nameF) && nameToUuid.get(nameF) == null) {
+        if (nameToUuid.containsKey(nameF) && nameToUuid.get(nameF) == null) {
             callback.accept(null);
             return;
         }
 
         getPlayerUUID(nameF, (uuid) -> {
-            if(uuid == null) {
+            if (uuid == null) {
                 getHypixelProfile(nameF, jsonObject -> {
-                    if(jsonObject != null) {
+                    if (jsonObject != null) {
                         callback.accept(getProfileReset(nameToUuid.get(nameF), ignored -> {}));
                     } else {
                         callback.accept(null);
@@ -1215,7 +1208,7 @@ public class ProfileViewer {
                     }
                 });
             } else {
-                if(!uuidToHypixelProfile.containsKey(uuid)) {
+                if (!uuidToHypixelProfile.containsKey(uuid)) {
                     getHypixelProfile(nameF, jsonObject -> {});
                 }
                 callback.accept(getProfileReset(uuid, ignored -> {}));
@@ -1231,7 +1224,7 @@ public class ProfileViewer {
 
     public Profile getProfile(String uuid, Consumer<Profile> callback) {
         Profile profile = uuidToProfileMap.computeIfAbsent(uuid, k -> new Profile(uuid));
-        if(profile.playerInformation != null) {
+        if (profile.playerInformation != null) {
             callback.accept(profile);
         } else {
             profile.getPlayerInformation(() -> callback.accept(profile));
@@ -1240,15 +1233,16 @@ public class ProfileViewer {
     }
 
     public Profile getProfileReset(String uuid, Consumer<Profile> callback) {
-        if(uuidToProfileMap.containsKey(uuid)) uuidToProfileMap.get(uuid).resetCache();
+        if (uuidToProfileMap.containsKey(uuid)) uuidToProfileMap.get(uuid).resetCache();
         return getProfile(uuid, callback);
     }
 
     private static JsonObject resourceCollection = null;
-    private static AtomicBoolean updatingResourceCollection = new AtomicBoolean(false);
+    private static final AtomicBoolean updatingResourceCollection = new AtomicBoolean(false);
+
     public static JsonObject getResourceCollectionInformation() {
-        if(resourceCollection != null) return resourceCollection;
-        if(updatingResourceCollection.get()) return null;
+        if (resourceCollection != null) return resourceCollection;
+        if (updatingResourceCollection.get()) return null;
 
         updatingResourceCollection.set(true);
 
@@ -1256,12 +1250,10 @@ public class ProfileViewer {
         NotEnoughUpdates.INSTANCE.manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "resources/skyblock/collections",
                 args, jsonObject -> {
                     updatingResourceCollection.set(false);
-                    if(jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
+                    if (jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
                         resourceCollection = jsonObject.get("collections").getAsJsonObject();
                     }
-                }, () -> {
-                    updatingResourceCollection.set(false);
-                }
+                }, () -> updatingResourceCollection.set(false)
         );
 
         return null;

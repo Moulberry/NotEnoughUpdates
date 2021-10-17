@@ -16,9 +16,9 @@ public class SunTzu {
     private static boolean enabled = false;
     private static int quoteNum = 0;
 
-    private static Random rand = new Random();
+    private static final Random rand = new Random();
 
-    private static String[] quotes = new String[] {
+    private static final String[] quotes = new String[]{
             "Appear weak when you are strong, and strong when you are weak.",
             "The supreme art of war is to subdue the enemy without fighting.",
             "If you know the enemy and know yourself, you need not fear the result of a hundred battles.",
@@ -46,10 +46,10 @@ public class SunTzu {
     }
 
     public static void randomizeQuote() {
-        for(int i=0; i<3; i++) {
+        for (int i = 0; i < 3; i++) {
             int newQuote = rand.nextInt(quotes.length);
 
-            if(newQuote != quoteNum) {
+            if (newQuote != quoteNum) {
                 quoteNum = newQuote;
                 return;
             }
@@ -62,23 +62,23 @@ public class SunTzu {
 
     @SubscribeEvent
     public void onOverlayDrawn(RenderGameOverlayEvent event) {
-        if(enabled && ((event.type == null && Loader.isModLoaded("labymod")) ||
-                        event.type == RenderGameOverlayEvent.ElementType.ALL)) {
-            if(Minecraft.getMinecraft().gameSettings.showDebugInfo ||
+        if (enabled && ((event.type == null && Loader.isModLoaded("labymod")) ||
+                event.type == RenderGameOverlayEvent.ElementType.ALL)) {
+            if (Minecraft.getMinecraft().gameSettings.showDebugInfo ||
                     (Minecraft.getMinecraft().gameSettings.keyBindPlayerList.isKeyDown() &&
                             (!Minecraft.getMinecraft().isIntegratedServerRunning() ||
                                     Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap().size() > 1))) {
                 return;
             }
-            
+
             ScaledResolution sr = Utils.pushGuiScale(2);
 
-            int height = Utils.renderStringTrimWidth(EnumChatFormatting.YELLOW+getQuote(), Minecraft.getMinecraft().fontRendererObj,
-                    true, sr.getScaledWidth()/2-100, 5, 200, -1, -1);
+            int height = Utils.renderStringTrimWidth(EnumChatFormatting.YELLOW + getQuote(), Minecraft.getMinecraft().fontRendererObj,
+                    true, sr.getScaledWidth() / 2 - 100, 5, 200, -1, -1);
             String sunTzu = "- Sun Tzu, The Art of War";
             int sunTzuLength = Minecraft.getMinecraft().fontRendererObj.getStringWidth(sunTzu);
-            Minecraft.getMinecraft().fontRendererObj.drawString(EnumChatFormatting.GOLD+sunTzu,
-                    sr.getScaledWidth()/2f+100-sunTzuLength, 15+height, 0, true);
+            Minecraft.getMinecraft().fontRendererObj.drawString(EnumChatFormatting.GOLD + sunTzu,
+                    sr.getScaledWidth() / 2f + 100 - sunTzuLength, 15 + height, 0, true);
 
             Utils.pushGuiScale(-1);
         }
@@ -88,6 +88,5 @@ public class SunTzu {
     public void switchWorld(WorldEvent.Load event) {
         randomizeQuote();
     }
-
 
 }

@@ -6,7 +6,6 @@ import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
@@ -25,10 +24,10 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Set;
 
 public class CrystalOverlay {
 
@@ -47,14 +46,14 @@ public class CrystalOverlay {
         }
 
         public Set<BlockPos> getCircleOffsets() {
-            if(circleOffsets != null) return circleOffsets;
+            if (circleOffsets != null) return circleOffsets;
             circleOffsets = new HashSet<>();
 
-            for(int x=-radius; x<=radius; x++) {
-                for(int y=-radius; y<=radius; y++) {
-                    for(int z=-radius; z<=radius; z++) {
-                        float distSq = (x-0.5f)*(x-0.5f) + y*y + (z-0.5f)*(z-0.5f);
-                        if(distSq > (radius-1)*(radius-1) && distSq < radius*radius) {
+            for (int x = -radius; x <= radius; x++) {
+                for (int y = -radius; y <= radius; y++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        float distSq = (x - 0.5f) * (x - 0.5f) + y * y + (z - 0.5f) * (z - 0.5f);
+                        if (distSq > (radius - 1) * (radius - 1) && distSq < radius * radius) {
                             circleOffsets.add(new BlockPos(x, y, z));
                         }
                     }
@@ -65,12 +64,12 @@ public class CrystalOverlay {
         }
 
         public ReverseWorldRenderer getOverlayVBO() {
-            if(overlayVBO != null) return overlayVBO;
+            if (overlayVBO != null) return overlayVBO;
 
             EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-            if(p == null) return null;
+            if (p == null) return null;
 
-            if(!crystals.containsKey(this)) {
+            if (!crystals.containsKey(this)) {
                 return null;
             }
 
@@ -79,21 +78,21 @@ public class CrystalOverlay {
             //per block = 8
             //total per block = 196
 
-            ReverseWorldRenderer worldRenderer = new ReverseWorldRenderer(196*getCircleOffsets().size());
+            ReverseWorldRenderer worldRenderer = new ReverseWorldRenderer(196 * getCircleOffsets().size());
             worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
 
             String col = SpecialColour.special(0, 180, rgb);
-            for(BlockPos offset : getCircleOffsets()) {
+            for (BlockPos offset : getCircleOffsets()) {
                 BlockPos overlayPos = new BlockPos(offset.getX(), offset.getY(), offset.getZ());
 
                 AxisAlignedBB bb = new AxisAlignedBB(
                         overlayPos.getX(),
                         overlayPos.getY(),
                         overlayPos.getZ(),
-                        overlayPos.getX()+1,
-                        overlayPos.getY()+1,
-                        overlayPos.getZ()+1
-                ).expand(0.001f*(this.ordinal()+1), 0.001f*(this.ordinal()+1), 0.001f*(this.ordinal()+1));
+                        overlayPos.getX() + 1,
+                        overlayPos.getY() + 1,
+                        overlayPos.getZ() + 1
+                ).expand(0.001f * (this.ordinal() + 1), 0.001f * (this.ordinal() + 1), 0.001f * (this.ordinal() + 1));
                 uploadFilledBoundingBox(bb, 1f, col, worldRenderer);
             }
 
@@ -112,7 +111,8 @@ public class CrystalOverlay {
     private static double posLastUpdateY;
     private static double posLastUpdateZ;
 
-    private static HashMap<String, CrystalType> skullId = new HashMap<>();
+    private static final HashMap<String, CrystalType> skullId = new HashMap<>();
+
     static {
         skullId.put("d9c3168a-8654-3dd8-b297-4d3b7e55b95a", CrystalType.FARMING_MINION);
         skullId.put("949d100c-aa74-3b09-a642-af5529f808aa", CrystalType.MINING_MINION);
@@ -127,62 +127,61 @@ public class CrystalOverlay {
     public static HashMap<CrystalType, BlockPos> crystals = new HashMap<>();
 
     public static void tick() {
-        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
-        if(Minecraft.getMinecraft().theWorld == null) return;
+        if (!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
+        if (Minecraft.getMinecraft().theWorld == null) return;
 
         EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-        if(p == null) return;
+        if (p == null) return;
 
         long currentTime = System.currentTimeMillis();
 
-        if(NotEnoughUpdates.INSTANCE.config.itemOverlays.alwaysShowCrystal) {
+        if (NotEnoughUpdates.INSTANCE.config.itemOverlays.alwaysShowCrystal) {
             displayMillis = currentTime;
         } else {
-            if(currentTime - displayMillis > 10*1000) {
+            if (currentTime - displayMillis > 10 * 1000) {
                 crystals.clear();
                 displayMillis = -1;
             }
 
             ItemStack held = p.getHeldItem();
             String internal = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(held);
-            if(internal != null) {
-                if(internal.endsWith("_CRYSTAL") && !internal.equals("POWER_CRYSTAL")) {
+            if (internal != null) {
+                if (internal.endsWith("_CRYSTAL") && !internal.equals("POWER_CRYSTAL")) {
                     displayMillis = currentTime;
                 }
             }
 
-            if(displayMillis < 0) {
+            if (displayMillis < 0) {
                 return;
             }
         }
 
-
         Set<CrystalType> foundTypes = new HashSet<>();
-        for(Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {
-            if(entity instanceof EntityArmorStand) {
+        for (Entity entity : Minecraft.getMinecraft().theWorld.loadedEntityList) {
+            if (entity instanceof EntityArmorStand) {
                 EntityArmorStand armorStand = (EntityArmorStand) entity;
 
-                if(armorStand.isChild() && armorStand.getEquipmentInSlot(4) != null) {
+                if (armorStand.isChild() && armorStand.getEquipmentInSlot(4) != null) {
                     ItemStack helmet = armorStand.getEquipmentInSlot(4);
 
-                    if(helmet.getItem() == Items.skull && helmet.hasTagCompound()) {
+                    if (helmet.getItem() == Items.skull && helmet.hasTagCompound()) {
                         NBTTagCompound tag = helmet.getTagCompound();
-                        if(tag.hasKey("SkullOwner", 10)) {
+                        if (tag.hasKey("SkullOwner", 10)) {
                             NBTTagCompound skullOwner = tag.getCompoundTag("SkullOwner");
-                            if(skullOwner.hasKey("Id", 8)) {
+                            if (skullOwner.hasKey("Id", 8)) {
                                 String id = skullOwner.getString("Id");
 
-                                if(skullId.containsKey(id)) {
+                                if (skullId.containsKey(id)) {
                                     CrystalType type = skullId.get(id);
                                     foundTypes.add(type);
-                                    BlockPos pos = new BlockPos(armorStand.posX, armorStand.posY+0.5f, armorStand.posZ);
+                                    BlockPos pos = new BlockPos(armorStand.posX, armorStand.posY + 0.5f, armorStand.posZ);
 
-                                    if(crystals.containsKey(type)) {
+                                    if (crystals.containsKey(type)) {
                                         BlockPos old = crystals.get(type);
-                                        if(old.equals(pos)) {
+                                        if (old.equals(pos)) {
                                             type.updates = 0;
                                         } else {
-                                            if(++type.updates >= 3) {
+                                            if (++type.updates >= 3) {
                                                 type.updates = 0;
                                                 crystals.put(type, pos);
                                             }
@@ -202,21 +201,21 @@ public class CrystalOverlay {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
+        if (!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
 
-        if(displayMillis < 0) {
+        if (displayMillis < 0) {
             return;
         }
 
         EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-        if(p == null) return;
+        if (p == null) return;
 
-        if(event.phase == TickEvent.Phase.START) {
+        if (event.phase == TickEvent.Phase.START) {
             double dX = p.posX - posLastUpdateX;
             double dY = p.posY - posLastUpdateY;
             double dZ = p.posZ - posLastUpdateZ;
 
-            if(dX*dX + dY*dY + dZ*dZ < 1) {
+            if (dX * dX + dY * dY + dZ * dZ < 1) {
                 return;
             }
 
@@ -224,24 +223,24 @@ public class CrystalOverlay {
             posLastUpdateY = p.posY;
             posLastUpdateZ = p.posZ;
 
-            for(CrystalType type : crystals.keySet()) {
-                if(type == CrystalType.MINING_MINION) {
+            for (CrystalType type : crystals.keySet()) {
+                if (type == CrystalType.MINING_MINION) {
                     long currentTime = System.currentTimeMillis();
-                    if(currentTime - lastMiningUpdate < 1000) {
+                    if (currentTime - lastMiningUpdate < 1000) {
                         continue;
                     }
                     lastMiningUpdate = currentTime;
                 }
 
                 ReverseWorldRenderer worldRenderer = type.getOverlayVBO();
-                if(worldRenderer != null) {
+                if (worldRenderer != null) {
                     BlockPos crystal = crystals.get(type);
 
-                    worldRenderer.setTranslation(0, 0,0 );
+                    worldRenderer.setTranslation(0, 0, 0);
                     worldRenderer.sortVertexData(
-                            (float)p.posX-crystal.getX(),
-                            (float)p.posY-crystal.getY(),
-                            (float)p.posZ-crystal.getZ());
+                            (float) p.posX - crystal.getX(),
+                            (float) p.posY - crystal.getY(),
+                            (float) p.posZ - crystal.getZ());
                     /*es.submit(() -> worldRenderer.sortVertexData(
                             (float)p.posX-crystal.getX(),
                             (float)p.posY-crystal.getY(),
@@ -254,9 +253,9 @@ public class CrystalOverlay {
 
     @SubscribeEvent
     public void onRenderLast(RenderWorldLastEvent event) {
-        if(!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
+        if (!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCrystalOverlay) return;
 
-        if(displayMillis < 0) {
+        if (displayMillis < 0) {
             return;
         }
 
@@ -272,9 +271,9 @@ public class CrystalOverlay {
         GlStateManager.translate(-viewerX, -viewerY, -viewerZ);
 
         GL11.glPolygonOffset(5, 5);
-        for(CrystalType type : crystals.keySet()) {
+        for (CrystalType type : crystals.keySet()) {
             ReverseWorldRenderer worldRenderer = type.getOverlayVBO();
-            if(worldRenderer != null && worldRenderer.getVertexCount() > 0) {
+            if (worldRenderer != null && worldRenderer.getVertexCount() > 0) {
                 BlockPos crystal = crystals.get(type);
                 GlStateManager.translate(crystal.getX(), crystal.getY(), crystal.getZ());
 
@@ -315,57 +314,57 @@ public class CrystalOverlay {
 
         //vertical
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ)
-                     .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
 
         //x
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
 
         //z
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
     }
 
 }

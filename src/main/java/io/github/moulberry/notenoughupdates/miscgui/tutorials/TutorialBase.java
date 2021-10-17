@@ -31,13 +31,11 @@ public class TutorialBase extends GuiScreen {
     protected static String title;
 
     private int page = 0;
-    private ResourceLocation screenshotBorder = new ResourceLocation("notenoughupdates:ss_border.jpg");
+    private final ResourceLocation screenshotBorder = new ResourceLocation("notenoughupdates:ss_border.jpg");
 
     protected ResourceLocation[] screenshots = null;
 
     int scaleFactor = 0;
-
-
 
     @Override
     public void setWorldAndResolution(Minecraft mc, int width, int height) {
@@ -48,9 +46,9 @@ public class TutorialBase extends GuiScreen {
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         Keyboard.enableRepeatEvents(true);
         super.keyTyped(typedChar, keyCode);
-        if(keyCode == Keyboard.KEY_LEFT) {
+        if (keyCode == Keyboard.KEY_LEFT) {
             page--;
-        } else if(keyCode == Keyboard.KEY_RIGHT) {
+        } else if (keyCode == Keyboard.KEY_RIGHT) {
             page++;
         }
     }
@@ -64,10 +62,10 @@ public class TutorialBase extends GuiScreen {
         ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         scaleFactor = scaledResolution.getScaleFactor();
 
-        sizeX = width/2+40/scaleFactor;
-        sizeY = height/2+40/scaleFactor;
-        guiLeft = width/4-20/scaleFactor;
-        guiTop = height/4-20/scaleFactor;
+        sizeX = width / 2 + 40 / scaleFactor;
+        sizeY = height / 2 + 40 / scaleFactor;
+        guiLeft = width / 4 - 20 / scaleFactor;
+        guiTop = height / 4 - 20 / scaleFactor;
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(screenshotBorder);
         Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY);
@@ -75,12 +73,13 @@ public class TutorialBase extends GuiScreen {
         page = Math.max(0, Math.min(17, page));
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(screenshots[page]);
-        Utils.drawTexturedRect(guiLeft+20f/scaleFactor, guiTop+20f/scaleFactor, sizeX-40f/scaleFactor, sizeY-40f/scaleFactor);
+        Utils.drawTexturedRect(guiLeft + 20f / scaleFactor, guiTop + 20f / scaleFactor, sizeX - 40f / scaleFactor, sizeY - 40f / scaleFactor);
 
-        Utils.drawStringCentered(EnumChatFormatting.GOLD+title+" - Page "+(page+1)+"/"+(texts.size())+" - Use arrow keys", Minecraft.getMinecraft().fontRendererObj,
-                width/2, guiTop+8, true, 0);
-        if(scaleFactor != 2) Utils.drawStringCentered(EnumChatFormatting.GOLD+"Use GUI Scale normal for better reading experience", Minecraft.getMinecraft().fontRendererObj,
-                width/2, guiTop+18, true, 0);
+        Utils.drawStringCentered(EnumChatFormatting.GOLD + title + " - Page " + (page + 1) + "/" + (texts.size()) + " - Use arrow keys", Minecraft.getMinecraft().fontRendererObj,
+                width / 2, guiTop + 8, true, 0);
+        if (scaleFactor != 2)
+            Utils.drawStringCentered(EnumChatFormatting.GOLD + "Use GUI Scale normal for better reading experience", Minecraft.getMinecraft().fontRendererObj,
+                    width / 2, guiTop + 18, true, 0);
         JsonArray pageTexts = texts.get(page);
         for (int i = 0; i < pageTexts.size(); i++) {
             JsonObject textElement = pageTexts.get(i).getAsJsonObject();
@@ -94,29 +93,27 @@ public class TutorialBase extends GuiScreen {
                 text.add(textArray.get(j).getAsString());
             }
 
+            float x = guiLeft + 20f / scaleFactor + (sizeX - 40f / scaleFactor) * oldX;
+            float y = guiTop + 20f / scaleFactor + (sizeY - 40f / scaleFactor) * oldY;
 
-            float x = guiLeft+20f/scaleFactor+(sizeX-40f/scaleFactor)*oldX;
-            float y = guiTop+20f/scaleFactor+(sizeY-40f/scaleFactor)*oldY;
-
-            Utils.drawHoveringText(text, (int)x, (int)y+12, 100000, 100000, 200, Minecraft.getMinecraft().fontRendererObj);
+            Utils.drawHoveringText(text, (int) x, (int) y + 12, 100000, 100000, 200, Minecraft.getMinecraft().fontRendererObj);
         }
 
         drawButtons();
     }
 
-    protected void drawButtons(){
+    protected void drawButtons() {
 
-        for (int i = 0; i < buttons.size(); i++) {
-            JsonObject button = buttons.get(i);
+        for (JsonObject button : buttons) {
             JsonArray pages = button.get("pages").getAsJsonArray();
             boolean drawButton = false;
             for (int i1 = 0; i1 < pages.size(); i1++) {
-                if(pages.get(i1).getAsInt() == page){
+                if (pages.get(i1).getAsInt() == page) {
                     drawButton = true;
                     break;
                 }
             }
-            if(!drawButton){
+            if (!drawButton) {
                 continue;
             }
             float x = button.get("x").getAsFloat();
@@ -125,9 +122,8 @@ public class TutorialBase extends GuiScreen {
 //            String command = button.get("command").getAsString();
             Minecraft.getMinecraft().getTextureManager().bindTexture(custom_ench_colour);
             GlStateManager.color(1, 1, 1, 1);
-            Utils.drawTexturedRect(guiLeft+20f/scaleFactor+(sizeX-40f/scaleFactor)*x, guiTop+20f/scaleFactor+(sizeY-40f/scaleFactor)*y, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
-            Utils.drawStringCenteredScaledMaxWidth(text, fontRendererObj, (guiLeft+20f/scaleFactor+(sizeX-40f/scaleFactor)*x)+44, (guiTop+20f/scaleFactor+(sizeY-40f/scaleFactor)*y)+10, false, 86, 4210752);
-
+            Utils.drawTexturedRect(guiLeft + 20f / scaleFactor + (sizeX - 40f / scaleFactor) * x, guiTop + 20f / scaleFactor + (sizeY - 40f / scaleFactor) * y, 88, 20, 64 / 217f, 152 / 217f, 48 / 78f, 68 / 78f, GL11.GL_NEAREST);
+            Utils.drawStringCenteredScaledMaxWidth(text, fontRendererObj, (guiLeft + 20f / scaleFactor + (sizeX - 40f / scaleFactor) * x) + 44, (guiTop + 20f / scaleFactor + (sizeY - 40f / scaleFactor) * y) + 10, false, 86, 4210752);
 
         }
     }
@@ -135,51 +131,46 @@ public class TutorialBase extends GuiScreen {
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
-        int width= 88;
+        int width = 88;
         int height = 20;
 
-        for (int i = 0; i < buttons.size(); i++) {
-            JsonObject button = buttons.get(i);
+        for (JsonObject button : buttons) {
             JsonArray pages = button.get("pages").getAsJsonArray();
             boolean drawButton = false;
             for (int i1 = 0; i1 < pages.size(); i1++) {
-                if(pages.get(i1).getAsInt() == page){
+                if (pages.get(i1).getAsInt() == page) {
                     drawButton = true;
                     break;
                 }
             }
-            if(!drawButton){
+            if (!drawButton) {
                 continue;
             }
             float x = button.get("x").getAsFloat();
             float y = button.get("y").getAsFloat();
             //String text = button.get("text").getAsString();
-            float realX = guiLeft+20f/scaleFactor+(sizeX-40f/scaleFactor)*x;
-            float realY = guiTop+20f/scaleFactor+(sizeY-40f/scaleFactor)*y;
-            if(mouseX > realX && mouseX < realX+width && mouseY > realY && mouseY < realY+height){
+            float realX = guiLeft + 20f / scaleFactor + (sizeX - 40f / scaleFactor) * x;
+            float realY = guiTop + 20f / scaleFactor + (sizeY - 40f / scaleFactor) * y;
+            if (mouseX > realX && mouseX < realX + width && mouseY > realY && mouseY < realY + height) {
                 String command = button.get("command").getAsString();
                 NotEnoughUpdates.INSTANCE.openGui = null;
-                ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/"+command);
+                ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/" + command);
                 return;
             }
         }
     }
 
-
-
-
-
-    protected static List<JsonArray> texts = new ArrayList<JsonArray>();
+    protected static List<JsonArray> texts = new ArrayList<>();
 
     protected static List<JsonObject> buttons = new ArrayList<>();
 
-    protected static JsonObject createNewButton(float x, float y, int[] pages, String text, String command){
+    protected static JsonObject createNewButton(float x, float y, int[] pages, String text, String command) {
         JsonObject button = new JsonObject();
         JsonArray pagesArray = new JsonArray();
-        for (int i = 0; i < pages.length; i++) {
-            pagesArray.add(new JsonPrimitive(pages[i]));
+        for (int j : pages) {
+            pagesArray.add(new JsonPrimitive(j));
         }
-        button.add("pages",pagesArray);
+        button.add("pages", pagesArray);
         button.add("x", new JsonPrimitive(x));
         button.add("y", new JsonPrimitive(y));
         button.add("text", new JsonPrimitive(text));
@@ -187,33 +178,33 @@ public class TutorialBase extends GuiScreen {
         return button;
     }
 
-    protected static JsonArray createNewTexts(JsonObject... texts){
+    protected static JsonArray createNewTexts(JsonObject... texts) {
         JsonArray textArray = new JsonArray();
-        for (int i = 0; i < texts.length; i++) {
-            textArray.add(texts[i]);
+        for (JsonObject text : texts) {
+            textArray.add(text);
         }
         return textArray;
     }
 
-    protected static JsonObject createNewText(float x, float y, String... texts){
+    protected static JsonObject createNewText(float x, float y, String... texts) {
         JsonObject tooltip = new JsonObject();
         tooltip.add("x", new JsonPrimitive(x));
         tooltip.add("y", new JsonPrimitive(y));
         JsonArray lines = new JsonArray();
-        for (int i = 0; i < texts.length; i++) {
-            lines.add(new JsonPrimitive(texts[i]));
+        for (String text : texts) {
+            lines.add(new JsonPrimitive(text));
         }
         tooltip.add("lines", lines);
         return tooltip;
     }
 
-    protected static JsonObject createNewText(float x, float y, List<String> texts){
+    protected static JsonObject createNewText(float x, float y, List<String> texts) {
         JsonObject tooltip = new JsonObject();
         tooltip.add("x", new JsonPrimitive(x));
         tooltip.add("y", new JsonPrimitive(y));
         JsonArray lines = new JsonArray();
-        for (int i = 0; i < texts.size(); i++) {
-            lines.add(new JsonPrimitive(texts.get(i)));
+        for (String text : texts) {
+            lines.add(new JsonPrimitive(text));
         }
         tooltip.add("lines", lines);
         return tooltip;

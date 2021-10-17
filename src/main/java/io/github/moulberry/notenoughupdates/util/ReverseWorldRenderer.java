@@ -1,16 +1,6 @@
 package io.github.moulberry.notenoughupdates.util;
 
 import com.google.common.primitives.Floats;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Comparator;
-
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
@@ -18,6 +8,11 @@ import net.minecraft.util.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
+
+import java.nio.*;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Comparator;
 
 @SideOnly(Side.CLIENT)
 public class ReverseWorldRenderer {
@@ -77,20 +72,16 @@ public class ReverseWorldRenderer {
         Integer[] ainteger = new Integer[i];
 
         for (int k = 0; k < ainteger.length; ++k) {
-            ainteger[k] = Integer.valueOf(k);
+            ainteger[k] = k;
         }
 
-        Arrays.sort(ainteger, new Comparator<Integer>() {
-            public int compare(Integer p_compare_1_, Integer p_compare_2_) {
-                return -Floats.compare(afloat[p_compare_2_.intValue()], afloat[p_compare_1_.intValue()]);
-            }
-        });
+        Arrays.sort(ainteger, (p_compare_1_, p_compare_2_) -> -Floats.compare(afloat[p_compare_2_], afloat[p_compare_1_]));
         BitSet bitset = new BitSet();
         int l = this.vertexFormat.getNextOffset();
         int[] aint = new int[l];
 
         for (int l1 = 0; (l1 = bitset.nextClearBit(l1)) < ainteger.length; ++l1) {
-            int i1 = ainteger[l1].intValue();
+            int i1 = ainteger[l1];
 
             if (i1 != l1) {
                 this.rawIntBuffer.limit(i1 * l + l);
@@ -98,7 +89,7 @@ public class ReverseWorldRenderer {
                 this.rawIntBuffer.get(aint);
                 int j1 = i1;
 
-                for (int k1 = ainteger[i1].intValue(); j1 != l1; k1 = ainteger[k1].intValue()) {
+                for (int k1 = ainteger[i1]; j1 != l1; k1 = ainteger[k1]) {
                     this.rawIntBuffer.limit(k1 * l + l);
                     this.rawIntBuffer.position(k1 * l);
                     IntBuffer intbuffer = this.rawIntBuffer.slice();
@@ -328,9 +319,7 @@ public class ReverseWorldRenderer {
     }
 
     public ReverseWorldRenderer color(int red, int green, int blue, int alpha) {
-        if (this.noColor) {
-            return this;
-        } else {
+        if (!this.noColor) {
             int i = this.vertexCount * this.vertexFormat.getNextOffset() + this.vertexFormat.getOffset(this.vertexFormatIndex);
 
             switch (this.vertexFormatElement.getType()) {
@@ -371,8 +360,8 @@ public class ReverseWorldRenderer {
             }
 
             this.nextVertexFormatIndex();
-            return this;
         }
+        return this;
     }
 
     public void addVertexData(int[] vertexData) {
@@ -523,12 +512,12 @@ public class ReverseWorldRenderer {
     }
 
     public boolean isColorDisabled() {
-        /** None */
+        /* None */
         return noColor;
     }
 
     @SideOnly(Side.CLIENT)
-    public class State {
+    public static class State {
         private final int[] stateRawBuffer;
         private final VertexFormat stateVertexFormat;
 

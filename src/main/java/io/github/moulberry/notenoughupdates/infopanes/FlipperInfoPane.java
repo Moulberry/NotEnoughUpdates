@@ -2,17 +2,19 @@ package io.github.moulberry.notenoughupdates.infopanes;
 
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
-import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 
-import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
-import static io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField.*;
-
 import java.awt.*;
+
+import static io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField.NO_SPACE;
+import static io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField.NUM_ONLY;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.off;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.on;
 
 public class FlipperInfoPane extends InfoPane {
 
@@ -40,12 +42,12 @@ public class FlipperInfoPane extends InfoPane {
     public void render(int width, int height, Color bg, Color fg, ScaledResolution scaledresolution, int mouseX, int mouseY) {
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
-        int paneWidth = (int)(width/3*overlay.getWidthMult());
-        int rightSide = (int)(width*overlay.getInfoPaneOffsetFactor());
+        int paneWidth = (int) (width / 3 * overlay.getWidthMult());
+        int rightSide = (int) (width * overlay.getInfoPaneOffsetFactor());
         int leftSide = rightSide - paneWidth;
 
         int titleLen = fr.getStringWidth(title);
-        fr.drawString(title, (leftSide+rightSide-titleLen)/2, overlay.getBoxPadding() + 5,
+        fr.drawString(title, (leftSide + rightSide - titleLen) / 2, overlay.getBoxPadding() + 5,
                 Color.WHITE.getRGB());
 
         int y = 0;
@@ -64,16 +66,19 @@ public class FlipperInfoPane extends InfoPane {
         y += 10;
         int x = 10;
         fr.drawString("Min Price: ", x, y, Color.WHITE.getRGB());
-        minPrice.render(x, y+10); x += 70;
+        minPrice.render(x, y + 10);
+        x += 70;
         fr.drawString("Max Price: ", x, y, Color.WHITE.getRGB());
-        maxPrice.render(x, y+10); x += 70;
+        maxPrice.render(x, y + 10);
+        x += 70;
         fr.drawString("Price Diff: ", x, y, Color.WHITE.getRGB());
-        priceDiff.render(x, y+10); x += 70;
+        priceDiff.render(x, y + 10);
+        x += 70;
         fr.drawString("Incl. Stackables: ", x, y, Color.WHITE.getRGB());
         drawButton(x, y, false);
 
-        drawRect(leftSide+overlay.getBoxPadding()-5, overlay.getBoxPadding()-5,
-                rightSide-overlay.getBoxPadding()+5, height-overlay.getBoxPadding()+5, bg.getRGB());
+        drawRect(leftSide + overlay.getBoxPadding() - 5, overlay.getBoxPadding() - 5,
+                rightSide - overlay.getBoxPadding() + 5, height - overlay.getBoxPadding() + 5, bg.getRGB());
     }
 
     private void drawButton(int x, int y, boolean enabled) {
@@ -93,15 +98,15 @@ public class FlipperInfoPane extends InfoPane {
     private int renderParagraph(int width, int height, int startY, String text, Color bg) {
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
-        int paneWidth = (int)(width/3*overlay.getWidthMult());
-        int rightSide = (int)(width*overlay.getInfoPaneOffsetFactor());
+        int paneWidth = (int) (width / 3 * overlay.getWidthMult());
+        int rightSide = (int) (width * overlay.getInfoPaneOffsetFactor());
         int leftSide = rightSide - paneWidth;
 
         int yOff = 0;
-        for(String line : text.split("\n")) {
-            yOff += Utils.renderStringTrimWidth(line, fr, false,leftSide+overlay.getBoxPadding() + 5,
-                    startY+overlay.getBoxPadding() + 10 + yOff,
-                    width*1/3-overlay.getBoxPadding()*2-10, Color.WHITE.getRGB(), -1);
+        for (String line : text.split("\n")) {
+            yOff += Utils.renderStringTrimWidth(line, fr, false, leftSide + overlay.getBoxPadding() + 5,
+                    startY + overlay.getBoxPadding() + 10 + yOff,
+                    width * 1 / 3 - overlay.getBoxPadding() * 2 - 10, Color.WHITE.getRGB(), -1);
             yOff += 16;
         }
 

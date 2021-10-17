@@ -29,23 +29,21 @@ public class NEUConfig extends Config {
 
     private void editOverlay(String activeConfig, TextOverlay overlay, Position position) {
         Vector2f size = overlay.getDummySize();
-        int width = (int)size.x;
-        int height = (int)size.y;
+        int width = (int) size.x;
+        int height = (int) size.y;
         Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(position, width, height, () -> {
             overlay.renderDummy();
             OverlayManager.dontRenderOverlay = overlay.getClass();
-        }, () -> {
-        }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)
-        ));
+        }, () -> {}, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)));
     }
 
     @Override
     public void executeRunnable(int runnableId) {
         String activeConfigCategory = null;
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper) {
             GuiScreenElementWrapper wrapper = (GuiScreenElementWrapper) Minecraft.getMinecraft().currentScreen;
-            if(wrapper.element instanceof NEUConfigEditor) {
-                activeConfigCategory = ((NEUConfigEditor)wrapper.element).getSelectedCategoryName();
+            if (wrapper.element instanceof NEUConfigEditor) {
+                activeConfigCategory = ((NEUConfigEditor) wrapper.element).getSelectedCategoryName();
             }
         }
 
@@ -60,9 +58,7 @@ public class NEUConfig extends Config {
                 Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
                         NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarPosition,
                         NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, 12, () -> {
-                }, () -> {
-                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)
-                ));
+                }, () -> {}, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)));
                 return;
             case 3:
                 editOverlay(activeConfigCategory, OverlayManager.farmingOverlay, skillOverlays.farmingPosition);
@@ -128,7 +124,6 @@ public class NEUConfig extends Config {
     )
     public InventoryButtons inventoryButtons = new InventoryButtons();
 
-
     @Expose
     @Category(
             name = "Slot Locking",
@@ -178,7 +173,6 @@ public class NEUConfig extends Config {
     )
     public Dungeons dungeons = new Dungeons();
 
-
     @Expose
     @Category(
             name = "Enchanting GUI/Solvers",
@@ -192,7 +186,6 @@ public class NEUConfig extends Config {
             desc = "Mining"
     )
     public Mining mining = new Mining();
-
 
     @Expose
     @Category(
@@ -236,7 +229,6 @@ public class NEUConfig extends Config {
     )
     public PetOverlay petOverlay = new PetOverlay();
 
-
     @Expose
     @Category(
             name = "AH Tweaks",
@@ -269,35 +261,56 @@ public class NEUConfig extends Config {
         public HashMap<String, NEUConfig.HiddenProfileSpecific> profileSpecific = new HashMap<>();
         @Expose
         public HashMap<String, NEUConfig.HiddenLocationSpecific> locationSpecific = new HashMap<>();
-        @Expose public List<NEUConfig.InventoryButton> inventoryButtons = createDefaultInventoryButtons();
+        @Expose
+        public List<NEUConfig.InventoryButton> inventoryButtons = createDefaultInventoryButtons();
 
-        @Expose public boolean enableItemEditing = false;
-        @Expose public boolean cacheRenderedItempane = true;
-        @Expose public boolean autoupdate = true;
-        @Expose public String overlaySearchBar = "";
-        @Expose public String overlayQuickCommand = "";
-        @Expose public boolean dev = false;
-        @Expose public boolean loadedModBefore = false;
-        @Expose public String selectedCape = null;
-        @Expose public int compareMode = 0;
-        @Expose public int sortMode = 0;
-        @Expose public ArrayList<Boolean> compareAscending = Lists.newArrayList(true, true, true);
-        @Expose public ArrayList<String> favourites = new ArrayList<>();
-        @Expose public ArrayList<String> previousAuctionSearches = new ArrayList<>();
-        @Expose public ArrayList<String> eventFavourites = new ArrayList<>();
-        @Expose public ArrayList<String> quickCommands = createDefaultQuickCommands();
-        @Expose public ArrayList<String> enchantColours = createDefaultEnchantColours();
-        @Expose public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
-        @Expose public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
+        @Expose
+        public boolean enableItemEditing = false;
+        @Expose
+        public boolean cacheRenderedItempane = true;
+        @Expose
+        public boolean autoupdate = true;
+        @Expose
+        public String overlaySearchBar = "";
+        @Expose
+        public String overlayQuickCommand = "";
+        @Expose
+        public boolean dev = false;
+        @Expose
+        public boolean loadedModBefore = false;
+        @Expose
+        public String selectedCape = null;
+        @Expose
+        public int compareMode = 0;
+        @Expose
+        public int sortMode = 0;
+        @Expose
+        public ArrayList<Boolean> compareAscending = Lists.newArrayList(true, true, true);
+        @Expose
+        public ArrayList<String> favourites = new ArrayList<>();
+        @Expose
+        public ArrayList<String> previousAuctionSearches = new ArrayList<>();
+        @Expose
+        public ArrayList<String> eventFavourites = new ArrayList<>();
+        @Expose
+        public ArrayList<String> quickCommands = createDefaultQuickCommands();
+        @Expose
+        public ArrayList<String> enchantColours = createDefaultEnchantColours();
+        @Expose
+        public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
+        @Expose
+        public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
 
-        @Expose public boolean firstTimeSearchFocus = true;
+        @Expose
+        public boolean firstTimeSearchFocus = true;
 
         //These config options were added due to a graphical bug that caused the player to be unable to see the screen
-        @Expose public boolean disableBrokenCapes = false;
+        @Expose
+        public boolean disableBrokenCapes = false;
 
     }
 
-    public static ArrayList<String> createDefaultEnchantColours(){
+    public static ArrayList<String> createDefaultEnchantColours() {
         return Lists.newArrayList(
                 "[a-zA-Z\\- ]+:\u003e:9:6:0",
                 "[a-zA-Z\\- ]+:\u003e:6:c:0",
@@ -323,26 +336,36 @@ public class NEUConfig extends Config {
     }
 
     public HiddenProfileSpecific getProfileSpecific() {
-        if(SBInfo.getInstance().currentProfile == null) {
+        if (SBInfo.getInstance().currentProfile == null) {
             return null;
         }
-        return hidden.profileSpecific.computeIfAbsent(SBInfo.getInstance().currentProfile, k-> new HiddenProfileSpecific());
+        return hidden.profileSpecific.computeIfAbsent(SBInfo.getInstance().currentProfile, k -> new HiddenProfileSpecific());
     }
 
     public static class HiddenProfileSpecific {
 
-        @Expose public long godPotionDuration = 0L;
-        @Expose public long puzzlerCompleted = 0L;
-        @Expose public long firstCakeAte = 0L;
-        @Expose public long fetchurCompleted = 0L;
-        @Expose public long commissionsCompleted = 0L;
-        @Expose public long experimentsCompleted = 0L;
-        @Expose public long cookieBuffRemaining = 0L;
-        @Expose public List<MiningOverlay.ForgeItem> forgeItems = new ArrayList<MiningOverlay.ForgeItem>();
+        @Expose
+        public long godPotionDuration = 0L;
+        @Expose
+        public long puzzlerCompleted = 0L;
+        @Expose
+        public long firstCakeAte = 0L;
+        @Expose
+        public long fetchurCompleted = 0L;
+        @Expose
+        public long commissionsCompleted = 0L;
+        @Expose
+        public long experimentsCompleted = 0L;
+        @Expose
+        public long cookieBuffRemaining = 0L;
+        @Expose
+        public List<MiningOverlay.ForgeItem> forgeItems = new ArrayList<>();
 
-        @Expose public int commissionMilestone = 0;
+        @Expose
+        public int commissionMilestone = 0;
 
-        @Expose public HashMap<String, Boolean> automatonParts = new HashMap<String, Boolean>(){{
+        @Expose
+        public HashMap<String, Boolean> automatonParts = new HashMap<String, Boolean>() {{
             put("Electron Transmitter", false);
             put("FTX 3070", false);
             put("Robotron Reflector", false);
@@ -351,25 +374,27 @@ public class NEUConfig extends Config {
             put("Synthetic Heart", false);
         }};
 
-        @Expose public HashMap<String, Boolean> divanMinesParts = new HashMap<String, Boolean>(){{
+        @Expose
+        public HashMap<String, Boolean> divanMinesParts = new HashMap<String, Boolean>() {{
             put("Scavenged Lapis Sword", false);
             put("Scavenged Golden Hammer", false);
             put("Scavenged Diamond Axe", false);
             put("Scavenged Emerald Hammer", false);
         }};
 
-        @Expose public HashMap<String, Integer> crystals = new HashMap<String, Integer>(){{
+        @Expose
+        public HashMap<String, Integer> crystals = new HashMap<String, Integer>() {{
             put("Jade", 0);
             put("Amber", 0);
             put("Amethyst", 0);
             put("Sapphire", 0);
             put("Topaz", 0);
         }};
-      }
+    }
 
-      public HiddenLocationSpecific getLocationSpecific() {
+    public HiddenLocationSpecific getLocationSpecific() {
         String location = SBInfo.getInstance().getLocation();
-        if(location == null || location.isEmpty()) {
+        if (location == null || location.isEmpty()) {
             return null;
         }
 
@@ -377,32 +402,33 @@ public class NEUConfig extends Config {
     }
 
     public HiddenLocationSpecific getLocationSpecific(String location) {
-        return hidden.locationSpecific.computeIfAbsent(location, k-> new HiddenLocationSpecific());
+        return hidden.locationSpecific.computeIfAbsent(location, k -> new HiddenLocationSpecific());
     }
 
     public static class HiddenLocationSpecific {
-            @Expose public Map<String, Integer> commissionMaxes = new HashMap<>();
-        }
+        @Expose
+        public Map<String, Integer> commissionMaxes = new HashMap<>();
+    }
 
-        public static List<InventoryButton> createDefaultInventoryButtons() {
+    public static List<InventoryButton> createDefaultInventoryButtons() {
         List<InventoryButton> buttons = new ArrayList<>();
         //Below crafting
         buttons.add(new InventoryButton(87, 63, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21, 63, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21*2, 63, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21*3, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21 * 2, 63, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21 * 3, 63, null, true, false, false, 0, ""));
 
         //Above crafting
         buttons.add(new InventoryButton(87, 5, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21, 5, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21*2, 5, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+21*3, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21 * 2, 5, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 21 * 3, 5, null, true, false, false, 0, ""));
 
         //Crafting square
         buttons.add(new InventoryButton(87, 25, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+18, 25, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87, 25+18, null, true, false, false, 0, ""));
-        buttons.add(new InventoryButton(87+18, 25+18, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 18, 25, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87, 25 + 18, null, true, false, false, 0, ""));
+        buttons.add(new InventoryButton(87 + 18, 25 + 18, null, true, false, false, 0, ""));
 
         //Crafting result
         buttons.add(new InventoryButton(143, 35, null, true, false, false, 0, ""));
@@ -414,48 +440,56 @@ public class NEUConfig extends Config {
         buttons.add(new InventoryButton(26, 60, null, true, false, false, 0, ""));
 
         //Right side
-        for(int i=0; i<8; i++) {
-            int y = 2+20*i;
-            if(y < 80) {
-                buttons.add(new InventoryButton(2, 2+20*i, null, false, true, false, 0, ""));
+        for (int i = 0; i < 8; i++) {
+            int y = 2 + 20 * i;
+            if (y < 80) {
+                buttons.add(new InventoryButton(2, 2 + 20 * i, null, false, true, false, 0, ""));
             } else {
-                buttons.add(new InventoryButton(2, 2+20*i-166, null, false, true, true, 0, ""));
+                buttons.add(new InventoryButton(2, 2 + 20 * i - 166, null, false, true, true, 0, ""));
             }
         }
 
         //Top side
-        for(int i=0; i<8; i++) {
-            buttons.add(new InventoryButton(4+21*i, -19, null, false, false, false, 0, ""));
+        for (int i = 0; i < 8; i++) {
+            buttons.add(new InventoryButton(4 + 21 * i, -19, null, false, false, false, 0, ""));
         }
 
         //Left side
-        for(int i=0; i<8; i++) {
-            int y = 2+20*i;
-            if(y < 80) {
-                buttons.add(new InventoryButton(-19, 2+20*i, null, false, false, false, 0, ""));
+        for (int i = 0; i < 8; i++) {
+            int y = 2 + 20 * i;
+            if (y < 80) {
+                buttons.add(new InventoryButton(-19, 2 + 20 * i, null, false, false, false, 0, ""));
             } else {
-                buttons.add(new InventoryButton(-19, 2+20*i-166, null, false, false, true, 0, ""));
+                buttons.add(new InventoryButton(-19, 2 + 20 * i - 166, null, false, false, true, 0, ""));
             }
         }
 
         //Bottom side
-        for(int i=0; i<8; i++) {
-            buttons.add(new InventoryButton(4+21*i, 2, null, false, false, true, 0, ""));
+        for (int i = 0; i < 8; i++) {
+            buttons.add(new InventoryButton(4 + 21 * i, 2, null, false, false, true, 0, ""));
         }
         return buttons;
     }
 
     public static class InventoryButton {
-        @Expose public int x;
-        @Expose public int y;
-        @Expose public boolean playerInvOnly;
+        @Expose
+        public int x;
+        @Expose
+        public int y;
+        @Expose
+        public boolean playerInvOnly;
 
-        @Expose public boolean anchorRight;
-        @Expose public boolean anchorBottom;
+        @Expose
+        public boolean anchorRight;
+        @Expose
+        public boolean anchorBottom;
 
-        @Expose public int backgroundIndex;
-        @Expose public String command;
-        @Expose public String icon;
+        @Expose
+        public int backgroundIndex;
+        @Expose
+        public String command;
+        @Expose
+        public String icon;
 
         public boolean isActive() {
             return command.trim().length() > 0;

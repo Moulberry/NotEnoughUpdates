@@ -8,13 +8,7 @@ import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.inventory.GuiChest;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
@@ -25,7 +19,6 @@ import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector3f;
 
 import java.util.HashMap;
@@ -36,7 +29,8 @@ import java.util.regex.Pattern;
 
 public class DwarvenMinesWaypoints {
 
-    private HashMap<String, Vector3f> waypointsMap = new HashMap<>();
+    private final HashMap<String, Vector3f> waypointsMap = new HashMap<>();
+
     {
         waypointsMap.put("Dwarven Village", new Vector3f(-37, 199, -122));
         waypointsMap.put("Miner's Guild", new Vector3f(-74, 220, -122));
@@ -63,14 +57,15 @@ public class DwarvenMinesWaypoints {
     }
 
     private static final HashSet<String> emissaryNames = new HashSet<>();
+
     static {
-        emissaryNames.add(EnumChatFormatting.GOLD+"Emissary Ceanna"+EnumChatFormatting.RESET);
-        emissaryNames.add(EnumChatFormatting.GOLD+"Emissary Carlton"+EnumChatFormatting.RESET);
-        emissaryNames.add(EnumChatFormatting.GOLD+"Emissary Wilson"+EnumChatFormatting.RESET);
-        emissaryNames.add(EnumChatFormatting.GOLD+"Emissary Lilith"+EnumChatFormatting.RESET);
-        emissaryNames.add(EnumChatFormatting.GOLD+"Emissary Frasier"+EnumChatFormatting.RESET);
-        emissaryNames.add(EnumChatFormatting.GOLD+"Emissary Eliza"+EnumChatFormatting.RESET);
-        emissaryNames.add(EnumChatFormatting.GOLD.toString()+EnumChatFormatting.BOLD+"King Thormyr"+EnumChatFormatting.RESET);
+        emissaryNames.add(EnumChatFormatting.GOLD + "Emissary Ceanna" + EnumChatFormatting.RESET);
+        emissaryNames.add(EnumChatFormatting.GOLD + "Emissary Carlton" + EnumChatFormatting.RESET);
+        emissaryNames.add(EnumChatFormatting.GOLD + "Emissary Wilson" + EnumChatFormatting.RESET);
+        emissaryNames.add(EnumChatFormatting.GOLD + "Emissary Lilith" + EnumChatFormatting.RESET);
+        emissaryNames.add(EnumChatFormatting.GOLD + "Emissary Frasier" + EnumChatFormatting.RESET);
+        emissaryNames.add(EnumChatFormatting.GOLD + "Emissary Eliza" + EnumChatFormatting.RESET);
+        emissaryNames.add(EnumChatFormatting.GOLD.toString() + EnumChatFormatting.BOLD + "King Thormyr" + EnumChatFormatting.RESET);
     }
 
     private enum Emissary {
@@ -85,6 +80,7 @@ public class DwarvenMinesWaypoints {
         String name;
         int minMilestone;
         Vector3f loc;
+
         Emissary(String name, int minMilestone, Vector3f loc) {
             this.name = name;
             this.minMilestone = minMilestone;
@@ -101,15 +97,15 @@ public class DwarvenMinesWaypoints {
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
         Matcher matcherGhast = ghastRegex.matcher(event.message.getFormattedText());
-        if(matcherGhast.find()) {
+        if (matcherGhast.find()) {
             dynamicLocation = Utils.cleanColour(matcherGhast.group(1).trim());
-            dynamicName = EnumChatFormatting.GOLD+"Powder Ghast";
+            dynamicName = EnumChatFormatting.GOLD + "Powder Ghast";
             dynamicMillis = System.currentTimeMillis();
         } else {
             Matcher matcherStar = fallenStarRegex.matcher(event.message.getFormattedText());
-            if(matcherStar.find()) {
+            if (matcherStar.find()) {
                 dynamicLocation = Utils.cleanColour(matcherStar.group(1).trim());
-                dynamicName = EnumChatFormatting.DARK_PURPLE+"Fallen Star";
+                dynamicName = EnumChatFormatting.DARK_PURPLE + "Fallen Star";
                 dynamicMillis = System.currentTimeMillis();
             }
         }
@@ -119,37 +115,42 @@ public class DwarvenMinesWaypoints {
     public void onTick(TickEvent.ClientTickEvent event) {
         emissaryRemovedDistSq = -1;
 
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
-
+        if (SBInfo.getInstance().getLocation() == null) return;
+        if (!SBInfo.getInstance().getLocation().equals("mining_3")) return;
 
         NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
-        if(hidden == null) return;
+        if (hidden == null) return;
 
-        if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
             GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest container = (ContainerChest) chest.inventorySlots;
             IInventory lower = container.getLowerChestInventory();
 
-            if(lower.getDisplayName().getFormattedText().contains("Commissions")) {
-                for(int i=0; i<lower.getSizeInventory(); i++) {
+            if (lower.getDisplayName().getFormattedText().contains("Commissions")) {
+                for (int i = 0; i < lower.getSizeInventory(); i++) {
                     ItemStack stack = lower.getStackInSlot(i);
-                    if(stack == null) continue;
-                    if(stack.getDisplayName().equals(EnumChatFormatting.YELLOW+"Commission Milestones")) {
+                    if (stack == null) continue;
+                    if (stack.getDisplayName().equals(EnumChatFormatting.YELLOW + "Commission Milestones")) {
                         hidden.commissionMilestone = 5;
                         String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
-                        for(String line : lore) {
+                        for (String line : lore) {
                             String clean = Utils.cleanColour(line);
-                            if(clean.equals("Tier I Rewards:")) {
-                                hidden.commissionMilestone = 0;
-                            } else if(clean.equals("Tier II Rewards:")) {
-                                hidden.commissionMilestone = 1;
-                            } else if(clean.equals("Tier III Rewards:")) {
-                                hidden.commissionMilestone = 2;
-                            } else if(clean.equals("Tier IV Rewards:")) {
-                                hidden.commissionMilestone = 3;
-                            } else if(clean.equals("Tier V Rewards:")) {
-                                hidden.commissionMilestone = 4;
+                            switch (clean) {
+                                case "Tier I Rewards:":
+                                    hidden.commissionMilestone = 0;
+                                    break;
+                                case "Tier II Rewards:":
+                                    hidden.commissionMilestone = 1;
+                                    break;
+                                case "Tier III Rewards:":
+                                    hidden.commissionMilestone = 2;
+                                    break;
+                                case "Tier IV Rewards:":
+                                    hidden.commissionMilestone = 3;
+                                    break;
+                                case "Tier V Rewards:":
+                                    hidden.commissionMilestone = 4;
+                                    break;
                             }
                         }
                         return;
@@ -164,21 +165,21 @@ public class DwarvenMinesWaypoints {
 
     @SubscribeEvent
     public void onRenderSpecial(RenderLivingEvent.Specials.Pre<EntityArmorStand> event) {
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
+        if (SBInfo.getInstance().getLocation() == null) return;
+        if (!SBInfo.getInstance().getLocation().equals("mining_3")) return;
 
-        if(commissionFinished && event.entity instanceof EntityArmorStand) {
+        if (commissionFinished && event.entity instanceof EntityArmorStand) {
             String name = event.entity.getDisplayName().getFormattedText();
-            if(emissaryRemovedDistSq > 0 && name.equals(EnumChatFormatting.YELLOW.toString()+EnumChatFormatting.BOLD+"CLICK"+EnumChatFormatting.RESET)) {
+            if (emissaryRemovedDistSq > 0 && name.equals(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "CLICK" + EnumChatFormatting.RESET)) {
                 EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
                 double distSq = event.entity.getDistanceSq(p.posX, p.posY, p.posZ);
-                if(Math.abs(distSq - emissaryRemovedDistSq) < 1) {
+                if (Math.abs(distSq - emissaryRemovedDistSq) < 1) {
                     event.setCanceled(true);
                 }
-            } else if(emissaryNames.contains(name)) {
+            } else if (emissaryNames.contains(name)) {
                 EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
                 double distSq = event.entity.getDistanceSq(p.posX, p.posY, p.posZ);
-                if(distSq >= 12*12) {
+                if (distSq >= 12 * 12) {
                     emissaryRemovedDistSq = distSq;
                     event.setCanceled(true);
                 }
@@ -186,35 +187,34 @@ public class DwarvenMinesWaypoints {
         }
     }
 
-
     @SubscribeEvent
     public void onRenderLast(RenderWorldLastEvent event) {
-        if(SBInfo.getInstance().getLocation() == null) return;
-        if(!SBInfo.getInstance().getLocation().equals("mining_3")) return;
+        if (SBInfo.getInstance().getLocation() == null) return;
+        if (!SBInfo.getInstance().getLocation().equals("mining_3")) return;
 
         int locWaypoint = NotEnoughUpdates.INSTANCE.config.mining.locWaypoints;
 
-        if(dynamicLocation != null && dynamicName != null &&
-                System.currentTimeMillis() - dynamicMillis < 30*1000) {
-            for(Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
-                if(entry.getKey().equals(dynamicLocation)) {
+        if (dynamicLocation != null && dynamicName != null &&
+                System.currentTimeMillis() - dynamicMillis < 30 * 1000) {
+            for (Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
+                if (entry.getKey().equals(dynamicLocation)) {
                     RenderUtils.renderWayPoint(dynamicName, new Vector3f(entry.getValue()).translate(0, 15, 0), event.partialTicks);
                     break;
                 }
             }
         }
 
-        if(locWaypoint >= 1) {
-            for(Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
-                if(locWaypoint >= 2) {
-                    RenderUtils.renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
+        if (locWaypoint >= 1) {
+            for (Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
+                if (locWaypoint >= 2) {
+                    RenderUtils.renderWayPoint(EnumChatFormatting.AQUA + entry.getKey(), entry.getValue(), event.partialTicks);
                 } else {
-                    for(String commissionName : MiningOverlay.commissionProgress.keySet()) {
-                        if(commissionName.toLowerCase().contains(entry.getKey().toLowerCase())) {
-                            if(commissionName.contains("Titanium")) {
-                                RenderUtils.renderWayPoint(EnumChatFormatting.WHITE+entry.getKey(), entry.getValue(), event.partialTicks);
+                    for (String commissionName : MiningOverlay.commissionProgress.keySet()) {
+                        if (commissionName.toLowerCase().contains(entry.getKey().toLowerCase())) {
+                            if (commissionName.contains("Titanium")) {
+                                RenderUtils.renderWayPoint(EnumChatFormatting.WHITE + entry.getKey(), entry.getValue(), event.partialTicks);
                             } else {
-                                RenderUtils.renderWayPoint(EnumChatFormatting.AQUA+entry.getKey(), entry.getValue(), event.partialTicks);
+                                RenderUtils.renderWayPoint(EnumChatFormatting.AQUA + entry.getKey(), entry.getValue(), event.partialTicks);
                             }
                         }
                     }
@@ -224,31 +224,31 @@ public class DwarvenMinesWaypoints {
 
         commissionFinished = NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints >= 2;
 
-        if(NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints == 0) return;
+        if (NotEnoughUpdates.INSTANCE.config.mining.emissaryWaypoints == 0) return;
 
-        if(!commissionFinished) {
-            for(float f : MiningOverlay.commissionProgress.values()) {
+        if (!commissionFinished) {
+            for (float f : MiningOverlay.commissionProgress.values()) {
                 if (f >= 1) {
                     commissionFinished = true;
                     break;
                 }
             }
         }
-        if(commissionFinished) {
-            for(Emissary emissary : Emissary.values()) {
+        if (commissionFinished) {
+            for (Emissary emissary : Emissary.values()) {
 
                 NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
-                if(hidden != null) {
-                    if(hidden.commissionMilestone >= emissary.minMilestone) {
+                if (hidden != null) {
+                    if (hidden.commissionMilestone >= emissary.minMilestone) {
 
                         EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
                         double dX = emissary.loc.x + 0.5f - p.posX;
                         double dY = emissary.loc.y + 0.188f - p.posY;
                         double dZ = emissary.loc.z + 0.5f - p.posZ;
 
-                        double distSq = dX*dX + dY*dY + dZ*dZ;
-                        if(distSq >= 12*12) {
-                            RenderUtils.renderWayPoint(EnumChatFormatting.GOLD+emissary.name,
+                        double distSq = dX * dX + dY * dY + dZ * dZ;
+                        if (distSq >= 12 * 12) {
+                            RenderUtils.renderWayPoint(EnumChatFormatting.GOLD + emissary.name,
                                     new Vector3f(emissary.loc).translate(0.5f, 2.488f, 0.5f),
                                     event.partialTicks);
                         }

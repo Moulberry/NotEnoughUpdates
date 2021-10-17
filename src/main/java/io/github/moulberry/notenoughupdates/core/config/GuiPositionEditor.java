@@ -28,15 +28,15 @@ public class GuiPositionEditor extends GuiScreen {
         int centerWidth = 176;
         int centerHeight = 166;
 
-        float centerWF = centerWidth/2f / (float)width;
-        float centerHF = centerHeight/2f / (float)height;
+        float centerWF = centerWidth / 2f / (float) width;
+        float centerHF = centerHeight / 2f / (float) height;
 
         float left = 0;
         float top = 0;
         float right = 0;
         float bottom = 0;
 
-        switch(position.getAnchorX()) {
+        switch (position.getAnchorX()) {
             case MIN: {
                 left = 0;
                 right = 0.5f - centerWF;
@@ -53,7 +53,7 @@ public class GuiPositionEditor extends GuiScreen {
                 break;
             }
         }
-        switch(position.getAnchorY()) {
+        switch (position.getAnchorY()) {
             case MIN: {
                 top = 0;
                 bottom = 0.5f - centerHF;
@@ -71,8 +71,8 @@ public class GuiPositionEditor extends GuiScreen {
             }
         }
 
-        Gui.drawRect((int)(left*width), (int)(top*height), (int)(right*width), (int)(bottom*height), 0x40404040);
-        Gui.drawRect(x, y, x+200, y+100, 0x80404040);
+        Gui.drawRect((int) (left * width), (int) (top * height), (int) (right * width), (int) (bottom * height), 0x40404040);
+        Gui.drawRect(x, y, x + 200, y + 100, 0x80404040);
     }
 
     @Override
@@ -81,8 +81,8 @@ public class GuiPositionEditor extends GuiScreen {
         int x = position.resolveX(scaledResolution, 200);
         int y = position.resolveY(scaledResolution, 100);
 
-        if(mouseX > x && mouseX < x+200 &&
-            mouseY > y && mouseY < y+100) {
+        if (mouseX > x && mouseX < x + 200 &&
+                mouseY > y && mouseY < y + 100) {
             clickedX = mouseX;
             clickedY = mouseY;
         } else {
@@ -99,7 +99,7 @@ public class GuiPositionEditor extends GuiScreen {
 
     @Override
     protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
-        if(clickedX >= 0 && clickedY >= 0) {
+        if (clickedX >= 0 && clickedY >= 0) {
             int deltaX = mouseX - clickedX;
             int deltaY = mouseY - clickedY;
 

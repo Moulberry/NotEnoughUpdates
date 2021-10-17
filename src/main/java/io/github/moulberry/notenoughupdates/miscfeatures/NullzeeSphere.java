@@ -31,10 +31,10 @@ public class NullzeeSphere {
     public static ReverseWorldRenderer overlayVBO = null;
 
     public ReverseWorldRenderer getOverlayVBO() {
-        if(overlayVBO != null) return overlayVBO;
+        if (overlayVBO != null) return overlayVBO;
 
         EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-        if(p == null) return null;
+        if (p == null) return null;
 
         //per vertex = 6
         //per size = 4
@@ -43,20 +43,20 @@ public class NullzeeSphere {
 
         Set<BlockPos> circleOffsets = getCircleOffsets(size);
 
-        ReverseWorldRenderer worldRenderer = new ReverseWorldRenderer(196*circleOffsets.size());
+        ReverseWorldRenderer worldRenderer = new ReverseWorldRenderer(196 * circleOffsets.size());
         worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
 
         String col = SpecialColour.special(0, 180, 0xffff9900);
-        for(BlockPos offset : circleOffsets) {
+        for (BlockPos offset : circleOffsets) {
             BlockPos overlayPos = new BlockPos(offset.getX(), offset.getY(), offset.getZ());
 
             AxisAlignedBB bb = new AxisAlignedBB(
                     overlayPos.getX(),
                     overlayPos.getY(),
                     overlayPos.getZ(),
-                    overlayPos.getX()+1,
-                    overlayPos.getY()+1,
-                    overlayPos.getZ()+1
+                    overlayPos.getX() + 1,
+                    overlayPos.getY() + 1,
+                    overlayPos.getZ() + 1
             ).expand(0.001f, 0.001f, 0.001f);
             uploadFilledBoundingBox(bb, 1f, col, worldRenderer);
         }
@@ -68,12 +68,12 @@ public class NullzeeSphere {
     public Set<BlockPos> getCircleOffsets(float radius) {
         Set<BlockPos> circleOffsets = new HashSet<>();
 
-        int radiusI = (int)Math.ceil(radius)+1;
-        for(int x=-radiusI; x<=radiusI; x++) {
-            for(int y=-radiusI; y<=radiusI; y++) {
-                for(int z=-radiusI; z<=radiusI; z++) {
-                    float distSq = x*x + y*y + z*z;
-                    if(distSq >= (radius-0.5)*(radius-0.5) && distSq <= (radius+0.5)*(radius+0.5)) {
+        int radiusI = (int) Math.ceil(radius) + 1;
+        for (int x = -radiusI; x <= radiusI; x++) {
+            for (int y = -radiusI; y <= radiusI; y++) {
+                for (int z = -radiusI; z <= radiusI; z++) {
+                    float distSq = x * x + y * y + z * z;
+                    if (distSq >= (radius - 0.5) * (radius - 0.5) && distSq <= (radius + 0.5) * (radius + 0.5)) {
                         circleOffsets.add(new BlockPos(x, y, z));
                     }
                 }
@@ -91,17 +91,17 @@ public class NullzeeSphere {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if(!enabled) return;
+        if (!enabled) return;
 
         EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-        if(p == null) return;
+        if (p == null) return;
 
-        if(event.phase == TickEvent.Phase.START) {
+        if (event.phase == TickEvent.Phase.START) {
             double dX = p.posX - posLastUpdateX;
             double dY = p.posY - posLastUpdateY;
             double dZ = p.posZ - posLastUpdateZ;
 
-            if(dX*dX + dY*dY + dZ*dZ < 1) {
+            if (dX * dX + dY * dY + dZ * dZ < 1) {
                 return;
             }
 
@@ -110,18 +110,18 @@ public class NullzeeSphere {
             posLastUpdateZ = p.posZ;
 
             long currentTime = System.currentTimeMillis();
-            if(currentTime - lastUpdate < 250) {
+            if (currentTime - lastUpdate < 250) {
                 return;
             }
             lastUpdate = currentTime;
 
             ReverseWorldRenderer worldRenderer = getOverlayVBO();
-            if(worldRenderer != null) {
-                worldRenderer.setTranslation(0, 0,0 );
+            if (worldRenderer != null) {
+                worldRenderer.setTranslation(0, 0, 0);
                 worldRenderer.sortVertexData(
-                        (float)p.posX-centerPos.getX(),
-                        (float)p.posY-centerPos.getY(),
-                        (float)p.posZ-centerPos.getZ());
+                        (float) p.posX - centerPos.getX(),
+                        (float) p.posY - centerPos.getY(),
+                        (float) p.posZ - centerPos.getZ());
 
             }
         }
@@ -129,7 +129,7 @@ public class NullzeeSphere {
 
     @SubscribeEvent
     public void onRenderLast(RenderWorldLastEvent event) {
-        if(!enabled) return;
+        if (!enabled) return;
 
         Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
         double viewerX = viewer.lastTickPosX + (viewer.posX - viewer.lastTickPosX) * event.partialTicks;
@@ -144,7 +144,7 @@ public class NullzeeSphere {
 
         GL11.glPolygonOffset(5, 5);
         ReverseWorldRenderer worldRenderer = getOverlayVBO();
-        if(worldRenderer != null && worldRenderer.getVertexCount() > 0) {
+        if (worldRenderer != null && worldRenderer.getVertexCount() > 0) {
             GlStateManager.translate(centerPos.getX(), centerPos.getY(), centerPos.getZ());
 
             VertexFormat vertexformat = worldRenderer.getVertexFormat();
@@ -178,57 +178,57 @@ public class NullzeeSphere {
 
         //vertical
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, c.getAlpha() / 255f * alpha).endVertex();
 
         //x
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.8f, c.getGreen()/255f*0.8f, c.getBlue()/255f*0.8f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.8f, c.getGreen() / 255f * 0.8f, c.getBlue() / 255f * 0.8f, c.getAlpha() / 255f * alpha).endVertex();
 
         //z
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.minZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.minY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.maxX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
         worldrenderer.pos(p_181561_0_.minX, p_181561_0_.maxY, p_181561_0_.maxZ)
-                .color(c.getRed()/255f*0.9f, c.getGreen()/255f*0.9f, c.getBlue()/255f*0.9f, c.getAlpha()/255f*alpha).endVertex();
+                .color(c.getRed() / 255f * 0.9f, c.getGreen() / 255f * 0.9f, c.getBlue() / 255f * 0.9f, c.getAlpha() / 255f * alpha).endVertex();
     }
 
 }
