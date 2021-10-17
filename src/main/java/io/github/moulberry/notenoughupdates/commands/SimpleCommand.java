@@ -5,13 +5,12 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.BlockPos;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleCommand extends CommandBase {
 
-    private String commandName;
-    private ProcessCommandRunnable runnable;
+    private final String commandName;
+    private final ProcessCommandRunnable runnable;
     private TabCompleteRunnable tabRunnable;
 
     public SimpleCommand(String commandName, ProcessCommandRunnable runnable) {
@@ -50,7 +49,7 @@ public class SimpleCommand extends CommandBase {
     }
 
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
-        if(tabRunnable != null) return tabRunnable.tabComplete(sender, args, pos);
+        if (tabRunnable != null) return tabRunnable.tabComplete(sender, args, pos);
         return null;
     }
 }

@@ -22,7 +22,6 @@ public class CraftingOverlay {
     public static boolean shouldRender = false;
     private static String text = null;
 
-
     public static void render() {
         if (shouldRender) {
             ContainerChest container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;

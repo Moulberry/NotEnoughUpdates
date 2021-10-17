@@ -14,6 +14,7 @@ public class Constants {
         public Pattern deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             return Pattern.compile(json.getAsString());
         }
+
         @Override
         public JsonElement serialize(Pattern src, Type typeOfSrc, JsonSerializationContext context) {
             return new JsonPrimitive(src.pattern());
@@ -37,7 +38,7 @@ public class Constants {
     public static CollectionConstant COLLECTIONLOG;
 
     private static final ReentrantLock lock = new ReentrantLock();
-    
+
     public static void reload() {
         try {
             lock.lock();

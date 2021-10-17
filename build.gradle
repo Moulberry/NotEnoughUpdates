@@ -23,7 +23,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-version = "2.0-PRE"
+version = "2.0-DEV"
 group= "io.github.moulberry"
 archivesBaseName = "NotEnoughUpdates"
 String modid = "notenoughupdates"

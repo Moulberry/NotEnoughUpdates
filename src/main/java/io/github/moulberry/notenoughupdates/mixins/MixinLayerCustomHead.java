@@ -20,21 +20,21 @@ public class MixinLayerCustomHead {
 
     private static String customGlintColour = null;
 
-    @Inject(method="doRenderLayer", at=@At("HEAD"))
+    @Inject(method = "doRenderLayer", at = @At("HEAD"))
     public void doRenderLayer(EntityLivingBase entitylivingbaseIn, float p_177141_2_, float p_177141_3_, float partialTicks,
                               float p_177141_5_, float p_177141_6_, float p_177141_7_, float scale, CallbackInfo ci) {
         ItemStack stack = entitylivingbaseIn.getCurrentArmor(3);
 
         ItemCustomizeManager.ItemData data = ItemCustomizeManager.getDataForItem(stack);
-        if(data != null && data.overrideEnchantGlint && data.enchantGlintValue) {
+        if (data != null && data.overrideEnchantGlint && data.enchantGlintValue) {
             customGlintColour = data.customGlintColour;
         } else {
             customGlintColour = null;
         }
     }
 
-    @Redirect(method="doRenderLayer",
-            at=@At(
+    @Redirect(method = "doRenderLayer",
+            at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/renderer/tileentity/TileEntitySkullRenderer;renderSkull(FFFLnet/minecraft/util/EnumFacing;FILcom/mojang/authlib/GameProfile;I)V"
             )
@@ -47,7 +47,7 @@ public class MixinLayerCustomHead {
                 p_180543_6_, p_180543_7_, p_180543_8_);
         GL11.glPopMatrix();
 
-        if(customGlintColour != null) {
+        if (customGlintColour != null) {
             ItemCustomizeManager.renderEffectHook(customGlintColour, (color) -> {
                 float red = ((color >> 16) & 0xFF) / 255f;
                 float green = ((color >> 8) & 0xFF) / 255f;
@@ -56,7 +56,7 @@ public class MixinLayerCustomHead {
 
                 GlStateManager.color(red, green, blue, alpha);
 
-                GlStateManager.scale(1/8f, 1/8f, 1/8f);
+                GlStateManager.scale(1 / 8f, 1 / 8f, 1 / 8f);
                 GlStateManager.matrixMode(GL11.GL_MODELVIEW);
                 GL11.glPushMatrix();
                 ItemCustomizeManager.disableTextureBinding = true;

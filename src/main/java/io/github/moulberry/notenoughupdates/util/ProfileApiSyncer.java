@@ -9,11 +9,11 @@ import java.util.function.Consumer;
 
 public class ProfileApiSyncer {
 
-    private static ProfileApiSyncer INSTANCE = new ProfileApiSyncer();
+    private static final ProfileApiSyncer INSTANCE = new ProfileApiSyncer();
 
-    private HashMap<String, Long> resyncTimes = new HashMap<>();
-    private HashMap<String, Runnable> syncingCallbacks = new HashMap<>();
-    private HashMap<String, Consumer<ProfileViewer.Profile>> finishSyncCallbacks = new HashMap<>();
+    private final HashMap<String, Long> resyncTimes = new HashMap<>();
+    private final HashMap<String, Runnable> syncingCallbacks = new HashMap<>();
+    private final HashMap<String, Consumer<ProfileViewer.Profile>> finishSyncCallbacks = new HashMap<>();
     private long lastResync;
 
     public static ProfileApiSyncer getInstance() {
@@ -36,26 +36,26 @@ public class ProfileApiSyncer {
 
     public long getCurrentResyncTime() {
         long time = -1;
-        for(long l : resyncTimes.values()) {
-            if(l > 0 && (l < time || time == -1)) time = l;
+        for (long l : resyncTimes.values()) {
+            if (l > 0 && (l < time || time == -1)) time = l;
         }
         return time;
     }
 
     public void tick() {
-        if(Minecraft.getMinecraft().thePlayer == null) return;
+        if (Minecraft.getMinecraft().thePlayer == null) return;
 
         long resyncTime = getCurrentResyncTime();
 
-        if(resyncTime < 0) return;
+        if (resyncTime < 0) return;
 
         long currentTime = System.currentTimeMillis();
 
-        if(currentTime - lastResync > resyncTime) {
+        if (currentTime - lastResync > resyncTime) {
             lastResync = currentTime;
             resyncTimes.clear();
 
-            for(Runnable r : syncingCallbacks.values()) r.run();
+            for (Runnable r : syncingCallbacks.values()) r.run();
             syncingCallbacks.clear();
 
             forceResync();
@@ -63,11 +63,11 @@ public class ProfileApiSyncer {
     }
 
     private void forceResync() {
-        if(Minecraft.getMinecraft().thePlayer == null) return;
+        if (Minecraft.getMinecraft().thePlayer == null) return;
 
         String uuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
         NotEnoughUpdates.profileViewer.getProfileReset(uuid, (profile) -> {
-            for(Consumer<ProfileViewer.Profile> c : finishSyncCallbacks.values()) c.accept(profile);
+            for (Consumer<ProfileViewer.Profile> c : finishSyncCallbacks.values()) c.accept(profile);
             finishSyncCallbacks.clear();
         });
     }

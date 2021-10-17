@@ -198,6 +198,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Enable etherwarp block overlay",
+            desc = "Display an overlay that tells you what block you will TP to."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 7)
+    public boolean enableEtherwarpBlockOverlay = true;
+
+    @Expose
+    @ConfigOption(
             name = "Highlight Colour",
             desc = "Change the colour of the etherwarp target block outline"
     )
@@ -269,14 +278,12 @@ public class ItemOverlays {
     @Expose
     @ConfigOption(
             name = "Fast update",
-            desc = "Updates the bonemerang overlay faster.\n"+
+            desc = "Updates the bonemerang overlay faster.\n" +
                     "Might cause some lag."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 3)
     public boolean bonemerangFastUpdate = false;
-
-
 
     @ConfigOption(
             name = "Minion Crystal Radius Overlay",
@@ -303,7 +310,6 @@ public class ItemOverlays {
     @ConfigAccordionId(id = 5)
     public boolean alwaysShowCrystal = false;
 
-
     @Expose
     @ConfigOption(
             name = "Enable Prismapump Overlay",
@@ -311,7 +317,6 @@ public class ItemOverlays {
     )
     @ConfigEditorBoolean
     public boolean enablePrismapumpOverlay = true;
-
 
     @Expose
     @ConfigOption(

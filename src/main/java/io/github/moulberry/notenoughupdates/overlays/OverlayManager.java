@@ -13,6 +13,7 @@ public class OverlayManager {
 
     public static MiningOverlay miningOverlay;
     public static FarmingOverlay farmingOverlay;
+    public static MiningSkillOverlay miningSkillOverlay;
     public static PetInfoOverlay petInfoOverlay;
     public static TimersOverlay timersOverlay;
     public static BonemerangOverlay bonemerangOverlay;
@@ -37,13 +38,13 @@ public class OverlayManager {
                 "\u00a73Experiments: \u00a7e3h38m");
         textOverlays.add(timersOverlay = new TimersOverlay(NotEnoughUpdates.INSTANCE.config.miscOverlays.todoPosition, () -> {
             List<String> strings = new ArrayList<>();
-            for(int i : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText2) {
-                if(i >= 0 && i < todoDummy.size()) strings.add(todoDummy.get(i));
+            for (int i : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText2) {
+                if (i >= 0 && i < todoDummy.size()) strings.add(todoDummy.get(i));
             }
             return strings;
         }, () -> {
             int style = NotEnoughUpdates.INSTANCE.config.miscOverlays.todoStyle;
-            if(style >= 0 && style < TextOverlayStyle.values().length) {
+            if (style >= 0 && style < TextOverlayStyle.values().length) {
                 return TextOverlayStyle.values()[style];
             }
             return TextOverlayStyle.BACKGROUND;
@@ -55,13 +56,13 @@ public class OverlayManager {
                 "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY");
         miningOverlay = new MiningOverlay(NotEnoughUpdates.INSTANCE.config.mining.overlayPosition, () -> {
             List<String> strings = new ArrayList<>();
-            for(int i : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText2) {
-                if(i >= 0 && i < miningDummy.size()) strings.add(miningDummy.get(i));
+            for (int i : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText2) {
+                if (i >= 0 && i < miningDummy.size()) strings.add(miningDummy.get(i));
             }
             return strings;
         }, () -> {
             int style = NotEnoughUpdates.INSTANCE.config.mining.overlayStyle;
-            if(style >= 0 && style < TextOverlayStyle.values().length) {
+            if (style >= 0 && style < TextOverlayStyle.values().length) {
                 return TextOverlayStyle.values()[style];
             }
             return TextOverlayStyle.BACKGROUND;
@@ -76,12 +77,33 @@ public class OverlayManager {
                 "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52");
         farmingOverlay = new FarmingOverlay(NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingPosition, () -> {
             List<String> strings = new ArrayList<>();
-            for(int i : NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingText) {
-                if(i >= 0 && i < farmingDummy.size()) strings.add(farmingDummy.get(i));
+            for (int i : NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingText) {
+                if (i >= 0 && i < farmingDummy.size()) strings.add(farmingDummy.get(i));
             }
             return strings;
         }, () -> {
             int style = NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingStyle;
+            if (style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
+        List<String> miningSkillDummy = Lists.newArrayList(
+                "\u00a7bCompact: \u00a7e547,860",
+                "\u00a7bBlocks/m: \u00a7e38.29",
+                "\u00a7bMine: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+                "\u00a7bCurrent XP: \u00a7e6,734",
+                "\u00a7bRemaining XP: \u00a7e3,265",
+                "\u00a7bXP/h: \u00a7e238,129",
+                "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52");
+        miningSkillOverlay = new MiningSkillOverlay(NotEnoughUpdates.INSTANCE.config.skillOverlays.miningPosition, () -> {
+            List<String> strings = new ArrayList<>();
+            for(int i : NotEnoughUpdates.INSTANCE.config.skillOverlays.miningText) {
+                if(i >= 0 && i < miningSkillDummy.size()) strings.add(miningSkillDummy.get(i));
+            }
+            return strings;
+        }, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.skillOverlays.miningStyle;
             if(style >= 0 && style < TextOverlayStyle.values().length) {
                 return TextOverlayStyle.values()[style];
             }
@@ -98,13 +120,13 @@ public class OverlayManager {
                 "\u00a7bUntil L100: \u00a7e2d13h");
         petInfoOverlay = new PetInfoOverlay(NotEnoughUpdates.INSTANCE.config.petOverlay.petInfoPosition, () -> {
             List<String> strings = new ArrayList<>();
-            for(int i : NotEnoughUpdates.INSTANCE.config.petOverlay.petOverlayText) {
-                if(i >= 0 && i < petInfoDummy.size()) strings.add(petInfoDummy.get(i));
+            for (int i : NotEnoughUpdates.INSTANCE.config.petOverlay.petOverlayText) {
+                if (i >= 0 && i < petInfoDummy.size()) strings.add(petInfoDummy.get(i));
             }
             return strings;
         }, () -> {
             int style = NotEnoughUpdates.INSTANCE.config.petOverlay.petInfoOverlayStyle;
-            if(style >= 0 && style < TextOverlayStyle.values().length) {
+            if (style >= 0 && style < TextOverlayStyle.values().length) {
                 return TextOverlayStyle.values()[style];
             }
             return TextOverlayStyle.BACKGROUND;
@@ -116,7 +138,7 @@ public class OverlayManager {
         );
         bonemerangOverlay = new BonemerangOverlay(NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangPosition, () -> bonemerangDummy, () -> {
             int style = NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangOverlayStyle;
-            if(style >= 0 && style < TextOverlayStyle.values().length) {
+            if (style >= 0 && style < TextOverlayStyle.values().length) {
                 return TextOverlayStyle.values()[style];
             }
             return TextOverlayStyle.BACKGROUND;
@@ -170,6 +192,7 @@ public class OverlayManager {
 
         textOverlays.add(miningOverlay);
         textOverlays.add(farmingOverlay);
+        textOverlays.add(miningSkillOverlay);
         textOverlays.add(petInfoOverlay);
         textOverlays.add(bonemerangOverlay);
         textOverlays.add(crystalHollowOverlay);

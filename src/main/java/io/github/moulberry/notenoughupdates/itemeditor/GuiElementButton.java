@@ -4,7 +4,7 @@ import java.awt.*;
 
 public class GuiElementButton extends GuiElementText {
 
-    private Runnable callback;
+    private final Runnable callback;
 
     public GuiElementButton(String text, int colour, Runnable callback) {
         super(text, colour);
@@ -28,8 +28,8 @@ public class GuiElementButton extends GuiElementText {
 
     @Override
     public void render(int x, int y) {
-        drawRect(x, y, x+getWidth(), y+super.getHeight(), Color.WHITE.getRGB());
-        drawRect(x+1, y+1, x+getWidth()-1, y+super.getHeight()-1, Color.BLACK.getRGB());
-        super.render(x+5, y-1);
+        drawRect(x, y, x + getWidth(), y + super.getHeight(), Color.WHITE.getRGB());
+        drawRect(x + 1, y + 1, x + getWidth() - 1, y + super.getHeight() - 1, Color.BLACK.getRGB());
+        super.render(x + 5, y - 1);
     }
 }

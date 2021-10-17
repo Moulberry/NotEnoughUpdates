@@ -4,7 +4,8 @@ import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 public class NEUApi {
     static boolean disableInventoryButtons = false;
-    public static void setInventoryButtonsToDisabled(){
+
+    public static void setInventoryButtonsToDisabled() {
         disableInventoryButtons = true;
     }
 }

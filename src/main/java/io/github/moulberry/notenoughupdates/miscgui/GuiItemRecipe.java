@@ -2,25 +2,18 @@ package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
-import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.inventory.ContainerWorkbench;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
-import net.minecraft.inventory.SlotCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector3f;
 
 import java.awt.*;
 import java.io.IOException;
@@ -31,12 +24,12 @@ public class GuiItemRecipe extends GuiScreen {
     private static final ResourceLocation resourcePacksTexture = new ResourceLocation("textures/gui/resource_packs.png");
     private static final ResourceLocation craftingTableGuiTextures = new ResourceLocation("textures/gui/container/crafting_table.png");
 
-    private List<ItemStack[]> craftMatrices;
-    private List<JsonObject> results;
+    private final List<ItemStack[]> craftMatrices;
+    private final List<JsonObject> results;
     private int currentIndex = 0;
 
-    private String title;
-    private NEUManager manager;
+    private final String title;
+    private final NEUManager manager;
 
     public int guiLeft = 0;
     public int guiTop = 0;

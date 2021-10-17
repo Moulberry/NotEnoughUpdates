@@ -5,16 +5,14 @@ import net.minecraft.client.particle.EffectRenderer;
 import net.minecraft.client.particle.EntityFX;
 import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.util.vector.Vector3f;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(EffectRenderer.class)
 public class MixinEffectRenderer {
 
-    @Redirect(method="renderParticles", at=@At(
+    @Redirect(method = "renderParticles", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/GlStateManager;enableBlend()V")
     )
@@ -22,7 +20,7 @@ public class MixinEffectRenderer {
         GlStateManager.enableBlend();
 
         Vector3f currentPosition = CustomItemEffects.INSTANCE.getCurrentPosition();
-        if(currentPosition != null) {
+        if (currentPosition != null) {
             EntityFX.interpPosX = currentPosition.x;
             EntityFX.interpPosY = currentPosition.y;
             EntityFX.interpPosZ = currentPosition.z;

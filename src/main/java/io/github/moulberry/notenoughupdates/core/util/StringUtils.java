@@ -22,13 +22,13 @@ public class StringUtils {
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
         String trim = fr.trimStringToWidth(str, len);
 
-        if(str.length() != trim.length() && !trim.endsWith(" ")) {
+        if (str.length() != trim.length() && !trim.endsWith(" ")) {
             char next = str.charAt(trim.length());
-            if(next != ' ') {
+            if (next != ' ') {
                 String[] split = trim.split(" ");
-                String last = split[split.length-1];
-                if(last.length() < 8) {
-                    trim = trim.substring(0, trim.length()-last.length());
+                String last = split[split.length - 1];
+                if (last.length() < 8) {
+                    trim = trim.substring(0, trim.length() - last.length());
                 }
             }
         }

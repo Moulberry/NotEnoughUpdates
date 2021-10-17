@@ -122,17 +122,17 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
     private JLabel getPictureLabel() {
         if (logo == null) {
             try {
-                h = w/2;
+                h = w / 2;
                 margin = 5;
 
                 BufferedImage myPicture = ImageIO.read(getClass().getClassLoader().getResourceAsStream("assets/notenoughupdates/logo.png"));
-                Image scaled = myPicture.getScaledInstance(w-margin*2, h-margin, Image.SCALE_SMOOTH);
+                Image scaled = myPicture.getScaledInstance(w - margin * 2, h - margin, Image.SCALE_SMOOTH);
                 logo = new JLabel(new ImageIcon(scaled));
                 logo.setName("Logo");
-                logo.setBounds(x+margin, y+margin, w-margin*2, h-margin);
+                logo.setBounds(x + margin, y + margin, w - margin * 2, h - margin);
                 logo.setFont(new Font(Font.DIALOG, Font.BOLD, 18));
                 logo.setHorizontalAlignment(SwingConstants.CENTER);
-                logo.setPreferredSize(new Dimension(h*742/537, h));
+                logo.setPreferredSize(new Dimension(h * 742 / 537, h));
 
                 y += h;
             } catch (Throwable ivjExc) {
@@ -171,14 +171,14 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
 
                 descriptionText = new JTextArea();
                 descriptionText.setName("TextArea");
-                descriptionText.setBounds(x+margin, y+margin, w-margin*2, h-margin);
+                descriptionText.setBounds(x + margin, y + margin, w - margin * 2, h - margin);
                 descriptionText.setEditable(false);
                 descriptionText.setHighlighter(null);
                 descriptionText.setEnabled(true);
                 descriptionText.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
                 descriptionText.setLineWrap(true);
                 descriptionText.setOpaque(false);
-                descriptionText.setPreferredSize(new Dimension(w-margin*2, h-margin));
+                descriptionText.setPreferredSize(new Dimension(w - margin * 2, h - margin));
                 descriptionText.setText("This installer will copy NotEnoughUpdates into your forge mods folder for you, and replace any old versions that already exist. " +
                         "Close this if you prefer to do this yourself!");
                 descriptionText.setWrapStyleWord(true);
@@ -199,14 +199,14 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
 
                 forgeDescriptionText = new JTextArea();
                 forgeDescriptionText.setName("TextAreaForge");
-                forgeDescriptionText.setBounds(x+margin, y+margin, w-margin*2, h-margin);
+                forgeDescriptionText.setBounds(x + margin, y + margin, w - margin * 2, h - margin);
                 forgeDescriptionText.setEditable(false);
                 forgeDescriptionText.setHighlighter(null);
                 forgeDescriptionText.setEnabled(true);
                 forgeDescriptionText.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
                 forgeDescriptionText.setLineWrap(true);
                 forgeDescriptionText.setOpaque(false);
-                forgeDescriptionText.setPreferredSize(new Dimension(w-margin*2, h-margin));
+                forgeDescriptionText.setPreferredSize(new Dimension(w - margin * 2, h - margin));
                 forgeDescriptionText.setText("However, you still need to install Forge client in order to be able to run this mod. Click here to visit the download page for Forge 1.8.9!");
                 forgeDescriptionText.setForeground(Color.BLUE.darker());
                 forgeDescriptionText.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -230,7 +230,7 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
             try {
                 labelFolder = new JLabel();
                 labelFolder.setName("LabelFolder");
-                labelFolder.setBounds(x, y+2, w, h);
+                labelFolder.setBounds(x, y + 2, w, h);
                 labelFolder.setPreferredSize(new Dimension(w, h));
                 labelFolder.setText("Mods Folder");
             } catch (Throwable ivjExc) {
@@ -271,7 +271,7 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
 
             try {
                 BufferedImage myPicture = ImageIO.read(getClass().getClassLoader().getResourceAsStream("assets/notenoughupdates/folder.png"));
-                Image scaled = myPicture.getScaledInstance(w-8, h-6, Image.SCALE_SMOOTH);
+                Image scaled = myPicture.getScaledInstance(w - 8, h - 6, Image.SCALE_SMOOTH);
                 buttonChooseFolder = new JButton(new ImageIcon(scaled));
                 buttonChooseFolder.setName("ButtonFolder");
                 buttonChooseFolder.setBounds(x, y, w, h);
@@ -411,10 +411,7 @@ public class NotSkyblockAddonsInstallerFrame extends JFrame implements ActionLis
         File thisFile = getThisFile();
 
         if (thisFile != null) {
-            boolean inSubFolder = false;
-            if (IN_MODS_SUBFOLDER.matcher(modsFolder.getPath()).find()) {
-                inSubFolder = true;
-            }
+            boolean inSubFolder = IN_MODS_SUBFOLDER.matcher(modsFolder.getPath()).find();
 
             boolean deletingFailure = false;
             if (modsFolder.isDirectory()) { // Delete in this current folder.

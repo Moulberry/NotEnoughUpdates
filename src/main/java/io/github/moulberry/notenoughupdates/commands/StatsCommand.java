@@ -36,7 +36,7 @@ public class StatsCommand extends ClientCommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (args.length > 0){
+        if (args.length > 0) {
             switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "modlist":
                     clipboardAndSendMessage(createModList(new DiscordMarkdownBuilder()).toString());
@@ -49,7 +49,7 @@ public class StatsCommand extends ClientCommandBase {
                             final ObjectName objectName = ObjectName.getInstance("com.sun.management:type=DiagnosticCommand");
                             final DiagnosticCommandMXBean proxy = JMX.newMXBeanProxy(server, objectName, DiagnosticCommandMXBean.class);
                             clipboardAndSendMessage(HastebinUploader.upload(proxy.gcClassHistogram(new String[0]).replace("[", "[]"), HastebinUploader.Mode.NORMAL));
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             clipboardAndSendMessage(null);
                         }
                     });
@@ -103,8 +103,8 @@ public class StatsCommand extends ClientCommandBase {
         builder.append("Display", String.format("%dx%d (%s)", Display.getWidth(), Display.getHeight(), GL11.glGetString(GL11.GL_VENDOR)));
         builder.append("GPU", GL11.glGetString(GL11.GL_RENDERER));
         builder.append("GPU Driver", GL11.glGetString(GL11.GL_VERSION));
-        if(getMemorySize() > 0) builder.append("Maximum Memory", (getMemorySize() / 1024L / 1024L) + "MB");
-        builder.append("Shaders", (""+OpenGlHelper.isFramebufferEnabled()).toUpperCase());
+        if (getMemorySize() > 0) builder.append("Maximum Memory", (getMemorySize() / 1024L / 1024L) + "MB");
+        builder.append("Shaders", ("" + OpenGlHelper.isFramebufferEnabled()).toUpperCase());
         builder.category("Java Stats");
         builder.append("Java", String.format("%s %dbit", System.getProperty("java.version"), Minecraft.getMinecraft().isJava64bit() ? 64 : 32));
         builder.append("Memory", String.format("% 2d%% %03d/%03dMB", currentMemory * 100L / maxMemory, currentMemory / 1024L / 1024L, maxMemory / 1024L / 1024L));
@@ -113,7 +113,7 @@ public class StatsCommand extends ClientCommandBase {
         builder.append("FPS", String.valueOf(Minecraft.getDebugFPS()));
         builder.append("Loaded Mods", String.valueOf(activeModCount));
         builder.append("Forge", ForgeVersion.getVersion());
-        builder.category("Neu Settings"); 
+        builder.category("Neu Settings");
         builder.append("API Key", NotEnoughUpdates.INSTANCE.config.apiKey.apiKey.isEmpty() ? "FALSE" : "TRUE");
         builder.append("On Skyblock", NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() ? "TRUE" : "FALSE");
         builder.append("Mod Version", Loader.instance().getIndexedModList().get(NotEnoughUpdates.MODID).getSource().getName());
@@ -132,13 +132,13 @@ public class StatsCommand extends ClientCommandBase {
         return builder;
     }
 
-    private static long getMemorySize(){
+    private static long getMemorySize() {
         try {
             return ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
-        } catch(Exception e){
+        } catch (Exception e) {
             try {
                 return ((com.sun.management.UnixOperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
-            } catch(Exception ignored){/*IGNORE*/}
+            } catch (Exception ignored) {/*IGNORE*/}
         }
         return -1;
     }

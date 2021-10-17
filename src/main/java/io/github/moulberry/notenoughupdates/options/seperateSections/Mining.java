@@ -179,7 +179,6 @@ public class Mining {
     @ConfigAccordionId(id = 2)
     public int forgeDisplayEnabledLocations = 0;
 
-
     @ConfigOption(
             name = "Metal Detector Solver",
             desc = ""
@@ -289,7 +288,6 @@ public class Mining {
     @ConfigAccordionId(id = 4)
     public int crystalHollowOverlayStyle = 0;
 
-
     @Expose
     @ConfigOption(
             name = "Show Icons",
@@ -298,7 +296,6 @@ public class Mining {
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 4)
     public boolean crystalHollowIcons = true;
-
 
     @Expose
     @ConfigOption(
@@ -494,7 +491,6 @@ public class Mining {
     )
     @ConfigEditorBoolean
     public boolean titaniumAlertMustBeVisible = false;
-
 
     @Expose
     @ConfigOption(

@@ -35,7 +35,7 @@ public class MBAnchorPoint implements Serializable {
     }
 
     public static MBAnchorPoint createFromString(String str) {
-        if(str == null || str.split(":").length != 4) {
+        if (str == null || str.split(":").length != 4) {
             return null;
         }
 
@@ -44,7 +44,9 @@ public class MBAnchorPoint implements Serializable {
             AnchorPoint point = AnchorPoint.valueOf(split[0].toUpperCase());
             Vector2f pos = new Vector2f(Float.parseFloat(split[1]), Float.parseFloat(split[2]));
             return new MBAnchorPoint(point, pos, Boolean.parseBoolean(split[3]));
-        } catch(Exception e) { return null; }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Override

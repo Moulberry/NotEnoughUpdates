@@ -11,18 +11,17 @@ import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
 public abstract class TextOverlay {
 
-    private Position position;
+    private final Position position;
     protected Supplier<TextOverlayStyle> styleSupplier;
     public int overlayWidth = -1;
     public int overlayHeight = -1;
     public List<String> overlayStrings = null;
-    private Supplier<List<String>> dummyStrings;
+    private final Supplier<List<String>> dummyStrings;
 
     public boolean shouldUpdateFrequent = false;
 
@@ -32,7 +31,7 @@ public abstract class TextOverlay {
     public TextOverlay(Position position, Supplier<List<String>> dummyStrings, Supplier<TextOverlayStyle> styleSupplier) {
         this.position = position;
         this.styleSupplier = styleSupplier;
-        if(dummyStrings == null) {
+        if (dummyStrings == null) {
             this.dummyStrings = () -> null;
         } else {
             this.dummyStrings = dummyStrings;
@@ -42,7 +41,7 @@ public abstract class TextOverlay {
     public Vector2f getDummySize() {
         List<String> dummyStrings = this.dummyStrings.get();
 
-        if(dummyStrings != null) {
+        if (dummyStrings != null) {
             return getSize(dummyStrings);
         }
         return new Vector2f(100, 50);
@@ -53,6 +52,7 @@ public abstract class TextOverlay {
     }
 
     public void updateFrequent() {}
+
     public abstract void update();
 
     public void renderDummy() {
@@ -61,7 +61,7 @@ public abstract class TextOverlay {
     }
 
     public void render() {
-        if(shouldUpdateFrequent) {
+        if (shouldUpdateFrequent) {
             updateFrequent();
             shouldUpdateFrequent = false;
         }
@@ -71,14 +71,14 @@ public abstract class TextOverlay {
     protected Vector2f getSize(List<String> strings) {
         int overlayHeight = 0;
         int overlayWidth = 0;
-        for(String s : strings) {
-            if(s == null) {
+        for (String s : strings) {
+            if (s == null) {
                 overlayHeight += 3;
                 continue;
             }
-            for(String s2 : s.split("\n")) {
+            for (String s2 : s.split("\n")) {
                 int sWidth = Minecraft.getMinecraft().fontRendererObj.getStringWidth(s2);
-                if(sWidth > overlayWidth) {
+                if (sWidth > overlayWidth) {
                     overlayWidth = sWidth;
                 }
                 overlayHeight += 10;
@@ -88,11 +88,11 @@ public abstract class TextOverlay {
 
         int paddingX = 0;
         int paddingY = 0;
-        if(styleSupplier.get() == TextOverlayStyle.BACKGROUND) {
+        if (styleSupplier.get() == TextOverlayStyle.BACKGROUND) {
             paddingX = PADDING_X;
             paddingY = PADDING_Y;
         }
-        return new Vector2f(overlayWidth+paddingX*2, overlayHeight+paddingY*2);
+        return new Vector2f(overlayWidth + paddingX * 2, overlayHeight + paddingY * 2);
     }
 
     protected Vector2f getTextOffset() {
@@ -111,19 +111,19 @@ public abstract class TextOverlay {
     protected void renderLine(String line, Vector2f position, boolean dummy) {}
 
     private void render(List<String> strings, boolean dummy) {
-        if(strings == null) return;
+        if (strings == null) return;
 
         Vector2f size = getSize(strings);
-        overlayHeight = (int)size.y;
-        overlayWidth = (int)size.x;
+        overlayHeight = (int) size.y;
+        overlayWidth = (int) size.x;
 
         Vector2f position = getPosition(overlayWidth, overlayHeight);
-        int x = (int)position.x;
-        int y = (int)position.y;
+        int x = (int) position.x;
+        int y = (int) position.y;
 
         TextOverlayStyle style = styleSupplier.get();
 
-        if(style == TextOverlayStyle.BACKGROUND) Gui.drawRect(x, y, x+overlayWidth, y+overlayHeight, 0x80000000);
+        if (style == TextOverlayStyle.BACKGROUND) Gui.drawRect(x, y, x + overlayWidth, y + overlayHeight, 0x80000000);
 
         GlStateManager.enableBlend();
         GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -131,7 +131,7 @@ public abstract class TextOverlay {
 
         int paddingX = 0;
         int paddingY = 0;
-        if(styleSupplier.get() == TextOverlayStyle.BACKGROUND) {
+        if (styleSupplier.get() == TextOverlayStyle.BACKGROUND) {
             paddingX = PADDING_X;
             paddingY = PADDING_Y;
         }
@@ -141,25 +141,25 @@ public abstract class TextOverlay {
         paddingY += (int) textOffset.y;
 
         int yOff = 0;
-        for(String s : strings) {
-            if(s == null) {
+        for (String s : strings) {
+            if (s == null) {
                 yOff += 3;
             } else {
-                for(String s2 : s.split("\n")) {
-                    Vector2f pos = new Vector2f(x+paddingX, y+paddingY+yOff);
+                for (String s2 : s.split("\n")) {
+                    Vector2f pos = new Vector2f(x + paddingX, y + paddingY + yOff);
                     renderLine(s2, pos, dummy);
 
-                    int xPad = (int)pos.x;
-                    int yPad = (int)pos.y;
+                    int xPad = (int) pos.x;
+                    int yPad = (int) pos.y;
 
-                    if(style == TextOverlayStyle.FULL_SHADOW) {
+                    if (style == TextOverlayStyle.FULL_SHADOW) {
                         String clean = Utils.cleanColourNotModifiers(s2);
-                        for(int xO=-2; xO<=2; xO++) {
-                            for(int yO=-2; yO<=2; yO++) {
-                                if(Math.abs(xO) != Math.abs(yO)) {
+                        for (int xO = -2; xO <= 2; xO++) {
+                            for (int yO = -2; yO <= 2; yO++) {
+                                if (Math.abs(xO) != Math.abs(yO)) {
                                     Minecraft.getMinecraft().fontRendererObj.drawString(clean,
-                                            xPad+xO/2f, yPad+yO/2f,
-                                            new Color(0, 0, 0, 200/Math.max(Math.abs(xO), Math.abs(yO))).getRGB(), false);
+                                            xPad + xO / 2f, yPad + yO / 2f,
+                                            new Color(0, 0, 0, 200 / Math.max(Math.abs(xO), Math.abs(yO))).getRGB(), false);
                                 }
                             }
                         }

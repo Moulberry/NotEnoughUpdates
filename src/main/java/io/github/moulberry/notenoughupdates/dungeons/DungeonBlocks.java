@@ -7,12 +7,17 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.texture.*;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.GL30;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
@@ -24,19 +29,19 @@ public class DungeonBlocks {
     private static Framebuffer framebufferBlocksTo = null;
     private static Framebuffer framebufferBlocksFrom = null;
 
-    private static HashMap<String, Framebuffer> framebuffersDynamicTo = new HashMap<>();
+    private static final HashMap<String, Framebuffer> framebuffersDynamicTo = new HashMap<>();
     public static HashMap<String, Framebuffer> framebuffersDynamicFrom = new HashMap<>();
-    private static HashSet<String> dynamicUpdated = new HashSet<>();
+    private static final HashSet<String> dynamicUpdated = new HashSet<>();
 
-    private static FloatBuffer projectionMatrixOld = BufferUtils.createFloatBuffer(16);
-    private static FloatBuffer modelviewMatrixOld = BufferUtils.createFloatBuffer(16);
+    private static final FloatBuffer projectionMatrixOld = BufferUtils.createFloatBuffer(16);
+    private static final FloatBuffer modelviewMatrixOld = BufferUtils.createFloatBuffer(16);
 
     public static boolean textureExists() {
         return framebufferBlocksFrom != null && isOverriding();
     }
 
     public static void bindTextureIfExists() {
-        if(textureExists()) {
+        if (textureExists()) {
             framebufferBlocksFrom.bindFramebufferTexture();
         }
     }
@@ -44,24 +49,24 @@ public class DungeonBlocks {
     public static boolean isOverriding() {
         return OpenGlHelper.isFramebufferEnabled() && NotEnoughUpdates.INSTANCE.config.dungeons.enableDungBlockOverlay &&
                 (NotEnoughUpdates.INSTANCE.config.dungeons.dungeonBlocksEverywhere ||
-                (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon")));
+                        (SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("dungeon")));
     }
 
     public static boolean bindModifiedTexture(ResourceLocation location, int colour) {
-        if(!isOverriding()) {
+        if (!isOverriding()) {
             return false;
         }
 
-        if(Utils.disableCustomDungColours) {
+        if (Utils.disableCustomDungColours) {
             return false;
         }
 
-        if(((colour >> 24) & 0xFF) < 10) {
+        if (((colour >> 24) & 0xFF) < 10) {
             return false;
         }
 
-        String id = location.getResourceDomain()+":"+location.getResourcePath();
-        if(dynamicUpdated.contains(id) && framebuffersDynamicFrom.containsKey(id)) {
+        String id = location.getResourceDomain() + ":" + location.getResourcePath();
+        if (dynamicUpdated.contains(id) && framebuffersDynamicFrom.containsKey(id)) {
             framebuffersDynamicFrom.get(id).bindFramebufferTexture();
             return true;
         }
@@ -108,7 +113,7 @@ public class DungeonBlocks {
             if (Minecraft.getMinecraft().gameSettings.mipmapLevels >= 0) {
                 GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, Minecraft.getMinecraft().gameSettings.mipmapLevels);
                 GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MIN_LOD, 0.0F);
-                GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LOD, (float)Minecraft.getMinecraft().gameSettings.mipmapLevels);
+                GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LOD, (float) Minecraft.getMinecraft().gameSettings.mipmapLevels);
                 GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, 0.0F);
                 GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
             }
@@ -128,7 +133,7 @@ public class DungeonBlocks {
             GlStateManager.disableBlend();
             GlStateManager.enableLighting();
             return true;
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
@@ -137,7 +142,7 @@ public class DungeonBlocks {
         return false;
     }
 
-    private static HashMap<ResourceLocation, String> dynamicPreloadMap = new HashMap<>();
+    private static final HashMap<ResourceLocation, String> dynamicPreloadMap = new HashMap<>();
 
     static {
         dynamicPreloadMap.put(new ResourceLocation("textures/entity/bat.png"),
@@ -153,13 +158,13 @@ public class DungeonBlocks {
     }
 
     public static void tick() {
-        if(!isOverriding() || Minecraft.getMinecraft().theWorld == null) {
+        if (!isOverriding() || Minecraft.getMinecraft().theWorld == null) {
             return;
         }
 
         dynamicUpdated.clear();
 
-        for(Map.Entry<ResourceLocation, String> entry : dynamicPreloadMap.entrySet()) {
+        for (Map.Entry<ResourceLocation, String> entry : dynamicPreloadMap.entrySet()) {
             bindModifiedTexture(entry.getKey(), SpecialColour.specialToChromaRGB(entry.getValue()));
         }
 
@@ -200,12 +205,12 @@ public class DungeonBlocks {
             spriteMap.put(Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/trip_wire"),
                     SpecialColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.dungeons.dungTripWireColour));
 
-            for(Map.Entry<TextureAtlasSprite, Integer> entry : spriteMap.entrySet()) {
-                if(((entry.getValue() >> 24) & 0xFF) < 10) continue;
+            for (Map.Entry<TextureAtlasSprite, Integer> entry : spriteMap.entrySet()) {
+                if (((entry.getValue() >> 24) & 0xFF) < 10) continue;
 
                 TextureAtlasSprite tas = entry.getKey();
-                Gui.drawRect((int)(w*tas.getMinU()), h-(int)(h*tas.getMaxV())-1,
-                        (int)(w*tas.getMaxU())+1, h-(int)(h*tas.getMinV()), entry.getValue());
+                Gui.drawRect((int) (w * tas.getMinU()), h - (int) (h * tas.getMaxV()) - 1,
+                        (int) (w * tas.getMaxU()) + 1, h - (int) (h * tas.getMinV()), entry.getValue());
             }
 
             ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
@@ -223,7 +228,7 @@ public class DungeonBlocks {
             if (Minecraft.getMinecraft().gameSettings.mipmapLevels >= 0) {
                 GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, Minecraft.getMinecraft().gameSettings.mipmapLevels);
                 GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MIN_LOD, 0.0F);
-                GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LOD, (float)Minecraft.getMinecraft().gameSettings.mipmapLevels);
+                GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LOD, (float) Minecraft.getMinecraft().gameSettings.mipmapLevels);
                 GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, 0.0F);
                 GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
             }
@@ -231,7 +236,7 @@ public class DungeonBlocks {
             Framebuffer from = checkFramebufferSizes(framebufferBlocksFrom, w, h);
             framebufferBlocksFrom = to;
             framebufferBlocksTo = from;
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
@@ -239,8 +244,8 @@ public class DungeonBlocks {
     }
 
     private static Framebuffer checkFramebufferSizes(Framebuffer framebuffer, int width, int height) {
-        if(framebuffer == null || framebuffer.framebufferWidth != width || framebuffer.framebufferHeight != height) {
-            if(framebuffer == null) {
+        if (framebuffer == null || framebuffer.framebufferWidth != width || framebuffer.framebufferHeight != height) {
+            if (framebuffer == null) {
                 framebuffer = new Framebuffer(width, height, false);
                 framebuffer.framebufferColor[0] = 1f;
                 framebuffer.framebufferColor[1] = 0f;
