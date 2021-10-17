@@ -206,7 +206,6 @@ public class AuctionSearchOverlay {
     private static final AtomicInteger searchId = new AtomicInteger(0);
 
     private static String getItemIdAtIndex(int i) {
-        System.out.println(i);
         if (!autocompletedItems.isEmpty()) {
             if ((i > autocompletedItems.size() - 1) || i < 0 || i > 4) {
                 return "";
