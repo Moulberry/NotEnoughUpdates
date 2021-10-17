@@ -884,9 +884,19 @@ public class GuiProfileViewer extends GuiScreen {
 
             if(mouseX > x && mouseX < x + sectionWidth &&
                     mouseY > y+16 && mouseY < y+24) {
-                float xpF5 = 2000;
-                float xpF6 = 4000;
-                float xpF7 = 20000;
+                float F5 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.catacombs.tier_completions."+5), 0)); //this can prob be done better
+                float F6 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.catacombs.tier_completions."+6), 0));
+                float F7 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.catacombs.tier_completions."+7), 0));
+                if (F5 > 150){
+                    F5 = 150;
+                } if (F6 > 100){
+                    F6 = 100;
+                } if (F7 > 50){
+                    F7 = 50;
+                }
+                float xpF5 = 2000*(F5/100+1);
+                float xpF6 = 4000*(F6/100+1);
+                float xpF7 = 20000*(F7/100+1);
                 if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
                     xpF5 *= 1.1;
                     xpF6 *= 1.1;
