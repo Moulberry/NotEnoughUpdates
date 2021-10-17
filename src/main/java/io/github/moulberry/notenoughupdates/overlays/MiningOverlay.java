@@ -618,6 +618,9 @@ public class MiningOverlay extends TextOverlay {
         String cleaned = Utils.cleanColour(line);
         String beforeColon = cleaned.split(":")[0];
 
+        if(miningOverlayCommisionItems == null){
+            setupMiningOverlayCommisionItems();
+        }
 
         if (miningOverlayCommisionItems.containsKey(beforeColon)) {
             icon = miningOverlayCommisionItems.get(beforeColon);
@@ -666,8 +669,9 @@ public class MiningOverlay extends TextOverlay {
     private static HashMap<String, ItemStack> miningOverlayPerfectGems = new HashMap<String, ItemStack>() {};
 
 
-    private static HashMap<String, ItemStack> miningOverlayCommisionItems = new HashMap<String, ItemStack>() {};
-    {
+    private static HashMap<String, ItemStack> miningOverlayCommisionItems;
+    private static void setupMiningOverlayCommisionItems(){
+        miningOverlayCommisionItems = new HashMap<String, ItemStack>() {};
         miningOverlayCommisionItems.put("Mithril Powder", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("INK_SACK-10")));
         miningOverlayCommisionItems.put("Gemstone Powder", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("INK_SACK-9")));
         miningOverlayCommisionItems.put("Lucky Raffle", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MINING_RAFFLE_TICKET")));
@@ -692,4 +696,5 @@ public class MiningOverlay extends TextOverlay {
         miningOverlayCommisionItems.put("Mithril", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MITHRIL_ORE")));
         miningOverlayCommisionItems.put("Forge", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("ANVIL")));
     }
+
 }

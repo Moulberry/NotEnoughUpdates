@@ -330,6 +330,9 @@ public class CrystalHollowOverlay extends TextOverlay {
         ItemStack icon = null;
         String cleaned = Utils.cleanColour(line);
         String beforeColon = cleaned.split(":")[0];
+        if(crystallHollowsIcons == null){
+            setupCrystallHollowsIcons();
+        }
         if (crystallHollowsIcons.containsKey(beforeColon)) {
             icon = crystallHollowsIcons.get(beforeColon);
         }
@@ -346,8 +349,9 @@ public class CrystalHollowOverlay extends TextOverlay {
         super.renderLine(line, position, dummy);
     }
 
-    private static Map<String, ItemStack> crystallHollowsIcons = new HashMap<String, ItemStack>(){};
-    {
+    private static Map<String, ItemStack> crystallHollowsIcons;
+    private static void setupCrystallHollowsIcons() {
+        crystallHollowsIcons = new HashMap<String, ItemStack>(){};
         crystallHollowsIcons.put("Scavenged Lapis Sword", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_LAPIS_SWORD")));
         crystallHollowsIcons.put("Scavenged Golden Hammer", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_GOLD_HAMMER")));
         crystallHollowsIcons.put("Scavenged Diamond Axe", NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("DWARVEN_DIAMOND_AXE")));
