@@ -302,8 +302,6 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
             }
 
             if (skillInfo != null && skillInfo.level == 60) {
-                StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + "Mineing".substring(0, 4) + ": "); //yes ik its spelt wrong
-
                 int current = (int) skillInfo.currentXp;
                 if (skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
                     current = (int) interp(current, skillInfoLast.currentXp);

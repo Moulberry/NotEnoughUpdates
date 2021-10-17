@@ -191,7 +191,7 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                         format.format(xpInterp)+(isFishing ? "" : EnumChatFormatting.RED + " (PAUSED)"));
             }
 
-            if(skillInfo != null) {
+            if(skillInfo != null && skillInfo.level < 50) {
                 StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + skillType.substring(0, 4) + ": ");
 
                 levelStr.append(EnumChatFormatting.YELLOW)
@@ -243,6 +243,17 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                         lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ Utils.prettyTime((long)(remaining)*1000*60*60/(long)xpInterp));
                     }
                 }
+
+            }
+
+            if (skillInfo != null && skillInfo.level == 50) {
+                int current = (int) skillInfo.currentXp;
+                if (skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
+                    current = (int) interp(current, skillInfoLast.currentXp);
+                }
+
+                lineMap.put(2, EnumChatFormatting.AQUA + "Fish: " + EnumChatFormatting.YELLOW + "50 " + EnumChatFormatting.RED + "(Maxed)");
+                lineMap.put(3, EnumChatFormatting.AQUA + "Current XP: " + EnumChatFormatting.YELLOW + format.format(current));
 
             }
 

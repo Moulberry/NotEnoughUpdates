@@ -22,6 +22,8 @@ public class FarmingOverlay extends TextOverlay {
     private long lastUpdate = -1;
     private int counterLast = -1;
     private int counter = -1;
+    private int Farming = -1;
+    private int Alch = -1;
     private float cropsPerSecondLast = 0;
     private float cropsPerSecond = 0;
     private final LinkedList<Integer> counterQueue = new LinkedList<>();
@@ -88,8 +90,12 @@ public class FarmingOverlay extends TextOverlay {
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
         if (internalname != null && internalname.startsWith("THEORETICAL_HOE_WARTS")) {
             skillType = "Alchemy";
+            Farming = 0;
+            Alch = 1;
         } else {
             skillType = "Farming";
+            Farming = 1;
+            Alch = 1;
         }
 
         skillInfoLast = skillInfo;
@@ -199,7 +205,7 @@ public class FarmingOverlay extends TextOverlay {
                         format.format(xpInterp) + (isFarming ? "" : EnumChatFormatting.RED + " (PAUSED)"));
             }
 
-            if (skillInfo != null) {
+            if (skillInfo != null && skillInfo.level < 60 && Alch == 0) {
                 StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + skillType.substring(0, 4) + ": ");
 
                 levelStr.append(EnumChatFormatting.YELLOW)
@@ -251,6 +257,21 @@ public class FarmingOverlay extends TextOverlay {
                         lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + Utils.prettyTime((long) (remaining) * 1000 * 60 * 60 / (long) xpInterp));
                     }
                 }
+
+            }
+
+            if (skillInfo != null && skillInfo.level == 60 || Alch == 1 && skillInfo != null && skillInfo.level == 50) {
+                int current = (int) skillInfo.currentXp;
+                if (skillInfoLast != null && skillInfo.currentXpMax == skillInfoLast.currentXpMax) {
+                    current = (int) interp(current, skillInfoLast.currentXp);
+                }
+
+                if (Alch == 0) {
+                    lineMap.put(2, EnumChatFormatting.AQUA + "Farm: " + EnumChatFormatting.YELLOW + "60 " + EnumChatFormatting.RED + "(Maxed)");
+                } else {
+                    lineMap.put(2, EnumChatFormatting.AQUA + "Alch: " + EnumChatFormatting.YELLOW + "50 " + EnumChatFormatting.RED + "(Maxed)");
+                }
+                lineMap.put(3, EnumChatFormatting.AQUA + "Current XP: " + EnumChatFormatting.YELLOW + format.format(current));
 
             }
 
