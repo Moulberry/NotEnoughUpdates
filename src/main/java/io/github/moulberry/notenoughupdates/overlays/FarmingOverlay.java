@@ -255,12 +255,19 @@ public class FarmingOverlay extends TextOverlay {
             }
 
             float yaw = Minecraft.getMinecraft().thePlayer.rotationYawHead;
+            float pitch = Minecraft.getMinecraft().thePlayer.rotationPitch;
             yaw %= 360;
             if (yaw < 0) yaw += 360;
             if (yaw > 180) yaw -= 360;
+            pitch %= 360;
+            if (pitch < 0) pitch += 360;
+            if (pitch > 180) pitch -= 360;
 
             lineMap.put(6, EnumChatFormatting.AQUA + "Yaw: " + EnumChatFormatting.YELLOW +
                     String.format("%.2f", yaw) + EnumChatFormatting.BOLD + "\u1D52");
+
+            lineMap.put(8, EnumChatFormatting.AQUA + "Pitch: " + EnumChatFormatting.YELLOW +
+                    String.format("%.2f", pitch) + EnumChatFormatting.BOLD + "\u1D52");
 
             for (int strIndex : NotEnoughUpdates.INSTANCE.config.skillOverlays.farmingText) {
                 if (lineMap.get(strIndex) != null) {

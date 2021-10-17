@@ -58,7 +58,8 @@ public class SkillOverlays {
                     "\u00a7bRemaining XP: \u00a7e3,265",
                     "\u00a7bXP/h: \u00a7e238,129",
                     "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52",
-                    "\u00a7bETA: \u00a7e13h12m"}
+                    "\u00a7bETA: \u00a7e13h12m",
+                    "\u00a7bPitch: \u00a7e69.42\u00a7l\u1D52"}
     )
     @ConfigAccordionId(id = 0)
     public List<Integer> farmingText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 7, 6));
@@ -69,7 +70,7 @@ public class SkillOverlays {
             desc = "Change the position of the Farming overlay"
     )
     @ConfigEditorButton(
-            runnableId = 14,
+            runnableId = 3,
             buttonText = "Edit"
     )
     @ConfigAccordionId(id = 0)
