@@ -956,11 +956,24 @@ public class GuiProfileViewer extends GuiScreen {
             }
 
             if(mouseX > x && mouseX < x + sectionWidth && mouseY > y+16 && mouseY < y+24 && onMasterMode) {
-                float xpM3 = 50000;
-                float xpM4 = 80000;
-                float xpM5 = 90000;
-                float xpM6 = 150000;
-                //No clue if these xp values are right
+                float M3 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.master_catacombs.tier_completions."+3), 0));
+                float M4 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.master_catacombs.tier_completions."+4), 0));
+                float M5 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.master_catacombs.tier_completions."+5), 0)); //this can prob be done better
+                float M6 = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "dungeons.dungeon_types.master_catacombs.tier_completions."+6), 0));
+                if (M3 > 50){
+                    M3 = 50;
+                } if (M4 > 50){
+                    M4 = 50;
+                } if (M5 > 50){
+                    M5 = 50;
+                } if (M6 > 50){
+                    M6 = 50;
+                }
+                float xpM3 = 30500*(M3/100+1);
+                float xpM4 = 46000*(M4/100+1);
+                float xpM5 = 70000*(M5/100+1);
+                float xpM6 = 100000*(M6/100+1);
+                //No clue if M3 or M4 xp values are right
                 if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
                     xpM3 *= 1.1;
                     xpM4 *= 1.1;
