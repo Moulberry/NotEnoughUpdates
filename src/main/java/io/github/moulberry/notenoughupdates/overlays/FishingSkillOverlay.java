@@ -22,6 +22,8 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
     private long lastUpdate = -1;
     private int expertiseLast = -1;
     private int expertise = -1;
+    private int expertiseTier = -1;
+    private String expertiseTierAmount = "1";
     private float fishedPerSecondLast = 0;
     private float fishedPerSecond = 0;
     private LinkedList<Integer> expertiseQueue = new LinkedList<>();
@@ -81,6 +83,53 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                 }
             }
         }
+
+        if (expertise < 50){
+            expertiseTier = 1;
+        } else if (expertise < 100){
+            expertiseTier = 2;
+        } else if (expertise < 250){
+            expertiseTier = 3;
+        } else if (expertise < 500){
+            expertiseTier = 4;
+        } else if (expertise < 1000){
+            expertiseTier = 5;
+        } else if (expertise < 2500){
+            expertiseTier = 6;
+        } else if (expertise < 5500){
+            expertiseTier = 7;
+        } else if (expertise < 10000){
+            expertiseTier = 8;
+        } else if (expertise < 15000){
+            expertiseTier = 9;
+        } else if (expertise > 15000){
+            expertiseTier = 10;
+        }
+        //TODO add this for farming
+        if (expertiseTier == 1){
+            expertiseTierAmount = "50";
+        } else if (expertiseTier == 2){
+            expertiseTierAmount = "100";
+        } else if (expertiseTier == 3){
+            expertiseTierAmount = "250";
+        } else if (expertiseTier == 4){
+            expertiseTierAmount = "500";
+        } else if (expertiseTier == 5){
+            expertiseTierAmount = "1,000";
+        } else if (expertiseTier == 6){
+            expertiseTierAmount = "2,500";
+        } else if (expertiseTier == 7){
+            expertiseTierAmount = "5,500";
+        } else if (expertiseTier == 8){
+            expertiseTierAmount = "10,000";
+        } else if (expertiseTier == 9){
+            expertiseTierAmount = "15,000";
+        } else if (expertiseTier == 10){
+            expertiseTierAmount = "Maxed";
+        }
+
+
+
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
 
         skillInfoLast = skillInfo;
@@ -172,14 +221,23 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
             //TODO make this not be interp
             /*if(expertise >= 0) {
                 if(fishedPerSecondLast == fishedPerSecond && fishedPerSecond <= 0) {
-                    lineMap.put(1, EnumChatFormatting.AQUA+"Catches/m: "+EnumChatFormatting.YELLOW+"N/A");
+                    lineMap.put(7, EnumChatFormatting.AQUA+"Catches/m: "+EnumChatFormatting.YELLOW + "N/A");
                 } else {
-                    float cpsInterp = interp(fishedPerSecond, fishedPerSecondLast);
+                    //float cpsInterp = interp(fishedPerSecond, fishedPerSecondLast);
 
-                    lineMap.put(1, EnumChatFormatting.AQUA+"Catches/m: "+EnumChatFormatting.YELLOW+
-                            String.format("%.2f", cpsInterp*60));
+                    lineMap.put(7, EnumChatFormatting.AQUA+"Catches/m: "+EnumChatFormatting.YELLOW +
+                            fishedPerSecond);
+                            //String.format("%.2f", cpsInterp*60));
                 }
             }*/
+
+            if (expertiseTier <= 9) {
+                int counterInterp = (int) interp(expertise, expertiseLast);
+                lineMap.put(6, EnumChatFormatting.AQUA + "Expertise Progress: " + EnumChatFormatting.YELLOW + format.format(counterInterp) + "/" + expertiseTierAmount);
+            }
+            if (expertiseTier == 10) {
+                lineMap.put(6, EnumChatFormatting.AQUA + "Expertise Progress: " + EnumChatFormatting.RED + expertiseTierAmount);
+            }
 
             float xpInterp = xpGainHour;
             if(xpGainHourLast == xpGainHour && xpGainHour <= 0) {
@@ -257,13 +315,13 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
 
             }
 
-            float yaw = Minecraft.getMinecraft().thePlayer.rotationYawHead;
+            /*float yaw = Minecraft.getMinecraft().thePlayer.rotationYawHead;
             yaw %= 360;
             if(yaw < 0) yaw += 360;
             if(yaw > 180) yaw -= 360;
 
             lineMap.put(6, EnumChatFormatting.AQUA+"Yaw: "+EnumChatFormatting.YELLOW+
-                    String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u1D52");
+                    String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u1D52");*/
 
             for(int strIndex : NotEnoughUpdates.INSTANCE.config.skillOverlays.fishingText) {
                 if(lineMap.get(strIndex) != null) {

@@ -232,7 +232,6 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
                 lineMap.put(8, EnumChatFormatting.AQUA + "Compact Progress: " + EnumChatFormatting.YELLOW + format.format(counterInterp) + "/" + compactTierAmount);
             }
             if (compactTier == 10) {
-                int counterInterp = (int) interp(compact, compactLast);
                 lineMap.put(8, EnumChatFormatting.AQUA + "Compact Progress: " + EnumChatFormatting.RED + compactTierAmount);
             }
 
