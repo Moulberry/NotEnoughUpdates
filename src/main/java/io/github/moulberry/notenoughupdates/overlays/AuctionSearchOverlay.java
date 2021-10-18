@@ -427,14 +427,9 @@ public class AuctionSearchOverlay {
         }
 
         if (Keyboard.getEventKeyState()) {
-            System.out.println("----------");
-            System.out.println(ignoreKey);
-            System.out.println(tabCompleted);
-            System.out.println("----------");
             if (tabCompleted) {
                 if (!ignoreKey) {
                     boolean success = updateTabCompletedSearch(Keyboard.getEventKey());
-                    System.out.println(success);
                     if (success) return;
                     textField.setFocus(true);
                     textField.setText(searchString);
