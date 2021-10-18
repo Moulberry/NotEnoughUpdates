@@ -243,7 +243,7 @@ public class FarmingOverlay extends TextOverlay {
                     float cpsInterp = interp(cropsPerSecond, cropsPerSecondLast);
 
                     lineMap.put(1, EnumChatFormatting.AQUA + "Crops/m: " + EnumChatFormatting.YELLOW +
-                            String.format("%.2f", cpsInterp * 60));
+                            String.format("%,.2f", cpsInterp * 60));
                 }
             }
 

@@ -223,7 +223,7 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
                     float cpsInterp = interp(minedPerSecond, minedPerSecondLast);
 
                     lineMap.put(1, EnumChatFormatting.AQUA + "Blocks/m: " + EnumChatFormatting.YELLOW +
-                            String.format("%.2f", cpsInterp * 60));
+                            String.format("%,.2f", cpsInterp * 60));
                 }
             }
 
@@ -246,7 +246,7 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
             }
 
             if (skillInfo != null && skillInfo.level < 60) {
-                StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + "Mineing".substring(0, 4) + ": "); //yes ik its spelt wrong
+                StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + "Mining" + ": "); //yes ik its spelt wrong
 
                 levelStr.append(EnumChatFormatting.YELLOW)
                         .append(skillInfo.level)
