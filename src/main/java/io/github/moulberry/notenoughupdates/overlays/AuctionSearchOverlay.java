@@ -304,7 +304,7 @@ public class AuctionSearchOverlay {
         }
     }
 
-    private static void updateTabCompletedSearch(int key) {
+    private static boolean updateTabCompletedSearch(int key) {
         String id;
         if (key == Keyboard.KEY_DOWN || key == Keyboard.KEY_TAB) {
             id = getItemIdAtIndex(tabCompletionIndex + 1);
@@ -313,9 +313,14 @@ public class AuctionSearchOverlay {
                 textField.setText(searchString);
                 tabCompleted = false;
                 tabCompletionIndex = -1;
-            } else if (!id.equals("")) {
+                return true;
+            } else if (id.equals("")) {
+                tabCompletionIndex = 0;
+                return true;
+            } else {
                 searchString = id;
                 tabCompletionIndex += 1;
+                return true;
             }
         } else if (key == Keyboard.KEY_UP) {
             id = getItemIdAtIndex(tabCompletionIndex - 1);
@@ -324,11 +329,19 @@ public class AuctionSearchOverlay {
                 textField.setText(searchString);
                 tabCompleted = false;
                 tabCompletionIndex = -1;
-            } else if (!id.equals("")) {
+                return true;
+            } else if (id.equals("")) {
+                if (autocompletedItems.size() > 4) tabCompletionIndex = 4;
+                else tabCompletionIndex = autocompletedItems.size() - 1;
+                tabCompletionIndex = autocompletedItems.size() - 1;
+                return true;
+            } else {
                 searchString = id;
                 tabCompletionIndex -= 1;
+                return true;
             }
         }
+        return false;
     }
 
     public static void search() {
@@ -414,10 +427,21 @@ public class AuctionSearchOverlay {
         }
 
         if (Keyboard.getEventKeyState()) {
+            System.out.println("----------");
+            System.out.println(ignoreKey);
+            System.out.println(tabCompleted);
+            System.out.println("----------");
             if (tabCompleted) {
-                if (!ignoreKey)
-                    updateTabCompletedSearch(Keyboard.getEventKey());
-                return;
+                if (!ignoreKey) {
+                    boolean success = updateTabCompletedSearch(Keyboard.getEventKey());
+                    System.out.println(success);
+                    if (success) return;
+                    textField.setFocus(true);
+                    textField.setText(searchString);
+                    tabCompleted = false;
+                    tabCompletionIndex = -1;
+                } else return;
+
             }
             textField.setFocus(true);
             textField.setText(searchString);
