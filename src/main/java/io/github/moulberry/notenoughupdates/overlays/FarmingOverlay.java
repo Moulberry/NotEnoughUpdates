@@ -22,6 +22,10 @@ public class FarmingOverlay extends TextOverlay {
     private long lastUpdate = -1;
     private int counterLast = -1;
     private int counter = -1;
+    private int cultivatingLast = -1;
+    private int cultivating = -1;
+    private int cultivatingTier = -1;
+    private String cultivatingTierAmount = "1";
     private int Farming = -1;
     private int Alch = -1;
     private float cropsPerSecondLast = 0;
@@ -65,6 +69,7 @@ public class FarmingOverlay extends TextOverlay {
 
         lastUpdate = System.currentTimeMillis();
         counterLast = counter;
+        cultivatingLast = cultivating;
         xpGainHourLast = xpGainHour;
         counter = -1;
 
@@ -80,13 +85,60 @@ public class FarmingOverlay extends TextOverlay {
                 if(ea.hasKey("mined_crops", 99)) {
                     //TODO make cult show separate gui option
                     counter = ea.getInteger("mined_crops");
+                    cultivating = ea.getInteger("farmed_cultivating");
                     counterQueue.add(0, counter);
                 } else if (ea.hasKey("farmed_cultivating", 99)) {
                     counter = ea.getInteger("farmed_cultivating");
+                    cultivating = ea.getInteger("farmed_cultivating");
                     counterQueue.add(0, counter);
                 }
             }
         }
+
+        if (cultivating < 1000){
+            cultivatingTier = 1;
+        } else if (cultivating < 5000){
+            cultivatingTier = 2;
+        } else if (cultivating < 25000){
+            cultivatingTier = 3;
+        } else if (cultivating < 100000){
+            cultivatingTier = 4;
+        } else if (cultivating < 300000){
+            cultivatingTier = 5;
+        } else if (cultivating < 1500000){
+            cultivatingTier = 6;
+        } else if (cultivating < 5000000){
+            cultivatingTier = 7;
+        } else if (cultivating < 20000000){
+            cultivatingTier = 8;
+        } else if (cultivating < 100000000){
+            cultivatingTier = 9;
+        } else if (cultivating > 100000000){
+            cultivatingTier = 10;
+        }
+
+        if (cultivatingTier == 1){
+            cultivatingTierAmount = "1,000";
+        } else if (cultivatingTier == 2){
+            cultivatingTierAmount = "5,000";
+        } else if (cultivatingTier == 3){
+            cultivatingTierAmount = "25,000";
+        } else if (cultivatingTier == 4){
+            cultivatingTierAmount = "100,000";
+        } else if (cultivatingTier == 5){
+            cultivatingTierAmount = "300,000";
+        } else if (cultivatingTier == 6){
+            cultivatingTierAmount = "1,500,000";
+        } else if (cultivatingTier == 7){
+            cultivatingTierAmount = "5,000,000";
+        } else if (cultivatingTier == 8){
+            cultivatingTierAmount = "20,000,000";
+        } else if (cultivatingTier == 9){
+            cultivatingTierAmount = "100,000,000";
+        } else if (cultivatingTier == 10){
+            cultivatingTierAmount = "Maxed";
+        }
+
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
         if (internalname != null && internalname.startsWith("THEORETICAL_HOE_WARTS")) {
             skillType = "Alchemy";
@@ -95,7 +147,7 @@ public class FarmingOverlay extends TextOverlay {
         } else {
             skillType = "Farming";
             Farming = 1;
-            Alch = 1;
+            Alch = 0;
         }
 
         skillInfoLast = skillInfo;
@@ -178,7 +230,7 @@ public class FarmingOverlay extends TextOverlay {
 
             NumberFormat format = NumberFormat.getIntegerInstance();
 
-            if (counter >= 0) {
+            if (counter >= 0 && cultivating != counter) {
                 int counterInterp = (int) interp(counter, counterLast);
 
                 lineMap.put(0, EnumChatFormatting.AQUA + "Counter: " + EnumChatFormatting.YELLOW + format.format(counterInterp));
@@ -195,6 +247,15 @@ public class FarmingOverlay extends TextOverlay {
                 }
             }
 
+            if (cultivatingTier <= 9 && cultivating > 0) {
+                int counterInterp = (int) interp(cultivating, cultivatingLast);
+                lineMap.put(9, EnumChatFormatting.AQUA + "Cultivating: " + EnumChatFormatting.YELLOW + format.format(counterInterp) + "/" + cultivatingTierAmount);
+            }
+            if (cultivatingTier == 10) {
+                int counterInterp = (int) interp(cultivating, cultivatingLast);
+                lineMap.put(9, EnumChatFormatting.AQUA + "Cultivating: " + EnumChatFormatting.YELLOW + format.format(counterInterp));
+            }
+
             float xpInterp = xpGainHour;
             if (xpGainHourLast == xpGainHour && xpGainHour <= 0) {
                 lineMap.put(5, EnumChatFormatting.AQUA + "XP/h: " + EnumChatFormatting.YELLOW + "N/A");
@@ -205,7 +266,7 @@ public class FarmingOverlay extends TextOverlay {
                         format.format(xpInterp) + (isFarming ? "" : EnumChatFormatting.RED + " (PAUSED)"));
             }
 
-            if (skillInfo != null /*&& skillInfo.level < 60 && Alch == 0*/) {
+            if (skillInfo != null && skillInfo.level < 60 && Alch == 0) {
                 StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + skillType.substring(0, 4) + ": ");
 
                 levelStr.append(EnumChatFormatting.YELLOW)
@@ -246,17 +307,17 @@ public class FarmingOverlay extends TextOverlay {
 
                 lineMap.put(2, levelStr.toString());
                 lineMap.put(3, EnumChatFormatting.AQUA + "Current XP: " + EnumChatFormatting.YELLOW + format.format(current));
-                if (remaining < 0) {
-                    lineMap.put(4, EnumChatFormatting.AQUA + "Remaining XP: " + EnumChatFormatting.YELLOW + "MAXED!");
-                    lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + "MAXED!");
-                } else {
-                    lineMap.put(4, EnumChatFormatting.AQUA + "Remaining XP: " + EnumChatFormatting.YELLOW + format.format(remaining));
-                    if (xpGainHour < 1000) {
-                        lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + "N/A");
+                    if (remaining < 0) {
+                        lineMap.put(4, EnumChatFormatting.AQUA + "Remaining XP: " + EnumChatFormatting.YELLOW + "MAXED!");
+                        lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + "MAXED!");
                     } else {
-                        lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + Utils.prettyTime((long) (remaining) * 1000 * 60 * 60 / (long) xpInterp));
+                        lineMap.put(4, EnumChatFormatting.AQUA + "Remaining XP: " + EnumChatFormatting.YELLOW + format.format(remaining));
+                        if (xpGainHour < 1000) {
+                            lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + "N/A");
+                        } else {
+                            lineMap.put(7, EnumChatFormatting.AQUA + "ETA: " + EnumChatFormatting.YELLOW + Utils.prettyTime((long) (remaining) * 1000 * 60 * 60 / (long) xpInterp));
+                        }
                     }
-                }
 
             }
 
