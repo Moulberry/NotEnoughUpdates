@@ -72,6 +72,7 @@ public class MixinNetHandlerPlayClient {
             target = "Lnet/minecraft/network/PacketThreadUtil;checkThreadAndEnqueue(Lnet/minecraft/network/Packet;Lnet/minecraft/network/INetHandler;Lnet/minecraft/util/IThreadListener;)V",
             shift = At.Shift.AFTER))
     public void handleOpenWindow(S07PacketRespawn packetIn, CallbackInfo ci) {
+        FancyPortals.onRespawnPacket(packetIn);
     }
 
     @Inject(method = "handleBlockChange", at = @At("HEAD"))
