@@ -57,7 +57,7 @@ public class Misc {
 
     @Expose
     @ConfigOption(
-            name = "Clear Fairy Souls",
+            name = "Unclear Fairy Souls",
             desc = "Shows all waypoints to fairy souls (/neusouls unclear)"
     )
     @ConfigEditorButton(
