@@ -1146,6 +1146,9 @@ public class StorageOverlay extends GuiElement {
                 case 7:
                     vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus ? 1 : 0;
                     break;
+                case 8:
+                    vIndex = NotEnoughUpdates.INSTANCE.config.storageGUI.showEnchantGlint ? 1 : 0;
+                    break;
             }
 
             Utils.drawTexturedRect(buttonX, buttonY, 16, 16, minU, maxU, (vIndex * 16) / 256f, (vIndex * 16 + 16) / 256f, GL11.GL_NEAREST);
@@ -1228,6 +1231,14 @@ public class StorageOverlay extends GuiElement {
                         tooltipToDisplay = createTooltip(
                                 "Search Bar Autofocus",
                                 NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus ? 0 : 1,
+                                "On",
+                                "Off"
+                        );
+                        break;
+                    case 8:
+                        tooltipToDisplay = createTooltip(
+                                "Show enchant glint",
+                                NotEnoughUpdates.INSTANCE.config.storageGUI.showEnchantGlint ? 0 : 1,
                                 "On",
                                 "Off"
                         );
@@ -1741,6 +1752,10 @@ public class StorageOverlay extends GuiElement {
                     NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus =
                             !NotEnoughUpdates.INSTANCE.config.storageGUI.searchBarAutofocus;
                     break;
+                case 8:
+                    NotEnoughUpdates.INSTANCE.config.storageGUI.showEnchantGlint =
+                            !NotEnoughUpdates.INSTANCE.config.storageGUI.showEnchantGlint;
+                    break;
             }
             dirty = true;
         }
@@ -1963,7 +1978,9 @@ public class StorageOverlay extends GuiElement {
     private void renderEnchOverlay(Set<Vector2f> locations) {
         float f = (float) (Minecraft.getSystemTime() % 3000L) / 3000.0F / 8.0F;
         float f1 = (float) (Minecraft.getSystemTime() % 4873L) / 4873.0F / 8.0F;
-        Minecraft.getMinecraft().getTextureManager().bindTexture(RES_ITEM_GLINT);
+        if (NotEnoughUpdates.INSTANCE.config.storageGUI.showEnchantGlint) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(RES_ITEM_GLINT);
+        }
 
         GL11.glPushMatrix();
         for (Vector2f loc : locations) {

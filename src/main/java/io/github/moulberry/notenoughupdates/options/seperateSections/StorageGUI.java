@@ -108,6 +108,15 @@ public class StorageGUI {
 
     @Expose
     @ConfigOption(
+            name = "Show Enchant Glint",
+            desc = "Toggle enchant glint in storage GUI"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 1)
+    public boolean showEnchantGlint = true;
+
+    @Expose
+    @ConfigOption(
             name = "Selected Storage Colour",
             desc = "Change the colour used to draw the selected backpack border"
     )
