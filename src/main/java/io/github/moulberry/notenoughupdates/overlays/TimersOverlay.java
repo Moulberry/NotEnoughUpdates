@@ -45,6 +45,9 @@ public class TimersOverlay extends TextOverlay {
 
     private final boolean hideGodpot = false;
 
+    private int lobbySwap = -1;
+    private int lobbySwapSwap = -1;
+
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onChatMessageReceived(ClientChatReceivedEvent event) {
         NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
@@ -237,6 +240,7 @@ public class TimersOverlay extends TextOverlay {
             for (String line : formatted.split("\n")) {
                 Matcher activeEffectsMatcher = PATTERN_ACTIVE_EFFECTS.matcher(line);
                 if (activeEffectsMatcher.matches()) {
+                    lobbySwap = (int) System.currentTimeMillis();
                     foundGodPotText = true;
                     String[] godpotRemaingTimeUnformatted = activeEffectsMatcher.group(1).split(":");
                     long godPotDuration = 0;
@@ -316,7 +320,7 @@ public class TimersOverlay extends TextOverlay {
             }
         }
 
-        if (!foundGodPotText) {
+        if (!foundGodPotText && System.currentTimeMillis() - lobbySwap < 2000) {
             hidden.godPotionDuration = 0;
         }
 

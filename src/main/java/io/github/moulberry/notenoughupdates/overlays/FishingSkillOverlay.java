@@ -215,7 +215,7 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
             if(expertise >= 0) {
                 int counterInterp = (int)interp(expertise, expertiseLast);
 
-                lineMap.put(0, EnumChatFormatting.AQUA+"Catches: "+EnumChatFormatting.YELLOW+format.format(counterInterp));
+                lineMap.put(0, EnumChatFormatting.AQUA+"Expertise Kills: "+EnumChatFormatting.YELLOW+format.format(counterInterp));
             }
 
             //TODO make this not be interp

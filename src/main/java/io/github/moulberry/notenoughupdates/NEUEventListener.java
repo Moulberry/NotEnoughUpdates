@@ -799,6 +799,11 @@ public class NEUEventListener {
 
                 chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv " + username, "" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD + username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s profile in " + EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD + "NEU's" + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + " profile viewer."));
                 return chatComponent;
+            } else if (chatComponent.getChatStyle().getChatClickEvent().getValue().startsWith("/viewprofile")) {
+                String username = chatComponent.getChatStyle().getChatClickEvent().getValue().substring(13);
+
+                chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv " + username, "" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD + username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s profile in " + EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD + "NEU's" + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + " profile viewer."));
+                return chatComponent;
             }
         }
         return chatComponent;
