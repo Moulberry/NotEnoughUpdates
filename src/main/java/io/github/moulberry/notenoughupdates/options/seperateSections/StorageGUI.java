@@ -19,9 +19,9 @@ public class StorageGUI {
             desc = "You need Fast Render and Antialiasing off for these settings to work\n" +
                     "You can find these in your video settings"
     )
-    @ConfigEditorButton(
+    @ConfigEditorFSR(
             runnableId = 12,
-            buttonText = "Info"
+            buttonText = ""
     )
     @ConfigAccordionId(id = 1)
     public boolean storageGUIWarning = false;

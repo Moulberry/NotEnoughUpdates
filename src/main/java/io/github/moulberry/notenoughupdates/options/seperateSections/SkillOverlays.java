@@ -22,9 +22,9 @@ public class SkillOverlays {
                     "For the overlays to show you need a \u00A7bmathematical hoe\u00A77 or an axe with \u00A7bcultivating\u00A77 " +
                     "enchant for farming, a pickaxe with \u00A7bcompact\u00A77 for mining or a rod with \u00A7bexpertise\u00A77"
     )
-    @ConfigEditorButton(
+    @ConfigEditorFSR(
     runnableId = 12,
-    buttonText = "Info"
+    buttonText = ""
     )
     @ConfigAccordionId(id = 2)
     public boolean skillInfo = false;

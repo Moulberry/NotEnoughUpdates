@@ -98,6 +98,12 @@ public class NEUConfig extends Config {
                 return;
             case 15:
                 editOverlay(activeConfigCategory, OverlayManager.combatSkillOverlay, skillOverlays.combatPosition);
+                return;
+            case 16:
+                ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neusouls clear");
+                return;
+            case 17:
+                ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neusouls unclear");
         }
     }
 
