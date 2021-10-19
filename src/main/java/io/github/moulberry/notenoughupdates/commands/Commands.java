@@ -15,7 +15,6 @@ import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.gamemodes.GuiGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
-import io.github.moulberry.notenoughupdates.miscfeatures.FancyPortals;
 import io.github.moulberry.notenoughupdates.miscfeatures.FishingHelper;
 import io.github.moulberry.notenoughupdates.miscfeatures.NullzeeSphere;
 import io.github.moulberry.notenoughupdates.miscgui.*;
@@ -768,7 +767,6 @@ public class Commands {
                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "Taking panorama screenshot"));
 
                 AtomicInteger perspective = new AtomicInteger(0);
-                FancyPortals.perspectiveId = 0;
 
                 EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
                 p.prevRotationYaw = p.rotationYaw = 0;
@@ -782,20 +780,9 @@ public class Commands {
                                     Minecraft.getMinecraft().getFramebuffer());
                         });
                         if (perspective.incrementAndGet() >= 6) {
-                            FancyPortals.perspectiveId = -1;
                             return;
                         }
                         devES.schedule(() -> {
-                            FancyPortals.perspectiveId = perspective.get();
-                            if (FancyPortals.perspectiveId == 5) {
-                                p.prevRotationYaw = p.rotationYaw = 0;
-                                p.prevRotationPitch = p.rotationPitch = -90;
-                            } else if (FancyPortals.perspectiveId >= 1 && FancyPortals.perspectiveId <= 4) {
-                                float yaw = 90 * FancyPortals.perspectiveId - 180;
-                                if (yaw > 180) yaw -= 360;
-                                p.prevRotationYaw = p.rotationYaw = yaw;
-                                p.prevRotationPitch = p.rotationPitch = 0;
-                            }
                             devES.schedule(this, 3000L, TimeUnit.MILLISECONDS);
                         }, 100L, TimeUnit.MILLISECONDS);
                     }
