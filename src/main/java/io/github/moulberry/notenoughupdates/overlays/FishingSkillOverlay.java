@@ -1,6 +1,7 @@
 package io.github.moulberry.notenoughupdates.overlays;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -20,6 +21,7 @@ import java.util.function.Supplier;
 public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much better way to do this besides making another class ¯\_(ツ)_/¯
 
     private long lastUpdate = -1;
+    private long timer = -1;
     private int expertiseLast = -1;
     private int expertise = -1;
     private int expertiseTier = -1;
@@ -33,6 +35,7 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
 
     private float lastTotalXp = -1;
     private boolean isFishing = false;
+    private boolean iClickOnTheKey = false;
     private LinkedList<Float> xpGainQueue = new LinkedList<>();
     private float xpGainHourLast = -1;
     private float xpGainHour = -1;
@@ -322,6 +325,14 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
 
             lineMap.put(6, EnumChatFormatting.AQUA+"Yaw: "+EnumChatFormatting.YELLOW+
                     String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u1D52");*/
+            int key = NotEnoughUpdates.INSTANCE.config.skillOverlays.fishKey;
+            if (!KeybindHelper.isKeyPressed(key)) {
+                timer = System.currentTimeMillis();
+            }
+            if (KeybindHelper.isKeyPressed(key)) {
+
+                lineMap.put(7, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.YELLOW + Utils.prettyTime(System.currentTimeMillis() - (timer)));
+            }
 
             for(int strIndex : NotEnoughUpdates.INSTANCE.config.skillOverlays.fishingText) {
                 if(lineMap.get(strIndex) != null) {
