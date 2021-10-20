@@ -78,10 +78,12 @@ public class Misc {
     @Expose
     @ConfigOption(
             name = "Replace Chat Social Options",
-            desc = "Replace Hypixel's chat social options with NEU's profile viewer."
+            desc = "Replace Hypixel's chat social options with NEU's profile viewer or with /ah"
     )
-    @ConfigEditorBoolean
-    public boolean replaceSocialOptions = true;
+    @ConfigEditorDropdown(
+            values = {"Off", "/pv", "/ah"}
+    )
+    public int replaceSocialOptions = 1;
 
     @Expose
     @ConfigOption(

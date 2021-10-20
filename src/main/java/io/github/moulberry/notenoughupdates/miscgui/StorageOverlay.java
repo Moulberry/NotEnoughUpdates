@@ -29,6 +29,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.ClientCommandHandler;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -1237,10 +1238,17 @@ public class StorageOverlay extends GuiElement {
                         break;
                     case 8:
                         tooltipToDisplay = createTooltip(
-                                "Show enchant glint",
+                                "Show Enchant Glint",
                                 NotEnoughUpdates.INSTANCE.config.storageGUI.showEnchantGlint ? 0 : 1,
                                 "On",
                                 "Off"
+                        );
+                        break;
+                    case 9:
+                        tooltipToDisplay = createTooltip(
+                                "Open Full Settings",
+                                0,
+                                "Click To Open"
                         );
                         break;
                 }
@@ -1755,6 +1763,9 @@ public class StorageOverlay extends GuiElement {
                 case 8:
                     NotEnoughUpdates.INSTANCE.config.storageGUI.showEnchantGlint =
                             !NotEnoughUpdates.INSTANCE.config.storageGUI.showEnchantGlint;
+                    break;
+                case 9:
+                    ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neu storage gui");
                     break;
             }
             dirty = true;

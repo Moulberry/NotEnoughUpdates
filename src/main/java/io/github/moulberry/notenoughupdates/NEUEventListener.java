@@ -795,12 +795,17 @@ public class NEUEventListener {
 
     private IChatComponent replaceSocialControlsWithPV(IChatComponent chatComponent) {
 
-        if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions && chatComponent.getChatStyle() != null && chatComponent.getChatStyle().getChatClickEvent() != null && chatComponent.getChatStyle().getChatClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND) {
+        if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions > 0 && chatComponent.getChatStyle() != null && chatComponent.getChatStyle().getChatClickEvent() != null && chatComponent.getChatStyle().getChatClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND) {
             if (chatComponent.getChatStyle().getChatClickEvent().getValue().startsWith("/socialoptions")) {
                 String username = chatComponent.getChatStyle().getChatClickEvent().getValue().substring(15);
-
-                chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv " + username, "" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD + username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s profile in " + EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD + "NEU's" + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + " profile viewer."));
-                return chatComponent;
+                if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions == 1) {
+                    chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv " + username, "" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD + username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s profile in " + EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD + "NEU's" + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + " profile viewer."));
+                    return chatComponent;
+                }
+                if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions == 2) {
+                    chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/ah " + username, "" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD + username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s /ah page"));
+                    return chatComponent;
+                }
             } // wanted to add this for guild but guild uses uuid :sad:
         }
         return chatComponent;
