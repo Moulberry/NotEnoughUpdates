@@ -83,7 +83,7 @@ public class Misc {
     @ConfigEditorDropdown(
             values = {"Off", "/pv", "/ah"}
     )
-    public int replaceSocialOptions = 1;
+    public int replaceSocialOptions1 = 1;
 
     @Expose
     @ConfigOption(
