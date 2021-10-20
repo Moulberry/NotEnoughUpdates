@@ -285,6 +285,8 @@ public class NEUConfig extends Config {
         @Expose
         public boolean enableItemEditing = false;
         @Expose
+        public boolean bHopBan = false;
+        @Expose
         public boolean cacheRenderedItempane = true;
         @Expose
         public boolean autoupdate = true;

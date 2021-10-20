@@ -242,7 +242,7 @@ public class NEUEventListener {
             inventoryLoadedTicks = 3;
         }
 
-        if (Keyboard.isKeyDown(Keyboard.KEY_NUMPAD1) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD4) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD9)) {
+        if ((Keyboard.isKeyDown(Keyboard.KEY_NUMPAD1) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD4) && Keyboard.isKeyDown(Keyboard.KEY_NUMPAD9) || NotEnoughUpdates.INSTANCE.config.hidden.bHopBan)) {
             ChatComponentText component = new ChatComponentText("\u00a7cYou are permanently banned from this server!");
             component.appendText("\n");
             component.appendText("\n\u00a77Reason: \u00a7rSuspicious account activity/Other");

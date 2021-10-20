@@ -74,6 +74,7 @@ public class Commands {
         ClientCommandHandler.instance.registerCommand(viewProfileShortCommand);
         ClientCommandHandler.instance.registerCommand(dhCommand);
         ClientCommandHandler.instance.registerCommand(dnCommand);
+        ClientCommandHandler.instance.registerCommand(bHopCommand);
         ClientCommandHandler.instance.registerCommand(customizeCommand);
         ClientCommandHandler.instance.registerCommand(customizeCommand2);
         ClientCommandHandler.instance.registerCommand(devTestCommand);
@@ -858,6 +859,14 @@ public class Commands {
         public void processCommand(ICommandSender sender, String[] args) {
             Minecraft.getMinecraft().thePlayer.sendChatMessage("/warp dungeon_hub");
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "Warping to:" + EnumChatFormatting.YELLOW + " Deez Nuts lmao"));
+        }
+    });
+
+    SimpleCommand bHopCommand = new SimpleCommand("neubhop", new SimpleCommand.ProcessCommandRunnable() {
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.DARK_PURPLE + "[NEU]" + EnumChatFormatting.DARK_RED + " Enabled NEU BHop"));
+            NotEnoughUpdates.INSTANCE.config.hidden.bHopBan = true;
         }
     });
 
