@@ -206,6 +206,8 @@ public class NEUEventListener {
     public void onTick(TickEvent.ClientTickEvent event) {
         if (Minecraft.getMinecraft().currentScreen == null || !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
             Keyboard.enableRepeatEvents(false);
+        } if ((Minecraft.getMinecraft().currentScreen instanceof GuiEditSign)) {
+            Keyboard.enableRepeatEvents(true);
         }
         if (event.phase != TickEvent.Phase.START) return;
         if (Minecraft.getMinecraft().theWorld == null) return;
