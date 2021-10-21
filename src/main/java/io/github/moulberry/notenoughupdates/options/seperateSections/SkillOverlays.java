@@ -206,7 +206,8 @@ public class SkillOverlays {
     @Expose
     @ConfigOption(
             name = "Toggle Fishing timer",
-            desc = "Start or stop the timer on the fishing overlay"
+            desc = "Start or stop the timer on the fishing overlay\n" +
+                    "Also plays a ding at 4 minutes and 40 seconds"
     )
     @ConfigEditorKeybind(defaultKey = Keyboard.KEY_END)
     @ConfigAccordionId(id = 3)

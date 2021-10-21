@@ -7,9 +7,13 @@ import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.util.XPInformation;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.ISound;
+import net.minecraft.client.audio.PositionedSound;
+import net.minecraft.client.audio.SoundCategory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.ResourceLocation;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -326,7 +330,13 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
             lineMap.put(6, EnumChatFormatting.AQUA+"Yaw: "+EnumChatFormatting.YELLOW+
                     String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u1D52");*/
             int key = NotEnoughUpdates.INSTANCE.config.skillOverlays.fishKey;
-            int stopKey = NotEnoughUpdates.INSTANCE.config.skillOverlays.fishKeyStop;
+
+            ISound sound = new PositionedSound(new ResourceLocation("random.orb")) {{
+                volume = 50;
+                repeat = false;
+                repeatDelay = 0;
+                attenuationType = ISound.AttenuationType.NONE;
+            }};
 
             if (KeybindHelper.isKeyPressed(key) && timer != 0 && System.currentTimeMillis() - timer > 1000) {
                 timer = 0;
@@ -337,6 +347,11 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                 lineMap.put(7, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.YELLOW + Utils.prettyTime(System.currentTimeMillis() - (timer)));
             } if (timer <= 0) {
                 lineMap.put(7, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.RED + "(Stopped)");
+            } if (System.currentTimeMillis() - timer > 280000 && System.currentTimeMillis() - timer < 280100) {
+                float oldLevel = Minecraft.getMinecraft().gameSettings.getSoundLevel(SoundCategory.PLAYERS);
+                Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.PLAYERS, 1);
+                Minecraft.getMinecraft().getSoundHandler().playSound(sound);
+                Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.PLAYERS, oldLevel);
             }
 
             for(int strIndex : NotEnoughUpdates.INSTANCE.config.skillOverlays.fishingText) {
