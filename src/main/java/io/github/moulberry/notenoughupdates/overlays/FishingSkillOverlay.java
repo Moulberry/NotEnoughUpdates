@@ -326,12 +326,17 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
             lineMap.put(6, EnumChatFormatting.AQUA+"Yaw: "+EnumChatFormatting.YELLOW+
                     String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u1D52");*/
             int key = NotEnoughUpdates.INSTANCE.config.skillOverlays.fishKey;
-            if (!KeybindHelper.isKeyPressed(key)) {
+            int stopKey = NotEnoughUpdates.INSTANCE.config.skillOverlays.fishKeyStop;
+
+            if (KeybindHelper.isKeyPressed(key) && timer != 0 && System.currentTimeMillis() - timer > 1000) {
+                timer = 0;
+            } else if (KeybindHelper.isKeyPressed(key) && timer == 0) {
                 timer = System.currentTimeMillis();
             }
-            if (KeybindHelper.isKeyPressed(key)) {
-
+            if (timer >= 1) {
                 lineMap.put(7, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.YELLOW + Utils.prettyTime(System.currentTimeMillis() - (timer)));
+            } if (timer <= 0) {
+                lineMap.put(7, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.RED + "(Stopped)");
             }
 
             for(int strIndex : NotEnoughUpdates.INSTANCE.config.skillOverlays.fishingText) {

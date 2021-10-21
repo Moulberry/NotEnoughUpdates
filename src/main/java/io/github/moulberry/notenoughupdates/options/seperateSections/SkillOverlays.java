@@ -176,10 +176,10 @@ public class SkillOverlays {
                     //"\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52",
                     "\u00a7bETA: \u00a7e13h12m",
                     "\u00a7bExpertise Progress: \u00a7e7,945/10,000",
-                    "\u00a7bTime: negative 15 seconds"}
+                    "\u00a7bTimer: \u00a7e1m15s"}
     )
     @ConfigAccordionId(id = 3)
-    public List<Integer> fishingText = new ArrayList<>(Arrays.asList(0, 6, 1, 2, 3, 4, 5));
+    public List<Integer> fishingText = new ArrayList<>(Arrays.asList(0, 6, 1, 2, 3, 4, 5, 7));
 
     @Expose
     @ConfigOption(
@@ -205,9 +205,8 @@ public class SkillOverlays {
     public int fishingStyle = 0;
     @Expose
     @ConfigOption(
-            name = "Slot Lock Key(not fake",
-            desc = "Click this key to LOCK a slot\n" +
-                    "Hold this key and drag to BIND a slot"
+            name = "Toggle Fishing timer",
+            desc = "Start or stop the timer on the fishing overlay"
     )
     @ConfigEditorKeybind(defaultKey = Keyboard.KEY_END)
     @ConfigAccordionId(id = 3)
