@@ -167,19 +167,19 @@ public class SkillOverlays {
                     "\u00a7rHold a fishing rod with expertise enchantment while gaining fishing xp to show the overlay"
     )
     @ConfigEditorDraggableList(
-            exampleText = {"\u00a7bCatches: \u00a7e547,860",
+            exampleText = {"\u00a7bExpertise: \u00a7e7,945/10,000",
                     //"\u00a7bCatches/m: \u00a7e38.29",
-                    "\u00a7bFish: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+                    "\u00a7bFishing: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
                     "\u00a7bCurrent XP: \u00a7e6,734",
                     "\u00a7bRemaining XP: \u00a7e3,265",
                     "\u00a7bXP/h: \u00a7e238,129",
                     //"\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52",
                     "\u00a7bETA: \u00a7e13h12m",
-                    "\u00a7bExpertise Progress: \u00a7e7,945/10,000",
+                    //"\u00a7bExpertise Progress: \u00a7e7,945/10,000",
                     "\u00a7bTimer: \u00a7e1m15s"}
     )
     @ConfigAccordionId(id = 3)
-    public List<Integer> fishingText = new ArrayList<>(Arrays.asList(0, 6, 1, 2, 3, 4, 5, 7));
+    public List<Integer> fishingText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
 
     @Expose
     @ConfigOption(

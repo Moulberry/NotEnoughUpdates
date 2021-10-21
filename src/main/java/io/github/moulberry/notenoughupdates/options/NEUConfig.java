@@ -116,6 +116,13 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
+            name = "GUI Locations",
+            desc = "Edit the GUI locations of everything here"
+    )
+    public LocationEdit locationedit = new LocationEdit();
+
+    @Expose
+    @Category(
             name = "Notifications",
             desc = "Notifications"
     )

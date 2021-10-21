@@ -219,11 +219,11 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
 
             NumberFormat format = NumberFormat.getIntegerInstance();
 
-            if(expertise >= 0) {
+            /*if(expertise >= 0) {
                 int counterInterp = (int)interp(expertise, expertiseLast);
 
                 lineMap.put(0, EnumChatFormatting.AQUA+"Expertise Kills: "+EnumChatFormatting.YELLOW+format.format(counterInterp));
-            }
+            }*/
 
             //TODO make this not be interp
             /*if(expertise >= 0) {
@@ -240,24 +240,25 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
 
             if (expertiseTier <= 9) {
                 int counterInterp = (int) interp(expertise, expertiseLast);
-                lineMap.put(6, EnumChatFormatting.AQUA + "Expertise Progress: " + EnumChatFormatting.YELLOW + format.format(counterInterp) + "/" + expertiseTierAmount);
+                lineMap.put(0, EnumChatFormatting.AQUA + "Expertise: " + EnumChatFormatting.YELLOW + format.format(counterInterp) + "/" + expertiseTierAmount);
             }
             if (expertiseTier == 10) {
-                lineMap.put(6, EnumChatFormatting.AQUA + "Expertise Progress: " + EnumChatFormatting.RED + expertiseTierAmount);
+                int counterInterp = (int) interp(expertise, expertiseLast);
+                lineMap.put(0, EnumChatFormatting.AQUA + "Expertise: " + EnumChatFormatting.YELLOW + format.format(counterInterp) + " " + EnumChatFormatting.RED + expertiseTierAmount);
             }
 
             float xpInterp = xpGainHour;
             if(xpGainHourLast == xpGainHour && xpGainHour <= 0) {
-                lineMap.put(5, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+"N/A");
+                lineMap.put(4, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+"N/A");
             } else {
                 xpInterp = interp(xpGainHour, xpGainHourLast);
 
-                lineMap.put(5, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+
+                lineMap.put(4, EnumChatFormatting.AQUA+"XP/h: "+EnumChatFormatting.YELLOW+
                         format.format(xpInterp)+(isFishing ? "" : EnumChatFormatting.RED + " (PAUSED)"));
             }
 
             if(skillInfo != null && skillInfo.level < 50) {
-                StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + skillType.substring(0, 4) + ": ");
+                StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + skillType + ": ");
 
                 levelStr.append(EnumChatFormatting.YELLOW)
                         .append(skillInfo.level)
@@ -295,17 +296,17 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                     remaining = (int)interp(remaining, (int)(skillInfoLast.currentXpMax - skillInfoLast.currentXp));
                 }
 
-                lineMap.put(2, levelStr.toString());
-                lineMap.put(3, EnumChatFormatting.AQUA+"Current XP: " + EnumChatFormatting.YELLOW+ format.format(current));
+                lineMap.put(1, levelStr.toString());
+                lineMap.put(2, EnumChatFormatting.AQUA+"Current XP: " + EnumChatFormatting.YELLOW+ format.format(current));
                 if(remaining < 0) {
-                    lineMap.put(4, EnumChatFormatting.AQUA+"Remaining XP: " + EnumChatFormatting.YELLOW+ "MAXED!");
-                    lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ "MAXED!");
+                    lineMap.put(3, EnumChatFormatting.AQUA+"Remaining XP: " + EnumChatFormatting.YELLOW+ "MAXED!");
+                    lineMap.put(5, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ "MAXED!");
                 } else {
-                    lineMap.put(4, EnumChatFormatting.AQUA+"Remaining XP: " + EnumChatFormatting.YELLOW+ format.format(remaining));
+                    lineMap.put(3, EnumChatFormatting.AQUA+"Remaining XP: " + EnumChatFormatting.YELLOW+ format.format(remaining));
                     if(xpGainHour < 1000) {
-                        lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ "N/A");
+                        lineMap.put(5, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ "N/A");
                     } else {
-                        lineMap.put(7, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ Utils.prettyTime((long)(remaining)*1000*60*60/(long)xpInterp));
+                        lineMap.put(5, EnumChatFormatting.AQUA+"ETA: "+EnumChatFormatting.YELLOW+ Utils.prettyTime((long)(remaining)*1000*60*60/(long)xpInterp));
                     }
                 }
 
@@ -317,8 +318,8 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                     current = (int) interp(current, skillInfoLast.currentXp);
                 }
 
-                lineMap.put(2, EnumChatFormatting.AQUA + "Fish: " + EnumChatFormatting.YELLOW + "50 " + EnumChatFormatting.RED + "(Maxed)");
-                lineMap.put(3, EnumChatFormatting.AQUA + "Current XP: " + EnumChatFormatting.YELLOW + format.format(current));
+                lineMap.put(1, EnumChatFormatting.AQUA + "Fishing: " + EnumChatFormatting.YELLOW + "50 " + EnumChatFormatting.RED + "(Maxed)");
+                lineMap.put(2, EnumChatFormatting.AQUA + "Current XP: " + EnumChatFormatting.YELLOW + format.format(current));
 
             }
 
@@ -344,9 +345,9 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                 timer = System.currentTimeMillis();
             }
             if (timer >= 1) {
-                lineMap.put(7, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.YELLOW + Utils.prettyTime(System.currentTimeMillis() - (timer)));
+                lineMap.put(6, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.YELLOW + Utils.prettyTime(System.currentTimeMillis() - (timer)));
             } if (timer <= 0) {
-                lineMap.put(7, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.RED + "(Stopped)");
+                lineMap.put(6, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.RED + "(Stopped)");
             } if (System.currentTimeMillis() - timer > 280000 && System.currentTimeMillis() - timer < 280100) {
                 float oldLevel = Minecraft.getMinecraft().gameSettings.getSoundLevel(SoundCategory.PLAYERS);
                 Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.PLAYERS, 1);
