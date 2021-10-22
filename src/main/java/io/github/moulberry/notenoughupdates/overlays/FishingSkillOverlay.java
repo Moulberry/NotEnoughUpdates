@@ -39,7 +39,6 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
 
     private float lastTotalXp = -1;
     private boolean isFishing = false;
-    private boolean iClickOnTheKey = false;
     private LinkedList<Float> xpGainQueue = new LinkedList<>();
     private float xpGainHourLast = -1;
     private float xpGainHour = -1;
@@ -339,6 +338,7 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                 attenuationType = ISound.AttenuationType.NONE;
             }};
 
+            int funnyCustomTimer = 1000*NotEnoughUpdates.INSTANCE.config.skillOverlays.customFishTimer;
             if (KeybindHelper.isKeyPressed(key) && timer != 0 && System.currentTimeMillis() - timer > 1000) {
                 timer = 0;
             } else if (KeybindHelper.isKeyPressed(key) && timer == 0) {
@@ -348,7 +348,7 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
                 lineMap.put(6, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.YELLOW + Utils.prettyTime(System.currentTimeMillis() - (timer)));
             } if (timer <= 0) {
                 lineMap.put(6, EnumChatFormatting.AQUA + "Timer: " + EnumChatFormatting.RED + "(Stopped)");
-            } if (System.currentTimeMillis() - timer > 280000 && System.currentTimeMillis() - timer < 280100) {
+            } if (System.currentTimeMillis() - timer > funnyCustomTimer && System.currentTimeMillis() - timer < (funnyCustomTimer + 100) && funnyCustomTimer != 0) {
                 float oldLevel = Minecraft.getMinecraft().gameSettings.getSoundLevel(SoundCategory.PLAYERS);
                 Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.PLAYERS, 1);
                 Minecraft.getMinecraft().getSoundHandler().playSound(sound);
