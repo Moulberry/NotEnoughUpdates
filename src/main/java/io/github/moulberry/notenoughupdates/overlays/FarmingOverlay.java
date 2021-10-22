@@ -266,7 +266,7 @@ public class FarmingOverlay extends TextOverlay {
                         format.format(xpInterp) + (isFarming ? "" : EnumChatFormatting.RED + " (PAUSED)"));
             }
 
-            if (skillInfo != null && skillInfo.level < 60 && Alch == 0) {
+            if (skillInfo != null && skillInfo.level < 60) {
                 StringBuilder levelStr = new StringBuilder(EnumChatFormatting.AQUA + skillType.substring(0, 4) + ": ");
 
                 levelStr.append(EnumChatFormatting.YELLOW)
