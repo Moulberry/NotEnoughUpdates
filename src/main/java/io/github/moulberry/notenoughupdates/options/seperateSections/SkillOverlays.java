@@ -60,10 +60,11 @@ public class SkillOverlays {
                     "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52",
                     "\u00a7bETA: \u00a7e13h12m",
                     "\u00a7bPitch: \u00a7e69.42\u00a7l\u1D52",
-                    "\u00a7bCultivating: \u00a7e10,137,945/20,000,000"}
+                    "\u00a7bCultivating: \u00a7e10,137,945/20,000,000",
+                    "\u00a7bCoins/m \u00a7e57,432"}
     )
     @ConfigAccordionId(id = 0)
-    public List<Integer> farmingText = new ArrayList<>(Arrays.asList(0, 9, 1, 2, 3, 4, 5, 7, 6));
+    public List<Integer> farmingText = new ArrayList<>(Arrays.asList(0, 9, 10, 1, 2, 3, 4, 5, 7, 6));
 
     @Expose
     @ConfigOption(

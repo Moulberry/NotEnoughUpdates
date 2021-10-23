@@ -28,6 +28,7 @@ public class FarmingOverlay extends TextOverlay {
     private String cultivatingTierAmount = "1";
     private int Farming = -1;
     private int Alch = -1;
+    private double Coins = -1;
     private float cropsPerSecondLast = 0;
     private float cropsPerSecond = 0;
     private final LinkedList<Integer> counterQueue = new LinkedList<>();
@@ -150,6 +151,22 @@ public class FarmingOverlay extends TextOverlay {
             Alch = 0;
         }
 
+        if (internalname != null && internalname.startsWith("THEORETICAL_HOE_WARTS") || (internalname != null && internalname.equals("COCO_CHOPPER"))) {
+            Coins = 3;
+        } else if (internalname != null && internalname.startsWith("THEORETICAL_HOE_POTATO") || (internalname != null && internalname.startsWith("THEORETICAL_HOE_CARROT"))
+                || (internalname != null && internalname.equals("CACTUS_KNIFE")) || (internalname != null && internalname.startsWith("THEORETICAL_HOE_WHEAT"))) {
+            Coins = 1;
+        } else if (internalname != null && internalname.startsWith("THEORETICAL_HOE_CANE") || (internalname != null && internalname.equals("TREECAPITATOR_AXE"))) {
+            Coins = 2;
+        } else if ((internalname != null && internalname.equals("PUMPKIN_DICER")) || (internalname != null && internalname.equals("FUNGI_CUTTER"))) {
+            Coins = 4;
+        } else if ((internalname != null && internalname.equals("MELON_DICER"))) {
+            Coins = 0.5;
+        }
+        else {
+            Coins = 0;
+        }
+
         skillInfoLast = skillInfo;
         skillInfo = XPInformation.getInstance().getSkillInfo(skillType);
         if (skillInfo != null) {
@@ -244,6 +261,17 @@ public class FarmingOverlay extends TextOverlay {
 
                     lineMap.put(1, EnumChatFormatting.AQUA + "Crops/m: " + EnumChatFormatting.YELLOW +
                             String.format("%,.2f", cpsInterp * 60));
+                }
+            }
+
+            if (counter >= 0 && Coins > 0) {
+                if (cropsPerSecondLast == cropsPerSecond && cropsPerSecond <= 0) {
+                    lineMap.put(10, EnumChatFormatting.AQUA + "Coins/m: " + EnumChatFormatting.YELLOW + "N/A");
+                } else {
+                    float cpsInterp = interp(cropsPerSecond, cropsPerSecondLast);
+
+                    lineMap.put(10, EnumChatFormatting.AQUA + "Coins/m: " + EnumChatFormatting.YELLOW +
+                            String.format("%,.2f", (cpsInterp * 60) * Coins));
                 }
             }
 
