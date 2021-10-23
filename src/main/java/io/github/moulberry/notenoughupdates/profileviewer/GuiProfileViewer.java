@@ -7,7 +7,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
@@ -24,7 +23,6 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.client.resources.SkinManager;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.entity.EntityLivingBase;
@@ -67,6 +65,7 @@ public class GuiProfileViewer extends GuiScreen {
     public static final ResourceLocation pv_basic = new ResourceLocation("notenoughupdates:pv_basic.png");
     public static final ResourceLocation pv_dung = new ResourceLocation("notenoughupdates:pv_dung.png");
     public static final ResourceLocation pv_extra = new ResourceLocation("notenoughupdates:pv_extra.png");
+    public static final ResourceLocation pv_mining = new ResourceLocation("notenoughupdates:pv_dung.png");
     public static final ResourceLocation pv_invs = new ResourceLocation("notenoughupdates:pv_invs.png");
     public static final ResourceLocation pv_cols = new ResourceLocation("notenoughupdates:pv_cols.png");
     public static final ResourceLocation pv_pets = new ResourceLocation("notenoughupdates:pv_pets.png");
@@ -106,7 +105,8 @@ public class GuiProfileViewer extends GuiScreen {
         EXTRA(new ItemStack(Items.book)),
         INVS(new ItemStack(Item.getItemFromBlock(Blocks.ender_chest))),
         COLS(new ItemStack(Items.painting)),
-        PETS(new ItemStack(Items.bone));
+        PETS(new ItemStack(Items.bone)),
+        MINING(new ItemStack(Items.iron_pickaxe));
 
         public final ItemStack stack;
 
@@ -262,6 +262,9 @@ public class GuiProfileViewer extends GuiScreen {
                 break;
             case PETS:
                 drawPetsPage(mouseX, mouseY, partialTicks);
+                break;
+            case MINING:
+                drawMiningPage(mouseX, mouseY, partialTicks);
                 break;
             case LOADING:
                 String str = EnumChatFormatting.YELLOW + "Loading player profiles.";
@@ -777,9 +780,11 @@ public class GuiProfileViewer extends GuiScreen {
     }
 
     private static final ItemStack DEADBUSH = new ItemStack(Item.getItemFromBlock(Blocks.deadbush));
+    private static final ItemStack iron_pick = new ItemStack(Items.iron_pickaxe);
     private static final ItemStack[] BOSS_HEADS = new ItemStack[7];
 
     private final HashMap<String, ProfileViewer.Level> levelObjCatas = new HashMap<>();
+    private final HashMap<String, ProfileViewer.Level> levelObjhotms = new HashMap<>();
     private final HashMap<String, HashMap<String, ProfileViewer.Level>> levelObjClasseses = new HashMap<>();
 
     private final GuiElementTextField dungeonLevelTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
@@ -2693,9 +2698,9 @@ public class GuiProfileViewer extends GuiScreen {
                 guiLeft + xStart + xOffset * 2, guiTop + yStartBottom + yOffset * 0, 76);
         Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA + "Sven T4", EnumChatFormatting.WHITE.toString() + (int) wolf_boss_kills_tier_3,
                 guiLeft + xStart + xOffset * 2, guiTop + yStartBottom + yOffset * 1, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA + "Voidgloom Seraph T3", EnumChatFormatting.WHITE.toString() + (int) enderman_boss_kills_tier_2,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA + "Voidgloom T3", EnumChatFormatting.WHITE.toString() + (int) enderman_boss_kills_tier_2,
                 guiLeft + xStart + xOffset * 2, guiTop + yStartBottom + yOffset * 2, 76);
-        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA + "Voidgloom Seraph T4", EnumChatFormatting.WHITE.toString() + (int) enderman_boss_kills_tier_3,
+        Utils.renderAlignedString(EnumChatFormatting.DARK_AQUA + "Voidgloom T4", EnumChatFormatting.WHITE.toString() + (int) enderman_boss_kills_tier_3,
                 guiLeft + xStart + xOffset * 2, guiTop + yStartBottom + yOffset * 3, 76);
 
         float pet_milestone_ores_mined = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.pet_milestone_ores_mined"), 0);
@@ -2773,6 +2778,53 @@ public class GuiProfileViewer extends GuiScreen {
             }
         }
     }
+
+    private void drawMiningPage(int mouseX, int mouseY, float partialTicks) {
+        FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_mining);
+        Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
+
+        JsonObject profileInfo = profile.getProfileInformation(profileId);
+        if (profileInfo == null) return;
+        JsonObject skillInfo = profile.getSkillInfo(profileId);
+
+        float xStart = 22;
+        float xOffset = 103;
+        float yStartTop = 27;
+        float yStartBottom = 105;
+        float yOffset = 10;
+
+        int x = guiLeft + 23;
+        int y = guiTop + 25;
+        int sectionWidth = 110;
+        JsonObject leveling = Constants.LEVELING;
+        ProfileViewer.Level levelObjhotm = levelObjhotms.get(profileId);
+        if (levelObjhotm == null) {
+            float hotmXp = Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.experience"), 0);
+            levelObjhotm = ProfileViewer.getLevel(Utils.getElement(leveling, "HOTM").getAsJsonArray(),
+                    hotmXp, 7, false);
+            levelObjhotms.put(profileId, levelObjhotm);
+        }
+
+        String skillName = EnumChatFormatting.RED + "HOTM";
+
+        renderXpBar(skillName, iron_pick, x, y, sectionWidth, levelObjhotm, mouseX, mouseY);
+        float mithrilPowder = Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_mithril"), 0);
+        float gemstonePowder = Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_gemstone"), 0);
+        float mithrilPowderTotal = Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_spent_mithril"), 0);
+        float gemstonePowderTotal = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_spent_gemstone"), 0));
+
+        Utils.renderAlignedString(EnumChatFormatting.DARK_GREEN + "Mithril Power", EnumChatFormatting.WHITE + shortNumberFormat(mithrilPowder, 0),
+                guiLeft + xStart, guiTop + yStartTop + 53, 76);
+        Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE + "Gemstone Power", EnumChatFormatting.WHITE + shortNumberFormat(gemstonePowder, 0),
+                guiLeft + xStart, guiTop + yStartTop + 73, 76);
+        Utils.renderAlignedString(EnumChatFormatting.DARK_GREEN + "Total Mithril Power", EnumChatFormatting.WHITE + shortNumberFormat(mithrilPowderTotal + mithrilPowder, 0),
+                guiLeft + xStart, guiTop + yStartTop + 63, 76);
+        Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE + "Total Gemstone Power", EnumChatFormatting.WHITE + shortNumberFormat(gemstonePowderTotal + gemstonePowder, 0),
+                guiLeft + xStart, guiTop + yStartTop + 83, 76);
+    }
+
 
     private String getTimeSinceString(JsonObject profileInfo, String path) {
         JsonElement lastSaveElement = Utils.getElement(profileInfo, path);
