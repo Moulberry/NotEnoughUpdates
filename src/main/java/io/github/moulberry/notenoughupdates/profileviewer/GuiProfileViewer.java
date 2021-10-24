@@ -60,6 +60,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static io.github.moulberry.notenoughupdates.util.GuiTextures.help;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.peakotm;
 
 public class GuiProfileViewer extends GuiScreen {
 
@@ -2841,6 +2842,23 @@ public class GuiProfileViewer extends GuiScreen {
         float effMinerStat2 = (float) ((Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.nodes.efficient_miner"), 0)) * .06 + 0.31);
         int tittyInsane = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.titanium_insanium"), 0)));
         float tittyInsaneStat = (float) ((Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.nodes.titanium_insanium"), 0)) * .1 + 2);
+        int luckofcave = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.random_event"), 0)));
+        int luckofcaveStat = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.random_event"), 0)));
+        int madMining = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_madness"), 0)));
+        int skyMall = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.daily_effect"), 0)));
+        int goblinKiller = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.goblin_killer"), 0)));
+        int seasonMine = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_experience"), 0)));
+        int quickForge = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.forge_time"), 0)));
+        int frontLoad = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.front_loaded"), 0)));
+        int orbit = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.experience_orbs"), 0)));
+        int starPowder = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.fallen_star_bonus"), 0)));
+        int professional = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.professional"), 0)));
+        int greatExplorer = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.great_explorer"), 0)));
+        int fortunate = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.fortunate"), 0)));
+        int lonesomeMiner = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.lonesome_miner"), 0)));
+        int miningFortune2 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_fortune_2"), 0)));
+        int miningSpeed2 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_speed_2"), 0)));
+
         if (effMinerStat2 < 1) {
             effMinerStat2 = 1;
         }
@@ -2968,6 +2986,68 @@ public class GuiProfileViewer extends GuiScreen {
                 tittyInsaneTooltip = null;
             }
         }
+        if (potm == 0) {
+            List<String> mngspeedBoostTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(help);
+            Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
+
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
+                    mngspeedBoostTooltip = Lists.newArrayList(
+                            EnumChatFormatting.YELLOW + "Mining Speed Boost",
+                            "",
+                            EnumChatFormatting.GRAY + "Pickaxe Ability: Mining Speed Boost",
+                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "200% " + EnumChatFormatting.GOLD + "⸕ Mining",
+                            EnumChatFormatting.GOLD + "Speed " + EnumChatFormatting.GRAY + "for " + EnumChatFormatting.GREEN + "15s" + EnumChatFormatting.GRAY,
+                            EnumChatFormatting.DARK_GRAY + "Cooldown: " + EnumChatFormatting.GREEN + "120s"
+                    );
+                    Utils.drawHoveringText(mngspeedBoostTooltip, mouseX, mouseY, width, height, -1, fr);
+                    mngspeedBoostTooltip = null;
+                }
+            }
+        }
+        if (potm > 0) {
+            List<String> mngspeedBoostTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(help);
+            Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
+
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
+                    mngspeedBoostTooltip = Lists.newArrayList(
+                            EnumChatFormatting.YELLOW + "Mining Speed Boost",
+                            "",
+                            EnumChatFormatting.GRAY + "Pickaxe Ability: Mining Speed Boost",
+                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "300% " + EnumChatFormatting.GOLD + "⸕ Mining",
+                            EnumChatFormatting.GOLD + "Speed " + EnumChatFormatting.GRAY + "for " + EnumChatFormatting.GREEN + "20s" + EnumChatFormatting.GRAY,
+                            EnumChatFormatting.DARK_GRAY + "Cooldown: " + EnumChatFormatting.GREEN + "120s"
+                    );
+                    Utils.drawHoveringText(mngspeedBoostTooltip, mouseX, mouseY, width, height, -1, fr);
+                    mngspeedBoostTooltip = null;
+                }
+            }
+        }
+        List<String> luckofcaveTooltip = null;
+        GlStateManager.color(1, 1, 1, 1);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(help);
+        Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
+
+        if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+            if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
+                luckofcaveTooltip = Lists.newArrayList(
+                        "§eLuck of the Cave",
+                        "§7Level "+luckofcave+EnumChatFormatting.DARK_GRAY+"/45",
+                        "",
+                        "§7Increases the chance for you to",
+                        "§7trigger rare occurrences i",
+                        "§2Dwarven Mines by"+EnumChatFormatting.GREEN+luckofcaveStat+"%§7."
+                );
+                Utils.drawHoveringText(luckofcaveTooltip, mouseX, mouseY, width, height, -1, fr);
+                luckofcaveTooltip = null;
+            }
+        }
+
         List<String> dailyPowderTooltip = null;
         GlStateManager.color(1, 1, 1, 1);
         Minecraft.getMinecraft().getTextureManager().bindTexture(help);
@@ -3004,22 +3084,111 @@ public class GuiProfileViewer extends GuiScreen {
                 effMinerTooltip = null;
             }
         }
-        List<String> potmTooltip = null;
-        GlStateManager.color(1, 1, 1, 1);
-        Minecraft.getMinecraft().getTextureManager().bindTexture(help);
-        Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
-        if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
-            if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
-                potmTooltip = Lists.newArrayList(
-                        EnumChatFormatting.YELLOW+"Peak of the Mountain",
-                        EnumChatFormatting.GRAY+"Level "+potm+EnumChatFormatting.DARK_GRAY+"/5",
-                        "",
-                        EnumChatFormatting.GRAY+"No stats 4 u"
-                );
-                Utils.drawHoveringText(potmTooltip, mouseX, mouseY, width, height, -1, fr);
-                potmTooltip = null;
+        //AAAAAAAAA
+        //AaaaaaaAaaAaA
+        //AAAAAA
+        if (potm == 5) {
+            List<String> potmTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(peakotm);
+            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
+                if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
+                    potmTooltip = Lists.newArrayList(
+                            EnumChatFormatting.YELLOW + "Peak of the Mountain",
+                            EnumChatFormatting.GRAY + "Level " + potm + EnumChatFormatting.DARK_GRAY + "/5",
+                            "",
+                            "§7§8+§c1 Pickaxe Ability Level",
+                            "§7§8+§51 Token of the Mountain",
+                            "§7§8+§a1 Forge Slot",
+                            "§7§8+§a1 Commission Slot",
+                            "§7§8+§21 Mithril Powder §7when",
+                            "§7mining §fMithril",
+                            "§7§8+§51 Token of the Mountain"
+                    );
+                    Utils.drawHoveringText(potmTooltip, mouseX, mouseY, width, height, -1, fr);
+                    potmTooltip = null;
+                }
+            }
+        } if (potm == 4) {
+            List<String> potmTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(peakotm);
+            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
+                if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
+                    potmTooltip = Lists.newArrayList(
+                            EnumChatFormatting.YELLOW + "Peak of the Mountain",
+                            EnumChatFormatting.GRAY + "Level " + potm + EnumChatFormatting.DARK_GRAY + "/5",
+                            "",
+                            "§7§8+§c1 Pickaxe Ability Level",
+                            "§7§8+§51 Token of the Mountain",
+                            "§7§8+§a1 Forge Slot",
+                            "§7§8+§a1 Commission Slot",
+                            "§7§8+§21 Mithril Powder §7when",
+                            "§7mining §fMithril"
+                    );
+                    Utils.drawHoveringText(potmTooltip, mouseX, mouseY, width, height, -1, fr);
+                    potmTooltip = null;
+                }
+            }
+        } if (potm == 3) {
+            List<String> potmTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(peakotm);
+            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
+                if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
+                    potmTooltip = Lists.newArrayList(
+                            EnumChatFormatting.YELLOW + "Peak of the Mountain",
+                            EnumChatFormatting.GRAY + "Level " + potm + EnumChatFormatting.DARK_GRAY + "/5",
+                            "",
+                            "§7§8+§c1 Pickaxe Ability Level",
+                            "§7§8+§51 Token of the Mountain",
+                            "§7§8+§a1 Forge Slot",
+                            "§7§8+§a1 Commission Slot"
+                    );
+                    Utils.drawHoveringText(potmTooltip, mouseX, mouseY, width, height, -1, fr);
+                    potmTooltip = null;
+                }
+            }
+        } if (potm == 2) {
+            List<String> potmTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(peakotm);
+            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
+                if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
+                    potmTooltip = Lists.newArrayList(
+                            EnumChatFormatting.YELLOW + "Peak of the Mountain",
+                            EnumChatFormatting.GRAY + "Level " + potm + EnumChatFormatting.DARK_GRAY + "/5",
+                            "",
+                            "§7§8+§c1 Pickaxe Ability Level",
+                            "§7§8+§51 Token of the Mountain",
+                            "§7§8+§a1 Forge Slot"
+                    );
+                    Utils.drawHoveringText(potmTooltip, mouseX, mouseY, width, height, -1, fr);
+                    potmTooltip = null;
+                }
+            }
+        } if (potm == 0) {
+            List<String> potmTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(peakotm);
+            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
+                if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
+                    potmTooltip = Lists.newArrayList(
+                            EnumChatFormatting.YELLOW + "Peak of the Mountain",
+                            EnumChatFormatting.GRAY + "Level " + potm + EnumChatFormatting.DARK_GRAY + "/5"
+                    );
+                    Utils.drawHoveringText(potmTooltip, mouseX, mouseY, width, height, -1, fr);
+                    potmTooltip = null;
+                }
             }
         }
+        //aaaaa
+        //aaa
         List<String> moulTooltip = null;
         GlStateManager.color(1, 1, 1, 1);
         Minecraft.getMinecraft().getTextureManager().bindTexture(help);
