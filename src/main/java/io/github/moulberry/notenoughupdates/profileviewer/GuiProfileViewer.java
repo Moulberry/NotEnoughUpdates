@@ -65,7 +65,7 @@ public class GuiProfileViewer extends GuiScreen {
     public static final ResourceLocation pv_basic = new ResourceLocation("notenoughupdates:pv_basic.png");
     public static final ResourceLocation pv_dung = new ResourceLocation("notenoughupdates:pv_dung.png");
     public static final ResourceLocation pv_extra = new ResourceLocation("notenoughupdates:pv_extra.png");
-    public static final ResourceLocation pv_mining = new ResourceLocation("notenoughupdates:pv_dung.png");
+    public static final ResourceLocation pv_mining = new ResourceLocation("notenoughupdates:pv_mining.png");
     public static final ResourceLocation pv_invs = new ResourceLocation("notenoughupdates:pv_invs.png");
     public static final ResourceLocation pv_cols = new ResourceLocation("notenoughupdates:pv_cols.png");
     public static final ResourceLocation pv_pets = new ResourceLocation("notenoughupdates:pv_pets.png");
@@ -2808,21 +2808,87 @@ public class GuiProfileViewer extends GuiScreen {
         }
 
         String skillName = EnumChatFormatting.RED + "HOTM";
-
-        renderXpBar(skillName, iron_pick, x, y, sectionWidth, levelObjhotm, mouseX, mouseY);
+        //The stats that show
         float mithrilPowder = Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_mithril"), 0);
         float gemstonePowder = Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_gemstone"), 0);
         float mithrilPowderTotal = Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_spent_mithril"), 0);
         float gemstonePowderTotal = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_spent_gemstone"), 0));
+        String jadeCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.jade_crystal.state"), "Not Found"));
+        float crystalPlacedAmount = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.crystals.jade_crystal.total_placed"), 0));
+        String jadeCrystalString = "Not Found";
+        String amethystCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.amethyst_crystal.state"), "Not Found"));
+        String amethystCrystalString = "Not Found";
+        String amberCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.amber_crystal.state"), "Not Found"));
+        String amberCrystalString = "Not Found";
+        String sapphireCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.sapphire_crystal.state"), "Not Found"));
+        String sapphireCrystalString = "Not Found";
+        String topazCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.topaz_crystal.state"), "Not Found"));
+        String topazCrystalString = "Not Found";
+        String jasperCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.jasper_crystal.state"), "Not Found"));
+        String jasperCrystalString = "Not Found";
+        String rubyCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.ruby_crystal.state"), "Not Found"));
+        String rubyCrystalString = "Not Found";
 
+        //The logic for some of the stats
+        if (Objects.equals(jadeCrystal, "NOT_FOUND")) {
+            jadeCrystalString = "Not Found";
+        } if (Objects.equals(jadeCrystal, "FOUND")) {
+            jadeCrystalString = "Found";
+        } if (Objects.equals(amethystCrystal, "NOT_FOUND")) {
+            amethystCrystalString = "Not Found";
+        } if (Objects.equals(amethystCrystal, "FOUND")) {
+            amethystCrystalString = "Found";
+        } if (Objects.equals(amberCrystal, "NOT_FOUND")) {
+            amberCrystalString = "Not Found";
+        } if (Objects.equals(amberCrystal, "FOUND")) {
+            amberCrystalString = "Found";
+        } if (Objects.equals(sapphireCrystal, "NOT_FOUND")) {
+            sapphireCrystalString = "Not Found";
+        } if (Objects.equals(sapphireCrystal, "FOUND")) {
+            sapphireCrystalString = "Found";
+        } if (Objects.equals(topazCrystal, "NOT_FOUND")) {
+            topazCrystalString = "Not Found";
+        } if (Objects.equals(topazCrystal, "FOUND")) {
+            topazCrystalString = "Found";
+        }  if (Objects.equals(jasperCrystal, "NOT_FOUND")) {
+            jasperCrystalString = "Not Found";
+        } if (Objects.equals(jasperCrystal, "FOUND")) {
+            jasperCrystalString = "Found";
+        } if (Objects.equals(rubyCrystal, "NOT_FOUND")) {
+            rubyCrystalString = "Not Found";
+        } if (Objects.equals(rubyCrystal, "FOUND")) {
+            rubyCrystalString = "Found";
+        }
+
+        //The rendering of the stats
+        //hotm level
+        renderXpBar(skillName, iron_pick, x, y, sectionWidth, levelObjhotm, mouseX, mouseY);
+        //Powder
         Utils.renderAlignedString(EnumChatFormatting.DARK_GREEN + "Mithril Power", EnumChatFormatting.WHITE + shortNumberFormat(mithrilPowder, 0),
-                guiLeft + xStart, guiTop + yStartTop + 53, 76);
+                guiLeft + xStart, guiTop + yStartTop + 20, 115);
         Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE + "Gemstone Power", EnumChatFormatting.WHITE + shortNumberFormat(gemstonePowder, 0),
-                guiLeft + xStart, guiTop + yStartTop + 73, 76);
+                guiLeft + xStart, guiTop + yStartTop + 30, 115);
         Utils.renderAlignedString(EnumChatFormatting.DARK_GREEN + "Total Mithril Power", EnumChatFormatting.WHITE + shortNumberFormat(mithrilPowderTotal + mithrilPowder, 0),
-                guiLeft + xStart, guiTop + yStartTop + 63, 76);
+                guiLeft + xStart, guiTop + yStartTop + 40, 115);
         Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE + "Total Gemstone Power", EnumChatFormatting.WHITE + shortNumberFormat(gemstonePowderTotal + gemstonePowder, 0),
-                guiLeft + xStart, guiTop + yStartTop + 83, 76);
+                guiLeft + xStart, guiTop + yStartTop + 50, 115);
+        //Crystals
+        Utils.renderAlignedString(EnumChatFormatting.GREEN + "Jade Crystal:", EnumChatFormatting.WHITE + jadeCrystalString,
+                guiLeft + xStart, guiTop + yStartTop + 65, 115);
+        Utils.renderAlignedString(EnumChatFormatting.GOLD + "Amber Crystal:", EnumChatFormatting.WHITE + amberCrystalString,
+                guiLeft + xStart, guiTop + yStartTop + 75, 115);
+        Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE + "Amethyst Crystal:", EnumChatFormatting.WHITE + amethystCrystalString,
+                guiLeft + xStart, guiTop + yStartTop + 85, 115);
+        Utils.renderAlignedString(EnumChatFormatting.AQUA + "Sapphire Crystal:", EnumChatFormatting.WHITE + sapphireCrystalString,
+                guiLeft + xStart, guiTop + yStartTop + 95, 115);
+        Utils.renderAlignedString(EnumChatFormatting.YELLOW + "Topaz Crystal:", EnumChatFormatting.WHITE + topazCrystalString,
+                guiLeft + xStart, guiTop + yStartTop + 105, 115);
+        Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE + "Jasper Crystal:", EnumChatFormatting.WHITE + jasperCrystalString,
+                guiLeft + xStart, guiTop + yStartTop + 120, 115);
+        Utils.renderAlignedString(EnumChatFormatting.RED + "Ruby Crystal:", EnumChatFormatting.WHITE + rubyCrystalString,
+                guiLeft + xStart, guiTop + yStartTop + 130, 115);
+        Utils.renderAlignedString(EnumChatFormatting.BLUE + "Total Placed Crystals", EnumChatFormatting.WHITE + shortNumberFormat(crystalPlacedAmount, 0),
+                guiLeft + xStart, guiTop + yStartTop + 145, 115);
     }
 
 
