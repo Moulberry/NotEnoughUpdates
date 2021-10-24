@@ -1,7 +1,12 @@
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
+import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ItemOverlays {
     @ConfigOption(
@@ -22,6 +27,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Show in Item durability",
+            desc = "Show the cooldown of the Treecapitator in the item durability"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 0)
+    public boolean enableCooldownInItemDurability = true;
+
+    @Expose
+    @ConfigOption(
             name = "Overlay Colour",
             desc = "Change the colour of the overlay"
     )
@@ -32,7 +46,7 @@ public class ItemOverlays {
     @Expose
     @ConfigOption(
             name = "Enable Monkey Pet Check",
-            desc = "Will check use the API to check what pet you're using\nto determine the cooldown based off of if you have monkey pet."
+            desc = "Will check using the API to check what pet you're using\nto determine the cooldown based off of if you have a monkey pet."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 0)
@@ -175,6 +189,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Enable etherwarp helper overlay",
+            desc = "Display an overlay which tells you if the etherwarp will fail."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 7)
+    public boolean enableEtherwarpHelperOverlay = true;
+
+    @Expose
+    @ConfigOption(
             name = "Highlight Colour",
             desc = "Change the colour of the etherwarp target block outline"
     )
@@ -191,6 +214,15 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
+            name = "Enable Bonemerang Overlay",
+            desc = "Shows info about the bonemerang while holding it."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 3)
+    public boolean enableBonemerangOverlay = true;
+
+    @Expose
+    @ConfigOption(
             name = "Highlight Targeted Entities",
             desc = "Highlight entities that will be hit by your bonemerang"
     )
@@ -200,12 +232,51 @@ public class ItemOverlays {
 
     @Expose
     @ConfigOption(
-            name = "Break Warning",
-            desc = "Show a warning below your crosshair if the bonemerang will break on a block"
+            name = "Bonemerang Overlay Position",
+            desc = "The position of the Bonemerang overlay."
+    )
+    @ConfigEditorButton(
+            runnableId = 9,
+            buttonText = "Edit"
+    )
+    @ConfigAccordionId(id = 3)
+    public Position bonemerangPosition = new Position(-1, -1);
+
+    @Expose
+    @ConfigOption(
+            name = "Bonemerang Overlay Text",
+            desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
+                    "\u00a7rHold a Bonemerang to display the overlay"
+    )
+    @ConfigEditorDraggableList(
+            exampleText = {"\u00a7cBonemerang will break!",
+                    "\u00a77Targets: \u00a76\u00a7l10"
+            }
+    )
+    @ConfigAccordionId(id = 3)
+    public List<Integer> bonemerangOverlayText = new ArrayList<>(Arrays.asList(0, 1));
+
+    @Expose
+    @ConfigOption(
+            name = "Bonemerang Overlay Style",
+            desc = "Change the style of the Bonemerang overlay"
+    )
+    @ConfigEditorDropdown(
+            values = {"Background", "No Shadow", "Shadow Only", "Full Shadow"}
+    )
+    @ConfigAccordionId(id = 3)
+    public int bonemerangOverlayStyle = 0;
+    @Expose
+    @ConfigOption(
+            name = "Fast update",
+            desc = "Updates the bonemerang overlay faster.\n"+
+                    "Might cause some lag."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 3)
-    public boolean showBreak = true;
+    public boolean bonemerangFastUpdate = false;
+
+
 
     @ConfigOption(
             name = "Minion Crystal Radius Overlay",
@@ -217,7 +288,7 @@ public class ItemOverlays {
     @Expose
     @ConfigOption(
             name = "Enable Crystal Overlay",
-            desc = "Show a block overlay for the effective radius of minion crystals (farming, mining, etc)"
+            desc = "Show a block overlay for the effective radius of minion crystals (farming, mining, etc)."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 5)
@@ -226,9 +297,28 @@ public class ItemOverlays {
     @Expose
     @ConfigOption(
             name = "Always Show Crystal Overlay",
-            desc = "Show the crystal overlay, even when a minion crystal is not being held"
+            desc = "Show the crystal overlay, even when a minion crystal is not being held."
     )
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 5)
     public boolean alwaysShowCrystal = false;
+
+
+    @Expose
+    @ConfigOption(
+            name = "Enable Prismapump Overlay",
+            desc = "Show a block overlay for the effected blocks of prismapump's ability."
+    )
+    @ConfigEditorBoolean
+    public boolean enablePrismapumpOverlay = true;
+
+
+    @Expose
+    @ConfigOption(
+            name = "Pickaxe Ability Cooldown",
+            desc = "Show the cooldown duration off the pickaxe ability as the durability."
+    )
+    @ConfigEditorBoolean
+    public boolean pickaxeAbility = true;
+
 }

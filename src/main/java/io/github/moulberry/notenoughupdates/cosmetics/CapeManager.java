@@ -67,46 +67,54 @@ public class CapeManager {
     }
 
     public CapeData[] capes = new CapeData[]{
-            //Content Creator
-        new CapeData("jakethybro", false, true),
-        new CapeData("krusty", false, true),
-        new CapeData("krusty_day", false, true),
-        new CapeData("krusty_sunset", false, true),
-        new CapeData("krusty_night", false, true),
-        new CapeData("zera", false, true),
-        new CapeData("soldier", false, true),
-        new CapeData("alexxoffi", false, true),
-
-            //Patreon
-        new CapeData("patreon1", false, false),
-        new CapeData("patreon2", false, false),
-        new CapeData("fade", false, false),
-        new CapeData("space", false, false),
-        new CapeData("mcworld", false, false),
-        new CapeData("negative", false, false),
-        new CapeData("void", false, false),
-        new CapeData("lava", false, false),
-        new CapeData("tunnel", false, false),
-        new CapeData("planets", false, false),
 
             //Admins
-        new CapeData("nullzee", true, false),
-        new CapeData("ironmoon", true, false),
-        new CapeData("gravy", true, false),
-
-            //Partner
-        new CapeData("thebakery", true, false),
-        new CapeData("furf", true, false),
-        new CapeData("dsm", true, false),
-        new CapeData("skyclient", true, false),
-        new CapeData("subreddit_dark", true, false),
-        new CapeData("subreddit_light", true, false),
-        new CapeData("packshq", true, false),
-        new CapeData("skytils", true, false),
+            new CapeData("nullzee", true, false),
+            new CapeData("ironmoon", true, false),
+            new CapeData("gravy", true, false),
 
             //Special Other
-        new CapeData("contrib", true, false),
-        new CapeData("mbstaff", true, false)
+            new CapeData("contrib", true, false),
+            new CapeData("mbstaff", true, false),
+
+            //Partner
+            new CapeData("thebakery", true, false),
+            new CapeData("furf", true, false),
+            new CapeData("dsm", true, false),
+            new CapeData("skyclient", true, false),
+            new CapeData("subreddit_dark", true, false),
+            new CapeData("subreddit_light", true, false),
+            new CapeData("packshq", true, false),
+            new CapeData("skytils", true, false),
+            new CapeData("sbp", true, false),
+            new CapeData("sharex", true, false),
+            new CapeData("sharex_white", true, false),
+
+            //Content Creator
+            new CapeData("jakethybro", false, true),
+            new CapeData("krusty", false, true),
+            new CapeData("krusty_day", false, true),
+            new CapeData("krusty_sunset", false, true),
+            new CapeData("krusty_night", false, true),
+            new CapeData("zera", false, true),
+            new CapeData("soldier", false, true),
+            new CapeData("alexxoffi", false, true),
+            new CapeData("secondpfirsisch", false, true),
+            new CapeData("stormy_lh", false, true),
+
+            //Patreon
+            new CapeData("patreon1", false, false),
+            new CapeData("patreon2", false, false),
+            new CapeData("fade", false, false),
+            new CapeData("space", false, false),
+            new CapeData("mcworld", false, false),
+            new CapeData("negative", false, false),
+            new CapeData("void", false, false),
+            new CapeData("lava", false, false),
+            new CapeData("tunnel", false, false),
+            new CapeData("planets", false, false)
+
+
     };
 
     /*private String[] capes = new String[]{"patreon1", "patreon2", "fade", "contrib", "nullzee",
@@ -137,6 +145,7 @@ public class CapeManager {
     }
 
     private void updateCapes() {
+
         NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("activecapes.json", (jsonObject) -> {
             if(jsonObject.get("success").getAsBoolean()) {
                 lastJsonSync = jsonObject;
@@ -310,7 +319,9 @@ public class CapeManager {
         playerMap.clear();
         for(EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
             String uuid = player.getUniqueID().toString().replace("-", "");
-            playerMap.put(uuid, player);
+            try {
+                playerMap.put(uuid, player);
+            } catch(IllegalArgumentException ignored){}
         }
     }
 

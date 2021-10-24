@@ -26,6 +26,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.tuple.Triple;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -78,6 +79,14 @@ public class SlotLocking {
     private boolean lockKeyHeld = false;
     private Slot pairingSlot = null;
 
+    private Slot realSlot = null;
+
+    public void setRealSlot(Slot slot){
+        realSlot = slot;
+    }
+
+    public Slot getRealSlot(){ return realSlot;}
+
     public void loadConfig(File file) {
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             config = GSON.fromJson(reader, SlotLockingConfig.class);
@@ -86,6 +95,35 @@ public class SlotLocking {
             config = new SlotLockingConfig();
         }
     }
+
+    public void changedSlot(int slotNumber){
+        int pingModifier = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSwapDelay;
+        if(pingModifier == 0){ return; };
+        if(!isSlotIndexLocked(slotNumber)){ return;}
+        long currentTimeMilis = System.currentTimeMillis();
+
+        for (int i = 0; i < slotChanges.length; i++) {
+            if(i != slotNumber && slotChanges[i] != 0 && (slotChanges[i] + (long) pingModifier) > currentTimeMilis){
+                slotChanges[i] = 0;
+            }
+        }
+        slotChanges[slotNumber] = currentTimeMilis;
+    }
+
+    public boolean isSwapedSlotLocked(){
+        int pingModifier = NotEnoughUpdates.INSTANCE.config.slotLocking.slotLockSwapDelay;
+        if(pingModifier == 0){ return false; };
+        long currentTimeMilis = System.currentTimeMillis();
+
+        for (int i = 0; i < slotChanges.length; i++) {
+            if (slotChanges[i] != 0 && isSlotIndexLocked(i) && (slotChanges[i] + (long) pingModifier) > currentTimeMilis) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private long[] slotChanges = new long[9];
 
     public void saveConfig(File file) {
         try {
@@ -271,6 +309,7 @@ public class SlotLocking {
     }
 
     public void toggleLock(int lockIndex) {
+        if(lockIndex == 8) return;
         LockedSlot[] lockedSlots = getDataForProfile();
 
         if(lockedSlots != null) {
@@ -381,7 +420,7 @@ public class SlotLocking {
             return;
         } else if(locked.locked || (clickType == 2 && SlotLocking.getInstance().isSlotIndexLocked(clickedButton))) {
             consumer.accept(null);
-        } else if(NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotBinding && clickType == 1) {
+        } else if(NotEnoughUpdates.INSTANCE.config.slotLocking.enableSlotBinding && clickType == 1 && locked.boundTo != -1) {
             GuiContainer container = (GuiContainer) Minecraft.getMinecraft().currentScreen;
             Slot boundSlot = container.inventorySlots.getSlotFromInventory(Minecraft.getMinecraft().thePlayer.inventory, locked.boundTo);
 
@@ -576,5 +615,6 @@ public class SlotLocking {
 
         return locked != null && (locked.locked || (NotEnoughUpdates.INSTANCE.config.slotLocking.bindingAlsoLocks && locked.boundTo != -1));
     }
+    
 
 }

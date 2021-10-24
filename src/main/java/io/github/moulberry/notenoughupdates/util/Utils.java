@@ -8,6 +8,7 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -433,7 +434,11 @@ public class Utils {
     }
 
     public static Slot getSlotUnderMouse(GuiContainer container) {
-        return (Slot) getField(GuiContainer.class, container, "theSlot", "field_147006_u");
+        Slot slot = (Slot) getField(GuiContainer.class, container, "theSlot", "field_147006_u");
+        if(slot == null){
+            slot = SlotLocking.getInstance().getRealSlot();
+        }
+        return slot;
     }
 
     public static void drawTexturedRect(float x, float y, float width, float height) {
@@ -464,26 +469,105 @@ public class Utils {
         return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
     }
 
-    private static String[] rarityArr = new String[] {
-            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
+    public static String[] rarityArr = new String[] {
+            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME", "DIVINE"
     };
+
+    public static String[] rarityArrC = new String[] {
+            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
+            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
+            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
+            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
+            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
+            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
+            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
+            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
+            EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
+
+    };
+    public static final HashMap<String, String> rarityArrMap = new HashMap<>();
+    static {
+        rarityArrMap.put("COMMON", rarityArrC[0]);
+        rarityArrMap.put("UNCOMMON", rarityArrC[1]);
+        rarityArrMap.put("RARE", rarityArrC[2]);
+        rarityArrMap.put("EPIC", rarityArrC[3]);
+        rarityArrMap.put("LEGENDARY", rarityArrC[4]);
+        rarityArrMap.put("MYTHIC", rarityArrC[5]);
+        rarityArrMap.put("SPECIAL", rarityArrC[6]);
+        rarityArrMap.put("VERY SPECIAL", rarityArrC[7]);
+        rarityArrMap.put("SUPREME", rarityArrC[8]);
+        rarityArrMap.put("DIVINE", rarityArrC[9]);
+
+    }
+
+    public static String getRarityFromInt(int rarity){
+        if(rarity < 0|| rarity >= rarityArr.length){ return rarityArr[0]; }
+        return rarityArr[rarity];
+    }
+
+    public static int checkItemTypePet(List<String> lore){
+        for(int i=lore.size()-1; i>=0; i--){
+            String line = Utils.cleanColour(lore.get(i));
+            for (int i1 = 0; i1 < rarityArr.length; i1++) {
+                if(line.equals(rarityArr[i1])){
+                    return i1;
+                }
+            }
+        }
+        return -1;
+    }
+
     public static int checkItemType(JsonArray lore, boolean contains, String... typeMatches) {
         for(int i=lore.size()-1; i>=0; i--) {
             String line = lore.get(i).getAsString();
-            for(String rarity : rarityArr) {
-                for(int j=0; j<typeMatches.length; j++) {
-                    if(contains) {
-                        if(line.trim().contains(rarity + " " + typeMatches[j])) {
-                            return j;
-                        } else if(line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
-                            return j;
-                        }
-                    } else {
-                        if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
-                            return j;
-                        } else if(line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
-                            return j;
-                        }
+
+            int returnType = checkItemType(line, contains, typeMatches);
+            if(returnType != -1){
+                return returnType;
+            }
+        }
+        return -1;
+    }
+
+    public static int checkItemType(String[] lore, boolean contains, String... typeMatches) {
+        for(int i=lore.length-1; i>=0; i--) {
+            String line = lore[i];
+
+            int returnType = checkItemType(line, contains, typeMatches);
+            if(returnType != -1){
+                return returnType;
+            }
+        }
+        return -1;
+    }
+
+    public static int checkItemType(List<String> lore, boolean contains, String... typeMatches) {
+        for(int i=lore.size()-1; i>=0; i--) {
+            String line = lore.get(i);
+
+            int returnType = checkItemType(line, contains, typeMatches);
+            if(returnType != -1){
+                return returnType;
+            }
+        }
+        return -1;
+    }
+
+    private static int checkItemType(String line, boolean contains, String... typeMatches) {
+        for (String rarity : rarityArr) {
+            for (int j = 0; j < typeMatches.length; j++) {
+                if (contains) {
+                    if (line.trim().contains(rarity + " " + typeMatches[j])) {
+                        return j;
+                    } else if (line.trim().contains(rarity + " DUNGEON " + typeMatches[j])) {
+                        return j;
+                    }
+                } else {
+                    if (line.trim().endsWith(rarity + " " + typeMatches[j])) {
+                        return j;
+                    } else if (line.trim().endsWith(rarity + " DUNGEON " + typeMatches[j])) {
+                        return j;
                     }
                 }
             }
@@ -491,10 +575,20 @@ public class Utils {
         return -1;
     }
 
+    public static float round (float value, int precision) {
+        int scale = (int) Math.pow(10, precision);
+        return (float) Math.round(value * scale) / scale;
+    }
+
+
+
     public static void playPressSound() {
-        if(NotEnoughUpdates.INSTANCE.config.misc.guiButtonClicks) {
-            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(
-                    new ResourceLocation("gui.button.press"), 1.0F));
+        playSound(new ResourceLocation("gui.button.press"), true);
+    }
+
+    public static void playSound(ResourceLocation sound, boolean gui) {
+        if(NotEnoughUpdates.INSTANCE.config.misc.guiButtonClicks || !gui) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(sound, 1.0F));
         }
     }
 
@@ -605,6 +699,29 @@ public class Utils {
         stack.setTagCompound(tag);
 
         return stack;
+    }
+
+    public static ItemStack editItemStackInfo(ItemStack itemStack, String displayName, boolean disableNeuToolTips, String... lore){
+        NBTTagCompound tag = itemStack.getTagCompound();
+        NBTTagCompound display = tag.getCompoundTag("display");
+        NBTTagList Lore = new NBTTagList();
+
+        for(String line : lore) {
+            Lore.appendTag(new NBTTagString(line));
+        }
+
+        display.setString("Name", displayName);
+        display.setTag("Lore", Lore);
+
+        tag.setTag("display", display);
+        tag.setInteger("HideFlags", 254);
+        if(disableNeuToolTips){
+            tag.setBoolean("disableNeuTooltip", true);
+        }
+
+        itemStack.setTagCompound(tag);
+
+        return itemStack;
     }
 
     public static void drawStringF(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
@@ -954,6 +1071,11 @@ public class Utils {
         ChatStyle style = new ChatStyle();
         style.setChatClickEvent(new ClickEvent(action, value));
         style.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(EnumChatFormatting.YELLOW+value)));
+        return style;
+    }
+    public static ChatStyle createClickStyle(ClickEvent.Action action, String value, String message) {
+        ChatStyle style = createClickStyle(action, value);
+        style.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(message)));
         return style;
     }
 

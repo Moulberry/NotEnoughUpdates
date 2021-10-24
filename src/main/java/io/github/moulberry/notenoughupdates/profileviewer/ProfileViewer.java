@@ -310,6 +310,7 @@ public class ProfileViewer {
         private String latestProfile = null;
 
         private JsonArray playerInformation = null;
+        private JsonObject guildInformation = null;
         private JsonObject basicInfo = null;
 
         private final HashMap<String, JsonObject> profileMap = new HashMap<>();
@@ -331,6 +332,9 @@ public class ProfileViewer {
         private AtomicBoolean updatingPlayerInfoState = new AtomicBoolean(false);
         private long lastPlayerInfoState = 0;
         private AtomicBoolean updatingPlayerStatusState = new AtomicBoolean(false);
+        private AtomicBoolean updatingGuildInfoState = new AtomicBoolean(false);
+        private long lastGuildInfoState = 0;
+        private AtomicBoolean updatingGuildStatusState = new AtomicBoolean(false);
 
         public JsonObject getPlayerStatus() {
             if(playerStatus != null) return playerStatus;
@@ -353,6 +357,7 @@ public class ProfileViewer {
 
             return null;
         }
+
 
         public long getNetWorth(String profileId) {
             if(profileId == null) profileId = latestProfile;
@@ -522,6 +527,7 @@ public class ProfileViewer {
                                         }
                                     }
 
+
                                     String cute_name = profile.get("cute_name").getAsString();
                                     if (backup == null) backup = cute_name;
                                     profileIds.add(cute_name);
@@ -540,6 +546,35 @@ public class ProfileViewer {
                         }
                     }, () -> {
                         updatingPlayerInfoState.set(false);
+                    }
+            );
+
+                return null;
+        }
+        public JsonObject getGuildInfo(Runnable runnable) {
+            if (guildInformation != null) return guildInformation;
+
+            long currentTime = System.currentTimeMillis();
+
+            if (currentTime - lastGuildInfoState < 15*1000 && updatingGuildInfoState.get()) return null;
+
+            lastGuildInfoState = currentTime;
+            updatingGuildInfoState.set(true);
+
+            HashMap<String, String> args = new HashMap<>();
+            args.put("player", "" + uuid);
+            manager.hypixelApi.getHypixelApiAsync(NotEnoughUpdates.INSTANCE.config.apiKey.apiKey, "guild",
+                    args, jsonObject -> {
+                        updatingGuildInfoState.set(false);
+
+                        if (jsonObject == null) return;
+                        if (jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
+                            guildInformation = jsonObject.get("guild").getAsJsonObject();
+                            if (guildInformation == null) return;
+                            if (runnable != null) runnable.run();
+                        }
+                    }, () -> {
+                        updatingGuildInfoState.set(false);
                     }
             );
 
@@ -569,6 +604,9 @@ public class ProfileViewer {
                     JsonObject profileInfo = members.get(uuid).getAsJsonObject();
                     if(profile.has("banking")) {
                         profileInfo.add("banking", profile.get("banking").getAsJsonObject());
+                    }
+                    if(profile.has("game_mode")){
+                        profileInfo.add("game_mode", profile.get("game_mode"));
                     }
                     profileMap.put(profileId, profileInfo);
                     return profileInfo;
@@ -611,6 +649,7 @@ public class ProfileViewer {
 
         public void resetCache() {
             playerInformation = null;
+            guildInformation = null;
             basicInfo = null;
             playerStatus = null;
             stats.clear();

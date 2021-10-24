@@ -38,6 +38,17 @@ public class Misc {
     @ConfigEditorBoolean
     public boolean guiButtonClicks = true;
 
+
+    @Expose
+    @ConfigOption(
+            name = "Replace Chat Social Options",
+            desc = "Replace Hypixel's chat social options with NEU's profile viewer."
+    )
+    @ConfigEditorBoolean
+    public boolean replaceSocialOptions = true;
+
+
+
     @Expose
     @ConfigOption(
             name = "Damage Indicator Style",
@@ -67,4 +78,15 @@ public class Misc {
             minStep = 10
     )
     public int chromaSpeed = 100;
+
+    @Expose
+    @ConfigOption(
+            name = "Disable Skull retexturing",
+            desc = "Disables the skull retexturing."
+    )
+    @ConfigEditorBoolean
+    public boolean disableSkullRetexturing = false;
+
+
+
 }

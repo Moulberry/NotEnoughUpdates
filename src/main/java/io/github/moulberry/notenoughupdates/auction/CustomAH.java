@@ -144,8 +144,8 @@ public class CustomAH extends Gui {
     private static final int SORT_MODE_LOW = 1;
     private static final int SORT_MODE_SOON = 2;
 
-    private static final String[] rarities = {"COMMON", "UNCOMMON", "RARE", "EPIC",
-            "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME"};
+//    private static final String[] rarities = {"COMMON", "UNCOMMON", "RARE", "EPIC",
+//            "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME"};
     private static final String[] rarityColours = {"" + EnumChatFormatting.WHITE,
             "" + EnumChatFormatting.GREEN, "" + EnumChatFormatting.BLUE, "" + EnumChatFormatting.DARK_PURPLE,
             "" + EnumChatFormatting.GOLD, "" + EnumChatFormatting.LIGHT_PURPLE, "" + EnumChatFormatting.RED,
@@ -1075,9 +1075,9 @@ public class CustomAH extends Gui {
                 lore.add("");
                 lore.add((rarityFilter == -1 ? EnumChatFormatting.DARK_GRAY + selPrefixNC : unselPrefix) + "No Filter");
 
-                for (int i = 0; i < rarities.length; i++) {
+                for (int i = 0; i < Utils.rarityArr.length; i++) {
                     lore.add((rarityFilter == i ? rarityColours[i] + selPrefixNC : unselPrefix) +
-                            Utils.prettyCase(rarities[i]));
+                            Utils.prettyCase(Utils.rarityArr[i]));
                 }
                 lore.add("");
                 lore.add(EnumChatFormatting.AQUA + "Right-Click to go backwards!");
@@ -1230,8 +1230,8 @@ public class CustomAH extends Gui {
             }
         }
 
-        if (rarityFilter >= 0 && rarityFilter < rarities.length) {
-            match &= rarities[rarityFilter].equals(auc.rarity);
+        if (rarityFilter >= 0 && rarityFilter < Utils.rarityArr.length) {
+            match &= Utils.rarityArr[rarityFilter].equals(auc.rarity);
         }
 
         if (binFilter == BIN_FILTER_BIN) {
@@ -1674,10 +1674,10 @@ public class CustomAH extends Gui {
                     case 2:
                         if (rightClicked) {
                             rarityFilter--;
-                            if (rarityFilter < -1) rarityFilter = rarities.length - 1;
+                            if (rarityFilter < -1) rarityFilter = Utils.rarityArr.length - 1;
                         } else {
                             rarityFilter++;
-                            if (rarityFilter >= rarities.length) rarityFilter = -1;
+                            if (rarityFilter >= Utils.rarityArr.length) rarityFilter = -1;
                         }
                         break;
                     case 3:

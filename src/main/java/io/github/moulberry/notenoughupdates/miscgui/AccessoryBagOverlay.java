@@ -172,7 +172,7 @@ public class AccessoryBagOverlay {
 
         int yIndex = 0;
         for(Map.Entry<Integer, Integer> entry : talismanCountRarity.descendingMap().entrySet()) {
-            String rarityName = rarityArrC[entry.getKey()];
+            String rarityName = Utils.rarityArrC[entry.getKey()];
             Utils.renderAlignedString(rarityName, EnumChatFormatting.WHITE.toString()+entry.getValue(), x+5, y+20+11*yIndex, 70);
             yIndex++;
         }
@@ -582,13 +582,19 @@ public class AccessoryBagOverlay {
             return o1.compareTo(o2);
         };
     }
+    private static boolean inAccessoryBag = false;
+    public static boolean isInAccessoryBag(){
+        return inAccessoryBag;
+    }
 
-    public static void renderOverlay() {
+    public static void  renderOverlay() {
+        inAccessoryBag = false;
         if(Minecraft.getMinecraft().currentScreen instanceof GuiChest && NEUEventListener.inventoryLoaded) {
             GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
             if(containerName.trim().startsWith("Accessory Bag")) {
+                inAccessoryBag = true;
                 try {
                     int xSize = (int) Utils.getField(GuiContainer.class, eventGui, "xSize", "field_146999_f");
                     int ySize = (int) Utils.getField(GuiContainer.class, eventGui, "ySize", "field_147000_g");
@@ -746,19 +752,21 @@ public class AccessoryBagOverlay {
         }
     }*/
 
-    private static final Pattern HEALTH_PATTERN_BONUS = Pattern.compile("^Health: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern DEFENCE_PATTERN_BONUS = Pattern.compile("^Defense: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern STRENGTH_PATTERN_BONUS = Pattern.compile("^Strength: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern SPEED_PATTERN_BONUS = Pattern.compile("^Speed: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern CC_PATTERN_BONUS = Pattern.compile("^Crit Chance: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern CD_PATTERN_BONUS = Pattern.compile("^Crit Damage: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern ATKSPEED_PATTERN_BONUS = Pattern.compile("^Bonus Attack Speed: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern INTELLIGENCE_PATTERN_BONUS = Pattern.compile("^Intelligence: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern SCC_PATTERN_BONUS = Pattern.compile("^Sea Creature Chance: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern FEROCITY_PATTERN_BONUS = Pattern.compile("^Ferocity: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern MINING_FORTUNE_PATTERN_BONUS = Pattern.compile("^Mining Fortune: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern MINING_SPEED_PATTERN_BONUS = Pattern.compile("^Mining Speed: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
-    private static final Pattern MAGIC_FIND_PATTERN_BONUS = Pattern.compile("^Magic Find: (?:\\+|-)[0-9]+(?:\\.[0-9]+)? \\([a-zA-Z]+ ((?:\\+|-)[0-9]+)");
+    private static final String STAT_PATTERN_BONUS_END = ": (?:\\+|-)[0-9]+(?:\\.[0-9]+)?\\%? \\(((?:\\+|-)[0-9]+)%?";
+
+    private static final Pattern HEALTH_PATTERN_BONUS = Pattern.compile("^Health"+STAT_PATTERN_BONUS_END);
+    private static final Pattern DEFENCE_PATTERN_BONUS = Pattern.compile("^Defense"+STAT_PATTERN_BONUS_END);
+    private static final Pattern STRENGTH_PATTERN_BONUS = Pattern.compile("^Strength"+STAT_PATTERN_BONUS_END);
+    private static final Pattern SPEED_PATTERN_BONUS = Pattern.compile("^Speed"+STAT_PATTERN_BONUS_END);
+    private static final Pattern CC_PATTERN_BONUS = Pattern.compile("^Crit Chance"+STAT_PATTERN_BONUS_END);
+    private static final Pattern CD_PATTERN_BONUS = Pattern.compile("^Crit Damage"+STAT_PATTERN_BONUS_END);
+    private static final Pattern ATKSPEED_PATTERN_BONUS = Pattern.compile("^Bonus Attack Speed"+STAT_PATTERN_BONUS_END);
+    private static final Pattern INTELLIGENCE_PATTERN_BONUS = Pattern.compile("^Intelligence"+STAT_PATTERN_BONUS_END);
+    private static final Pattern SCC_PATTERN_BONUS = Pattern.compile("^Sea Creature Chance"+STAT_PATTERN_BONUS_END);
+    private static final Pattern FEROCITY_PATTERN_BONUS = Pattern.compile("^Ferocity"+STAT_PATTERN_BONUS_END);
+    private static final Pattern MINING_FORTUNE_PATTERN_BONUS = Pattern.compile("^Mining Fortune"+STAT_PATTERN_BONUS_END);
+    private static final Pattern MINING_SPEED_PATTERN_BONUS = Pattern.compile("^Mining Speed"+STAT_PATTERN_BONUS_END);
+    private static final Pattern MAGIC_FIND_PATTERN_BONUS = Pattern.compile("^Magic Find"+STAT_PATTERN_BONUS_END);
     private static final HashMap<String, Pattern> STAT_PATTERN_MAP_BONUS = new HashMap<>();
     static {
         STAT_PATTERN_MAP_BONUS.put("health", HEALTH_PATTERN_BONUS);
@@ -776,19 +784,22 @@ public class AccessoryBagOverlay {
         STAT_PATTERN_MAP_BONUS.put("magic_find", MAGIC_FIND_PATTERN_BONUS);
     }
 
-    private static final Pattern HEALTH_PATTERN = Pattern.compile("^Health: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern DEFENCE_PATTERN = Pattern.compile("^Defense: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern STRENGTH_PATTERN = Pattern.compile("^Strength: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern SPEED_PATTERN = Pattern.compile("^Speed: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern CC_PATTERN = Pattern.compile("^Crit Chance: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern CD_PATTERN = Pattern.compile("^Crit Damage: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern ATKSPEED_PATTERN = Pattern.compile("^Bonus Attack Speed: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern INTELLIGENCE_PATTERN = Pattern.compile("^Intelligence: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern SCC_PATTERN = Pattern.compile("^Sea Creature Chance: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern FEROCITY_PATTERN = Pattern.compile("^Ferocity: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern MINING_FORTUNE_PATTERN = Pattern.compile("^Mining Fortune: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern MINING_SPEED_PATTERN = Pattern.compile("^Mining Speed: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
-    private static final Pattern MAGIC_FIND_PATTERN = Pattern.compile("^Magic Find: ((?:\\+|-)([0-9]+(\\.[0-9]+)?))");
+
+    private static final String STAT_PATTERN_END = ": ((?:\\+|-)([0-9]+(\\.[0-9]+)?))%?";
+
+    private static final Pattern HEALTH_PATTERN = Pattern.compile("^Health"+STAT_PATTERN_END);
+    private static final Pattern DEFENCE_PATTERN = Pattern.compile("^Defense"+STAT_PATTERN_END);
+    private static final Pattern STRENGTH_PATTERN = Pattern.compile("^Strength"+STAT_PATTERN_END);
+    private static final Pattern SPEED_PATTERN = Pattern.compile("^Speed"+STAT_PATTERN_END);
+    private static final Pattern CC_PATTERN = Pattern.compile("^Crit Chance"+STAT_PATTERN_END);
+    private static final Pattern CD_PATTERN = Pattern.compile("^Crit Damage"+STAT_PATTERN_END);
+    private static final Pattern ATKSPEED_PATTERN = Pattern.compile("^Bonus Attack Speed"+STAT_PATTERN_END);
+    private static final Pattern INTELLIGENCE_PATTERN = Pattern.compile("^Intelligence"+STAT_PATTERN_END);
+    private static final Pattern SCC_PATTERN = Pattern.compile("^Sea Creature Chance"+STAT_PATTERN_END);
+    private static final Pattern FEROCITY_PATTERN = Pattern.compile("^Ferocity"+STAT_PATTERN_END);
+    private static final Pattern MINING_FORTUNE_PATTERN = Pattern.compile("^Mining Fortune"+STAT_PATTERN_END);
+    private static final Pattern MINING_SPEED_PATTERN = Pattern.compile("^Mining Speed"+STAT_PATTERN_END);
+    private static final Pattern MAGIC_FIND_PATTERN = Pattern.compile("^Magic Find"+STAT_PATTERN_END);
 
     private static final HashMap<String, Pattern> STAT_PATTERN_MAP = new HashMap<>();
     static {
@@ -873,20 +884,20 @@ public class AccessoryBagOverlay {
         return stats;
     }
 
-    private static String[] rarityArr = new String[] {
-            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
-    };
-    private static String[] rarityArrC = new String[] {
-            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
-            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
-            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
-            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
-            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
-            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
-            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
-    };
+//    private static String[] rarityArr = new String[] {
+//            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME"
+//    };
+//    private static String[] rarityArrC = new String[] {
+//            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
+//            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
+//            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
+//            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
+//            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
+//            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
+//            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+//            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
+//            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
+//    };
     public static int checkItemType(ItemStack stack, boolean contains, String... typeMatches) {
         NBTTagCompound tag = stack.getTagCompound();
         if(tag != null) {
@@ -895,7 +906,7 @@ public class AccessoryBagOverlay {
                 NBTTagList list = display.getTagList("Lore", 8);
                 for (int i = list.tagCount()-1; i >= 0; i--) {
                     String line = list.getStringTagAt(i);
-                    for(String rarity : rarityArr) {
+                    for(String rarity : Utils.rarityArr) {
                         for(int j=0; j<typeMatches.length; j++) {
                             if(contains) {
                                 if(line.trim().contains(rarity + " " + typeMatches[j])) {
@@ -921,7 +932,7 @@ public class AccessoryBagOverlay {
         for(int i=lore.size()-1; i>=0; i--) {
             String line = lore.get(i).getAsString();
 
-            for(String rarity : rarityArr) {
+            for(String rarity : Utils.rarityArr) {
                 for(int j=0; j<typeMatches.length; j++) {
                     if(line.trim().endsWith(rarity + " " + typeMatches[j])) {
                         return j;
@@ -944,8 +955,8 @@ public class AccessoryBagOverlay {
                 NBTTagList list = display.getTagList("Lore", 8);
                 for (int i = list.tagCount(); i >= 0; i--) {
                     String line = list.getStringTagAt(i);
-                    for(int j=0; j<rarityArrC.length; j++) {
-                        if(line.contains(rarityArrC[j])) {
+                    for(int j=0; j<Utils.rarityArrC.length; j++) {
+                        if(line.contains(Utils.rarityArrC[j])) {
                             return j;
                         }
                     }

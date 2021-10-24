@@ -1,10 +1,7 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
@@ -15,21 +12,14 @@ import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonBlocks;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
-import io.github.moulberry.notenoughupdates.gamemodes.SBGamemodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.*;
 import io.github.moulberry.notenoughupdates.miscgui.*;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
-import io.github.moulberry.notenoughupdates.overlays.AuctionSearchOverlay;
-import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
-import io.github.moulberry.notenoughupdates.overlays.RancherBootOverlay;
-import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
+import io.github.moulberry.notenoughupdates.overlays.*;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
@@ -37,11 +27,9 @@ import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
-import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -51,6 +39,7 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -64,6 +53,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
@@ -170,10 +160,12 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Unload event) {
         NotEnoughUpdates.INSTANCE.saveConfig();
+        CrystalMetalDetectorSolver.reset(false);
     }
 
     private static long notificationDisplayMillis = 0;
     private static List<String> notificationLines = null;
+    private static boolean showNotificationOverInv = false;
 
     private static final Pattern BAD_ITEM_REGEX = Pattern.compile("x[0-9]{1,2}$");
 
@@ -192,18 +184,25 @@ public class NEUEventListener {
     private int inventoryLoadedTicks = 0;
     private String loadedInvName = "";
     public static boolean inventoryLoaded = false;
-
     public static void displayNotification(List<String> lines, boolean showForever) {
+        displayNotification(lines, showForever, false);
+    }
+
+    public static void displayNotification(List<String> lines, boolean showForever, boolean overInventory) {
         if(showForever) {
             notificationDisplayMillis = -420;
         } else {
             notificationDisplayMillis = System.currentTimeMillis();
         }
         notificationLines = lines;
+        showNotificationOverInv = overInventory;
     }
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if(Minecraft.getMinecraft().currentScreen == null || !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
+            Keyboard.enableRepeatEvents(false);
+        }
         if(event.phase != TickEvent.Phase.START) return;
         if(Minecraft.getMinecraft().theWorld == null) return;
         if(Minecraft.getMinecraft().thePlayer == null) return;
@@ -340,7 +339,7 @@ public class NEUEventListener {
                 if(!joinedSB) {
                     joinedSB = true;
 
-                    SBGamemodes.loadFromFile();
+                    //SBGamemodes.loadFromFile();
 
 
                     if(NotEnoughUpdates.INSTANCE.config.notifications.showUpdateMsg) {
@@ -363,14 +362,26 @@ public class NEUEventListener {
 
                     if(!NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore) {
                         NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore = true;
-
+                        if(Constants.MISC == null || !Constants.MISC.has("featureslist")){
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"WARNING: "+EnumChatFormatting.RESET+EnumChatFormatting.RED+"Could not load Feature List URL from repo."));
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.RED+ "Please run "+EnumChatFormatting.BOLD+"/neuresetrepo"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" and "+EnumChatFormatting.BOLD+"restart your game"+EnumChatFormatting.RESET+EnumChatFormatting.RED+" in order to fix. "+EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD+"If that doesn't fix it"+EnumChatFormatting.RESET+EnumChatFormatting.RED+", please join discord.gg/moulberry and post in #neu-support"));
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""+EnumChatFormatting.GOLD+"To view the feature list after restarting type /neufeatures"));
+                        } else {
+                            String url = Constants.MISC.get("featureslist").getAsString();
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+                                    EnumChatFormatting.BLUE + "It seems this is your first time using NotEnoughUpdates."));
+                            ChatComponentText clickTextFeatures = new ChatComponentText(
+                                    EnumChatFormatting.YELLOW + "Click this message if you would like to view a list of NotEnoughUpdate's Features.");
+                            clickTextFeatures.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, url));
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(clickTextFeatures);
+                        }
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
-                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                EnumChatFormatting.BLUE+"It seems this is your first time using NotEnoughUpdates."));
-                        ChatComponentText clickText = new ChatComponentText(
-                                EnumChatFormatting.YELLOW+"Click this message if you would like to view a short tutorial.");
-                        clickText.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/neututorial"));
-                        Minecraft.getMinecraft().thePlayer.addChatMessage(clickText);
+                        ChatComponentText clickTextHelp = new ChatComponentText(
+                                EnumChatFormatting.YELLOW+"Click this message if you would like to view a list of NotEnoughUpdate's commands.");
+                        clickTextHelp.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/neuhelp"));
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(clickTextHelp);
                         Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
                     }
                 }
@@ -501,13 +512,20 @@ public class NEUEventListener {
         if(Keyboard.isKeyDown(Keyboard.KEY_X)) {
             notificationDisplayMillis = 0;
         }
+
+        if(event.type == RenderGameOverlayEvent.ElementType.ALL){
+            renderNotification();
+        }
+
+    }
+    private static void renderNotification(){
+
         long timeRemaining = 15000 - (System.currentTimeMillis() - notificationDisplayMillis);
         boolean display = timeRemaining > 0 || notificationDisplayMillis == -420;
-        if(event.type == RenderGameOverlayEvent.ElementType.ALL &&
-                display && notificationLines != null && notificationLines.size() > 0) {
+        if(display && notificationLines != null && notificationLines.size() > 0) {
             int width = 0;
             int height = notificationLines.size()*10+10;
-            
+
             for(String line : notificationLines) {
                 int len = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line) + 8;
                 if(len > width) {
@@ -556,6 +574,9 @@ public class NEUEventListener {
     AtomicBoolean missingRecipe = new AtomicBoolean(false);
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
+        CraftingOverlay.shouldRender = false;
+        NEUApi.disableInventoryButtons = false;
+
         if((Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper ||
                 Minecraft.getMinecraft().currentScreen instanceof GuiItemRecipe) &&
                 event.gui == null && !(Keyboard.getEventKeyState() && Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) &&
@@ -756,12 +777,26 @@ public class NEUEventListener {
 
     private String processText(String text) {
         if(SBInfo.getInstance().getLocation() == null) return text;
-        if(!SBInfo.getInstance().getLocation().startsWith("mining_")) return text;
+        if(!SBInfo.getInstance().getLocation().startsWith("mining_")&&!SBInfo.getInstance().getLocation().equals("crystal_hollows")) return text;
 
         if(Minecraft.getMinecraft().thePlayer == null) return text;
         if(!NotEnoughUpdates.INSTANCE.config.mining.drillFuelBar) return text;
 
         return Utils.trimIgnoreColour(text.replaceAll(EnumChatFormatting.DARK_GREEN+"\\S+ Drill Fuel", ""));
+    }
+
+
+    private IChatComponent replaceSocialControlsWithPV(IChatComponent chatComponent){
+
+        if(NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions && chatComponent.getChatStyle() != null && chatComponent.getChatStyle().getChatClickEvent() != null && chatComponent.getChatStyle().getChatClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND){
+            if(chatComponent.getChatStyle().getChatClickEvent().getValue().startsWith("/socialoptions")){
+                String username = chatComponent.getChatStyle().getChatClickEvent().getValue().substring(15);
+
+                chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv "+username, ""+EnumChatFormatting.YELLOW+"Click to open "+EnumChatFormatting.AQUA+EnumChatFormatting.BOLD+username+EnumChatFormatting.RESET+EnumChatFormatting.YELLOW+"'s profile in "+EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD+"NEU's"+EnumChatFormatting.RESET+EnumChatFormatting.YELLOW+ " profile viewer."));
+                return chatComponent;
+            }
+        }
+        return  chatComponent;
     }
 
     /**
@@ -772,8 +807,11 @@ public class NEUEventListener {
     @SubscribeEvent(priority = EventPriority.LOW, receiveCanceled = true)
     public void onGuiChat(ClientChatReceivedEvent e) {
         if(e.type == 2) {
+            CrystalMetalDetectorSolver.process(e.message);
             e.message = processChatComponent(e.message);
             return;
+        } else if(e.type == 0){
+            e.message = replaceSocialControlsWithPV(e.message);
         }
 
         DungeonWin.onChatMessage(e);
@@ -819,6 +857,12 @@ public class NEUEventListener {
                 e.message = new ChatComponentText(m2);
             }
         }
+        if (unformatted.startsWith("You found ") && SBInfo.getInstance().getLocation() != null && SBInfo.getInstance().getLocation().equals("crystal_hollows")){
+            CrystalMetalDetectorSolver.reset(true);
+        }
+        if(unformatted.startsWith("[NPC] Keeper of ") | unformatted.startsWith("[NPC] Professor Robot: ") || unformatted.startsWith("  ") || unformatted.startsWith("✦") ||
+        unformatted.equals("  You've earned a Crystal Loot Bundle!"))
+            OverlayManager.crystalHollowOverlay.message(unformatted);
     }
 
     public static boolean drawingGuiScreen = false;
@@ -836,6 +880,11 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiBackgroundDraw(GuiScreenEvent.BackgroundDrawnEvent event) {
+        if(showNotificationOverInv){
+
+            renderNotification();
+
+        }
         if((shouldRenderOverlay(event.gui) || event.gui instanceof CustomAHGui) && neu.isOnSkyblock()) {
             ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
             int width = scaledresolution.getScaledWidth();
@@ -967,35 +1016,42 @@ public class NEUEventListener {
 
             GlStateManager.translate(0, 0, zOffset);
 
-            int xSize = ((GuiContainer)event.gui).xSize;
-            int ySize = ((GuiContainer)event.gui).ySize;
-            int guiLeft = ((GuiContainer)event.gui).guiLeft;
-            int guiTop = ((GuiContainer)event.gui).guiTop;
+            int xSize = ((GuiContainer) event.gui).xSize;
+            int ySize = ((GuiContainer) event.gui).ySize;
+            int guiLeft = ((GuiContainer) event.gui).guiLeft;
+            int guiTop = ((GuiContainer) event.gui).guiTop;
 
-            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
-                if(!button.isActive()) continue;
-                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
+            if (!NEUApi.disableInventoryButtons) {
+                for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                    if (!button.isActive()) continue;
+                    if (button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
 
-                int x = guiLeft+button.x;
-                int y = guiTop+button.y;
-                if(button.anchorRight) {
-                    x += xSize;
-                }
-                if(button.anchorBottom) {
-                    y += ySize;
-                }
+                    int x = guiLeft + button.x;
+                    int y = guiTop + button.y;
+                    if (button.anchorRight) {
+                        x += xSize;
+                    }
+                    if (button.anchorBottom) {
+                        y += ySize;
+                    }
+                    if (AccessoryBagOverlay.isInAccessoryBag()) {
+                        if (x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28 + 5 && y > guiTop - 18 && y < guiTop + 150) {
+                            x += 80 + 28;
+                        }
+                    }
 
-                GlStateManager.color(1, 1, 1, 1f);
+                    GlStateManager.color(1, 1, 1, 1f);
 
-                GlStateManager.enableDepth();
-                GlStateManager.enableAlpha();
-                Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
-                Utils.drawTexturedRect(x, y, 18, 18,
-                        button.backgroundIndex*18/256f, (button.backgroundIndex*18+18)/256f,
-                        18/256f, 36/256f, GL11.GL_NEAREST);
+                    GlStateManager.enableDepth();
+                    GlStateManager.enableAlpha();
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
+                    Utils.drawTexturedRect(x, y, 18, 18,
+                            button.backgroundIndex * 18 / 256f, (button.backgroundIndex * 18 + 18) / 256f,
+                            18 / 256f, 36 / 256f, GL11.GL_NEAREST);
 
-                if(button.icon != null && !button.icon.trim().isEmpty()) {
-                    GuiInvButtonEditor.renderIcon(button.icon, x+1, y+1);
+                    if (button.icon != null && !button.icon.trim().isEmpty()) {
+                        GuiInvButtonEditor.renderIcon(button.icon, x + 1, y + 1);
+                    }
                 }
             }
             GlStateManager.translate(0, 0, -zOffset);
@@ -1036,6 +1092,9 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if (containerName.equals("Craft Item")) {
+                CraftingOverlay.render();
+            }
         }
 
         if(GuiCustomEnchant.getInstance().shouldOverride(containerName)) {
@@ -1069,51 +1128,62 @@ public class NEUEventListener {
         if(!doInventoryButtons) return;
         if(NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && shouldRenderOverlay(event.gui) &&
                 event.gui instanceof GuiContainer) {
-            int xSize = ((GuiContainer)event.gui).xSize;
-            int ySize = ((GuiContainer)event.gui).ySize;
-            int guiLeft = ((GuiContainer)event.gui).guiLeft;
-            int guiTop = ((GuiContainer)event.gui).guiTop;
+            int xSize = ((GuiContainer) event.gui).xSize;
+            int ySize = ((GuiContainer) event.gui).ySize;
+            int guiLeft = ((GuiContainer) event.gui).guiLeft;
+            int guiTop = ((GuiContainer) event.gui).guiTop;
 
-            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
-                if(!button.isActive()) continue;
-                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
+            if (!NEUApi.disableInventoryButtons) {
+                for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                    if (!button.isActive()) continue;
+                    if (button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
 
-                int x = guiLeft+button.x;
-                int y = guiTop+button.y;
-                if(button.anchorRight) {
-                    x += xSize;
-                }
-                if(button.anchorBottom) {
-                    y += ySize;
-                }
-
-                if(x-guiLeft >= 85 && x-guiLeft <= 115 && y-guiTop >= 4 && y-guiTop <= 25) {
-                    disableCraftingText = true;
-                }
-
-                if(event.mouseX >= x && event.mouseX <= x+18 &&
-                        event.mouseY >= y && event.mouseY <= y+18) {
-                    hoveringButton = true;
-                    long currentTime = System.currentTimeMillis();
-
-                    if(buttonHovered != button) {
-                        buttonHoveredMillis = currentTime;
-                        buttonHovered = button;
+                    int x = guiLeft + button.x;
+                    int y = guiTop + button.y;
+                    if (button.anchorRight) {
+                        x += xSize;
+                    }
+                    if (button.anchorBottom) {
+                        y += ySize;
+                    }
+                    if (AccessoryBagOverlay.isInAccessoryBag()) {
+                        if (x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28 + 5 && y > guiTop - 18 && y < guiTop + 150) {
+                            x += 80 + 28;
+                        }
                     }
 
-                    if(currentTime - buttonHoveredMillis > 600) {
-                        String command = button.command.trim();
-                        if(!command.startsWith("/")) {
-                            command = "/" + command;
+                    if (x - guiLeft >= 85 && x - guiLeft <= 115 && y - guiTop >= 4 && y - guiTop <= 25) {
+                        disableCraftingText = true;
+                    }
+
+                    if (event.mouseX >= x && event.mouseX <= x + 18 &&
+                            event.mouseY >= y && event.mouseY <= y + 18) {
+                        hoveringButton = true;
+                        long currentTime = System.currentTimeMillis();
+
+                        if (buttonHovered != button) {
+                            buttonHoveredMillis = currentTime;
+                            buttonHovered = button;
                         }
 
-                        Utils.drawHoveringText(Lists.newArrayList("\u00a77"+command), event.mouseX, event.mouseY,
-                                event.gui.width, event.gui.height, -1, Minecraft.getMinecraft().fontRendererObj);
+                        if (currentTime - buttonHoveredMillis > 600) {
+                            String command = button.command.trim();
+                            if (!command.startsWith("/")) {
+                                command = "/" + command;
+                            }
+
+                            Utils.drawHoveringText(Lists.newArrayList("\u00a77" + command), event.mouseX, event.mouseY,
+                                    event.gui.width, event.gui.height, -1, Minecraft.getMinecraft().fontRendererObj);
+                        }
                     }
                 }
             }
         }
         if(!hoveringButton) buttonHovered = null;
+
+        if(AuctionBINWarning.getInstance().shouldShow()) {
+            AuctionBINWarning.getInstance().render();
+        }
     }
 
     private void renderDungeonChestOverlay(GuiScreen gui) {
@@ -1323,6 +1393,18 @@ public class NEUEventListener {
             return;
         }
 
+        final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
+        final int scaledWidth = scaledresolution.getScaledWidth();
+        final int scaledHeight = scaledresolution.getScaledHeight();
+        int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
+        int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
+
+        if(AuctionBINWarning.getInstance().shouldShow()) {
+            AuctionBINWarning.getInstance().mouseInput(mouseX, mouseY);
+            event.setCanceled(true);
+            return;
+        }
+
         if(!event.isCanceled()) {
             Utils.scrollTooltip(Mouse.getEventDWheel());
         }
@@ -1337,18 +1419,25 @@ public class NEUEventListener {
             return;
         }
 
-        final ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
-        final int scaledWidth = scaledresolution.getScaledWidth();
-        final int scaledHeight = scaledresolution.getScaledHeight();
-        int mouseX = Mouse.getX() * scaledWidth / Minecraft.getMinecraft().displayWidth;
-        int mouseY = scaledHeight - Mouse.getY() * scaledHeight / Minecraft.getMinecraft().displayHeight - 1;
-
         String containerName = null;
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
         if(guiScreen instanceof GuiChest) {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if(containerName.contains(" Profile") && BetterContainers.profileViewerStackIndex != -1 &&
+                    eventGui.isMouseOverSlot(cc.inventorySlots.get(BetterContainers.profileViewerStackIndex), mouseX, mouseY) && Mouse.getEventButton() >= 0) {
+                event.setCanceled(true);
+                if(Mouse.getEventButtonState() && eventGui.inventorySlots.inventorySlots.get(22).getStack() != null &&
+                        eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound() != null){
+                    NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
+                    if(tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")){
+                        String username = tag.getCompoundTag("SkullOwner").getString("Name");
+                        Utils.playPressSound();
+                        NotEnoughUpdates.INSTANCE.commands.viewProfileRunnable.processCommand(null, new String[]{username});
+                    }
+                }
+            }
         }
 
         if(GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
@@ -1398,36 +1487,42 @@ public class NEUEventListener {
             int ySize = ((GuiContainer)event.gui).ySize;
             int guiLeft = ((GuiContainer)event.gui).guiLeft;
             int guiTop = ((GuiContainer)event.gui).guiTop;
+            if(!NEUApi.disableInventoryButtons) {
+                for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
+                    if (!button.isActive()) continue;
+                    if (button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
 
-            for(NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
-                if(!button.isActive()) continue;
-                if(button.playerInvOnly && !(event.gui instanceof GuiInventory)) continue;
-
-                int x = guiLeft+button.x;
-                int y = guiTop+button.y;
-                if(button.anchorRight) {
-                    x += xSize;
-                }
-                if(button.anchorBottom) {
-                    y += ySize;
-                }
-
-                if(mouseX >= x && mouseX <= x+18 && mouseY >= y && mouseY <= y+18) {
-                    if(Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
-                        int clickType = NotEnoughUpdates.INSTANCE.config.inventoryButtons.clickType;
-                        if((clickType == 0 && Mouse.getEventButtonState()) || (clickType == 1 && !Mouse.getEventButtonState())) {
-                            String command = button.command.trim();
-                            if(!command.startsWith("/")) {
-                                command = "/" + command;
-                            }
-                            if(ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command) == 0) {
-                                NotEnoughUpdates.INSTANCE.sendChatMessage(command);
-                            }
-                        }
-                    } else {
-                        event.setCanceled(true);
+                    int x = guiLeft + button.x;
+                    int y = guiTop + button.y;
+                    if (button.anchorRight) {
+                        x += xSize;
                     }
-                    return;
+                    if (button.anchorBottom) {
+                        y += ySize;
+                    }
+                    if (AccessoryBagOverlay.isInAccessoryBag()) {
+                        if (x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28 + 5 && y > guiTop - 18 && y < guiTop + 150) {
+                            x += 80 + 28;
+                        }
+                    }
+
+                    if (mouseX >= x && mouseX <= x + 18 && mouseY >= y && mouseY <= y + 18) {
+                        if (Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
+                            int clickType = NotEnoughUpdates.INSTANCE.config.inventoryButtons.clickType;
+                            if ((clickType == 0 && Mouse.getEventButtonState()) || (clickType == 1 && !Mouse.getEventButtonState())) {
+                                String command = button.command.trim();
+                                if (!command.startsWith("/")) {
+                                    command = "/" + command;
+                                }
+                                if (ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command) == 0) {
+                                    NotEnoughUpdates.INSTANCE.sendChatMessage(command);
+                                }
+                            }
+                        } else {
+                            event.setCanceled(true);
+                        }
+                        return;
+                    }
                 }
             }
         }
@@ -1443,6 +1538,12 @@ public class NEUEventListener {
      */
     @SubscribeEvent
     public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
+        if(AuctionBINWarning.getInstance().shouldShow()) {
+            AuctionBINWarning.getInstance().keyboardInput();
+            event.setCanceled(true);
+            return;
+        }
+
         if(AuctionSearchOverlay.shouldReplace()) {
             AuctionSearchOverlay.keyEvent();
             event.setCanceled(true);
@@ -1460,6 +1561,9 @@ public class NEUEventListener {
             GuiChest eventGui = (GuiChest) guiScreen;
             ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
             containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
+            if(CraftingOverlay.shouldRender && containerName.equals("Craft Item")){
+                CraftingOverlay.keyInput();
+            }
         }
 
         if(GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
@@ -1620,26 +1724,7 @@ public class NEUEventListener {
         }
     }
 
-    private static String[] rarityArrC = new String[] {
-            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
-            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
-            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
-            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
-            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
-            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
-            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
-            EnumChatFormatting.DARK_RED+EnumChatFormatting.BOLD.toString()+"SUPREME",
-    };
-    private static final HashMap<String, String> rarityArrMap = new HashMap<>();
-    static {
-        rarityArrMap.put("COMMON", rarityArrC[0]);
-        rarityArrMap.put("UNCOMMON", rarityArrC[1]);
-        rarityArrMap.put("RARE", rarityArrC[2]);
-        rarityArrMap.put("EPIC", rarityArrC[3]);
-        rarityArrMap.put("LEGENDARY", rarityArrC[4]);
-        rarityArrMap.put("MYTHIC", rarityArrC[5]);
-    }
+
 
     private HashSet<String> percentStats = new HashSet<>();
     {
@@ -1657,12 +1742,26 @@ public class NEUEventListener {
 
     private boolean copied = false;
 
+    //just to try and optimize it a bit
+    private int sbaloaded = -1;
+    private boolean isSbaloaded(){
+        if(sbaloaded == -1){
+            if(Loader.isModLoaded("skyblockaddons")) {
+                sbaloaded = 1;
+            } else {
+                sbaloaded = 0;
+            }
+        }
+        return sbaloaded == 1;
+    }
+
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltipLow(ItemTooltipEvent event) {
         if(!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return;
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
         if(internalname == null) {
+            onItemToolTipInternalNameNull(event);
             return;
         }
 
@@ -1700,9 +1799,9 @@ public class NEUEventListener {
                         out:
                         for (int i = list.tagCount(); i >= 0; i--) {
                             String line = list.getStringTagAt(i);
-                            for(int j=0; j<rarityArrC.length; j++) {
+                            for(int j=0; j<Utils.rarityArrC.length; j++) {
                                 for(Map.Entry<String, JsonElement> entry : enchantsObj.entrySet()) {
-                                    if(line.contains(rarityArrC[j] + " " + entry.getKey()) || line.contains(rarityArrC[j] + " DUNGEON " + entry.getKey())) {
+                                    if(line.contains(Utils.rarityArrC[j] + " " + entry.getKey()) || line.contains(Utils.rarityArrC[j] + " DUNGEON " + entry.getKey())) {
                                         allItemEnchs = entry.getValue().getAsJsonArray();
                                         break out;
                                     }
@@ -1720,9 +1819,11 @@ public class NEUEventListener {
         boolean dungeonProfit = false;
         int index = 0;
         List<String> newTooltip = new ArrayList<>();
+
         for(String line : event.toolTip) {
-            if(line.endsWith(EnumChatFormatting.DARK_GRAY+"Reforge Stone")) {
+            if(line.endsWith(EnumChatFormatting.DARK_GRAY+"Reforge Stone") && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showReforgeStats) {
                 JsonObject reforgeStones = Constants.REFORGESTONES;
+
 
                 if(reforgeStones != null && reforgeStones.has(internalname)) {
                     boolean shift = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
@@ -1777,84 +1878,88 @@ public class NEUEventListener {
                         pressedArrowLast = left || right;
 
                         JsonElement statsE = reforgeInfo.get("reforgeStats");
+
+
+                        String rarityFormatted = Utils.rarityArrMap.getOrDefault(rarity, rarity);
+
+                        JsonElement reforgeAbilityE = reforgeInfo.get("reforgeAbility");
+                        String reforgeAbility = null;
+                        if (reforgeAbilityE != null) {
+                            if (reforgeAbilityE.isJsonPrimitive() && reforgeAbilityE.getAsJsonPrimitive().isString()) {
+                                reforgeAbility = Utils.getElementAsString(reforgeInfo.get("reforgeAbility"), "");
+
+                            } else if (reforgeAbilityE.isJsonObject()) {
+                                if (reforgeAbilityE.getAsJsonObject().has(rarity)) {
+                                    reforgeAbility = reforgeAbilityE.getAsJsonObject().get(rarity).getAsString();
+                                }
+                            }
+                        }
+
+                        if (reforgeAbility != null && !reforgeAbility.isEmpty()) {
+                            String text = EnumChatFormatting.BLUE + (reforgeName.isEmpty() ? "Bonus: " : reforgeName + " Bonus: ") +
+                                    EnumChatFormatting.GRAY + reforgeAbility;
+                            boolean first = true;
+                            for (String s : Minecraft.getMinecraft().fontRendererObj.listFormattedStringToWidth(text, 150)) {
+                                newTooltip.add((first ? "" : "  ") + s);
+                                first = false;
+                            }
+                            newTooltip.add("");
+                        }
+
+                        newTooltip.add(EnumChatFormatting.BLUE + "Stats for " + rarityFormatted + "\u00a79: [\u00a7l\u00a7m< \u00a79Switch\u00a7l\u27a1\u00a79]");
+
                         if(statsE != null && statsE.isJsonObject()) {
                             JsonObject stats = statsE.getAsJsonObject();
 
-                            String rarityFormatted = rarityArrMap.getOrDefault(rarity, rarity);
-
-                            JsonElement reforgeAbilityE = reforgeInfo.get("reforgeAbility");
-                            String reforgeAbility = null;
-                            if(reforgeAbilityE != null) {
-                                if(reforgeAbilityE.isJsonPrimitive() && reforgeAbilityE.getAsJsonPrimitive().isString()) {
-                                    reforgeAbility = Utils.getElementAsString(reforgeInfo.get("reforgeAbility"), "");
-
-                                } else if(reforgeAbilityE.isJsonObject()) {
-                                    if(reforgeAbilityE.getAsJsonObject().has(rarity)) {
-                                        reforgeAbility = reforgeAbilityE.getAsJsonObject().get(rarity).getAsString();
-                                    }
-                                }
-                            }
-
-                            if(reforgeAbility != null && !reforgeAbility.isEmpty()) {
-                                String text = EnumChatFormatting.BLUE + (reforgeName.isEmpty() ? "Bonus: " : reforgeName + " Bonus: ") +
-                                        EnumChatFormatting.GRAY+reforgeAbility;
-                                boolean first = true;
-                                for(String s : Minecraft.getMinecraft().fontRendererObj.listFormattedStringToWidth(text, 150)) {
-                                    newTooltip.add((first ? "" : "  ") + s);
-                                    first = false;
-                                }
-                                newTooltip.add("");
-                            }
-
-                            newTooltip.add(EnumChatFormatting.BLUE+"Stats for "+rarityFormatted+"\u00a79: [\u00a7l\u00a7m< \u00a79Switch\u00a7l\u27a1\u00a79]");
-
                             JsonElement statsRarE = stats.get(rarity);
-                            if(statsRarE != null && statsRarE.isJsonObject()) {
+                            if (statsRarE != null && statsRarE.isJsonObject()) {
+
                                 JsonObject statsRar = statsRarE.getAsJsonObject();
 
                                 TreeSet<Map.Entry<String, JsonElement>> sorted = new TreeSet<>(Map.Entry.comparingByKey());
                                 sorted.addAll(statsRar.entrySet());
 
-                                for(Map.Entry<String, JsonElement> entry : sorted) {
-                                    if(entry.getValue().isJsonPrimitive() && ((JsonPrimitive)entry.getValue()).isNumber()) {
+                                for (Map.Entry<String, JsonElement> entry : sorted) {
+                                    if (entry.getValue().isJsonPrimitive() && ((JsonPrimitive) entry.getValue()).isNumber()) {
                                         float statNumF = entry.getValue().getAsFloat();
                                         String statNumS;
-                                        if(statNumF % 1 == 0) {
+                                        if (statNumF % 1 == 0) {
                                             statNumS = String.valueOf(Math.round(statNumF));
                                         } else {
                                             statNumS = Utils.floatToString(statNumF, 1);
                                         }
                                         String reforgeNamePretty = WordUtils.capitalizeFully(entry.getKey().replace("_", " "));
-                                        String text = EnumChatFormatting.GRAY + reforgeNamePretty + ": " + EnumChatFormatting.GREEN+"+"+statNumS;
-                                        if(percentStats.contains(entry.getKey())) {
+                                        String text = EnumChatFormatting.GRAY + reforgeNamePretty + ": " + EnumChatFormatting.GREEN + "+" + statNumS;
+                                        if (percentStats.contains(entry.getKey())) {
                                             text += "%";
                                         }
-                                        newTooltip.add("  "+text);
+                                        newTooltip.add("  " + text);
                                     }
                                 }
                             }
-
-                            JsonElement reforgeCostsE = reforgeInfo.get("reforgeCosts");
-                            int reforgeCost = -1;
-                            if(reforgeCostsE != null) {
-                                if(reforgeCostsE.isJsonPrimitive() && reforgeCostsE.getAsJsonPrimitive().isNumber()) {
-                                    reforgeCost = (int)Utils.getElementAsFloat(reforgeInfo.get("reforgeAbility"), -1);
-
-                                } else if(reforgeCostsE.isJsonObject()) {
-                                    if(reforgeCostsE.getAsJsonObject().has(rarity)) {
-                                        reforgeCost = (int)Utils.getElementAsFloat(reforgeCostsE.getAsJsonObject().get(rarity), -1);
-                                    }
-                                }
-                            }
-
-                            if(reforgeCost >= 0) {
-                                String text = EnumChatFormatting.BLUE + "Apply Cost: " + EnumChatFormatting.GOLD+NumberFormat.getNumberInstance().format(reforgeCost) +" coins";
-                                newTooltip.add("");
-                                newTooltip.add(text);
-                            }
-
                         }
+
+                        JsonElement reforgeCostsE = reforgeInfo.get("reforgeCosts");
+                        int reforgeCost = -1;
+                        if (reforgeCostsE != null) {
+                            if (reforgeCostsE.isJsonPrimitive() && reforgeCostsE.getAsJsonPrimitive().isNumber()) {
+                                reforgeCost = (int) Utils.getElementAsFloat(reforgeInfo.get("reforgeAbility"), -1);
+
+                            } else if (reforgeCostsE.isJsonObject()) {
+                                if (reforgeCostsE.getAsJsonObject().has(rarity)) {
+                                    reforgeCost = (int) Utils.getElementAsFloat(reforgeCostsE.getAsJsonObject().get(rarity), -1);
+                                }
+                            }
+                        }
+
+                        if (reforgeCost >= 0) {
+                            String text = EnumChatFormatting.BLUE + "Apply Cost: " + EnumChatFormatting.GOLD + NumberFormat.getNumberInstance().format(reforgeCost) + " coins";
+                            newTooltip.add("");
+                            newTooltip.add(text);
+                        }
+
                     }
+
 
                     continue;
                 }
@@ -1929,23 +2034,29 @@ public class NEUEventListener {
                     } catch(Exception e) { continue; }
 
                     if(comparatorI < 0) continue;
-                    if("0123456789abcdefz".indexOf(colourCode.charAt(0)) < 0) continue;
+                    String regexText = "0123456789abcdefz";
+                    if(isSbaloaded()) {
+                        regexText = regexText + "Z";
+                    }
+
+                    if (regexText.indexOf(colourCode.charAt(0)) < 0) continue;
 
                     //item_lore = item_lore.replaceAll("\\u00A79("+lvl4Max+" IV)", EnumChatFormatting.DARK_PURPLE+"$1");
                     //9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
                     Pattern pattern;
                     try {
-                        pattern = Pattern.compile("(\\u00A79|\\u00A79\\u00A7d\\u00A7l)("+enchantName+") " +
-                                "([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))(,|$)");
+                        pattern = Pattern.compile("(\\u00A79|\\u00A7(9|l)\\u00A7d\\u00A7l)(?<enchantName>"+enchantName+") " +
+                                "(?<level>[0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))((\\u00A79)?,|( \\u00A78(?:,?[0-9]+)*)?$)");
                     } catch(Exception e) {continue;} //malformed regex
                     Matcher matcher = pattern.matcher(line);
                     int matchCount = 0;
                     while(matcher.find() && matchCount < 5) {
-                        if(Utils.cleanColour(matcher.group(2)).startsWith(" ")) continue;
+                        if(Utils.cleanColour(matcher.group("enchantName")).startsWith(" ")) continue;
+
 
                         matchCount++;
                         int level = -1;
-                        String levelStr = matcher.group(matcher.groupCount()-2);
+                        String levelStr = matcher.group("level");
                         if(levelStr == null) continue;
                         try {
                             level = Integer.parseInt(levelStr);
@@ -2005,7 +2116,7 @@ public class NEUEventListener {
                             }
                         }
                         if(matches) {
-                            String enchantText = matcher.group(2);
+                            String enchantText = matcher.group("enchantName");
                             StringBuilder extraModifiersBuilder = new StringBuilder();
 
                             if((modifierI & GuiEnchantColour.BOLD_MODIFIER) != 0) {
@@ -2031,6 +2142,8 @@ public class NEUEventListener {
                                         "\u00A7"+colourCode+extraMods+enchantText);
                                 line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText,
                                         "\u00A7"+colourCode+extraMods+enchantText);
+                                line = line.replace("\u00A7l\u00A7d\u00A7l"+enchantText,
+                                        "\u00A7"+colourCode+extraMods+enchantText);
                             } else {
                                 int offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
                                         "\\u00A79"+enchantText+".*", ""));
@@ -2040,6 +2153,10 @@ public class NEUEventListener {
                                         "\\u00A79\\u00A7d\\u00A7l"+enchantText+".*", ""));
                                 line = line.replace("\u00A79\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
                                         offset/12f+index, true));
+                                offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
+                                        "\\u00A7l\\u00A7d\\u00A7l"+enchantText+".*", ""));
+                                line = line.replace("\u00A7l\u00A7d\u00A7l"+enchantText, Utils.chromaString(enchantText,
+                                        offset/12f+index, true));
                             }
                         }
                     }
@@ -2047,6 +2164,7 @@ public class NEUEventListener {
             }
 
             newTooltip.add(line);
+
 
             if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoAucItem) {
                 if(line.contains(EnumChatFormatting.GRAY+"Buy it now: ") ||
@@ -2213,6 +2331,19 @@ public class NEUEventListener {
             index++;
         }
 
+        for (int i = newTooltip.size()-1; i >=0; i--) {
+            String line = Utils.cleanColour(newTooltip.get(i));
+            for (int i1 = 0; i1 < Utils.rarityArr.length; i1++) {
+                if(line.equals(Utils.rarityArr[i1])){
+                    if(i-2 <0){
+                        break;
+                    }
+                    newTooltip.addAll(i-1, petToolTipXPExtend(event));
+                    break;
+                }
+            }
+        }
+
         pressedShiftLast = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
         pressedArrowLast = Keyboard.isKeyDown(Keyboard.KEY_LEFT) || Keyboard.isKeyDown(Keyboard.KEY_RIGHT);
 
@@ -2232,7 +2363,106 @@ public class NEUEventListener {
         if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showPriceInfoInvItem) {
             ItemPriceInformation.addToTooltip(event.toolTip, internalname, event.itemStack);
         }
+
+
+
+
+
     }
+
+    private Pattern xpLevelPattern = Pattern.compile("(.*) (\\xA7e(.*)\\xA76/\\xA7e(.*))");
+
+    private void onItemToolTipInternalNameNull(ItemTooltipEvent event){
+        petToolTipXPExtendPetMenu(event);
+    }
+
+    private List<String> petToolTipXPExtend(ItemTooltipEvent event) {
+        List<String> tooltipText = new ArrayList();
+        if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
+            if(event.itemStack.getTagCompound().hasKey("DisablePetExp")){
+                if(event.itemStack.getTagCompound().getBoolean("DisablePetExp")){
+                    return tooltipText;
+                }
+            }
+            //7 is just a random number i chose, prob no pets with less lines than 7
+            if (event.toolTip.size() > 7) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
+
+                    GuiProfileViewer.PetLevel petlevel = null;
+
+                    //this is the item itself
+                    NBTTagCompound tag = event.itemStack.getTagCompound();
+                    if (tag.hasKey("ExtraAttributes")) {
+                        if (tag.getCompoundTag("ExtraAttributes").hasKey("petInfo")) {
+                            JsonObject petInfo = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(
+                                    tag.getCompoundTag("ExtraAttributes").getString("petInfo"), JsonObject.class);
+                            if (petInfo.has("exp") && petInfo.get("exp").isJsonPrimitive()) {
+                                JsonPrimitive exp = petInfo.getAsJsonPrimitive("exp");
+                                String petName = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(event.itemStack);
+                                        //Utils.getRarityFromInt(Utils.checkItemTypePet(event.toolTip))).getAsInt();
+                                petlevel = GuiProfileViewer.getPetLevel(petName, Utils.getRarityFromInt(Utils.checkItemTypePet(event.toolTip)), exp.getAsLong());
+                            }
+                        }
+                    }
+
+                    if (petlevel != null) {
+                        tooltipText.add("");
+                        if(petlevel.totalXp > petlevel.maxXP) {
+                            tooltipText.add(EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD +"MAX LEVEL");
+                        } else {
+                            tooltipText.add(EnumChatFormatting.GRAY+"Progress to Level "+(int)Math.floor(petlevel.level+1)+": "+EnumChatFormatting.YELLOW+Utils.round(petlevel.levelPercentage*100, 1)+"%");
+                            int levelpercentage = Math.round(petlevel.levelPercentage*20);
+                            tooltipText.add(EnumChatFormatting.DARK_GREEN+String.join("", Collections.nCopies(levelpercentage, "-"))+EnumChatFormatting.WHITE+String.join("", Collections.nCopies(20-levelpercentage, "-")));
+                            tooltipText.add(EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW  + myFormatter.format(petlevel.levelXp) +
+                                    EnumChatFormatting.GOLD + "/" + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.currentLevelRequirement) + " EXP");
+                        }
+                    }
+                }
+            }
+        }
+        return tooltipText;
+    }
+    
+    private static final String petToolTipRegex = "((Farming)|(Combat)|(Fishing)|(Mining)|(Foraging)|(Enchanting)|(Alchemy)) ((Mount)|(Pet)|(Morph)).*";
+
+    private void petToolTipXPExtendPetMenu(ItemTooltipEvent event) {
+        if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.petExtendExp) {
+            //7 is just a random number i chose, prob no pets with less lines than 7
+            if (event.toolTip.size() > 7) {
+                if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
+                    GuiProfileViewer.PetLevel petlevel = null;
+
+                    int xpLine = -1;
+                    for (int i = event.toolTip.size() - 1; i >= 0; i--) {
+                        Matcher matcher = xpLevelPattern.matcher(event.toolTip.get(i));
+                        if (matcher.matches()) {
+                            xpLine = i;
+                            event.toolTip.set(xpLine, matcher.group(1));
+                            break;
+                        } else if (event.toolTip.get(i).matches("MAX LEVEL")) {
+                            return;
+                        }
+                    }
+
+                    PetInfoOverlay.Pet pet = PetInfoOverlay.getPetFromStack(event.itemStack.getDisplayName(), NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(event.itemStack.getTagCompound()));
+                    if (pet == null) {
+                        return;
+                    }
+                    petlevel = pet.petLevel;
+
+                    if (petlevel == null||xpLine==-1) {
+                        return;
+                    }
+
+                    event.toolTip.add(xpLine+1, EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.levelXp) +
+                            EnumChatFormatting.GOLD + "/" + EnumChatFormatting.YELLOW + myFormatter.format(petlevel.currentLevelRequirement));
+
+                }
+            }
+        }
+    }
+
+    DecimalFormat myFormatter = new DecimalFormat("###,###.###");
 
     /**
      * This makes it so that holding LCONTROL while hovering over an item with NBT will show the NBT of the item.
@@ -2241,14 +2471,14 @@ public class NEUEventListener {
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
         if(!neu.isOnSkyblock()) return;
-        if(NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
+        /*if(NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
                 event.itemStack.getItem().equals(Item.getItemFromBlock(Blocks.stained_glass_pane))) {
             String first = Utils.cleanColour(event.toolTip.get(0));
             first = first.replaceAll("\\(.*\\)", "").trim();
             if(first.length() == 0) {
                 event.toolTip.clear();
             }
-        }
+        }*/
         //AH prices
         /*if(Minecraft.getMinecraft().currentScreen != null) {
             if(Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
@@ -2384,5 +2614,10 @@ public class NEUEventListener {
                 copied = false;
             }
         }
+    }
+
+    @SubscribeEvent
+    public void onRenderLast(RenderWorldLastEvent event){
+        CrystalMetalDetectorSolver.render(event.partialTicks);
     }
 }

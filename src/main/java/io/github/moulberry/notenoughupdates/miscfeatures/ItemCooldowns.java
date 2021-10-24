@@ -65,6 +65,10 @@ public class ItemCooldowns {
     }
 
     public static long getTreecapCooldownWithPet(){
+        if (!NotEnoughUpdates.INSTANCE.config.itemOverlays.enableCooldownInItemDurability){
+            return 0;
+        }
+
         PetInfoOverlay.Pet pet = PetInfoOverlay.getCurrentPet();
         if (NotEnoughUpdates.INSTANCE.config.itemOverlays.enableMonkeyCheck && pet != null) {
             if (pet.petLevel != null &&
@@ -119,12 +123,16 @@ public class ItemCooldowns {
             if(lastChar >= '0' && lastChar <= '9') {
                 return true;
             }
+        } else if(internalname.equals("DIVAN_DRILL")){
+            return true;
+        } else if(internalname.equals("GEMSTONE_GAUNTLET")){
+            return true;
         }
         return false;
     }
 
     private static void updatePickaxeCooldown() {
-        if(pickaxeCooldown == -1) {
+        if(pickaxeCooldown == -1 && NotEnoughUpdates.INSTANCE.config.itemOverlays.pickaxeAbility) {
             for(ItemStack stack : Minecraft.getMinecraft().thePlayer.inventory.mainInventory) {
                 if(stack != null && stack.hasTagCompound()) {
                     String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
@@ -148,7 +156,7 @@ public class ItemCooldowns {
 
     @SubscribeEvent
     public void onChatMessage(ClientChatReceivedEvent event) {
-        if(pickaxeCooldown != 0 && PICKAXE_ABILITY_REGEX.matcher(event.message.getFormattedText()).matches()) {
+        if(pickaxeCooldown != 0 && PICKAXE_ABILITY_REGEX.matcher(event.message.getFormattedText()).matches() && NotEnoughUpdates.INSTANCE.config.itemOverlays.pickaxeAbility) {
             updatePickaxeCooldown();
             pickaxeUseCooldownMillisRemaining = pickaxeCooldown*1000;
         }

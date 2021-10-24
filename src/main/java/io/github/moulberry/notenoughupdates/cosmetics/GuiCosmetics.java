@@ -1,7 +1,14 @@
 package io.github.moulberry.notenoughupdates.cosmetics;
 
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
+import io.github.moulberry.notenoughupdates.util.Constants;
+import io.github.moulberry.notenoughupdates.util.GuiTextures;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -41,7 +48,19 @@ public class GuiCosmetics extends GuiScreen {
     private String wantToEquipCape = null;
     private long lastCapeEquip = 0;
 
-    private List<String> tooltipToDisplay = null;
+    private List<String> cosmeticsInfoTooltip = null;
+
+
+
+    public GuiCosmetics(){
+        Gson gson = new Gson();
+
+        JsonElement cosmeticHelpTextElement = Utils.getElement(Constants.MISC, "cosmeticsinfo.lore");
+        if(cosmeticHelpTextElement.isJsonArray()) {
+            cosmeticsInfoTooltip = gson.fromJson(cosmeticHelpTextElement, new TypeToken<List<String>>(){}.getType());
+        }
+
+    }
 
     public enum CosmeticsPage {
         CAPES(new ItemStack(Items.chainmail_chestplate));
@@ -92,14 +111,16 @@ public class GuiCosmetics extends GuiScreen {
                 drawCapesPage(mouseX, mouseY, partialTicks);
                 break;
         }
+        int helpX = guiLeft+sizeX-20;
+        if(mouseX >= helpX && mouseX <= helpX+20 && mouseY >= guiTop-20 && mouseY <= guiTop) {
+            if(cosmeticsInfoTooltip != null) {
+                List<String> grayTooltip = new ArrayList<>(cosmeticsInfoTooltip.size());
+                for (String line : cosmeticsInfoTooltip) {
+                    grayTooltip.add(EnumChatFormatting.GRAY + line);
+                }
+                Utils.drawHoveringText(grayTooltip, mouseX, mouseY, width, height, -1, Minecraft.getMinecraft().fontRendererObj);
 
-        if(tooltipToDisplay != null) {
-            List<String> grayTooltip = new ArrayList<>(tooltipToDisplay.size());
-            for(String line : tooltipToDisplay) {
-                grayTooltip.add(EnumChatFormatting.GRAY + line);
             }
-            Utils.drawHoveringText(grayTooltip, mouseX, mouseY, width, height, -1, Minecraft.getMinecraft().fontRendererObj);
-            tooltipToDisplay = null;
         }
 
         StringBuilder statusMsg = new StringBuilder("Last Sync: ");
@@ -116,7 +137,7 @@ public class GuiCosmetics extends GuiScreen {
         }
 
         Minecraft.getMinecraft().fontRendererObj.drawString(EnumChatFormatting.AQUA+statusMsg.toString(),
-                guiLeft+sizeX-Minecraft.getMinecraft().fontRendererObj.getStringWidth(statusMsg.toString()), guiTop-12, 0, true);
+                guiLeft+sizeX-Minecraft.getMinecraft().fontRendererObj.getStringWidth(statusMsg.toString())-20, guiTop-12, 0, true);
 
         if(currentPage == CosmeticsPage.CAPES) {
             GlStateManager.color(1, 1, 1, 1);
@@ -148,6 +169,17 @@ public class GuiCosmetics extends GuiScreen {
 
         unlockTextField.setSize(80, 20);
         unlockTextField.render(guiLeft+sizeX-80, guiTop+sizeY+2);
+
+
+
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.help);
+        GlStateManager.color(1, 1, 1, 1);
+        Utils.drawTexturedRect(helpX, guiTop-20, 20, 20, GL11.GL_LINEAR);
+
+
+
+
     }
 
     private void renderTabs(boolean renderPressed) {

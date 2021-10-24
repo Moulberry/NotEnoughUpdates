@@ -22,6 +22,7 @@ import net.minecraft.client.shader.Shader;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Score;
@@ -1516,6 +1517,10 @@ public class DungeonMap {
                 renderMap(pos.getAbsX(scaledResolution, size/2)+size/2, pos.getAbsY(scaledResolution, size/2)+size/2,
                         colourMap, decorations, roomSizeBlocks, actualPlayers, true, event.partialTicks);
                 Utils.pushGuiScale(-1);
+            } else if(stack != null && Item.getIdFromItem(stack.getItem()) == 399){
+                //This should clear the map if you're in the dungeon boss room
+                //so when you're holding a bow it doesnt show the map anymore
+                this.colourMap = null;
             }
         }
     }

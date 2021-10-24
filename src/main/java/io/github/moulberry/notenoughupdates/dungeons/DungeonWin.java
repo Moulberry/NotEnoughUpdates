@@ -139,18 +139,23 @@ public class DungeonWin {
         }
     }
 
+
     public static void onChatMessage(ClientChatReceivedEvent e) {
         if(e.type == 2) return;
 
         if(NotEnoughUpdates.INSTANCE.config.dungeons.dungeonWinMillis < 100 || !NotEnoughUpdates.INSTANCE.config.dungeons.enableDungeonWin) return;
+
         long currentTime = System.currentTimeMillis();
         String unformatted = Utils.cleanColour(e.message.getUnformattedText());
-        if(e.message.getFormattedText().startsWith(EnumChatFormatting.RESET+"   ")) {
+
+        //Added two more Resets, cant do Reset+Reset+Reset cause idk?
+        //hypixel please dont randomly add more
+
+        if(e.message.getFormattedText().startsWith(EnumChatFormatting.RESET+""+EnumChatFormatting.RESET+""+EnumChatFormatting.RESET+"   ")){
             if(currentTime - lastDungeonFinish > 30000) {
                 Matcher matcher = TEAM_SCORE_REGEX.matcher(unformatted);
                 if(matcher.find()) {
                     lastDungeonFinish = currentTime;
-
                     String score = matcher.group(1);
                     switch (score.toUpperCase()) {
                         case "S+":
@@ -183,7 +188,7 @@ public class DungeonWin {
                     displayWin();
                 } else {
                     if(unformatted.trim().length() > 0) {
-                        text.add(e.message.getFormattedText().substring(2).trim());
+                        text.add(e.message.getFormattedText().substring(6).trim());
                     }
                 }
             } else {

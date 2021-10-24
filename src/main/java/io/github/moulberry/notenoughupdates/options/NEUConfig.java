@@ -6,13 +6,15 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
 import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.Category;
 import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
 import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.miscgui.GuiInvButtonEditor;
 import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.options.seperateSections.*;
-import io.github.moulberry.notenoughupdates.overlays.*;
+import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
+import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
+import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -21,6 +23,7 @@ import org.lwjgl.util.vector.Vector2f;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NEUConfig extends Config {
 
@@ -32,8 +35,7 @@ public class NEUConfig extends Config {
             overlay.renderDummy();
             OverlayManager.dontRenderOverlay = overlay.getClass();
         }, () -> {
-        }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfig))
+        }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)
         ));
     }
 
@@ -46,7 +48,6 @@ public class NEUConfig extends Config {
                 activeConfigCategory = ((NEUConfigEditor)wrapper.element).getSelectedCategoryName();
             }
         }
-        final String activeConfigCategoryF = activeConfigCategory;
 
         switch (runnableId) {
             case 0:
@@ -60,8 +61,7 @@ public class NEUConfig extends Config {
                         NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarPosition,
                         NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, 12, () -> {
                 }, () -> {
-                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(
-                        new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, activeConfigCategoryF))
+                }, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)
                 ));
                 return;
             case 3:
@@ -82,7 +82,11 @@ public class NEUConfig extends Config {
             case 8:
                 NotEnoughUpdates.INSTANCE.openGui = new GuiEnchantColour();
                 return;
-
+            case 9:
+                editOverlay(activeConfigCategory, OverlayManager.bonemerangOverlay, itemOverlays.bonemerangPosition);
+                return;
+            case 10:
+                editOverlay(activeConfigCategory, OverlayManager.crystalHollowOverlay, mining.crystalHollowOverlayPosition);
         }
     }
 
@@ -229,12 +233,13 @@ public class NEUConfig extends Config {
     )
     public PetOverlay petOverlay = new PetOverlay();
 
+
     @Expose
     @Category(
-            name = "AH Search GUI",
-            desc = "AH Search GUI"
+            name = "AH Tweaks",
+            desc = "Tweaks for Hypixel's (Not NEU's) Auction House"
     )
-    public AuctionHouseSearch auctionHouseSearch = new AuctionHouseSearch();
+    public AHTweaks ahTweaks = new AHTweaks();
 
     @Expose
     @Category(
@@ -259,6 +264,8 @@ public class NEUConfig extends Config {
     public static class Hidden {
         @Expose
         public HashMap<String, NEUConfig.HiddenProfileSpecific> profileSpecific = new HashMap<>();
+        @Expose
+        public HashMap<String, NEUConfig.HiddenLocationSpecific> locationSpecific = new HashMap<>();
         @Expose public List<NEUConfig.InventoryButton> inventoryButtons = createDefaultInventoryButtons();
 
         @Expose public boolean enableItemEditing = false;
@@ -276,7 +283,19 @@ public class NEUConfig extends Config {
         @Expose public ArrayList<String> previousAuctionSearches = new ArrayList<>();
         @Expose public ArrayList<String> eventFavourites = new ArrayList<>();
         @Expose public ArrayList<String> quickCommands = createDefaultQuickCommands();
-        @Expose public ArrayList<String> enchantColours = Lists.newArrayList(
+        @Expose public ArrayList<String> enchantColours = createDefaultEnchantColours();
+        @Expose public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
+        @Expose public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
+
+        @Expose public boolean firstTimeSearchFocus = true;
+
+        //These config options were added due to a graphical bug that caused the player to be unable to see the screen
+        @Expose public boolean disableBrokenCapes = false;
+
+    }
+
+    public static ArrayList<String> createDefaultEnchantColours(){
+        return Lists.newArrayList(
                 "[a-zA-Z\\- ]+:\u003e:9:6:0",
                 "[a-zA-Z\\- ]+:\u003e:6:c:0",
                 "[a-zA-Z\\- ]+:\u003e:5:5:0",
@@ -284,8 +303,6 @@ public class NEUConfig extends Config {
                 "Life Steal:\u003e:3:5:0",
                 "Scavenger:\u003e:3:5:0",
                 "Looting:\u003e:3:5:0");
-        @Expose public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
-        @Expose public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
     }
 
     private static ArrayList<String> createDefaultQuickCommands() {
@@ -311,18 +328,60 @@ public class NEUConfig extends Config {
 
     public static class HiddenProfileSpecific {
 
-        @Expose public long godPotionDuration = 0l;
+        @Expose public long godPotionDuration = 0L;
         @Expose public long puzzlerCompleted = 0L;
         @Expose public long firstCakeAte = 0L;
         @Expose public long fetchurCompleted = 0L;
         @Expose public long commissionsCompleted = 0L;
         @Expose public long experimentsCompleted = 0L;
         @Expose public long cookieBuffRemaining = 0L;
+        @Expose public List<MiningOverlay.ForgeItem> forgeItems = new ArrayList<MiningOverlay.ForgeItem>();
 
         @Expose public int commissionMilestone = 0;
+
+        @Expose public HashMap<String, Boolean> automatonParts = new HashMap<String, Boolean>(){{
+            put("Electron Transmitter", false);
+            put("FTX 3070", false);
+            put("Robotron Reflector", false);
+            put("Superlite Motor", false);
+            put("Control Switch", false);
+            put("Synthetic Heart", false);
+        }};
+
+        @Expose public HashMap<String, Boolean> divanMinesParts = new HashMap<String, Boolean>(){{
+            put("Scavenged Lapis Sword", false);
+            put("Scavenged Golden Hammer", false);
+            put("Scavenged Diamond Axe", false);
+            put("Scavenged Emerald Hammer", false);
+        }};
+
+        @Expose public HashMap<String, Integer> crystals = new HashMap<String, Integer>(){{
+            put("Jade", 0);
+            put("Amber", 0);
+            put("Amethyst", 0);
+            put("Sapphire", 0);
+            put("Topaz", 0);
+        }};
+      }
+
+      public HiddenLocationSpecific getLocationSpecific() {
+        String location = SBInfo.getInstance().getLocation();
+        if(location == null || location.isEmpty()) {
+            return null;
+        }
+
+        return getLocationSpecific(location);
     }
 
-    public static List<InventoryButton> createDefaultInventoryButtons() {
+    public HiddenLocationSpecific getLocationSpecific(String location) {
+        return hidden.locationSpecific.computeIfAbsent(location, k-> new HiddenLocationSpecific());
+    }
+
+    public static class HiddenLocationSpecific {
+            @Expose public Map<String, Integer> commissionMaxes = new HashMap<>();
+        }
+
+        public static List<InventoryButton> createDefaultInventoryButtons() {
         List<InventoryButton> buttons = new ArrayList<>();
         //Below crafting
         buttons.add(new InventoryButton(87, 63, null, true, false, false, 0, ""));

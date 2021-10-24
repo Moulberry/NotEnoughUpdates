@@ -429,15 +429,15 @@ public class APIManager {
         } catch(Exception e) {}
     }
 
-    String[] rarityArr = new String[] {
-       "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL",
-    };
+//    String[] rarityArr = new String[] {
+//       "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME",
+//    };
 
     public int checkItemType(String lore, boolean contains, String... typeMatches) {
         String[] split = lore.split("\n");
         for(int i=split.length-1; i>=0; i--) {
             String line = split[i];
-            for(String rarity : rarityArr) {
+            for(String rarity : Utils.rarityArr) {
                 for(int j=0; j<typeMatches.length; j++) {
                     if(contains) {
                         if(line.trim().contains(rarity + " " + typeMatches[j])) {

@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
+import io.github.moulberry.notenoughupdates.overlays.CraftingOverlay;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.HypixelApi;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -12,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.ContainerChest;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
@@ -797,7 +799,12 @@ public class NEUManager {
     }
 
     public void showRecipe(JsonObject item) {
-        if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
+        ContainerChest container = null;
+        if(Minecraft.getMinecraft().thePlayer.openContainer instanceof ContainerChest)
+            container = (ContainerChest) Minecraft.getMinecraft().thePlayer.openContainer;
+        if (item.has("recipe") && container != null && container.getLowerChestInventory().getDisplayName().getUnformattedText().equals("Craft Item")) {
+            CraftingOverlay.updateItem(item);
+        } else if(item.has("useneucraft") && item.get("useneucraft").getAsBoolean()) {
             displayGuiItemRecipe(item.get("internalname").getAsString(), "");
         } else if(item.has("clickcommand")) {
             String clickcommand = item.get("clickcommand").getAsString();
@@ -1201,10 +1208,17 @@ public class NEUManager {
 
         HashMap<String, String> replacements = new HashMap<>();
         if(level < 1) {
-            replacements.put("LVL", "1\u27A1100");
+            if (Constants.PETS.has("custom_pet_leveling") && Constants.PETS.getAsJsonObject("custom_pet_leveling").has(petname) && Constants.PETS.getAsJsonObject("custom_pet_leveling").getAsJsonObject(petname).has("max_level")){
+                int maxLvl = Constants.PETS.getAsJsonObject("custom_pet_leveling").getAsJsonObject(petname).get("max_level").getAsInt();
+                replacements.put("LVL", "1\u27A1"+maxLvl);
+            } else {
+                replacements.put("LVL", "1\u27A1100");
+            }
         } else {
             replacements.put("LVL", ""+level);
         }
+
+
         if(petnums != null) {
             if(petnums.has(petname)) {
                 JsonObject petInfo = petnums.get(petname).getAsJsonObject();
@@ -1220,8 +1234,18 @@ public class NEUManager {
                     if(level < 1) {
                         JsonArray otherNumsMin = min.get("otherNums").getAsJsonArray();
                         JsonArray otherNumsMax = max.get("otherNums").getAsJsonArray();
+                        boolean addZero = false;
+                        if(petInfoTier.has("stats_levelling_curve")){
+                            String[] stringArray = petInfoTier.get("stats_levelling_curve").getAsString().split(":");
+                            if(stringArray.length == 3) {
+                                int type = Integer.parseInt(stringArray[2]);
+                                if(type == 1){
+                                    addZero = true;
+                                }
+                            }
+                        }
                         for(int i=0; i<otherNumsMax.size(); i++) {
-                            replacements.put(""+i, removeUnusedDecimal(Math.floor(otherNumsMin.get(i).getAsFloat()*10)/10f)+
+                            replacements.put(""+i, (addZero?"0\u27A1":"")+removeUnusedDecimal(Math.floor(otherNumsMin.get(i).getAsFloat()*10)/10f)+
                                     "\u27A1"+removeUnusedDecimal(Math.floor(otherNumsMax.get(i).getAsFloat()*10)/10f));
                         }
 
@@ -1229,25 +1253,64 @@ public class NEUManager {
                             int statMax = (int)Math.floor(entry.getValue().getAsFloat());
                             int statMin = (int)Math.floor(min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat());
                             String statStr = (statMin>0?"+":"")+statMin+"\u27A1"+statMax;
+                            statStr = (addZero?"0\u27A1":"")+statStr;
                             replacements.put(entry.getKey(), statStr);
                         }
                     } else {
-                        float minMix = (100-level)/99f;
-                        float maxMix = (level-1)/99f;
+
+                        int minStatsLevel = 0;
+                        int maxStatsLevel = 100;
+                        int statsLevelingType = -1;
+
+                        int statsLevel = level;
+
+
+                        if(petInfoTier.has("stats_levelling_curve")) {
+                            String[] stringArray = petInfoTier.get("stats_levelling_curve").getAsString().split(":");
+                            if (stringArray.length == 3) {
+                                minStatsLevel = Integer.parseInt(stringArray[0]);
+                                maxStatsLevel = Integer.parseInt(stringArray[1]);
+                                statsLevelingType = Integer.parseInt(stringArray[2]);
+                                switch (statsLevelingType) {
+                                    //Case for maybe a pet that might exist
+                                    case 0:
+                                    case 1:
+                                        if (level < minStatsLevel) {
+                                            statsLevel = 1;
+                                        } else if (level < maxStatsLevel) {
+                                            statsLevel = level - minStatsLevel + 1;
+                                        } else {
+                                            statsLevel = maxStatsLevel - minStatsLevel + 1;
+                                        }
+                                        break;
+
+                                }
+                            }
+                        }
+                        float minMix = (maxStatsLevel-(minStatsLevel-(statsLevelingType==-1?0:1))-statsLevel)/99f;
+                        float maxMix = (statsLevel-1)/99f;
 
                         JsonArray otherNumsMin = min.get("otherNums").getAsJsonArray();
                         JsonArray otherNumsMax = max.get("otherNums").getAsJsonArray();
                         for(int i=0; i<otherNumsMax.size(); i++) {
                             float val = otherNumsMin.get(i).getAsFloat()*minMix + otherNumsMax.get(i).getAsFloat()*maxMix;
-                            replacements.put(""+i, removeUnusedDecimal(Math.floor(val*10)/10f));
+                            if(statsLevelingType == 1 && level < minStatsLevel){
+                                replacements.put("" + i, "0");
+                            } else {
+                                replacements.put("" + i, removeUnusedDecimal(Math.floor(val * 10) / 10f));
+                            }
                         }
 
                         for(Map.Entry<String, JsonElement> entry : max.get("statNums").getAsJsonObject().entrySet()) {
-                            float statMax = entry.getValue().getAsFloat();
-                            float statMin = min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat();
-                            float val = statMin*minMix + statMax*maxMix;
-                            String statStr = (statMin>0?"+":"")+(int)Math.floor(val);
-                            replacements.put(entry.getKey(), statStr);
+                            if(statsLevelingType == 1 && level < minStatsLevel) {
+                                replacements.put(entry.getKey(), "0");
+                            } else {
+                                float statMax = entry.getValue().getAsFloat();
+                                float statMin = min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat();
+                                float val = statMin * minMix + statMax * maxMix;
+                                String statStr = (statMin > 0 ? "+" : "") + (int) Math.floor(val);
+                                replacements.put(entry.getKey(), statStr);
+                            }
                         }
                     }
                 }

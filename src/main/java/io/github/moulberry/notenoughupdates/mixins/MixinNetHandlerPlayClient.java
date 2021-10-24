@@ -82,11 +82,6 @@ public class MixinNetHandlerPlayClient {
         ItemCooldowns.processBlockChangePacket(packetIn);
     }
 
-    @Inject(method="handlePlayerAbilities", at=@At("HEAD"))
-    public void handlePlayerAbilities(S39PacketPlayerAbilities packetIn, CallbackInfo ci) {
-        FlyFix.onReceiveAbilities(packetIn);
-    }
-
     @Inject(method="addToSendQueue", at=@At("HEAD"))
     public void addToSendQueue(Packet packet, CallbackInfo ci) {
         if(packet instanceof C0EPacketClickWindow) {

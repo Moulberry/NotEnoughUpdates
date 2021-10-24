@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -55,6 +56,8 @@ public class BetterContainers {
     private static int lastHashcodeCheck = 0;
 
     public static HashMap<Integer, ItemStack> itemCache = new HashMap<>();
+
+    public static int profileViewerStackIndex = -1;
 
     public static void clickSlot(int slot) {
         clickedSlotMillis = System.currentTimeMillis();
@@ -119,17 +122,25 @@ public class BetterContainers {
         return isChestOpen() && ((loaded && texture != null) || System.currentTimeMillis() - lastRenderMillis < 200) && !isBlacklistedInventory();
     }
 
-    public static boolean isBlankStack(ItemStack stack) {
+    public static boolean isBlankStack(int index, ItemStack stack) {
+        if(index != -1 && index == profileViewerStackIndex) {
+            return false;
+        }
+
         return stack != null && stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane) &&
                 stack.getItemDamage() == 15 &&
                 stack.getDisplayName() != null && stack.getDisplayName().trim().isEmpty();
     }
 
-    public static boolean shouldRenderStack(ItemStack stack) {
-        return !isBlankStack(stack) && !isToggleOff(stack) && !isToggleOn(stack);
+    public static boolean shouldRenderStack(int index, ItemStack stack) {
+        return !isBlankStack(index, stack) && !isToggleOff(stack) && !isToggleOn(stack);
     }
 
-    public static boolean isButtonStack(ItemStack stack) {
+    public static boolean isButtonStack(int index, ItemStack stack) {
+        if(index == profileViewerStackIndex) {
+            return true;
+        }
+
         return stack != null && stack.getItem() != Item.getItemFromBlock(Blocks.stained_glass_pane)
                 && NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack) == null && !isToggleOn(stack) && !isToggleOff(stack);
     }
@@ -220,7 +231,7 @@ public class BetterContainers {
                         !lower.getDisplayName().getUnformattedText().contains("Stakes");
                 for (int index = 0; index < size; index++) {
                     ItemStack stack = getStackCached(lower, index);
-                    buttons[index%9][index/9] = isButtonStack(stack);
+                    buttons[index%9][index/9] = isButtonStack(index, stack);
 
                     if(ultrasequencer && stack.getItem() == Items.dye) {
                         buttons[index%9][index/9] = false;
@@ -234,7 +245,7 @@ public class BetterContainers {
                         //buttons[index%9][index/9] = false;
                         //slots[index%9][index/9] = true;
                     } else {
-                        slots[index%9][index/9] = !isBlankStack(stack) && !buttons[index%9][index/9];
+                        slots[index%9][index/9] = !isBlankStack(index, stack) && !buttons[index%9][index/9];
                     }
                 }
                 for (int index = 0; index < size; index++) {
@@ -351,7 +362,7 @@ public class BetterContainers {
             IInventory lower = ((ContainerChest)container).getLowerChestInventory();
             int size = lower.getSizeInventory();
             for(int index=0; index<size; index++) {
-                if(isBlankStack(getStackCached(lower, index))) return true;
+                if(isBlankStack(index, getStackCached(lower, index))) return true;
             }
         }
         return false;

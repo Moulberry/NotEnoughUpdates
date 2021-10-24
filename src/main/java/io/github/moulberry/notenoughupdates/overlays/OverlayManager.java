@@ -15,6 +15,8 @@ public class OverlayManager {
     public static FarmingOverlay farmingOverlay;
     public static PetInfoOverlay petInfoOverlay;
     public static TimersOverlay timersOverlay;
+    public static BonemerangOverlay bonemerangOverlay;
+    public static CrystalHollowOverlay crystalHollowOverlay;
     public static final List<TextOverlay> textOverlays = new ArrayList<>();
 
     static {
@@ -53,7 +55,7 @@ public class OverlayManager {
                 "\u00a73Forge 2) \u00a77EMPTY\n\u00a73Forge 3) \u00a77EMPTY\n\u00a73Forge 4) \u00a77EMPTY");
         miningOverlay = new MiningOverlay(NotEnoughUpdates.INSTANCE.config.mining.overlayPosition, () -> {
             List<String> strings = new ArrayList<>();
-            for(int i : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText) {
+            for(int i : NotEnoughUpdates.INSTANCE.config.mining.dwarvenText2) {
                 if(i >= 0 && i < miningDummy.size()) strings.add(miningDummy.get(i));
             }
             return strings;
@@ -108,10 +110,69 @@ public class OverlayManager {
             return TextOverlayStyle.BACKGROUND;
         });
 
+        List<String> bonemerangDummy = Lists.newArrayList(
+                "\u00a7cBonemerang will break!",
+                "\u00a77Targets: \u00a76\u00a7l10"
+        );
+        bonemerangOverlay = new BonemerangOverlay(NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangPosition, () -> bonemerangDummy, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.itemOverlays.bonemerangOverlayStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
+        List<String> crystalHollowOverlayDummy = Lists.newArrayList(
+                "\u00a73Amber Crystal: \u00a7aPlaced\n" +
+                        "\u00a73Sapphire Crystal: \u00a7eCollected\n" +
+                        "\u00a73Jade Crystal: \u00a7eMissing\n" +
+                        "\u00a73Amethyst Crystal: \u00a7cMissing\n" +
+                        "\u00a73Topaz Crystal: \u00a7cMissing\n",
+                "\u00a73Crystals: \u00a7a4/5",
+                "\u00a73Crystals: \u00a7a80%",
+                "\u00a73Electron Transmitter: \u00a7aDone\n" +
+                        "\u00a73Robotron Reflector: \u00a7eIn Storage\n" +
+                        "\u00a73Superlite Motor: \u00a7eIn Inventory\n" +
+                        "\u00a73Synthetic Hearth: \u00a7cMissing\n" +
+                        "\u00a73Control Switch: \u00a7cMissing\n" +
+                        "\u00a73FTX 3070: \u00a7cMissing",
+                "\u00a73Electron Transmitter: \u00a7a3\n" +
+                        "\u00a73Robotron Reflector: \u00a7e2\n" +
+                        "\u00a73Superlite Motor: \u00a7e1\n" +
+                        "\u00a73Synthetic Hearth: \u00a7c0\n" +
+                        "\u00a73Control Switch: \u00a7c0\n" +
+                        "\u00a73FTX 3070: \u00a7c0",
+                "\u00a73Automaton parts: \u00a7a5/6",
+                "\u00a73Automaton parts: \u00a7a83%",
+                "\u00a73Scavenged Lapis Sword: \u00a7aDone\n" +
+                        "\u00a73Scavenged Golden Hammer: \u00a7eIn Storage\n" +
+                        "\u00a73Scavenged Diamond Axe: \u00a7eIn Inventory\n" +
+                        "\u00a73Scavenged Emerald Hammer: \u00a7cMissing\n",
+                "\u00a73Scavenged Lapis Sword: \u00a7a3\n" +
+                        "\u00a73Scavenged Golden Hammer: \u00a7e2\n" +
+                        "\u00a73Scavenged Diamond Axe: \u00a7e1\n" +
+                        "\u00a73Scavenged Emerald Hammer: \u00a7c0\n",
+                "\u00a73Mines of Divan parts: \u00a7a3/4",
+                "\u00a73Mines of Divan parts: \u00a7a75%"
+        );
+        crystalHollowOverlay = new CrystalHollowOverlay(NotEnoughUpdates.INSTANCE.config.mining.crystalHollowOverlayPosition, () -> {
+            List<String> strings = new ArrayList<>();
+            for (int i : NotEnoughUpdates.INSTANCE.config.mining.crystalHollowText) {
+                if (i >= 0 && i < crystalHollowOverlayDummy.size()) strings.add(crystalHollowOverlayDummy.get(i));
+            }
+            return strings;
+        }, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.mining.crystalHollowOverlayStyle;
+            if (style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
+
         textOverlays.add(miningOverlay);
         textOverlays.add(farmingOverlay);
         textOverlays.add(petInfoOverlay);
-
+        textOverlays.add(bonemerangOverlay);
+        textOverlays.add(crystalHollowOverlay);
     }
 
 }

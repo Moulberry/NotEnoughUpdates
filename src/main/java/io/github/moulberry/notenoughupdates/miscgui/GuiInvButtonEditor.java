@@ -1,8 +1,6 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GlScissorStack;
@@ -25,14 +23,21 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour.custom_ench_colour;
 
 public class GuiInvButtonEditor extends GuiScreen {
 
@@ -40,6 +45,8 @@ public class GuiInvButtonEditor extends GuiScreen {
     private static final ResourceLocation EDITOR = new ResourceLocation("notenoughupdates:invbuttons/editor.png");
     private static final ResourceLocation EXTRA_ICONS_JSON = new ResourceLocation("notenoughupdates:invbuttons/extraicons.json");
     private static final ResourceLocation PRESETS_JSON = new ResourceLocation("notenoughupdates:invbuttons/presets.json");
+
+    private static final String sharePrefix = "NEUBUTTONS/";
 
     private int xSize = 176;
     private int ySize = 166;
@@ -284,6 +291,20 @@ public class GuiInvButtonEditor extends GuiScreen {
                 fontRendererObj.drawString("+", x+6, y+5, 0xffcccccc);
             }
         }
+        Minecraft.getMinecraft().getTextureManager().bindTexture(custom_ench_colour);
+        GlStateManager.color(1, 1, 1, 1);
+        Utils.drawTexturedRect(guiLeft-88-2-22, guiTop+2, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
+        Utils.drawTexturedRect(guiLeft-88-2-22, guiTop+2+24, 88, 20, 64/217f, 152/217f, 48/78f, 68/78f, GL11.GL_NEAREST);
+        Utils.drawStringCenteredScaledMaxWidth("Load preset", fontRendererObj, guiLeft-44-2-22, guiTop+8, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("from Clipboard", fontRendererObj, guiLeft-44-2-22, guiTop+16, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("Save preset", fontRendererObj, guiLeft-44-2-22, guiTop+8+24, false, 86, 4210752);
+        Utils.drawStringCenteredScaledMaxWidth("to Clipboard", fontRendererObj, guiLeft-44-2-22, guiTop+16+24, false, 86, 4210752);
+
+        if(!validShareContents()) {
+            Gui.drawRect(guiLeft-88-2-22, guiTop+2, guiLeft-2-22, guiTop+2+20, 0x80000000);
+        }
+
+        GlStateManager.color(1, 1, 1, 1);
 
         if(presets != null) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(EDITOR);
@@ -463,6 +484,22 @@ public class GuiInvButtonEditor extends GuiScreen {
         super.handleMouseInput();
     }
 
+    private boolean validShareContents() {
+        try {
+            String base64 = (String)Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+
+            if(base64.length() <= sharePrefix.length()) return false;
+
+            try {
+                return new String(Base64.getDecoder().decode(base64)).startsWith(sharePrefix);
+            } catch (IllegalArgumentException e){
+                return false;
+            }
+        } catch (HeadlessException | IOException | UnsupportedFlavorException | IllegalStateException e) {
+            return false;
+        }
+    }
+
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
@@ -553,6 +590,74 @@ public class GuiInvButtonEditor extends GuiScreen {
                     editingButton = button;
                     commandTextField.setText(editingButton.command);
                 }
+                return;
+            }
+        }
+
+        if(mouseX > guiLeft-2-88-22 && mouseX< guiLeft-2-22) {
+            if (mouseY > guiTop + 2 && mouseY < guiTop + 22) {
+
+                String base64;
+
+                try {
+                    base64 = (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+                } catch (HeadlessException | IOException | UnsupportedFlavorException e) {
+                    return;
+                }
+
+                if(base64.length() <= sharePrefix.length()) return;
+
+                String jsonString;
+                try {
+                    jsonString = new String(Base64.getDecoder().decode(base64));
+                    if(!jsonString.startsWith(sharePrefix)) return;
+                    jsonString = jsonString.substring(sharePrefix.length());
+                } catch (IllegalArgumentException e) {
+                    return;
+
+                }
+                JsonArray presetArray;
+                try {
+                    presetArray = new JsonParser().parse(jsonString).getAsJsonArray();
+                } catch (IllegalStateException | JsonParseException e) {
+                    return;
+                }
+
+
+                List<NEUConfig.InventoryButton> buttons = new ArrayList<>();
+                System.out.println(presetArray.size());
+                try {
+                    for (int i = 0; i < presetArray.size(); i++) {
+
+
+                        JsonElement shittyO = presetArray.get(i);
+                        JsonElement lessShittyO = new JsonParser().parse(shittyO.getAsString());
+                        if (lessShittyO.isJsonObject()) {
+                            JsonObject o = lessShittyO.getAsJsonObject();
+                            NEUConfig.InventoryButton button = NotEnoughUpdates.INSTANCE.manager.gson.fromJson(o, NEUConfig.InventoryButton.class);
+                            buttons.add(button);
+                        }
+
+                    }
+
+                    NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons = buttons;
+                    return;
+                } catch(JsonParseException | ClassCastException | IllegalStateException e){
+                    return;
+                }
+
+
+            } else if (mouseY > guiTop + 26 && mouseY < guiTop + 26 + 20) {
+
+                List<NEUConfig.InventoryButton> result = NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons;
+                JsonArray jsonArray = new JsonArray();
+
+                for (int i = 0; i < result.size(); i++) {
+
+                    jsonArray.add(new JsonPrimitive(NotEnoughUpdates.INSTANCE.manager.gson.toJson(result.get(i), NEUConfig.InventoryButton.class)));
+                }
+                String base64String = Base64.getEncoder().encodeToString((sharePrefix+jsonArray).getBytes(StandardCharsets.UTF_8));
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(base64String), null);
                 return;
             }
         }

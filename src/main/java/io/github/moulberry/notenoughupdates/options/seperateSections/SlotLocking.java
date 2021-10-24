@@ -50,6 +50,19 @@ public class SlotLocking {
     public boolean lockSlotsInTrade = true;
 
     @Expose
+    /*@ConfigOption(
+            name = "Item Swap drop delay",
+            desc = "Set the delay between swapping to another item and being able to drop it.\n"+
+                    "This is to fix a bug that allowed you to drop slot locked items."
+    )
+    @ConfigEditorSlider(
+            minValue = 0,
+            maxValue = 500,
+            minStep = 5
+    )*/
+    public int slotLockSwapDelay = 100;
+
+    @Expose
     @ConfigOption(
             name = "Slot Lock Sound",
             desc = "Play a ding when locking/unlocking slots"

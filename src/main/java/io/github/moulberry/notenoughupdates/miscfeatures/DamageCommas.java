@@ -18,7 +18,7 @@ public class DamageCommas {
 
     private static final WeakHashMap<EntityLivingBase, ChatComponentText> replacementMap = new WeakHashMap<>();
 
-    private static final EnumChatFormatting[] colours = {EnumChatFormatting.RED, EnumChatFormatting.GOLD, EnumChatFormatting.YELLOW, EnumChatFormatting.WHITE};
+    private static final EnumChatFormatting[] coloursHypixel = {EnumChatFormatting.WHITE, EnumChatFormatting.YELLOW, EnumChatFormatting.GOLD, EnumChatFormatting.RED, EnumChatFormatting.RED, EnumChatFormatting.WHITE};
 
     private static final char STAR = '\u2727';
     private static final Pattern PATTERN_CRIT = Pattern.compile("\u00a7f"+STAR+"((?:\u00a7.\\d)+)\u00a7."+STAR+"(.*)");
@@ -81,7 +81,11 @@ public class DamageCommas {
 
             int colourIndex = 0;
             for(char c : newFormatted.toString().toCharArray()) {
-                newFormattedCrit.append(colours[colourIndex++ % colours.length]);
+                if(c == ',') {
+                    newFormattedCrit.append(EnumChatFormatting.GRAY);
+                } else {
+                    newFormattedCrit.append(coloursHypixel[colourIndex++ % coloursHypixel.length]);
+                }
                 newFormattedCrit.append(c);
             }
 

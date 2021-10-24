@@ -33,6 +33,8 @@ import java.util.List;
 
 public class NEUConfigEditor extends GuiElement {
 
+    public static NEUConfigEditor editor = new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config);
+
     private static final ResourceLocation[] socialsIco = new ResourceLocation[] {
             DISCORD,
             GITHUB,
@@ -112,6 +114,8 @@ public class NEUConfigEditor extends GuiElement {
                 }
             }
         }
+
+        editor = this;
     }
 
     private LinkedHashMap<String, ConfigProcessor.ProcessedCategory> getCurrentConfigEditing() {

@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
+import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.item.ItemStack;
@@ -20,6 +21,12 @@ public class ItemPriceInformation {
     }
 
     public static boolean addToTooltip(List<String> tooltip, String internalname, ItemStack stack, boolean useStackSize) {
+        if(stack.getTagCompound().hasKey("disableNeuTooltip") && stack.getTagCompound().getBoolean("disableNeuTooltip")){
+            return false;
+        }
+        if(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.disablePriceKey && !KeybindHelper.isKeyDown(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.disablePriceKeyKeybind)){
+            return false;
+        }
         JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
         JsonObject bazaarInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo(internalname);
         float lowestBinAvg = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAvgBin(internalname);
@@ -98,6 +105,7 @@ public class ItemPriceInformation {
                         break;
                     case 4:
                         if(craftCost.fromRecipe) {
+                            if((int)craftCost.craftCost == 0){ continue;}
                             if(!added) {
                                 tooltip.add("");
                                 added = true;
@@ -165,6 +173,7 @@ public class ItemPriceInformation {
                         break;
                     case 3:
                         if(craftCost.fromRecipe) {
+                            if((int)craftCost.craftCost == 0){ continue;}
                             if(!added) {
                                 tooltip.add("");
                                 added = true;
