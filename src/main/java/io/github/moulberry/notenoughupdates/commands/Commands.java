@@ -528,10 +528,10 @@ public class Commands {
                                 EnumChatFormatting moneyPrefix = money>50*1000*1000?
                                         (money>200*1000*1000?EnumChatFormatting.GREEN:EnumChatFormatting.YELLOW):EnumChatFormatting.RED;
                                 Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-                                        g+"Purse: "+moneyPrefix+Utils.shortNumberFormat(purseBalance, 0) + g+" - Bank: " +
+                                        g+"Purse: "+moneyPrefix+Utils.shortNumberFormat(purseBalance) + g+" - Bank: " +
                                                 (bankBalance == -1 ? EnumChatFormatting.YELLOW+"N/A" : moneyPrefix+
-                                                        (isMe?"4.8b":Utils.shortNumberFormat(bankBalance, 0))) +
-                                                (networth > 0 ? g+" - Net: "+moneyPrefix+Utils.shortNumberFormat(networth, 0) : "")));
+                                                        (isMe?"4.8b":Utils.shortNumberFormat(bankBalance))) +
+                                                (networth > 0 ? g+" - Net: "+moneyPrefix+Utils.shortNumberFormat(networth, 2) : "")));
 
                                 overallScore += Math.min(2, money/(100f*1000*1000));
 

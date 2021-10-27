@@ -357,8 +357,8 @@ public class PetInfoOverlay extends TextOverlay {
                 roundFloat(currentPet.petLevel.currentLevelRequirement)
                 + EnumChatFormatting.YELLOW + " (" + getLevelPercent(currentPet) + "%)";
 
-        String lvlString = EnumChatFormatting.AQUA + "" + Utils.shortNumberFormat(levelXp, 0) + "/" +
-                Utils.shortNumberFormat(currentPet.petLevel.currentLevelRequirement, 0)
+        String lvlString = EnumChatFormatting.AQUA + "" + Utils.shortNumberFormat(levelXp) + "/" +
+                Utils.shortNumberFormat(currentPet.petLevel.currentLevelRequirement)
                 + EnumChatFormatting.YELLOW + " (" + getLevelPercent(currentPet) + "%)";
 
         float xpGain;
