@@ -75,12 +75,6 @@ public class GuiProfileViewer extends GuiScreen {
     public static final ResourceLocation pv_ironman = new ResourceLocation("notenoughupdates:pv_ironman.png");
     public static final ResourceLocation resource_packs = new ResourceLocation("minecraft:textures/gui/resource_packs.png");
     public static final ResourceLocation icons = new ResourceLocation("textures/gui/icons.png");
-    public static final ResourceLocation lockedPerk = new ResourceLocation("minecraft:textures/items/coal.png");
-    public static final ResourceLocation unlockedPerk = new ResourceLocation("minecraft:textures/items/emerald.png");
-    public static final ResourceLocation potmUnlocked = new ResourceLocation("minecraft:textures/blocks/redstone_block.png");
-    public static final ResourceLocation potmlocked = new ResourceLocation("minecraft:textures/blocks/bedrock.png");
-    public static final ResourceLocation abilityUnlocked = new ResourceLocation("minecraft:textures/blocks/emerald_block.png");
-    public static final ResourceLocation abilitylocked = new ResourceLocation("minecraft:textures/blocks/coal_block.png");
 
     private static final NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
 
@@ -2851,17 +2845,26 @@ public class GuiProfileViewer extends GuiScreen {
         int skyMall = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.daily_effect"), 0)));
         int goblinKiller = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.goblin_killer"), 0)));
         int seasonMine = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_experience"), 0)));
+        float seasonMineStat = (float) ((Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.nodes.mining_experience"), 0)) * 0.1 + 5);
         int quickForge = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.forge_time"), 0)));
+        float quickForgeStat = (float) ((Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.nodes.forge_time"), 0)) * .5 + 10);
         int frontLoad = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.front_loaded"), 0)));
         int orbit = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.experience_orbs"), 0)));
-        int starPowder = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.fallen_star_bonus"), 0)));
+        int crystallized = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.fallen_star_bonus"), 0)));
         int professional = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.professional"), 0)));
+        int professionalStat = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.professional"), 0)) * 5 + 50);
         int greatExplorer = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.great_explorer"), 0)));
+        int greatExplorerStat = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.great_explorer"), 0)) * 4 + 16);
         int fortunate = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.fortunate"), 0)));
+        int fortunateStat = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.fortunate"), 0)) * 4 + 20);
         int lonesomeMiner = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.lonesome_miner"), 0)));
+        float lonesomeMinerStat = (float) ((Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.nodes.lonesome_miner"), 0)) * .5 + 5);
         int miningFortune2 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_fortune_2"), 0)));
+        int miningFortune2Stat = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_fortune_2"), 0)) * 5);
         int miningSpeed2 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_speed_2"), 0)));
+        int miningSpeed2Stat = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_speed_2"), 0)) * 40);
         int miningSpeedBoost = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_speed_boost"), 0)));
+        int veinSeeker = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.vein_seeker"), 0)));
 
         if (effMinerStat2 < 1) {
             effMinerStat2 = 1;
@@ -2870,6 +2873,12 @@ public class GuiProfileViewer extends GuiScreen {
         int potm = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.special_0"), 0)));
         int moul = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mole"), 0)));
         float moulStat = (float) ((Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.nodes.mole"), 0)) * 0.051);
+        double moleperkstat = (double) moul/20 - 0.55 + 50;
+        double moleperkstat2 = (double) Math.round(moleperkstat * 100) / 100;
+        float output =  (float) (moleperkstat2 % 1) * 100;
+        if (output==0) {
+            output = 100;
+        }
         int powderBuff = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.powder_buff"), 0)));
 
         //The logic for some of the stats
@@ -2930,7 +2939,7 @@ public class GuiProfileViewer extends GuiScreen {
                 guiLeft + xStart, guiTop + yStartTop + 125, 110);
         Utils.renderAlignedString(EnumChatFormatting.RED + "Ruby Crystal:", EnumChatFormatting.WHITE + rubyCrystalString,
                 guiLeft + xStart, guiTop + yStartTop + 135, 110);
-        Utils.renderAlignedString(EnumChatFormatting.BLUE + "Total Placed Crystals", EnumChatFormatting.WHITE + shortNumberFormat(crystalPlacedAmount, 0),
+        Utils.renderAlignedString(EnumChatFormatting.BLUE + "Total Placed Crystals:", EnumChatFormatting.WHITE + shortNumberFormat(crystalPlacedAmount, 0),
                 guiLeft + xStart, guiTop + yStartTop + 145, 110);
 
         //hotm render
@@ -2938,12 +2947,13 @@ public class GuiProfileViewer extends GuiScreen {
         if (miningSpeed == 0) {
             List<String> miningSpeedTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(lockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 138, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 138));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 138 && mouseY <= guiTop + yStartTop + 154) {
                     miningSpeedTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Mining Speed",
+                            EnumChatFormatting.RED + "Mining Speed",
                             EnumChatFormatting.GRAY + "Level " + miningSpeed + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
                             EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + miningSpeedStat + EnumChatFormatting.GOLD + " ⸕ Mining",
@@ -2956,12 +2966,13 @@ public class GuiProfileViewer extends GuiScreen {
         } if (miningSpeed > 0) {
             List<String> miningSpeedTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(unlockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 138, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 138));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 138 && mouseY <= guiTop + yStartTop + 154) {
                     miningSpeedTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Mining Speed",
+                            EnumChatFormatting.GREEN + "Mining Speed",
                             EnumChatFormatting.GRAY + "Level " + miningSpeed + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
                             EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + miningSpeedStat + EnumChatFormatting.GOLD + " ⸕ Mining",
@@ -2975,13 +2986,13 @@ public class GuiProfileViewer extends GuiScreen {
         if (miningFortune == 0) {
             List<String> miningFortuneTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(lockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
-
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 114));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
                     miningFortuneTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Mining Fortune",
+                            EnumChatFormatting.RED + "Mining Fortune",
                             EnumChatFormatting.GRAY + "Level " + miningFortune + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
                             EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + miningFortuneStat + EnumChatFormatting.GOLD + " ☘ Mining",
@@ -2994,13 +3005,13 @@ public class GuiProfileViewer extends GuiScreen {
         } if (miningFortune > 0) {
             List<String> miningFortuneTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(unlockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
-
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 114));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
                     miningFortuneTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Mining Fortune",
+                            EnumChatFormatting.GREEN + "Mining Fortune",
                             EnumChatFormatting.GRAY + "Level " + miningFortune + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
                             EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + miningFortuneStat + EnumChatFormatting.GOLD + " ☘ Mining",
@@ -3014,13 +3025,13 @@ public class GuiProfileViewer extends GuiScreen {
         if (tittyInsane == 0) {
             List<String> tittyInsaneTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(lockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 231, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
-
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 231), (int) (guiTop + yStartTop + 114));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 231 && mouseX < guiLeft + xStart + 247) {
                 if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
                     tittyInsaneTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Titanium Insanium",
+                            EnumChatFormatting.RED + "Titanium Insanium",
                             EnumChatFormatting.GRAY + "Level " + tittyInsane + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
                             EnumChatFormatting.GRAY + "When mining Mithril Ore, you",
@@ -3035,13 +3046,13 @@ public class GuiProfileViewer extends GuiScreen {
         } if (tittyInsane > 0) {
             List<String> tittyInsaneTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(unlockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 231, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
-
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 231), (int) (guiTop + yStartTop + 114));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 231 && mouseX < guiLeft + xStart + 247) {
                 if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
                     tittyInsaneTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Titanium Insanium",
+                            EnumChatFormatting.GREEN + "Titanium Insanium",
                             EnumChatFormatting.GRAY + "Level " + tittyInsane + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
                             EnumChatFormatting.GRAY + "When mining Mithril Ore, you",
@@ -3058,13 +3069,14 @@ public class GuiProfileViewer extends GuiScreen {
             if (potm == 0) {
                 List<String> mngspeedBoostTooltip = null;
                 GlStateManager.color(1, 1, 1, 1);
-                Minecraft.getMinecraft().getTextureManager().bindTexture(abilitylocked);
-                Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
-
+                GlStateManager.disableLighting();
+                RenderHelper.enableGUIStandardItemLighting();
+                Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.coal_block), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 114));
+                GlStateManager.enableLighting();
                 if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
                     if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
                         mngspeedBoostTooltip = Lists.newArrayList(
-                                EnumChatFormatting.YELLOW + "Mining Speed Boost",
+                                EnumChatFormatting.RED + "Mining Speed Boost",
                                 "",
                                 EnumChatFormatting.GRAY + "Pickaxe Ability: Mining Speed Boost",
                                 EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "200% " + EnumChatFormatting.GOLD + "⸕ Mining",
@@ -3079,13 +3091,14 @@ public class GuiProfileViewer extends GuiScreen {
             if (potm > 0) {
                 List<String> mngspeedBoostTooltip = null;
                 GlStateManager.color(1, 1, 1, 1);
-                Minecraft.getMinecraft().getTextureManager().bindTexture(abilitylocked);
-                Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
-
+                GlStateManager.disableLighting();
+                RenderHelper.enableGUIStandardItemLighting();
+                Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.coal_block), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 114));
+                GlStateManager.enableLighting();
                 if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
                     if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
                         mngspeedBoostTooltip = Lists.newArrayList(
-                                EnumChatFormatting.YELLOW + "Mining Speed Boost",
+                                EnumChatFormatting.RED + "Mining Speed Boost",
                                 "",
                                 EnumChatFormatting.GRAY + "Pickaxe Ability: Mining Speed Boost",
                                 EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "300% " + EnumChatFormatting.GOLD + "⸕ Mining",
@@ -3101,13 +3114,14 @@ public class GuiProfileViewer extends GuiScreen {
             if (potm == 0) {
                 List<String> mngspeedBoostTooltip = null;
                 GlStateManager.color(1, 1, 1, 1);
-                Minecraft.getMinecraft().getTextureManager().bindTexture(abilityUnlocked);
-                Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
-
+                GlStateManager.disableLighting();
+                RenderHelper.enableGUIStandardItemLighting();
+                Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.emerald_block), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 114));
+                GlStateManager.enableLighting();
                 if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
                     if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
                         mngspeedBoostTooltip = Lists.newArrayList(
-                                EnumChatFormatting.YELLOW + "Mining Speed Boost",
+                                EnumChatFormatting.GREEN + "Mining Speed Boost",
                                 "",
                                 EnumChatFormatting.GRAY + "Pickaxe Ability: Mining Speed Boost",
                                 EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "200% " + EnumChatFormatting.GOLD + "⸕ Mining",
@@ -3122,13 +3136,14 @@ public class GuiProfileViewer extends GuiScreen {
             if (potm > 0) {
                 List<String> mngspeedBoostTooltip = null;
                 GlStateManager.color(1, 1, 1, 1);
-                Minecraft.getMinecraft().getTextureManager().bindTexture(abilityUnlocked);
-                Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 114, 16, 16, GL11.GL_NEAREST);
-
+                GlStateManager.disableLighting();
+                RenderHelper.enableGUIStandardItemLighting();
+                Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.emerald_block), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 114));
+                GlStateManager.enableLighting();
                 if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
                     if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
                         mngspeedBoostTooltip = Lists.newArrayList(
-                                EnumChatFormatting.YELLOW + "Mining Speed Boost",
+                                EnumChatFormatting.GREEN + "Mining Speed Boost",
                                 "",
                                 EnumChatFormatting.GRAY + "Pickaxe Ability: Mining Speed Boost",
                                 EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "300% " + EnumChatFormatting.GOLD + "⸕ Mining",
@@ -3141,20 +3156,65 @@ public class GuiProfileViewer extends GuiScreen {
                 }
             }
         }
+        if (veinSeeker == 0) {
+                List<String> mngspeedBoostTooltip = null;
+                GlStateManager.color(1, 1, 1, 1);
+                GlStateManager.disableLighting();
+                RenderHelper.enableGUIStandardItemLighting();
+                Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.coal_block), (int) (guiLeft + xStart + 183), (int) (guiTop + yStartTop + 18));
+                GlStateManager.enableLighting();
+                if (mouseX >= guiLeft + xStart + 183 && mouseX < guiLeft + xStart + 199) {
+                    if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                        mngspeedBoostTooltip = Lists.newArrayList(
+                                EnumChatFormatting.RED + "Vein Seeker",
+                                "",
+                                "§6Pickaxe Ability: Vein Seeker",
+                                "§7Points in the direction of the",
+                                "§7nearest vein and grants §a+§a3§7",
+                                "§7§6Mining Spread §7for §a14s§7§7.",
+                                "§8Cooldown: §a60s"
+                        );
+                        Utils.drawHoveringText(mngspeedBoostTooltip, mouseX, mouseY, width, height, -1, fr);
+                        mngspeedBoostTooltip = null;
+                }
+            }
+        } if (veinSeeker > 0) {
+                List<String> mngspeedBoostTooltip = null;
+                GlStateManager.color(1, 1, 1, 1);
+                GlStateManager.disableLighting();
+                RenderHelper.enableGUIStandardItemLighting();
+                Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.emerald_block), (int) (guiLeft + xStart + 183), (int) (guiTop + yStartTop + 18));
+                GlStateManager.enableLighting();
+                if (mouseX >= guiLeft + xStart + 183 && mouseX < guiLeft + xStart + 199) {
+                    if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                        mngspeedBoostTooltip = Lists.newArrayList(
+                                EnumChatFormatting.GREEN + "Vein Seeker",
+                                "",
+                                "§6Pickaxe Ability: Vein Seeker",
+                                "§7Points in the direction of the",
+                                "§7nearest vein and grants §a+§a3§7",
+                                "§7§6Mining Spread §7for §a14s§7§7.",
+                                "§8Cooldown: §a60s"
+                        );
+                        Utils.drawHoveringText(mngspeedBoostTooltip, mouseX, mouseY, width, height, -1, fr);
+                        mngspeedBoostTooltip = null;
+                    }
+                }
+        }
         if (luckofcave == 0) {
             List<String> luckofcaveTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(lockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 90, 16, 16, GL11.GL_NEAREST);
-
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 90));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
                 if (mouseY >= guiTop + yStartTop + 90 && mouseY <= guiTop + yStartTop + 106) {
                     luckofcaveTooltip = Lists.newArrayList(
-                            "§eLuck of the Cave",
+                            EnumChatFormatting.RED + "Luck of the Cave",
                             "§7Level " + luckofcave + EnumChatFormatting.DARK_GRAY + "/45",
                             "",
                             "§7Increases the chance for you to",
-                            "§7trigger rare occurrences i",
+                            "§7trigger rare occurrences im",
                             "§2Dwarven Mines by " + EnumChatFormatting.GREEN + luckofcaveStat + "%§7."
                     );
                     Utils.drawHoveringText(luckofcaveTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3164,17 +3224,17 @@ public class GuiProfileViewer extends GuiScreen {
         } if (luckofcave > 0) {
             List<String> luckofcaveTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(unlockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 207, guiTop + yStartTop + 90, 16, 16, GL11.GL_NEAREST);
-
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 90));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
                 if (mouseY >= guiTop + yStartTop + 90 && mouseY <= guiTop + yStartTop + 106) {
                     luckofcaveTooltip = Lists.newArrayList(
-                            "§eLuck of the Cave",
+                            EnumChatFormatting.GREEN+"Luck of the Cave",
                             "§7Level " + luckofcave + EnumChatFormatting.DARK_GRAY + "/45",
                             "",
                             "§7Increases the chance for you to",
-                            "§7trigger rare occurrences i",
+                            "§7trigger rare occurrences in",
                             "§2Dwarven Mines by " + EnumChatFormatting.GREEN + luckofcaveStat + "%§7."
                     );
                     Utils.drawHoveringText(luckofcaveTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3185,12 +3245,13 @@ public class GuiProfileViewer extends GuiScreen {
         if (dailyPowder == 0) {
             List<String> dailyPowderTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(lockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 90, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 90));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 90 && mouseY <= guiTop + yStartTop + 106) {
                     dailyPowderTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Daily Powder",
+                            EnumChatFormatting.RED + "Daily Powder",
                             EnumChatFormatting.GRAY + "Level " + dailyPowder + EnumChatFormatting.DARK_GRAY + "/100",
                             "",
                             EnumChatFormatting.GRAY + "Gains " + EnumChatFormatting.GREEN + dailyPowderStat + " Powder" + EnumChatFormatting.GRAY + " from the",
@@ -3204,12 +3265,13 @@ public class GuiProfileViewer extends GuiScreen {
         } if (dailyPowder > 0) {
             List<String> dailyPowderTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(unlockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 90, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 90));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 90 && mouseY <= guiTop + yStartTop + 106) {
                     dailyPowderTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Daily Powder",
+                            EnumChatFormatting.GREEN + "Daily Powder",
                             EnumChatFormatting.GRAY + "Level " + dailyPowder + EnumChatFormatting.DARK_GRAY + "/100",
                             "",
                             EnumChatFormatting.GRAY + "Gains " + EnumChatFormatting.GREEN + dailyPowderStat + " Powder" + EnumChatFormatting.GRAY + " from the",
@@ -3224,12 +3286,13 @@ public class GuiProfileViewer extends GuiScreen {
         if (effMiner == 0) {
             List<String> effMinerTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(lockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 66, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 66));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 66 && mouseY <= guiTop + yStartTop + 82) {
                     effMinerTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Efficient Miner",
+                            EnumChatFormatting.RED + "Efficient Miner",
                             EnumChatFormatting.GRAY + "Level " + effMiner + EnumChatFormatting.DARK_GRAY + "/100",
                             "",
                             EnumChatFormatting.GRAY + "When mining ores, you have a",
@@ -3243,12 +3306,13 @@ public class GuiProfileViewer extends GuiScreen {
         } if (effMiner > 0) {
             List<String> effMinerTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(unlockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 66, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 66));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 66 && mouseY <= guiTop + yStartTop + 82) {
                     effMinerTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Efficient Miner",
+                            EnumChatFormatting.GREEN + "Efficient Miner",
                             EnumChatFormatting.GRAY + "Level " + effMiner + EnumChatFormatting.DARK_GRAY + "/100",
                             "",
                             EnumChatFormatting.GRAY + "When mining ores, you have a",
@@ -3266,12 +3330,16 @@ public class GuiProfileViewer extends GuiScreen {
         if (potm == 5) {
             List<String> potmTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(potmUnlocked);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.redstone_block), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 42));
+            GlStateManager.enableLighting();
+            //Minecraft.getMinecraft().getTextureManager().bindTexture(potmUnlocked);
+            //Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
                     potmTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Peak of the Mountain",
+                            EnumChatFormatting.GREEN + "Peak of the Mountain",
                             EnumChatFormatting.GRAY + "Level " + potm + EnumChatFormatting.DARK_GRAY + "/5",
                             "",
                             "§7§8+§c1 Pickaxe Ability Level",
@@ -3289,8 +3357,10 @@ public class GuiProfileViewer extends GuiScreen {
         } if (potm == 4) {
             List<String> potmTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(potmUnlocked);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.redstone_block), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 42));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
                     potmTooltip = Lists.newArrayList(
@@ -3311,8 +3381,10 @@ public class GuiProfileViewer extends GuiScreen {
         } if (potm == 3) {
             List<String> potmTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(potmUnlocked);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.redstone_block), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 42));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
                     potmTooltip = Lists.newArrayList(
@@ -3331,8 +3403,10 @@ public class GuiProfileViewer extends GuiScreen {
         } if (potm == 2) {
             List<String> potmTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(potmUnlocked);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.redstone_block), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 42));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
                     potmTooltip = Lists.newArrayList(
@@ -3350,8 +3424,10 @@ public class GuiProfileViewer extends GuiScreen {
             } if (potm == 1) {
                 List<String> potmTooltip = null;
                 GlStateManager.color(1, 1, 1, 1);
-                Minecraft.getMinecraft().getTextureManager().bindTexture(potmUnlocked);
-                Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.redstone_block), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 42));
+            GlStateManager.enableLighting();
                 if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                     if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
                         potmTooltip = Lists.newArrayList(
@@ -3368,12 +3444,14 @@ public class GuiProfileViewer extends GuiScreen {
         } if (potm == 0) {
             List<String> potmTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(potmlocked);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 42, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Blocks.bedrock), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 42));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
                     potmTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Peak of the Mountain",
+                            EnumChatFormatting.RED + "Peak of the Mountain",
                             EnumChatFormatting.GRAY + "Level " + potm + EnumChatFormatting.DARK_GRAY + "/5"
                     );
                     Utils.drawHoveringText(potmTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3386,17 +3464,18 @@ public class GuiProfileViewer extends GuiScreen {
         if (moul == 0) {
             List<String> moulTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(lockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 18, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
                     moulTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Mole",
+                            EnumChatFormatting.RED + "Mole",
                             EnumChatFormatting.GRAY + "Level " + moul + EnumChatFormatting.DARK_GRAY + "/190",
                             "",
                             EnumChatFormatting.GRAY + "When mining hard stone, you have",
-                            EnumChatFormatting.GRAY + "a " + EnumChatFormatting.GREEN + moul + "% " + EnumChatFormatting.GRAY + "chance to mine " + EnumChatFormatting.GREEN + "a",
-                            EnumChatFormatting.GREEN + "" + Math.round(moulStat) + EnumChatFormatting.GRAY + " adjacent hard stone block."
+                            EnumChatFormatting.GRAY + "a " + EnumChatFormatting.GREEN + output + "% " + EnumChatFormatting.GRAY + "chance to mine " + EnumChatFormatting.GREEN + "",
+                            EnumChatFormatting.GREEN + "" + Math.round(moulStat) + EnumChatFormatting.GRAY + " adjacent hard stone blocks."
                     );
                     Utils.drawHoveringText(moulTooltip, mouseX, mouseY, width, height, -1, fr);
                     moulTooltip = null;
@@ -3405,17 +3484,18 @@ public class GuiProfileViewer extends GuiScreen {
         } if (moul > 0) {
             List<String> moulTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(unlockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop + 18, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
                     moulTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Mole",
+                            EnumChatFormatting.GREEN + "Mole",
                             EnumChatFormatting.GRAY + "Level " + moul + EnumChatFormatting.DARK_GRAY + "/190",
                             "",
                             EnumChatFormatting.GRAY + "When mining hard stone, you have",
-                            EnumChatFormatting.GRAY + "a " + EnumChatFormatting.GREEN + moul + "% " + EnumChatFormatting.GRAY + "chance to mine " + EnumChatFormatting.GREEN + "a",
-                            EnumChatFormatting.GREEN + "" + Math.round(moulStat) + EnumChatFormatting.GRAY + " adjacent hard stone block."
+                            EnumChatFormatting.GRAY + "a " + EnumChatFormatting.GREEN + output + "% " + EnumChatFormatting.GRAY + "chance to mine " + EnumChatFormatting.GREEN + "",
+                            EnumChatFormatting.GREEN + "" + Math.round(moulStat) + EnumChatFormatting.GRAY + " adjacent hard stone blocks."
                     );
                     Utils.drawHoveringText(moulTooltip, mouseX, mouseY, width, height, -1, fr);
                     moulTooltip = null;
@@ -3425,12 +3505,13 @@ public class GuiProfileViewer extends GuiScreen {
         if (powderBuff == 0) {
             List<String> powderBuffTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(lockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop - 6, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop - 6));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop - 6 && mouseY <= guiTop + yStartTop + 10) {
                     powderBuffTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Powder Buff",
+                            EnumChatFormatting.RED + "Powder Buff",
                             EnumChatFormatting.GRAY + "Level " + powderBuff + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
                             EnumChatFormatting.GRAY + "Gain " + EnumChatFormatting.GREEN + powderBuff + "% " + EnumChatFormatting.GRAY + "more Mithril",
@@ -3443,12 +3524,13 @@ public class GuiProfileViewer extends GuiScreen {
         } if (powderBuff > 0) {
             List<String> powderBuffTooltip = null;
             GlStateManager.color(1, 1, 1, 1);
-            Minecraft.getMinecraft().getTextureManager().bindTexture(unlockedPerk);
-            Utils.drawTexturedRect(guiLeft + xStart + 255, guiTop + yStartTop - 6, 16, 16, GL11.GL_NEAREST);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 255), (int) (guiTop + yStartTop - 6));
+            GlStateManager.enableLighting();
             if (mouseX >= guiLeft + xStart + 255 && mouseX < guiLeft + xStart + 271) {
                 if (mouseY >= guiTop + yStartTop - 6 && mouseY <= guiTop + yStartTop + 10) {
                     powderBuffTooltip = Lists.newArrayList(
-                            EnumChatFormatting.YELLOW + "Powder Buff",
+                            EnumChatFormatting.GREEN + "Powder Buff",
                             EnumChatFormatting.GRAY + "Level " + powderBuff + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
                             EnumChatFormatting.GRAY + "Gain " + EnumChatFormatting.GREEN + powderBuff + "% " + EnumChatFormatting.GRAY + "more Mithril",
@@ -3456,6 +3538,455 @@ public class GuiProfileViewer extends GuiScreen {
                     );
                     Utils.drawHoveringText(powderBuffTooltip, mouseX, mouseY, width, height, -1, fr);
                     powderBuffTooltip = null;
+                }
+            }
+        }
+        if (skyMall == 0) {
+            List<String> skyMallTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 183), (int) (guiTop + yStartTop + 66));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 183 && mouseX < guiLeft + xStart + 199) {
+                if (mouseY >= guiTop + yStartTop + 66 && mouseY <= guiTop + yStartTop + 82) {
+                    skyMallTooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Sky Mall",
+                            "§7Every SkyBlock day, you receive",
+                            "§7a random buff in the §2Dwarven",
+                            "§2Mines§7.",
+                            "",
+                            "§7Possible Buffs",
+                            "§8 ■ §7Gain §a+100 §6⸕ Mining Speed.",
+                            "§8 ■ §7Gain §a+50 §6☘ Mining Fortune.",
+                            "§8 ■ §7Gain §a+15% §7chance to gain",
+                            "    §7extra Powder while mining.",
+                            "§8 ■ §7Reduce Pickaxe Ability cooldown",
+                            "    §7by §a20%", "§8 ■ §7§a10x §7chance to find Goblins",
+                            "    §7while mining.",
+                            "§8 ■ §7Gain §a5x §9Titanium §7drops."
+                    );
+                    Utils.drawHoveringText(skyMallTooltip, mouseX, mouseY, width, height, -1, fr);
+                    skyMallTooltip = null;
+                }
+            }
+        } if (skyMall > 0) {
+            List<String> skyMallTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.diamond), (int) (guiLeft + xStart + 183), (int) (guiTop + yStartTop + 66));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 183 && mouseX < guiLeft + xStart + 199) {
+                if (mouseY >= guiTop + yStartTop + 66 && mouseY <= guiTop + yStartTop + 82) {
+                    skyMallTooltip = Lists.newArrayList(
+                             EnumChatFormatting.GREEN + "Sky Mall",
+                            "§7Every SkyBlock day, you receive",
+                            "§7a random buff in the §2Dwarven",
+                            "§2Mines§7.",
+                            "",
+                            "§7Possible Buffs",
+                            "§8 ■ §7Gain §a+100 §6⸕ Mining Speed.",
+                            "§8 ■ §7Gain §a+50 §6☘ Mining Fortune.",
+                            "§8 ■ §7Gain §a+15% §7chance to gain",
+                            "    §7extra Powder while mining.",
+                            "§8 ■ §7Reduce Pickaxe Ability cooldown",
+                            "    §7by §a20%", "§8 ■ §7§a10x §7chance to find Goblins",
+                            "    §7while mining.",
+                            "§8 ■ §7Gain §a5x §9Titanium §7drops."
+                    );
+                    Utils.drawHoveringText(skyMallTooltip, mouseX, mouseY, width, height, -1, fr);
+                    skyMallTooltip = null;
+                }
+            }
+        }
+        if (goblinKiller == 0) {
+            List<String> goblinKillerTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 42));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
+                    goblinKillerTooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Goblin Killer",
+                            "§7Killing a §6Golden Goblin",
+                            "§6§7gives §2200 §7extra §2Mithril",
+                            "§2Powder§7, while killing other",
+                            "§7Goblins gives some based on",
+                            "§7their wits."
+                    );
+                    Utils.drawHoveringText(goblinKillerTooltip, mouseX, mouseY, width, height, -1, fr);
+                    goblinKillerTooltip = null;
+                }
+            }
+        } if (goblinKiller > 0) {
+            List<String> goblinKillerTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.diamond), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 42));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop + 42 && mouseY <= guiTop + yStartTop + 58) {
+                    goblinKillerTooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Goblin Killer",
+                            "§7Killing a §6Golden Goblin",
+                            "§6§7gives §2200 §7extra §2Mithril",
+                            "§2Powder§7, while killing other",
+                            "§7Goblins gives some based on",
+                            "§7their wits."
+                    );
+                    Utils.drawHoveringText(goblinKillerTooltip, mouseX, mouseY, width, height, -1, fr);
+                    goblinKillerTooltip = null;
+                }
+            }
+        }
+        if (seasonMine == 0) {
+            List<String> seasonMineTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 231), (int) (guiTop + yStartTop + 66));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 231 && mouseX < guiLeft + xStart + 247) {
+                if (mouseY >= guiTop + yStartTop + 66 && mouseY <= guiTop + yStartTop + 82) {
+                    seasonMineTooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Seasoned Mineman",
+                            "§7Level "+seasonMine+"§8/100",
+                            "",
+                            "§7Increases your Mining",
+                            "§7experience gain by "+EnumChatFormatting.GREEN+seasonMineStat+"%§7."
+                    );
+                    Utils.drawHoveringText(seasonMineTooltip, mouseX, mouseY, width, height, -1, fr);
+                    seasonMineTooltip = null;
+                }
+            }
+        } if (seasonMine > 0) {
+            List<String> seasonMineTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 231), (int) (guiTop + yStartTop + 66));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 231 && mouseX < guiLeft + xStart + 247) {
+                if (mouseY >= guiTop + yStartTop + 66 && mouseY <= guiTop + yStartTop + 82) {
+                    seasonMineTooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Seasoned Mineman",
+                            "§7Level "+seasonMine+"§8/100",
+                            "",
+                            "§7Increases your Mining",
+                            "§7experience gain by "+EnumChatFormatting.GREEN+seasonMineStat+"%§7."
+                    );
+                    Utils.drawHoveringText(seasonMineTooltip, mouseX, mouseY, width, height, -1, fr);
+                    seasonMineTooltip = null;
+                }
+            }
+        }
+        if (madMining == 0) {
+            List<String> madMiningTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 66));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop + 66 && mouseY <= guiTop + yStartTop + 82) {
+                    madMiningTooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Mining Madness",
+                            "§7Grants §a+50 §6⸕ Mining Speed",
+                            "§7and §6☘ Mining Fortune§7."
+                    );
+                    Utils.drawHoveringText(madMiningTooltip, mouseX, mouseY, width, height, -1, fr);
+                    madMiningTooltip = null;
+                }
+            }
+        } if (madMining > 0) {
+            List<String> madMiningTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.diamond), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 66));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop + 66 && mouseY <= guiTop + yStartTop + 92) {
+                    madMiningTooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Mining Madness",
+                            "§7Grants §a+50 §6⸕ Mining Speed",
+                            "§7and §6☘ Mining Fortune§7."
+                    );
+                    Utils.drawHoveringText(madMiningTooltip, mouseX, mouseY, width, height, -1, fr);
+                    madMiningTooltip = null;
+                }
+            }
+        }
+        if (lonesomeMiner == 0) {
+            List<String> lonesomeMinerTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                    lonesomeMinerTooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Lonesome Miner",
+                            "§7Level "+lonesomeMiner+EnumChatFormatting.DARK_GRAY+"/45",
+                            "",
+                            "§7Increases §c❁ Strength, §9☣ Crit",
+                            "§9Chance, §9☠ Crit Damage, §a❈",
+                            "§aDefense, and §c❤ Health",
+                            "§c§7statistics gain by "+EnumChatFormatting.GREEN+lonesomeMinerStat+"%§7",
+                            "§7while in the Crystal Hollows."
+                    );
+                    Utils.drawHoveringText(lonesomeMinerTooltip, mouseX, mouseY, width, height, -1, fr);
+                    lonesomeMinerTooltip = null;
+                }
+            }
+        } if (lonesomeMiner > 0) {
+            List<String> lonesomeMinerTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                    lonesomeMinerTooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Lonesome Miner",
+                            "§7Level "+lonesomeMiner+EnumChatFormatting.DARK_GRAY+"/45",
+                            "",
+                            "§7Increases §c❁ Strength, §9☣ Crit",
+                            "§9Chance, §9☠ Crit Damage, §a❈",
+                            "§aDefense, and §c❤ Health",
+                            "§c§7statistics gain by "+EnumChatFormatting.GREEN+lonesomeMinerStat+"%§7",
+                            "§7while in the Crystal Hollows."
+                    );
+                    Utils.drawHoveringText(lonesomeMinerTooltip, mouseX, mouseY, width, height, -1, fr);
+                    lonesomeMinerTooltip = null;
+                }
+            }
+        }
+        if (professional == 0) {
+            List<String> professionalTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 231), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 231 && mouseX < guiLeft + xStart + 247) {
+                if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                    professionalTooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Professional",
+                            "§7Level "+professional+EnumChatFormatting.DARK_GRAY+"/140",
+                            "",
+                            "§7Gain §a+"+professionalStat+"§6 ⸕ Mining",
+                            "§6Speed§7 when mining Gemstones."
+                    );
+                    Utils.drawHoveringText(professionalTooltip, mouseX, mouseY, width, height, -1, fr);
+                    professionalTooltip = null;
+                }
+            }
+        } if (professional > 0) {
+            List<String> professionalTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 231), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 231 && mouseX < guiLeft + xStart + 247) {
+                if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                    professionalTooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Professional",
+                            "§7Level "+professional+EnumChatFormatting.DARK_GRAY+"/140",
+                            "",
+                            "§7Gain §a+"+professionalStat+"§6 ⸕ Mining",
+                            "§6Speed§7 when mining Gemstones."
+                    );
+                    Utils.drawHoveringText(professionalTooltip, mouseX, mouseY, width, height, -1, fr);
+                    professionalTooltip = null;
+                }
+            }
+        }
+        if (miningSpeed2 == 0) {
+            List<String> miningSpeed2Tooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop - 6));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop - 6 && mouseY <= guiTop + yStartTop + 10) {
+                    miningSpeed2Tooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Mining Speed 2",
+                            "§7Level "+miningSpeed2+EnumChatFormatting.DARK_GRAY+"/50",
+                            "",
+                            "§7Grants "+EnumChatFormatting.GREEN+"+"+miningSpeed2Stat+EnumChatFormatting.GOLD+" ⸕ Mining",
+                            "§6Speed§7."
+                    );
+                    Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
+                    miningSpeed2Tooltip = null;
+                }
+            }
+        } if (miningSpeed2 > 0) {
+            List<String> miningSpeed2Tooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 207), (int) (guiTop + yStartTop - 6));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 207 && mouseX < guiLeft + xStart + 223) {
+                if (mouseY >= guiTop + yStartTop - 6 && mouseY <= guiTop + yStartTop + 10) {
+                    miningSpeed2Tooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Mining Speed 2",
+                            "§7Level "+miningSpeed2+EnumChatFormatting.DARK_GRAY+"/50",
+                            "",
+                            "§7Grants "+EnumChatFormatting.GREEN+"+"+miningSpeed2Stat+EnumChatFormatting.GOLD+" ⸕ Mining",
+                            "§6Speed§7."
+                    );
+                    Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
+                    miningSpeed2Tooltip = null;
+                }
+            }
+        }
+        if (quickForge == 0) {
+            List<String> miningSpeed2Tooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 279), (int) (guiTop + yStartTop + 114));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 279 && mouseX < guiLeft + xStart + 295) {
+                if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
+                    miningSpeed2Tooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Quick Forge",
+                            "§7Level "+quickForge+EnumChatFormatting.DARK_GRAY+"/20",
+                            "",
+                            "§7Decreases the time it takes to",
+                            "§7forge by §a"+quickForgeStat+"%§7."
+                    );
+                    Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
+                    miningSpeed2Tooltip = null;
+                }
+            }
+        } if (quickForge > 0) {
+            List<String> miningSpeed2Tooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 279), (int) (guiTop + yStartTop + 114));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 279 && mouseX < guiLeft + xStart + 295) {
+                if (mouseY >= guiTop + yStartTop + 114 && mouseY <= guiTop + yStartTop + 130) {
+                    miningSpeed2Tooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Quick Forge",
+                            "§7Level "+quickForge+EnumChatFormatting.DARK_GRAY+"/20",
+                            "",
+                            "§7Decreases the time it takes to",
+                            "§7forge by §a"+quickForgeStat+"%§7."
+                    );
+                    Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
+                    miningSpeed2Tooltip = null;
+                }
+            }
+        }
+        if (fortunate == 0) {
+            List<String> miningSpeed2Tooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 279), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 279 && mouseX < guiLeft + xStart + 295) {
+                if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                    miningSpeed2Tooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Fortunate",
+                            "§7Level "+fortunate+EnumChatFormatting.DARK_GRAY+"/20",
+                            "",
+                            "§7Gain "+EnumChatFormatting.GREEN+fortunateStat+"§6⸕ Mining",
+                            "§6Fortune§7 when mining Gemstones."
+                    );
+                    Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
+                    miningSpeed2Tooltip = null;
+                }
+            }
+        } if (fortunate > 0) {
+            List<String> miningSpeed2Tooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 279), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 279 && mouseX < guiLeft + xStart + 295) {
+                if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                    miningSpeed2Tooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Fortunate",
+                            "§7Level "+fortunate+EnumChatFormatting.DARK_GRAY+"/20",
+                            "",
+                            "§7Gain "+EnumChatFormatting.GREEN+fortunateStat+"§6⸕ Mining",
+                            "§6Fortune§7 when mining Gemstones."
+                    );
+                    Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
+                    miningSpeed2Tooltip = null;
+                }
+            }
+        }
+        if (greatExplorer == 0) {
+            List<String> greatExplorerTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 302), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 303 && mouseX < guiLeft + xStart + 319) {
+                if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                    greatExplorerTooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Great Explorer",
+                            "§7Level "+greatExplorer+EnumChatFormatting.DARK_GRAY+"/20",
+                            "",
+                            "§7Grants "+EnumChatFormatting.GREEN+greatExplorerStat+"% chance to",
+                            "§7find treasure."
+                    );
+                    Utils.drawHoveringText(greatExplorerTooltip, mouseX, mouseY, width, height, -1, fr);
+                    greatExplorerTooltip = null;
+                }
+            }
+        } if (greatExplorer > 0) {
+            List<String> greatExplorerTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 303), (int) (guiTop + yStartTop + 18));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 303 && mouseX < guiLeft + xStart + 319) {
+                if (mouseY >= guiTop + yStartTop + 18 && mouseY <= guiTop + yStartTop + 34) {
+                    greatExplorerTooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Great Explorer",
+                            "§7Level "+greatExplorer+EnumChatFormatting.DARK_GRAY+"/20",
+                            "",
+                            "§7Grants "+EnumChatFormatting.GREEN+greatExplorerStat+"% chance to",
+                            "§7find treasure."
+                    );
+                    Utils.drawHoveringText(greatExplorerTooltip, mouseX, mouseY, width, height, -1, fr);
+                    greatExplorerTooltip = null;
+                }
+            }
+        }
+        if (miningFortune2 == 0) {
+            List<String> greatExplorerTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.coal), (int) (guiLeft + xStart + 303), (int) (guiTop + yStartTop - 6));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 303 && mouseX < guiLeft + xStart + 319) {
+                if (mouseY >= guiTop + yStartTop - 6 && mouseY <= guiTop + yStartTop + 10) {
+                    greatExplorerTooltip = Lists.newArrayList(
+                            EnumChatFormatting.RED + "Mining Fortune 2",
+                            "§7Level "+miningFortune2+EnumChatFormatting.DARK_GRAY+"/50",
+                            "",
+                            "§7Grants §a+§a"+miningFortune2Stat+"§7 §6☘ Mining", "§6Fortune§7."
+                    );
+                    Utils.drawHoveringText(greatExplorerTooltip, mouseX, mouseY, width, height, -1, fr);
+                    greatExplorerTooltip = null;
+                }
+            }
+        } if (miningFortune2 > 0) {
+            List<String> greatExplorerTooltip = null;
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.disableLighting();
+            Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.emerald), (int) (guiLeft + xStart + 303), (int) (guiTop + yStartTop - 6));
+            GlStateManager.enableLighting();
+            if (mouseX >= guiLeft + xStart + 303 && mouseX < guiLeft + xStart + 319) {
+                if (mouseY >= guiTop + yStartTop - 6 && mouseY <= guiTop + yStartTop + 10) {
+                    greatExplorerTooltip = Lists.newArrayList(
+                            EnumChatFormatting.GREEN + "Mining Fortune 2",
+                            "§7Level "+miningFortune2+EnumChatFormatting.DARK_GRAY+"/50",
+                            "",
+                            "§7Grants §a+§a"+miningFortune2Stat+"§7 §6☘ Mining", "§6Fortune§7."
+                    );
+                    Utils.drawHoveringText(greatExplorerTooltip, mouseX, mouseY, width, height, -1, fr);
+                    greatExplorerTooltip = null;
                 }
             }
         }

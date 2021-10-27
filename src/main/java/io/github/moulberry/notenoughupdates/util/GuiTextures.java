@@ -14,12 +14,6 @@ public class GuiTextures {
     public static final ResourceLocation close = new ResourceLocation("notenoughupdates:close.png");
     public static final ResourceLocation settings = new ResourceLocation("notenoughupdates:settings.png");
 
-    public static final ResourceLocation hasPerk = new ResourceLocation("notenoughupdates:pv_hotm/hasperk.png");
-    public static final ResourceLocation doesntHavePerk = new ResourceLocation("notenoughupdates:pv_hotm/hasntperk.png");
-    public static final ResourceLocation hasRightClick = new ResourceLocation("notenoughupdates:pv_hotm/hasrightclick.png");
-    public static final ResourceLocation doesntHaveRightClick = new ResourceLocation("notenoughupdates:pv_hotm/hasntrightclick.png");
-    public static final ResourceLocation peakotm = new ResourceLocation("notenoughupdates:pv_hotm/peak.png");
-
     public static final ResourceLocation off = new ResourceLocation("notenoughupdates:off.png");
     public static final ResourceLocation on = new ResourceLocation("notenoughupdates:on.png");
     public static final ResourceLocation help = new ResourceLocation("notenoughupdates:help.png");
