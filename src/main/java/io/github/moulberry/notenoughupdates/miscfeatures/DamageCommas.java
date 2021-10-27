@@ -67,7 +67,7 @@ public class DamageCommas {
             int number = Integer.parseInt(numbers);
 
             if(number > 999 && NotEnoughUpdates.INSTANCE.config.misc.damageIndicatorStyle == 2) {
-                newFormatted.append(Utils.shortNumberFormat(number, 0));
+                newFormatted.append(Utils.shortNumberFormat(number, 2));
             } else {
                 newFormatted.append(NumberFormat.getIntegerInstance().format(number));
             }

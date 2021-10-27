@@ -148,14 +148,14 @@ public class AuctionBINWarning extends GuiElement {
 
         String lowestPriceStr;
         if(lowestPrice > 999) {
-            lowestPriceStr = Utils.shortNumberFormat(lowestPrice, 0);
+            lowestPriceStr = Utils.shortNumberFormat(lowestPrice);
         } else {
             lowestPriceStr = ""+lowestPrice;
         }
 
         String sellingPriceStr;
         if(sellingPrice > 999) {
-            sellingPriceStr = Utils.shortNumberFormat(sellingPrice, 0);
+            sellingPriceStr = Utils.shortNumberFormat(sellingPrice);
         } else {
             sellingPriceStr = ""+sellingPrice;
         }

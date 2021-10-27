@@ -255,15 +255,15 @@ public class Utils {
         return rainbowText.toString();
     }
 
-    private static char[] c = new char[]{'k', 'm', 'b', 't'};
-    public static String shortNumberFormat(double n, int iteration) {
-        double d = ((long) n / 100) / 10.0;
-        boolean isRound = (d * 10) %10 == 0;
-        return (d < 1000?
-                ((d > 99.9 || isRound || (!isRound && d > 9.99)?
-                        (int) d * 10 / 10 : d + ""
-                ) + "" + c[iteration])
-                : shortNumberFormat(d, iteration+1));
+    private static char[] c = new char[]{'k', 'M', 'B', 't', 'q', 'Q', 's', 'S'};
+    public static String shortNumberFormat(double n, int dp) {
+        int pow1k = (int) Math.floor(Math.log(n) / Math.log(1000));
+        if (pow1k == 0 || pow1k > 8) {return String.valueOf(n);}
+        double mantissa = n / (Math.pow(1000, pow1k));
+        return (String.format("%." + dp + "f", mantissa) + c[pow1k - 1]);
+    }
+    public static String shortNumberFormat(double n) {
+        return shortNumberFormat(n, 1);
     }
 
     public static String trimIgnoreColour(String str) {
