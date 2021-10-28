@@ -2815,19 +2815,19 @@ public class GuiProfileViewer extends GuiScreen {
         float gemstonePowderTotal = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.powder_spent_gemstone"), 0));
         String jadeCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.jade_crystal.state"), "Not Found"));
         float crystalPlacedAmount = (Utils.getElementAsFloat(Utils.getElement(profileInfo, "mining_core.crystals.jade_crystal.total_placed"), 0));
-        String jadeCrystalString = "Not Found";
+        String jadeCrystalString = "§c✖";
         String amethystCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.amethyst_crystal.state"), "Not Found"));
-        String amethystCrystalString = "Not Found";
+        String amethystCrystalString = "§c✖";
         String amberCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.amber_crystal.state"), "Not Found"));
-        String amberCrystalString = "Not Found";
+        String amberCrystalString = "§c✖";
         String sapphireCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.sapphire_crystal.state"), "Not Found"));
-        String sapphireCrystalString = "Not Found";
+        String sapphireCrystalString = "§c✖";
         String topazCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.topaz_crystal.state"), "Not Found"));
-        String topazCrystalString = "Not Found";
+        String topazCrystalString = "§c✖";
         String jasperCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.jasper_crystal.state"), "Not Found"));
-        String jasperCrystalString = "Not Found";
+        String jasperCrystalString = "§c✖";
         String rubyCrystal = (Utils.getElementAsString(Utils.getElement(profileInfo, "mining_core.crystals.ruby_crystal.state"), "Not Found"));
-        String rubyCrystalString = "Not Found";
+        String rubyCrystalString = "§c✖";
         int miningFortune = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_fortune"), 0)));
         int miningFortuneStat = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_fortune"), 0)) * 5);
         int miningSpeed = ((Utils.getElementAsInt(Utils.getElement(profileInfo, "mining_core.nodes.mining_speed"), 0)));
@@ -2888,46 +2888,46 @@ public class GuiProfileViewer extends GuiScreen {
 
         //The logic for some of the stats
         if (Objects.equals(jadeCrystal, "NOT_FOUND")) {
-            jadeCrystalString = "Not Found";
+            jadeCrystalString = "§c✖";
         }
         if (Objects.equals(jadeCrystal, "FOUND")) {
-            jadeCrystalString = "Found";
+            jadeCrystalString = "§a✔";
         }
         if (Objects.equals(amethystCrystal, "NOT_FOUND")) {
-            amethystCrystalString = "Not Found";
+            amethystCrystalString = "§c✖";
         }
         if (Objects.equals(amethystCrystal, "FOUND")) {
-            amethystCrystalString = "Found";
+            amethystCrystalString = "§a✔";
         }
         if (Objects.equals(amberCrystal, "NOT_FOUND")) {
-            amberCrystalString = "Not Found";
+            amberCrystalString = "§c✖";
         }
         if (Objects.equals(amberCrystal, "FOUND")) {
-            amberCrystalString = "Found";
+            amberCrystalString = "§a✔";
         }
         if (Objects.equals(sapphireCrystal, "NOT_FOUND")) {
-            sapphireCrystalString = "Not Found";
+            sapphireCrystalString = "§c✖";
         }
         if (Objects.equals(sapphireCrystal, "FOUND")) {
-            sapphireCrystalString = "Found";
+            sapphireCrystalString = "§a✔";
         }
         if (Objects.equals(topazCrystal, "NOT_FOUND")) {
-            topazCrystalString = "Not Found";
+            topazCrystalString = "§c✖";
         }
         if (Objects.equals(topazCrystal, "FOUND")) {
-            topazCrystalString = "Found";
+            topazCrystalString = "§a✔";
         }
         if (Objects.equals(jasperCrystal, "NOT_FOUND")) {
-            jasperCrystalString = "Not Found";
+            jasperCrystalString = "§c✖";
         }
         if (Objects.equals(jasperCrystal, "FOUND")) {
-            jasperCrystalString = "Found";
+            jasperCrystalString = "§a✔";
         }
         if (Objects.equals(rubyCrystal, "NOT_FOUND")) {
-            rubyCrystalString = "Not Found";
+            rubyCrystalString = "§c✖";
         }
         if (Objects.equals(rubyCrystal, "FOUND")) {
-            rubyCrystalString = "Found";
+            rubyCrystalString = "§a✔";
         }
 
         //The rendering of the stats
@@ -2935,30 +2935,30 @@ public class GuiProfileViewer extends GuiScreen {
         renderXpBar(skillName, iron_pick, x, y, sectionWidth, levelObjhotm, mouseX, mouseY);
         //Powder
         Utils.renderAlignedString(EnumChatFormatting.DARK_GREEN + "Mithril Powder", EnumChatFormatting.WHITE + shortNumberFormat(mithrilPowder, 0),
-                guiLeft + xStart, guiTop + yStartTop + 20, 115);
+                guiLeft + xStart, guiTop + yStartTop + 24, 115);
         Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE + "Gemstone Powder", EnumChatFormatting.WHITE + shortNumberFormat(gemstonePowder, 0),
-                guiLeft + xStart, guiTop + yStartTop + 40, 115);
+                guiLeft + xStart, guiTop + yStartTop + 44, 115);
         Utils.renderAlignedString(EnumChatFormatting.DARK_GREEN + "Total Mithril Powder", EnumChatFormatting.WHITE + shortNumberFormat(mithrilPowderTotal + mithrilPowder, 0),
-                guiLeft + xStart, guiTop + yStartTop + 30, 115);
+                guiLeft + xStart, guiTop + yStartTop + 34, 115);
         Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE + "Total Gemstone Powder", EnumChatFormatting.WHITE + shortNumberFormat(gemstonePowderTotal + gemstonePowder, 0),
-                guiLeft + xStart, guiTop + yStartTop + 50, 115);
+                guiLeft + xStart, guiTop + yStartTop + 54, 115);
         //Crystals
         Utils.renderAlignedString(EnumChatFormatting.GREEN + "Jade Crystal:", EnumChatFormatting.WHITE + jadeCrystalString,
-                guiLeft + xStart, guiTop + yStartTop + 70, 110);
+                guiLeft + xStart, guiTop + yStartTop + 74, 110);
         Utils.renderAlignedString(EnumChatFormatting.GOLD + "Amber Crystal:", EnumChatFormatting.WHITE + amberCrystalString,
-                guiLeft + xStart, guiTop + yStartTop + 80, 110);
+                guiLeft + xStart, guiTop + yStartTop + 84, 110);
         Utils.renderAlignedString(EnumChatFormatting.DARK_PURPLE + "Amethyst Crystal:", EnumChatFormatting.WHITE + amethystCrystalString,
-                guiLeft + xStart, guiTop + yStartTop + 90, 110);
+                guiLeft + xStart, guiTop + yStartTop + 94, 110);
         Utils.renderAlignedString(EnumChatFormatting.AQUA + "Sapphire Crystal:", EnumChatFormatting.WHITE + sapphireCrystalString,
-                guiLeft + xStart, guiTop + yStartTop + 100, 110);
+                guiLeft + xStart, guiTop + yStartTop + 104, 110);
         Utils.renderAlignedString(EnumChatFormatting.YELLOW + "Topaz Crystal:", EnumChatFormatting.WHITE + topazCrystalString,
-                guiLeft + xStart, guiTop + yStartTop + 110, 110);
+                guiLeft + xStart, guiTop + yStartTop + 114, 110);
         Utils.renderAlignedString(EnumChatFormatting.LIGHT_PURPLE + "Jasper Crystal:", EnumChatFormatting.WHITE + jasperCrystalString,
-                guiLeft + xStart, guiTop + yStartTop + 125, 110);
+                guiLeft + xStart, guiTop + yStartTop + 124, 110);
         Utils.renderAlignedString(EnumChatFormatting.RED + "Ruby Crystal:", EnumChatFormatting.WHITE + rubyCrystalString,
-                guiLeft + xStart, guiTop + yStartTop + 135, 110);
+                guiLeft + xStart, guiTop + yStartTop + 134, 110);
         Utils.renderAlignedString(EnumChatFormatting.BLUE + "Total Placed Crystals:", EnumChatFormatting.WHITE + shortNumberFormat(crystalPlacedAmount, 0),
-                guiLeft + xStart, guiTop + yStartTop + 145, 110);
+                guiLeft + xStart, guiTop + yStartTop + 149, 110);
 
         //hotm render
         //Pain
@@ -2974,7 +2974,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.RED + "Mining Speed",
                             EnumChatFormatting.GRAY + "Level " + miningSpeed + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
-                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + miningSpeedStat + EnumChatFormatting.GOLD + " ⸕ Mining",
+                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "+" + miningSpeedStat + EnumChatFormatting.GOLD + " ⸕ Mining",
                             EnumChatFormatting.GOLD + "Speed" + EnumChatFormatting.GRAY + "."
                     );
                     Utils.drawHoveringText(miningSpeedTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -2994,7 +2994,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.GREEN + "Mining Speed",
                             EnumChatFormatting.GRAY + "Level " + miningSpeed + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
-                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + miningSpeedStat + EnumChatFormatting.GOLD + " ⸕ Mining",
+                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "+" + miningSpeedStat + EnumChatFormatting.GOLD + " ⸕ Mining",
                             EnumChatFormatting.GOLD + "Speed" + EnumChatFormatting.GRAY + "."
                     );
                     Utils.drawHoveringText(miningSpeedTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3014,7 +3014,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.RED + "Mining Fortune",
                             EnumChatFormatting.GRAY + "Level " + miningFortune + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
-                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + miningFortuneStat + EnumChatFormatting.GOLD + " ☘ Mining",
+                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "+" + miningFortuneStat + EnumChatFormatting.GOLD + " ☘ Mining",
                             EnumChatFormatting.GOLD + "Fortune" + EnumChatFormatting.GRAY + "."
                     );
                     Utils.drawHoveringText(miningFortuneTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3034,7 +3034,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.GREEN + "Mining Fortune",
                             EnumChatFormatting.GRAY + "Level " + miningFortune + EnumChatFormatting.DARK_GRAY + "/50",
                             "",
-                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + miningFortuneStat + EnumChatFormatting.GOLD + " ☘ Mining",
+                            EnumChatFormatting.GRAY + "Grants " + EnumChatFormatting.GREEN + "+" + miningFortuneStat + EnumChatFormatting.GOLD + " ☘ Mining",
                             EnumChatFormatting.GOLD + "Fortune" + EnumChatFormatting.GRAY + "."
                     );
                     Utils.drawHoveringText(miningFortuneTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3928,7 +3928,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.RED + "Fortunate",
                             "§7Level " + fortunate + EnumChatFormatting.DARK_GRAY + "/20",
                             "",
-                            "§7Gain " + EnumChatFormatting.GREEN + fortunateStat + "§6⸕ Mining",
+                            "§7Gain " + EnumChatFormatting.GREEN + "+" + fortunateStat + " §6☘ Mining",
                             "§6Fortune§7 when mining Gemstones."
                     );
                     Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3948,7 +3948,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.GREEN + "Fortunate",
                             "§7Level " + fortunate + EnumChatFormatting.DARK_GRAY + "/20",
                             "",
-                            "§7Gain " + EnumChatFormatting.GREEN + fortunateStat + "§6⸕ Mining",
+                            "§7Gain " + EnumChatFormatting.GREEN + "+" + fortunateStat + " §6☘ Mining",
                             "§6Fortune§7 when mining Gemstones."
                     );
                     Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3968,7 +3968,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.RED + "Great Explorer",
                             "§7Level " + greatExplorer + EnumChatFormatting.DARK_GRAY + "/20",
                             "",
-                            "§7Grants " + EnumChatFormatting.GREEN + greatExplorerStat + "% chance to",
+                            "§7Grants " + EnumChatFormatting.GREEN + greatExplorerStat + "% " + EnumChatFormatting.GRAY + "chance to",
                             "§7find treasure."
                     );
                     Utils.drawHoveringText(greatExplorerTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3988,7 +3988,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.GREEN + "Great Explorer",
                             "§7Level " + greatExplorer + EnumChatFormatting.DARK_GRAY + "/20",
                             "",
-                            "§7Grants " + EnumChatFormatting.GREEN + greatExplorerStat + "% chance to",
+                            "§7Grants " + EnumChatFormatting.GREEN + greatExplorerStat + "% " + EnumChatFormatting.GRAY + "chance to",
                             "§7find treasure."
                     );
                     Utils.drawHoveringText(greatExplorerTooltip, mouseX, mouseY, width, height, -1, fr);
