@@ -118,26 +118,37 @@ public class FarmingOverlay extends TextOverlay {
             cultivatingTier = 10;
         }
 
-        if (cultivatingTier == 1){
-            cultivatingTierAmount = "1,000";
-        } else if (cultivatingTier == 2){
-            cultivatingTierAmount = "5,000";
-        } else if (cultivatingTier == 3){
-            cultivatingTierAmount = "25,000";
-        } else if (cultivatingTier == 4){
-            cultivatingTierAmount = "100,000";
-        } else if (cultivatingTier == 5){
-            cultivatingTierAmount = "300,000";
-        } else if (cultivatingTier == 6){
-            cultivatingTierAmount = "1,500,000";
-        } else if (cultivatingTier == 7){
-            cultivatingTierAmount = "5,000,000";
-        } else if (cultivatingTier == 8){
-            cultivatingTierAmount = "20,000,000";
-        } else if (cultivatingTier == 9){
-            cultivatingTierAmount = "100,000,000";
-        } else if (cultivatingTier == 10){
-            cultivatingTierAmount = "Maxed";
+        switch (cultivatingTier) {
+            case 1:
+                cultivatingTierAmount = "1,000";
+                break;
+            case 2:
+                cultivatingTierAmount = "5,000";
+                break;
+            case 3:
+                cultivatingTierAmount = "25,000";
+                break;
+            case 4:
+                cultivatingTierAmount = "100,000";
+                break;
+            case 5:
+                cultivatingTierAmount = "300,000";
+                break;
+            case 6:
+                cultivatingTierAmount = "1,500,000";
+                break;
+            case 7:
+                cultivatingTierAmount = "5,000,000";
+                break;
+            case 8:
+                cultivatingTierAmount = "20,000,000";
+                break;
+            case 9:
+                cultivatingTierAmount = "100,000,000";
+                break;
+            case 10:
+                cultivatingTierAmount = "Maxed";
+                break;
         }
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);

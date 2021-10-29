@@ -229,10 +229,6 @@ public class TimersOverlay extends TextOverlay {
                 }
             }
         }
-        long timeSinceSwap = -1;
-        if (!NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
-            timeSinceSwap = currentTime - System.currentTimeMillis();
-        }
 
         boolean foundCookieBuffText = false;
         boolean foundGodPotText = false;
@@ -320,7 +316,7 @@ public class TimersOverlay extends TextOverlay {
             }
         }
 
-        if (!foundGodPotText && timeSinceSwap > 5000) {
+        if (!foundGodPotText) {
             hidden.godPotionDuration = 0;
         }
 

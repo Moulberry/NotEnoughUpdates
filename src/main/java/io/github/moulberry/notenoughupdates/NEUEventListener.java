@@ -204,10 +204,11 @@ public class NEUEventListener {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (Minecraft.getMinecraft().currentScreen == null || !(Minecraft.getMinecraft().currentScreen instanceof GuiChat)) {
-            Keyboard.enableRepeatEvents(false);
-        } if ((Minecraft.getMinecraft().currentScreen instanceof GuiEditSign)) {
+        if (Minecraft.getMinecraft().currentScreen != null && (Minecraft.getMinecraft().currentScreen instanceof GuiChat
+                || Minecraft.getMinecraft().currentScreen instanceof GuiEditSign || Minecraft.getMinecraft().currentScreen instanceof GuiScreenBook)) {
             Keyboard.enableRepeatEvents(true);
+        } else {
+            Keyboard.enableRepeatEvents(false);
         }
         if (event.phase != TickEvent.Phase.START) return;
         if (Minecraft.getMinecraft().theWorld == null) return;
@@ -801,8 +802,7 @@ public class NEUEventListener {
                 if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 == 1) {
                     chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/pv " + username, "" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD + username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s profile in " + EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD + "NEU's" + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + " profile viewer."));
                     return chatComponent;
-                }
-                if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 == 2) {
+                } else if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 == 2) {
                     chatComponent.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/ah " + username, "" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD + username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s /ah page"));
                     return chatComponent;
                 }

@@ -111,30 +111,39 @@ public class FishingSkillOverlay extends TextOverlay { //Im sure there is a much
         } else if (expertise > 15000){
             expertiseTier = 10;
         }
-        //TODO add this for farming
-        if (expertiseTier == 1){
-            expertiseTierAmount = "50";
-        } else if (expertiseTier == 2){
-            expertiseTierAmount = "100";
-        } else if (expertiseTier == 3){
-            expertiseTierAmount = "250";
-        } else if (expertiseTier == 4){
-            expertiseTierAmount = "500";
-        } else if (expertiseTier == 5){
-            expertiseTierAmount = "1,000";
-        } else if (expertiseTier == 6){
-            expertiseTierAmount = "2,500";
-        } else if (expertiseTier == 7){
-            expertiseTierAmount = "5,500";
-        } else if (expertiseTier == 8){
-            expertiseTierAmount = "10,000";
-        } else if (expertiseTier == 9){
-            expertiseTierAmount = "15,000";
-        } else if (expertiseTier == 10){
-            expertiseTierAmount = "Maxed";
+
+        switch (expertiseTier) {
+            case 1:
+                expertiseTierAmount = "50";
+                break;
+            case 2:
+                expertiseTierAmount = "100";
+                break;
+            case 3:
+                expertiseTierAmount = "250";
+                break;
+            case 4:
+                expertiseTierAmount = "500";
+                break;
+            case 5:
+                expertiseTierAmount = "1,000";
+                break;
+            case 6:
+                expertiseTierAmount = "2,500";
+                break;
+            case 7:
+                expertiseTierAmount = "5,500";
+                break;
+            case 8:
+                expertiseTierAmount = "10,000";
+                break;
+            case 9:
+                expertiseTierAmount = "15,000";
+                break;
+            case 10:
+                expertiseTierAmount = "Maxed";
+                break;
         }
-
-
 
         String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
 

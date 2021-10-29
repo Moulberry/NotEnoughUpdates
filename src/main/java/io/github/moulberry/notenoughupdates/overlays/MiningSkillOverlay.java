@@ -105,26 +105,37 @@ public class MiningSkillOverlay extends TextOverlay { //Im sure there is a much 
             compactTier = 10;
         }
 
-        if (compactTier == 1){
-            compactTierAmount = "100";
-        } else if (compactTier == 2){
-            compactTierAmount = "500";
-        } else if (compactTier == 3){
-            compactTierAmount = "1,500";
-        } else if (compactTier == 4){
-            compactTierAmount = "5,000";
-        } else if (compactTier == 5){
-            compactTierAmount = "15,000";
-        } else if (compactTier == 6){
-            compactTierAmount = "50,000";
-        } else if (compactTier == 7){
-            compactTierAmount = "150,000";
-        } else if (compactTier == 8){
-            compactTierAmount = "500,000";
-        } else if (compactTier == 9){
-            compactTierAmount = "1,000,000";
-        } else if (compactTier == 10){
-            compactTierAmount = "Maxed";
+        switch (compactTier) {
+            case 1:
+                compactTierAmount = "100";
+                break;
+            case 2:
+                compactTierAmount = "500";
+                break;
+            case 3:
+                compactTierAmount = "1,500";
+                break;
+            case 4:
+                compactTierAmount = "5,000";
+                break;
+            case 5:
+                compactTierAmount = "15,000";
+                break;
+            case 6:
+                compactTierAmount = "50,000";
+                break;
+            case 7:
+                compactTierAmount = "150,000";
+                break;
+            case 8:
+                compactTierAmount = "500,000";
+                break;
+            case 9:
+                compactTierAmount = "1,000,000";
+                break;
+            case 10:
+                compactTierAmount = "Maxed";
+                break;
         }
 
 
