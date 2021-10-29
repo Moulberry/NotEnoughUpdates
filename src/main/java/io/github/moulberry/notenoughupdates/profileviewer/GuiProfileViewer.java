@@ -3928,7 +3928,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.RED + "Fortunate",
                             "§7Level " + fortunate + EnumChatFormatting.DARK_GRAY + "/20",
                             "",
-                            "§7Gain " + EnumChatFormatting.GREEN + fortunateStat + "§6⸕ Mining",
+                            "§7Gain " + EnumChatFormatting.GREEN + fortunateStat + "§6 ☘ Mining",
                             "§6Fortune§7 when mining Gemstones."
                     );
                     Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3948,7 +3948,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.GREEN + "Fortunate",
                             "§7Level " + fortunate + EnumChatFormatting.DARK_GRAY + "/20",
                             "",
-                            "§7Gain " + EnumChatFormatting.GREEN + fortunateStat + "§6⸕ Mining",
+                            "§7Gain " + EnumChatFormatting.GREEN + fortunateStat + "§6 ☘ Mining",
                             "§6Fortune§7 when mining Gemstones."
                     );
                     Utils.drawHoveringText(miningSpeed2Tooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3968,7 +3968,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.RED + "Great Explorer",
                             "§7Level " + greatExplorer + EnumChatFormatting.DARK_GRAY + "/20",
                             "",
-                            "§7Grants " + EnumChatFormatting.GREEN + greatExplorerStat + "% chance to",
+                            "§7Grants " + EnumChatFormatting.GREEN + greatExplorerStat + "% "+ EnumChatFormatting.GRAY + "chance to",
                             "§7find treasure."
                     );
                     Utils.drawHoveringText(greatExplorerTooltip, mouseX, mouseY, width, height, -1, fr);
@@ -3988,7 +3988,7 @@ public class GuiProfileViewer extends GuiScreen {
                             EnumChatFormatting.GREEN + "Great Explorer",
                             "§7Level " + greatExplorer + EnumChatFormatting.DARK_GRAY + "/20",
                             "",
-                            "§7Grants " + EnumChatFormatting.GREEN + greatExplorerStat + "% chance to",
+                            "§7Grants " + EnumChatFormatting.GREEN + greatExplorerStat + "% "+ EnumChatFormatting.GRAY + "chance to",
                             "§7find treasure."
                     );
                     Utils.drawHoveringText(greatExplorerTooltip, mouseX, mouseY, width, height, -1, fr);
