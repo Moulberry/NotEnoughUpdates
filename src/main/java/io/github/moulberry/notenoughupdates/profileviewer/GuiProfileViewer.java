@@ -974,8 +974,8 @@ public class GuiProfileViewer extends GuiScreen {
                 } if (M6 > 50){
                     M6 = 50;
                 }
-                float xpM3 = 30500*(M3/100+1);
-                float xpM4 = 46000*(M4/100+1);
+                float xpM3 = 36500*(M3/100+1);
+                float xpM4 = 48500*(M4/100+1);
                 float xpM5 = 70000*(M5/100+1);
                 float xpM6 = 100000*(M6/100+1);
                 //No clue if M3 or M4 xp values are right
