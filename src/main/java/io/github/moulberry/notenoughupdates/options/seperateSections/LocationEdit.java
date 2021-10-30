@@ -135,15 +135,4 @@ public class LocationEdit {
     )
     public Position fishingPosition = new Position(10, 200);
 
-    @Expose
-    @ConfigOption(
-            name = "Combat Position",
-            desc = "Change the position of the Combat overlay"
-    )
-    @ConfigEditorButton(
-            runnableId = 15,
-            buttonText = "Edit"
-    )
-    public Position combatPosition = new Position(10, 200);
-
 }
