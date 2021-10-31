@@ -66,6 +66,7 @@ public class GuiProfileViewer extends GuiScreen {
     public static final ResourceLocation pv_dung = new ResourceLocation("notenoughupdates:pv_dung.png");
     public static final ResourceLocation pv_extra = new ResourceLocation("notenoughupdates:pv_extra.png");
     public static final ResourceLocation pv_mining = new ResourceLocation("notenoughupdates:pv_mining.png");
+    public static final ResourceLocation pv_custom = new ResourceLocation("notenoughupdates:pv_extra.png");
     public static final ResourceLocation pv_invs = new ResourceLocation("notenoughupdates:pv_invs.png");
     public static final ResourceLocation pv_cols = new ResourceLocation("notenoughupdates:pv_cols.png");
     public static final ResourceLocation pv_pets = new ResourceLocation("notenoughupdates:pv_pets.png");
@@ -106,7 +107,8 @@ public class GuiProfileViewer extends GuiScreen {
         INVS(new ItemStack(Item.getItemFromBlock(Blocks.ender_chest))),
         COLS(new ItemStack(Items.painting)),
         PETS(new ItemStack(Items.bone)),
-        MINING(new ItemStack(Items.iron_pickaxe));
+        MINING(new ItemStack(Items.iron_pickaxe)),
+        CUSTOM(new ItemStack(Blocks.command_block));
 
         public final ItemStack stack;
 
@@ -265,6 +267,9 @@ public class GuiProfileViewer extends GuiScreen {
                 break;
             case MINING:
                 drawMiningPage(mouseX, mouseY, partialTicks);
+                break;
+            case CUSTOM:
+                drawCustomPage(mouseX, mouseY, partialTicks);
                 break;
             case LOADING:
                 String str = EnumChatFormatting.YELLOW + "Loading player profiles.";
@@ -3860,6 +3865,81 @@ public class GuiProfileViewer extends GuiScreen {
                 }
             }
         }
+    }
+
+    private void drawCustomPage(int mouseX, int mouseY, float partialTicks) {
+        FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+
+        Minecraft.getMinecraft().getTextureManager().bindTexture(pv_custom);
+        Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
+
+        JsonObject profileInfo = profile.getProfileInformation(profileId);
+        if (profileInfo == null) return;
+        JsonObject skillInfo = profile.getSkillInfo(profileId);
+
+        float xStart = 22;
+        float xOffset = 103;
+        float yStartTop = 27;
+        float yStartBottom = 105;
+        float yOffset = 10;
+
+        int x = guiLeft + 23;
+        int y = guiTop + 25;
+        int sectionWidth = 110;
+
+        //Make it not crash
+        if (Objects.equals(NotEnoughUpdates.INSTANCE.config.customPV.pathPV1, "")) {
+            NotEnoughUpdates.INSTANCE.config.customPV.pathPV1 = " ";
+        }
+        if (Objects.equals(NotEnoughUpdates.INSTANCE.config.customPV.pathPV2, "")) {
+            NotEnoughUpdates.INSTANCE.config.customPV.pathPV2 = " ";
+        }
+        if (Objects.equals(NotEnoughUpdates.INSTANCE.config.customPV.pathPV3, "")) {
+            NotEnoughUpdates.INSTANCE.config.customPV.pathPV3 = " ";
+        }
+        if (Objects.equals(NotEnoughUpdates.INSTANCE.config.customPV.pathPV4, "")) {
+            NotEnoughUpdates.INSTANCE.config.customPV.pathPV4 = " ";
+        }
+        if (Objects.equals(NotEnoughUpdates.INSTANCE.config.customPV.pathPV5, "")) {
+            NotEnoughUpdates.INSTANCE.config.customPV.pathPV5 = " ";
+        }
+        if (Objects.equals(NotEnoughUpdates.INSTANCE.config.customPV.pathPV6, "")) {
+            NotEnoughUpdates.INSTANCE.config.customPV.pathPV6 = " ";
+        }
+        if (Objects.equals(NotEnoughUpdates.INSTANCE.config.customPV.pathPV7, "")) {
+            NotEnoughUpdates.INSTANCE.config.customPV.pathPV7 = " ";
+        }
+
+        int customPath1 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, NotEnoughUpdates.INSTANCE.config.customPV.pathPV1), 0)));
+        String customName1 = NotEnoughUpdates.INSTANCE.config.customPV.namePV1;
+        int customPath2 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, NotEnoughUpdates.INSTANCE.config.customPV.pathPV2), 0)));
+        String customName2 = NotEnoughUpdates.INSTANCE.config.customPV.namePV2;
+        int customPath3 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, NotEnoughUpdates.INSTANCE.config.customPV.pathPV3), 0)));
+        String customName3 = NotEnoughUpdates.INSTANCE.config.customPV.namePV3;
+        int customPath4 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, NotEnoughUpdates.INSTANCE.config.customPV.pathPV4), 0)));
+        String customName4 = NotEnoughUpdates.INSTANCE.config.customPV.namePV4;
+        int customPath5 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, NotEnoughUpdates.INSTANCE.config.customPV.pathPV5), 0)));
+        String customName5 = NotEnoughUpdates.INSTANCE.config.customPV.namePV5;
+        int customPath6 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, NotEnoughUpdates.INSTANCE.config.customPV.pathPV6), 0)));
+        String customName6 = NotEnoughUpdates.INSTANCE.config.customPV.namePV6;
+        int customPath7 = ((Utils.getElementAsInt(Utils.getElement(profileInfo, NotEnoughUpdates.INSTANCE.config.customPV.pathPV7), 0)));
+        String customName7 = NotEnoughUpdates.INSTANCE.config.customPV.namePV7;
+
+
+        Utils.renderAlignedString(EnumChatFormatting.WHITE + customName1, EnumChatFormatting.WHITE + shortNumberFormat(customPath1, 0),
+                guiLeft + xStart, guiTop + yStartTop, 76);
+        Utils.renderAlignedString(EnumChatFormatting.WHITE + customName2, EnumChatFormatting.WHITE + shortNumberFormat(customPath2, 0),
+                guiLeft + xStart, guiTop + yStartTop + 10, 76);
+        Utils.renderAlignedString(EnumChatFormatting.WHITE + customName3, EnumChatFormatting.WHITE + shortNumberFormat(customPath3, 0),
+                guiLeft + xStart, guiTop + yStartTop + 20, 76);
+        Utils.renderAlignedString(EnumChatFormatting.WHITE + customName4, EnumChatFormatting.WHITE + shortNumberFormat(customPath4, 0),
+                guiLeft + xStart, guiTop + yStartTop + 30, 76);
+        Utils.renderAlignedString(EnumChatFormatting.WHITE + customName5, EnumChatFormatting.WHITE + shortNumberFormat(customPath5, 0),
+                guiLeft + xStart, guiTop + yStartTop + 40, 76);
+        Utils.renderAlignedString(EnumChatFormatting.WHITE + customName6, EnumChatFormatting.WHITE + shortNumberFormat(customPath6, 0),
+                guiLeft + xStart, guiTop + yStartTop + 50, 76);
+        Utils.renderAlignedString(EnumChatFormatting.WHITE + customName7, EnumChatFormatting.WHITE + shortNumberFormat(customPath7, 0),
+                guiLeft + xStart, guiTop + yStartTop + 60, 76);
     }
 
 

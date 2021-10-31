@@ -267,6 +267,13 @@ public class NEUConfig extends Config {
 
     @Expose
     @Category(
+            name = "Custom PV Page",
+            desc = "Lets you edit the last page in /pv"
+    )
+    public CustomPV customPV = new CustomPV();
+
+    @Expose
+    @Category(
             name = "Api Key",
             desc = "Api Key"
     )
