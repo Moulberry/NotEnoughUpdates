@@ -265,12 +265,6 @@ public class NEUConfig extends Config {
     )
     public AccessoryBag accessoryBag = new AccessoryBag();
 
-    @Expose
-    @Category(
-            name = "Custom PV Page",
-            desc = "Lets you edit the last page in /pv"
-    )
-    public CustomPV customPV = new CustomPV();
 
     @Expose
     @Category(
@@ -295,8 +289,6 @@ public class NEUConfig extends Config {
 
         @Expose
         public boolean enableItemEditing = false;
-        @Expose
-        public boolean bHopBan = false;
         @Expose
         public boolean cacheRenderedItempane = true;
         @Expose
