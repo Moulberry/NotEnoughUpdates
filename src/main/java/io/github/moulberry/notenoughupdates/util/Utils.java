@@ -455,21 +455,22 @@ public class Utils {
         return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
     }
 
-    public static String[] rarityArr = new String[]{
-            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME", "DIVINE"
+    public static String[] rarityArr = new String[] {
+            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "SPECIAL", "VERY SPECIAL", "SUPREME", "^^ THAT ONE IS DIVINE ^^"//, "DIVINE"
     };
 
-    public static String[] rarityArrC = new String[]{
-            EnumChatFormatting.WHITE + EnumChatFormatting.BOLD.toString() + "COMMON",
-            EnumChatFormatting.GREEN + EnumChatFormatting.BOLD.toString() + "UNCOMMON",
-            EnumChatFormatting.BLUE + EnumChatFormatting.BOLD.toString() + "RARE",
-            EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD.toString() + "EPIC",
-            EnumChatFormatting.GOLD + EnumChatFormatting.BOLD.toString() + "LEGENDARY",
-            EnumChatFormatting.LIGHT_PURPLE + EnumChatFormatting.BOLD.toString() + "MYTHIC",
-            EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "SPECIAL",
-            EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "VERY SPECIAL",
-            EnumChatFormatting.DARK_RED + EnumChatFormatting.BOLD.toString() + "SUPREME",
-            EnumChatFormatting.AQUA + EnumChatFormatting.BOLD.toString() + "DIVINE",
+    public static String[] rarityArrC = new String[] {
+            EnumChatFormatting.WHITE+EnumChatFormatting.BOLD.toString()+"COMMON",
+            EnumChatFormatting.GREEN+EnumChatFormatting.BOLD.toString()+"UNCOMMON",
+            EnumChatFormatting.BLUE+EnumChatFormatting.BOLD.toString()+"RARE",
+            EnumChatFormatting.DARK_PURPLE+EnumChatFormatting.BOLD.toString()+"EPIC",
+            EnumChatFormatting.GOLD+EnumChatFormatting.BOLD.toString()+"LEGENDARY",
+            EnumChatFormatting.LIGHT_PURPLE+EnumChatFormatting.BOLD.toString()+"MYTHIC",
+            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"SPECIAL",
+            EnumChatFormatting.RED+EnumChatFormatting.BOLD.toString()+"VERY SPECIAL",
+            EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
+            EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
+            //EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
 
     };
     public static final HashMap<String, String> rarityArrMap = new HashMap<>();
@@ -483,8 +484,8 @@ public class Utils {
         rarityArrMap.put("MYTHIC", rarityArrC[5]);
         rarityArrMap.put("SPECIAL", rarityArrC[6]);
         rarityArrMap.put("VERY SPECIAL", rarityArrC[7]);
-        rarityArrMap.put("SUPREME", rarityArrC[8]);
-        rarityArrMap.put("DIVINE", rarityArrC[9]);
+        rarityArrMap.put("DIVINE", rarityArrC[8]);
+        //rarityArrMap.put("DIVINE", rarityArrC[9]);
 
     }
 
@@ -1031,6 +1032,14 @@ public class Utils {
         JsonPrimitive prim = element.getAsJsonPrimitive();
         if (!prim.isNumber()) return def;
         return prim.getAsFloat();
+    }
+
+    public static int getElementAsInt(JsonElement element, int def) {
+        if (element == null) return def;
+        if (!element.isJsonPrimitive()) return def;
+        JsonPrimitive prim = element.getAsJsonPrimitive();
+        if (!prim.isNumber()) return def;
+        return prim.getAsInt();
     }
 
     public static String getElementAsString(JsonElement element, String def) {

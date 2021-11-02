@@ -14,7 +14,17 @@ public class StorageGUI {
 
     @Expose
     public int selectedIndex = 0;
-
+    @ConfigOption(
+            name = "\u00A7cWarning",
+            desc = "You need Fast Render and Antialiasing off for these settings to work\n" +
+                    "You can find these in your video settings"
+    )
+    @ConfigEditorFSR(
+            runnableId = 12,
+            buttonText = ""
+    )
+    @ConfigAccordionId(id = 1)
+    public boolean storageGUIWarning = false;
     @Expose
     @ConfigOption(
             name = "Enable Storage GUI",
@@ -95,6 +105,15 @@ public class StorageGUI {
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 1)
     public boolean searchBarAutofocus = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Show Enchant Glint",
+            desc = "Toggle enchant glint in storage GUI"
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 1)
+    public boolean showEnchantGlint = true;
 
     @Expose
     @ConfigOption(

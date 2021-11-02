@@ -13,6 +13,8 @@ public class OverlayManager {
 
     public static MiningOverlay miningOverlay;
     public static FarmingOverlay farmingOverlay;
+    public static FishingSkillOverlay fishingSkillOverlay;
+    public static MiningSkillOverlay miningSkillOverlay;
     public static PetInfoOverlay petInfoOverlay;
     public static TimersOverlay timersOverlay;
     public static BonemerangOverlay bonemerangOverlay;
@@ -87,7 +89,48 @@ public class OverlayManager {
             }
             return TextOverlayStyle.BACKGROUND;
         });
-
+        List<String> miningSkillDummy = Lists.newArrayList(
+                "\u00a7bCompact: \u00a7e547,860",
+                "\u00a7bBlocks/m: \u00a7e38.29",
+                "\u00a7bMine: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+                "\u00a7bCurrent XP: \u00a7e6,734",
+                "\u00a7bRemaining XP: \u00a7e3,265",
+                "\u00a7bXP/h: \u00a7e238,129",
+                "\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52");
+        miningSkillOverlay = new MiningSkillOverlay(NotEnoughUpdates.INSTANCE.config.skillOverlays.miningPosition, () -> {
+            List<String> strings = new ArrayList<>();
+            for(int i : NotEnoughUpdates.INSTANCE.config.skillOverlays.miningText) {
+                if(i >= 0 && i < miningSkillDummy.size()) strings.add(miningSkillDummy.get(i));
+            }
+            return strings;
+        }, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.skillOverlays.miningStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
+        List<String> fishingDummy = Lists.newArrayList("\u00a7bCatches: \u00a7e37,547,860",
+                //"\u00a7bCatches/m: \u00a7e38.29",
+                "\u00a7bFish: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+                "\u00a7bCurrent XP: \u00a7e6,734",
+                "\u00a7bRemaining XP: \u00a7e3,265",
+                "\u00a7bXP/h: \u00a7e238,129"
+                //"\u00a7bYaw: \u00a7e68.25\u00a7l\u1D52"
+        );
+        fishingSkillOverlay = new FishingSkillOverlay(NotEnoughUpdates.INSTANCE.config.skillOverlays.fishingPosition, () -> {
+            List<String> strings = new ArrayList<>();
+            for (int i : NotEnoughUpdates.INSTANCE.config.skillOverlays.fishingText) {
+                if (i >= 0 && i < fishingDummy.size()) strings.add(fishingDummy.get(i));
+            }
+            return strings;
+        }, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.skillOverlays.fishingStyle;
+            if (style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
         List<String> petInfoDummy = Lists.newArrayList("\u00a7a[Lvl 37] \u00a7fRock",
                 "\u00a7b2,312.9/2,700\u00a7e (85.7%)",
                 "\u00a7b2.3k/2.7k\u00a7e (85.7%)",
@@ -170,6 +213,8 @@ public class OverlayManager {
 
         textOverlays.add(miningOverlay);
         textOverlays.add(farmingOverlay);
+        textOverlays.add(miningSkillOverlay);
+        textOverlays.add(fishingSkillOverlay);
         textOverlays.add(petInfoOverlay);
         textOverlays.add(bonemerangOverlay);
         textOverlays.add(crystalHollowOverlay);

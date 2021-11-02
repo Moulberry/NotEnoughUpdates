@@ -193,7 +193,6 @@ public class DwarvenMinesWaypoints {
         if (!SBInfo.getInstance().getLocation().equals("mining_3")) return;
 
         int locWaypoint = NotEnoughUpdates.INSTANCE.config.mining.locWaypoints;
-
         if (dynamicLocation != null && dynamicName != null &&
                 System.currentTimeMillis() - dynamicMillis < 30 * 1000) {
             for (Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
@@ -203,14 +202,17 @@ public class DwarvenMinesWaypoints {
                 }
             }
         }
-
+        String skyblockLocation = SBInfo.getInstance().location.toLowerCase();
         if (locWaypoint >= 1) {
             for (Map.Entry<String, Vector3f> entry : waypointsMap.entrySet()) {
                 if (locWaypoint >= 2) {
                     RenderUtils.renderWayPoint(EnumChatFormatting.AQUA + entry.getKey(), entry.getValue(), event.partialTicks);
                 } else {
+                    String commissionLocation = entry.getKey().toLowerCase();
                     for (String commissionName : MiningOverlay.commissionProgress.keySet()) {
-                        if (commissionName.toLowerCase().contains(entry.getKey().toLowerCase())) {
+                        if (NotEnoughUpdates.INSTANCE.config.mining.hideWaypointIfAtLocation)
+                            if (commissionLocation.replace("'", "").equals(skyblockLocation)) continue;
+                        if (commissionName.toLowerCase().contains(commissionLocation)) {
                             if (commissionName.contains("Titanium")) {
                                 RenderUtils.renderWayPoint(EnumChatFormatting.WHITE + entry.getKey(), entry.getValue(), event.partialTicks);
                             } else {
