@@ -15,10 +15,12 @@ public class OverlayManager {
     public static FarmingOverlay farmingOverlay;
     public static FishingSkillOverlay fishingSkillOverlay;
     public static MiningSkillOverlay miningSkillOverlay;
+    public static CombatSkillOverlay combatSkillOverlay;
     public static PetInfoOverlay petInfoOverlay;
     public static TimersOverlay timersOverlay;
     public static BonemerangOverlay bonemerangOverlay;
     public static CrystalHollowOverlay crystalHollowOverlay;
+    public static SlayerOverlay slayerOverlay;
     public static final List<TextOverlay> textOverlays = new ArrayList<>();
 
     static {
@@ -131,6 +133,26 @@ public class OverlayManager {
             }
             return TextOverlayStyle.BACKGROUND;
         });
+        List<String> combatSkillDummy = Lists.newArrayList(
+                "\u00a7bKills: \u00a7e547,860",
+                        "\u00a7bCombat: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+                        "\u00a7bCurrent XP: \u00a7e6,734",
+                        "\u00a7bRemaining XP: \u00a7e3,265",
+                        "\u00a7bXP/h: \u00a7e238,129",
+                        "\u00a7bETA: \u00a7e13h12m");
+        combatSkillOverlay = new CombatSkillOverlay(NotEnoughUpdates.INSTANCE.config.skillOverlays.combatPosition, () -> {
+            List<String> strings = new ArrayList<>();
+            for(int i : NotEnoughUpdates.INSTANCE.config.skillOverlays.combatText) {
+                if(i >= 0 && i < combatSkillDummy.size()) strings.add(combatSkillDummy.get(i));
+            }
+            return strings;
+        }, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.skillOverlays.combatStyle;
+            if(style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
         List<String> petInfoDummy = Lists.newArrayList("\u00a7a[Lvl 37] \u00a7fRock",
                 "\u00a7b2,312.9/2,700\u00a7e (85.7%)",
                 "\u00a7b2.3k/2.7k\u00a7e (85.7%)",
@@ -210,14 +232,36 @@ public class OverlayManager {
             }
             return TextOverlayStyle.BACKGROUND;
         });
+        List<String> slayerDummy = Lists.newArrayList("\u00a7eSlayer: \u00a74Sven",
+                "\u00a7eRNG Meter: \u00a75100%",
+                "\u00a7eLvl: \u00a7d7",
+                "\u00a7eKill time: \u00a7c1:30",
+                "\u00a7eXP: \u00a7d75,450/100,000",
+                "\u00a7eBosses till next Lvl: \u00a7d17",
+                "\u00a7eAverage kill time: \u00a7c3:20");
+        slayerOverlay = new SlayerOverlay(NotEnoughUpdates.INSTANCE.config.slayerOverlay.slayerPosition, () -> {
+            List<String> strings = new ArrayList<>();
+            for (int i : NotEnoughUpdates.INSTANCE.config.slayerOverlay.slayerText) {
+                if (i >= 0 && i < slayerDummy.size()) strings.add(slayerDummy.get(i));
+            }
+            return strings;
+        }, () -> {
+            int style = NotEnoughUpdates.INSTANCE.config.slayerOverlay.slayerStyle;
+            if (style >= 0 && style < TextOverlayStyle.values().length) {
+                return TextOverlayStyle.values()[style];
+            }
+            return TextOverlayStyle.BACKGROUND;
+        });
 
         textOverlays.add(miningOverlay);
         textOverlays.add(farmingOverlay);
         textOverlays.add(miningSkillOverlay);
+        textOverlays.add(combatSkillOverlay);
         textOverlays.add(fishingSkillOverlay);
         textOverlays.add(petInfoOverlay);
         textOverlays.add(bonemerangOverlay);
         textOverlays.add(crystalHollowOverlay);
+        textOverlays.add(slayerOverlay);
     }
 
 }

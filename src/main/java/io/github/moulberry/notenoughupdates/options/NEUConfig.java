@@ -101,6 +101,13 @@ public class NEUConfig extends Config {
                 return;
             case 17:
                 ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neusouls unclear");
+                return;
+            case 18:
+                editOverlay(activeConfigCategory, OverlayManager.slayerOverlay, slayerOverlay.slayerPosition);
+                return;
+            case 19:
+                editOverlay(activeConfigCategory, OverlayManager.combatSkillOverlay, skillOverlays.combatPosition);
+
         }
     }
 
@@ -180,6 +187,13 @@ public class NEUConfig extends Config {
             desc = "Todo Overlay"
     )
     public MiscOverlays miscOverlays = new MiscOverlays();
+
+    @Expose
+    @Category(
+            name = "Slayer Overlay",
+            desc = "Slayer Overlay"
+    )
+    public SlayerOverlay slayerOverlay = new SlayerOverlay();
 
     @Expose
     @Category(
@@ -330,6 +344,10 @@ public class NEUConfig extends Config {
         //These config options were added due to a graphical bug that caused the player to be unable to see the screen
         @Expose
         public boolean disableBrokenCapes = false;
+
+        //Ery wanted to texture himself because its ery
+        @Expose
+        public boolean npcRetextureOnSelf = false;
 
     }
 

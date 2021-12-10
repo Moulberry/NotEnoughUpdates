@@ -20,7 +20,7 @@ public class Enchanting {
     @ConfigAccordionId(id = 1)
     public boolean enableTableGUI = true;
 
-    @Expose
+    /*@Expose
     @ConfigOption(
             name = "Incompatible Enchants",
             desc = "How to display enchants that are incompatible with your current item, eg. Smite on a sword with Sharpness"
@@ -29,7 +29,7 @@ public class Enchanting {
             values = {"Highlight", "Hide"}
     )
     @ConfigAccordionId(id = 1)
-    public int incompatibleEnchants = 0;
+    public int incompatibleEnchants = 0;*/
 
     @Expose
     @ConfigOption(
@@ -68,7 +68,8 @@ public class Enchanting {
     @ConfigEditorBoolean
     @ConfigAccordionId(id = 0)
     public boolean enableEnchantingSolvers = true;
-
+    //In an email from Donpireso (admin) he says not sending a packet at all isn't bannable
+    //https://cdn.discordapp.com/attachments/823769568933576764/906101631861526559/unknown.png
     @Expose
         @ConfigOption(
                 name = "Prevent Misclicks",

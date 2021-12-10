@@ -2,6 +2,7 @@ package io.github.moulberry.notenoughupdates.util;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.overlays.SlayerOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.network.NetworkPlayerInfo;
@@ -42,6 +43,7 @@ public class SBInfo {
     public String date = "";
     public String time = "";
     public String objective = "";
+    public String slayer = "";
 
     public String mode = "";
 
@@ -181,6 +183,36 @@ public class SBInfo {
                 lines.add(line);
             }
             isInDungeon = tempIsInDungeon;
+
+            for (String line : lines) { //Slayer stuff
+                //System.out.println(line);
+                if (line.contains("Tarantula Broodfather")) {
+                    slayer = "Tarantula";
+                } else if (line.contains("Revenant Horror")) {
+                    slayer = "Revenant";
+                } else if (line.contains("Sven Packmaster")) {
+                    slayer = "Sven";
+                } else if (line.contains("Voidgloom Seraph")) {
+                    slayer = "Enderman";
+                }
+                if (lines.contains("Slayer Quest") && SlayerOverlay.unloadOverlayTimer == -1 ||
+                        lines.contains("Slayer Quest") && System.currentTimeMillis() - SlayerOverlay.unloadOverlayTimer > 500) {
+                    SlayerOverlay.slayerQuest = true;
+                }
+                if (SlayerOverlay.slayerQuest) {
+                    if (line.contains(" I")) {
+                        SlayerOverlay.slayerTier = 1;
+                    } if (line.contains(" II")) {
+                        SlayerOverlay.slayerTier = 2;
+                    } if (line.contains(" III")) {
+                        SlayerOverlay.slayerTier = 3;
+                    } if (line.contains(" IV")) {
+                        SlayerOverlay.slayerTier = 4;
+                    } if (line.contains(" V")) {
+                        SlayerOverlay.slayerTier = 5;
+                    }
+                }
+            }
 
             if (lines.size() >= 5) {
                 date = Utils.cleanColour(lines.get(1)).trim();

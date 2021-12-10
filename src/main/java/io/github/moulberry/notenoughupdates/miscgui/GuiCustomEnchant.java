@@ -586,9 +586,9 @@ public class GuiCustomEnchant extends Gui {
         Utils.drawTexturedRect(guiLeft + 295, guiTop + 147, 16, 16,
                 0, 16 / 512f, 387 / 512f, (387 + 16) / 512f, GL11.GL_NEAREST);
         //Incompatible Settings Button
-        float incompatibleMinU = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants * 16 / 512f;
+        /*float incompatibleMinU = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants * 16 / 512f;
         Utils.drawTexturedRect(guiLeft + 295 + 18, guiTop + 147, 16, 16,
-                incompatibleMinU, incompatibleMinU + 16 / 512f, 403 / 512f, (403 + 16) / 512f, GL11.GL_NEAREST);
+                incompatibleMinU, incompatibleMinU + 16 / 512f, 403 / 512f, (403 + 16) / 512f, GL11.GL_NEAREST);*/
         //Sorting Settings Button
         float sortingMinU = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantSorting * 16 / 512f;
         Utils.drawTexturedRect(guiLeft + 295, guiTop + 147 + 18, 16, 16,
@@ -606,7 +606,7 @@ public class GuiCustomEnchant extends Gui {
                     Gui.drawRect(guiLeft + 295, guiTop + 147, guiLeft + 295 + 16, guiTop + 147 + 16, 0x80ffffff);
                     tooltipToDisplay = createTooltip("Enable GUI", 0, "On", "Off");
                     break;
-                case 1:
+                /*case 1:
                     Gui.drawRect(guiLeft + 295 + 18, guiTop + 147, guiLeft + 295 + 16 + 18, guiTop + 147 + 16, 0x80ffffff);
                     tooltipToDisplay = createTooltip("Incompatible Enchants",
                             NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants,
@@ -614,7 +614,7 @@ public class GuiCustomEnchant extends Gui {
                     tooltipToDisplay.add(1, EnumChatFormatting.GRAY + "How to display enchants that are");
                     tooltipToDisplay.add(2, EnumChatFormatting.GRAY + "incompatible with your current item,");
                     tooltipToDisplay.add(3, EnumChatFormatting.GRAY + "eg. Smite on a sword with Sharpness");
-                    break;
+                    break;*/
                 case 2:
                     Gui.drawRect(guiLeft + 295, guiTop + 147 + 18, guiLeft + 295 + 16, guiTop + 147 + 16 + 18, 0x80ffffff);
                     tooltipToDisplay = createTooltip("Sort enchants...",
@@ -1435,14 +1435,14 @@ public class GuiCustomEnchant extends Gui {
                         NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableTableGUI = false;
                         break;
                     }
-                    case 1: {
+                   /*case 1: {
                         int val = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants;
                         val += direction;
                         if (val < 0) val = 1;
                         if (val > 1) val = 0;
                         NotEnoughUpdates.INSTANCE.config.enchantingSolvers.incompatibleEnchants = val;
                         break;
-                    }
+                    }*/
                     case 2: {
                         int val = NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enchantSorting;
                         val += direction;

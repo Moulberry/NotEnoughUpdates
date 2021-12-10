@@ -96,6 +96,7 @@ public class NEUOverlay extends Gui {
     //Various constants used for GUI structure
     private final int searchBarYOffset = 10;
     private final int searchBarPadding = 2;
+    private long lastSearchMode = 0;
 
     private float oldWidthMult = 0;
 
@@ -197,6 +198,7 @@ public class NEUOverlay extends Gui {
                     } else {
                         if (System.currentTimeMillis() - millisLastLeftClick < 300) {
                             searchMode = !searchMode;
+                            lastSearchMode = System.currentTimeMillis();
                             if (searchMode && NotEnoughUpdates.INSTANCE.config.hidden.firstTimeSearchFocus) {
                                 NEUEventListener.displayNotification(Lists.newArrayList(
                                         "\u00a7eSearch Highlight",
@@ -205,13 +207,16 @@ public class NEUOverlay extends Gui {
                                         "\u00a77This allows you easily find items as the item will stand out.",
                                         "\u00a77To toggle this please double click on the search bar in your inventory.",
                                         "\u00a77",
-                                        "\u00a77Press X on your keyboard to close this notifcation"), true, true);
+                                        "\u00a77Press X on your keyboard to close this notification"), true, true);
                                 NotEnoughUpdates.INSTANCE.config.hidden.firstTimeSearchFocus = false;
 
                             }
                         }
                         textField.setCursorPosition(getClickedIndex(mouseX, mouseY));
                         millisLastLeftClick = System.currentTimeMillis();
+                        if (searchMode) {
+                            lastSearchMode = System.currentTimeMillis();
+                        }
                     }
                 }
             }
@@ -2041,6 +2046,11 @@ public class NEUOverlay extends Gui {
         GlStateManager.disableLighting();
 
         Utils.pushGuiScale(-1);
+
+        if (System.currentTimeMillis() - lastSearchMode > 120000 && NotEnoughUpdates.INSTANCE.config.toolbar.autoTurnOffSearchMode
+                || !NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
+            searchMode = false;
+        }
     }
 
     /**
