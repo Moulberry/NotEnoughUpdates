@@ -1,5 +1,6 @@
 package io.github.moulberry.notenoughupdates;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
@@ -10,14 +11,44 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Keyboard;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class ItemPriceInformation {
+    private static File file;
+    private static HashSet<String> auctionableItems = null;
+    private static Gson gson;
 
     public static boolean addToTooltip(List<String> tooltip, String internalname, ItemStack stack) {
         return addToTooltip(tooltip, internalname, stack, true);
+    }
+
+    public static void init(File saveLocation, Gson neuGson) {
+        file = saveLocation;
+        gson = neuGson;
+        if (file.exists()) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+                auctionableItems = gson.fromJson(reader, HashSet.class);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    public static void updateAuctionableItemsList() {
+        Set<String> items = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfoKeySet();
+        if (!items.isEmpty()) {
+            auctionableItems = (HashSet<String>) items;
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+                //noinspection ResultOfMethodCallIgnored
+                file.createNewFile();
+                writer.write(gson.toJson(items));
+            } catch (IOException ignored) {
+            }
+        }
     }
 
     public static boolean addToTooltip(List<String> tooltip, String internalname, ItemStack stack, boolean useStackSize) {
@@ -25,6 +56,9 @@ public class ItemPriceInformation {
             return false;
         }
         if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.disablePriceKey && !KeybindHelper.isKeyDown(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.disablePriceKeyKeybind)) {
+            return false;
+        }
+        if (internalname.equals("SKYBLOCK_MENU")) {
             return false;
         }
         JsonObject auctionInfo = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(internalname);
@@ -256,8 +290,16 @@ public class ItemPriceInformation {
 
             return added;
         } else if (auctionInfoErrored) {
-            tooltip.add(EnumChatFormatting.RED.toString() + EnumChatFormatting.BOLD + "[NEU] Can't find price info! Please be patient.");
-            return true;
+            String message = EnumChatFormatting.RED.toString() + EnumChatFormatting.BOLD + "[NEU] API is down";
+            if (auctionableItems != null && !auctionableItems.isEmpty()) {
+                if (auctionableItems.contains(internalname)) {
+                    tooltip.add(message);
+                    return true;
+                }
+            } else {
+                tooltip.add(message + " and no item data is cached");
+                return true;
+            }
         }
 
         return false;
