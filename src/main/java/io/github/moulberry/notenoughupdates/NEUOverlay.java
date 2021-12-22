@@ -743,7 +743,7 @@ public class NEUOverlay extends Gui {
                                 if(Mouse.getEventButton() == 0) {
                                     manager.showRecipe(item);
                                 } else if(Mouse.getEventButton() == 1) {
-                                    showInfo(item);
+                                    new Thread(() -> showInfo(item)).start();
                                 } else if(Mouse.getEventButton() == manager.keybindItemSelect.getKeyCode()+100  && NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
                                     textField.setText("id:"+item.get("internalname").getAsString());
                                     updateSearch();
