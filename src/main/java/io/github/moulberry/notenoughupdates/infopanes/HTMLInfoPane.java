@@ -94,6 +94,9 @@ public class HTMLInfoPane extends TextInfoPane {
      */
     public static HTMLInfoPane createFromWikiUrl(NEUOverlay overlay, NEUManager manager, String name,
                                                  String wikiUrl) {
+        // Display a loading pane before downloading the page
+        overlay.displayInformationPane(new TextInfoPane(overlay, manager, name, EnumChatFormatting.GRAY+"Downloading webpage (" + name + EnumChatFormatting.RESET+
+                EnumChatFormatting.GRAY+"), please wait..."));
         File f = manager.getWebFile(wikiUrl);
         if(f == null) {
             return new HTMLInfoPane(overlay, manager, "error", "error","Failed to load wiki url: "+ wikiUrl);
