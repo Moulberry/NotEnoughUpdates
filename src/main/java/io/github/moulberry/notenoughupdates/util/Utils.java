@@ -7,6 +7,7 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -28,6 +29,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.network.play.client.C0DPacketCloseWindow;
 import net.minecraft.util.*;
 import net.minecraftforge.fml.common.Loader;
 import org.lwjgl.BufferUtils;
@@ -44,8 +46,8 @@ import java.lang.reflect.Method;
 import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -472,7 +474,6 @@ public class Utils {
             //EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
 
     };
-
     public static final HashMap<String, String> rarityArrMap = new HashMap<String, String>() {{
         put("COMMON", rarityArrC[0]);
         put("UNCOMMON", rarityArrC[1]);
@@ -1362,7 +1363,6 @@ public class Utils {
 
         return endsIn;
     }
-
     public static void drawLine(float sx, float sy, float ex, float ey, int width, int color) {
         float f = (float) (color >> 24 & 255) / 255.0F;
         float f1 = (float) (color >> 16 & 255) / 255.0F;
@@ -1395,7 +1395,7 @@ public class Utils {
     }
 
     public static void drawTexturedQuad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4,
-                                         float uMin, float uMax, float vMin, float vMax, int filter) {
+                                        float uMin, float uMax, float vMin, float vMax, int filter) {
         GlStateManager.enableTexture2D();
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -1426,4 +1426,34 @@ public class Utils {
 
         GlStateManager.disableBlend();
     }
+
+    public static boolean sendCloseScreenPacket() {
+        EntityPlayerSP thePlayer = Minecraft.getMinecraft().thePlayer;
+        if (thePlayer.openContainer == null) return false;
+        thePlayer.sendQueue.addToSendQueue(new C0DPacketCloseWindow(
+                thePlayer.openContainer.windowId));
+        return true;
+    }
+
+    public static String formatNumberWithDots(long number) {
+        if (number == 0)
+            return "0";
+        String work = "";
+        boolean isNegative = false;
+        if (number < 0) {
+            isNegative = true;
+            number = -number;
+        }
+        while (number != 0) {
+            work = String.format("%03d.%s", number % 1000, work);
+            number /= 1000;
+        }
+        work = work.substring(0, work.length() - 1);
+        while (work.startsWith("0"))
+            work = work.substring(1);
+        if (isNegative)
+            return "-" + work;
+        return work;
+    }
+
 }
