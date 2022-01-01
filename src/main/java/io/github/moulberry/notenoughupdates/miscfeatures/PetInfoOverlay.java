@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 import com.google.common.collect.Lists;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.NEUEventListener;
+import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpUtils;
@@ -1114,7 +1115,11 @@ public class PetInfoOverlay extends TextOverlay {
                 String chatMessage = Utils.cleanColour(event.message.getUnformattedText());
 
                 Matcher autopetMatcher = AUTOPET_EQUIP.matcher(event.message.getFormattedText());
-                if (autopetMatcher.matches()) {
+                if (event.message.getUnformattedText().startsWith("You summoned your") || System.currentTimeMillis() - NEUOverlay.cachedPetTimer < 500) {
+                    NEUOverlay.cachedPetTimer = System.currentTimeMillis();
+                    NEUOverlay.shouldUseCachedPet = false;
+                } else if (autopetMatcher.matches()) {
+                    NEUOverlay.shouldUseCachedPet = false;
                     try {
                         lastLevelHovered = Integer.parseInt(autopetMatcher.group(1));
                     } catch (NumberFormatException ignored) {}

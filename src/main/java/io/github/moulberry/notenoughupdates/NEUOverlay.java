@@ -16,6 +16,7 @@ import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiElement;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupAligned;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupFloating;
+import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 import io.github.moulberry.notenoughupdates.miscfeatures.SunTzu;
 import io.github.moulberry.notenoughupdates.miscgui.GuiPriceGraph;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
@@ -26,8 +27,11 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.entity.RenderManager;
@@ -39,6 +43,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.ContainerChest;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -72,6 +78,33 @@ public class NEUOverlay extends Gui {
     private static final ResourceLocation SUPERGEHEIMNISVERMOGEN = new ResourceLocation("notenoughupdates:supersecretassets/bald.png");
     private static final ResourceLocation SEARCH_BAR = new ResourceLocation("notenoughupdates:search_bar.png");
     private static final ResourceLocation SEARCH_BAR_GOLD = new ResourceLocation("notenoughupdates:search_bar_gold.png");
+
+    private static final ResourceLocation ARMOR_DISPLAY = new ResourceLocation("notenoughupdates:armordisplay/armordisplay.png");
+    private static final ResourceLocation ARMOR_DISPLAY_GREY = new ResourceLocation("notenoughupdates:armordisplay/armordisplay_grey.png");
+    private static final ResourceLocation ARMOR_DISPLAY_DARK = new ResourceLocation("notenoughupdates:armordisplay/armordisplay_phq_dark.png");
+    private static final ResourceLocation ARMOR_DISPLAY_FSR = new ResourceLocation("notenoughupdates:armordisplay/armordisplay_fsr.png");
+    private static final ResourceLocation ARMOR_DISPLAY_TRANSPARENT = new ResourceLocation("notenoughupdates:armordisplay/armordisplay_transparent.png");
+    private static final ResourceLocation ARMOR_DISPLAY_TRANSPARENT_PET = new ResourceLocation("notenoughupdates:armordisplay/armordisplay_transparent_pet.png");
+
+    private static final ResourceLocation QUESTION_MARK = new ResourceLocation("notenoughupdates:pv_unknown.png");
+
+    private static final ResourceLocation PET_DISPLAY = new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo.png");
+    private static final ResourceLocation PET_DISPLAY_GREY = new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_dark.png");
+    private static final ResourceLocation PET_DISPLAY_DARK = new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_phqdark.png");
+    private static final ResourceLocation PET_DISPLAY_FSR = new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_fsr.png");
+    private static final ResourceLocation PET_DISPLAY_TRANSPARENT = new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_transparent.png");
+
+
+    private static final ResourceLocation PET_ARMOR_DISPLAY = new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor.png");
+    private static final ResourceLocation PET_ARMOR_DISPLAY_GREY = new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_dark.png");
+    private static final ResourceLocation PET_ARMOR_DISPLAY_DARK = new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_phqdark.png");
+    private static final ResourceLocation PET_ARMOR_DISPLAY_FSR = new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_fsr.png");
+    private static final ResourceLocation PET_ARMOR_DISPLAY_TRANSPARENT = new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_transparent.png");
+
+    private static boolean renderingArmorHud;
+    private static boolean renderingPetHud;
+    public static boolean shouldUseCachedPet;
+    public static long cachedPetTimer;
 
     private final NEUManager manager;
 
@@ -1656,13 +1689,174 @@ public class NEUOverlay extends Gui {
     int guiScaleLast = 0;
     private boolean showVanillaLast = false;
 
+    private boolean wardrobeOpen = false;
+    private boolean isInNamedGui(String guiName) {
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+        if (guiScreen instanceof GuiChest) {
+            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+            ContainerChest container = (ContainerChest) chest.inventorySlots;
+            IInventory lower = container.getLowerChestInventory();
+            String containerName = lower.getDisplayName().getUnformattedText();
+            if (containerName.contains(guiName)) {
+                wardrobeOpen = true;
+            } else wardrobeOpen = false;
+        }
+        if (guiScreen instanceof GuiInventory) {
+            wardrobeOpen = false;
+        }
+        return wardrobeOpen;
+    }
+    private int wardrobePage = -1;
+    private int getWardrobePage () {
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+        if (guiScreen instanceof GuiChest) {
+            if (isInNamedGui("Wardrobe")) {
+                GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+                ContainerChest container = (ContainerChest) chest.inventorySlots;
+                IInventory lower = container.getLowerChestInventory();
+                String containerName = lower.getDisplayName().getUnformattedText();
+                try {
+                    wardrobePage = Integer.parseInt(containerName.substring(10, 11));
+                } catch (NumberFormatException e) {
+                    System.out.println(containerName.charAt(10));
+                    System.out.println("Did hypixel change the wardrobe string?");
+                    wardrobePage = -1;
+                }
+            } else wardrobePage = -1;
+        }
+        return wardrobePage;
+    }
+    private int petPage = -1;
+    private int getPetPage () {
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+        if (guiScreen instanceof GuiChest) {
+            if (isInNamedGui("Pets")) {
+                GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+                ContainerChest container = (ContainerChest) chest.inventorySlots;
+                IInventory lower = container.getLowerChestInventory();
+                String containerName = lower.getDisplayName().getUnformattedText();
+                try {
+                    petPage = Integer.parseInt(containerName.substring(1, 2));
+                } catch (NumberFormatException e) {
+                    petPage = 1;
+                }
+            } else petPage = -1;
+        }
+        return petPage;
+    }
+    private ItemStack getChestSlotsAsItemStack(int slot) {
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+        if (guiScreen instanceof GuiChest) {
+            GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+            return chest.inventorySlots.getSlot(slot).getStack();
+        } else {
+            return null;
+        }
+    }
+    private int selectedArmor = 9;
+    private int getEquippedArmor() {
+            if (isInNamedGui("Wardrobe")) {
+                ItemStack nullTest1 = getChestSlotsAsItemStack(8);
+                ItemStack nullTest2 = getChestSlotsAsItemStack(17);
+                ItemStack nullTest3 = getChestSlotsAsItemStack(26);
+                ItemStack nullTest4 = getChestSlotsAsItemStack(35);
+                ItemStack nullTest5 = getChestSlotsAsItemStack(44);
+                if (nullTest1 != null || nullTest2 != null || nullTest3 != null || nullTest4 != null || nullTest5 != null) {
+                    selectedArmor = 9;
+                }
+                for (int ii = 1; ii < 5; ii++) {
+                    if (ii == 1 || selectedArmor == 9) {
+                        if (getWardrobePage() == ii) {
+                            for (int i = 8; i < 54; i += 9) {
+                                ItemStack stack1 = getChestSlotsAsItemStack(i);
+                                if (stack1 != null) {
+                                    String[] lore1 = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack1.getTagCompound());
+                                    for (String line : lore1) {
+                                        //System.out.println(line);
+                                        if (line.contains("to unequip this armor")) {
+                                            selectedArmor = i;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        return selectedArmor;
+        }
+
+    private int selectedPet = 0;
+    private int getEquippedPet() {
+        if (isInNamedGui("Pets")) {
+            for (int ii = 1; ii < 3; ii++) {
+                if (ii == 1 || selectedPet == 0) {
+                    if (getPetPage() == ii) {
+                        for (int i = 0; i < 54; i ++) {
+                            ItemStack stack1 = getChestSlotsAsItemStack(i);
+                            if (stack1 != null) {
+                                String[] lore1 = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack1.getTagCompound());
+                                for (String line : lore1) {
+                                    //System.out.println(line);
+                                    if (line.contains("\u00a77\u00a7cClick to despawn.")) {
+                                        selectedPet = i;
+                                        shouldUseCachedPet = true;
+                                    }
+                                }
+                            } else {
+                                shouldUseCachedPet = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return selectedPet;
+    }
+
+    private ItemStack getWardrobeSlot(int armourSlot) {
+            if (isInNamedGui("Wardrobe")) {
+                if (getChestSlotsAsItemStack(getEquippedArmor() - armourSlot) != null && getEquippedArmor() != 9) {
+                    return getChestSlotsAsItemStack(getEquippedArmor() - armourSlot);
+                } else return null;
+            } else return null;
+        }
+
+    public boolean isWardrobeSystemOnMainServer() {
+        JsonElement alphaWardrobeElement = Utils.getElement( Constants.DISABLE, "wardrobeFeature");
+        if (alphaWardrobeElement == null || !alphaWardrobeElement.isJsonObject()) {
+            return true;
+        }
+        JsonObject isWardrobe = alphaWardrobeElement.getAsJsonObject();
+        if (isWardrobe.has("enableNewWardrob")) {
+            return isWardrobe.get("enableNewWardrob").getAsBoolean();
+        } else {
+            return true;
+        }
+    }
+
+    public ItemStack slot1 = null;
+    public ItemStack slot2 = null;
+    public ItemStack slot3 = null;
+    public ItemStack slot4 = null;
+    public ItemStack petSlot = null;
+    public ItemStack petSlot2 = null;
+    public static boolean isRenderingArmorHud() {
+        return renderingArmorHud;
+    }
+    public static boolean isRenderingPetHud() {
+        return renderingPetHud;
+    }
     /**
-     * Renders the search bar, quick commands, item selection (right) and item info (left) gui elements.
+     * Renders the search bar, quick commands, item selection (right), item info (left) and armor hud gui elements.
      */
     public void render(boolean hoverInv) {
         if (disabled) {
             return;
         }
+        renderingArmorHud = false;
+        renderingPetHud = false;
         GlStateManager.enableDepth();
 
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
@@ -1685,6 +1879,177 @@ public class NEUOverlay extends Gui {
             GlStateManager.color(1, 1, 1, 1);
             Utils.drawTexturedRect((width - 64) / 2f, (height - 64) / 2f - 114, 64, 64, GL11.GL_LINEAR);
             GlStateManager.bindTexture(0);
+        }
+        GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
+
+        if (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud && NotEnoughUpdates.INSTANCE.config.misc.hidePotionEffect
+                && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && isWardrobeSystemOnMainServer()) {
+           if (getWardrobeSlot(1) != null) {
+               slot1 = getWardrobeSlot(4);
+               slot2 = getWardrobeSlot(3);
+               slot3 = getWardrobeSlot(2);
+               slot4 = getWardrobeSlot(1);
+           }
+            if (guiScreen instanceof GuiInventory) {
+                renderingArmorHud = true;
+                selectedArmor = 9;
+
+                List<String> tooltipToDisplay = null;
+                if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 0) {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY);
+                }
+                if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 1) {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_GREY);
+                }
+                if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 2) {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_DARK);
+                }
+                if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 3) {
+                    if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 3 && NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay) {
+                        Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_TRANSPARENT_PET);
+                    } else {
+                        Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_TRANSPARENT);
+                    }
+                }
+                if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 4) {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_FSR);
+                }
+
+                GlStateManager.color(1, 1, 1, 1);
+                GL11.glTranslatef(0, 0, 80);
+                float yNumber = (float) (height - 167) / 2f;
+                Utils.drawTexturedRect((float) ((width - 224.1) / 2f), yNumber, 31, 86, GL11.GL_NEAREST);
+                GlStateManager.bindTexture(0);
+
+                Utils.drawItemStack(slot1, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105));
+                Utils.drawItemStack(slot2, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105) + 18);
+                Utils.drawItemStack(slot3, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105) + 36);
+                Utils.drawItemStack(slot4, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105) + 54);
+                if (slot1 == null) {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(QUESTION_MARK);
+                    GlStateManager.color(1, 1, 1, 1);
+                    GL11.glTranslatef(0, 0, 100);
+                    Utils.drawTexturedRect(((width - 208) / 2f), ((height + 60) / 2f - 105), 16, 16, GL11.GL_NEAREST);
+                    GlStateManager.bindTexture(0);
+
+                    tooltipToDisplay = Lists.newArrayList(
+                            EnumChatFormatting.RED+"Warning",
+                            EnumChatFormatting.GREEN+"You need to open /wardrobe",
+                            EnumChatFormatting.GREEN+"To cache your armour"
+                    );
+                    if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
+                        //top slot
+                        if (mouseY >= ((height + 60) / 2f - 105) && mouseY <= ((height + 60) / 2f - 105) + 16) {
+                            Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
+                        }
+                    }
+
+                }
+                if (slot1 != null && slot2 != null && slot3 != null && slot4 != null) {
+                    if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
+                        //top slot
+                        if (mouseY >= ((height + 60) / 2f - 105) && mouseY <= ((height + 60) / 2f - 105) + 16) {
+                            tooltipToDisplay = slot1.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                            Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
+                            tooltipToDisplay = null;
+                            GL11.glTranslatef(0, 0, -80);
+                        }
+                        if (mouseY >= ((height + 60) / 2f - 105) + 18 && mouseY <= ((height + 60) / 2f - 105) + 34) {
+                            tooltipToDisplay = slot2.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                            Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
+                            tooltipToDisplay = null;
+                            GL11.glTranslatef(0, 0, -80);
+                        }
+                        if (mouseY >= ((height + 60) / 2f - 105) + 36 && mouseY <= ((height + 60) / 2f - 105) + 52) {
+                            tooltipToDisplay = slot3.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                            Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
+                            tooltipToDisplay = null;
+                            GL11.glTranslatef(0, 0, -80);
+                        }
+                        if (mouseY >= ((height + 60) / 2f - 105) + 54 && mouseY <= ((height + 60) / 2f - 105) + 70) {
+                            tooltipToDisplay = slot4.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                            Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
+                            tooltipToDisplay = null;
+                            GL11.glTranslatef(0, 0, -80);
+                        }
+                    }
+                    GL11.glTranslatef(0, 0, -80);
+                }
+            }
+        }
+        if (PetInfoOverlay.getCurrentPet() != null) {
+            if (NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay
+                    && NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(PetInfoOverlay.getCurrentPet().petType + ";" + PetInfoOverlay.getCurrentPet().rarity.petId)).hasDisplayName()
+                    && NotEnoughUpdates.INSTANCE.config.misc.hidePotionEffect && NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+                petSlot = NotEnoughUpdates.INSTANCE.manager.jsonToStack(
+                        NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(
+                                PetInfoOverlay.getCurrentPet().petType + ";" + PetInfoOverlay.getCurrentPet().rarity.petId));
+                if (isInNamedGui("Pets")) {
+                    petSlot2 = getChestSlotsAsItemStack(getEquippedPet());
+                }
+                ItemStack petInfo = null;
+
+                if (shouldUseCachedPet) {
+                    petInfo = petSlot2;
+                } else {
+                    petInfo = petSlot;
+                }
+                if (guiScreen instanceof GuiInventory) {
+                    GL11.glTranslatef(0, 0, 80);
+                    if (!NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud || !isWardrobeSystemOnMainServer()) {
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 0) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY);
+                        }
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 1) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY_GREY);
+                        }
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 2) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY_DARK);
+                        }
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 3) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY_TRANSPARENT);
+                        }
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 4) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY_FSR);
+                        }
+                    } else {
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 0) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY);
+                        }
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 1) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY_GREY);
+                        }
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 2) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY_DARK);
+                        }
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 3) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY_TRANSPARENT);
+                        }
+                        if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 4) {
+                            Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY_FSR);
+                        }
+                    }
+
+                    GlStateManager.color(1, 1, 1, 1);
+                    float yNumber = (float) (height - 23) / 2f;
+                    Utils.drawTexturedRect((float) ((width - 224.1) / 2f), yNumber, 31, 32, GL11.GL_NEAREST);
+                    GlStateManager.bindTexture(0);
+
+                    Utils.drawItemStack(petInfo, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105) + 72);
+                    renderingPetHud = true;
+                    List<String> tooltipToDisplay = null;
+                    if (petInfo != null) {
+                        if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
+                            if (mouseY >= ((height + 60) / 2f - 105) + 72 && mouseY <= ((height + 60) / 2f - 105) + 88) {
+                                tooltipToDisplay = petInfo.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+                                Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
+                                tooltipToDisplay = null;
+                                GL11.glTranslatef(0, 0, -80);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         SunTzu.setEnabled(textField.getText().toLowerCase().startsWith("potato"));

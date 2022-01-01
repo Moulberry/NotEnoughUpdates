@@ -843,6 +843,10 @@ public class NEUEventListener {
             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW +
                     "[NEU] API Key automatically configured"));
             NotEnoughUpdates.INSTANCE.config.apiKey.apiKey = NotEnoughUpdates.INSTANCE.config.apiKey.apiKey.substring(0, 36);
+        } else if (unformatted.startsWith("Player List Info is now disabled!")) {
+            SBInfo.getInstance().hasNewTab = false;
+        } else if (unformatted.startsWith("Player List Info is now enabled!")) {
+            SBInfo.getInstance().hasNewTab = true;
         }
         if (e.message.getFormattedText().equals(EnumChatFormatting.RESET.toString() +
                 EnumChatFormatting.RED + "You haven't unlocked this recipe!" + EnumChatFormatting.RESET)) {
@@ -1080,6 +1084,16 @@ public class NEUEventListener {
                             x += 80 + 28;
                         }
                     }
+                    if (NEUOverlay.isRenderingArmorHud()) {
+                        if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop && y < guiTop + 84) {
+                            x -= 25;
+                        }
+                    }
+                    if (NEUOverlay.isRenderingPetHud()) {
+                        if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop + 60 && y < guiTop + 120) {
+                            x -= 25;
+                        }
+                    }
 
                     GlStateManager.color(1, 1, 1, 1f);
 
@@ -1189,6 +1203,16 @@ public class NEUEventListener {
                     if (AccessoryBagOverlay.isInAccessoryBag()) {
                         if (x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28 + 5 && y > guiTop - 18 && y < guiTop + 150) {
                             x += 80 + 28;
+                        }
+                    }
+                    if (NEUOverlay.isRenderingArmorHud()) {
+                        if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop && y < guiTop + 84) {
+                            x -= 25;
+                        }
+                    }
+                    if (NEUOverlay.isRenderingPetHud()) {
+                        if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop + 60 && y < guiTop + 120) {
+                            x -= 25;
                         }
                     }
 
@@ -1563,6 +1587,16 @@ public class NEUEventListener {
                     if (AccessoryBagOverlay.isInAccessoryBag()) {
                         if (x > guiLeft + xSize && x < guiLeft + xSize + 80 + 28 + 5 && y > guiTop - 18 && y < guiTop + 150) {
                             x += 80 + 28;
+                        }
+                    }
+                    if (NEUOverlay.isRenderingArmorHud()) {
+                        if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop && y < guiTop + 84) {
+                            x -= 25;
+                        }
+                    }
+                    if (NEUOverlay.isRenderingPetHud()) {
+                        if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop + 60 && y < guiTop + 120) {
+                            x -= 25;
                         }
                     }
 

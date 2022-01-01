@@ -56,6 +56,7 @@ public class SBInfo {
     public long unloadedWorld = -1;
     private JsonObject locraw = null;
     public boolean isInDungeon = false;
+    public boolean hasNewTab = false;
 
     public String currentProfile = null;
 
@@ -79,6 +80,7 @@ public class SBInfo {
         mode = null;
         joinedWorld = System.currentTimeMillis();
         lastOpenContainerName = "";
+        hasNewTab = false;
     }
 
     @SubscribeEvent
@@ -144,6 +146,7 @@ public class SBInfo {
                 String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
                 if (name.startsWith(profilePrefix)) {
                     currentProfile = Utils.cleanColour(name.substring(profilePrefix.length()));
+                    hasNewTab = true;
                 } else if (name.startsWith(skillsPrefix)) {
                     String levelInfo = name.substring(skillsPrefix.length()).trim();
                     Matcher matcher = SKILL_LEVEL_PATTERN.matcher(Utils.cleanColour(levelInfo).split(":")[0]);
