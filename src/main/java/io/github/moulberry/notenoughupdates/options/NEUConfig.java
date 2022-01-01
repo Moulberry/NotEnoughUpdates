@@ -437,6 +437,10 @@ public class NEUConfig extends Config {
             put("Sapphire", 0);
             put("Topaz", 0);
         }};
+        @Expose
+        public long dailyGemstonePowderCompleted = 0L;
+        @Expose
+        public long dailyMithrilPowerCompleted = 0L;
     }
 
     public HiddenLocationSpecific getLocationSpecific() {
