@@ -492,11 +492,46 @@ public class Mining {
     @ConfigEditorBoolean
     public boolean titaniumAlertMustBeVisible = false;
 
+    @ConfigOption(
+            name = "Custom Textures",
+            desc = ""
+    )
+    @ConfigEditorAccordion(id = 7)
+    public boolean texturesAccordion = false;
+
     @Expose
     @ConfigOption(
             name = "Dwarven Mines Textures",
-            desc = "Allows texture packs to retexture blocks in the Dwarven Mines. If you don't have a texturepack that does this, you should leave this off"
+            desc = "Allows texture packs to retexture blocks in the Dwarven Mines. If you don't have a texture pack that does this, you should leave this off"
     )
+    @ConfigAccordionId(id = 7)
     @ConfigEditorBoolean
     public boolean dwarvenTextures = false;
+    @Expose
+    @ConfigOption(
+            name = "Crystal Hollows Textures",
+            desc = "Allows texture packs to retexture blocks in the Crystal Hollows. If you don't have a texture pack that does this, you should leave this off"
+    )
+    @ConfigAccordionId(id = 7)
+    @ConfigEditorBoolean
+    public boolean crystalHollowTextures = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Replace Gemstone sounds",
+            desc = "Replace the break sounds of crystals in the Crystal Hollows. Requires a texture pack with this feature"
+    )
+    @ConfigAccordionId(id = 7)
+    @ConfigEditorBoolean
+    public boolean gemstoneSounds = false;
+
+    @Expose
+    @ConfigOption(
+            name = "Replace Mithril sounds",
+            desc = "Replace the break sounds of mithril and titanium in the Dwarven mines. Requires a texture pack with this feature"
+    )
+    @ConfigAccordionId(id = 7)
+    @ConfigEditorBoolean
+    public boolean mithrilSounds = false;
+
 }
