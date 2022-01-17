@@ -3,6 +3,7 @@ package io.github.moulberry.notenoughupdates;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
+import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.recipes.CraftingOverlay;
 import io.github.moulberry.notenoughupdates.recipes.CraftingRecipe;
 import io.github.moulberry.notenoughupdates.recipes.Ingredient;
@@ -1034,6 +1035,9 @@ public class NEUManager {
                     File newFile = new File(destDir + File.separator + fileName);
                     //create directories for sub directories in zip
                     new File(newFile.getParent()).mkdirs();
+                    if (!isInTree(dir, newFile)) {
+                        throw new RuntimeException("Not Enough Updates detected an invalid zip file. This is a potential security risk, please report this in the Moulberry discord.");
+                    }
                     FileOutputStream fos = new FileOutputStream(newFile);
                     int len;
                     while ((len = zis.read(buffer)) > 0) {
@@ -1054,6 +1058,16 @@ public class NEUManager {
         }
     }
 
+    private static boolean isInTree(File rootDirectory, File file) throws IOException {
+        file = file.getCanonicalFile();
+        rootDirectory = rootDirectory.getCanonicalFile();
+        while (file != null) {
+            if (file.equals(rootDirectory)) return true;
+            file = file.getParentFile();
+        }
+        return false;
+    }
+
     /**
      * Modified from https://www.journaldev.com/960/java-unzip-file-example
      */
@@ -1067,6 +1081,9 @@ public class NEUManager {
                 if (!ze.isDirectory()) {
                     String fileName = ze.getName();
                     File newFile = new File(dest, fileName);
+                    if (!isInTree(dest, newFile)) {
+                        throw new RuntimeException("Not Enough Updates detected an invalid zip file. This is a potential security risk, please report this in the Moulberry discord.");
+                    }
                     //create directories for sub directories in zip
                     new File(newFile.getParent()).mkdirs();
                     FileOutputStream fos = new FileOutputStream(newFile);
@@ -1436,6 +1453,23 @@ public class NEUManager {
             return stack.copy();
         } else {
             return stack;
+        }
+    }
+
+    public void reloadRepository() {
+        File items = new File(repoLocation, "items");
+        if (items.exists()) {
+            recipes.clear();
+            recipesMap.clear();
+            usagesMap.clear();
+
+            File[] itemFiles = new File(repoLocation, "items").listFiles();
+            if (itemFiles != null) {
+                for (File f : itemFiles) {
+                    String internalname = f.getName().substring(0, f.getName().length() - 5);
+                    loadItem(internalname);
+                }
+            }
         }
     }
 }
