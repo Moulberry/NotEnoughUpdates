@@ -1,5 +1,5 @@
+import java.io.ByteArrayOutputStream
 import net.minecraftforge.gradle.user.ReobfMappingType
-
 plugins {
     java
     id("net.minecraftforge.gradle.forge") version "6f5327738df"
@@ -8,7 +8,22 @@ plugins {
 }
 
 group = "io.github.moulberry"
-version = "2.1"
+val baseVersion = "2.1"
+
+
+var buildVersion = properties["BUILD_VERSION"]
+if (buildVersion == null) {
+    val stdout = ByteArrayOutputStream()
+    val execResult = exec {
+        commandLine("git", "describe", "--always", "--first-parent", "--abbrev=7")
+        standardOutput = stdout
+    }
+    if (execResult.exitValue == 0)
+        buildVersion = String(stdout.toByteArray()).trim()
+}
+
+version = baseVersion + (buildVersion?.let { "+$it" } ?: "")
+
 
 // Toolchains:
 
