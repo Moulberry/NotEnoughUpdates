@@ -943,14 +943,12 @@ public class GuiProfileViewer extends GuiScreen {
                 boolean hasTime = false;
                 
                 if(!onMasterMode) {
-                	
                 	tooltipToDisplay = Lists.newArrayList(
                             String.format("# F5 Runs (%s xp) : %d", shortNumberFormat(xpF5*xpmultiplierF5, 0), runsF5),
                          	String.format("# F6 Runs (%s xp) : %d", shortNumberFormat(xpF6*xpmultiplierF6, 0), runsF6),
                          	String.format("# F7 Runs (%s xp) : %d", shortNumberFormat(xpF7*xpmultiplierF7, 0), runsF7),
                             ""
                     );
-                	
 	                if(timeF5 > 1000) {
 	                    tooltipToDisplay.add(String.format("Expected Time (F5) : %s", Utils.prettyTime(runsF5*(long)(timeF5*1.2))));
 	                    hasTime = true;
@@ -963,33 +961,14 @@ public class GuiProfileViewer extends GuiScreen {
 	                    tooltipToDisplay.add(String.format("Expected Time (F7) : %s", Utils.prettyTime(runsF7*(long)(timeF7*1.2))));
 	                    hasTime = true;
 	                }
-	                if(hasTime) {
-	                    tooltipToDisplay.add("");
-	                }
-	                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-	                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" to show without Expert Ring]");
-	                }
-	                if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)) {
-	                    if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) tooltipToDisplay.add("");
-	                    tooltipToDisplay.add("Number of runs is calculated as [Remaining XP]/[XP per Run].");
-	                    tooltipToDisplay.add("The [XP per Run] is the average xp gained from an S+ run");
-	                    tooltipToDisplay.add("The "+EnumChatFormatting.DARK_PURPLE+"Catacombs Expert Ring"+EnumChatFormatting.GRAY+
-	                            " is assumed to be used, unless "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" is held.");
-	                    tooltipToDisplay.add("[Time per run] is calculated using fastestSPlus x 120%");
-	                } else {
-	                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"CTRL"+EnumChatFormatting.GRAY+" to see details]");
-	                }
                 }
-
                 else {
-                	
                 	tooltipToDisplay = Lists.newArrayList(
                             String.format("# M3 Runs (%s xp) : %d", shortNumberFormat(xpM3*xpmultiplierM3, 0), runsM3),
                          	String.format("# M5 Runs (%s xp) : %d", shortNumberFormat(xpM5*xpmultiplierM5, 0), runsM5),
                          	String.format("# M6 Runs (%s xp) : %d", shortNumberFormat(xpM6*xpmultiplierM6, 0), runsM6),
                             ""
                     );
-                	
                 	if(timeM3 > 1000) {
 	                    tooltipToDisplay.add(String.format("Expected Time (M3) : %s", Utils.prettyTime(runsM3*(long)(timeM3*1.2))));
 	                    hasTime = true;
@@ -1002,22 +981,22 @@ public class GuiProfileViewer extends GuiScreen {
 	                    tooltipToDisplay.add(String.format("Expected Time (M6) : %s", Utils.prettyTime(runsM6*(long)(timeM6*1.2))));
 	                    hasTime = true;
 	                }
-	                if(hasTime) {
-	                    tooltipToDisplay.add("");
-	                }
-	                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-	                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" to show without Expert Ring]");
-	                }
-	                if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)) {
-	                    if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) tooltipToDisplay.add("");
-	                    tooltipToDisplay.add("Number of runs is calculated as [Remaining XP]/[XP per Run].");
-	                    tooltipToDisplay.add("The [XP per Run] is the average xp gained from an S+ run");
-	                    tooltipToDisplay.add("The "+EnumChatFormatting.DARK_PURPLE+"Catacombs Expert Ring"+EnumChatFormatting.GRAY+
-	                            " is assumed to be used, unless "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" is held.");
-	                    tooltipToDisplay.add("[Time per run] is calculated using fastestSPlus x 120%");
-	                } else {
-	                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"CTRL"+EnumChatFormatting.GRAY+" to see details]");
-	                }
+                }
+                if(hasTime) {
+                    tooltipToDisplay.add("");
+                }
+                if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" to show without Expert Ring]");
+                }
+                if(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)) {
+                    if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) tooltipToDisplay.add("");
+                    tooltipToDisplay.add("Number of runs is calculated as [Remaining XP]/[XP per Run].");
+                    tooltipToDisplay.add("The [XP per Run] is the average xp gained from an S+ run");
+                    tooltipToDisplay.add("The "+EnumChatFormatting.DARK_PURPLE+"Catacombs Expert Ring"+EnumChatFormatting.GRAY+
+                            " is assumed to be used, unless "+EnumChatFormatting.YELLOW+"SHIFT"+EnumChatFormatting.GRAY+" is held.");
+                    tooltipToDisplay.add("[Time per run] is calculated using fastestSPlus x 120%");
+                } else {
+                    tooltipToDisplay.add("[Hold "+EnumChatFormatting.YELLOW+"CTRL"+EnumChatFormatting.GRAY+" to see details]");
                 }
             }
 
