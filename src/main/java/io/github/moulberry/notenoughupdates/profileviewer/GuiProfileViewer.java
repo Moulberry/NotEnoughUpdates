@@ -820,6 +820,7 @@ public class GuiProfileViewer extends GuiScreen {
             if(remaining < 0) {
                 remaining = 0;
             }
+            
             floorLevelToXP = (int) remaining;
         } catch(Exception e) {
             dungeonLevelTextField.setCustomBorderColour(0xffff0000);
@@ -887,15 +888,38 @@ public class GuiProfileViewer extends GuiScreen {
                 float xpF5 = 2000;
                 float xpF6 = 4000;
                 float xpF7 = 20000;
+                float xpM3 = 33000;
+                float xpM5 = 60000;
+                float xpM6 = 85000;
+                
+                float xpmultiplierF5 = (float) Math.min(1+Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types."+"catacombs"+".tier_completions."+5), 0)*0.02, 2.5);
+                float xpmultiplierF6 = (float) Math.min(1+Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types."+"catacombs"+".tier_completions."+6), 0)*0.02, 2);
+                float xpmultiplierF7 = (float) Math.min(1+Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types."+"catacombs"+".tier_completions."+7), 0)*0.02, 1.5);
+                float xpmultiplierM3 = (float) Math.min(1+Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types."+"master_catacombs"+".tier_completions."+3), 0)*0.02, 1.5);
+                float xpmultiplierM5 = (float) Math.min(1+Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types."+"master_catacombs"+".tier_completions."+5), 0)*0.02, 1.5);;
+                float xpmultiplierM6 = (float) Math.min(1+Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types."+"master_catacombs"+".tier_completions."+6), 0)*0.02, 1.5);;
+                
                 if(!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-                    xpF5 *= 1.1;
-                    xpF6 *= 1.1;
-                    xpF7 *= 1.1;
+                    xpmultiplierF5 *= 1.1;
+                    xpmultiplierF6 *= 1.1;
+                    xpmultiplierF7 *= 1.1;
+                    xpmultiplierM3 *= 1.1;
+                    xpmultiplierM5 *= 1.1;
+                    xpmultiplierM6 *= 1.1;
                 }
 
-                long runsF5 = (int)Math.ceil(floorLevelToXP/xpF5);
-                long runsF6 = (int)Math.ceil(floorLevelToXP/xpF6);
-                long runsF7 = (int)Math.ceil(floorLevelToXP/xpF7);
+                long runsF5 = (int)Math.ceil(floorLevelToXP/(xpF5*xpmultiplierF5));
+                long runsF6 = (int)Math.ceil(floorLevelToXP/(xpF6*xpmultiplierF6));
+                long runsF7 = (int)Math.ceil(floorLevelToXP/(xpF7*xpmultiplierF7));
+                long runsM3 = (int)Math.ceil(floorLevelToXP/(xpM3*xpmultiplierM3));
+                long runsM5 = (int)Math.ceil(floorLevelToXP/(xpM5*xpmultiplierM5));
+                long runsM6 = (int)Math.ceil(floorLevelToXP/(xpM6*xpmultiplierM6));
 
                 float timeF5 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
                         "dungeons.dungeon_types.catacombs.fastest_time_s_plus.5"), 0);
@@ -903,25 +927,60 @@ public class GuiProfileViewer extends GuiScreen {
                         "dungeons.dungeon_types.catacombs.fastest_time_s_plus.6"), 0);
                 float timeF7 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
                         "dungeons.dungeon_types.catacombs.fastest_time_s_plus.7"), 0);
+                float timeM3 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.fastest_time_s_plus.3"), 0);
+                float timeM5 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.fastest_time_s_plus.5"), 0);
+                float timeM6 = Utils.getElementAsFloat(Utils.getElement(profileInfo,
+                        "dungeons.dungeon_types.master_catacombs.fastest_time_s_plus.6"), 0);
 
                 tooltipToDisplay = Lists.newArrayList(
-              String.format("# F5 Runs (%s xp) : %d", shortNumberFormat(xpF5, 0), runsF5),
+                		String.format("# F5 Runs (%s xp) : %d", shortNumberFormat(xpF5, 0), runsF5),
                         String.format("# F6 Runs (%s xp) : %d", shortNumberFormat(xpF6, 0), runsF6),
                         String.format("# F7 Runs (%s xp) : %d", shortNumberFormat(xpF7, 0), runsF7),
                         ""
                 );
                 boolean hasTime = false;
-                if(timeF5 > 1000) {
-                    tooltipToDisplay.add(String.format("Expected Time (F5) : %s", Utils.prettyTime(runsF5*(long)(timeF5*1.2))));
-                    hasTime = true;
+                
+                if(!onMasterMode) {
+                	tooltipToDisplay = Lists.newArrayList(
+                            String.format("# F5 Runs (%s xp) : %d", shortNumberFormat(xpF5*xpmultiplierF5, 0), runsF5),
+                         	String.format("# F6 Runs (%s xp) : %d", shortNumberFormat(xpF6*xpmultiplierF6, 0), runsF6),
+                         	String.format("# F7 Runs (%s xp) : %d", shortNumberFormat(xpF7*xpmultiplierF7, 0), runsF7),
+                            ""
+                    );
+	                if(timeF5 > 1000) {
+	                    tooltipToDisplay.add(String.format("Expected Time (F5) : %s", Utils.prettyTime(runsF5*(long)(timeF5*1.2))));
+	                    hasTime = true;
+	                }
+	                if(timeF6 > 1000) {
+	                    tooltipToDisplay.add(String.format("Expected Time (F6) : %s", Utils.prettyTime(runsF6*(long)(timeF6*1.2))));
+	                    hasTime = true;
+	                }
+	                if(timeF7 > 1000) {
+	                    tooltipToDisplay.add(String.format("Expected Time (F7) : %s", Utils.prettyTime(runsF7*(long)(timeF7*1.2))));
+	                    hasTime = true;
+	                }
                 }
-                if(timeF6 > 1000) {
-                    tooltipToDisplay.add(String.format("Expected Time (F6) : %s", Utils.prettyTime(runsF6*(long)(timeF6*1.2))));
-                    hasTime = true;
-                }
-                if(timeF7 > 1000) {
-                    tooltipToDisplay.add(String.format("Expected Time (F7) : %s", Utils.prettyTime(runsF7*(long)(timeF7*1.2))));
-                    hasTime = true;
+                else {
+                	tooltipToDisplay = Lists.newArrayList(
+                            String.format("# M3 Runs (%s xp) : %d", shortNumberFormat(xpM3*xpmultiplierM3, 0), runsM3),
+                         	String.format("# M5 Runs (%s xp) : %d", shortNumberFormat(xpM5*xpmultiplierM5, 0), runsM5),
+                         	String.format("# M6 Runs (%s xp) : %d", shortNumberFormat(xpM6*xpmultiplierM6, 0), runsM6),
+                            ""
+                    );
+                	if(timeM3 > 1000) {
+	                    tooltipToDisplay.add(String.format("Expected Time (M3) : %s", Utils.prettyTime(runsM3*(long)(timeM3*1.2))));
+	                    hasTime = true;
+	                }
+	                if(timeM5 > 1000) {
+	                    tooltipToDisplay.add(String.format("Expected Time (M5) : %s", Utils.prettyTime(runsM5*(long)(timeM5*1.2))));
+	                    hasTime = true;
+	                }
+	                if(timeM6 > 1000) {
+	                    tooltipToDisplay.add(String.format("Expected Time (M6) : %s", Utils.prettyTime(runsM6*(long)(timeM6*1.2))));
+	                    hasTime = true;
+	                }
                 }
                 if(hasTime) {
                     tooltipToDisplay.add("");
