@@ -1647,6 +1647,10 @@ public class NEUEventListener {
         String containerName = null;
         GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
 
+        if (guiScreen instanceof GuiChest) {
+            containerName = ((ContainerChest) ((GuiChest) guiScreen).inventorySlots).getLowerChestInventory().getDisplayName().getUnformattedText();
+        }
+
         if (GuiCustomEnchant.getInstance().shouldOverride(containerName) &&
                 GuiCustomEnchant.getInstance().keyboardInput()) {
             event.setCanceled(true);
