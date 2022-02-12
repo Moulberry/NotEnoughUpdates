@@ -2474,6 +2474,9 @@ public class NEUEventListener {
             ItemPriceInformation.addToTooltip(event.toolTip, internalname, event.itemStack);
         }
 
+        if (event.itemStack.getTagCompound() != null && event.itemStack.getTagCompound().getBoolean("NEUHIDEPETTOOLTIP") && NotEnoughUpdates.INSTANCE.config.petOverlay.hidePetTooltip) {
+            event.toolTip.clear();
+        }
     }
 
     private final Pattern xpLevelPattern = Pattern.compile("(.*) (\\xA7e(.*)\\xA76/\\xA7e(.*))");
@@ -2577,7 +2580,7 @@ public class NEUEventListener {
     public void onItemTooltip(ItemTooltipEvent event) {
         if (!neu.isOnSkyblock()) return;
         //Render the pet inventory display tooltip to the left to avoid things from other mods rendering over the tooltip
-        if (event.itemStack.getTagCompound().getBoolean("NEUPETINVDISPLAY")) {
+        if (event.itemStack.getTagCompound() != null && event.itemStack.getTagCompound().getBoolean("NEUPETINVDISPLAY")) {
             GlStateManager.translate(-200, 0, 0);
         }
 
