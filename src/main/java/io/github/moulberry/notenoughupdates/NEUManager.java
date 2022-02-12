@@ -3,7 +3,6 @@ package io.github.moulberry.notenoughupdates;
 import com.google.gson.*;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
-import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.recipes.CraftingOverlay;
 import io.github.moulberry.notenoughupdates.recipes.CraftingRecipe;
 import io.github.moulberry.notenoughupdates.recipes.Ingredient;
@@ -33,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -418,8 +418,16 @@ public class NEUManager {
         return recipesMap.getOrDefault(internalName, Collections.emptySet());
     }
 
+    public List<NeuRecipe> getAvailableRecipesFor(String internalname) {
+        return getRecipesFor(internalname).stream().filter(NeuRecipe::isAvailable).collect(Collectors.toList());
+    }
+
     public Set<NeuRecipe> getUsagesFor(String internalName) {
         return usagesMap.getOrDefault(internalName, Collections.emptySet());
+    }
+
+    public List<NeuRecipe> getAvailableUsagesFor(String internalname) {
+        return getUsagesFor(internalname).stream().filter(NeuRecipe::isAvailable).collect(Collectors.toList());
     }
 
     /**
@@ -952,19 +960,19 @@ public class NEUManager {
 
     public boolean displayGuiItemUsages(String internalName) {
         if (!usagesMap.containsKey(internalName)) return false;
-        Set<NeuRecipe> usages = usagesMap.get(internalName);
+        List<NeuRecipe> usages = getAvailableUsagesFor(internalName);
         if (usages.isEmpty()) return false;
         Minecraft.getMinecraft().displayGuiScreen(
-                new GuiItemRecipe("Item Usages", new ArrayList<>(usages), this));
+                new GuiItemRecipe("Item Usages", usages, this));
         return true;
     }
 
     public boolean displayGuiItemRecipe(String internalName, String text) {
         if (!recipesMap.containsKey(internalName)) return false;
-        Set<NeuRecipe> recipes = recipesMap.get(internalName);
+        List<NeuRecipe> recipes = getAvailableRecipesFor(internalName);
         if (recipes.isEmpty()) return false;
         Minecraft.getMinecraft().displayGuiScreen(
-                new GuiItemRecipe(text != null ? text : "Item Recipe", new ArrayList<>(recipes), this));
+                new GuiItemRecipe(text != null ? text : "Item Recipe", recipes, this));
         return true;
     }
 
