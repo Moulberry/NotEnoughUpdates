@@ -830,6 +830,10 @@ public class Utils {
         GlStateManager.scale(1 / factor, 1 / factor, 1);
     }
 
+    public static void drawStringRightAligned(String str, FontRenderer fr, float x, float y , boolean shadow, int colour, float factor) {
+        drawStringScaled(str, fr, x - fr.getStringWidth(str) * factor, y, shadow, colour, factor);
+    }
+
     public static void drawStringScaledMax(String str, FontRenderer fr, float x, float y, boolean shadow, int colour, float factor, int len) {
         int strLen = fr.getStringWidth(str);
         float f = len / (float) strLen;
