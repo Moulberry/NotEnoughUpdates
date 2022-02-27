@@ -8,13 +8,13 @@ import net.minecraft.command.ICommandSender;
 
 public class GamemodesCommand extends ClientCommandBase {
 
-    public GamemodesCommand() {
-        super("neugamemodes");
-    }
+	public GamemodesCommand() {
+		super("neugamemodes");
+	}
 
-    @Override
-    public void processCommand(ICommandSender sender, String[] args) throws CommandException {
-        boolean upgradeOverride = args.length == 1 && args[0].equals("upgradeOverride");
-        NotEnoughUpdates.INSTANCE.openGui = new GuiGamemodes(upgradeOverride);
-    }
+	@Override
+	public void processCommand(ICommandSender sender, String[] args) throws CommandException {
+		boolean upgradeOverride = args.length == 1 && args[0].equals("upgradeOverride");
+		NotEnoughUpdates.INSTANCE.openGui = new GuiGamemodes(upgradeOverride);
+	}
 }

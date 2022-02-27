@@ -9,12 +9,12 @@ import java.util.List;
 
 public class CollectionLogCommand extends ScreenCommand {
 
-    public CollectionLogCommand() {
-        super("neucl", GuiCollectionLog::new);
-    }
+	public CollectionLogCommand() {
+		super("neucl", GuiCollectionLog::new);
+	}
 
-    @Override
-    public List<String> getCommandAliases() {
-        return Collections.singletonList("collectionlog");
-    }
+	@Override
+	public List<String> getCommandAliases() {
+		return Collections.singletonList("collectionlog");
+	}
 }
