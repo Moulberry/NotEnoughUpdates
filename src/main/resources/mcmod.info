@@ -1,8 +1,8 @@
 [
 {
   "modid": "notenoughupdates",
-  "name": "NotEnoughUpdates",
-  "description": "Mod that shows recipes and useful info for Hypixel's Skyblock gamemode.",
+  "name": "NotEnoughUpdates
+  "description": "Mod that has a library of recipes for every craftable item and everything else a Hypixel Skyblock player would need.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "https://github.com/Moulberry/NotEnoughUpdates/",
