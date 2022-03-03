@@ -1,5 +1,17 @@
 package io.github.moulberry.notenoughupdates;
 
+import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Set;
+
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -8,9 +20,25 @@ import io.github.moulberry.notenoughupdates.commands.Commands;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.cosmetics.CapeManager;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonMap;
-import io.github.moulberry.notenoughupdates.miscfeatures.*;
+import io.github.moulberry.notenoughupdates.listener.ChatListener;
+import io.github.moulberry.notenoughupdates.listener.ItemTooltipListener;
+import io.github.moulberry.notenoughupdates.listener.NEUEventListener;
+import io.github.moulberry.notenoughupdates.listener.RenderListener;
+import io.github.moulberry.notenoughupdates.miscfeatures.CrystalOverlay;
+import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
+import io.github.moulberry.notenoughupdates.miscfeatures.DwarvenMinesWaypoints;
+import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
+import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
+import io.github.moulberry.notenoughupdates.miscfeatures.FishingHelper;
+import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
+import io.github.moulberry.notenoughupdates.miscfeatures.ItemCustomizeManager;
+import io.github.moulberry.notenoughupdates.miscfeatures.MiningStuff;
+import io.github.moulberry.notenoughupdates.miscfeatures.NullzeeSphere;
+import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
+import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
+import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
+import io.github.moulberry.notenoughupdates.miscfeatures.SunTzu;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.CustomBiomes;
-import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.CustomBlockSounds;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.DwarvenMinesTextures;
 import io.github.moulberry.notenoughupdates.miscgui.CalendarOverlay;
 import io.github.moulberry.notenoughupdates.miscgui.InventoryStorageSelector;
@@ -24,14 +52,17 @@ import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.util.XPInformation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.world.biome.*;
+import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.BiomeGenHell;
+import net.minecraft.world.biome.BiomeGenJungle;
+import net.minecraft.world.biome.BiomeGenMesa;
+import net.minecraft.world.biome.BiomeGenSnow;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
@@ -39,12 +70,6 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-
-import java.awt.*;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Set;
 
 @Mod(modid = NotEnoughUpdates.MODID, version = NotEnoughUpdates.VERSION, clientSideOnly = true)
 public class NotEnoughUpdates {
@@ -194,7 +219,6 @@ public class NotEnoughUpdates {
 		MinecraftForge.EVENT_BUS.register(new ItemCooldowns());
 		MinecraftForge.EVENT_BUS.register(new DwarvenMinesWaypoints());
 		MinecraftForge.EVENT_BUS.register(new FuelBar());
-		//MinecraftForge.EVENT_BUS.register(new FancyPortals());
 		MinecraftForge.EVENT_BUS.register(XPInformation.getInstance());
 		MinecraftForge.EVENT_BUS.register(OverlayManager.petInfoOverlay);
 		MinecraftForge.EVENT_BUS.register(OverlayManager.timersOverlay);
@@ -205,13 +229,23 @@ public class NotEnoughUpdates {
 		MinecraftForge.EVENT_BUS.register(new DwarvenMinesTextures());
 		MinecraftForge.EVENT_BUS.register(CustomBiomes.INSTANCE);
 
-		if (Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {
-			IReloadableResourceManager manager = (IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager();
-			manager.registerReloadListener(CustomSkulls.getInstance());
-			manager.registerReloadListener(NPCRetexturing.getInstance());
-			manager.registerReloadListener(new ItemCustomizeManager.ReloadListener());
-			manager.registerReloadListener(new CustomBlockSounds.ReloaderListener());
-		}
+		MinecraftForge.EVENT_BUS.register(this);
+		MinecraftForge.EVENT_BUS.register(new NEUEventListener(this));
+		MinecraftForge.EVENT_BUS.register(new ChatListener(this));
+		MinecraftForge.EVENT_BUS.register(new ItemTooltipListener(this));
+		MinecraftForge.EVENT_BUS.register(new RenderListener(this));
+		MinecraftForge.EVENT_BUS.register(new RecipeGenerator(this));
+		MinecraftForge.EVENT_BUS.register(CapeManager.getInstance());
+		MinecraftForge.EVENT_BUS.register(new EnchantingSolvers());
+		MinecraftForge.EVENT_BUS.register(new CalendarOverlay());
+		MinecraftForge.EVENT_BUS.register(SBInfo.getInstance());
+		MinecraftForge.EVENT_BUS.register(CustomItemEffects.INSTANCE);
+		MinecraftForge.EVENT_BUS.register(new DungeonMap());
+		MinecraftForge.EVENT_BUS.register(new SunTzu());
+		MinecraftForge.EVENT_BUS.register(new MiningStuff());
+		MinecraftForge.EVENT_BUS.register(new FairySouls());
+		MinecraftForge.EVENT_BUS.register(new CrystalOverlay());
+		MinecraftForge.EVENT_BUS.register(new ItemCooldowns());
 
 		this.commands = new Commands();
 

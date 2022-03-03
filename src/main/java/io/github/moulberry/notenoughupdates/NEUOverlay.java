@@ -1,9 +1,63 @@
 package io.github.moulberry.notenoughupdates;
 
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.ascending_overlay;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.close;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.descending_overlay;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.help;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.itemPaneTabArrow;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.item_haschild;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.item_mask;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.order_alphabetical;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.order_alphabetical_active;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.order_rarity;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.order_rarity_active;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.order_value;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.order_value_active;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.quickcommand_background;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.rightarrow;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.rightarrow_overlay;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.settings;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_accessory;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_accessory_active;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_all;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_all_active;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_armor;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_armor_active;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_mob;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_mob_active;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_pet;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_pet_active;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_tool;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.sort_tool_active;
+
+import java.awt.Color;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
+import org.lwjgl.util.vector.Vector2f;
 import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
@@ -22,6 +76,7 @@ import io.github.moulberry.notenoughupdates.miscgui.GuiPriceGraph;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.LerpingFloat;
+import io.github.moulberry.notenoughupdates.util.NotificationHandler;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -32,7 +87,11 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiInventory;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -56,65 +115,49 @@ import net.minecraft.util.Matrix4f;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.ClientCommandHandler;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
-import org.lwjgl.util.vector.Vector2f;
-
-import java.awt.Color;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
 
 public class NEUOverlay extends Gui {
-	private static final ResourceLocation SUPERGEHEIMNISVERMOGEN =
-		new ResourceLocation("notenoughupdates:supersecretassets/bald.png");
+	private static final ResourceLocation SUPERGEHEIMNISVERMOGEN = new ResourceLocation(
+		"notenoughupdates:supersecretassets/bald.png");
 	private static final ResourceLocation SEARCH_BAR = new ResourceLocation("notenoughupdates:search_bar.png");
 	private static final ResourceLocation SEARCH_BAR_GOLD = new ResourceLocation("notenoughupdates:search_bar_gold.png");
 
-	private static final ResourceLocation ARMOR_DISPLAY =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay.png");
-	private static final ResourceLocation ARMOR_DISPLAY_GREY =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_grey.png");
-	private static final ResourceLocation ARMOR_DISPLAY_DARK =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_phq_dark.png");
-	private static final ResourceLocation ARMOR_DISPLAY_FSR =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_fsr.png");
-	private static final ResourceLocation ARMOR_DISPLAY_TRANSPARENT =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_transparent.png");
-	private static final ResourceLocation ARMOR_DISPLAY_TRANSPARENT_PET =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_transparent_pet.png");
+	private static final ResourceLocation ARMOR_DISPLAY = new ResourceLocation(
+		"notenoughupdates:armordisplay/armordisplay.png");
+	private static final ResourceLocation ARMOR_DISPLAY_GREY = new ResourceLocation(
+		"notenoughupdates:armordisplay/armordisplay_grey.png");
+	private static final ResourceLocation ARMOR_DISPLAY_DARK = new ResourceLocation(
+		"notenoughupdates:armordisplay/armordisplay_phq_dark.png");
+	private static final ResourceLocation ARMOR_DISPLAY_FSR = new ResourceLocation(
+		"notenoughupdates:armordisplay/armordisplay_fsr.png");
+	private static final ResourceLocation ARMOR_DISPLAY_TRANSPARENT = new ResourceLocation(
+		"notenoughupdates:armordisplay/armordisplay_transparent.png");
+	private static final ResourceLocation ARMOR_DISPLAY_TRANSPARENT_PET = new ResourceLocation(
+		"notenoughupdates:armordisplay/armordisplay_transparent_pet.png");
 
 	private static final ResourceLocation QUESTION_MARK = new ResourceLocation("notenoughupdates:pv_unknown.png");
 
-	private static final ResourceLocation PET_DISPLAY =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo.png");
-	private static final ResourceLocation PET_DISPLAY_GREY =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_dark.png");
-	private static final ResourceLocation PET_DISPLAY_DARK =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_phqdark.png");
-	private static final ResourceLocation PET_DISPLAY_FSR =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_fsr.png");
-	private static final ResourceLocation PET_DISPLAY_TRANSPARENT =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_transparent.png");
+	private static final ResourceLocation PET_DISPLAY = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplaysolo.png");
+	private static final ResourceLocation PET_DISPLAY_GREY = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplaysolo_dark.png");
+	private static final ResourceLocation PET_DISPLAY_DARK = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplaysolo_phqdark.png");
+	private static final ResourceLocation PET_DISPLAY_FSR = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplaysolo_fsr.png");
+	private static final ResourceLocation PET_DISPLAY_TRANSPARENT = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplaysolo_transparent.png");
 
-	private static final ResourceLocation PET_ARMOR_DISPLAY =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor.png");
-	private static final ResourceLocation PET_ARMOR_DISPLAY_GREY =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_dark.png");
-	private static final ResourceLocation PET_ARMOR_DISPLAY_DARK =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_phqdark.png");
-	private static final ResourceLocation PET_ARMOR_DISPLAY_FSR =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_fsr.png");
-	private static final ResourceLocation PET_ARMOR_DISPLAY_TRANSPARENT =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_transparent.png");
+	private static final ResourceLocation PET_ARMOR_DISPLAY = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplayarmor.png");
+	private static final ResourceLocation PET_ARMOR_DISPLAY_GREY = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplayarmor_dark.png");
+	private static final ResourceLocation PET_ARMOR_DISPLAY_DARK = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplayarmor_phqdark.png");
+	private static final ResourceLocation PET_ARMOR_DISPLAY_FSR = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplayarmor_fsr.png");
+	private static final ResourceLocation PET_ARMOR_DISPLAY_TRANSPARENT = new ResourceLocation(
+		"notenoughupdates:petdisplay/petdisplayarmor_transparent.png");
 
 	private static boolean renderingArmorHud;
 	private static boolean renderingPetHud;
@@ -249,7 +292,7 @@ public class NEUOverlay extends Gui {
 							searchMode = !searchMode;
 							lastSearchMode = System.currentTimeMillis();
 							if (searchMode && NotEnoughUpdates.INSTANCE.config.hidden.firstTimeSearchFocus) {
-								NEUEventListener.displayNotification(Lists.newArrayList(
+								NotificationHandler.displayNotification(Lists.newArrayList(
 									"\u00a7eSearch Highlight",
 									"\u00a77In this mode NEU will gray out non matching items in",
 									"\u00a77your inventory or chests.",
@@ -366,8 +409,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void recalculate() {
-			}
+			public void recalculate() {}
 		};
 	}
 
@@ -384,8 +426,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void recalculate() {
-			}
+			public void recalculate() {}
 
 			@Override
 			public void mouseClick(float x, float y, int mouseX, int mouseY) {
@@ -398,8 +439,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void mouseClickOutside() {
-			}
+			public void mouseClickOutside() {}
 
 			@Override
 			public void render(float x, float y) {
@@ -439,8 +479,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void recalculate() {
-			}
+			public void recalculate() {}
 
 			@Override
 			public void mouseClick(float x, float y, int mouseX, int mouseY) {
@@ -457,8 +496,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void mouseClickOutside() {
-			}
+			public void mouseClickOutside() {}
 
 			@Override
 			public void render(float x, float y) {
@@ -499,16 +537,14 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void recalculate() {
-			}
+			public void recalculate() {}
 
 			@Override
 			public void mouseClick(float x, float y, int mouseX, int mouseY) {
 				if (!NotEnoughUpdates.INSTANCE.config.toolbar.quickCommands) return;
 
 				if ((NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType != 0 && Mouse.getEventButtonState()) ||
-					(NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType == 0 &&
-						!Mouse.getEventButtonState() &&
+					(NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType == 0 && !Mouse.getEventButtonState() &&
 						Mouse.getEventButton() != -1)) {
 					if (quickCommandStr.contains(":")) {
 						String command = quickCommandStr.split(":")[0].trim();
@@ -523,8 +559,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void mouseClickOutside() {
-			}
+			public void mouseClickOutside() {}
 
 			@Override
 			public void render(float x, float y) {
@@ -582,8 +617,7 @@ public class NEUOverlay extends Gui {
 
 					int mouseX = Mouse.getX() * Utils.peekGuiScale().getScaledWidth() / Minecraft.getMinecraft().displayWidth;
 					int mouseY = Utils.peekGuiScale().getScaledHeight() -
-						Mouse.getY() * Utils.peekGuiScale().getScaledHeight() / Minecraft.getMinecraft().displayHeight -
-						1;
+						Mouse.getY() * Utils.peekGuiScale().getScaledHeight() / Minecraft.getMinecraft().displayHeight - 1;
 
 					if (mouseX > x && mouseX < x + bigItemSize) {
 						if (mouseY > y && mouseY < y + bigItemSize) {
@@ -619,8 +653,11 @@ public class NEUOverlay extends Gui {
 	}
 
 	private MBGuiGroupAligned createSearchBarGroup() {
-		List<MBGuiElement> children =
-			Lists.newArrayList(createSettingsButton(this), createSearchBar(), createHelpButton(this));
+		List<MBGuiElement> children = Lists.newArrayList(
+			createSettingsButton(this),
+			createSearchBar(),
+			createHelpButton(this)
+		);
 		return new MBGuiGroupAligned(children, false) {
 			public int getPadding() {
 				return getPaddingUnscaled() * 4;
@@ -724,9 +761,12 @@ public class NEUOverlay extends Gui {
 			String internalname = item.get("internalname").getAsString();
 			String name = item.get("displayname").getAsString();
 			String infoType = item.get("infoType").getAsString();
-			displayInformationPane(new TextInfoPane(this, manager, "Loading", "Loading your requested information about " +
-				name +
-				"."));
+			displayInformationPane(new TextInfoPane(
+				this,
+				manager,
+				"Loading",
+				"Loading your requested information about " + name + "."
+			));
 			infoPaneLoadingJob = InfoPane.create(this, manager, infoType, name, internalname, infoText)
 																	 .thenAccept(this::displayInformationPane);
 		}
@@ -1214,12 +1254,14 @@ public class NEUOverlay extends Gui {
 		return (o1, o2) -> {
 			//1 (mult) if o1 should appear after o2
 			//-1 (-mult) if o2 should appear after o1
-			if (getFavourites().contains(o1.get("internalname").getAsString()) &&
-				!getFavourites().contains(o2.get("internalname").getAsString())) {
+			if (getFavourites().contains(o1.get("internalname").getAsString()) && !getFavourites().contains(o2
+				.get("internalname")
+				.getAsString())) {
 				return -1;
 			}
-			if (!getFavourites().contains(o1.get("internalname").getAsString()) &&
-				getFavourites().contains(o2.get("internalname").getAsString())) {
+			if (!getFavourites().contains(o1.get("internalname").getAsString()) && getFavourites().contains(o2
+				.get("internalname")
+				.getAsString())) {
 				return 1;
 			}
 
@@ -1295,8 +1337,7 @@ public class NEUOverlay extends Gui {
 	 * Checks whether an item matches the current sort mode.
 	 */
 	public boolean checkMatchesSort(String internalname, JsonObject item) {
-		if (!NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems &&
-			item.has("vanilla") &&
+		if (!NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems && item.has("vanilla") &&
 			item.get("vanilla").getAsBoolean()) {
 			return false;
 		}
@@ -1308,8 +1349,7 @@ public class NEUOverlay extends Gui {
 		} else if (getSortMode() == SORT_MODE_PET) {
 			return internalname.matches(petRegex) && item.get("displayname").getAsString().contains("[");
 		} else if (getSortMode() == SORT_MODE_TOOL) {
-			return checkItemType(
-				item.get("lore").getAsJsonArray(),
+			return checkItemType(item.get("lore").getAsJsonArray(),
 				"SWORD",
 				"BOW",
 				"AXE",
@@ -1325,9 +1365,7 @@ public class NEUOverlay extends Gui {
 			) >= 0;
 		} else if (getSortMode() == SORT_MODE_ARMOR) {
 			return checkItemType(
-				item
-					.get("lore")
-					.getAsJsonArray(),
+				item.get("lore").getAsJsonArray(),
 				"HELMET",
 				"CHESTPLATE",
 				"LEGGINGS",
@@ -1336,8 +1374,7 @@ public class NEUOverlay extends Gui {
 				"DUNGEON CHESTPLATE",
 				"DUNGEON LEGGINGS",
 				"DUNGEON BOOTS"
-			) >=
-				0;
+			) >= 0;
 		} else if (getSortMode() == SORT_MODE_ACCESSORY) {
 			return checkItemType(item.get("lore").getAsJsonArray(), "ACCESSORY", "HATCCESSORY", "DUNGEON ACCESSORY") >= 0;
 		}
@@ -1812,7 +1849,9 @@ public class NEUOverlay extends Gui {
 			ContainerChest container = (ContainerChest) chest.inventorySlots;
 			IInventory lower = container.getLowerChestInventory();
 			String containerName = lower.getDisplayName().getUnformattedText();
-			wardrobeOpen = containerName.contains(guiName);
+			if (containerName.contains(guiName)) {
+				wardrobeOpen = true;
+			} else wardrobeOpen = false;
 		}
 		if (guiScreen instanceof GuiInventory) {
 			wardrobeOpen = false;
@@ -1855,27 +1894,31 @@ public class NEUOverlay extends Gui {
 	private int selectedArmor = 9;
 
 	private int getEquippedArmor() {
-		if (!isInNamedGui("Wardrobe")) return selectedArmor;
-
-		ItemStack nullTest1 = getChestSlotsAsItemStack(8);
-		ItemStack nullTest2 = getChestSlotsAsItemStack(17);
-		ItemStack nullTest3 = getChestSlotsAsItemStack(26);
-		ItemStack nullTest4 = getChestSlotsAsItemStack(35);
-		ItemStack nullTest5 = getChestSlotsAsItemStack(44);
-		if (nullTest1 != null || nullTest2 != null || nullTest3 != null || nullTest4 != null || nullTest5 != null) {
-			selectedArmor = 9;
-		}
-		for (int ii = 1; ii < 5; ii++) {
-			if (ii != 1 && selectedArmor != 9) continue;
-			if (getWardrobePage() != ii) continue;
-			for (int i = 8; i < 54; i += 9) {
-				ItemStack stack1 = getChestSlotsAsItemStack(i);
-				if (stack1 == null) continue;
-				String[] lore1 = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack1.getTagCompound());
-				for (String line : lore1) {
-					if (line.contains("to unequip this armor")) {
-						selectedArmor = i;
-						break;
+		if (isInNamedGui("Wardrobe")) {
+			ItemStack nullTest1 = getChestSlotsAsItemStack(8);
+			ItemStack nullTest2 = getChestSlotsAsItemStack(17);
+			ItemStack nullTest3 = getChestSlotsAsItemStack(26);
+			ItemStack nullTest4 = getChestSlotsAsItemStack(35);
+			ItemStack nullTest5 = getChestSlotsAsItemStack(44);
+			if (nullTest1 != null || nullTest2 != null || nullTest3 != null || nullTest4 != null || nullTest5 != null) {
+				selectedArmor = 9;
+			}
+			for (int ii = 1; ii < 5; ii++) {
+				if (ii == 1 || selectedArmor == 9) {
+					if (getWardrobePage() == ii) {
+						for (int i = 8; i < 54; i += 9) {
+							ItemStack stack1 = getChestSlotsAsItemStack(i);
+							if (stack1 != null) {
+								String[] lore1 = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack1.getTagCompound());
+								for (String line : lore1) {
+									//System.out.println(line);
+									if (line.contains("to unequip this armor")) {
+										selectedArmor = i;
+										break;
+									}
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1922,7 +1965,9 @@ public class NEUOverlay extends Gui {
 	 * Renders the search bar, quick commands, item selection (right), item info (left) and armor hud gui elements.
 	 */
 	public void render(boolean hoverInv) {
-		if (disabled) return;
+		if (disabled) {
+			return;
+		}
 		renderingArmorHud = false;
 		renderingPetHud = false;
 		GlStateManager.enableDepth();
@@ -1952,9 +1997,7 @@ public class NEUOverlay extends Gui {
 
 		if (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud &&
 			NotEnoughUpdates.INSTANCE.config.misc.hidePotionEffect
-			&&
-			NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
-			isWardrobeSystemOnMainServer()) {
+			&& NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() && isWardrobeSystemOnMainServer()) {
 			if (getWardrobeSlot(1) != null) {
 				slot1 = getWardrobeSlot(4);
 				slot2 = getWardrobeSlot(3);
@@ -1977,8 +2020,7 @@ public class NEUOverlay extends Gui {
 				}
 				if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 3) {
 					if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 3 &&
-						NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay &&
-						petSlot != null) {
+						NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay && petSlot != null) {
 						Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_TRANSPARENT_PET);
 					} else {
 						Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_TRANSPARENT);
@@ -2010,8 +2052,7 @@ public class NEUOverlay extends Gui {
 						EnumChatFormatting.GREEN + "To cache your armour"
 					);
 					if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
-						if (mouseY >= ((height + 60) / 2f - 105) &&
-							mouseY <= ((height + 60) / 2f - 105) + 70 &&
+						if (mouseY >= ((height + 60) / 2f - 105) && mouseY <= ((height + 60) / 2f - 105) + 70 &&
 							NotEnoughUpdates.INSTANCE.config.customArmour.sendWardrobeCommand) {
 							if (Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
 								if (Mouse.getEventButtonState()) {
@@ -2031,8 +2072,7 @@ public class NEUOverlay extends Gui {
 				}
 				if (slot1 != null && slot2 != null && slot3 != null && slot4 != null) {
 					if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
-						if (mouseY >= ((height + 60) / 2f - 105) &&
-							mouseY <= ((height + 60) / 2f - 105) + 70 &&
+						if (mouseY >= ((height + 60) / 2f - 105) && mouseY <= ((height + 60) / 2f - 105) + 70 &&
 							NotEnoughUpdates.INSTANCE.config.customArmour.sendWardrobeCommand) {
 							if (Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
 								if (Mouse.getEventButtonState()) {
@@ -2075,20 +2115,17 @@ public class NEUOverlay extends Gui {
 		}
 		if (PetInfoOverlay.getCurrentPet() != null) {
 			if (NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay
-				&&
-				(NotEnoughUpdates.INSTANCE.manager
-					.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-						.getItemInformation()
-						.get(PetInfoOverlay.getCurrentPet().petType + ";" + PetInfoOverlay.getCurrentPet().rarity.petId))
-					.hasDisplayName()
-					||
-					NotEnoughUpdates.INSTANCE.manager
-						.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-							.getItemInformation()
-							.get(PetInfoOverlay.getCurrentPet().petType + ";" + (PetInfoOverlay.getCurrentPet().rarity.petId - 1)))
-						.hasDisplayName())
-				&&
-				NotEnoughUpdates.INSTANCE.config.misc.hidePotionEffect &&
+				&& (NotEnoughUpdates.INSTANCE.manager
+				.jsonToStack(NotEnoughUpdates.INSTANCE.manager
+					.getItemInformation()
+					.get(PetInfoOverlay.getCurrentPet().petType + ";" + PetInfoOverlay.getCurrentPet().rarity.petId))
+				.hasDisplayName()
+				|| NotEnoughUpdates.INSTANCE.manager
+				.jsonToStack(NotEnoughUpdates.INSTANCE.manager
+					.getItemInformation()
+					.get(PetInfoOverlay.getCurrentPet().petType + ";" + (PetInfoOverlay.getCurrentPet().rarity.petId - 1)))
+				.hasDisplayName())
+				&& NotEnoughUpdates.INSTANCE.config.misc.hidePotionEffect &&
 				NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
 				if (!NotEnoughUpdates.INSTANCE.manager
 					.jsonToStack(
@@ -2105,9 +2142,10 @@ public class NEUOverlay extends Gui {
 							PetInfoOverlay.getCurrentPet().petType + ";" + PetInfoOverlay.getCurrentPet().rarity.petId));
 				}
 				petSlot.getTagCompound().setBoolean("NEUPETINVDISPLAY", true);
-				petSlot
-					.getTagCompound()
-					.setBoolean("NEUHIDEPETTOOLTIP", NotEnoughUpdates.INSTANCE.config.petOverlay.hidePetTooltip);
+				petSlot.getTagCompound().setBoolean(
+					"NEUHIDEPETTOOLTIP",
+					NotEnoughUpdates.INSTANCE.config.petOverlay.hidePetTooltip
+				);
 				ItemStack petInfo = petSlot;
 
 				if (guiScreen instanceof GuiInventory) {
@@ -2157,8 +2195,7 @@ public class NEUOverlay extends Gui {
 					List<String> tooltipToDisplay = null;
 					if (petInfo != null) {
 						if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
-							if (mouseY >= ((height + 60) / 2f - 105) + 72 &&
-								mouseY <= ((height + 60) / 2f - 105) + 88 &&
+							if (mouseY >= ((height + 60) / 2f - 105) + 72 && mouseY <= ((height + 60) / 2f - 105) + 88 &&
 								NotEnoughUpdates.INSTANCE.config.petOverlay.sendPetsCommand) {
 								if (Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
 									if (Mouse.getEventButtonState()) {
@@ -2308,17 +2345,14 @@ public class NEUOverlay extends Gui {
 				int orderIconX = leftSide + getBoxPadding() + getItemBoxXPadding() + i * scaledItemPaddedSize;
 				drawRect(orderIconX, iconTop, scaledITEM_SIZE + orderIconX, iconTop + scaledITEM_SIZE, fg.getRGB());
 
-				Minecraft
-					.getMinecraft()
-					.getTextureManager()
-					.bindTexture(getCompareMode() == i ? orderIconsActive[i] : orderIcons[i]);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(
+					getCompareMode() == i ? orderIconsActive[i] : orderIcons[i]);
 				GlStateManager.color(1f, 1f, 1f, 1f);
 				Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
 
-				Minecraft
-					.getMinecraft()
-					.getTextureManager()
-					.bindTexture(getCompareAscending().get(i) ? ascending_overlay : descending_overlay);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(getCompareAscending().get(i)
+					? ascending_overlay
+					: descending_overlay);
 				GlStateManager.color(1f, 1f, 1f, 1f);
 				Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
 				GlStateManager.bindTexture(0);
@@ -2341,10 +2375,8 @@ public class NEUOverlay extends Gui {
 			for (int i = 0; i < sortIcons.length; i++) {
 				int sortIconX = rightSide - scaledITEM_SIZE - i * scaledItemPaddedSize;
 				drawRect(sortIconX, iconTop, scaledITEM_SIZE + sortIconX, iconTop + scaledITEM_SIZE, fg.getRGB());
-				Minecraft
-					.getMinecraft()
-					.getTextureManager()
-					.bindTexture(getSortMode() == i ? sortIconsActive[i] : sortIcons[i]);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(
+					getSortMode() == i ? sortIconsActive[i] : sortIcons[i]);
 				GlStateManager.color(1f, 1f, 1f, 1f);
 				Utils.drawTexturedRect(sortIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
 				GlStateManager.bindTexture(0);
@@ -2585,8 +2617,7 @@ public class NEUOverlay extends Gui {
 		int sw = width * Utils.peekGuiScale().getScaleFactor();
 		int sh = height * Utils.peekGuiScale().getScaleFactor();
 		for (int i = 0; i < itemFramebuffers.length; i++) {
-			if (itemFramebuffers[i] == null ||
-				itemFramebuffers[i].framebufferWidth != sw ||
+			if (itemFramebuffers[i] == null || itemFramebuffers[i].framebufferWidth != sw ||
 				itemFramebuffers[i].framebufferHeight != sh) {
 				if (itemFramebuffers[i] == null) {
 					itemFramebuffers[i] = new Framebuffer(sw, sh, true);

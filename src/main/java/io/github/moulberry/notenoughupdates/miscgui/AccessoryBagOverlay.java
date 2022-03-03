@@ -3,10 +3,10 @@ package io.github.moulberry.notenoughupdates.miscgui;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
+import io.github.moulberry.notenoughupdates.listener.RenderListener;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -55,8 +55,7 @@ public class AccessoryBagOverlay {
 		Utils.createItemStack(Items.diamond_sword, EnumChatFormatting.DARK_AQUA + "Total Stat Bonuses",
 			0
 		),
-		Utils.createItemStack(
-			Item.getItemFromBlock(Blocks.anvil),
+		Utils.createItemStack(Item.getItemFromBlock(Blocks.anvil),
 			EnumChatFormatting.DARK_AQUA + "Total Stat Bonuses (from reforges)",
 			0
 		),
@@ -95,14 +94,30 @@ public class AccessoryBagOverlay {
 			int mouseX = Mouse.getX() / scaledResolution.getScaleFactor();
 			int mouseY = height - Mouse.getY() / scaledResolution.getScaleFactor();
 
-			int xSize =
-				(int) Utils.getField(GuiContainer.class, Minecraft.getMinecraft().currentScreen, "xSize", "field_146999_f");
-			int ySize =
-				(int) Utils.getField(GuiContainer.class, Minecraft.getMinecraft().currentScreen, "ySize", "field_147000_g");
-			int guiLeft =
-				(int) Utils.getField(GuiContainer.class, Minecraft.getMinecraft().currentScreen, "guiLeft", "field_147003_i");
-			int guiTop =
-				(int) Utils.getField(GuiContainer.class, Minecraft.getMinecraft().currentScreen, "guiTop", "field_147009_r");
+			int xSize = (int) Utils.getField(
+				GuiContainer.class,
+				Minecraft.getMinecraft().currentScreen,
+				"xSize",
+				"field_146999_f"
+			);
+			int ySize = (int) Utils.getField(
+				GuiContainer.class,
+				Minecraft.getMinecraft().currentScreen,
+				"ySize",
+				"field_147000_g"
+			);
+			int guiLeft = (int) Utils.getField(
+				GuiContainer.class,
+				Minecraft.getMinecraft().currentScreen,
+				"guiLeft",
+				"field_147003_i"
+			);
+			int guiTop = (int) Utils.getField(
+				GuiContainer.class,
+				Minecraft.getMinecraft().currentScreen,
+				"guiTop",
+				"field_147009_r"
+			);
 
 			if (mouseX < guiLeft + xSize + 3 || mouseX > guiLeft + xSize + 80 + 28) return false;
 			if (mouseY < guiTop || mouseY > guiTop + 166) return false;
@@ -196,8 +211,7 @@ public class AccessoryBagOverlay {
 			}
 		}
 
-		Utils.drawStringCenteredScaledMaxWidth(
-			"# By Rarity",
+		Utils.drawStringCenteredScaledMaxWidth("# By Rarity",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 12,
@@ -230,8 +244,7 @@ public class AccessoryBagOverlay {
 			}
 		}
 
-		Utils.drawStringCenteredScaledMaxWidth(
-			"Total Stats",
+		Utils.drawStringCenteredScaledMaxWidth("Total Stats",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 12,
@@ -278,8 +291,7 @@ public class AccessoryBagOverlay {
 			}
 		}
 
-		Utils.drawStringCenteredScaledMaxWidth(
-			"Reforge Stats",
+		Utils.drawStringCenteredScaledMaxWidth("Reforge Stats",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 12,
@@ -322,8 +334,7 @@ public class AccessoryBagOverlay {
 		if (duplicates == null) {
 			JsonObject misc = Constants.MISC;
 			if (misc == null) {
-				Utils.drawStringCenteredScaledMaxWidth(
-					"Duplicates: ERROR",
+				Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR",
 					Minecraft.getMinecraft().fontRendererObj,
 					x + 40,
 					y + 12,
@@ -335,8 +346,7 @@ public class AccessoryBagOverlay {
 			}
 			JsonElement talisman_upgrades_element = misc.get("talisman_upgrades");
 			if (talisman_upgrades_element == null) {
-				Utils.drawStringCenteredScaledMaxWidth(
-					"Duplicates: ERROR",
+				Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR",
 					Minecraft.getMinecraft().fontRendererObj,
 					x + 40,
 					y + 12,
@@ -378,8 +388,7 @@ public class AccessoryBagOverlay {
 			}
 		}
 		if (duplicates.isEmpty()) {
-			Utils.drawStringCenteredScaledMaxWidth(
-				"No Duplicates",
+			Utils.drawStringCenteredScaledMaxWidth("No Duplicates",
 				Minecraft.getMinecraft().fontRendererObj,
 				x + 40,
 				y + 12,
@@ -388,8 +397,7 @@ public class AccessoryBagOverlay {
 				new Color(80, 80, 80).getRGB()
 			);
 		} else {
-			Utils.drawStringCenteredScaledMaxWidth(
-				"Duplicates: " + duplicates.size(),
+			Utils.drawStringCenteredScaledMaxWidth("Duplicates: " + duplicates.size(),
 				Minecraft.getMinecraft().fontRendererObj,
 				x + 40,
 				y + 12,
@@ -424,8 +432,7 @@ public class AccessoryBagOverlay {
 		if (missing == null) {
 			JsonObject misc = Constants.MISC;
 			if (misc == null) {
-				Utils.drawStringCenteredScaledMaxWidth(
-					"Duplicates: ERROR",
+				Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR",
 					Minecraft.getMinecraft().fontRendererObj,
 					x + 40,
 					y + 12,
@@ -437,8 +444,7 @@ public class AccessoryBagOverlay {
 			}
 			JsonElement talisman_upgrades_element = misc.get("talisman_upgrades");
 			if (talisman_upgrades_element == null) {
-				Utils.drawStringCenteredScaledMaxWidth(
-					"Duplicates: ERROR",
+				Utils.drawStringCenteredScaledMaxWidth("Duplicates: ERROR",
 					Minecraft.getMinecraft().fontRendererObj,
 					x + 40,
 					y + 12,
@@ -513,8 +519,7 @@ public class AccessoryBagOverlay {
 			}
 		}
 		if (missing.isEmpty()) {
-			Utils.drawStringCenteredScaledMaxWidth(
-				"No Missing",
+			Utils.drawStringCenteredScaledMaxWidth("No Missing",
 				Minecraft.getMinecraft().fontRendererObj,
 				x + 40,
 				y + 12,
@@ -523,8 +528,7 @@ public class AccessoryBagOverlay {
 				new Color(80, 80, 80).getRGB()
 			);
 		} else {
-			Utils.drawStringCenteredScaledMaxWidth(
-				"Missing: " + missing.size(),
+			Utils.drawStringCenteredScaledMaxWidth("Missing: " + missing.size(),
 				Minecraft.getMinecraft().fontRendererObj,
 				x + 40,
 				y + 12,
@@ -649,8 +653,7 @@ public class AccessoryBagOverlay {
 	private static int mainWeapon = 1;
 
 	public static void renderOptimizerOverlay(int x, int y) {
-		Utils.drawStringCenteredScaledMaxWidth(
-			"Optimizer",
+		Utils.drawStringCenteredScaledMaxWidth("Optimizer",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 12,
@@ -683,8 +686,7 @@ public class AccessoryBagOverlay {
 			dark
 		);
 
-		Utils.drawStringCenteredScaledMaxWidth(
-			"Force 100% CC",
+		Utils.drawStringCenteredScaledMaxWidth("Force 100% CC",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 27,
@@ -696,8 +698,7 @@ public class AccessoryBagOverlay {
 			Minecraft.getMinecraft().fontRendererObj, x + 20, y + 37,
 			true, 30, new Color(80, 80, 80).getRGB()
 		);
-		Utils.drawStringCenteredScaledMaxWidth(
-			(forceCC ? EnumChatFormatting.GRAY : EnumChatFormatting.RED) + "NO",
+		Utils.drawStringCenteredScaledMaxWidth((forceCC ? EnumChatFormatting.GRAY : EnumChatFormatting.RED) + "NO",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 60,
 			y + 37,
@@ -706,8 +707,7 @@ public class AccessoryBagOverlay {
 			new Color(80, 80, 80).getRGB()
 		);
 
-		Utils.drawStringCenteredScaledMaxWidth(
-			"Force 100% ATKSPEED",
+		Utils.drawStringCenteredScaledMaxWidth("Force 100% ATKSPEED",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 47,
@@ -715,8 +715,7 @@ public class AccessoryBagOverlay {
 			70,
 			new Color(80, 80, 80).getRGB()
 		);
-		Utils.drawStringCenteredScaledMaxWidth(
-			(forceAS ? EnumChatFormatting.GREEN : EnumChatFormatting.GRAY) + "YES",
+		Utils.drawStringCenteredScaledMaxWidth((forceAS ? EnumChatFormatting.GREEN : EnumChatFormatting.GRAY) + "YES",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 20,
 			y + 57,
@@ -724,8 +723,7 @@ public class AccessoryBagOverlay {
 			30,
 			new Color(80, 80, 80).getRGB()
 		);
-		Utils.drawStringCenteredScaledMaxWidth(
-			(forceAS ? EnumChatFormatting.GRAY : EnumChatFormatting.RED) + "NO",
+		Utils.drawStringCenteredScaledMaxWidth((forceAS ? EnumChatFormatting.GRAY : EnumChatFormatting.RED) + "NO",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 60,
 			y + 57,
@@ -734,8 +732,7 @@ public class AccessoryBagOverlay {
 			new Color(80, 80, 80).getRGB()
 		);
 
-		Utils.drawStringCenteredScaledMaxWidth(
-			"Use God Potion",
+		Utils.drawStringCenteredScaledMaxWidth("Use God Potion",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 67,
@@ -743,8 +740,7 @@ public class AccessoryBagOverlay {
 			70,
 			new Color(80, 80, 80).getRGB()
 		);
-		Utils.drawStringCenteredScaledMaxWidth(
-			(useGodPot ? EnumChatFormatting.GREEN : EnumChatFormatting.GRAY) + "YES",
+		Utils.drawStringCenteredScaledMaxWidth((useGodPot ? EnumChatFormatting.GREEN : EnumChatFormatting.GRAY) + "YES",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 20,
 			y + 77,
@@ -752,8 +748,7 @@ public class AccessoryBagOverlay {
 			30,
 			new Color(80, 80, 80).getRGB()
 		);
-		Utils.drawStringCenteredScaledMaxWidth(
-			(useGodPot ? EnumChatFormatting.GRAY : EnumChatFormatting.RED) + "NO",
+		Utils.drawStringCenteredScaledMaxWidth((useGodPot ? EnumChatFormatting.GRAY : EnumChatFormatting.RED) + "NO",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 60,
 			y + 77,
@@ -762,8 +757,7 @@ public class AccessoryBagOverlay {
 			new Color(80, 80, 80).getRGB()
 		);
 
-		Utils.drawStringCenteredScaledMaxWidth(
-			"Use God Potion",
+		Utils.drawStringCenteredScaledMaxWidth("Use God Potion",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 87,
@@ -780,8 +774,7 @@ public class AccessoryBagOverlay {
 			true, 30, new Color(80, 80, 80).getRGB()
 		);
 
-		Utils.drawStringCenteredScaledMaxWidth(
-			"Main Weapon",
+		Utils.drawStringCenteredScaledMaxWidth("Main Weapon",
 			Minecraft.getMinecraft().fontRendererObj,
 			x + 40,
 			y + 107,
@@ -839,7 +832,7 @@ public class AccessoryBagOverlay {
 
 	public static void renderOverlay() {
 		inAccessoryBag = false;
-		if (Minecraft.getMinecraft().currentScreen instanceof GuiChest && NEUEventListener.inventoryLoaded) {
+		if (Minecraft.getMinecraft().currentScreen instanceof GuiChest && RenderListener.inventoryLoaded) {
 			GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
 			ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
 			String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();

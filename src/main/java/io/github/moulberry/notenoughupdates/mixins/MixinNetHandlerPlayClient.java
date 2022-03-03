@@ -61,11 +61,6 @@ public class MixinNetHandlerPlayClient {
 		}
 	}
 
-	@Inject(method = "handleSpawnMob", at = @At("RETURN"))
-	public void handleSpawnMob(S0FPacketSpawnMob packetIn, CallbackInfo ci) {
-		//CollectionLogManager.getInstance().onEntityMetadataUpdated(packetIn.getEntityID());
-	}
-
 	@Inject(method = "handleSetSlot", at = @At("RETURN"))
 	public void handleSetSlot(S2FPacketSetSlot packetIn, CallbackInfo ci) {
 		EnchantingSolvers.processInventoryContents(false);
@@ -85,14 +80,6 @@ public class MixinNetHandlerPlayClient {
 	@Inject(method = "handleWindowItems", at = @At("RETURN"))
 	public void handleOpenWindow(S30PacketWindowItems packetIn, CallbackInfo ci) {
 		StorageManager.getInstance().setItemsPacket(packetIn);
-	}
-
-	@Inject(method = "handleRespawn", at = @At(
-		value = "INVOKE",
-		target = "Lnet/minecraft/network/PacketThreadUtil;checkThreadAndEnqueue(Lnet/minecraft/network/Packet;Lnet/minecraft/network/INetHandler;Lnet/minecraft/util/IThreadListener;)V",
-		shift = At.Shift.AFTER))
-	public void handleOpenWindow(S07PacketRespawn packetIn, CallbackInfo ci) {
-		FancyPortals.onRespawnPacket(packetIn);
 	}
 
 	@Inject(method = "handleBlockChange", at = @At("HEAD"))
