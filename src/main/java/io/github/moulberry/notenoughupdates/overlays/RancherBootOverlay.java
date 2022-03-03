@@ -16,146 +16,156 @@ import org.lwjgl.input.Mouse;
 import java.util.HashMap;
 
 public class RancherBootOverlay {
+	private static int selectedIndex = 0;
 
-    private static int selectedIndex = 0;
+	private static final HashMap<Integer, Integer> currentSpeeds = new HashMap<>();
+	private static final GuiElementSlider slider =
+		new GuiElementSlider(0, 0, 145, 100, 400, 1, 300, (val) -> setValue(val.intValue()));
+	private static final GuiElementTextField textField =
+		new GuiElementTextField("", 48, 20, GuiElementTextField.NUM_ONLY);
+	private static boolean textFieldClicked = false;
 
-    private static HashMap<Integer, Integer> currentSpeeds = new HashMap<>();
-    private static GuiElementSlider slider = new GuiElementSlider(0, 0, 145, 100, 400, 1, 300, (val) -> {
-        setValue(val.intValue());
-    });
-    private static GuiElementTextField textField = new GuiElementTextField("", 48, 20, GuiElementTextField.NUM_ONLY);
-    private static boolean textFieldClicked = false;
+	public static boolean shouldReplace() {
+		if (true) return false;
+		//if(!NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.enableSearchOverlay) return false;
 
-    public static boolean shouldReplace() {
-        if(true) return false;
-        //if(!NotEnoughUpdates.INSTANCE.config.auctionHouseSearch.enableSearchOverlay) return false;
+		if (!(Minecraft.getMinecraft().currentScreen instanceof GuiEditSign)) return false;
 
-        if(!(Minecraft.getMinecraft().currentScreen instanceof GuiEditSign)) return false;
+		TileEntitySign tes = ((GuiEditSign) Minecraft.getMinecraft().currentScreen).tileSign;
 
-        TileEntitySign tes = ((GuiEditSign)Minecraft.getMinecraft().currentScreen).tileSign;
+		if (tes == null) return false;
+		if (tes.getPos().getY() != 0) return false;
+		if (!tes.signText[1].getUnformattedText().equals("^^^^^^")) return false;
+		if (!tes.signText[2].getUnformattedText().equals("Set your")) return false;
+		return tes.signText[3].getUnformattedText().equals("speed cap!");
+	}
 
-        if(tes == null) return false;
-        if(tes.getPos().getY() != 0) return false;
-        if(!tes.signText[1].getUnformattedText().equals("^^^^^^")) return false;
-        if(!tes.signText[2].getUnformattedText().equals("Set your")) return false;
-        if(!tes.signText[3].getUnformattedText().equals("speed cap!")) return false;
+	public static void render() {
+		ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+		int width = scaledResolution.getScaledWidth();
+		int height = scaledResolution.getScaledHeight();
+		int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+		int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-        return true;
-    }
+		Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
 
-    public static void render() {
-        ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
-        int width = scaledResolution.getScaledWidth();
-        int height = scaledResolution.getScaledHeight();
-        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
-        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
+		int topY = height / 4;
 
-        Utils.drawGradientRect(0, 0, width, height, -1072689136, -804253680);
+		//Gui.drawRect(width/2-100, topY, width/2+48, topY+20, 0xffffffff);
+		Gui.drawRect(width / 2 + 52, topY, width / 2 + 100, topY + 20, 0xffffffff);
 
-        int topY = height/4;
+		textField.render(width / 2 + 52, topY);
 
-        //Gui.drawRect(width/2-100, topY, width/2+48, topY+20, 0xffffffff);
-        Gui.drawRect(width/2+52, topY, width/2+100, topY+20, 0xffffffff);
+		slider.x = width / 2 - 100;
+		slider.y = topY;
+		slider.render();
 
-        textField.render(width/2+52, topY);
+		int numIcons = 3;
+		int iconsLeft = width / 2 - (numIcons * 25 - 5) / 2;
 
-        slider.x = width/2-100;
-        slider.y = topY;
-        slider.render();
+		for (int i = 0; i < numIcons; i++) {
+			Gui.drawRect(
+				iconsLeft + i * 25,
+				topY + 25,
+				iconsLeft + i * 25 + 20,
+				topY + 45,
+				selectedIndex == i ? 0xff0000ff : 0xff808080
+			);
+			Utils.drawItemStack(new ItemStack(Items.carrot), iconsLeft + i * 25 + 2, topY + 25 + 2);
+			Utils.drawStringCentered(
+				"" + currentSpeeds.get(i),
+				Minecraft.getMinecraft().fontRendererObj,
+				iconsLeft + i * 25 + 10,
+				topY + 52,
+				true,
+				0xffffffff
+			);
+			//Minecraft.getMinecraft().fontRendererObj.drawString("\u2710", iconsLeft+i*25+15, topY+40, 0xffffff, false);
+		}
 
-        int numIcons = 3;
-        int iconsLeft = width/2 - (numIcons*25 - 5)/2 ;
+		//Minecraft.getMinecraft().fontRendererObj.drawString("Hello!", 100, 100, 0xffffff);
+	}
 
-        for(int i=0; i<numIcons; i++) {
-            Gui.drawRect(iconsLeft+i*25, topY+25, iconsLeft+i*25+20, topY+45, selectedIndex == i ? 0xff0000ff : 0xff808080);
-            Utils.drawItemStack(new ItemStack(Items.carrot), iconsLeft+i*25+2, topY+25+2);
-            Utils.drawStringCentered(""+currentSpeeds.get(i), Minecraft.getMinecraft().fontRendererObj, iconsLeft+i*25+10, topY+52, true, 0xffffffff);
-            //Minecraft.getMinecraft().fontRendererObj.drawString("\u2710", iconsLeft+i*25+15, topY+40, 0xffffff, false);
-        }
+	public static void close() {
 
-        //Minecraft.getMinecraft().fontRendererObj.drawString("Hello!", 100, 100, 0xffffff);
-    }
+	}
 
-    public static void close() {
+	public static void keyEvent() {
+		if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
+			Minecraft.getMinecraft().displayGuiScreen(null);
+		} else {
+			slider.keyboardInput();
 
-    }
+			if (Keyboard.getEventKeyState()) {
+				textField.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
+				if (textField.getText().length() > 5) textField.setText(textField.getText().substring(0, 5));
 
-    public static void keyEvent() {
-        if(Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
-            Minecraft.getMinecraft().displayGuiScreen(null);
-        } else {
-            slider.keyboardInput();
+				try {
+					setCurrentSpeed(Integer.parseInt(textField.getText().trim()));
+					slider.setValue(getCurrentSpeed());
+					textField.setCustomBorderColour(0xfeffffff);
+				} catch (NumberFormatException ignored) {
+					textField.setCustomBorderColour(0xffff0000);
+				}
+			}
+		}
+	}
 
-            if(Keyboard.getEventKeyState()) {
-                textField.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
-                if(textField.getText().length() > 5) textField.setText(textField.getText().substring(0, 5));
+	private static int getCurrentSpeed() {
+		return currentSpeeds.get(selectedIndex);
+	}
 
-                try {
-                    setCurrentSpeed(Integer.parseInt(textField.getText().trim()));
-                    slider.setValue(getCurrentSpeed());
-                    textField.setCustomBorderColour(0xfeffffff);
-                } catch(NumberFormatException ignored) {
-                    textField.setCustomBorderColour(0xffff0000);
-                }
-            }
-        }
-    }
+	private static void setCurrentSpeed(int speed) {
+		currentSpeeds.put(selectedIndex, speed);
+	}
 
-    private static int getCurrentSpeed() {
-        return currentSpeeds.get(selectedIndex);
-    }
+	public static void setValue(int value) {
+		setCurrentSpeed(value);
+		textField.setText("" + getCurrentSpeed());
+	}
 
-    private static void setCurrentSpeed(int speed) {
-        currentSpeeds.put(selectedIndex, speed);
-    }
+	public static void mouseEvent() {
+		ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+		int width = scaledResolution.getScaledWidth();
+		int height = scaledResolution.getScaledHeight();
+		int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
+		int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
 
-    public static void setValue(int value) {
-        setCurrentSpeed(value);
-        textField.setText(""+getCurrentSpeed());
-    }
+		int topY = height / 4;
 
-    public static void mouseEvent() {
-        ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
-        int width = scaledResolution.getScaledWidth();
-        int height = scaledResolution.getScaledHeight();
-        int mouseX = Mouse.getX() * width / Minecraft.getMinecraft().displayWidth;
-        int mouseY = height - Mouse.getY() * height / Minecraft.getMinecraft().displayHeight - 1;
+		slider.mouseInput(mouseX, mouseY);
 
-        int topY = height/4;
+		if (!Mouse.getEventButtonState() && Mouse.getEventButton() == -1 && textFieldClicked) {
+			textField.mouseClickMove(mouseX - 2, topY + 10, 0, 0);
+		}
 
-        slider.mouseInput(mouseX, mouseY);
+		if (Mouse.getEventButton() != -1) {
+			textFieldClicked = false;
+		}
 
-        if(!Mouse.getEventButtonState() && Mouse.getEventButton() == -1 && textFieldClicked) {
-            textField.mouseClickMove(mouseX-2, topY+10, 0, 0);
-        }
+		if (mouseX > width / 2 + 52 && mouseX < width / 2 + 100 && mouseY > topY && mouseY < topY + 20) {
+			if (Mouse.getEventButtonState()) {
+				textField.mouseClicked(mouseX, mouseY, Mouse.getEventButton());
+				textFieldClicked = true;
+			}
+		}
 
-        if(Mouse.getEventButton() != -1) {
-            textFieldClicked = false;
-        }
+		if (Mouse.getEventButtonState()) {
+			int numIcons = 3;
+			int iconsLeft = width / 2 - (numIcons * 25 - 5) / 2;
 
-        if(mouseX > width/2+52 && mouseX < width/2+100 && mouseY > topY && mouseY < topY+20) {
-            if(Mouse.getEventButtonState()) {
-                textField.mouseClicked(mouseX, mouseY, Mouse.getEventButton());
-                textFieldClicked = true;
-            }
-        }
-
-        if(Mouse.getEventButtonState()) {
-            int numIcons = 3;
-            int iconsLeft = width/2 - (numIcons*25 - 5)/2 ;
-
-            for(int i=0; i<numIcons; i++) {
-                if(mouseX > iconsLeft+i*25 && mouseX < iconsLeft+i*25+20 && mouseY > topY+25 && mouseY < topY+45) {
-                    if(i != selectedIndex) {
-                        selectedIndex = i;
-                        slider.setValue(getCurrentSpeed());
-                        textField.setText(""+getCurrentSpeed());
-                    }
-                    return;
-                }
-                //Minecraft.getMinecraft().fontRendererObj.drawString("\u2710", iconsLeft+i*25+15, topY+40, 0xffffff, false);
-            }
-        }
-    }
-
+			for (int i = 0; i < numIcons; i++) {
+				if (mouseX > iconsLeft + i * 25 && mouseX < iconsLeft + i * 25 + 20 && mouseY > topY + 25 &&
+					mouseY < topY + 45) {
+					if (i != selectedIndex) {
+						selectedIndex = i;
+						slider.setValue(getCurrentSpeed());
+						textField.setText("" + getCurrentSpeed());
+					}
+					return;
+				}
+				//Minecraft.getMinecraft().fontRendererObj.drawString("\u2710", iconsLeft+i*25+15, topY+40, 0xffffff, false);
+			}
+		}
+	}
 }
