@@ -5,297 +5,263 @@ import io.github.moulberry.notenoughupdates.commands.ClientCommandBase;
 import io.github.moulberry.notenoughupdates.core.util.MiscUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 
-public class PackDevCommand extends ClientCommandBase {
+import java.util.HashMap;
+import java.util.List;
+import java.util.function.Supplier;
 
+public class PackDevCommand extends ClientCommandBase {
+	static Minecraft mc = Minecraft.getMinecraft();
 	public PackDevCommand() {
 		super("neupackdev");
 	}
 
-	EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
-	double dist  = 5;
-	double distSq = 25;
+	private static final HashMap<String, Command<?, ?>> commands = new HashMap<String, Command<?, ?>>() {{
+		put("getnpc",
+			new Command<>(
+				"NPC",
+				() -> mc.theWorld.playerEntities,
+				true,
+				AbstractClientPlayer.class
+			));
+		put("getnpcs",
+			new Command<>(
+				"NPC",
+				() -> mc.theWorld.playerEntities,
+				false,
+				AbstractClientPlayer.class
+			));
+		put("getmob",
+			new Command<>(
+				"mob",
+				() -> mc.theWorld.loadedEntityList,
+				true,
+				EntityLiving.class
+			));
+		put("getmobs",
+			new Command<>(
+				"mob",
+				() -> mc.theWorld.loadedEntityList,
+				false,
+				EntityLiving.class
+			));
+		put("getarmorstand",
+			new Command<>("armor stand",
+				() -> mc.theWorld.loadedEntityList,
+				true,
+				EntityArmorStand.class
+			));
+		put("getarmorstands",
+			new Command<>("armor stand",
+				() -> mc.theWorld.loadedEntityList,
+				false,
+				EntityArmorStand.class
+			));
+	}};
+
+	@Override
+	public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
+		return args.length == 1 ? getListOfStringsMatchingLastWord(args, commands.keySet()) : null;
+	}
+
+	public static void togglePackDeveloperMode(ICommandSender sender) {
+		NotEnoughUpdates.INSTANCE.packDevEnabled = !NotEnoughUpdates.INSTANCE.packDevEnabled;
+		if (NotEnoughUpdates.INSTANCE.packDevEnabled) {
+			sender.addChatMessage(new ChatComponentText(
+				EnumChatFormatting.GREEN + "Enabled pack developer mode."));
+		} else {
+			sender.addChatMessage(new ChatComponentText(
+				EnumChatFormatting.RED + "Disabled pack developer mode."));
+		}
+	}
+
 	@Override
 	public void processCommand(ICommandSender sender, String[] args) throws CommandException {
-		if (args.length >= 1) {
+		if (args.length == 0) {
+			togglePackDeveloperMode(sender);
+			return;
+		}
 
-			if (args.length == 2) {
-				try {
-					distSq = Double.parseDouble(args[1]) * Double.parseDouble(args[1]);
-					dist = Double.parseDouble(args[1]);
-				} catch (NumberFormatException e) {
-					sender.addChatMessage(new ChatComponentText(
-						EnumChatFormatting.RED + "Invalid distance! Must be a number, defaulting to a radius of 5."));
-				}
-			}
-			StringBuilder value;
-			switch (args[0].toLowerCase()) {
-				case "getnpc":
-					getNPCData();
-					break;
-
-				case "getmob":
-					value	= getMobData();
-					if (value != null) MiscUtils.copyToClipboard(value.toString());
-					break;
-
-				case "getmobs":
-					value = getMobsData();
-					if (value != null) MiscUtils.copyToClipboard(value.toString());
-					break;
-
-				case "getarmorstand":
-					value = getArmorStandData();
-					if (value != null) MiscUtils.copyToClipboard(value.toString());
-					break;
-
-				case "getarmorstands":
-					value = getArmorStandsData();
-					if (value != null) MiscUtils.copyToClipboard(value.toString());
-					break;
-
-				case "getall":
-					value = getMobsData();
-					StringBuilder value2 = getArmorStandsData();
-					if (value == null && value2 == null) {
-						break;
-					} else if (value != null && value2 != null) {
-						MiscUtils.copyToClipboard(value.append(value2).toString());
-					} else if (value == null) {
-						MiscUtils.copyToClipboard(value2.toString());
-					} else {
-						MiscUtils.copyToClipboard(value.toString());
-					}
-					break;
-
-				default:
-					break;
-			}
-
-		} else {
-			NotEnoughUpdates.INSTANCE.packDevEnabled = !NotEnoughUpdates.INSTANCE.packDevEnabled;
-			if (NotEnoughUpdates.INSTANCE.packDevEnabled) {
+		double dist = 5.0;
+		if (args.length >= 2) {
+			try {
+				dist = Double.parseDouble(args[1]);
+			} catch (NumberFormatException e) {
 				sender.addChatMessage(new ChatComponentText(
-					EnumChatFormatting.GREEN + "Enabled pack developer mode."));
-			} else {
-				sender.addChatMessage(new ChatComponentText(
-					EnumChatFormatting.RED + "Disabled pack developer mode."));
-			}
-		}
-	}
-
-	public void getNPCData() {
-		EntityPlayer closestNPC = null;
-		for (EntityPlayer player : Minecraft.getMinecraft().theWorld.playerEntities) {
-			if (player instanceof AbstractClientPlayer && p != player && player.getUniqueID().version() != 4) {
-				double dSq = player.getDistanceSq(p.posX, p.posY, p.posZ);
-				if (dSq < distSq) {
-					distSq = dSq;
-					closestNPC = player;
-				}
+					EnumChatFormatting.RED + "Invalid distance! Must be a number, defaulting to a radius of 5."));
 			}
 		}
 
-		if (closestNPC == null) {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.RED + "No NPCs found within " + dist + " blocks. :("));
+		StringBuilder output;
+		String subCommand = args[0].toLowerCase();
+		if (commands.containsKey(subCommand)) {
+			Command<?,?> command = commands.get(subCommand);
+			output = command.getData(dist);
+		} else if (subCommand.equals("getall")) {
+			output = getAll(dist);
+		} else if (subCommand.equals("getallclose")) {
+			output = getAllClose(dist);
 		} else {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.GREEN + "Copied NPC entity texture id to clipboard"));
-			MiscUtils.copyToClipboard(((AbstractClientPlayer) closestNPC)
-				.getLocationSkin()
-				.getResourcePath()
-				.replace("skins/", ""));
+			sender.addChatMessage(new ChatComponentText(
+				EnumChatFormatting.RED + "Invalid sub-command."));
+			return;
+		}
+
+		if (output.length() != 0) {
+			MiscUtils.copyToClipboard(output.toString());
 		}
 	}
 
-	public StringBuilder getMobData(){
-		Entity closestMob = null;
-		for (Entity mob : Minecraft.getMinecraft().theWorld.loadedEntityList) {
-			if (mob != null && mob != Minecraft.getMinecraft().thePlayer && mob instanceof EntityLiving) {
-				double dSq = mob.getDistanceSq(p.posX, p.posY, p.posZ);
-				if (dSq < distSq) {
-					distSq = dSq;
-					closestMob = mob;
-				}
-			}
-		}
-
-
-		if (closestMob == null) {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.RED + "No mobs found within" + dist + " blocks. :("));
-		} else {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.GREEN + "Copied mob data to clipboard"));
-
-				return mobDataBuilder(closestMob);
-
-		}
-		return null;
+	private static StringBuilder getAllClose(Double dist) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(commands.get("getmob").getData(dist));
+		sb.append(commands.get("getarmorstand").getData(dist));
+		sb.append(commands.get("getnpc").getData(dist));
+		return sb;
 	}
 
-	public StringBuilder getMobsData(){
-		StringBuilder mobStringBuilder = new StringBuilder();
-		for (Entity mob : Minecraft.getMinecraft().theWorld.loadedEntityList) {
-			if (mob != null && mob != Minecraft.getMinecraft().thePlayer && mob instanceof EntityLiving &&
-				mob.getDistanceSq(p.posX, p.posY, p.posZ) < distSq) {
-				mobStringBuilder.append(mobDataBuilder(mob));
-			}
-		}
-
-		if (mobStringBuilder.toString().equals("")) {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.RED + "No mobs found within" + dist + " blocks. :("));
-		} else {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.GREEN + "Copied mob data to clipboard"));
-			return mobStringBuilder;
-		}
-		return null;
+	private static StringBuilder getAll(Double dist) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(commands.get("getmobs").getData(dist));
+		sb.append(commands.get("getarmorstands").getData(dist));
+		sb.append(commands.get("getnpcs").getData(dist));
+		return sb;
 	}
 
-	public StringBuilder getArmorStandData(){
-		EntityArmorStand closestArmorStand = null;
-		for (Entity armorStand : Minecraft.getMinecraft().theWorld.loadedEntityList) {
-			if (armorStand instanceof EntityArmorStand) {
-				double dSq = armorStand.getDistanceSq(p.posX, p.posY, p.posZ);
-				if (dSq < distSq) {
-					distSq = dSq;
-					closestArmorStand = (EntityArmorStand) armorStand;
-				}
-			}
+	public static <T extends EntityLivingBase> StringBuilder livingBaseDataBuilder(T entity, Class<T> clazz) {
+		StringBuilder entityData = new StringBuilder();
+		if (EntityPlayer.class.isAssignableFrom(entity.getClass())) {
+			EntityPlayer entityPlayer = (EntityPlayer) entity;
+
+			// NPC Information
+			String skinResourcePath = ((AbstractClientPlayer) entityPlayer).getLocationSkin().getResourcePath();
+			entityData
+				.append("Player Id: ")
+				.append(entityPlayer.getUniqueID() != null ? entityPlayer.getUniqueID().toString() : "null")
+				.append(entityPlayer.getCustomNameTag() != null ? entityPlayer.getCustomNameTag() : "null")
+				.append("\nEntity Texture Id: ")
+				.append(skinResourcePath != null ? skinResourcePath.replace("skins/", "") : "null");
 		}
 
-		if (closestArmorStand == null) {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.RED + "No armor stands found within " + dist + " blocks. :("));
-		} else {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.GREEN + "Copied armor stand data to clipboard"));
-
-			return(armorStandDataBuilder(closestArmorStand));
-
-		}
-		return null;
-	}
-
-	public StringBuilder getArmorStandsData(){
-
-		StringBuilder armorStandStringBuilder = new StringBuilder();
-		for (Entity armorStand : Minecraft.getMinecraft().theWorld.loadedEntityList) {
-			if (armorStand instanceof EntityArmorStand &&
-				armorStand.getDistanceSq(p.posX, p.posY, p.posZ) < distSq) {
-				armorStandStringBuilder.append(armorStandDataBuilder((EntityArmorStand) armorStand));
-			}
+		if (!clazz.isAssignableFrom(entity.getClass())) {
+			return entityData;
 		}
 
-		if (armorStandStringBuilder.toString().equals("")) {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.RED + "No armor stands found within" + dist + " blocks. :("));
-		} else {
-			p.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.GREEN + "Copied armor stand data to clipboard"));
-			return armorStandStringBuilder;
-		}
-		return null;
-	}
-
-
-
-
-	public StringBuilder mobDataBuilder(Entity mob) {
-		StringBuilder mobData = new StringBuilder();
-
-		//Preventing Null Pointer Exception
 		//Entity Information
-		mobData
+		entityData
 			.append("Entity Id: ")
-			.append(mob.getEntityId() != -1 ? mob.getEntityId() : "null")
+			.append(entity.getEntityId())
 			.append("\nMob: ")
-			.append(mob.getName() != null ? mob.getName() : "null")
-			.append("\nCuston Name: ")
-			.append(mob.getCustomNameTag() != null ? mob.getCustomNameTag() : "null");
-
-		//Held Item
-		if (((EntityLiving) mob).getHeldItem() != null) {
-			mobData
-				.append("\nItem: ")
-				.append(((EntityLiving) mob).getHeldItem())
-				.append("\nItem Display Name: ")
-				.append(((EntityLiving) mob).getHeldItem().getDisplayName()!= null ? ((EntityLiving) mob).getHeldItem().getDisplayName() : "null")
-				.append("\nItem Tag Compound: ")
-				.append(((EntityLiving) mob).getHeldItem().getTagCompound().toString() != null ? ((EntityLiving) mob).getHeldItem().getTagCompound().toString() : "null")
-				.append("\nItem Tag Compound Extra Attributes: ")
-				.append(((EntityLiving) mob).getHeldItem().getTagCompound().getTag("ExtraAttributes") != null ? ((EntityLiving) mob).getHeldItem().getTagCompound().getTag("ExtraAttributes").toString() : "null");
-		} else {
-			mobData.append("\nItem: null");
-		}
-
-		//Armor
-			mobData
-				.append("\nBoots: ")
-				.append(((EntityLiving) mob).getCurrentArmor(0).getTagCompound() != null ? ((EntityLiving) mob).getCurrentArmor(0).getTagCompound().toString() : "null")
-				.append("\nLeggings: ")
-				.append(((EntityLiving) mob).getCurrentArmor(1).getTagCompound() != null ? ((EntityLiving) mob).getCurrentArmor(1).getTagCompound() : "null")
-				.append("\nChestplate: ")
-				.append(((EntityLiving) mob).getCurrentArmor(2).getTagCompound() != null ? ((EntityLiving) mob).getCurrentArmor(2).getTagCompound() : "null")
-				.append("\nHelmet: ")
-				.append(((EntityLiving) mob).getCurrentArmor(3).getTagCompound() != null ? ((EntityLiving) mob).getCurrentArmor(3).getTagCompound() : "null")
-				.append("\n\n");
-
-		return mobData;
-	}
-
-	public StringBuilder armorStandDataBuilder(EntityArmorStand armorStand) {
-		StringBuilder armorStandData = new StringBuilder();
-
-		//Preventing Null Pointer Exception
-		//Entity Information
-		armorStandData
-			.append("Entity Id: ")
-			.append(armorStand.getEntityId())
-			.append("\nMob: ")
-			.append(armorStand.getName() != null ? armorStand.getName() : "null")
+			.append(entity.getName() != null ? entity.getName() : "null")
 			.append("\nCustom Name: ")
-			.append(armorStand.getCustomNameTag() != null ? armorStand.getCustomNameTag() : "null");
+			.append(entity.getCustomNameTag() != null ? entity.getCustomNameTag() : "null");
 
 		//Held Item
-		if (armorStand.getHeldItem() != null) {
-			armorStandData
+		if (entity.getHeldItem() != null) {
+			entityData
 				.append("\nItem: ")
-				.append(armorStand.getHeldItem())
+				.append(entity.getHeldItem())
 				.append("\nItem Display Name: ")
-				.append(armorStand.getHeldItem().getDisplayName() != null ? armorStand.getHeldItem().getDisplayName() : "null")
-					.append("\nItem Tag Compound: ")
-					.append(armorStand.getHeldItem().getTagCompound().toString() != null ? armorStand.getHeldItem().getTagCompound().toString() : "null")
+				.append(entity.getHeldItem().getDisplayName() != null
+					? entity.getHeldItem().getDisplayName()
+					: "null")
+				.append("\nItem Tag Compound: ");
+			NBTTagCompound heldItemTagCompound = entity.getHeldItem().getTagCompound();
+			if (heldItemTagCompound != null) {
+				String heldItemString = heldItemTagCompound.toString();
+				NBTBase extraAttrTag = heldItemTagCompound.getTag("ExtraAttributes");
+				entityData
+					.append(heldItemString != null ? heldItemString	: "null")
 					.append("\nItem Tag Compound Extra Attributes: ")
-					.append(armorStand.getHeldItem().getTagCompound().getTag("ExtraAttributes") != null ? armorStand.getHeldItem().getTagCompound().getTag("ExtraAttributes") : "null");
+					.append(extraAttrTag != null ? extraAttrTag : "null");
+			} else {
+				entityData.append("null");
+			}
 
 		} else {
-			armorStandData.append("\nItem: null");
+			entityData.append("\nItem: null");
 		}
 
-		//Armor
-			armorStandData
-				.append("\nBoots: ")
-				.append(armorStand.getCurrentArmor(0).getTagCompound() != null ? armorStand.getCurrentArmor(0).getTagCompound() : "null")
-				.append("\nLeggings: ")
-				.append(armorStand.getCurrentArmor(1).getTagCompound() != null ? armorStand.getCurrentArmor(1).getTagCompound() : "null")
-				.append("\nChestplate: ")
-				.append(armorStand.getCurrentArmor(2).getTagCompound() != null ? armorStand.getCurrentArmor(2).getTagCompound() : "null")
-				.append("\nHelmet: ")
-				.append(armorStand.getCurrentArmor(3).getTagCompound() != null ? armorStand.getCurrentArmor(3).getTagCompound() : "null");
-		armorStandData.append("\n\n");
-		return armorStandData;
+		entityData.append(armorDataBuilder(entity)).append("\n\n");
+
+		return entityData;
+	}
+
+	private static final String[] armorPieceTypes = {"Boots", "Leggings", "Chestplate", "Helmet"};
+	public static <T extends EntityLivingBase> StringBuilder armorDataBuilder (T entity) {
+		StringBuilder armorData = new StringBuilder();
+		for (int i=0; i < 4; i++) {
+			ItemStack currentArmor = entity.getCurrentArmor(0);
+			armorData.append(String.format("\n%s: ", armorPieceTypes[i]));
+		 	if (currentArmor == null) {
+				armorData.append("null");
+			} else {
+				armorData.append(currentArmor.getTagCompound() != null ? currentArmor.getTagCompound().toString() : "null");
+			}
+		}
+		return armorData;
+	}
+
+	static class Command<T extends EntityLivingBase, U extends Entity> {
+		String typeFriendlyName;
+		Supplier<List<U>> entitySupplier;
+		Class<T> clazz;
+		boolean single;
+
+		Command(String typeFriendlyName,
+						Supplier<List<U>> entitySupplier,
+						boolean single,
+						Class<T> clazz) {
+			this.typeFriendlyName = typeFriendlyName;
+			this.entitySupplier = entitySupplier;
+			this.single = single;
+			this.clazz = clazz;
+		}
+
+		@SuppressWarnings("unchecked")
+		public StringBuilder getData(double dist) {
+			StringBuilder result = new StringBuilder();
+			double distSq = dist * dist;
+			T closest = null;
+			for (Entity entity : entitySupplier.get()) {
+				if (!clazz.isAssignableFrom(entity.getClass()) || entity == mc.thePlayer) {
+					continue;
+				}
+				T entityT = (T) entity;
+				double entityDistanceSq = entity.getDistanceSq(mc.thePlayer.posX,	mc.thePlayer.posY, mc.thePlayer.posZ);
+				if (entityDistanceSq <	distSq) {
+					if (single) {
+						distSq = entityDistanceSq;
+						closest = entityT;
+					} else {
+						result.append(livingBaseDataBuilder(entityT, clazz));
+					}
+				}
+			}
+
+			if ((single && closest == null) || (!single && result.length() == 0)) {
+				mc.thePlayer.addChatMessage(new ChatComponentText(
+					EnumChatFormatting.RED + "No " + typeFriendlyName + "s found within " + dist + " blocks."));
+			} else {
+				mc.thePlayer.addChatMessage(new ChatComponentText(
+					EnumChatFormatting.GREEN + "Copied " + typeFriendlyName + " data to clipboard"));
+				return single ? livingBaseDataBuilder(closest, clazz) : result;
+			}
+
+			return result;
+		}
 	}
 }
