@@ -1,7 +1,12 @@
 package io.github.moulberry.notenoughupdates.listener;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NEUApi;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
@@ -13,7 +18,13 @@ import io.github.moulberry.notenoughupdates.miscfeatures.AuctionBINWarning;
 import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
 import io.github.moulberry.notenoughupdates.miscfeatures.CrystalMetalDetectorSolver;
 import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
-import io.github.moulberry.notenoughupdates.miscgui.*;
+import io.github.moulberry.notenoughupdates.miscgui.AccessoryBagOverlay;
+import io.github.moulberry.notenoughupdates.miscgui.CalendarOverlay;
+import io.github.moulberry.notenoughupdates.miscgui.GuiCustomEnchant;
+import io.github.moulberry.notenoughupdates.miscgui.GuiInvButtonEditor;
+import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
+import io.github.moulberry.notenoughupdates.miscgui.StorageOverlay;
+import io.github.moulberry.notenoughupdates.miscgui.TradeWindow;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.overlays.AuctionSearchOverlay;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
@@ -32,9 +43,12 @@ import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -42,7 +56,11 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.event.GuiOpenEvent;
+import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -52,7 +70,15 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -61,6 +87,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static io.github.moulberry.notenoughupdates.util.GuiTextures.dungeon_chest_worth;
 
@@ -984,6 +1011,109 @@ public class RenderListener {
 	 */
 	@SubscribeEvent
 	public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
+		if (Keyboard.isKeyDown(Keyboard.KEY_B) && NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+			if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
+				GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+				ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+				IInventory lower = cc.getLowerChestInventory();
+
+				try {
+					File file = new File(
+						Minecraft.getMinecraft().mcDataDir.getAbsolutePath(),
+						"config/notenoughupdates/repo/constants/essencecosts.json"
+					);
+					String fileContent;
+					fileContent = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))
+						.lines()
+						.collect(Collectors.joining(System.lineSeparator()));
+					String id = null;
+					JsonObject jsonObject = new JsonParser().parse(fileContent).getAsJsonObject();
+					JsonObject newEntry = new JsonObject();
+					for (int i = 0; i < 54; i++) {
+						ItemStack stack = lower.getStackInSlot(i);
+						if (!stack.getDisplayName().isEmpty() && stack.getItem() != Item.getItemFromBlock(Blocks.barrier) &&
+							stack.getItem() != Items.arrow) {
+							if (stack.getTagCompound().getCompoundTag("display").hasKey("Lore", 9)) {
+								int stars = Utils.getNumberOfStars(stack);
+								if (stars == 0) continue;
+
+								NBTTagList lore = stack.getTagCompound().getCompoundTag("display").getTagList("Lore", 8);
+								int costIndex = 10000;
+								id = NotEnoughUpdates.INSTANCE.manager.getInternalnameFromNBT(stack.getTagCompound());
+								if (jsonObject.has(id)) {
+									jsonObject.remove(id);
+								}
+								for (int j = 0; j < lore.tagCount(); j++) {
+									String entry = lore.getStringTagAt(j);
+									if (entry.equals("§7Cost")) {
+										costIndex = j;
+									}
+									if (j > costIndex) {
+										entry = entry.trim();
+										int index = entry.lastIndexOf('x');
+										String item, amountString;
+										if (index < 0) {
+											item = entry.trim() + " x1";
+											amountString = "x1";
+										} else {
+											amountString = entry.substring(index);
+											item = entry.substring(0, index).trim();
+										}
+										item = item.substring(0, item.length() - 3);
+										int amount = Integer.parseInt(amountString.trim().replace("x", "").replace(",", ""));
+										if (item.endsWith("Essence")) {
+											int index2 = entry.indexOf("Essence");
+											String type = item.substring(0, index2).trim().substring(2);
+											newEntry.add("type", new JsonPrimitive(type));
+											newEntry.add(String.valueOf(stars), new JsonPrimitive(amount));
+										} else {
+											String itemString = item + " §8x" + amount;
+											if (!newEntry.has("items")) {
+												newEntry.add("items", new JsonObject());
+											}
+											if (!newEntry.get("items").getAsJsonObject().has(String.valueOf(stars))) {
+												newEntry.get("items").getAsJsonObject().add(String.valueOf(stars), new JsonArray());
+											}
+											newEntry
+												.get("items")
+												.getAsJsonObject()
+												.get(String.valueOf(stars))
+												.getAsJsonArray()
+												.add(new JsonPrimitive(itemString));
+										}
+									}
+								}
+								jsonObject.add(id, newEntry);
+							}
+						}
+					}
+					JsonObject itemsObj = jsonObject.get(id).getAsJsonObject().get("items").getAsJsonObject();
+					jsonObject.get(id).getAsJsonObject().remove("items");
+					jsonObject.get(id).getAsJsonObject().add("items", itemsObj);
+					Gson gson = new GsonBuilder().setPrettyPrinting().create();
+					try {
+						try (
+							BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+								new FileOutputStream(file),
+								StandardCharsets.UTF_8
+							))
+						) {
+							writer.write(gson.toJson(jsonObject));
+							Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+								EnumChatFormatting.AQUA + "Parsed and saved: " + EnumChatFormatting.WHITE + id));
+						}
+					} catch (IOException ignored) {
+						Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+							EnumChatFormatting.RED + "Error while writing file."));
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+						EnumChatFormatting.RED + "Error while parsing inventory. Try again or check logs for details."));
+				}
+			}
+		}
+
 		if (AuctionBINWarning.getInstance().shouldShow()) {
 			AuctionBINWarning.getInstance().keyboardInput();
 			event.setCanceled(true);

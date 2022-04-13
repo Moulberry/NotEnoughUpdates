@@ -1,17 +1,24 @@
 package io.github.moulberry.notenoughupdates;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Keyboard;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.HashSet;
@@ -79,8 +86,9 @@ public class ItemPriceInformation {
 
 		int lowestBin = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
 		APIManager.CraftInfo craftCost = NotEnoughUpdates.INSTANCE.manager.auctionManager.getCraftCost(internalname);
+		boolean bazaarItem = bazaarInfo != null;
 
-		boolean auctionItem = lowestBin > 0 || lowestBinAvg > 0;
+		boolean auctionItem = !bazaarItem;
 		boolean auctionInfoErrored = auctionInfo == null;
 		if (auctionItem) {
 			long currentTime = System.currentTimeMillis();
@@ -92,7 +100,6 @@ public class ItemPriceInformation {
 			}
 		}
 
-		boolean bazaarItem = bazaarInfo != null;
 
 		NumberFormat format = NumberFormat.getInstance(Locale.US);
 		boolean shortNumber = NotEnoughUpdates.INSTANCE.config.tooltipTweaks.shortNumberFormatPrices;
@@ -302,34 +309,49 @@ public class ItemPriceInformation {
 						}
 						JsonObject itemCosts = essenceCosts.get(internalname).getAsJsonObject();
 						String essenceType = itemCosts.get("type").getAsString();
-
-						int dungeonItemLevel = -1;
-						if (stack != null && stack.hasTagCompound() &&
-							stack.getTagCompound().hasKey("ExtraAttributes", 10)) {
-							NBTTagCompound ea = stack.getTagCompound().getCompoundTag("ExtraAttributes");
-
-							if (ea.hasKey("dungeon_item_level", 99)) {
-								dungeonItemLevel = ea.getInteger("dungeon_item_level");
-							}
+						boolean requiresItems = false;
+						JsonObject itemsObject = null;
+						if (itemCosts.has("items")) {
+							requiresItems = true;
+							itemsObject = itemCosts.get("items").getAsJsonObject();
 						}
+
+						int dungeonItemLevel = Utils.getNumberOfStars(stack);
+
 						if (dungeonItemLevel == -1) {
 							int dungeonizeCost = 0;
 							if (itemCosts.has("dungeonize")) {
 								dungeonizeCost = itemCosts.get("dungeonize").getAsInt();
 							}
-							tooltip.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "Dungeonize Cost: " +
-								EnumChatFormatting.GOLD + EnumChatFormatting.BOLD + dungeonizeCost + " " + essenceType);
-						} else if (dungeonItemLevel >= 0 && dungeonItemLevel <= 4) {
-							String costType = (dungeonItemLevel + 1) + "";
 
-							int upgradeCost = itemCosts.get(costType).getAsInt();
-							StringBuilder star = new StringBuilder();
-							for (int i = 0; i <= dungeonItemLevel; i++) {
-								star.append('\u272A');
+							if (dungeonizeCost > 0) {
+								tooltip.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "Dungeonize Cost: " +
+									EnumChatFormatting.GOLD + EnumChatFormatting.BOLD + dungeonizeCost + " " + essenceType);
 							}
-							tooltip.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "Upgrade to " +
-								EnumChatFormatting.GOLD + star + EnumChatFormatting.YELLOW + EnumChatFormatting.BOLD + ": " +
-								EnumChatFormatting.GOLD + EnumChatFormatting.BOLD + upgradeCost + " " + essenceType);
+						} else if (dungeonItemLevel >= 0) {
+							String nextStarLevelString = (dungeonItemLevel + 1) + "";
+							int nextStarLevelInt = Integer.parseInt(nextStarLevelString);
+
+							if (itemCosts.has(nextStarLevelString)) {
+								int upgradeCost = itemCosts.get(nextStarLevelString).getAsInt();
+								String starString = Utils.getStarsString(nextStarLevelInt);
+								tooltip.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "Upgrade to " +
+									starString + EnumChatFormatting.YELLOW + EnumChatFormatting.BOLD + ": " +
+									EnumChatFormatting.GOLD + EnumChatFormatting.BOLD + upgradeCost + " " + essenceType);
+								if (requiresItems && itemsObject.has(nextStarLevelString)) {
+									boolean shouldShow = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) ||
+										NotEnoughUpdates.INSTANCE.config.tooltipTweaks.alwaysShowRequiredItems;
+
+									if (shouldShow) {
+										tooltip.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "Required Items:");
+										for (JsonElement item : itemsObject.get(nextStarLevelString).getAsJsonArray()) {
+											tooltip.add("  - " + item.getAsString());
+										}
+									} else {
+										tooltip.add(EnumChatFormatting.DARK_GRAY + "[CTRL to show required items]");
+									}
+								}
+							}
 						}
 						break;
 				}
