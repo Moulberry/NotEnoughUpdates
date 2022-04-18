@@ -3,14 +3,18 @@
   "refmap": "mixins.notenoughupdates.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+	"AccessorEntityAgeable",
+	"AccessorEntityArmorStand",
 	"MixinAbstractClientPlayer",
 	"MixinContainer",
 	"MixinEffectRenderer",
 	"MixinEntity",
 	"MixinEntityAgeable",
+	"MixinEntityHorse",
 	"MixinEntityPlayer",
 	"MixinEntityPlayerSP",
 	"MixinEntityRenderer",
+	"MixinEntitySkeleton",
 	"MixinGuiChest",
 	"MixinGuiContainer",
 	"MixinGuiIngame",
@@ -39,5 +43,8 @@
 	"MixinVboRenderList",
 	"MixinWorld",
 	"MixinWorldClient"
+  ],
+  "client": [
+	"AccessorMinecraft"
   ]
 }

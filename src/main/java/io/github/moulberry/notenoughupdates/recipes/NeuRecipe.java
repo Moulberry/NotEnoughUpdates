@@ -15,6 +15,12 @@ public interface NeuRecipe {
 
 	List<RecipeSlot> getSlots();
 
+	RecipeType getType();
+
+	default String getTitle() {
+		return getType().getLabel();
+	}
+
 	default void drawExtraInfo(GuiItemRecipe gui, int mouseX, int mouseY) {
 	}
 
@@ -31,15 +37,12 @@ public interface NeuRecipe {
 	ResourceLocation getBackground();
 
 	static NeuRecipe parseRecipe(NEUManager manager, JsonObject recipe, JsonObject output) {
+		RecipeType recipeType = RecipeType.CRAFTING;
 		if (recipe.has("type")) {
-			switch (recipe.get("type").getAsString().intern()) {
-				case "forge":
-					return ForgeRecipe.parseForgeRecipe(manager, recipe, output);
-				case "trade":
-					return VillagerTradeRecipe.parseStaticRecipe(manager, recipe);
-			}
+			recipeType = RecipeType.getRecipeTypeForId(recipe.get("type").getAsString());
 		}
-		return CraftingRecipe.parseCraftingRecipe(manager, recipe, output);
+		if (recipeType == null) return null;
+		return recipeType.createRecipe(manager, recipe, output);
 	}
 
 	default boolean shouldUseForCraftCost() {
@@ -48,5 +51,12 @@ public interface NeuRecipe {
 
 	default boolean isAvailable() {
 		return true;
+	}
+
+	/**
+	 * @return an array of length two in the format [leftmost x, topmost y] of the page buttons
+	 */
+	default int[] getPageFlipPositionLeftTopCorner() {
+		return new int[]{110, 90};
 	}
 }

@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -175,8 +176,13 @@ public class Utils {
 	}
 
 	public static void drawItemStackWithText(ItemStack stack, int x, int y, String text) {
-		if (stack == null) return;
+		drawItemStackWithText(stack, x, y, text, false);
+	}
 
+	public static void drawItemStackWithText(ItemStack stack, int x, int y, String text, boolean skytilsRarity) {
+		if (stack == null) return;
+		if (skytilsRarity)
+			SkytilsCompat.renderSkytilsRarity(stack, x, y);
 		RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
 
 		disableCustomDungColours = true;
@@ -190,9 +196,11 @@ public class Utils {
 	}
 
 	public static void drawItemStack(ItemStack stack, int x, int y) {
-		if (stack == null) return;
-
 		drawItemStackWithText(stack, x, y, null);
+	}
+
+	public static void drawItemStack(ItemStack stack, int x, int y, boolean skytilsRarity) {
+		drawItemStackWithText(stack, x, y, null, skytilsRarity);
 	}
 
 	private static final EnumChatFormatting[] rainbow = new EnumChatFormatting[]{
@@ -766,6 +774,9 @@ public class Utils {
 
 	public static ItemStack createItemStack(Item item, String displayname, String... lore) {
 		return createItemStack(item, displayname, 0, lore);
+	}
+	public static ItemStack createItemStack(Block item, String displayname, String... lore) {
+		return createItemStack(Item.getItemFromBlock(item), displayname, lore);
 	}
 
 	public static ItemStack createItemStack(Item item, String displayname, int damage, String... lore) {
