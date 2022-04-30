@@ -16,7 +16,6 @@ import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -36,8 +35,15 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -90,10 +96,13 @@ public class ItemTooltipListener {
 			"enchantments",
 			10
 		);
+		boolean hasAttributes = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").hasKey(
+			"attributes",
+			10
+		);
 		Set<String> enchantIds = new HashSet<>();
-		if (hasEnchantments)
-			enchantIds =
-				event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").getCompoundTag("enchantments").getKeySet();
+		if (hasEnchantments) enchantIds = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").getCompoundTag(
+			"enchantments").getKeySet();
 
 		JsonObject enchantsConst = Constants.ENCHANTS;
 		JsonArray allItemEnchs = null;
@@ -348,6 +357,8 @@ public class ItemTooltipListener {
 						}
 					}
 				}
+			}
+			if (hasEnchantments || hasAttributes) {
 				for (String op : NotEnoughUpdates.INSTANCE.config.hidden.enchantColours) {
 					List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
 					String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
@@ -388,9 +399,10 @@ public class ItemTooltipListener {
 					//9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
 					Pattern pattern;
 					try {
-						pattern = Pattern.compile("(\\u00A79|\\u00A7(9|l)\\u00A7d\\u00A7l)(?<enchantName>" + enchantName + ") " +
-							"(?<level>[0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))((\\u00A79)?,|( \\u00A78(?:,?[0-9]+)*)?$)");
-					} catch (PatternSyntaxException e) {
+						pattern = Pattern.compile(
+							"(\\u00A7b|\\u00A79|\\u00A7(b|9|l)\\u00A7d\\u00A7l)(?<enchantName>" + enchantName + ") " +
+								"(?<level>[0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))((\\u00A79)?,|( \\u00A78(?:,?[0-9]+)*)?$)");
+					} catch (Exception e) {
 						continue;
 					}
 					Matcher matcher = pattern.matcher(line);
@@ -441,8 +453,13 @@ public class ItemTooltipListener {
 
 							if (!colourCode.equals("z")) {
 								line = line.replace("\u00A79" + enchantText, "\u00A7" + colourCode + extraMods + enchantText);
+								line = line.replace("\u00A7b" + enchantText, "\u00A7" + colourCode + extraMods + enchantText);
 								line = line.replace(
 									"\u00A79\u00A7d\u00A7l" + enchantText,
+									"\u00A7" + colourCode + extraMods + enchantText
+								);
+								line = line.replace(
+									"\u00A7b\u00A7d\u00A7l" + enchantText,
 									"\u00A7" + colourCode + extraMods + enchantText
 								);
 								line = line.replace(
@@ -781,7 +798,6 @@ public class ItemTooltipListener {
 
 	/**
 	 * This method does the following:
-	 * Move the pet inventory display tooltip to the left to avoid conflicts
 	 * Remove reforge stats for Legendary items from Hypixel if enabled
 	 * Show NBT data when holding LCONTROL
 	 */
@@ -789,10 +805,6 @@ public class ItemTooltipListener {
 	public void onItemTooltip(ItemTooltipEvent event) {
 		if (!neu.isOnSkyblock()) return;
 		if (event.toolTip == null) return;
-		//Render the pet inventory display tooltip to the left to avoid things from other mods rendering over the tooltip
-		if (event.itemStack.getTagCompound() != null && event.itemStack.getTagCompound().getBoolean("NEUPETINVDISPLAY")) {
-			GlStateManager.translate(-200, 0, 0);
-		}
 
 		if (event.toolTip.size() > 2 && NotEnoughUpdates.INSTANCE.config.tooltipTweaks.hideDefaultReforgeStats) {
 			String secondLine = StringUtils.stripControlCodes(event.toolTip.get(1));
