@@ -34,7 +34,12 @@ public class CookieWarning {
 	 */
 	private void checkCookie() {
 		if(!hasNotified && NotEnoughUpdates.INSTANCE.config.notifications.doBoosterNotif) {
-			String[] lines = ((AccessorGuiPlayerTabOverlay) Minecraft.getMinecraft().ingameGUI.getTabList()).getFooter().getUnformattedText().split("\n");
+			String[] lines = {};
+			try {
+				lines = ((AccessorGuiPlayerTabOverlay) Minecraft.getMinecraft().ingameGUI.getTabList()).getFooter().getUnformattedText().split("\n");
+			} catch(NullPointerException e) {
+				return; // if the footer is null or somehow doesn't exist, stop
+			}
 			boolean hasCookie = true;
 			String timeLine = null; // the line that contains the cookie timer
 			for(int i = 0; i < lines.length; i++) {
@@ -89,7 +94,7 @@ public class CookieWarning {
 					), true, true);
 					hasNotified = true;
 				}
-		}
+			}
 		}
 	}
 }
