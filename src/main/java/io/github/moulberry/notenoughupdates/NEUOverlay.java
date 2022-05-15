@@ -212,7 +212,7 @@ public class NEUOverlay extends Gui {
 
 	private boolean redrawItems = false;
 
-	private boolean searchBarHasFocus = false;
+	public static boolean searchBarHasFocus = false;
 	private static final GuiTextField textField = new GuiTextField(0, null, 0, 0, 0, 0);
 
 	private static final int COMPARE_MODE_ALPHABETICAL = 0;
@@ -1044,7 +1044,6 @@ public class NEUOverlay extends Gui {
 	 */
 	public boolean keyboardInput(boolean hoverInv) {
 		if (Minecraft.getMinecraft().currentScreen == null) return false;
-		Keyboard.enableRepeatEvents(true);
 
 		int keyPressed = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter() + 256 : Keyboard.getEventKey();
 

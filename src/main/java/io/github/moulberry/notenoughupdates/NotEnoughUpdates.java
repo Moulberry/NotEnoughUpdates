@@ -275,7 +275,6 @@ public class NotEnoughUpdates {
 				}
 				tmp.delete();
 			}
-			//saveConfig();
 		}));
 	}
 

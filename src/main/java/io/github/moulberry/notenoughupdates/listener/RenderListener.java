@@ -1018,6 +1018,13 @@ public class RenderListener {
 	 */
 	@SubscribeEvent
 	public void onGuiScreenKeyboard(GuiScreenEvent.KeyboardInputEvent.Pre event) {
+		Keyboard.enableRepeatEvents(true);
+		if (Minecraft.getMinecraft().currentScreen instanceof GuiInventory &&
+			!NEUOverlay.searchBarHasFocus &&
+			Keyboard.isRepeatEvent()) {
+			event.setCanceled(true);
+			return;
+		}
 		if (typing) {
 			event.setCanceled(true);
 		}
