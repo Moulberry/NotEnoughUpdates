@@ -80,6 +80,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -1135,8 +1136,9 @@ public class NEUOverlay extends Gui {
 				if (internalname.get() != null) {
 					if (itemstack.get() != null) {
 						if (NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Keyboard.getEventCharacter() == 'k') {
-							Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
-								internalname.get(), manager.getJsonForItem(itemstack.get())
+							Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(
+								internalname.get(),
+								manager.getJsonForItem(itemstack.get())
 							));
 							return true;
 						}
@@ -1159,9 +1161,7 @@ public class NEUOverlay extends Gui {
 							}
 						} else if (NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing &&
 							Keyboard.getEventCharacter() == 'k') {
-							Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
-								internalname.get(), item
-							));
+							Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(internalname.get(), item));
 							return true;
 						} else if (keyPressed == manager.keybindItemSelect.getKeyCode() &&
 							NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
@@ -1880,7 +1880,7 @@ public class NEUOverlay extends Gui {
 	private String lastProfile;
 
 	private ItemStack getWardrobeSlot(int armourSlot) {
-		if (!SBInfo.getInstance().currentProfile.equals(lastProfile)) {
+		if (!Objects.equals(SBInfo.getInstance().currentProfile, lastProfile)) {
 			lastProfile = SBInfo.getInstance().currentProfile;
 			slot1 = null;
 			slot2 = null;

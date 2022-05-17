@@ -14,6 +14,7 @@ import io.github.moulberry.notenoughupdates.auction.CustomAHGui;
 import io.github.moulberry.notenoughupdates.commands.profile.ViewProfileCommand;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
+import io.github.moulberry.notenoughupdates.itemeditor.NEUItemEditor;
 import io.github.moulberry.notenoughupdates.miscfeatures.AuctionBINWarning;
 import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
 import io.github.moulberry.notenoughupdates.miscfeatures.CrystalMetalDetectorSolver;
@@ -75,15 +76,16 @@ import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
@@ -1028,11 +1030,16 @@ public class RenderListener {
 		if (typing) {
 			event.setCanceled(true);
 		}
-		if (Keyboard.isKeyDown(Keyboard.KEY_B) && NotEnoughUpdates.INSTANCE.config.hidden.dev) {
-			if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
-				GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
-				ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
-				IInventory lower = cc.getLowerChestInventory();
+		if (NotEnoughUpdates.INSTANCE.config.hidden.dev && Keyboard.isKeyDown(Keyboard.KEY_B) &&
+			Minecraft.getMinecraft().currentScreen instanceof GuiChest
+		) {
+			GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+			ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+			IInventory lower = cc.getLowerChestInventory();
+
+			ItemStack backArrow = lower.getStackInSlot(48);
+			List<String> tooltip = backArrow != null ? backArrow.getTooltip(Minecraft.getMinecraft().thePlayer, false) : null;
+			if (tooltip != null && tooltip.size() >= 2 && tooltip.get(1).endsWith("Essence")) {
 
 				try {
 					File file = new File(
@@ -1040,7 +1047,7 @@ public class RenderListener {
 						"config/notenoughupdates/repo/constants/essencecosts.json"
 					);
 					String fileContent;
-					fileContent = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))
+					fileContent = new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8))
 						.lines()
 						.collect(Collectors.joining(System.lineSeparator()));
 					String id = null;
@@ -1264,6 +1271,54 @@ public class RenderListener {
 						EnumChatFormatting.RED + "Error while parsing inventory. Try again or check logs for details"));
 				}
 			}
+		} else if (NotEnoughUpdates.INSTANCE.config.hidden.dev && Keyboard.isKeyDown(Keyboard.KEY_B) &&
+			Minecraft.getMinecraft().currentScreen instanceof GuiChest &&
+			((((ContainerChest) ((GuiChest) Minecraft.getMinecraft().currentScreen).inventorySlots)
+				.getLowerChestInventory()
+				.getDisplayName()
+				.getUnformattedText()
+				.endsWith("Essence")))) {
+			GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
+			ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
+			IInventory lower = cc.getLowerChestInventory();
+
+			for (int i = 9; i < 45; i++) {
+				ItemStack stack = lower.getStackInSlot(i);
+				if (stack == null) continue;
+				if (stack.getDisplayName().isEmpty() || stack.getDisplayName().equals(" ")) continue;
+				String internalName = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(stack);
+				if (internalName == null) {
+					Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+						EnumChatFormatting.RED + "ERROR: Could not get internal name for: " + EnumChatFormatting.AQUA +
+							stack.getDisplayName()));
+					continue;
+				}
+				JsonObject itemObject = NotEnoughUpdates.INSTANCE.manager.getJsonForItem(stack);
+				JsonArray lore = itemObject.get("lore").getAsJsonArray();
+				List<String> loreList = new ArrayList<>();
+				for (int j = 0; j < lore.size(); j++) loreList.add(lore.get(j).getAsString());
+				if (loreList.get(loreList.size() - 1).equals("§7§eClick to view upgrades!")) {
+					loreList.remove(loreList.size() - 1);
+					loreList.remove(loreList.size() - 1);
+				}
+
+				JsonArray newLore = new JsonArray();
+				for (String s : loreList) {
+					newLore.add(new JsonPrimitive(s));
+				}
+				itemObject.remove("lore");
+				itemObject.add("lore", newLore);
+
+				if (!NEUItemEditor.saveOnly(internalName, itemObject)) {
+					Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+						EnumChatFormatting.RED + "ERROR: Failed to save item: " + EnumChatFormatting.AQUA +
+							stack.getDisplayName()));
+				}
+			}
+			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
+				EnumChatFormatting.AQUA + "Parsed page: " + lower.getDisplayName().getUnformattedText()));
+			event.setCanceled(true);
+			return;
 		}
 
 		if (AuctionBINWarning.getInstance().shouldShow()) {
