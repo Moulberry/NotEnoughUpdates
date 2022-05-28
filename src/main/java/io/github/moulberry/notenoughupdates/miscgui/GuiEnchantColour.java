@@ -421,6 +421,11 @@ public class GuiEnchantColour extends GuiScreen {
 	}
 
 	@Override
+	public void onGuiClosed() {
+		NotEnoughUpdates.INSTANCE.saveConfig();
+	}
+
+	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
 		super.keyTyped(typedChar, keyCode);
 		for (int yIndex = 0; yIndex < guiElementTextFields.size(); yIndex++) {

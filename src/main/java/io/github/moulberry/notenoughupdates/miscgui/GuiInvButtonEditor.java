@@ -22,6 +22,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -840,6 +841,11 @@ public class GuiInvButtonEditor extends GuiScreen {
 
 	private final ExecutorService searchES = Executors.newSingleThreadExecutor();
 	private final AtomicInteger searchId = new AtomicInteger(0);
+
+	@Override
+	public void onGuiClosed() {
+		NotEnoughUpdates.INSTANCE.saveConfig();
+	}
 
 	public void search() {
 		final int thisSearchId = searchId.incrementAndGet();
