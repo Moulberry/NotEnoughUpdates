@@ -35,10 +35,8 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.FileUtils;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.Display;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.swing.*;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -55,6 +53,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -109,10 +108,6 @@ public class NEUManager {
 
 	private final Map<String, ItemStack> itemstackCache = new HashMap<>();
 
-	private static String GIT_COMMITS_URL;
-
-	// TODO: private final Map<String, NeuItem>
-
 	private final Set<NeuRecipe> recipes = new HashSet<>();
 	private final HashMap<String, Set<NeuRecipe>> recipesMap = new HashMap<>();
 	private final HashMap<String, Set<NeuRecipe>> usagesMap = new HashMap<>();
@@ -135,8 +130,6 @@ public class NEUManager {
 		this.hotm = new HotmInformation(neu);
 		this.craftingOverlay = new CraftingOverlay(this);
 		this.katSitterOverlay = new KatSitterOverlay();
-
-		GIT_COMMITS_URL = neu.config.hidden.repoCommitsURL;
 
 		gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -200,7 +193,7 @@ public class NEUManager {
 				JsonObject currentCommitJSON = getJsonFromFile(new File(configLocation, "currentCommit.json"));
 
 				latestRepoCommit = null;
-				try (Reader inReader = new InputStreamReader(new URL(GIT_COMMITS_URL).openStream())) {
+				try (Reader inReader = new InputStreamReader(new URL(neu.config.apiData.getCommitApiUrl()).openStream())) {
 					JsonObject commits = gson.fromJson(inReader, JsonObject.class);
 					latestRepoCommit = commits.get("sha").getAsString();
 				} catch (Exception e) {
@@ -216,8 +209,6 @@ public class NEUManager {
 				Utils.recursiveDelete(repoLocation);
 				repoLocation.mkdirs();
 
-				String dlUrl = neu.config.hidden.repoURL;
-
 				File itemsZip = new File(repoLocation, "neu-items-master.zip");
 				try {
 					itemsZip.createNewFile();
@@ -225,7 +216,7 @@ public class NEUManager {
 					return false;
 				}
 
-				URL url = new URL(dlUrl);
+				URL url = new URL(neu.config.apiData.getDownloadUrl(latestRepoCommit));
 				URLConnection urlConnection = url.openConnection();
 				urlConnection.setConnectTimeout(15000);
 				urlConnection.setReadTimeout(30000);
@@ -237,7 +228,6 @@ public class NEUManager {
 					System.err.println("Failed to download NEU Repo! Please report this issue to the mod creator");
 					return false;
 				}
-
 
 				unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
 
@@ -261,10 +251,8 @@ public class NEUManager {
 	 * downloading of new/updated files. This then calls the "loadItem" method for every item in the local repository.
 	 */
 	public void loadItemInformation() {
-		if (NotEnoughUpdates.INSTANCE.config.hidden.autoupdate) {
-			fetchRepository().thenAccept(i -> {
-				reloadRepository();
-			});
+		if (NotEnoughUpdates.INSTANCE.config.apiData.autoupdate) {
+			fetchRepository().thenRun(this::reloadRepository);
 		} else {
 			reloadRepository();
 		}
@@ -1485,26 +1473,64 @@ public class NEUManager {
 		}
 	}
 
-	public void reloadRepository() {
-		Minecraft.getMinecraft().addScheduledTask(() -> {
-			File items = new File(repoLocation, "items");
-			if (items.exists()) {
-				recipes.clear();
-				recipesMap.clear();
-				usagesMap.clear();
+	public CompletableFuture<List<String>> userFacingRepositoryReload() {
+		String lastCommit = NotEnoughUpdates.INSTANCE.manager.latestRepoCommit;
+		NotEnoughUpdates.INSTANCE.manager.resetRepo();
+		return NotEnoughUpdates.INSTANCE.manager
+			.fetchRepository()
+			.thenCompose(ignored -> NotEnoughUpdates.INSTANCE.manager.reloadRepository())
+			.<List<String>>thenApply(ignored -> {
+				String newCommitHash = NotEnoughUpdates.INSTANCE.manager.latestRepoCommit;
+				String newCommitShortHash = (newCommitHash == null ? "MISSING" : newCommitHash.substring(0, 7));
+				return Arrays.asList(
+					"§aRepository reloaded.",
+					(lastCommit == null
+						? "§eYou downloaded the repository version §b" + newCommitShortHash + "§e."
+						: "§eYou updated your repository from §b" + lastCommit.substring(0, 7) + "§e to §b" +
+							newCommitShortHash + "§e."
+					)
+				);
+			})
+			.exceptionally(ex -> {
+				ex.printStackTrace();
+				return Arrays.asList(
+					"§cRepository not fully reloaded.",
+					"§cThere was an error reloading your repository.",
+					"§cThis might be caused by an outdated version of neu",
+					"§c(or by not using the dangerous repository if you are using a prerelease of neu).",
+					"§aYour repository will still work, but is in a suboptimal state.",
+					"§eJoin §bdiscord.gg/moulberry §efor help."
+				);
+			});
+	}
 
-				File[] itemFiles = new File(repoLocation, "items").listFiles();
-				if (itemFiles != null) {
-					for (File f : itemFiles) {
-						String internalname = f.getName().substring(0, f.getName().length() - 5);
-						loadItem(internalname);
+	public CompletableFuture<Void> reloadRepository() {
+		CompletableFuture<Void> comp = new CompletableFuture<>();
+		Minecraft.getMinecraft().addScheduledTask(() -> {
+			try {
+				File items = new File(repoLocation, "items");
+				if (items.exists()) {
+					recipes.clear();
+					recipesMap.clear();
+					usagesMap.clear();
+
+					File[] itemFiles = new File(repoLocation, "items").listFiles();
+					if (itemFiles != null) {
+						for (File f : itemFiles) {
+							String internalname = f.getName().substring(0, f.getName().length() - 5);
+							loadItem(internalname);
+						}
 					}
 				}
-			}
 
-			new RepositoryReloadEvent(repoLocation, !hasBeenLoadedBefore).post();
-			hasBeenLoadedBefore = true;
+				new RepositoryReloadEvent(repoLocation, !hasBeenLoadedBefore).post();
+				hasBeenLoadedBefore = true;
+				comp.complete(null);
+			} catch (Exception e) {
+				comp.completeExceptionally(e);
+			}
 		});
+		return comp;
 	}
 
 	public ItemStack createItem(String internalname) {

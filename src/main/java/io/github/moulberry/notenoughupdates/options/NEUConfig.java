@@ -17,7 +17,7 @@ import io.github.moulberry.notenoughupdates.options.customtypes.NEUDebugFlag;
 import io.github.moulberry.notenoughupdates.options.seperateSections.AHGraph;
 import io.github.moulberry.notenoughupdates.options.seperateSections.AHTweaks;
 import io.github.moulberry.notenoughupdates.options.seperateSections.AccessoryBag;
-import io.github.moulberry.notenoughupdates.options.seperateSections.ApiKey;
+import io.github.moulberry.notenoughupdates.options.seperateSections.ApiData;
 import io.github.moulberry.notenoughupdates.options.seperateSections.Calendar;
 import io.github.moulberry.notenoughupdates.options.seperateSections.CustomArmour;
 import io.github.moulberry.notenoughupdates.options.seperateSections.DungeonMapConfig;
@@ -46,6 +46,7 @@ import io.github.moulberry.notenoughupdates.options.seperateSections.TradeMenu;
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
+import io.github.moulberry.notenoughupdates.util.NotificationHandler;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -155,6 +156,29 @@ public class NEUConfig extends Config {
 			case 21:
 				NotEnoughUpdates.INSTANCE.overlay.updateSearch();
 				return;
+			case 22:
+				NotEnoughUpdates.INSTANCE.manager
+					.userFacingRepositoryReload()
+					.thenAccept(strings ->
+						NotificationHandler.displayNotification(strings, true, true));
+				Minecraft.getMinecraft().displayGuiScreen(null);
+				return;
+			case 23:
+				NotEnoughUpdates.INSTANCE.config.apiData.repoUser = "NotEnoughUpdates";
+				NotEnoughUpdates.INSTANCE.config.apiData.repoName = "NotEnoughUpdates-REPO";
+				NotEnoughUpdates.INSTANCE.config.apiData.repoBranch = "master";
+				NotEnoughUpdates.INSTANCE.openGui =
+					new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, "apis"));
+				return;
+			case 24:
+				NotEnoughUpdates.INSTANCE.config.apiData.repoUser = "NotEnoughUpdates";
+				NotEnoughUpdates.INSTANCE.config.apiData.repoName = "NotEnoughUpdates-REPO";
+				NotEnoughUpdates.INSTANCE.config.apiData.repoBranch = "dangerous";
+				NotEnoughUpdates.INSTANCE.openGui =
+					new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, "apis"));
+				return;
+			default:
+				System.err.printf("Unknown runnableId = %d in category %s%n", runnableId, activeConfigCategory);
 		}
 	}
 
@@ -349,10 +373,19 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
-		name = "Api Key",
-		desc = "Api Key"
+		name = "Apis",
+		desc = "Api Data"
 	)
-	public ApiKey apiKey = new ApiKey();
+	public ApiData apiData = new ApiData();
+
+	@Expose
+	public LegacyApiKey apiKey = null;
+
+	public static class LegacyApiKey {
+		// Blame Ironmoon for this (still better than my idea tho)
+		@Expose
+		public String apiKey = null;
+	}
 
 	@Expose
 	public Hidden hidden = new Hidden();
@@ -371,11 +404,7 @@ public class NEUConfig extends Config {
 		@Expose
 		public EnumSet<NEUDebugFlag> debugFlags = EnumSet.noneOf(NEUDebugFlag.class);
 		@Expose
-		public boolean enableItemEditing = false;
-		@Expose
 		public boolean cacheRenderedItempane = true;
-		@Expose
-		public boolean autoupdate = true;
 		@Expose
 		public String overlaySearchBar = "";
 		@Expose
@@ -402,10 +431,6 @@ public class NEUConfig extends Config {
 		public ArrayList<String> quickCommands = createDefaultQuickCommands();
 		@Expose
 		public ArrayList<String> enchantColours = createDefaultEnchantColours();
-		@Expose
-		public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
-		@Expose
-		public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
 
 		@Expose
 		public boolean firstTimeSearchFocus = true;
