@@ -158,7 +158,12 @@ public class GuiElementTextField extends GuiElement {
 
 		String textNC = textNoColour.substring(0, cursorIndex);
 		int colorCodes = StringUtils.countMatches(textNC, "\u00B6");
-		String line = text.substring(cursorIndex + (((options & COLOUR) != 0) ? colorCodes * 2 : 0)).split("\n")[0];
+		String[] lines = text.substring(cursorIndex + (((options & COLOUR) != 0) ? colorCodes * 2 : 0)).split("\n");
+		if (lines.length < 1) {
+			return 0;
+		}
+		String line = lines[0];
+
 		int padding = Math.min(5, searchBarXSize - strLenNoColor(line)) / 2;
 		String trimmed = Minecraft.getMinecraft().fontRendererObj.trimStringToWidth(line, xComp - padding);
 		int linePos = strLenNoColor(trimmed);
@@ -213,16 +218,26 @@ public class GuiElementTextField extends GuiElement {
 			//allows for pasting formatted text that includes "§"
 			if (GuiScreen.isKeyComboCtrlV(keyCode)) {
 				textField.setEnabled(false);
-				//The cursor position gets set to the end when using setText
-				int oldCursorPosition = textField.getCursorPosition();
+
+				int selectionEnd = textField.getSelectionEnd();
+				int cursorPosition = textField.getCursorPosition();
+
+				if (cursorPosition < selectionEnd) {
+					//swap selectionEnd and cursorPosition
+					selectionEnd = selectionEnd ^ cursorPosition;
+					cursorPosition = selectionEnd ^ cursorPosition;
+					selectionEnd = selectionEnd ^ cursorPosition;
+				}
 
 				String clipboardContent = GuiScreen.getClipboardString();
+
 				StringBuilder stringBuilder = new StringBuilder(getText())
-					.insert(textField.getCursorPosition(), clipboardContent);
+					.replace(selectionEnd, cursorPosition, "")
+					.insert(selectionEnd, clipboardContent);
 
 				//writeText removes unwanted chars from the String which includes "§"
 				textField.setText(stringBuilder.toString());
-				textField.setCursorPosition(oldCursorPosition + clipboardContent.length());
+				textField.setCursorPosition(selectionEnd + clipboardContent.length());
 			} else {
 				textField.setEnabled(true);
 			}
