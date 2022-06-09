@@ -15,7 +15,7 @@
         <img src="https://img.shields.io/tokei/lines/github/NotEnoughUpdates/NotEnoughUpdates?label=lines&color=informational&logo=GitHub" alt="lines">
     </a>
     <!-- license -->
-    <a href="https://github.com/NotEnoughUpdates/NotEnoughUpdates/blob/master/LICENSE.md" target="_blank">
+    <a href="https://github.com/NotEnoughUpdates/NotEnoughUpdates/blob/master/COPYING.LESSER" target="_blank">
         <img src="https://img.shields.io/github/license/NotEnoughUpdates/NotEnoughUpdates?color=informational" alt="license">
     </a>
     <!-- contributors -->
