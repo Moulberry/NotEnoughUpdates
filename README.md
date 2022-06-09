@@ -12,7 +12,7 @@
     </a> -->
     <!-- lines -->
     <a href="https://github.com/NotEnoughUpdates/NotEnoughUpdates/graphs/code-frequency" target="_blank">
-        <img src="https://img.shields.io/tokei/lines/github/NotEnoughUpdate/NotEnoughUpdates?label=lines&color=informational&logo=GitHub" alt="lines">
+        <img src="https://img.shields.io/tokei/lines/github/NotEnoughUpdates/NotEnoughUpdates?label=lines&color=informational&logo=GitHub" alt="lines">
     </a>
     <!-- license -->
     <a href="https://github.com/NotEnoughUpdates/NotEnoughUpdates/blob/master/LICENSE.md" target="_blank">
@@ -57,7 +57,7 @@ NotEnoughUpdates (NEU) is a feature rich 1.8.9 Minecraft forge mod for Hypixel S
 4. Then, hop onto Skyblock and run the command `/api new`. Your api key is automatically filled out and all features should work.
 5. Type `/neu`. If you see the NotEnoughUpdates menu, you have done this correctly!
 
-*If you need further assistance feel free to join the [discord](https://discord.gg/moulberry) and ask for help in [#neu-support](discord://discord.com/channels/516977525906341928/714332750156660756)*
+_If you need further assistance feel free to join the [discord](https://discord.gg/moulberry) and ask for help in [#neu-support](discord://discord.com/channels/516977525906341928/714332750156660756)_
 
 ## Features
 
