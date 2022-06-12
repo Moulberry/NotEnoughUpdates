@@ -59,8 +59,7 @@ public class AuctionSearchOverlay {
 	private static final ResourceLocation SEARCH_OVERLAY_TEXTURE_TAB_COMPLETED = new ResourceLocation(
 		"notenoughupdates:auc_search/ah_search_overlay_tab_completed.png");
 	private static final ResourceLocation STAR = new ResourceLocation("notenoughupdates:auc_search/star.png");
-	private static final ResourceLocation MASTER_STAR =
-		new ResourceLocation("notenoughupdates:auc_search/master_star.png");
+	private static final ResourceLocation MASTER_STAR = new ResourceLocation("notenoughupdates:auc_search/master_star.png");
 	private static final ResourceLocation STAR_BOARD = new ResourceLocation("notenoughupdates:auc_search/star_board.png");
 
 	private static final GuiElementTextField textField = new GuiElementTextField("", 200, 20, 0);
@@ -73,6 +72,7 @@ public class AuctionSearchOverlay {
 
 	private static int selectedStars = 0;
 	private static boolean atLeast = true;
+	private static boolean onlyLevel100 = false;
 
 	private static final int AUTOCOMPLETE_HEIGHT = 118;
 
@@ -156,15 +156,22 @@ public class AuctionSearchOverlay {
 			Utils.drawTexturedRect(width / 2 + 108 + 10 * i, topY + 29, 9, 10, GL11.GL_NEAREST);
 		}
 
-		if (selectedStars < 6) Gui.drawRect(width / 2 + 106, topY + 42, width / 2 + 115, topY + 51, 0xffffffff);
-		if (selectedStars < 6) Gui.drawRect(width / 2 + 107, topY + 43, width / 2 + 114, topY + 50, 0xff000000);
-		if (atLeast && selectedStars < 6) Gui.drawRect(width / 2 + 108, topY + 44, width / 2 + 113, topY + 49, 0xffffffff);
-		if (selectedStars < 6) Minecraft.getMinecraft().fontRendererObj.drawString(
-			"At Least?",
-			width / 2 + 117,
-			topY + 43,
-			0xffffff
-		);
+		if (selectedStars < 6) {
+			Gui.drawRect(width / 2 + 106, topY + 42, width / 2 + 115, topY + 51, 0xffffffff);
+			Gui.drawRect(width / 2 + 107, topY + 43, width / 2 + 114, topY + 50, 0xff000000);
+			Minecraft.getMinecraft().fontRendererObj.drawString("At Least?", width / 2 + 117, topY + 43, 0xffffff);
+
+			if (atLeast) {
+				Gui.drawRect(width / 2 + 108, topY + 44, width / 2 + 113, topY + 49, 0xffffffff);
+			}
+		}
+
+		Gui.drawRect(width / 2 + 106, topY + 53, width / 2 + 115, topY + 62, 0xffffffff);
+		Gui.drawRect(width / 2 + 107, topY + 54, width / 2 + 114, topY + 61, 0xff000000);
+		if (onlyLevel100) {
+			Gui.drawRect(width / 2 + 108, topY + 55, width / 2 + 113, topY + 60, 0xffffffff);
+		}
+		Minecraft.getMinecraft().fontRendererObj.drawString("Level 100 pets only?", width / 2 + 117, topY + 54, 0xffffff);
 
 		Minecraft.getMinecraft().fontRendererObj.drawString("Enter Query:", width / 2 - 100, topY - 10, 0xdddddd, true);
 
@@ -293,17 +300,13 @@ public class AuctionSearchOverlay {
 			}
 			String searchString = autocompletedItems.toArray()[i].toString();
 			JsonObject repoObject = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(searchString);
-			String displayname = repoObject.get("displayname").getAsString();
-			if (displayname.contains("Enchanted Book")) {
-				String lore = repoObject.get("lore").getAsJsonArray().get(0).getAsString();
-				String name = lore.substring(0, lore.lastIndexOf(" "));
-				return Utils.cleanColour(name);
-			} else {
-				return Utils.cleanColour(displayname);
+			if (repoObject != null) {
+				ItemStack stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(repoObject);
+				return Utils.cleanColour(stack.getDisplayName().replaceAll("\\[.+]", ""));
 			}
-		} else {
-			return null;
+
 		}
+		return null;
 	}
 
 	public static void close() {
@@ -321,10 +324,16 @@ public class AuctionSearchOverlay {
 
 		TileEntitySign tes = ((AccessorGuiEditSign) Minecraft.getMinecraft().currentScreen).getTileSign();
 
-		String search = searchString.trim();
-		if (searchStringExtra != null && !searchStringExtra.isEmpty()) {
-			search += " " + searchStringExtra.trim();
+		StringBuilder stringBuilder = new StringBuilder(searchString.trim());
+		if (!searchStringExtra.isEmpty()) {
+			stringBuilder.append(searchStringExtra.trim());
 		}
+		if (onlyLevel100) {
+			stringBuilder.insert(0, "[Lvl 100] ");
+		}
+
+		String search = stringBuilder.toString();
+
 		if (search.length() <= 15) {
 			tes.signText[0] = new ChatComponentText(search.substring(0, Math.min(search.length(), 15)));
 		} else {
@@ -562,6 +571,12 @@ public class AuctionSearchOverlay {
 		if (Mouse.getEventButtonState() && mouseX >= width / 2 + 106 && mouseX <= width / 2 + 116 &&
 			mouseY >= topY + 42 && mouseY <= topY + 50) {
 			atLeast = !atLeast;
+			return;
+		}
+
+		if (Mouse.getEventButtonState() && mouseX >= width / 2 + 106 && mouseX <= width / 2 + 116 &&
+			mouseY >= topY + 53 && mouseY <= topY + 62) {
+			onlyLevel100 = !onlyLevel100;
 			return;
 		}
 
