@@ -879,4 +879,3 @@ public class TimersOverlay extends TextOverlay {
 		ALWAYS,
 	}
 }
-

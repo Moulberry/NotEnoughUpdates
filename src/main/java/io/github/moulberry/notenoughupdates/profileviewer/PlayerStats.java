@@ -559,7 +559,7 @@ public class PlayerStats {
 				}
 
 				GuiProfileViewer.PetLevel levelObj = GuiProfileViewer.getPetLevel(petname, tier, exp);
-
+				if (levelObj == null) return null;
 				float level = levelObj.level;
 				float currentLevelRequirement = levelObj.currentLevelRequirement;
 				float maxXP = levelObj.maxXP;
@@ -702,6 +702,7 @@ public class PlayerStats {
 		}
 
 		Stats petBonus = getPetStatBonuses(petsInfo);
+		if (petBonus == null) return null;
 
 		stats = stats.add(passiveBonuses).add(armorBonuses).add(talismanBonuses).add(petBonus).add(hotmBonuses);
 

@@ -46,6 +46,7 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EnumPlayerModelParts;
 import net.minecraft.init.Blocks;
@@ -300,6 +301,11 @@ public class GuiProfileViewer extends GuiScreen {
 	private static JsonObject getPetInfo(String pet_name, String rarity) {
 		JsonObject petInfo = new JsonObject();
 
+		if (Constants.PETS == null) {
+			Utils.showOutdatedRepoNotification();
+			return null;
+		}
+
 		if (Constants.PETS.has("custom_pet_leveling") &&
 			Constants.PETS.getAsJsonObject("custom_pet_leveling").has(pet_name)) {
 			JsonObject pet = Constants.PETS.getAsJsonObject("custom_pet_leveling").getAsJsonObject(pet_name);
@@ -346,6 +352,9 @@ public class GuiProfileViewer extends GuiScreen {
 
 	public static PetLevel getPetLevel(String pet_name, String rarity, float exp) {
 		JsonObject petInfo = getPetInfo(pet_name, rarity);
+		if (petInfo == null) {
+			return null;
+		}
 		int offset = petInfo.get("offset").getAsInt();
 		int maxPetLevel = petInfo.get("max_level").getAsInt();
 		JsonArray levels = petInfo.getAsJsonArray("pet_levels");
@@ -4647,6 +4656,15 @@ public class GuiProfileViewer extends GuiScreen {
 			String locationStr = null;
 			if (profile.getUuid().equals("20934ef9488c465180a78f861586b4cf")) {
 				locationStr = "Ignoring DMs";
+			} else if(profile.getUuid().equals("b876ec32e396476ba1158438d83c67d4")) {
+				statusStr = EnumChatFormatting.LIGHT_PURPLE + "Long live Potato King";
+				ItemStack potato_crown = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
+					.getItemInformation()
+					.get("POTATO_CROWN"));
+				potato_crown.addEnchantment(Enchantment.unbreaking, 1656638942); // this number may be useful
+				Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.potato), guiLeft + 35, guiTop + 160);
+				Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(potato_crown, guiLeft + 50, guiTop + 162);
+				Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(new ItemStack(Items.potato), guiLeft + 63, guiTop + 160);
 			} else {
 				locationStr = NotEnoughUpdates.INSTANCE.navigation.getNameForAreaModeOrUnknown(location);
 			}
