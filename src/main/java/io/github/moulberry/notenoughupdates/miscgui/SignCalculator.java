@@ -31,6 +31,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.text.DecimalFormat;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -76,7 +77,8 @@ public class SignCalculator {
 
 	public String getRenderedString() {
 		if (lastResult != null) {
-			String lr = lastResult.toPlainString();
+			DecimalFormat formatter = new DecimalFormat("#,###.00");
+			String lr = formatter.format(lastResult);
 			if (Minecraft.getMinecraft().fontRendererObj.getStringWidth(lr) > 90) {
 				return EnumChatFormatting.WHITE + lastSource + " = " + EnumChatFormatting.RED + "Result too long";
 			}
