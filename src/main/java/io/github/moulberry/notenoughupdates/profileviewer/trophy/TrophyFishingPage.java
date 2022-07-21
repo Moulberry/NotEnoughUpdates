@@ -122,8 +122,11 @@ public class TrophyFishingPage {
 	public static void renderPage(int mouseX, int mouseY) {
 		guiLeft = GuiProfileViewer.getGuiLeft();
 		guiTop = GuiProfileViewer.getGuiTop();
-		JsonObject trophyInformation = getTrophyInformation();
-		if (trophyInformation == null) {
+
+		trophyFishList.clear();
+
+		JsonObject profileInformation = GuiProfileViewer.getProfile().getProfileInformation(GuiProfileViewer.getProfileId());
+		if (profileInformation == null || !profileInformation.has("trophy_fish")) {
 			Utils.drawStringCentered(EnumChatFormatting.RED + "No data found",
 				Minecraft.getMinecraft().fontRendererObj,
 				guiLeft + 431 / 2f,
@@ -133,6 +136,9 @@ public class TrophyFishingPage {
 			);
 			return;
 		}
+		JsonObject trophyObject = profileInformation.get("trophy_fish").getAsJsonObject();
+
+		 loadTrophyInformation(trophyObject);
 
 		ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 		int width = scaledResolution.getScaledWidth();
@@ -145,7 +151,7 @@ public class TrophyFishingPage {
 		GlStateManager.disableLighting();
 		RenderHelper.enableGUIStandardItemLighting();
 
-		JsonObject stats = trophyInformation.get("stats").getAsJsonObject();
+		JsonObject stats = profileInformation.get("stats").getAsJsonObject();
 
 		int thunderKills = 0;
 		if (stats.has("kills_thunder")) {
@@ -231,7 +237,7 @@ public class TrophyFishingPage {
 			if (mouseX >= x && mouseX < x + 24) {
 				if (mouseY >= y && mouseY <= y + 24) {
 					Utils.drawHoveringText(
-						getTooltip(value),
+						getTooltip(value.getName(), value.getTrophyFishRarityIntegerMap()),
 						mouseX,
 						mouseY,
 						width,
@@ -260,7 +266,7 @@ public class TrophyFishingPage {
 				if (mouseX >= x && mouseX < x + 24) {
 					if (mouseY >= y && mouseY <= y + 24) {
 						Utils.drawHoveringText(
-							getTooltipIfNotFound(difference),
+							getTooltip(difference, null),
 							mouseX,
 							mouseY,
 							width,
@@ -276,23 +282,26 @@ public class TrophyFishingPage {
 			}
 		}
 
-		int i = 0;
-		if (!trophyInformation.has("trophy_fish") &&
-			!trophyInformation.get("trophy_fish").getAsJsonObject().has("rewards")) {
-			return;
-		}
+		if (!trophyObject.has("rewards")) return;
 
-		JsonArray rewards = trophyInformation.get("trophy_fish").getAsJsonObject().get("rewards").getAsJsonArray();
+		int[] trophiesPerTier = getTrophiesPerTier(trophyObject);
+		JsonArray rewards = trophyObject.get("rewards").getAsJsonArray();
+		int i = 0;
 		for (ItemStack itemStack : armorHelmets.keySet()) {
 			RenderHelper.enableGUIStandardItemLighting();
 			int integer = armorHelmets.get(itemStack).getRight();
-			x = guiLeft + 18;
+			x = guiLeft + 15;
 			y = guiTop + 50 + i;
 
 			Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(itemStack, x, y);
 			Utils.drawStringF(armorHelmets.get(itemStack).getLeft(), Minecraft.getMinecraft().fontRendererObj,
 				x + 20, y + 4, true, 0
 			);
+
+			int hasValue = trophiesPerTier[integer - 1];
+			int neededValue = integer == 1 ? 15 : 18;
+			String neededText = "§c" + hasValue + "/" + neededValue;
+
 			try {
 				JsonElement jsonElement = rewards.get(integer - 1);
 				if (!jsonElement.isJsonNull()) {
@@ -300,12 +309,12 @@ public class TrophyFishingPage {
 						x + 100, y + 2, true, 0
 					);
 				} else {
-					Utils.drawStringF(checkX, Minecraft.getMinecraft().fontRendererObj,
+					Utils.drawStringF(neededText, Minecraft.getMinecraft().fontRendererObj,
 						x + 100, y + 4, true, 0
 					);
 				}
 			} catch (IndexOutOfBoundsException exception) {
-				Utils.drawStringF(checkX, Minecraft.getMinecraft().fontRendererObj,
+				Utils.drawStringF(neededText, Minecraft.getMinecraft().fontRendererObj,
 					x + 100, y + 4, true, 0
 				);
 			}
@@ -315,31 +324,46 @@ public class TrophyFishingPage {
 		GlStateManager.enableLighting();
 	}
 
-	private static List<String> getTooltip(TrophyFish fish) {
+	private static int[] getTrophiesPerTier(JsonObject trophyFish) {
+		int[] trophiesPerTier = new int[] {0, 0, 0, 0};
+		for (String fishType : internalTrophyFish.keySet()) {
+			int highestTier = 0;
+			if (trophyFish.has((fishType + "_bronze"))) highestTier = 1;
+			if (trophyFish.has((fishType + "_silver"))) highestTier = 2;
+			if (trophyFish.has((fishType + "_gold"))) highestTier = 3;
+			if (trophyFish.has((fishType + "_diamond"))) highestTier = 4;
+
+			if (highestTier >= 1) trophiesPerTier[0]++;
+			if (highestTier >= 2) trophiesPerTier[1]++;
+			if (highestTier >= 3) trophiesPerTier[2]++;
+			if (highestTier >= 4) trophiesPerTier[3]++;
+		}
+		return trophiesPerTier;
+	}
+
+	private static List<String> getTooltip(
+		String name,
+		Map<TrophyFish.TrophyFishRarity, Integer> trophyFishRarityIntegerMap
+	) {
 		List<String> tooltip = new ArrayList<>();
 		tooltip.add(
-			internalTrophyFish.get(fish.getInternalName()) + WordUtils.capitalize(fish.getName().replace("_", " ")));
-		Map<TrophyFish.TrophyFishRarity, Integer> trophyFishRarityIntegerMap = fish.getTrophyFishRarityIntegerMap();
+			internalTrophyFish.get(name.toLowerCase().replace(" ", "_")) + WordUtils.capitalize(name.replace("_", " ")));
+
+		List<String> lore = readLoreFromRepo(name.toUpperCase());
+		List<String> description = readDescriptionFromLore(lore);
+		tooltip.addAll(description);
 		tooltip.add(" ");
+
+		if (trophyFishRarityIntegerMap == null) {
+			tooltip.add(EnumChatFormatting.RED + checkX + " Not Discovered");
+			tooltip.add(" ");
+		}
+
 		tooltip.add(display(trophyFishRarityIntegerMap, TrophyFish.TrophyFishRarity.DIAMOND, EnumChatFormatting.AQUA));
 		tooltip.add(display(trophyFishRarityIntegerMap, TrophyFish.TrophyFishRarity.GOLD, EnumChatFormatting.GOLD));
 		tooltip.add(display(trophyFishRarityIntegerMap, TrophyFish.TrophyFishRarity.SILVER, EnumChatFormatting.GRAY));
 		tooltip.add(display(trophyFishRarityIntegerMap, TrophyFish.TrophyFishRarity.BRONZE, EnumChatFormatting.DARK_GRAY
 		));
-		return tooltip;
-	}
-
-	private static List<String> getTooltipIfNotFound(String name) {
-		List<String> tooltip = new ArrayList<>();
-		tooltip.add(
-			internalTrophyFish.get(name.toLowerCase().replace(" ", "_")) + WordUtils.capitalize(name.replace("_", " ")));
-		tooltip.add(" ");
-		tooltip.add(EnumChatFormatting.RED + checkX + " Not Discovered");
-		tooltip.add(" ");
-		tooltip.add(display(null, TrophyFish.TrophyFishRarity.DIAMOND, EnumChatFormatting.AQUA));
-		tooltip.add(display(null, TrophyFish.TrophyFishRarity.GOLD, EnumChatFormatting.GOLD));
-		tooltip.add(display(null, TrophyFish.TrophyFishRarity.SILVER, EnumChatFormatting.GRAY));
-		tooltip.add(display(null, TrophyFish.TrophyFishRarity.BRONZE, EnumChatFormatting.DARK_GRAY));
 		return tooltip;
 	}
 
@@ -369,14 +393,7 @@ public class TrophyFishingPage {
 		return NotEnoughUpdates.INSTANCE.manager.jsonToStack(jsonItem);
 	}
 
-	private static JsonObject getTrophyInformation() {
-		trophyFishList.clear();
-
-		JsonObject trophyFishInformation = GuiProfileViewer.getProfile().getProfileInformation(GuiProfileViewer.getProfileId());
-		if (trophyFishInformation == null || !trophyFishInformation.has("trophy_fish")) {
-			return null;
-		}
-		JsonObject trophyObject = trophyFishInformation.get("trophy_fish").getAsJsonObject();
+	private static void loadTrophyInformation(JsonObject trophyObject) {
 		Map<String, List<Pair<TrophyFish.TrophyFishRarity, Integer>>> trophyFishRarityIntegerMap = new HashMap<>();
 		totalCount = 0;
 		for (Map.Entry<String, JsonElement> stringJsonElementEntry : trophyObject.entrySet()) {
@@ -432,7 +449,6 @@ public class TrophyFishingPage {
 				}
 			}
 		});
-		return trophyFishInformation;
 	}
 
 	private static List<String> fixStringName(List<String> list) {
@@ -441,5 +457,35 @@ public class TrophyFishingPage {
 			fixedList.add(s.toLowerCase().replace(" ", "_"));
 		}
 		return fixedList;
+	}
+
+	private static List<String> readDescriptionFromLore(List<String> lore) {
+		List<String> description = new ArrayList<>();
+		boolean found = false;
+
+		for (String line : lore) {
+			if (!found && line.startsWith("§7")) found = true;
+			if (found && line.isEmpty()) break;
+
+			if (found) {
+				description.add(line);
+			}
+		}
+
+		return description;
+	}
+
+	private static List<String> readLoreFromRepo(String name) {
+		String repoName = name.toUpperCase().replace(" ", "_") + "_BRONZE";
+		JsonObject jsonItem = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(repoName);
+
+		List<String> list = new ArrayList<>();
+		if (jsonItem != null && jsonItem.has("lore")) {
+			for (JsonElement line : jsonItem.getAsJsonArray("lore")) {
+				list.add(line.getAsString());
+			}
+		}
+
+		return list;
 	}
 }
