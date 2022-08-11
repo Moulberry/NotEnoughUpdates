@@ -57,6 +57,7 @@ import io.github.moulberry.notenoughupdates.miscfeatures.SunTzu;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.CustomBiomes;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.CustomBlockSounds;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.DwarvenMinesTextures;
+import io.github.moulberry.notenoughupdates.miscfeatures.updater.AutoUpdater;
 import io.github.moulberry.notenoughupdates.miscgui.CalendarOverlay;
 import io.github.moulberry.notenoughupdates.miscgui.InventoryStorageSelector;
 import io.github.moulberry.notenoughupdates.miscgui.SignCalculator;
@@ -172,6 +173,7 @@ public class NotEnoughUpdates {
 	public Commands commands;
 	public boolean packDevEnabled = false;
 	public Color[][] colourMap = null;
+	public AutoUpdater autoUpdater = new AutoUpdater(this);
 	private File configFile;
 	private long lastChatMessage = 0;
 	private long secondLastChatMessage = 0;
