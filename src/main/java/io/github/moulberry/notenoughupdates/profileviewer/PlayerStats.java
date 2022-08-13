@@ -24,9 +24,18 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.profileviewer.info.QuiverInfo;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.JsonUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.EnumChatFormatting;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.AbstractMap;
@@ -40,14 +49,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.EnumChatFormatting;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 
 public class PlayerStats {
 
@@ -300,12 +301,12 @@ public class PlayerStats {
 					bonuses.addStat(HEALTH, 60);
 					break;
 				case "EMERALD_ARMOR_":
-					{
-						int bonus = (int) Math.floor(Utils.getElementAsFloat(Utils.getElement(collectionInfo, "EMERALD"), 0) / 3000);
-						bonuses.addStat(HEALTH, bonus);
-						bonuses.addStat(DEFENCE, bonus);
-					}
-					break;
+				{
+					int bonus = (int) Math.floor(Utils.getElementAsFloat(Utils.getElement(collectionInfo, "EMERALD"), 0) / 3000);
+					bonuses.addStat(HEALTH, bonus);
+					bonuses.addStat(DEFENCE, bonus);
+				}
+				break;
 				case "FAIRY_":
 					bonuses.addStat(HEALTH, Utils.getElementAsFloat(Utils.getElement(profile, "fairy_souls_collected"), 0));
 					break;
@@ -457,18 +458,18 @@ public class PlayerStats {
 
 		if (
 			petsInfo != null &&
-			petsInfo.has("active_pet") &&
-			petsInfo.get("active_pet") != null &&
-			petsInfo.get("active_pet").isJsonObject()
+				petsInfo.has("active_pet") &&
+				petsInfo.get("active_pet") != null &&
+				petsInfo.get("active_pet").isJsonObject()
 		) {
 			JsonObject pet = petsInfo.get("active_pet").getAsJsonObject();
 			if (
 				pet.has("type") &&
-				pet.get("type") != null &&
-				pet.has("tier") &&
-				pet.get("tier") != null &&
-				pet.has("exp") &&
-				pet.get("exp") != null
+					pet.get("type") != null &&
+					pet.has("tier") &&
+					pet.get("tier") != null &&
+					pet.has("exp") &&
+					pet.get("exp") != null
 			) {
 				String petname = pet.get("type").getAsString();
 				String tier = pet.get("tier").getAsString();
@@ -484,8 +485,8 @@ public class PlayerStats {
 
 				if (
 					pet.has("heldItem") &&
-					!pet.get("heldItem").isJsonNull() &&
-					pet.get("heldItem").getAsString().equals("PET_ITEM_TIER_BOOST")
+						!pet.get("heldItem").isJsonNull() &&
+						pet.get("heldItem").getAsString().equals("PET_ITEM_TIER_BOOST")
 				) {
 					tierNum = "" + (Integer.parseInt(tierNum) + 1);
 				}
@@ -601,8 +602,8 @@ public class PlayerStats {
 		for (Map.Entry<String, JsonElement> statEntry : stats.statsJson.entrySet()) {
 			if (
 				statEntry.getKey().equals(CRIT_DAMAGE) ||
-				statEntry.getKey().equals(INTELLIGENCE) ||
-				statEntry.getKey().equals(BONUS_ATTACK_SPEED)
+					statEntry.getKey().equals(INTELLIGENCE) ||
+					statEntry.getKey().equals(BONUS_ATTACK_SPEED)
 			) continue;
 			stats.statsJson.add(statEntry.getKey(), new JsonPrimitive(Math.max(0, statEntry.getValue().getAsFloat())));
 		}
@@ -662,7 +663,7 @@ public class PlayerStats {
 		}
 
 		Map<String, Integer> accessories = JsonUtils.getJsonArrayAsStream(inventoryInfo.get("talisman_bag").getAsJsonArray())
-			.map(o -> {
+																								.map(o -> {
 				try {
 					return JsonToNBT.getTagFromJson(o.getAsJsonObject().get("nbttag").getAsString());
 				} catch (Exception ignored) {
@@ -680,7 +681,7 @@ public class PlayerStats {
 					tag.getCompoundTag("ExtraAttributes").getString("id"),
 					Utils.getRarityFromLore(lastElementJsonArray)
 				);
-			}).sorted(Comparator.comparingInt(e -> -e.getValue())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1,v2)->v1, LinkedHashMap::new));
+			}).sorted(Comparator.comparingInt(e -> -e.getValue())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2)->v1, LinkedHashMap::new));
 
 		Set<String> ignoredTalismans = new HashSet<>();
 		int powderAmount = 0;
@@ -742,14 +743,46 @@ public class PlayerStats {
 
 		if (
 			profileInfo == null ||
-			!profileInfo.has(abs) ||
-			!profileInfo.get(abs).isJsonObject() ||
-			!profileInfo.get(abs).getAsJsonObject().has("selected_power")
+				!profileInfo.has(abs) ||
+				!profileInfo.get(abs).isJsonObject() ||
+				!profileInfo.get(abs).getAsJsonObject().has("selected_power")
 		) {
 			return null;
 		}
 		String selectedPower = profileInfo.get(abs).getAsJsonObject().get("selected_power").getAsString();
 		return selectedPower.substring(0, 1).toUpperCase() + selectedPower.substring(1);
+	}
+
+	public static @Nullable QuiverInfo getQuiverInfo(JsonObject inventoryInfo, JsonObject profileInfo) {
+		if (inventoryInfo == null
+			|| !inventoryInfo.has("quiver")
+			|| !inventoryInfo.get("quiver").isJsonArray()) {
+			return null;
+		}
+		QuiverInfo quiverInfo = new QuiverInfo();
+		quiverInfo.arrows = new HashMap<>();
+
+		JsonArray quiver = inventoryInfo.getAsJsonArray("quiver");
+		for (JsonElement quiverEntry : quiver) {
+			if (quiverEntry == null || quiverEntry.isJsonNull() || !quiverEntry.isJsonObject()) {
+				continue;
+			}
+			JsonObject stack = quiverEntry.getAsJsonObject();
+			if (!stack.has("internalname") || !stack.has("count")) {
+				continue;
+			}
+			String internalName = stack.get("internalname").getAsString();
+			int count = stack.get("count").getAsInt();
+
+			quiverInfo.arrows.computeIfPresent(internalName, (key, existing) -> existing + count);
+			quiverInfo.arrows.putIfAbsent(internalName, count);
+		}
+
+		if (profileInfo.has("favorite_arrow")) {
+			quiverInfo.selectedArrow = profileInfo.get("favorite_arrow").getAsString();
+		}
+
+		return quiverInfo;
 	}
 
 	public static class Stats {

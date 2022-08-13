@@ -29,17 +29,6 @@ import io.github.moulberry.notenoughupdates.profileviewer.bestiary.BestiaryPage;
 import io.github.moulberry.notenoughupdates.profileviewer.trophy.TrophyFishPage;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import java.awt.*;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.client.gui.GuiScreen;
@@ -60,6 +49,18 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
+
+import java.awt.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 public class GuiProfileViewer extends GuiScreen {
 
@@ -354,8 +355,8 @@ public class GuiProfileViewer extends GuiScreen {
 		} else {
 			showBingoPage =
 				currProfileInfo != null &&
-				currProfileInfo.has("game_mode") &&
-				currProfileInfo.get("game_mode").getAsString().equals("bingo");
+					currProfileInfo.has("game_mode") &&
+					currProfileInfo.get("game_mode").getAsString().equals("bingo");
 		}
 
 		if (!showBingoPage && currentPage == ProfileViewerPage.BINGO) currentPage = ProfileViewerPage.BASIC;
@@ -407,8 +408,8 @@ public class GuiProfileViewer extends GuiScreen {
 				//ironman icon
 				if (
 					currProfileInfo != null &&
-					currProfileInfo.has("game_mode") &&
-					currProfileInfo.get("game_mode").getAsString().equals("ironman")
+						currProfileInfo.has("game_mode") &&
+						currProfileInfo.get("game_mode").getAsString().equals("ironman")
 				) {
 					GlStateManager.color(1, 1, 1, 1);
 					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_ironman);
@@ -417,8 +418,8 @@ public class GuiProfileViewer extends GuiScreen {
 				//bingo! icon
 				if (
 					currProfileInfo != null &&
-					currProfileInfo.has("game_mode") &&
-					currProfileInfo.get("game_mode").getAsString().equals("bingo")
+						currProfileInfo.has("game_mode") &&
+						currProfileInfo.get("game_mode").getAsString().equals("bingo")
 				) {
 					GlStateManager.color(1, 1, 1, 1);
 					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bingo);
@@ -427,8 +428,8 @@ public class GuiProfileViewer extends GuiScreen {
 				//stranded icon
 				if (
 					currProfileInfo != null &&
-					currProfileInfo.has("game_mode") &&
-					currProfileInfo.get("game_mode").getAsString().equals("island")
+						currProfileInfo.has("game_mode") &&
+						currProfileInfo.get("game_mode").getAsString().equals("island")
 				) {
 					GlStateManager.color(1, 1, 1, 1);
 					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_stranded);
@@ -437,10 +438,10 @@ public class GuiProfileViewer extends GuiScreen {
 				//icon if game mode is unknown
 				if (
 					currProfileInfo != null &&
-					currProfileInfo.has("game_mode") &&
-					!currProfileInfo.get("game_mode").getAsString().equals("island") &&
-					!currProfileInfo.get("game_mode").getAsString().equals("bingo") &&
-					!currProfileInfo.get("game_mode").getAsString().equals("ironman")
+						currProfileInfo.has("game_mode") &&
+						!currProfileInfo.get("game_mode").getAsString().equals("island") &&
+						!currProfileInfo.get("game_mode").getAsString().equals("bingo") &&
+						!currProfileInfo.get("game_mode").getAsString().equals("ironman")
 				) {
 					GlStateManager.color(1, 1, 1, 1);
 					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_unknown);
@@ -505,8 +506,8 @@ public class GuiProfileViewer extends GuiScreen {
 						currProfileInfo = profile.getProfileInformation(otherProfileId);
 						if (
 							currProfileInfo != null &&
-							currProfileInfo.has("game_mode") &&
-							currProfileInfo.get("game_mode").getAsString().equals("ironman")
+								currProfileInfo.has("game_mode") &&
+								currProfileInfo.get("game_mode").getAsString().equals("ironman")
 						) {
 							GlStateManager.color(1, 1, 1, 1);
 							Minecraft.getMinecraft().getTextureManager().bindTexture(pv_ironman);
@@ -520,8 +521,8 @@ public class GuiProfileViewer extends GuiScreen {
 						}
 						if (
 							currProfileInfo != null &&
-							currProfileInfo.has("game_mode") &&
-							currProfileInfo.get("game_mode").getAsString().equals("bingo")
+								currProfileInfo.has("game_mode") &&
+								currProfileInfo.get("game_mode").getAsString().equals("bingo")
 						) {
 							GlStateManager.color(1, 1, 1, 1);
 							Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bingo);
@@ -535,8 +536,8 @@ public class GuiProfileViewer extends GuiScreen {
 						}
 						if (
 							currProfileInfo != null &&
-							currProfileInfo.has("game_mode") &&
-							currProfileInfo.get("game_mode").getAsString().equals("island")
+								currProfileInfo.has("game_mode") &&
+								currProfileInfo.get("game_mode").getAsString().equals("island")
 						) {
 							GlStateManager.color(1, 1, 1, 1);
 							Minecraft.getMinecraft().getTextureManager().bindTexture(pv_stranded);
@@ -550,10 +551,10 @@ public class GuiProfileViewer extends GuiScreen {
 						}
 						if (
 							currProfileInfo != null &&
-							currProfileInfo.has("game_mode") &&
-							!currProfileInfo.get("game_mode").getAsString().equals("island") &&
-							!currProfileInfo.get("game_mode").getAsString().equals("bingo") &&
-							!currProfileInfo.get("game_mode").getAsString().equals("ironman")
+								currProfileInfo.has("game_mode") &&
+								!currProfileInfo.get("game_mode").getAsString().equals("island") &&
+								!currProfileInfo.get("game_mode").getAsString().equals("bingo") &&
+								!currProfileInfo.get("game_mode").getAsString().equals("ironman")
 						) {
 							GlStateManager.color(1, 1, 1, 1);
 							Minecraft.getMinecraft().getTextureManager().bindTexture(pv_unknown);
@@ -671,9 +672,9 @@ public class GuiProfileViewer extends GuiScreen {
 											if (timeDiff > 1800000) {
 												Utils.drawStringCentered(
 													EnumChatFormatting.RED +
-													"" +
-													EnumChatFormatting.BOLD +
-													"You don't know what's gonna happen to you",
+														"" +
+														EnumChatFormatting.BOLD +
+														"You don't know what's gonna happen to you",
 													Minecraft.getMinecraft().fontRendererObj,
 													guiLeft + sizeX / 2f,
 													guiTop + 191,
@@ -692,9 +693,9 @@ public class GuiProfileViewer extends GuiScreen {
 													if (timeDiff > 3300000) {
 														Utils.drawStringCentered(
 															EnumChatFormatting.DARK_RED +
-															"" +
-															EnumChatFormatting.BOLD +
-															"OW LORD FORGIVE ME FOR THIS",
+																"" +
+																EnumChatFormatting.BOLD +
+																"OW LORD FORGIVE ME FOR THIS",
 															Minecraft.getMinecraft().fontRendererObj,
 															guiLeft + sizeX / 2f,
 															guiTop + 71,
@@ -856,10 +857,10 @@ public class GuiProfileViewer extends GuiScreen {
 		}
 		if (
 			mouseX > guiLeft + 106 &&
-			mouseX < guiLeft + 106 + 100 &&
-			profile != null &&
-			!profile.getProfileNames().isEmpty() &&
-			profileId != null
+				mouseX < guiLeft + 106 + 100 &&
+				profile != null &&
+				!profile.getProfileNames().isEmpty() &&
+				profileId != null
 		) {
 			if (mouseY > guiTop + sizeY + 3 && mouseY < guiTop + sizeY + 23) {
 				try {
@@ -997,9 +998,9 @@ public class GuiProfileViewer extends GuiScreen {
 					int maxXp = (int) levelObj.maxXpForLevel;
 					levelStr =
 						EnumChatFormatting.DARK_PURPLE +
-						shortNumberFormat(Math.round((level % 1) * maxXp), 0) +
-						"/" +
-						shortNumberFormat(maxXp, 0);
+							shortNumberFormat(Math.round((level % 1) * maxXp), 0) +
+							"/" +
+							shortNumberFormat(maxXp, 0);
 				}
 				if (totalXpStr != null) {
 					tooltipToDisplay = Utils.createList(levelStr, totalXpStr);
