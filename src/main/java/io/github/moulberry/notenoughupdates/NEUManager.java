@@ -1380,7 +1380,7 @@ public class NEUManager {
 								float statMax = entry.getValue().getAsFloat();
 								float statMin = min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat();
 								float val = statMin * minMix + statMax * maxMix;
-								String statStr = (statMin > 0 ? "+" : "") + (int) Math.floor(val);
+								String statStr = (statMin > 0 ? "+" : "") + removeUnusedDecimal(Math.floor(val * 10) / 10);
 								replacements.put(entry.getKey(), statStr);
 							}
 						}
@@ -1457,6 +1457,7 @@ public class NEUManager {
 	}
 
 	public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean copyStack) {
+		if (useReplacements) useCache = false;
 		if (json == null) return new ItemStack(Items.painting, 1, 10);
 		String internalname = json.get("internalname").getAsString();
 
