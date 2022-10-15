@@ -1,8 +1,29 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.ChromaColour;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.PositionedSound;
@@ -11,8 +32,10 @@ import net.minecraft.client.particle.EntityFX;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.projectile.EntityFishHook;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -21,7 +44,13 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class FishingHelper {
 	private static final FishingHelper INSTANCE = new FishingHelper();
@@ -63,46 +92,92 @@ public class FishingHelper {
 	private int pingDelayTicks = 0;
 	private final List<Integer> pingDelayList = new ArrayList<>();
 	private int buildupSoundDelay = 0;
+	private boolean playedSound = false;
 
 	private static final ResourceLocation FISHING_WARNING_EXCLAM = new ResourceLocation(
 		"notenoughupdates:fishing_warning_exclam.png");
 
+	public boolean renderWarning() {
+		if (warningState == PlayerWarningState.NOTHING) return false;
+
+		if (!NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning &&
+			warningState == PlayerWarningState.FISH_INCOMING)
+			return false;
+		if (!NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarningR &&
+			warningState == PlayerWarningState.FISH_HOOKED)
+			return false;
+
+		float offset = warningState == PlayerWarningState.FISH_HOOKED ? 0.5f : 0f;
+
+		float centerOffset = 0.5f / 8f;
+		Minecraft.getMinecraft().getTextureManager().bindTexture(FISHING_WARNING_EXCLAM);
+		Utils.drawTexturedRect(
+			centerOffset - 4f / 8f,
+			-20 / 8f,
+			1f,
+			2f,
+			0 + offset,
+			0.5f + offset,
+			0,
+			1,
+			GL11.GL_NEAREST
+		);
+		return true;
+	}
+
 	public void onRenderBobber(EntityFishHook hook) {
-		if (Minecraft.getMinecraft().thePlayer.fishEntity == hook && warningState != PlayerWarningState.NOTHING) {
+		if (Minecraft.getMinecraft().thePlayer.fishEntity != hook) return;
+		GlStateManager.pushMatrix();
+		GlStateManager.disableCull();
+		GlStateManager.disableLighting();
+		GL11.glDepthFunc(GL11.GL_ALWAYS);
+		GlStateManager.scale(1, -1, 1);
+		boolean isExclamationMarkPresent = renderWarning();
+		GlStateManager.scale(0.1, 0.1, 1);
+		drawFishingTimer(hook, isExclamationMarkPresent);
+		GL11.glDepthFunc(GL11.GL_LEQUAL);
+		GlStateManager.enableLighting();
+		GlStateManager.enableCull();
+		GlStateManager.popMatrix();
+	}
 
-			if (!NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning &&
-				warningState == PlayerWarningState.FISH_INCOMING)
-				return;
-			if (!NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarningR &&
-				warningState == PlayerWarningState.FISH_HOOKED)
-				return;
+	private void drawFishingTimer(EntityFishHook hook, boolean isExclamationMarkPresent) {
+		if (!NotEnoughUpdates.INSTANCE.config.fishing.fishingTimer) return;
+		float baseHeight = isExclamationMarkPresent ? 20 : 0;
+		int ticksExisted = hook.ticksExisted;
+		float seconds = ticksExisted / 20F;
+		int color;
+		if (seconds >= 30) {
+			color = ChromaColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.fishing.fishingTimerColor30SecPlus);
+			if (NotEnoughUpdates.INSTANCE.config.fishing.fishingSound30Sec && !playedSound) {
+				ISound sound = new PositionedSound(new ResourceLocation("random.orb")) {{
+					volume = 50;
+					pitch = 2f;
+					repeat = false;
+					repeatDelay = 0;
+					attenuationType = ISound.AttenuationType.NONE;
+				}};
 
-			GlStateManager.disableCull();
-			GlStateManager.disableLighting();
-			GL11.glDepthFunc(GL11.GL_ALWAYS);
-			GlStateManager.scale(1, -1, 1);
-
-			float offset = warningState == PlayerWarningState.FISH_HOOKED ? 0.5f : 0f;
-
-			float centerOffset = 0.5f / 8f;
-			Minecraft.getMinecraft().getTextureManager().bindTexture(FISHING_WARNING_EXCLAM);
-			Utils.drawTexturedRect(
-				centerOffset - 4f / 8f,
-				-20 / 8f,
-				1f,
-				2f,
-				0 + offset,
-				0.5f + offset,
-				0,
-				1,
-				GL11.GL_NEAREST
-			);
-
-			GlStateManager.scale(1, -1, 1);
-			GL11.glDepthFunc(GL11.GL_LEQUAL);
-			GlStateManager.enableLighting();
-			GlStateManager.enableCull();
+				float oldLevel = Minecraft.getMinecraft().gameSettings.getSoundLevel(SoundCategory.RECORDS);
+				Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.RECORDS, 1);
+				Minecraft.getMinecraft().getSoundHandler().playSound(sound);
+				Minecraft.getMinecraft().gameSettings.setSoundLevel(SoundCategory.RECORDS, oldLevel);
+				playedSound = true;
+			}
+		} else {
+			color = ChromaColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.fishing.fishingTimerColor);
+			playedSound = false;
 		}
+
+		Utils.drawStringCentered(
+			String.format("%.02fs", seconds),
+			Minecraft.getMinecraft().fontRendererObj,
+			0,
+			-baseHeight - Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT,
+			false,
+			color
+		);
+
 	}
 
 	public void addEntity(int entityId, Entity entity) {
@@ -257,7 +332,17 @@ public class FishingHelper {
 		double angle2
 	) {
 		double dY = particleY - hook.posY;
-		if (Math.abs(dY) > 0.5f) {
+		double tolerance = 0.5F;
+		if (hook.worldObj != null) {
+			for (int i = -2; i < 2; i++) {
+				IBlockState state = hook.worldObj.getBlockState(new BlockPos(particleX, particleY + i, particleZ));
+				if (state != null && (state.getBlock() == Blocks.flowing_lava
+					|| state.getBlock() == Blocks.flowing_water
+					|| state.getBlock() == Blocks.lava))
+					tolerance = 2.0F;
+			}
+		}
+		if (Math.abs(dY) > tolerance) {
 			return HookPossibleRet.NOT_POSSIBLE;
 		}
 

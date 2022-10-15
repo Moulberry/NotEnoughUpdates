@@ -1,10 +1,34 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.util;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -30,35 +54,98 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.network.play.client.C0DPacketCloseWindow;
-import net.minecraft.util.*;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.Matrix4f;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.fml.common.Loader;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Utils {
-	public static boolean hasEffectOverride = false;
-	public static boolean disableCustomDungColours = false;
 	private static final LinkedList<Integer> guiScales = new LinkedList<>();
-	private static ScaledResolution lastScale = new ScaledResolution(Minecraft.getMinecraft());
 	//Labymod compatibility
 	private static final FloatBuffer projectionMatrixOld = BufferUtils.createFloatBuffer(16);
 	private static final FloatBuffer modelviewMatrixOld = BufferUtils.createFloatBuffer(16);
+	private static final EnumChatFormatting[] rainbow = new EnumChatFormatting[]{
+		EnumChatFormatting.RED,
+		EnumChatFormatting.GOLD,
+		EnumChatFormatting.YELLOW,
+		EnumChatFormatting.GREEN,
+		EnumChatFormatting.AQUA,
+		EnumChatFormatting.LIGHT_PURPLE,
+		EnumChatFormatting.DARK_PURPLE
+	};
+	private static final Pattern CHROMA_REPLACE_PATTERN = Pattern.compile("\u00a7z(.+?)(?=\u00a7|$)");
+	private static final char[] c = new char[]{'k', 'm', 'b', 't'};
+	private static final LerpingFloat scrollY = new LerpingFloat(0, 100);
+	public static boolean hasEffectOverride = false;
+	public static boolean disableCustomDungColours = false;
+	public static String[] rarityArr = new String[]{
+		"COMMON",
+		"UNCOMMON",
+		"RARE",
+		"EPIC",
+		"LEGENDARY",
+		"MYTHIC",
+		"SPECIAL",
+		"VERY SPECIAL",
+		"SUPREME",
+		"^^ THAT ONE IS DIVINE ^^"
+//, "DIVINE"
+	};
+	public static String[] rarityArrC = new String[]{
+		EnumChatFormatting.WHITE + EnumChatFormatting.BOLD.toString() + "COMMON",
+		EnumChatFormatting.GREEN + EnumChatFormatting.BOLD.toString() + "UNCOMMON",
+		EnumChatFormatting.BLUE + EnumChatFormatting.BOLD.toString() + "RARE",
+		EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD.toString() + "EPIC",
+		EnumChatFormatting.GOLD + EnumChatFormatting.BOLD.toString() + "LEGENDARY",
+		EnumChatFormatting.LIGHT_PURPLE + EnumChatFormatting.BOLD.toString() + "MYTHIC",
+		EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "SPECIAL",
+		EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "VERY SPECIAL",
+		EnumChatFormatting.AQUA + EnumChatFormatting.BOLD.toString() + "DIVINE",
+		EnumChatFormatting.AQUA + EnumChatFormatting.BOLD.toString() + "DIVINE",
+		//EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
+	};
+	public static final HashMap<String, String> rarityArrMap = new HashMap<String, String>() {{
+		put("COMMON", rarityArrC[0]);
+		put("UNCOMMON", rarityArrC[1]);
+		put("RARE", rarityArrC[2]);
+		put("EPIC", rarityArrC[3]);
+		put("LEGENDARY", rarityArrC[4]);
+		put("MYTHIC", rarityArrC[5]);
+		put("SPECIAL", rarityArrC[6]);
+		put("VERY SPECIAL", rarityArrC[7]);
+		put("DIVINE", rarityArrC[8]);
+		// put("DIVINE", rarityArrC[9]);
+	}};
+	public static Splitter PATH_SPLITTER = Splitter.on(".").omitEmptyStrings().limit(2);
+	private static ScaledResolution lastScale = new ScaledResolution(Minecraft.getMinecraft());
+	private static long startTime = 0;
 
 	public static <T> ArrayList<T> createList(T... values) {
 		ArrayList<T> list = new ArrayList<>();
@@ -162,8 +249,13 @@ public class Utils {
 	}
 
 	public static void drawItemStackWithText(ItemStack stack, int x, int y, String text) {
-		if (stack == null) return;
+		drawItemStackWithText(stack, x, y, text, false);
+	}
 
+	public static void drawItemStackWithText(ItemStack stack, int x, int y, String text, boolean skytilsRarity) {
+		if (stack == null) return;
+		if (skytilsRarity)
+			SkytilsCompat.renderSkytilsRarity(stack, x, y);
 		RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
 
 		disableCustomDungColours = true;
@@ -177,26 +269,16 @@ public class Utils {
 	}
 
 	public static void drawItemStack(ItemStack stack, int x, int y) {
-		if (stack == null) return;
-
 		drawItemStackWithText(stack, x, y, null);
 	}
 
-	private static final EnumChatFormatting[] rainbow = new EnumChatFormatting[]{
-		EnumChatFormatting.RED,
-		EnumChatFormatting.GOLD,
-		EnumChatFormatting.YELLOW,
-		EnumChatFormatting.GREEN,
-		EnumChatFormatting.AQUA,
-		EnumChatFormatting.LIGHT_PURPLE,
-		EnumChatFormatting.DARK_PURPLE
-	};
+	public static void drawItemStack(ItemStack stack, int x, int y, boolean skytilsRarity) {
+		drawItemStackWithText(stack, x, y, null, skytilsRarity);
+	}
 
 	public static String chromaString(String str) {
 		return chromaString(str, 0, false);
 	}
-
-	private static final Pattern CHROMA_REPLACE_PATTERN = Pattern.compile("\u00a7z(.+?)(?=\u00a7|$)");
 
 	public static String chromaStringByColourCode(String str) {
 		if (str.contains("\u00a7z")) {
@@ -218,8 +300,6 @@ public class Utils {
 		}
 		return str;
 	}
-
-	private static long startTime = 0;
 
 	public static String chromaString(String str, float offset, boolean bold) {
 		str = cleanColour(str);
@@ -246,8 +326,6 @@ public class Utils {
 		}
 		return rainbowText.toString();
 	}
-
-	private static final char[] c = new char[]{'k', 'm', 'b', 't'};
 
 	public static String shortNumberFormat(double n, int iteration) {
 		double d = ((long) n / 100) / 10.0;
@@ -299,6 +377,40 @@ public class Utils {
 		}
 
 		return "";
+	}
+
+	public static String trimWhitespaceAndFormatCodes(String str) {
+		int startIndex = indexOfFirstNonWhitespaceNonFormatCode(str);
+		int endIndex = lastIndexOfNonWhitespaceNonFormatCode(str);
+		if (startIndex == -1 || endIndex == -1) return "";
+		return str.substring(startIndex, endIndex + 1);
+	}
+
+	private static int indexOfFirstNonWhitespaceNonFormatCode(String str) {
+		int len = str.length();
+		for (int i = 0; i < len; i++) {
+			char ch = str.charAt(i);
+			if (Character.isWhitespace(ch)) {
+				continue;
+			} else if (ch == '\u00a7') {
+				i++;
+				continue;
+			}
+			return i;
+		}
+		return -1;
+	}
+
+	private static int lastIndexOfNonWhitespaceNonFormatCode(String str) {
+		for (int i = str.length() - 1; i >= 0; i--) {
+			char ch = str.charAt(i);
+			if (Character.isWhitespace(ch) || ch == '\u00a7' || (i > 0 && str.charAt(i - 1) == '\u00a7')) {
+				continue;
+			}
+			return i;
+		}
+
+		return -1;
 	}
 
 	public static List<String> getRawTooltip(ItemStack stack) {
@@ -477,46 +589,6 @@ public class Utils {
 		return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
 	}
 
-	public static String[] rarityArr = new String[]{
-		"COMMON",
-		"UNCOMMON",
-		"RARE",
-		"EPIC",
-		"LEGENDARY",
-		"MYTHIC",
-		"SPECIAL",
-		"VERY SPECIAL",
-		"SUPREME",
-		"^^ THAT ONE IS DIVINE ^^"
-//, "DIVINE"
-	};
-
-	public static String[] rarityArrC = new String[]{
-		EnumChatFormatting.WHITE + EnumChatFormatting.BOLD.toString() + "COMMON",
-		EnumChatFormatting.GREEN + EnumChatFormatting.BOLD.toString() + "UNCOMMON",
-		EnumChatFormatting.BLUE + EnumChatFormatting.BOLD.toString() + "RARE",
-		EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD.toString() + "EPIC",
-		EnumChatFormatting.GOLD + EnumChatFormatting.BOLD.toString() + "LEGENDARY",
-		EnumChatFormatting.LIGHT_PURPLE + EnumChatFormatting.BOLD.toString() + "MYTHIC",
-		EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "SPECIAL",
-		EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "VERY SPECIAL",
-		EnumChatFormatting.AQUA + EnumChatFormatting.BOLD.toString() + "DIVINE",
-		EnumChatFormatting.AQUA + EnumChatFormatting.BOLD.toString() + "DIVINE",
-		//EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
-	};
-	public static final HashMap<String, String> rarityArrMap = new HashMap<String, String>() {{
-		put("COMMON", rarityArrC[0]);
-		put("UNCOMMON", rarityArrC[1]);
-		put("RARE", rarityArrC[2]);
-		put("EPIC", rarityArrC[3]);
-		put("LEGENDARY", rarityArrC[4]);
-		put("MYTHIC", rarityArrC[5]);
-		put("SPECIAL", rarityArrC[6]);
-		put("VERY SPECIAL", rarityArrC[7]);
-		put("DIVINE", rarityArrC[8]);
-		// put("DIVINE", rarityArrC[9]);
-	}};
-
 	public static String getRarityFromInt(int rarity) {
 		if (rarity < 0 || rarity >= rarityArr.length) {
 			return rarityArr[0];
@@ -596,6 +668,60 @@ public class Utils {
 	public static float round(float value, int precision) {
 		int scale = (int) Math.pow(10, precision);
 		return (float) Math.round(value * scale) / scale;
+	}
+
+	public static int roundToNearestInt(double value) {
+		return (int) Math.round(value);
+	}
+
+	// Parses Roman numerals, allowing for single character irregular subtractive notation (e.g. IL is 49, IIL is invalid)
+	public static int parseRomanNumeral(String input) {
+		int prevVal = 0;
+		int total = 0;
+		for (int i = input.length() - 1; i >= 0; i--) {
+			int val;
+			char ch = input.charAt(i);
+			switch (ch) {
+				case 'I':
+					val = 1;
+					break;
+				case 'V':
+					val = 5;
+					break;
+				case 'X':
+					val = 10;
+					break;
+				case 'L':
+					val = 50;
+					break;
+				case 'C':
+					val = 100;
+					break;
+				case 'D':
+					val = 500;
+					break;
+				case 'M':
+					val = 1000;
+					break;
+				default:
+					throw new IllegalArgumentException("Invalid Roman Numeral Character: " + ch);
+			}
+			if (val < prevVal) val = -val;
+			total += val;
+			prevVal = val;
+		}
+
+		return total;
+	}
+
+	public static int parseIntOrRomanNumeral(String input) {
+		// 0 through 9, '-', and '+' come before 'A' in ANSI, UTF8, and UTF16 character sets
+		//
+		if (input.charAt(0) < 'A') {
+			return Integer.parseInt(input);
+		}
+
+		return parseRomanNumeral(input);
 	}
 
 	public static void playPressSound() {
@@ -717,11 +843,15 @@ public class Utils {
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
 	}
 
-	public static ItemStack createItemStack(Item item, String displayname, String... lore) {
-		return createItemStack(item, displayname, 0, lore);
+	public static ItemStack createItemStack(Item item, String displayName, String... lore) {
+		return createItemStack(item, displayName, 0, lore);
 	}
 
-	public static ItemStack createItemStack(Item item, String displayname, int damage, String... lore) {
+	public static ItemStack createItemStack(Block item, String displayName, String... lore) {
+		return createItemStack(Item.getItemFromBlock(item), displayName, lore);
+	}
+
+	public static ItemStack createItemStack(Item item, String displayName, int damage, String... lore) {
 		ItemStack stack = new ItemStack(item, 1, damage);
 		NBTTagCompound tag = new NBTTagCompound();
 		NBTTagCompound display = new NBTTagCompound();
@@ -731,7 +861,7 @@ public class Utils {
 			Lore.appendTag(new NBTTagString(line));
 		}
 
-		display.setString("Name", displayname);
+		display.setString("Name", displayName);
 		display.setTag("Lore", Lore);
 
 		tag.setTag("display", display);
@@ -749,6 +879,8 @@ public class Utils {
 		String... lore
 	) {
 		NBTTagCompound tag = itemStack.getTagCompound();
+		if (tag == null)
+			tag = new NBTTagCompound();
 		NBTTagCompound display = tag.getCompoundTag("display");
 		NBTTagList Lore = new NBTTagList();
 
@@ -1253,8 +1385,6 @@ public class Utils {
 		return prim.getAsString();
 	}
 
-	public static Splitter PATH_SPLITTER = Splitter.on(".").omitEmptyStrings().limit(2);
-
 	public static JsonElement getElement(JsonElement element, String path) {
 		List<String> path_split = PATH_SPLITTER.splitToList(path);
 		if (element instanceof JsonObject) {
@@ -1267,6 +1397,11 @@ public class Utils {
 		} else {
 			return element;
 		}
+	}
+
+	public static JsonElement getElementOrDefault(JsonElement element, String path, JsonElement def) {
+		JsonElement result = getElement(element, path);
+		return result != null ? result : def;
 	}
 
 	public static ChatStyle createClickStyle(ClickEvent.Action action, String value) {
@@ -1294,12 +1429,12 @@ public class Utils {
 		file.delete();
 	}
 
-	public static char getPrimaryColourCode(String displayname) {
+	public static char getPrimaryColourCode(String displayName) {
 		int lastColourCode = -99;
 		int currentColour = 0;
 		int[] mostCommon = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-		for (int i = 0; i < displayname.length(); i++) {
-			char c = displayname.charAt(i);
+		for (int i = 0; i < displayName.length(); i++) {
+			char c = displayName.charAt(i);
 			if (c == '\u00A7') {
 				lastColourCode = i;
 			} else if (lastColourCode == i - 1) {
@@ -1326,8 +1461,8 @@ public class Utils {
 		return "0123456789abcdef".charAt(currentColour);
 	}
 
-	public static Color getPrimaryColour(String displayname) {
-		int colourInt = Minecraft.getMinecraft().fontRendererObj.getColorCode(getPrimaryColourCode(displayname));
+	public static Color getPrimaryColour(String displayName) {
+		int colourInt = Minecraft.getMinecraft().fontRendererObj.getColorCode(getPrimaryColourCode(displayName));
 		return new Color(colourInt).darker();
 	}
 
@@ -1335,8 +1470,6 @@ public class Utils {
 		scrollY.setTarget(scrollY.getTarget() + dY / 10f);
 		scrollY.resetTimer();
 	}
-
-	private static final LerpingFloat scrollY = new LerpingFloat(0, 100);
 
 	public static void drawHoveringText(
 		List<String> textLines,
@@ -1761,7 +1894,109 @@ public class Utils {
 	}
 
 	public static boolean isWithinRect(int x, int y, int left, int top, int width, int height) {
-		return left <= x && x <= left + width &&
-			top <= y && y <= top + height;
+		return left <= x && x < left + width &&
+			top <= y && y < top + height;
+	}
+
+	public static int getNumberOfStars(ItemStack stack) {
+		if (stack != null && stack.hasTagCompound()) {
+			NBTTagCompound tag = stack.getTagCompound();
+
+			if (tag.hasKey("ExtraAttributes", 10)) {
+				NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+				if (ea.hasKey("upgrade_level", 99)) {
+					return ea.getInteger("upgrade_level");
+				} else if (ea.hasKey("dungeon_item_level")) {
+					return ea.getInteger("dungeon_item_level");
+				}
+			}
+		}
+		return -1;
+	}
+
+	public static String getStarsString(int stars) {
+		EnumChatFormatting colorCode = null;
+		EnumChatFormatting defaultColorCode = EnumChatFormatting.GOLD;
+		int amount = 0;
+		if (stars > 5 && stars < 11) {
+			colorCode = EnumChatFormatting.LIGHT_PURPLE;
+			amount = stars - 5;
+			stars = 5;
+		}
+		if (stars > 10) {
+			colorCode = EnumChatFormatting.AQUA;
+			defaultColorCode = EnumChatFormatting.LIGHT_PURPLE;
+			amount = stars - 10;
+			stars = 5;
+		}
+
+		StringBuilder stringBuilder = new StringBuilder();
+		for (int i = 0; i < stars; i++) {
+			if (i < amount) {
+				stringBuilder.append(colorCode).append('\u272A');
+			} else {
+				stringBuilder.append(defaultColorCode).append('\u272A');
+			}
+		}
+		return stringBuilder.toString();
+	}
+
+	public static void showOutdatedRepoNotification() {
+		if (NotEnoughUpdates.INSTANCE.config.notifications.outdatedRepo) {
+			NotificationHandler.displayNotification(Lists.newArrayList(
+					EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "Missing repo data",
+					EnumChatFormatting.RED +
+						"Data used for many NEU features is not up to date, this should normally not be the case.",
+					EnumChatFormatting.RED + "You can try " + EnumChatFormatting.BOLD + "/neuresetrepo" + EnumChatFormatting.RESET +
+						EnumChatFormatting.RED + " and restart your game" +
+						" to see if that fixes the issue.",
+					EnumChatFormatting.RED + "If the problem persists please join " + EnumChatFormatting.BOLD +
+						"discord.gg/moulberry" +
+						EnumChatFormatting.RESET + EnumChatFormatting.RED + " and message in " + EnumChatFormatting.BOLD +
+						"#neu-support" + EnumChatFormatting.RESET + EnumChatFormatting.RED + " to get support"
+				),
+				true, true
+			);
+		}
+	}
+
+	/**
+	 * Finds the rarity from the lore of an item.
+	 * -1 = UNKNOWN
+	 * 0 = COMMON
+	 * 1 = UNCOMMON
+	 * 2 = RARE
+	 * 3 = EPIC
+	 * 4 = LEGENDARY
+	 * 5 = MYTHIC
+	 * 6 = SPECIAL
+	 * 7 = VERY SPECIAL
+	 */
+	public static int getRarityFromLore(JsonArray lore) {
+		for (int i = lore.size() - 1; i >= 0; i--) {
+			String line = lore.get(i).getAsString();
+
+			for (int j = 0; j < rarityArrC.length; j++) {
+				if (line.startsWith(rarityArrC[j])) {
+					return j;
+				}
+			}
+		}
+		return -1;
+	}
+
+	public static UUID parseDashlessUUID(String dashlessUuid) {
+		// From: https://stackoverflow.com/a/30760478/
+		BigInteger most = new BigInteger(dashlessUuid.substring(0, 16), 16);
+		BigInteger least = new BigInteger(dashlessUuid.substring(16, 32), 16);
+		return new UUID(most.longValue(), least.longValue());
+	}
+
+	public static String getOpenChestName() {
+		return SBInfo.getInstance().currentlyOpenChestName;
+	}
+
+	public static String getLastOpenChestName() {
+		return SBInfo.getInstance().lastOpenChestName;
 	}
 }

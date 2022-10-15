@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.auction;
 
 import com.google.gson.JsonObject;
@@ -35,14 +54,23 @@ import org.lwjgl.opengl.GL14;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.auction_accept;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.auction_price;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.auction_view;
+import static io.github.moulberry.notenoughupdates.util.GuiTextures.auction_view_buttons;
 
 public class CustomAH extends Gui {
 	private enum PriceFilter {
@@ -66,7 +94,7 @@ public class CustomAH extends Gui {
 	private boolean shouldUpdateSearch = false;
 	private boolean shouldSortItems = false;
 
-	private int startingBid = 0;
+	private long startingBid = 0;
 	private String currentAucId = null;
 
 	private int clickedMainCategory = -1;
@@ -104,6 +132,8 @@ public class CustomAH extends Gui {
 
 	public int guiLeft = -1;
 	public int guiTop = -1;
+
+	private String lastSearch = "";
 
 	private final Category CATEGORY_SWORD = new Category("sword", "Swords", "diamond_sword");
 	private final Category CATEGORY_ARMOR = new Category("armor", "Armor", "diamond_chestplate");
@@ -247,7 +277,11 @@ public class CustomAH extends Gui {
 	}
 
 	public void setSearch(String search) {
-		searchField.setText(search);
+		if (search == null) {
+			searchField.setText(lastSearch);
+		} else {
+			searchField.setText(search);
+		}
 		updateSearch();
 	}
 
@@ -612,7 +646,7 @@ public class CustomAH extends Gui {
 									}
 								}
 								if (priceNumbers.length() > 0) {
-									startingBid = Integer.parseInt(priceNumbers.toString());
+									startingBid = Long.parseLong(priceNumbers.toString());
 								}
 							}
 						}
@@ -651,7 +685,7 @@ public class CustomAH extends Gui {
 									boolean hasAuctionPrice = auctionInfo != null;
 									boolean hasBazaarPrice = bazaarInfo != null;
 
-									int lowestBin = manager.auctionManager.getLowestBin(internalname);
+									long lowestBin = manager.auctionManager.getLowestBin(internalname);
 
 									NumberFormat format = NumberFormat.getInstance(Locale.US);
 
@@ -1347,7 +1381,7 @@ public class CustomAH extends Gui {
 			}
 		}
 		if (getBinPriceFilterAmount() > -1) {
-			int lowestBin =
+			long lowestBin =
 				NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(
 					auc.getStack()));
 			if (lowestBin > 0) {
@@ -1459,8 +1493,15 @@ public class CustomAH extends Gui {
 							auctionIdsNew.add(entry.getKey());
 						}
 					}
+					if (NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.saveLastSearch) {
+						lastSearch = "";
+					}
 				} else {
 					String query = searchField.getText();
+
+					if (NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.saveLastSearch) {
+						lastSearch = query;
+					}
 					Set<String> dontMatch = new HashSet<>();
 
 					HashSet<String> allMatch = new HashSet<>();
@@ -1550,18 +1591,18 @@ public class CustomAH extends Gui {
 				if (auc2 == null) return -1;
 
 				if (sortMode == SORT_MODE_HIGH) {
-					int price1 = Math.max(auc1.highest_bid_amount, auc1.starting_bid);
-					int price2 = Math.max(auc2.highest_bid_amount, auc2.starting_bid);
-					int diff = price2 - price1;
+					long price1 = Math.max(auc1.highest_bid_amount, auc1.starting_bid);
+					long price2 = Math.max(auc2.highest_bid_amount, auc2.starting_bid);
+					long diff = price2 - price1;
 					if (diff != 0) {
-						return diff;
+						return Long.compare(price2, price1);
 					}
 				} else if (sortMode == SORT_MODE_LOW) {
-					int price1 = Math.max(auc1.highest_bid_amount, auc1.starting_bid);
-					int price2 = Math.max(auc2.highest_bid_amount, auc2.starting_bid);
-					int diff = price1 - price2;
+					long price1 = Math.max(auc1.highest_bid_amount, auc1.starting_bid);
+					long price2 = Math.max(auc2.highest_bid_amount, auc2.starting_bid);
+					long diff = price1 - price2;
 					if (diff != 0) {
-						return diff;
+						return Long.compare(price1, price2);
 					}
 				} else {
 					long end1 = auc1.end;
@@ -1589,7 +1630,6 @@ public class CustomAH extends Gui {
 			return false;
 		}
 
-		Keyboard.enableRepeatEvents(true);
 		if (isEditingPrice() && Keyboard.getEventKey() == Keyboard.KEY_RETURN) {
 			Minecraft.getMinecraft().displayGuiScreen(null);
 		} else if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
@@ -1652,16 +1692,16 @@ public class CustomAH extends Gui {
 		priceField.setText((int) (priceI * factor) + end);
 	}
 
-	private int getPriceFilterAmount() {
+	private long getPriceFilterAmount() {
 		return getNumberFromTextBox(priceFilterField);
 	}
 
-	private int getNumberFromTextBox(GuiTextField textField) {
+	private long getNumberFromTextBox(GuiTextField textField) {
 		if (textField.getText().equals("")) {
 			return -2;
 		}
 		try {
-			int parsed = Integer.parseInt(textField.getText());
+			long parsed = Long.parseLong(textField.getText());
 			if (parsed < 0) {
 				return -1;
 			}
@@ -1671,7 +1711,7 @@ public class CustomAH extends Gui {
 		}
 	}
 
-	private int getBinPriceFilterAmount() {
+	private long getBinPriceFilterAmount() {
 		return getNumberFromTextBox(binPriceFilterField);
 	}
 

@@ -1,11 +1,34 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigAccordionId;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorAccordion;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorBoolean;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDropdown;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 
 public class Enchanting {
 	@ConfigOption(
-		name = "Enchant Table GUI",
+		name = "Enchant Table / Hex GUI",
 		desc = ""
 	)
 	@ConfigEditorAccordion(id = 1)
@@ -19,6 +42,15 @@ public class Enchanting {
 	@ConfigEditorBoolean
 	@ConfigAccordionId(id = 1)
 	public boolean enableTableGUI = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Enable Hex GUI",
+		desc = "Show a custom GUI when using the Hex"
+	)
+	@ConfigEditorBoolean
+	@ConfigAccordionId(id = 1)
+	public boolean enableHexGUI = true;
 
 	/*@Expose
 	@ConfigOption(
@@ -52,6 +84,15 @@ public class Enchanting {
 	)
 	@ConfigAccordionId(id = 1)
 	public int enchantOrdering = 0;
+
+	@Expose
+	@ConfigOption(
+		name = "Use highest level from /et in /hex",
+		desc = "Show max level from /et in hex instead of highest possible"
+	)
+	@ConfigEditorBoolean()
+	@ConfigAccordionId(id = 1)
+	public boolean maxEnchLevel = false;
 
 	@ConfigOption(
 		name = "Enchanting Solvers",
@@ -91,7 +132,7 @@ public class Enchanting {
 	@Expose
 	@ConfigOption(
 		name = "Ultrasequencer Numbers",
-		desc = "Replace the items in the supersequencer with only numbers"
+		desc = "Replace the items in the Ultrasequencer with only numbers"
 	)
 	@ConfigEditorBoolean
 	@ConfigAccordionId(id = 0)
@@ -105,6 +146,15 @@ public class Enchanting {
 	@ConfigEditorBoolean
 	@ConfigAccordionId(id = 0)
 	public boolean showNextClick = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Hide Buttons",
+		desc = "Hide Inventory Buttons and Quick Commands while in the experimentation table"
+	)
+	@ConfigEditorBoolean
+	@ConfigAccordionId(id = 0)
+	public boolean hideButtons = false;
 
 	@Expose
 	@ConfigOption(

@@ -1,14 +1,46 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
+import io.github.moulberry.notenoughupdates.events.RepositoryReloadEvent;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.miscgui.KatSitterOverlay;
+import io.github.moulberry.notenoughupdates.options.customtypes.NEUDebugFlag;
 import io.github.moulberry.notenoughupdates.recipes.CraftingOverlay;
 import io.github.moulberry.notenoughupdates.recipes.CraftingRecipe;
 import io.github.moulberry.notenoughupdates.recipes.Ingredient;
 import io.github.moulberry.notenoughupdates.recipes.NeuRecipe;
-import io.github.moulberry.notenoughupdates.util.*;
+import io.github.moulberry.notenoughupdates.util.Constants;
+import io.github.moulberry.notenoughupdates.util.HotmInformation;
+import io.github.moulberry.notenoughupdates.util.ApiUtil;
+import io.github.moulberry.notenoughupdates.util.ItemResolutionQuery;
+import io.github.moulberry.notenoughupdates.util.ItemUtils;
+import io.github.moulberry.notenoughupdates.util.SBInfo;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
@@ -16,23 +48,48 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTException;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.ProgressManager;
 import org.apache.commons.io.FileUtils;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.Display;
 
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import java.io.*;
+import javax.net.ssl.HttpsURLConnection;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -43,6 +100,7 @@ public class NEUManager {
 	public final APIManager auctionManager;
 
 	private final TreeMap<String, JsonObject> itemMap = new TreeMap<>();
+	private boolean hasBeenLoadedBefore = false;
 
 	private final TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
 	private final TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
@@ -66,17 +124,9 @@ public class NEUManager {
 	public String viewItemAttemptID = null;
 	public long viewItemAttemptTime = 0;
 
-	private final String currentProfile = "";
-	private final String currentProfileBackup = "";
-	public final HypixelApi hypixelApi = new HypixelApi();
+	public final ApiUtil apiUtils = new ApiUtil();
 
 	private final Map<String, ItemStack> itemstackCache = new HashMap<>();
-
-	private final ExecutorService repoLoaderES = Executors.newSingleThreadExecutor();
-
-	private static String GIT_COMMITS_URL;
-
-	// TODO: private final Map<String, NeuItem>
 
 	private final Set<NeuRecipe> recipes = new HashSet<>();
 	private final HashMap<String, Set<NeuRecipe>> recipesMap = new HashMap<>();
@@ -100,8 +150,6 @@ public class NEUManager {
 		this.hotm = new HotmInformation(neu);
 		this.craftingOverlay = new CraftingOverlay(this);
 		this.katSitterOverlay = new KatSitterOverlay();
-
-		GIT_COMMITS_URL = neu.config.hidden.repoCommitsURL;
 
 		gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -159,186 +207,74 @@ public class NEUManager {
 		}
 	}
 
+	public CompletableFuture<Boolean> fetchRepository() {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				JsonObject currentCommitJSON = getJsonFromFile(new File(configLocation, "currentCommit.json"));
+
+				latestRepoCommit = null;
+				try (Reader inReader = new InputStreamReader(new URL(neu.config.apiData.getCommitApiUrl()).openStream())) {
+					JsonObject commits = gson.fromJson(inReader, JsonObject.class);
+					latestRepoCommit = commits.get("sha").getAsString();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				if (latestRepoCommit == null || latestRepoCommit.isEmpty()) return false;
+
+				if (new File(configLocation, "repo").exists() && new File(configLocation, "repo/items").exists()) {
+					if (currentCommitJSON != null && currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
+						return false;
+					}
+				}
+				Utils.recursiveDelete(repoLocation);
+				repoLocation.mkdirs();
+
+				File itemsZip = new File(repoLocation, "neu-items-master.zip");
+				try {
+					itemsZip.createNewFile();
+				} catch (IOException e) {
+					return false;
+				}
+
+				URL url = new URL(neu.config.apiData.getDownloadUrl(latestRepoCommit));
+				URLConnection urlConnection = url.openConnection();
+				urlConnection.setConnectTimeout(15000);
+				urlConnection.setReadTimeout(30000);
+
+				try (InputStream is = urlConnection.getInputStream()) {
+					FileUtils.copyInputStreamToFile(is, itemsZip);
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.err.println("Failed to download NEU Repo! Please report this issue to the mod creator");
+					return false;
+				}
+
+				unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
+
+				if (currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
+					JsonObject newCurrentCommitJSON = new JsonObject();
+					newCurrentCommitJSON.addProperty("sha", latestRepoCommit);
+					try {
+						writeJson(newCurrentCommitJSON, new File(configLocation, "currentCommit.json"));
+					} catch (IOException ignored) {
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return true;
+		});
+	}
+
 	/**
 	 * Called when the game is first loaded. Compares the local repository to the github repository and handles the
 	 * downloading of new/updated files. This then calls the "loadItem" method for every item in the local repository.
 	 */
 	public void loadItemInformation() {
-        /*File repoFile = new File(configLocation, "repo2");
-        repoFile.mkdirs();
-
-        try(Git git = Git.init().setDirectory(repoFile).call()) {
-            StoredConfig config = git.getRepository().getConfig();
-            config.setString("branch", "master", "merge", "refs/heads/master");
-            config.setString("branch", "master", "remote", "origin");
-            config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
-            config.setString("remote", "origin", "url", "https://github.com/Moulberry/NotEnoughUpdates-REPO.git");
-            config.save();
-
-            git.remoteAdd().setName("origin").setUri(new URIish("https://github.com/Moulberry/NotEnoughUpdates-REPO.git")).call();
-            PullResult result = git.pull().setRemote("origin").setTimeout(30000).call();
-            System.out.println("successful pull: " + result.isSuccessful());
-        } catch(Exception e) {
-            e.printStackTrace();
-        }*/
-
-        /*if(repoFile.mkdirs()) {
-            try {
-                Git.cloneRepository()
-                    .setURI("https://github.com/Moulberry/NotEnoughUpdates-REPO.git")
-                    .setDirectory(repoFile)
-                    .call();
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-
-        }*/
-
-		repoLoaderES.submit(() -> {
-			JDialog dialog = null;
-			try {
-				if (NotEnoughUpdates.INSTANCE.config.hidden.autoupdate) {
-					JOptionPane pane = new JOptionPane("Getting items to download from remote repository.");
-					dialog = pane.createDialog("NotEnoughUpdates Remote Sync");
-					dialog.setModal(false);
-					if (NotEnoughUpdates.INSTANCE.config.hidden.dev) dialog.setVisible(true);
-
-					if (Display.isActive()) dialog.toFront();
-
-					JsonObject currentCommitJSON = getJsonFromFile(new File(configLocation, "currentCommit.json"));
-
-					latestRepoCommit = null;
-					try (Reader inReader = new InputStreamReader(new URL(GIT_COMMITS_URL).openStream())) {
-						JsonObject commits = gson.fromJson(inReader, JsonObject.class);
-						latestRepoCommit = commits.get("sha").getAsString();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					if (latestRepoCommit == null || latestRepoCommit.isEmpty()) return;
-
-					if (new File(configLocation, "repo").exists() && new File(configLocation, "repo/items").exists()) {
-						if (currentCommitJSON != null && currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
-							dialog.setVisible(false);
-							return;
-						}
-					}
-
-					if (Display.isActive()) dialog.toFront();
-
-					Utils.recursiveDelete(repoLocation);
-					repoLocation.mkdirs();
-
-					String dlUrl = neu.config.hidden.repoURL;
-
-					pane.setMessage("Downloading NEU Master Archive. (DL# >20)");
-					dialog.pack();
-					if (NotEnoughUpdates.INSTANCE.config.hidden.dev) dialog.setVisible(true);
-					if (Display.isActive()) dialog.toFront();
-
-					File itemsZip = new File(repoLocation, "neu-items-master.zip");
-					try {
-						itemsZip.createNewFile();
-					} catch (IOException e) {
-						return;
-					}
-
-					URL url = new URL(dlUrl);
-					URLConnection urlConnection = url.openConnection();
-					urlConnection.setConnectTimeout(15000);
-					urlConnection.setReadTimeout(30000);
-
-					try (InputStream is = urlConnection.getInputStream()) {
-						FileUtils.copyInputStreamToFile(is, itemsZip);
-					} catch (IOException e) {
-						dialog.dispose();
-						e.printStackTrace();
-						System.err.println("Failed to download NEU Repo! Please report this issue to the mod creator");
-						return;
-					}
-					/*try (
-						BufferedInputStream inStream = new BufferedInputStream(urlConnection.getInputStream());
-						FileOutputStream fileOutputStream = new FileOutputStream(itemsZip)
-					) {
-						byte dataBuffer[] = new byte[1024];
-						int bytesRead;
-						while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
-							fileOutputStream.write(dataBuffer, 0, bytesRead);
-						}
-					} catch (IOException e) {
-						dialog.dispose();
-						return;
-					}*/
-
-					pane.setMessage("Unzipping NEU Master Archive.");
-					dialog.pack();
-					//dialog.setVisible(true);
-					if (Display.isActive()) dialog.toFront();
-
-					unzipIgnoreFirstFolder(itemsZip.getAbsolutePath(), repoLocation.getAbsolutePath());
-
-					if (currentCommitJSON == null || !currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
-						JsonObject newCurrentCommitJSON = new JsonObject();
-						newCurrentCommitJSON.addProperty("sha", latestRepoCommit);
-						try {
-							writeJson(newCurrentCommitJSON, new File(configLocation, "currentCommit.json"));
-						} catch (IOException ignored) {
-						}
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				if (dialog != null) dialog.dispose();
-			}
-
-			File items = new File(repoLocation, "items");
-			if (items.exists()) {
-				File[] itemFiles = new File(repoLocation, "items").listFiles();
-				if (itemFiles != null) {
-					ProgressManager.ProgressBar bar = ProgressManager.push("Loading recipes", itemFiles.length);
-					for (File f : itemFiles) {
-						String internalname = f.getName().substring(0, f.getName().length() - 5);
-						bar.step(internalname);
-						synchronized (itemMap) {
-							if (!itemMap.containsKey(internalname)) {
-								loadItem(internalname);
-							}
-						}
-					}
-					ProgressManager.pop(bar);
-				}
-			}
-
-			try {
-				Constants.reload();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
-
-		File items = new File(repoLocation, "items");
-		if (items.exists()) {
-			File[] itemFiles = new File(repoLocation, "items").listFiles();
-			if (itemFiles != null) {
-				ProgressManager.ProgressBar bar = ProgressManager.push("Loading items", itemFiles.length);
-				for (File f : itemFiles) {
-					String internalname = f.getName().substring(0, f.getName().length() - 5);
-					bar.step(internalname);
-					synchronized (itemMap) {
-						if (!itemMap.containsKey(internalname)) {
-							loadItem(internalname);
-						}
-					}
-				}
-				ProgressManager.pop(bar);
-			}
-		}
-
-		try {
-			Constants.reload();
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (NotEnoughUpdates.INSTANCE.config.apiData.autoupdate) {
+			fetchRepository().thenRun(this::reloadRepository);
+		} else {
+			reloadRepository();
 		}
 	}
 
@@ -435,6 +371,10 @@ public class NEUManager {
 		for (Ingredient input : recipe.getIngredients()) {
 			usagesMap.computeIfAbsent(input.getInternalItemId(), ignored -> new HashSet<>()).add(recipe);
 		}
+		for (Ingredient catalystItem : recipe.getCatalystItems()) {
+			recipesMap.computeIfAbsent(catalystItem.getInternalItemId(), ignored -> new HashSet<>()).add(recipe);
+			usagesMap.computeIfAbsent(catalystItem.getInternalItemId(), ignored -> new HashSet<>()).add(recipe);
+		}
 	}
 
 	public Set<NeuRecipe> getRecipesFor(String internalName) {
@@ -453,29 +393,94 @@ public class NEUManager {
 		return getUsagesFor(internalname).stream().filter(NeuRecipe::isAvailable).collect(Collectors.toList());
 	}
 
+	private static class DebugMatch {
+		int index;
+		String match;
+
+		DebugMatch(int index, String match) {
+				this.index = index;
+				this.match = match;
+		}
+	}
+
+
+	private String searchDebug(String[] searchArray, ArrayList<DebugMatch> debugMatches) {
+		//splitToSearch, debugMatches and query
+		final String ANSI_RED = "\u001B[31m";
+		final String ANSI_RESET = "\u001B[0m";
+		final String ANSI_YELLOW = "\u001B[33m";
+
+		//create debug message
+		StringBuilder debugBuilder = new StringBuilder();
+		for (int i = 0; i < searchArray.length; i++) {
+			final int fi = i;
+			Object[] matches = debugMatches.stream().filter((d) -> d.index == fi).toArray();
+
+			if (matches.length > 0) {
+				debugBuilder.append(ANSI_YELLOW + "[").append(((DebugMatch) matches[0]).match).append("]");
+				debugBuilder.append(ANSI_RED + "[").append(searchArray[i]).append("]").append(ANSI_RESET).append(" ");
+			} else {
+				debugBuilder.append(searchArray[i]).append(" ");
+			}
+		}
+
+		//yellow = query match and red = string match
+		return debugBuilder.toString();
+	}
+
 	/**
 	 * Searches a string for a query. This method is used to mimic the behaviour of the more complex map-based search
 	 * function. This method is used for the chest-item-search feature.
 	 */
 	public boolean searchString(String toSearch, String query) {
-		int lastMatch = -1;
+		final String ANSI_RESET = "\u001B[0m";
+		final String ANSI_YELLOW = "\u001B[33m";
+
+		int lastStringMatch = -1;
+		ArrayList<DebugMatch> debugMatches = new ArrayList<>();
 
 		toSearch = clean(toSearch).toLowerCase();
 		query = clean(query).toLowerCase();
-		String[] splitToSeach = toSearch.split(" ");
-		out:
-		for (String s : query.split(" ")) {
-			for (int i = 0; i < splitToSeach.length; i++) {
-				if (!(lastMatch == -1 || lastMatch == i - 1)) continue;
-				if (splitToSeach[i].startsWith(s)) {
-					lastMatch = i;
-					continue out;
+		String[] splitToSearch = toSearch.split(" ");
+		String[] queryArray = query.split(" ");
+
+		{
+			String currentSearch = queryArray[0];
+			int queryIndex = 0;
+			boolean matchedLastQueryItem = false;
+
+			for (int k = 0; k < splitToSearch.length; k++) {
+				if (queryIndex - 1 != -1 && (queryArray.length - queryIndex) > (splitToSearch.length - k)) continue;
+				if (splitToSearch[k].startsWith(currentSearch)) {
+					if (((lastStringMatch != -1 ? lastStringMatch : k-1) == k-1)) {
+						debugMatches.add(new DebugMatch(k, currentSearch));
+						lastStringMatch = k;
+						if (queryIndex+1 != queryArray.length) {
+							queryIndex++;
+							currentSearch = queryArray[queryIndex];
+						} else {
+							matchedLastQueryItem = true;
+						}
+					}
+				} else if (queryIndex != 0) {
+					queryIndex = 0;
+					currentSearch = queryArray[queryIndex];
+					lastStringMatch = -1;
 				}
 			}
-			return false;
-		}
 
-		return true;
+			if (matchedLastQueryItem) {
+				if (NEUDebugFlag.SEARCH.isSet()) {
+					NotEnoughUpdates.LOGGER.info("Found match for \"" + ANSI_YELLOW + query + ANSI_RESET + "\":\n\t" + searchDebug(splitToSearch, debugMatches));
+				}
+			} else {
+				if (NEUDebugFlag.SEARCH.isSet() && lastStringMatch != -1) {
+					NotEnoughUpdates.LOGGER.info("Found partial match for \"" + ANSI_YELLOW + query + ANSI_RESET + "\":\n\t" + searchDebug(splitToSearch, debugMatches));
+				}
+			}
+
+			return matchedLastQueryItem;
+		}
 	}
 
 	/**
@@ -723,82 +728,35 @@ public class NEUManager {
 		return uuid;
 	}
 
-	public String getInternalnameFromNBT(NBTTagCompound tag) {
-		String internalname = null;
-		if (tag != null && tag.hasKey("ExtraAttributes", 10)) {
-			NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
+	public String getSkullValueFromNBT(NBTTagCompound tag) {
+		if (tag != null && tag.hasKey("SkullOwner", 10)) {
+			NBTTagCompound ea = tag.getCompoundTag("SkullOwner");
+			NBTTagCompound ea3 = tag.getCompoundTag("display");
 
-			if (ea.hasKey("id", 8)) {
-				internalname = ea.getString("id").replaceAll(":", "-");
-			} else {
-				return null;
-			}
-
-			if ("PET".equals(internalname)) {
-				String petInfo = ea.getString("petInfo");
-				if (petInfo.length() > 0) {
-					JsonObject petInfoObject = gson.fromJson(petInfo, JsonObject.class);
-					internalname = petInfoObject.get("type").getAsString();
-					String tier = petInfoObject.get("tier").getAsString();
-					switch (tier) {
-						case "COMMON":
-							internalname += ";0";
-							break;
-						case "UNCOMMON":
-							internalname += ";1";
-							break;
-						case "RARE":
-							internalname += ";2";
-							break;
-						case "EPIC":
-							internalname += ";3";
-							break;
-						case "LEGENDARY":
-							internalname += ";4";
-							break;
-						case "MYTHIC":
-							internalname += ";5";
-							break;
-					}
-				}
-			}
-			if ("ENCHANTED_BOOK".equals(internalname) && ea.hasKey("enchantments", 10)) {
-				NBTTagCompound enchants = ea.getCompoundTag("enchantments");
-
-				for (String enchname : enchants.getKeySet()) {
-					internalname = enchname.toUpperCase() + ";" + enchants.getInteger(enchname);
-					break;
-				}
-			}
-			if ("RUNE".equals(internalname) && ea.hasKey("runes", 10)) {
-				NBTTagCompound rune = ea.getCompoundTag("runes");
-
-				for (String runename : rune.getKeySet()) {
-					internalname = runename.toUpperCase() + "_RUNE" + ";" + rune.getInteger(runename);
-					break;
-				}
-			}
-			if ("PARTY_HAT_CRAB".equals(internalname) && (ea.getString("party_hat_color") != null)) {
-				String crabhat = ea.getString("party_hat_color");
-				internalname = "PARTY_HAT_CRAB" + "_" + crabhat.toUpperCase();
+			if (ea.hasKey("Properties", 10)) {
+				NBTTagCompound ea2 = ea;
+				ea = ea.getCompoundTag("Properties");
+				ea = ea.getTagList("textures", 10).getCompoundTagAt(0);
+				String name = ea3.getString("Name").replaceAll(" M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$", "");
+				return "put(\"ID\", Utils.createSkull(EnumChatFormatting.AQUA + \"" + name + "\" ,\"" + ea2.getString("Id") +
+					"\", \"" + ea.getString("Value") + "\"));";
 			}
 		}
+		return null;
+	}
 
-		return internalname;
+	/**
+	 * Replaced with {@link #createItemResolutionQuery()}
+	 */
+	@Deprecated
+	public String getInternalnameFromNBT(NBTTagCompound tag) {
+		return createItemResolutionQuery()
+			.withItemNBT(tag)
+			.resolveInternalName();
 	}
 
 	public String[] getLoreFromNBT(NBTTagCompound tag) {
-		String[] lore = new String[0];
-		NBTTagCompound display = tag.getCompoundTag("display");
-
-		if (display.hasKey("Lore", 9)) {
-			NBTTagList list = display.getTagList("Lore", 8);
-			lore = new String[list.tagCount()];
-			for (int k = 0; k < list.tagCount(); k++) {
-				lore[k] = list.getStringTagAt(k);
-			}
-		}
-		return lore;
+		return ItemUtils.getLore(tag).toArray(new String[0]);
 	}
 
 	public JsonObject getJsonFromNBT(NBTTagCompound tag) {
@@ -826,14 +784,14 @@ public class NEUManager {
 		if (itemMc != null) {
 			itemid = itemMc.getRegistryName();
 		}
-		String displayname = display.getString("Name");
+		String displayName = display.getString("Name");
 		String[] info = new String[0];
 		String clickcommand = "";
 
 		JsonObject item = new JsonObject();
 		item.addProperty("internalname", internalname);
 		item.addProperty("itemid", itemid);
-		item.addProperty("displayname", displayname);
+		item.addProperty("displayname", displayName);
 
 		if (tag != null && tag.hasKey("ExtraAttributes", 10)) {
 			NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
@@ -894,12 +852,12 @@ public class NEUManager {
 		String clickcommand = item.get("clickcommand").getAsString();
 		switch (clickcommand.intern()) {
 			case "viewrecipe":
-				displayGuiItemRecipe(internalName, null);
+				displayGuiItemRecipe(internalName);
 				break;
-			case "viewoption":
+			case "viewpotion":
 				neu.sendChatMessage("/viewpotion " + internalName.split(";")[0].toLowerCase(Locale.ROOT));
 		}
-		displayGuiItemRecipe(internalName, "");
+		displayGuiItemRecipe(internalName);
 	}
 
 	public void showRecipe(String internalName) {
@@ -952,10 +910,24 @@ public class NEUManager {
 		return json;
 	}
 
-	public String getInternalNameForItem(ItemStack stack) {
+	public String getSkullValueForItem(ItemStack stack) {
 		if (stack == null) return null;
 		NBTTagCompound tag = stack.getTagCompound();
-		return getInternalnameFromNBT(tag);
+		return getSkullValueFromNBT(tag);
+	}
+
+	public ItemResolutionQuery createItemResolutionQuery() {
+		return new ItemResolutionQuery(this);
+	}
+
+	/**
+	 * Replaced with {@link #createItemResolutionQuery()}
+	 */
+	@Deprecated
+	public String getInternalNameForItem(ItemStack stack) {
+		return createItemResolutionQuery()
+			.withItemStack(stack)
+			.resolveInternalName();
 	}
 
 	public String getUUIDForItem(ItemStack stack) {
@@ -988,17 +960,15 @@ public class NEUManager {
 		if (!usagesMap.containsKey(internalName)) return false;
 		List<NeuRecipe> usages = getAvailableUsagesFor(internalName);
 		if (usages.isEmpty()) return false;
-		Minecraft.getMinecraft().displayGuiScreen(
-			new GuiItemRecipe("Item Usages", usages, this));
+		NotEnoughUpdates.INSTANCE.openGui = (new GuiItemRecipe(usages, this));
 		return true;
 	}
 
-	public boolean displayGuiItemRecipe(String internalName, String text) {
+	public boolean displayGuiItemRecipe(String internalName) {
 		if (!recipesMap.containsKey(internalName)) return false;
 		List<NeuRecipe> recipes = getAvailableRecipesFor(internalName);
 		if (recipes.isEmpty()) return false;
-		Minecraft.getMinecraft().displayGuiScreen(
-			new GuiItemRecipe(text != null ? text : "Item Recipe", recipes, this));
+		NotEnoughUpdates.INSTANCE.openGui = (new GuiItemRecipe(recipes, this));
 		return true;
 	}
 
@@ -1009,7 +979,7 @@ public class NEUManager {
 	public boolean failViewItem(String text) {
 		if (viewItemAttemptID != null && !viewItemAttemptID.isEmpty()) {
 			if (System.currentTimeMillis() - viewItemAttemptTime < 500) {
-				return displayGuiItemRecipe(viewItemAttemptID, text);
+				return displayGuiItemRecipe(viewItemAttemptID);
 			}
 		}
 		return false;
@@ -1032,11 +1002,12 @@ public class NEUManager {
 			} catch (IOException e) {
 				return null;
 			}
-			try (
-				BufferedInputStream inStream = new BufferedInputStream(new URL(
-					url + "?action=raw&templates=expand").openStream());
-				FileOutputStream fileOutputStream = new FileOutputStream(f)
-			) {
+			try {
+				HttpsURLConnection con = (HttpsURLConnection) new URL(url + "?action=raw&templates=expand").openConnection();
+				con.setRequestMethod("GET");
+				con.setRequestProperty("User-Agent", "NotEnoughUpdates");
+				BufferedInputStream inStream = new BufferedInputStream(con.getInputStream());
+				FileOutputStream fileOutputStream = new FileOutputStream(f);
 				byte[] dataBuffer = new byte[1024];
 				int bytesRead;
 				while ((bytesRead = inStream.read(dataBuffer, 0, 1024)) != -1) {
@@ -1149,7 +1120,7 @@ public class NEUManager {
 	 * json files representing skyblock item data.
 	 */
 	public JsonObject createItemJson(
-		String internalname, String itemid, String displayname, String[] lore,
+		String internalname, String itemid, String displayName, String[] lore,
 		String crafttext, String infoType, String[] info,
 		String clickcommand, int damage, NBTTagCompound nbttag
 	) {
@@ -1157,7 +1128,7 @@ public class NEUManager {
 			new JsonObject(),
 			internalname,
 			itemid,
-			displayname,
+			displayName,
 			lore,
 			crafttext,
 			infoType,
@@ -1169,7 +1140,7 @@ public class NEUManager {
 	}
 
 	public JsonObject createItemJson(
-		JsonObject base, String internalname, String itemid, String displayname, String[] lore,
+		JsonObject base, String internalname, String itemid, String displayName, String[] lore,
 		String crafttext, String infoType, String[] info,
 		String clickcommand, int damage, NBTTagCompound nbttag
 	) {
@@ -1180,7 +1151,7 @@ public class NEUManager {
 		JsonObject json = gson.fromJson(gson.toJson(base, JsonObject.class), JsonObject.class);
 		json.addProperty("internalname", internalname);
 		json.addProperty("itemid", itemid);
-		json.addProperty("displayname", displayname);
+		json.addProperty("displayname", displayName);
 		json.addProperty("crafttext", crafttext);
 		json.addProperty("clickcommand", clickcommand);
 		json.addProperty("damage", damage);
@@ -1206,14 +1177,14 @@ public class NEUManager {
 	}
 
 	public boolean writeItemJson(
-		String internalname, String itemid, String displayname, String[] lore, String crafttext,
+		String internalname, String itemid, String displayName, String[] lore, String crafttext,
 		String infoType, String[] info, String clickcommand, int damage, NBTTagCompound nbttag
 	) {
 		return writeItemJson(
 			new JsonObject(),
 			internalname,
 			itemid,
-			displayname,
+			displayName,
 			lore,
 			crafttext,
 			infoType,
@@ -1225,14 +1196,14 @@ public class NEUManager {
 	}
 
 	public boolean writeItemJson(
-		JsonObject base, String internalname, String itemid, String displayname, String[] lore,
+		JsonObject base, String internalname, String itemid, String displayName, String[] lore,
 		String crafttext, String infoType, String[] info, String clickcommand, int damage, NBTTagCompound nbttag
 	) {
 		JsonObject json = createItemJson(
 			base,
 			internalname,
 			itemid,
-			displayname,
+			displayName,
 			lore,
 			crafttext,
 			infoType,
@@ -1294,7 +1265,7 @@ public class NEUManager {
 		}
 	}
 
-	public HashMap<String, String> getLoreReplacements(String petname, String tier, int level) {
+	public HashMap<String, String> getPetLoreReplacements(String petname, String tier, int level) {
 		JsonObject petnums = null;
 		if (petname != null && tier != null) {
 			petnums = Constants.PETNUMS;
@@ -1407,7 +1378,7 @@ public class NEUManager {
 								float statMax = entry.getValue().getAsFloat();
 								float statMin = min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat();
 								float val = statMin * minMix + statMax * maxMix;
-								String statStr = (statMin > 0 ? "+" : "") + (int) Math.floor(val);
+								String statStr = (statMin > 0 ? "+" : "") + removeUnusedDecimal(Math.floor(val * 10) / 10);
 								replacements.put(entry.getKey(), statStr);
 							}
 						}
@@ -1419,7 +1390,7 @@ public class NEUManager {
 		return replacements;
 	}
 
-	public HashMap<String, String> getLoreReplacements(NBTTagCompound tag, int level) {
+	public HashMap<String, String> getPetLoreReplacements(NBTTagCompound tag, int level) {
 		String petname = null;
 		String tier = null;
 		if (tag != null && tag.hasKey("ExtraAttributes")) {
@@ -1453,7 +1424,7 @@ public class NEUManager {
 				}
 			}
 		}
-		return getLoreReplacements(petname, tier, level);
+		return getPetLoreReplacements(petname, tier, level);
 	}
 
 	public NBTTagList processLore(JsonArray lore, HashMap<String, String> replacements) {
@@ -1484,6 +1455,7 @@ public class NEUManager {
 	}
 
 	public ItemStack jsonToStack(JsonObject json, boolean useCache, boolean useReplacements, boolean copyStack) {
+		if (useReplacements) useCache = false;
 		if (json == null) return new ItemStack(Items.painting, 1, 10);
 		String internalname = json.get("internalname").getAsString();
 
@@ -1523,13 +1495,13 @@ public class NEUManager {
 			HashMap<String, String> replacements = new HashMap<>();
 
 			if (useReplacements) {
-				replacements = getLoreReplacements(stack.getTagCompound(), -1);
+				replacements = getPetLoreReplacements(stack.getTagCompound(), -1);
 
-				String displayname = json.get("displayname").getAsString();
+				String displayName = json.get("displayname").getAsString();
 				for (Map.Entry<String, String> entry : replacements.entrySet()) {
-					displayname = displayname.replace("{" + entry.getKey() + "}", entry.getValue());
+					displayName = displayName.replace("{" + entry.getKey() + "}", entry.getValue());
 				}
-				stack.setStackDisplayName(displayname);
+				stack.setStackDisplayName(displayName);
 			}
 
 			if (json.has("lore")) {
@@ -1552,20 +1524,73 @@ public class NEUManager {
 		}
 	}
 
-	public void reloadRepository() {
-		File items = new File(repoLocation, "items");
-		if (items.exists()) {
-			recipes.clear();
-			recipesMap.clear();
-			usagesMap.clear();
+	public CompletableFuture<List<String>> userFacingRepositoryReload() {
+		String lastCommit = NotEnoughUpdates.INSTANCE.manager.latestRepoCommit;
+		NotEnoughUpdates.INSTANCE.manager.resetRepo();
+		return NotEnoughUpdates.INSTANCE.manager
+			.fetchRepository()
+			.thenCompose(ignored -> NotEnoughUpdates.INSTANCE.manager.reloadRepository())
+			.thenApply(ignored -> {
+				String newCommitHash = NotEnoughUpdates.INSTANCE.manager.latestRepoCommit;
+				String newCommitShortHash = (newCommitHash == null ? "MISSING" : newCommitHash.substring(0, 7));
+				return Arrays.asList(
+					"§aRepository reloaded.",
+					(lastCommit == null
+						? "§eYou downloaded the repository version §b" + newCommitShortHash + "§e."
+						: "§eYou updated your repository from §b" + lastCommit.substring(0, 7) + "§e to §b" +
+							newCommitShortHash + "§e."
+					)
+				);
+			})
+			.exceptionally(ex -> {
+				ex.printStackTrace();
+				return Arrays.asList(
+					"§cRepository not fully reloaded.",
+					"§cThere was an error reloading your repository.",
+					"§cThis might be caused by an outdated version of neu",
+					"§c(or by not using the dangerous repository if you are using a prerelease of neu).",
+					"§aYour repository will still work, but is in a suboptimal state.",
+					"§eJoin §bdiscord.gg/moulberry §efor help."
+				);
+			});
+	}
 
-			File[] itemFiles = new File(repoLocation, "items").listFiles();
-			if (itemFiles != null) {
-				for (File f : itemFiles) {
-					String internalname = f.getName().substring(0, f.getName().length() - 5);
-					loadItem(internalname);
+	public CompletableFuture<Void> reloadRepository() {
+		CompletableFuture<Void> comp = new CompletableFuture<>();
+		Minecraft.getMinecraft().addScheduledTask(() -> {
+			try {
+				File items = new File(repoLocation, "items");
+				if (items.exists()) {
+					recipes.clear();
+					recipesMap.clear();
+					usagesMap.clear();
+
+					File[] itemFiles = new File(repoLocation, "items").listFiles();
+					if (itemFiles != null) {
+						for (File f : itemFiles) {
+							String internalname = f.getName().substring(0, f.getName().length() - 5);
+							loadItem(internalname);
+						}
+					}
 				}
+
+				new RepositoryReloadEvent(repoLocation, !hasBeenLoadedBefore).post();
+				hasBeenLoadedBefore = true;
+				comp.complete(null);
+			} catch (Exception e) {
+				comp.completeExceptionally(e);
 			}
-		}
+		});
+		return comp;
+	}
+
+	public ItemStack createItem(String internalName) {
+		return createItemResolutionQuery()
+			.withKnownInternalName(internalName)
+			.resolveToItemStack();
+	}
+
+	public boolean isValidInternalName(String internalName) {
+		return itemMap.containsKey(internalName);
 	}
 }

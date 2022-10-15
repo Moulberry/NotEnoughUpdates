@@ -1,7 +1,32 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigAccordionId;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorAccordion;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorBoolean;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDraggableList;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorKeybind;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorSlider;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 import org.lwjgl.input.Keyboard;
 
 import java.util.ArrayList;
@@ -90,6 +115,14 @@ public class TooltipTweaks {
 
 	@Expose
 	@ConfigOption(
+		name = "Always show required dungeon items",
+		desc = "Always show the required items to upgrade to the next star if more than just Essence is needed"
+	)
+	@ConfigEditorBoolean
+	public boolean alwaysShowRequiredItems = false;
+
+	@Expose
+	@ConfigOption(
 		name = "Show reforge stats",
 		desc = "Show statistics a reforge stone will apply."
 	)
@@ -139,4 +172,54 @@ public class TooltipTweaks {
 		minStep = 1f
 	)
 	public int tooltipBorderOpacity = 200;
+
+	@Expose
+	@ConfigOption(
+		name = "Power Stone Stats",
+		desc = "Show your real magical power and real stat increase on power stones"
+	)
+	@ConfigEditorBoolean
+	public boolean powerStoneStats = true;
+
+	@ConfigOption(
+		name = "RNG Meter",
+		desc = ""
+	)
+	@ConfigEditorAccordion(id = 1)
+	public boolean rngMeter = false;
+
+	@Expose
+	@ConfigOption(
+		name = "Fraction Display",
+		desc = "Show the fraction instead of the percentage in the slayer and dungeon rng meter inventory"
+	)
+	@ConfigEditorBoolean
+	@ConfigAccordionId(id = 1)
+	public boolean rngMeterFractionDisplay = true;
+
+	@Expose
+	@ConfigOption(
+		name = " Profit Per Score/XP",
+		desc = "Show the amount of coins per Score/XP in the rng meter inventory"
+	)
+	@ConfigEditorBoolean
+	@ConfigAccordionId(id = 1)
+	public boolean rngMeterProfitPerUnit = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Dungeon/Slayer Needed Counter",
+		desc = "Show the amount of dungeon runs or slayer bosses needed for the rng meter to fill up"
+	)
+	@ConfigEditorBoolean
+	@ConfigAccordionId(id = 1)
+	public boolean rngMeterRunsNeeded = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Essence Price In Shop",
+		desc = "Show the essence price in the essence shop in the dungeon hub"
+	)
+	@ConfigEditorBoolean
+	public boolean essencePriceInEssenceShop = true;
 }

@@ -1,37 +1,51 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
-import io.github.moulberry.notenoughupdates.miscfeatures.FancyPortals;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.ForgeHooksClient;
-import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.Vector3f;
-import org.spongepowered.asm.lib.Opcodes;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EntityRenderer.class)
 public abstract class MixinEntityRenderer {
 	@Shadow
-	protected abstract float getFOVModifier(float partialTicks, boolean useFOVSetting);
-
-	@Shadow
 	private Minecraft mc;
-
 	@Shadow
 	private float farPlaneDistance;
+
+	@Shadow
+	protected abstract float getFOVModifier(float partialTicks, boolean useFOVSetting);
 
 	@Shadow
 	protected abstract void orientCamera(float partialTicks);
@@ -48,38 +62,6 @@ public abstract class MixinEntityRenderer {
 	))
 	public float updateCameraAndRender_mouseSensitivity(GameSettings gameSettings) {
 		return gameSettings.mouseSensitivity * CustomItemEffects.INSTANCE.getSensMultiplier();
-	}
-
-	@Redirect(method = "renderWorldPass", at = @At(
-		value = "INVOKE",
-		target = "Lorg/lwjgl/util/glu/Project;gluPerspective(FFFF)V",
-		remap = false)
-	)
-	public void perspective(float f1, float f2, float f3, float f4) {
-		if (!FancyPortals.overridePerspective()) {
-			Project.gluPerspective(f1, f2, f3, f4);
-		}
-	}
-
-	@Inject(method = "updateCameraAndRender", at = @At("RETURN"))
-	public void onUpdateCameraAndRender(float partialTicks, long nanoTime, CallbackInfo ci) {
-		if (Minecraft.getMinecraft().getRenderViewEntity() == null) return;
-
-		if (FancyPortals.shouldRenderWorldOverlay()) {
-			GlStateManager.matrixMode(5889);
-			GlStateManager.loadIdentity();
-			Project.gluPerspective(getFOVModifier(partialTicks, true),
-				(float) mc.displayWidth / (float) this.mc.displayHeight, 0.05F,
-				farPlaneDistance * MathHelper.SQRT_2
-			);
-			GlStateManager.matrixMode(5888);
-			GlStateManager.loadIdentity();
-			orientCamera(partialTicks);
-
-			FancyPortals.onUpdateCameraAndRender(partialTicks, nanoTime);
-
-			Minecraft.getMinecraft().entityRenderer.setupOverlayRendering();
-		}
 	}
 
 	@Redirect(method = "renderWorldPass", at = @At(

@@ -1,11 +1,37 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscgui;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GlScissorStack;
 import io.github.moulberry.notenoughupdates.core.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
+import io.github.moulberry.notenoughupdates.overlays.EquipmentOverlay;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -17,7 +43,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -29,8 +54,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,6 +84,15 @@ public class GuiInvButtonEditor extends GuiScreen {
 
 	private int guiLeft;
 	private int guiTop;
+
+	//region getGuiCoordinates
+	public int getGuiLeft() {
+		return this.guiLeft;
+	}
+	public int getGuiTop() {
+		return this.guiTop;
+	}
+	//endregion
 
 	private static final int BACKGROUND_TYPES = 5;
 	private static final int ICON_TYPES = 3;
@@ -107,8 +148,6 @@ public class GuiInvButtonEditor extends GuiScreen {
 		put("crypts", "skull:25d2f31ba162fe6272e831aed17f53213db6fa1c4cbe4fc827f3963cc98b9");
 		put("spiders den", "skull:c754318a3376f470e481dfcd6c83a59aa690ad4b4dd7577fdad1c2ef08d8aee6");
 		put("top of the nest", "skull:9d7e3b19ac4f3dee9c5677c135333b9d35a7f568b63d1ef4ada4b068b5a25");
-		put("blazing fortress", "skull:c3687e25c632bce8aa61e0d64c24e694c3eea629ea944f4cf30dcfb4fbce071");
-		put("blazing fortress magma boss", "skull:38957d5023c937c4c41aa2412d43410bda23cf79a9f6ab36b76fef2d7c429");
 		put("the end", "skull:7840b87d52271d2a755dedc82877e0ed3df67dcc42ea479ec146176b02779a5");
 		put("the end dragons nest", "skull:a1cd6d2d03f135e7c6b5d6cdae1b3a68743db4eb749faf7341e9fb347aa283b");
 		put("the park", "skull:a221f813dacee0fef8c59f76894dbb26415478d9ddfc44c2e708a6d3b7549b");
@@ -117,11 +156,18 @@ public class GuiInvButtonEditor extends GuiScreen {
 		put("gold mines", "skull:73bc965d579c3c6039f0a17eb7c2e6faf538c7a5de8e60ec7a719360d0a857a9");
 		put("deep caverns", "skull:569a1f114151b4521373f34bc14c2963a5011cdc25a6554c48c708cd96ebfc");
 		put("the barn", "skull:4d3a6bd98ac1833c664c4909ff8d2dc62ce887bdcf3cc5b3848651ae5af6b");
-		put("mushroom desert", "skull:2116b9d8df346a25edd05f842e7a9345beaf16dca4118abf5a68c75bcaae10");
+		put("mushroom desert", "skull:6b20b23c1aa2be0270f016b4c90d6ee6b8330a17cfef87869d6ad60b2ffbf3b5");
 		put("dungeon hub", "skull:9b56895b9659896ad647f58599238af532d46db9c1b0389b8bbeb70999dab33d");
-		put("dwarven mines", "skull:569a1f114151b4521373f34bc14c2963a5011cdc25a6554c48c708cd96ebfc");
+		put("dwarven mines", "skull:51539dddf9ed255ece6348193cd75012c82c93aec381f05572cecf7379711b3b");
 		put("hotm heart of the mountain", "skull:86f06eaa3004aeed09b3d5b45d976de584e691c0e9cade133635de93d23b9edb");
 		put("bazaar dude", "skull:c232e3820897429157619b0ee099fec0628f602fff12b695de54aef11d923ad7");
+		put("museum", "skull:438cf3f8e54afc3b3f91d20a49f324dca1486007fe545399055524c17941f4dc");
+		put("crystal hollows", "skull:21dbe30b027acbceb612563bd877cd7ebb719ea6ed1399027dcee58bb9049d4a");
+		put("dwarven forge", "skull:5cbd9f5ec1ed007259996491e69ff649a3106cf920227b1bb3a71ee7a89863f");
+		put("forgotton skull", "skull:6becc645f129c8bc2faa4d8145481fab11ad2ee75749d628dcd999aa94e7");
+		put("crystal nucleus", "skull:34d42f9c461cee1997b67bf3610c6411bf852b9e5db607bbf626527cfb42912c");
+		put("void sepulture", "skull:eb07594e2df273921a77c101d0bfdfa1115abed5b9b2029eb496ceba9bdbb4b3");
+		put("crimson isle", "skull:c3687e25c632bce8aa61e0d64c24e694c3eea629ea944f4cf30dcfb4fbce071");
 	}};
 
 	private static LinkedHashMap<String, List<NEUConfig.InventoryButton>> presets = null;
@@ -130,7 +176,6 @@ public class GuiInvButtonEditor extends GuiScreen {
 		super();
 		reloadExtraIcons();
 		reloadPresets();
-		Keyboard.enableRepeatEvents(true);
 	}
 
 	private static void reloadExtraIcons() {
@@ -282,6 +327,13 @@ public class GuiInvButtonEditor extends GuiScreen {
 		GlStateManager.color(1, 1, 1, 1);
 		Utils.drawTexturedRect(guiLeft, guiTop, xSize, ySize, 0, xSize / 256f, 0, ySize / 256f, GL11.GL_NEAREST);
 
+		if (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud) {
+			EquipmentOverlay.INSTANCE.renderPreviewArmorHud();
+		}
+		if (NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay) {
+			EquipmentOverlay.INSTANCE.renderPreviewPetInvHud();
+		}
+
 		for (NEUConfig.InventoryButton button : NotEnoughUpdates.INSTANCE.config.hidden.inventoryButtons) {
 			int x = guiLeft + button.x;
 			int y = guiTop + button.y;
@@ -290,6 +342,17 @@ public class GuiInvButtonEditor extends GuiScreen {
 			}
 			if (button.anchorBottom) {
 				y += ySize;
+			}
+
+			if (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud) {
+				if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop && y < guiTop + 84) {
+					x -= 25;
+				}
+			}
+			if (NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay) {
+				if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop + 60 && y < guiTop + 120) {
+					x -= 25;
+				}
 			}
 
 			if (button.isActive()) {
@@ -324,7 +387,7 @@ public class GuiInvButtonEditor extends GuiScreen {
 		Minecraft.getMinecraft().getTextureManager().bindTexture(custom_ench_colour);
 		GlStateManager.color(1, 1, 1, 1);
 		Utils.drawTexturedRect(
-			guiLeft - 88 - 2 - 22,
+			guiLeft - 88 - 2 - 22 - (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud ? 25 : 0),
 			guiTop + 2,
 			88,
 			20,
@@ -335,7 +398,7 @@ public class GuiInvButtonEditor extends GuiScreen {
 			GL11.GL_NEAREST
 		);
 		Utils.drawTexturedRect(
-			guiLeft - 88 - 2 - 22,
+			guiLeft - 88 - 2 - 22 - (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud ? 25 : 0),
 			guiTop + 2 + 24,
 			88,
 			20,
@@ -348,7 +411,7 @@ public class GuiInvButtonEditor extends GuiScreen {
 		Utils.drawStringCenteredScaledMaxWidth(
 			"Load preset",
 			fontRendererObj,
-			guiLeft - 44 - 2 - 22,
+			guiLeft - 44 - 2 - 22 - (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud ? 25 : 0),
 			guiTop + 8,
 			false,
 			86,
@@ -357,7 +420,7 @@ public class GuiInvButtonEditor extends GuiScreen {
 		Utils.drawStringCenteredScaledMaxWidth(
 			"from Clipboard",
 			fontRendererObj,
-			guiLeft - 44 - 2 - 22,
+			guiLeft - 44 - 2 - 22 - (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud ? 25 : 0),
 			guiTop + 16,
 			false,
 			86,
@@ -366,7 +429,7 @@ public class GuiInvButtonEditor extends GuiScreen {
 		Utils.drawStringCenteredScaledMaxWidth(
 			"Save preset",
 			fontRendererObj,
-			guiLeft - 44 - 2 - 22,
+			guiLeft - 44 - 2 - 22 - (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud ? 25 : 0),
 			guiTop + 8 + 24,
 			false,
 			86,
@@ -375,7 +438,7 @@ public class GuiInvButtonEditor extends GuiScreen {
 		Utils.drawStringCenteredScaledMaxWidth(
 			"to Clipboard",
 			fontRendererObj,
-			guiLeft - 44 - 2 - 22,
+			guiLeft - 44 - 2 - 22 - (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud ? 25 : 0),
 			guiTop + 16 + 24,
 			false,
 			86,
@@ -383,7 +446,7 @@ public class GuiInvButtonEditor extends GuiScreen {
 		);
 
 		if (!validShareContents()) {
-			Gui.drawRect(guiLeft - 88 - 2 - 22, guiTop + 2, guiLeft - 2 - 22, guiTop + 2 + 20, 0x80000000);
+			Gui.drawRect(guiLeft - 88 - 2 - 22 - (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud ? 25 : 0), guiTop + 2, guiLeft - 2 - 22 - (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud ? 25 : 0), guiTop + 2 + 20, 0x80000000);
 		}
 
 		GlStateManager.color(1, 1, 1, 1);
@@ -425,6 +488,17 @@ public class GuiInvButtonEditor extends GuiScreen {
 			}
 			if (editingButton.anchorBottom) {
 				y += ySize;
+			}
+
+			if (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud) {
+				if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop && y < guiTop + 84) {
+					x -= 25;
+				}
+			}
+			if (NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay) {
+				if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop + 60 && y < guiTop + 120) {
+					x -= 25;
+				}
 			}
 
 			GlStateManager.translate(0, 0, 300);
@@ -707,6 +781,17 @@ public class GuiInvButtonEditor extends GuiScreen {
 				y += ySize;
 			}
 
+			if (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud) {
+				if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop && y < guiTop + 84) {
+					x -= 25;
+				}
+			}
+			if (NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay) {
+				if (x < guiLeft + xSize - 150 && x > guiLeft + xSize - 200 && y > guiTop + 60 && y < guiTop + 120) {
+					x -= 25;
+				}
+			}
+
 			if (mouseX >= x && mouseY >= y &&
 				mouseX <= x + 18 && mouseY <= y + 18) {
 				if (editingButton == button) {
@@ -825,6 +910,11 @@ public class GuiInvButtonEditor extends GuiScreen {
 
 	private final ExecutorService searchES = Executors.newSingleThreadExecutor();
 	private final AtomicInteger searchId = new AtomicInteger(0);
+
+	@Override
+	public void onGuiClosed() {
+		NotEnoughUpdates.INSTANCE.saveConfig();
+	}
 
 	public void search() {
 		final int thisSearchId = searchId.incrementAndGet();

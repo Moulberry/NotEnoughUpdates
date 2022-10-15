@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.util;
 
 import com.google.gson.JsonArray;
@@ -140,13 +159,11 @@ public class HotmInformation {
 
 	public synchronized void requestUpdate(boolean force) {
 		if (updateTask.isDone() || force) {
-			updateTask = neu.manager.hypixelApi.getHypixelApiAsync(
-				neu.config.apiKey.apiKey,
-				"skyblock/profiles",
-				new HashMap<String, String>() {{
-					put("uuid", Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""));
-				}}
-			).thenAccept(this::updateInformation);
+			updateTask = neu.manager.apiUtils
+				.newHypixelApiRequest("skyblock/profiles")
+				.queryArgument("uuid", Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""))
+				.requestJson()
+				.thenAccept(this::updateInformation);
 		}
 	}
 
@@ -176,7 +193,10 @@ public class HotmInformation {
 			Tree tree = new Tree();
 			JsonObject nodes = miningCore.getAsJsonObject("nodes");
 			for (Map.Entry<String, JsonElement> node : nodes.entrySet()) {
-				tree.levels.put(node.getKey(), node.getValue().getAsInt());
+				String key = node.getKey();
+				if (!key.startsWith("toggle_")) {
+					tree.levels.put(key, node.getValue().getAsInt());
+				}
 			}
 			if (miningCore.has("powder_mithril_total")) {
 				tree.totalMithrilPowder = miningCore.get("powder_mithril_total").getAsInt();

@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.core.config.gui;
 
 import io.github.moulberry.notenoughupdates.core.config.struct.ConfigProcessor;
@@ -24,6 +43,7 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
 	private static final ResourceLocation DELETE = new ResourceLocation("notenoughupdates:core/delete.png");
 
 	private final String[] exampleText;
+	private final boolean enableDeleting;
 	private final List<Integer> activeText;
 	private int currentDragging = -1;
 	private int dragStartIndex = -1;
@@ -35,9 +55,14 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
 
 	private boolean dropdownOpen = false;
 
-	public GuiOptionEditorDraggableList(ConfigProcessor.ProcessedOption option, String[] exampleText) {
+	public GuiOptionEditorDraggableList(
+		ConfigProcessor.ProcessedOption option,
+		String[] exampleText,
+		boolean disableDeleting
+	) {
 		super(option);
 
+		this.enableDeleting = disableDeleting;
 		this.exampleText = exampleText;
 		this.activeText = (List<Integer>) option.get();
 	}
@@ -77,8 +102,11 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
 			float greenBlue = LerpUtils.clampZeroOne((250 + trashHoverTime - currentTime) / 250f);
 			GlStateManager.color(1, greenBlue, greenBlue, 1);
 		}
-		Minecraft.getMinecraft().getTextureManager().bindTexture(DELETE);
-		Utils.drawTexturedRect(x + width / 6 + 27, y + 45 - 7 - 13, 11, 14, GL11.GL_NEAREST);
+
+		if (enableDeleting) {
+			Minecraft.getMinecraft().getTextureManager().bindTexture(DELETE);
+			Utils.drawTexturedRect(x + width / 6 + 27, y + 45 - 7 - 13, 11, 14, GL11.GL_NEAREST);
+		}
 
 		Gui.drawRect(x + 5, y + 45, x + width - 5, y + height - 5, 0xffdddddd);
 		Gui.drawRect(x + 6, y + 46, x + width - 6, y + height - 6, 0xff000000);
@@ -206,7 +234,9 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
 			dragStartIndex >= 0 && Mouse.getEventButton() == 0 &&
 			mouseX >= x + width / 6 + 27 - 3 && mouseX <= x + width / 6 + 27 + 11 + 3 &&
 			mouseY >= y + 45 - 7 - 13 - 3 && mouseY <= y + 45 - 7 - 13 + 14 + 3) {
-			activeText.remove(dragStartIndex);
+			if (enableDeleting) {
+				activeText.remove(dragStartIndex);
+			}
 			currentDragging = -1;
 			dragStartIndex = -1;
 			return false;
@@ -215,13 +245,13 @@ public class GuiOptionEditorDraggableList extends GuiOptionEditor {
 		if (!Mouse.isButtonDown(0) || dropdownOpen) {
 			currentDragging = -1;
 			dragStartIndex = -1;
-			if (trashHoverTime > 0) trashHoverTime = -System.currentTimeMillis();
+			if (trashHoverTime > 0 && enableDeleting) trashHoverTime = -System.currentTimeMillis();
 		} else if (currentDragging >= 0 &&
 			mouseX >= x + width / 6 + 27 - 3 && mouseX <= x + width / 6 + 27 + 11 + 3 &&
 			mouseY >= y + 45 - 7 - 13 - 3 && mouseY <= y + 45 - 7 - 13 + 14 + 3) {
-			if (trashHoverTime < 0) trashHoverTime = System.currentTimeMillis();
+			if (trashHoverTime < 0 && enableDeleting) trashHoverTime = System.currentTimeMillis();
 		} else {
-			if (trashHoverTime > 0) trashHoverTime = -System.currentTimeMillis();
+			if (trashHoverTime > 0 && enableDeleting) trashHoverTime = -System.currentTimeMillis();
 		}
 
 		if (Mouse.getEventButtonState()) {

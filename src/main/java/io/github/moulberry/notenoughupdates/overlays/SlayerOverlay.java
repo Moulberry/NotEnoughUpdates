@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.overlays;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
@@ -8,7 +27,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.EnumChatFormatting;
 
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class SlayerOverlay extends TextOverlay {
@@ -66,6 +89,9 @@ public class SlayerOverlay extends TextOverlay {
 			case "Enderman":
 				if (!locrawLocation.equals("combat_3")) return false;
 				break;
+			case "Blaze":
+				if (!locrawLocation.equals("crimson_isle")) return false;
+				break;
 			default:
 				//A new slayer would need an update (see SBInfo)
 				return false;
@@ -97,10 +123,11 @@ public class SlayerOverlay extends TextOverlay {
 			slayerIntXP = 0;
 			isSlayerNine = false;
 		}
-		//System.out.println(slayerEXP);
+
 		if (SBInfo.getInstance().slayer.equals("Tarantula") || SBInfo.getInstance().slayer.equals("Revenant")) {
 			useSmallXpNext = true;
-		} else if (SBInfo.getInstance().slayer.equals("Sven") || SBInfo.getInstance().slayer.equals("Enderman")) {
+		} else if (SBInfo.getInstance().slayer.equals("Sven") || SBInfo.getInstance().slayer.equals("Enderman") ||
+			SBInfo.getInstance().slayer.equals("Blaze")) {
 			useSmallXpNext = false;
 		}
 		switch (slayerLVL) {
@@ -185,7 +212,7 @@ public class SlayerOverlay extends TextOverlay {
 			HashMap<Integer, String> lineMap = new HashMap<>();
 
 			NumberFormat format = NumberFormat.getIntegerInstance();
-			//System.out.println(SBInfo.getInstance().isSlain);
+
 			overlayStrings = new ArrayList<>();
 			lineMap.put(
 				0,

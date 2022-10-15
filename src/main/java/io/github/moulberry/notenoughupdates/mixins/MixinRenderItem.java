@@ -1,11 +1,31 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.mixins;
 
-import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.ChromaColour;
+import io.github.moulberry.notenoughupdates.listener.RenderListener;
 import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
 import io.github.moulberry.notenoughupdates.miscfeatures.ItemCustomizeManager;
+import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -176,7 +196,7 @@ public abstract class MixinRenderItem {
 
 	@Inject(method = "renderItemIntoGUI", at = @At("HEAD"))
 	public void renderItemHead(ItemStack stack, int x, int y, CallbackInfo ci) {
-		if (NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+		if (NotEnoughUpdates.INSTANCE.overlay.searchMode && RenderListener.drawingGuiScreen && NotEnoughUpdates.INSTANCE.isOnSkyblock() && !(Minecraft.getMinecraft().currentScreen instanceof GuiProfileViewer)) {
 			boolean matches = false;
 
 			GuiTextField textField = NotEnoughUpdates.INSTANCE.overlay.getTextField();
@@ -202,7 +222,7 @@ public abstract class MixinRenderItem {
 	@Inject(method = "renderItemIntoGUI", at = @At("RETURN"))
 	public void renderItemReturn(ItemStack stack, int x, int y, CallbackInfo ci) {
 		if (stack != null && stack.stackSize != 1) return;
-		if (NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+		if (NotEnoughUpdates.INSTANCE.overlay.searchMode && RenderListener.drawingGuiScreen && NotEnoughUpdates.INSTANCE.isOnSkyblock() && !(Minecraft.getMinecraft().currentScreen instanceof GuiProfileViewer)) {
 			boolean matches = false;
 
 			GuiTextField textField = NotEnoughUpdates.INSTANCE.overlay.getTextField();
@@ -233,7 +253,7 @@ public abstract class MixinRenderItem {
 		CallbackInfo ci
 	) {
 		if (stack != null && stack.stackSize != 1) {
-			if (NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+			if (NotEnoughUpdates.INSTANCE.overlay.searchMode && RenderListener.drawingGuiScreen && NotEnoughUpdates.INSTANCE.isOnSkyblock() && !(Minecraft.getMinecraft().currentScreen instanceof GuiProfileViewer)) {
 				boolean matches = false;
 
 				GuiTextField textField = NotEnoughUpdates.INSTANCE.overlay.getTextField();

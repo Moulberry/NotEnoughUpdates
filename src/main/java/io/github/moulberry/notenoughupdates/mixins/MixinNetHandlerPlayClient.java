@@ -1,13 +1,45 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.mixins;
 
-import io.github.moulberry.notenoughupdates.miscfeatures.*;
+import io.github.moulberry.notenoughupdates.miscfeatures.CrystalWishingCompassSolver;
+import io.github.moulberry.notenoughupdates.miscfeatures.CustomItemEffects;
+import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
+import io.github.moulberry.notenoughupdates.miscfeatures.FishingHelper;
+import io.github.moulberry.notenoughupdates.miscfeatures.ItemCooldowns;
+import io.github.moulberry.notenoughupdates.miscfeatures.MiningStuff;
+import io.github.moulberry.notenoughupdates.miscfeatures.NewApiKeyHelper;
+import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.Packet;
+import net.minecraft.network.play.client.C01PacketChatMessage;
 import net.minecraft.network.play.client.C0EPacketClickWindow;
-import net.minecraft.network.play.server.*;
+import net.minecraft.network.play.server.S23PacketBlockChange;
+import net.minecraft.network.play.server.S2DPacketOpenWindow;
+import net.minecraft.network.play.server.S2EPacketCloseWindow;
+import net.minecraft.network.play.server.S2FPacketSetSlot;
+import net.minecraft.network.play.server.S30PacketWindowItems;
+import net.minecraft.network.play.server.S47PacketPlayerListHeaderFooter;
 import net.minecraft.util.EnumParticleTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -47,6 +79,12 @@ public class MixinNetHandlerPlayClient {
 		double xCoord, double yCoord, double zCoord,
 		double xOffset, double yOffset, double zOffset, int[] params
 	) {
+		CrystalWishingCompassSolver.getInstance().onSpawnParticle(
+			particleTypes,
+			xCoord,
+			yCoord,
+			zCoord
+		);
 		boolean override = FishingHelper.getInstance().onSpawnParticle(
 			particleTypes,
 			xCoord,
@@ -59,11 +97,6 @@ public class MixinNetHandlerPlayClient {
 		if (!override) {
 			world.spawnParticle(particleTypes, isLongDistance, xCoord, yCoord, zCoord, xOffset, yOffset, zOffset, params);
 		}
-	}
-
-	@Inject(method = "handleSpawnMob", at = @At("RETURN"))
-	public void handleSpawnMob(S0FPacketSpawnMob packetIn, CallbackInfo ci) {
-		//CollectionLogManager.getInstance().onEntityMetadataUpdated(packetIn.getEntityID());
 	}
 
 	@Inject(method = "handleSetSlot", at = @At("RETURN"))
@@ -87,24 +120,19 @@ public class MixinNetHandlerPlayClient {
 		StorageManager.getInstance().setItemsPacket(packetIn);
 	}
 
-	@Inject(method = "handleRespawn", at = @At(
-		value = "INVOKE",
-		target = "Lnet/minecraft/network/PacketThreadUtil;checkThreadAndEnqueue(Lnet/minecraft/network/Packet;Lnet/minecraft/network/INetHandler;Lnet/minecraft/util/IThreadListener;)V",
-		shift = At.Shift.AFTER))
-	public void handleOpenWindow(S07PacketRespawn packetIn, CallbackInfo ci) {
-		FancyPortals.onRespawnPacket(packetIn);
-	}
-
 	@Inject(method = "handleBlockChange", at = @At("HEAD"))
 	public void handleBlockChange(S23PacketBlockChange packetIn, CallbackInfo ci) {
 		MiningStuff.processBlockChangePacket(packetIn);
 		ItemCooldowns.processBlockChangePacket(packetIn);
 	}
 
-	@Inject(method = "addToSendQueue", at = @At("HEAD"))
+	@Inject(method = "addToSendQueue", at = @At("HEAD"), cancellable = true)
 	public void addToSendQueue(Packet packet, CallbackInfo ci) {
 		if (packet instanceof C0EPacketClickWindow) {
 			StorageManager.getInstance().clientSendWindowClick((C0EPacketClickWindow) packet);
+		}
+		if (packet instanceof C01PacketChatMessage) {
+			NewApiKeyHelper.getInstance().hookPacketChatMessage((C01PacketChatMessage) packet);
 		}
 	}
 

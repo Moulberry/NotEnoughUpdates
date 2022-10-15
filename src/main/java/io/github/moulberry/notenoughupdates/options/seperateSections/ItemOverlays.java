@@ -1,8 +1,35 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigAccordionId;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorAccordion;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorBoolean;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorButton;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorColour;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDraggableList;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDropdown;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorSlider;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -207,6 +234,15 @@ public class ItemOverlays {
 
 	@Expose
 	@ConfigOption(
+		name = "Disable overlay when fail",
+		desc = "Don't display the etherwarp block overlay when you can't TP to the block"
+	)
+	@ConfigEditorBoolean
+	@ConfigAccordionId(id = 7)
+	public boolean disableOverlayWhenFailed = false;
+
+	@Expose
+	@ConfigOption(
 		name = "Highlight Colour",
 		desc = "Change the colour of the etherwarp target block outline"
 	)
@@ -242,7 +278,7 @@ public class ItemOverlays {
 	@Expose
 	@ConfigOption(
 		name = "Bonemerang Overlay Position",
-		desc = "The position of the Bonemerang overlay."
+		desc = "Change the position of the Bonemerang overlay."
 	)
 	@ConfigEditorButton(
 		runnableId = 9,
@@ -348,7 +384,7 @@ public class ItemOverlays {
 	@Expose
 	@ConfigOption(
 		name = "Pickaxe Ability Cooldown",
-		desc = "Show the cooldown duration off the pickaxe ability as the durability."
+		desc = "Show the cooldown duration of the pickaxe ability as the durability."
 	)
 	@ConfigEditorBoolean
 	public boolean pickaxeAbility = true;

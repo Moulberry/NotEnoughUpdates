@@ -1,8 +1,34 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigAccordionId;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorAccordion;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorBoolean;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorButton;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDraggableList;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDropdown;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorSlider;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,7 +110,7 @@ public class Mining {
 	@Expose
 	@ConfigOption(
 		name = "Edit Fuel Bar Position",
-		desc = "Set the position of the drill fuel bar"
+		desc = "Change the position of the drill fuel bar"
 	)
 	@ConfigEditorButton(
 		runnableId = 2,
@@ -180,6 +206,16 @@ public class Mining {
 	)
 	@ConfigAccordionId(id = 2)
 	public int forgeDisplayEnabledLocations = 0;
+
+	@Expose
+	@ConfigOption(
+		name = "Forge Tab",
+		desc = "Only show the forge display when tab list is open\n" +
+			"\u00A7cThis only works outside of Dwarven Caves!"
+	)
+	@ConfigEditorBoolean
+	@ConfigAccordionId(id = 2)
+	public boolean forgeDisplayOnlyShowTab = false;
 
 	@ConfigOption(
 		name = "Metal Detector Solver",
@@ -641,6 +677,42 @@ public class Mining {
 	@ConfigAccordionId(id = 6)
 	public int crystalHollowNoneColor = 12;
 
+	@ConfigOption(
+		name = "Wishing Compass Solver",
+		desc = ""
+	)
+	@ConfigEditorAccordion(id = 7)
+	public boolean wishingCompassSolverAccordion = false;
+
+	@Expose
+	@ConfigOption(
+		name = "Enable Solver",
+		desc = "Show wishing compass target coordinates based on two samples"
+	)
+	@ConfigAccordionId(id = 7)
+	@ConfigEditorBoolean
+	public boolean wishingCompassSolver = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Skytils Waypoints",
+		desc = "Automatically create Skytils waypoints for well-known targets"
+	)
+	@ConfigAccordionId(id = 7)
+	@ConfigEditorBoolean
+	public boolean wishingCompassAutocreateKnownWaypoints = false;
+
+	@Expose
+	@ConfigOption(
+		name = "Waypoint Names",
+		desc = "NOTE: Skytils overwrites waypoint coordinates with less accurate values for Skytils names."
+	)
+	@ConfigAccordionId(id = 7)
+	@ConfigEditorDropdown(
+		values = {"NEU", "Skytils"}
+	)
+	public int wishingCompassWaypointNames = 0;
+
 	@Expose
 	@ConfigOption(
 		name = "Puzzler Solver",
@@ -669,7 +741,7 @@ public class Mining {
 		name = "Custom Textures",
 		desc = ""
 	)
-	@ConfigEditorAccordion(id = 7)
+	@ConfigEditorAccordion(id = 8)
 	public boolean texturesAccordion = false;
 
 	@Expose
@@ -677,7 +749,7 @@ public class Mining {
 		name = "Dwarven Mines Textures",
 		desc = "Allows texture packs to retexture blocks in the Dwarven Mines. If you don't have a texture pack that does this, you should leave this off"
 	)
-	@ConfigAccordionId(id = 7)
+	@ConfigAccordionId(id = 8)
 	@ConfigEditorBoolean
 	public boolean dwarvenTextures = false;
 	@Expose
@@ -685,7 +757,7 @@ public class Mining {
 		name = "Crystal Hollows Textures",
 		desc = "Allows texture packs to retexture blocks in the Crystal Hollows. If you don't have a texture pack that does this, you should leave this off"
 	)
-	@ConfigAccordionId(id = 7)
+	@ConfigAccordionId(id = 8)
 	@ConfigEditorBoolean
 	public boolean crystalHollowTextures = false;
 
@@ -694,7 +766,7 @@ public class Mining {
 		name = "Replace Gemstone sounds",
 		desc = "Replace the break sounds of crystals in the Crystal Hollows. Requires a texture pack with this feature"
 	)
-	@ConfigAccordionId(id = 7)
+	@ConfigAccordionId(id = 8)
 	@ConfigEditorBoolean
 	public boolean gemstoneSounds = false;
 
@@ -703,7 +775,7 @@ public class Mining {
 		name = "Replace Mithril sounds",
 		desc = "Replace the break sounds of mithril and titanium in the Dwarven mines. Requires a texture pack with this feature"
 	)
-	@ConfigAccordionId(id = 7)
+	@ConfigAccordionId(id = 8)
 	@ConfigEditorBoolean
 	public boolean mithrilSounds = false;
 

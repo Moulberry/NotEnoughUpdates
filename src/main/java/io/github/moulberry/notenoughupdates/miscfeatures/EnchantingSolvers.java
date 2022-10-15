@@ -1,6 +1,26 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.events.SlotClickEvent;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
@@ -17,13 +37,18 @@ import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.input.Keyboard;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 public class EnchantingSolvers {
-	private static SolverType currentSolver = SolverType.NONE;
+	public static SolverType currentSolver = SolverType.NONE;
 
-	private enum SolverType {
+	public enum SolverType {
 		NONE,
 		CHRONOMATRON,
 		ULTRASEQUENCER,
@@ -72,20 +97,14 @@ public class EnchantingSolvers {
 			return;
 		}
 
-		if (event.gui instanceof GuiChest) {
-			GuiChest chest = (GuiChest) event.gui;
-			ContainerChest container = (ContainerChest) chest.inventorySlots;
-			String containerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
-			String lower = containerName.toLowerCase();
-
-			if (!lower.contains("stakes")) {
-				if (lower.startsWith("chronomatron")) {
-					currentSolver = SolverType.CHRONOMATRON;
-				} else if (lower.startsWith("ultrasequencer")) {
-					currentSolver = SolverType.ULTRASEQUENCER;
-				} else if (lower.startsWith("superpairs")) {
-					currentSolver = SolverType.SUPERPAIRS;
-				}
+		String openChestName = Utils.getOpenChestName();
+		if (!openChestName.contains("Stakes")) {
+			if (openChestName.startsWith("Chronomatron")) {
+				currentSolver = SolverType.CHRONOMATRON;
+			} else if (openChestName.startsWith("Ultrasequencer")) {
+				currentSolver = SolverType.ULTRASEQUENCER;
+			} else if (openChestName.startsWith("Superpairs")) {
+				currentSolver = SolverType.SUPERPAIRS;
 			}
 		}
 	}
@@ -290,97 +309,88 @@ public class EnchantingSolvers {
 		return false;
 	}
 
-	public static boolean onStackClick(ItemStack stack, int windowId, int slotId, int mouseButtonClicked, int mode) {
-		if (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers) {
-			return false;
+	@SubscribeEvent
+	public void onStackClick(SlotClickEvent event) {
+		if (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.enableEnchantingSolvers
+			|| !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+			return;
 		}
 
-		if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
-			return false;
+		ItemStack stack = event.slot.getStack();
+		if (stack == null || stack.getDisplayName() == null) {
+			return;
 		}
+		String displayName = stack.getDisplayName();
+		if (!(Minecraft.getMinecraft().currentScreen instanceof GuiChest)) {
+			return;
+		}
+		GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+		ContainerChest container = (ContainerChest) chest.inventorySlots;
+		IInventory lower = container.getLowerChestInventory();
 
-		if (stack != null && stack.getDisplayName() != null) {
-			String displayName = stack.getDisplayName();
-			if (Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
-				GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
-				ContainerChest container = (ContainerChest) chest.inventorySlots;
-				IInventory lower = container.getLowerChestInventory();
+		if (currentSolver == SolverType.CHRONOMATRON) {
+			ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
+			if (timerStack == null) {
+				return;
+			}
 
-				if (currentSolver == SolverType.CHRONOMATRON) {
-					ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
-					if (timerStack == null) {
-						return false;
-					}
-
-					boolean yepClock = timerStack.getItem() == Items.clock;
-					if (timerStack.getItem() == Item.getItemFromBlock(Blocks.glowstone) ||
-						(yepClock && (!addToChronomatron || chronomatronOrder.size() < lastChronomatronSize + 1))) {
-						return true;
-					} else if (yepClock) {
-						long currentTime = System.currentTimeMillis();
-						if (currentTime - millisLastClick < 150) {
-							return true;
-						}
-
-						if (chronomatronReplayIndex < chronomatronOrder.size()) {
-							String chronomatronCurrent = chronomatronOrder.get(chronomatronReplayIndex);
-							if (!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks1 ||
-								chronomatronCurrent.equals(displayName)) {
-								chronomatronReplayIndex++;
-								Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
-									2, mode, Minecraft.getMinecraft().thePlayer
-								);
-								millisLastClick = currentTime;
-							}
-                            /*if (chronomatronCurrent.equals(displayName)) {
-                                chronomatronReplayIndex++;
-                            }
-                            Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
-                                    2, mode, Minecraft.getMinecraft().thePlayer);
-                            millisLastClick = currentTime;*/
-						}
-						return true;
-					}
-				} else if (currentSolver == SolverType.ULTRASEQUENCER) {
-					ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
-					if (timerStack == null) {
-						return false;
-					}
-
-					boolean yepClock = timerStack.getItem() == Items.clock;
-					if (yepClock) {
-						UltrasequencerItem current = ultraSequencerOrder.get(ultrasequencerReplayIndex);
-						if (current == null) {
-							return true;
-						}
-						long currentTime = System.currentTimeMillis();
-						if (currentTime - millisLastClick > 150 &&
-							(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks1 ||
-								current.containerIndex == slotId)) {
-							ultrasequencerReplayIndex++;
-							Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
-								2, mode, Minecraft.getMinecraft().thePlayer
-							);
-							millisLastClick = currentTime;
-						}
-                        /*if (currentTime - millisLastClick > 150) {
-                            if (current.containerIndex == slotId) {
-                                ultrasequencerReplayIndex++;
-                            }
-                            Minecraft.getMinecraft().playerController.windowClick(windowId, slotId,
-                                    2, mode, Minecraft.getMinecraft().thePlayer);
-                            millisLastClick = currentTime;
-                        }*/
-						return true;
-					} else {
-						return true;
-					}
-				} else if (currentSolver == SolverType.SUPERPAIRS) {
-					lastSlotClicked = slotId;
+			boolean yepClock = timerStack.getItem() == Items.clock;
+			if (timerStack.getItem() == Item.getItemFromBlock(Blocks.glowstone) ||
+				(yepClock && (!addToChronomatron || chronomatronOrder.size() < lastChronomatronSize + 1))) {
+				event.setCanceled(true);
+				return;
+			}
+			if (yepClock) {
+				long currentTime = System.currentTimeMillis();
+				if (currentTime - millisLastClick < 150) {
+					event.setCanceled(true);
+					return;
 				}
+
+				if (chronomatronReplayIndex < chronomatronOrder.size()) {
+					String chronomatronCurrent = chronomatronOrder.get(chronomatronReplayIndex);
+					if ((!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks1 ||
+						chronomatronCurrent.equals(displayName) || Keyboard.getEventKey() == Keyboard.KEY_LSHIFT) &&
+						stack.getItem() != Item.getItemFromBlock(Blocks.stained_glass_pane) && event.slotId != 4 &&
+						event.slotId != 49) {
+						chronomatronReplayIndex++;
+						millisLastClick = currentTime;
+						event.usePickblockInstead();
+						return;
+					}
+				}
+				event.setCanceled(true);
+				return;
 			}
 		}
-		return false;
+		if (currentSolver == SolverType.ULTRASEQUENCER) {
+			ItemStack timerStack = lower.getStackInSlot(lower.getSizeInventory() - 5);
+			if (timerStack == null) {
+				return;
+			}
+
+			boolean yepClock = timerStack.getItem() == Items.clock;
+			if (yepClock) {
+				UltrasequencerItem current = ultraSequencerOrder.get(ultrasequencerReplayIndex);
+				long currentTime = System.currentTimeMillis();
+				if (current == null) {
+					event.setCanceled(true);
+					return;
+				}
+				if (currentTime - millisLastClick > 150 &&
+					(!NotEnoughUpdates.INSTANCE.config.enchantingSolvers.preventMisclicks1 ||
+						current.containerIndex == event.slotId || Keyboard.getEventKey() == Keyboard.KEY_LSHIFT) &&
+					(event.slotId < 45 && event.slotId > 8)) {
+					ultrasequencerReplayIndex++;
+					millisLastClick = currentTime;
+					event.usePickblockInstead();
+					return;
+				}
+			}
+			event.setCanceled(true);
+		} else if (currentSolver == SolverType.SUPERPAIRS) {
+			lastSlotClicked = event.slotId;
+		}
 	}
 
 	public static void processInventoryContents(boolean fromTick) {
@@ -572,5 +582,9 @@ public class EnchantingSolvers {
 		}
 
 		processInventoryContents(true);
+	}
+
+	public static boolean disableButtons() {
+		return currentSolver != SolverType.NONE && NotEnoughUpdates.INSTANCE.config.enchantingSolvers.hideButtons;
 	}
 }

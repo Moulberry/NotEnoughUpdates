@@ -1,6 +1,26 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
@@ -8,20 +28,52 @@ import io.github.moulberry.notenoughupdates.core.config.Config;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.core.config.annotations.Category;
 import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
+import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
 import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.miscgui.GuiInvButtonEditor;
 import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
-import io.github.moulberry.notenoughupdates.options.seperateSections.*;
+import io.github.moulberry.notenoughupdates.options.customtypes.NEUDebugFlag;
+import io.github.moulberry.notenoughupdates.options.seperateSections.AHGraph;
+import io.github.moulberry.notenoughupdates.options.seperateSections.AHTweaks;
+import io.github.moulberry.notenoughupdates.options.seperateSections.AccessoryBag;
+import io.github.moulberry.notenoughupdates.options.seperateSections.ApiData;
+import io.github.moulberry.notenoughupdates.options.seperateSections.BazaarTweaks;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Calendar;
 import io.github.moulberry.notenoughupdates.options.seperateSections.CustomArmour;
+import io.github.moulberry.notenoughupdates.options.seperateSections.DungeonMapConfig;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Dungeons;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Enchanting;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Fishing;
+import io.github.moulberry.notenoughupdates.options.seperateSections.ImprovedSBMenu;
+import io.github.moulberry.notenoughupdates.options.seperateSections.InventoryButtons;
+import io.github.moulberry.notenoughupdates.options.seperateSections.ItemOverlays;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Itemlist;
+import io.github.moulberry.notenoughupdates.options.seperateSections.LocationEdit;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Mining;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Misc;
+import io.github.moulberry.notenoughupdates.options.seperateSections.MiscOverlays;
+import io.github.moulberry.notenoughupdates.options.seperateSections.NeuAuctionHouse;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Notifications;
+import io.github.moulberry.notenoughupdates.options.seperateSections.PetOverlay;
+import io.github.moulberry.notenoughupdates.options.seperateSections.ProfileViewer;
+import io.github.moulberry.notenoughupdates.options.seperateSections.SkillOverlays;
+import io.github.moulberry.notenoughupdates.options.seperateSections.SlayerOverlay;
+import io.github.moulberry.notenoughupdates.options.seperateSections.SlotLocking;
+import io.github.moulberry.notenoughupdates.options.seperateSections.StorageGUI;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Toolbar;
+import io.github.moulberry.notenoughupdates.options.seperateSections.TooltipTweaks;
+import io.github.moulberry.notenoughupdates.options.seperateSections.TradeMenu;
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
+import io.github.moulberry.notenoughupdates.util.NotificationHandler;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +101,8 @@ public class NEUConfig extends Config {
 		}
 
 		switch (runnableId) {
+			case -1:
+				return;
 			case 0:
 				ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neumap");
 				return;
@@ -100,6 +154,10 @@ public class NEUConfig extends Config {
 			case 14:
 				editOverlay(activeConfigCategory, OverlayManager.fishingSkillOverlay, skillOverlays.fishingPosition);
 				return;
+			case 15:
+				String command = NotEnoughUpdates.INSTANCE.config.misc.fariySoul ? "/neusouls on" : "/neusouls off";
+				ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, command);
+				return;
 			case 16:
 				ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neusouls clear");
 				return;
@@ -111,7 +169,36 @@ public class NEUConfig extends Config {
 				return;
 			case 19:
 				editOverlay(activeConfigCategory, OverlayManager.combatSkillOverlay, skillOverlays.combatPosition);
-
+				return;
+			case 20:
+				FairySouls.getInstance().setTrackFairySouls(NotEnoughUpdates.INSTANCE.config.misc.trackFairySouls);
+				return;
+			case 21:
+				NotEnoughUpdates.INSTANCE.overlay.updateSearch();
+				return;
+			case 22:
+				NotEnoughUpdates.INSTANCE.manager
+					.userFacingRepositoryReload()
+					.thenAccept(strings ->
+						NotificationHandler.displayNotification(strings, true, true));
+				Minecraft.getMinecraft().displayGuiScreen(null);
+				return;
+			case 23:
+				NotEnoughUpdates.INSTANCE.config.apiData.repoUser = "NotEnoughUpdates";
+				NotEnoughUpdates.INSTANCE.config.apiData.repoName = "NotEnoughUpdates-REPO";
+				NotEnoughUpdates.INSTANCE.config.apiData.repoBranch = "master";
+				NotEnoughUpdates.INSTANCE.openGui =
+					new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, "apis"));
+				return;
+			case 24:
+				NotEnoughUpdates.INSTANCE.config.apiData.repoUser = "NotEnoughUpdates";
+				NotEnoughUpdates.INSTANCE.config.apiData.repoName = "NotEnoughUpdates-REPO";
+				NotEnoughUpdates.INSTANCE.config.apiData.repoBranch = "dangerous";
+				NotEnoughUpdates.INSTANCE.openGui =
+					new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, "apis"));
+				return;
+			default:
+				System.err.printf("Unknown runnableId = %d in category %s%n", runnableId, activeConfigCategory);
 		}
 	}
 
@@ -250,8 +337,8 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
-		name = "Custom Armour Hud",
-		desc = "Custom Armour Hud"
+		name = "Equipment Hud",
+		desc = "Equipment Hud"
 	)
 	public CustomArmour customArmour = new CustomArmour();
 
@@ -285,6 +372,13 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
+		name = "Bazaar Tweaks",
+		desc = "Tweaks for the Bazaar"
+	)
+	public BazaarTweaks bazaarTweaks = new BazaarTweaks();
+
+	@Expose
+	@Category(
 		name = "AH/BZ Graph",
 		desc = "Graph of auction and bazaar prices"
 	)
@@ -299,10 +393,26 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
-		name = "Api Key",
-		desc = "Api Key"
+		name = "Profile Viewer",
+		desc = "Profile Viewer"
 	)
-	public ApiKey apiKey = new ApiKey();
+	public ProfileViewer profileViewer = new ProfileViewer();
+
+	@Expose
+	@Category(
+		name = "Apis",
+		desc = "Api Data"
+	)
+	public ApiData apiData = new ApiData();
+
+	@Expose
+	public LegacyApiKey apiKey = null;
+
+	public static class LegacyApiKey {
+		// Blame Ironmoon for this (still better than my idea tho)
+		@Expose
+		public String apiKey = null;
+	}
 
 	@Expose
 	public Hidden hidden = new Hidden();
@@ -319,11 +429,9 @@ public class NEUConfig extends Config {
 		public List<NEUConfig.InventoryButton> inventoryButtons = createDefaultInventoryButtons();
 
 		@Expose
-		public boolean enableItemEditing = false;
+		public EnumSet<NEUDebugFlag> debugFlags = EnumSet.noneOf(NEUDebugFlag.class);
 		@Expose
 		public boolean cacheRenderedItempane = true;
-		@Expose
-		public boolean autoupdate = true;
 		@Expose
 		public String overlaySearchBar = "";
 		@Expose
@@ -345,15 +453,13 @@ public class NEUConfig extends Config {
 		@Expose
 		public ArrayList<String> previousAuctionSearches = new ArrayList<>();
 		@Expose
+		public ArrayList<String> previousBazaarSearches = new ArrayList<>();
+		@Expose
 		public ArrayList<String> eventFavourites = new ArrayList<>();
 		@Expose
 		public ArrayList<String> quickCommands = createDefaultQuickCommands();
 		@Expose
 		public ArrayList<String> enchantColours = createDefaultEnchantColours();
-		@Expose
-		public String repoURL = "https://github.com/Moulberry/NotEnoughUpdates-REPO/archive/master.zip";
-		@Expose
-		public String repoCommitsURL = "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/commits/master";
 
 		@Expose
 		public boolean firstTimeSearchFocus = true;
@@ -365,6 +471,9 @@ public class NEUConfig extends Config {
 		//Ery wanted to texture himself because its ery
 		@Expose
 		public boolean npcRetextureOnSelf = false;
+
+		@Expose
+		public boolean hasOpenedWaypointMenu = false;
 
 	}
 
@@ -459,6 +568,14 @@ public class NEUConfig extends Config {
 		public long dailyGemstonePowderCompleted = 0L;
 		@Expose
 		public long dailyMithrilPowerCompleted = 0L;
+		@Expose
+		public HashMap<String, Boolean> unlockedWarpScrolls = new HashMap<>();
+		@Expose
+		public long dailyHeavyPearlCompleted = 0L;
+		@Expose
+		public HashMap<Integer, JsonObject> savedEquipment = new HashMap<>();
+		@Expose
+		public int magicalPower = 0;
 	}
 
 	public HiddenLocationSpecific getLocationSpecific() {

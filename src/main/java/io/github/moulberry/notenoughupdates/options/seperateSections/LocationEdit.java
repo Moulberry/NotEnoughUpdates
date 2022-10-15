@@ -1,8 +1,30 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigAccordionId;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorAccordion;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorButton;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 
 public class LocationEdit {
 	@Expose
@@ -20,7 +42,7 @@ public class LocationEdit {
 	@Expose
 	@ConfigOption(
 		name = "Edit Pet Info Position",
-		desc = "The position of the pet info overlay."
+		desc = "Change the position of the pet info overlay"
 	)
 	@ConfigEditorButton(
 		runnableId = 4,
@@ -37,13 +59,12 @@ public class LocationEdit {
 		runnableId = 5,
 		buttonText = "Edit"
 	)
-	@ConfigAccordionId(id = 0)
 	public Position todoPosition = new Position(100, 0);
 
 	@Expose
 	@ConfigOption(
 		name = "Edit Bonemerang Overlay Position",
-		desc = "The position of the Bonemerang overlay."
+		desc = "Change the position of the Bonemerang overlay"
 	)
 	@ConfigEditorButton(
 		runnableId = 9,
@@ -72,7 +93,7 @@ public class LocationEdit {
 	@Expose
 	@ConfigOption(
 		name = "Edit Toolbar Positions",
-		desc = "Edit the position of the QuickCommands / Search Bar"
+		desc = "Change the position of the QuickCommands / Search Bar"
 	)
 	@ConfigAccordionId(id = 1)
 	@ConfigEditorButton(runnableId = 6, buttonText = "Edit")
@@ -109,7 +130,7 @@ public class LocationEdit {
 	@Expose
 	@ConfigOption(
 		name = "Edit Crystal Overlay Position",
-		desc = "Change the position of the Crystal Hollows Overlay."
+		desc = "Change the position of the Crystal Hollows Overlay"
 	)
 	@ConfigEditorButton(
 		runnableId = 10,
@@ -121,7 +142,7 @@ public class LocationEdit {
 	@Expose
 	@ConfigOption(
 		name = "Edit Fuel Bar Position",
-		desc = "Set the position of the drill fuel bar"
+		desc = "Change the position of the drill fuel bar"
 	)
 	@ConfigEditorButton(
 		runnableId = 2,

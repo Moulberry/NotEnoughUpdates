@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.cosmetics;
 
 import com.google.common.collect.BiMap;
@@ -67,6 +86,7 @@ public class CapeManager {
 		new CapeData("lava", false, false),
 		new CapeData("tunnel", false, false),
 		new CapeData("planets", false, false),
+		new CapeData("screensaver", false, false),
 
 		//Admins
 		new CapeData("nullzee", true, false),
@@ -125,46 +145,53 @@ public class CapeManager {
 	}
 
 	private void updateCapes() {
-		NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("activecapes.json", (jsonObject) -> {
-			if (jsonObject.get("success").getAsBoolean()) {
-				lastJsonSync = jsonObject;
+		NotEnoughUpdates.INSTANCE.manager.apiUtils
+			.newMoulberryRequest("activecapes.json")
+			.requestJson()
+			.thenAccept(jsonObject -> {
+				if (jsonObject.get("success").getAsBoolean()) {
+					lastJsonSync = jsonObject;
 
-				lastCapeSynced = System.currentTimeMillis();
-				capeMap.clear();
-				for (JsonElement active : jsonObject.get("active").getAsJsonArray()) {
-					if (active.isJsonObject()) {
-						JsonObject activeObj = (JsonObject) active;
-						setCape(activeObj.get("_id").getAsString(), activeObj.get("capeType").getAsString(), false);
+					lastCapeSynced = System.currentTimeMillis();
+					capeMap.clear();
+					for (JsonElement active : jsonObject.get("active").getAsJsonArray()) {
+						if (active.isJsonObject()) {
+							JsonObject activeObj = (JsonObject) active;
+							setCape(activeObj.get("_id").getAsString(), activeObj.get("capeType").getAsString(), false);
+						}
 					}
 				}
-			}
-		}, () -> System.out.println("[MBAPI] Update capes errored"));
+			});
 
 		if (Minecraft.getMinecraft().thePlayer != null && permSyncTries > 0) {
 			String uuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
 			permSyncTries--;
-			NotEnoughUpdates.INSTANCE.manager.hypixelApi.getMyApiAsync("permscapes.json", (jsonObject) -> {
-				if (!jsonObject.get("success").getAsBoolean()) return;
+			NotEnoughUpdates.INSTANCE.manager.apiUtils
+				.newMoulberryRequest("permscapes.json")
+				.requestJson()
+				.thenAccept(jsonObject -> {
+					if (!jsonObject.get("success").getAsBoolean()) return;
 
-				permSyncTries = 0;
-				availableCapes.clear();
-				for (JsonElement permPlayer : jsonObject.get("perms").getAsJsonArray()) {
-					if (!permPlayer.isJsonObject()) continue;
-					String playerUuid = permPlayer.getAsJsonObject().get("_id").getAsString();
-					if (!(playerUuid != null && playerUuid.equals(uuid))) continue;
-					for (JsonElement perm : permPlayer.getAsJsonObject().get("perms").getAsJsonArray()) {
-						if (!perm.isJsonPrimitive()) continue;
-						String cape = perm.getAsString();
-						if (cape.equals("*")) {
-							allAvailable = true;
-						} else {
-							availableCapes.add(cape);
+					permSyncTries = 0;
+					availableCapes.clear();
+					for (JsonElement permPlayer : jsonObject.get("perms").getAsJsonArray()) {
+						if (!permPlayer.isJsonObject()) continue;
+						String playerUuid = permPlayer.getAsJsonObject().get("_id").getAsString();
+						if (!(playerUuid != null && playerUuid.equals(uuid))) continue;
+						for (JsonElement perm : permPlayer.getAsJsonObject().get("perms").getAsJsonArray()) {
+							if (!perm.isJsonPrimitive()) continue;
+							String cape = perm.getAsString();
+							if (cape.equals("*")) {
+								allAvailable = true;
+							} else {
+								availableCapes.add(cape);
+							}
+
 						}
-
+						return;
 					}
-					return;
-				}
-			}, () -> System.out.println("[MBAPI] Update capes errored - perms"));
+
+				});
 		}
 	}
 

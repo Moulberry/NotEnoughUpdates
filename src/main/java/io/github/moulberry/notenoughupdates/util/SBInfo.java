@@ -1,12 +1,31 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.util;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.listener.ScoreboardLocationChangeListener;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.LocationChangeEvent;
 import io.github.moulberry.notenoughupdates.overlays.SlayerOverlay;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.init.Blocks;
@@ -18,6 +37,8 @@ import net.minecraft.scoreboard.Score;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -34,7 +55,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,15 +83,23 @@ public class SBInfo {
 	public String slayer = "";
 	public boolean stranded = false;
 
-	public String mode = "";
+	public String mode = null;
 
 	public Date currentTimeDate = null;
 
-	public String lastOpenContainerName = "";
+	private JsonObject mayorJson = new JsonObject();
+
+	/**
+	 * Use Utils.getOpenChestName() instead
+	 */
+	@Deprecated
+	public String currentlyOpenChestName = "";
+	public String lastOpenChestName = "";
 
 	private long lastManualLocRaw = -1;
 	private long lastLocRaw = -1;
 	public long joinedWorld = -1;
+	private long lastMayorUpdate;
 	public long unloadedWorld = -1;
 	private JsonObject locraw = null;
 	public boolean isInDungeon = false;
@@ -96,7 +130,8 @@ public class SBInfo {
 	private int tickCount = 0;
 	public String currentProfile = null;
 
-	@SubscribeEvent
+	//Set the priority HIGH to allow other GuiOpenEvent's to use the new currentlyOpenChestName data
+	@SubscribeEvent(priority = EventPriority.HIGH)
 	public void onGuiOpen(GuiOpenEvent event) {
 		if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) return;
 
@@ -104,20 +139,30 @@ public class SBInfo {
 			GuiChest chest = (GuiChest) event.gui;
 			ContainerChest container = (ContainerChest) chest.inventorySlots;
 
-			lastOpenContainerName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
+			currentlyOpenChestName = container.getLowerChestInventory().getDisplayName().getUnformattedText();
+			lastOpenChestName = currentlyOpenChestName;
+		} else {
+			currentlyOpenChestName = "";
 		}
 	}
 
 	@SubscribeEvent
 	public void onGuiTick(TickEvent event) {
 		if (tickCount++ % 10 != 0) return;
-		GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
-		if (currentScreen instanceof GuiChest) {
-			ContainerChest container = (ContainerChest) ((GuiChest) currentScreen).inventorySlots;
-			if ("Profile Management".equals(container.getLowerChestInventory().getDisplayName().getUnformattedText())) {
-				updateProfileInformation(container);
-			}
+		if (Utils.getOpenChestName().equals("Profile Management")) {
+			ContainerChest container = (ContainerChest) ((GuiChest) Minecraft.getMinecraft().currentScreen).inventorySlots;
+			updateProfileInformation(container);
 		}
+	}
+
+	public boolean checkForSkyblockLocation() {
+		if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() || getLocation() == null) {
+			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
+				"[NEU] This command is not available outside SkyBlock"));
+			return false;
+		}
+
+		return true;
 	}
 
 	private static final Pattern PROFILE_PATTERN =
@@ -189,7 +234,8 @@ public class SBInfo {
 		locraw = null;
 		this.setLocation(null);
 		joinedWorld = System.currentTimeMillis();
-		lastOpenContainerName = "";
+		currentlyOpenChestName = "";
+		lastOpenChestName = "";
 		hasNewTab = false;
 	}
 
@@ -254,7 +300,10 @@ public class SBInfo {
 			lastLocRaw = System.currentTimeMillis();
 			NotEnoughUpdates.INSTANCE.sendChatMessage("/locraw");
 		}
-
+			if (currentTime - lastMayorUpdate > 300 * 1000) {
+				updateMayor();
+				lastMayorUpdate = currentTime;
+			}
 		try {
 			for (NetworkPlayerInfo info : Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap()) {
 				String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
@@ -293,7 +342,7 @@ public class SBInfo {
 
 				String cleanLine = Utils.cleanColour(line);
 
-				if (cleanLine.contains("Dungeon") && cleanLine.contains("Cleared:") && cleanLine.contains("%")) {
+				if (cleanLine.contains("Cleared:") && cleanLine.contains("%")) {
 					tempIsInDungeon = true;
 				}
 
@@ -311,6 +360,8 @@ public class SBInfo {
 					slayer = "Sven";
 				} else if (line.contains("Voidgloom Seraph")) {
 					slayer = "Enderman";
+				} else if (line.contains("Inferno Demonlord")) {
+					slayer = "Blaze";
 				}
 				if (lines.contains("Slayer Quest") && SlayerOverlay.unloadOverlayTimer == -1 ||
 					lines.contains("Slayer Quest") && System.currentTimeMillis() - SlayerOverlay.unloadOverlayTimer > 500) {
@@ -353,7 +404,11 @@ public class SBInfo {
 				//Replaced with for loop because in crystal hollows with events the line it's on can shift.
 				for (String line : lines) {
 					if (line.contains("⏣")) {
-						location = Utils.cleanColour(line).replaceAll("[^A-Za-z0-9() ]", "").trim();
+						String l = Utils.cleanColour(line).replaceAll("[^A-Za-z0-9() ]", "").trim();
+						if (!l.equals(location)) {
+							new ScoreboardLocationChangeListener(location, l);
+						}
+						location = l;
 						break;
 					}
 				}
@@ -371,5 +426,17 @@ public class SBInfo {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void updateMayor() {
+		NotEnoughUpdates.INSTANCE.manager.apiUtils
+			.newHypixelApiRequest("resources/skyblock/election")
+			.requestJson()
+			.thenAccept(newJson -> mayorJson = newJson);
+	}
+
+
+	public JsonObject getMayorJson() {
+		return mayorJson;
 	}
 }

@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates;
 
 import com.google.common.collect.Lists;
@@ -16,23 +35,27 @@ import io.github.moulberry.notenoughupdates.mbgui.MBAnchorPoint;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiElement;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupAligned;
 import io.github.moulberry.notenoughupdates.mbgui.MBGuiGroupFloating;
-import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
+import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
 import io.github.moulberry.notenoughupdates.miscfeatures.SunTzu;
 import io.github.moulberry.notenoughupdates.miscgui.GuiPriceGraph;
+import io.github.moulberry.notenoughupdates.miscgui.NeuSearchCalculator;
 import io.github.moulberry.notenoughupdates.options.NEUConfigEditor;
 import io.github.moulberry.notenoughupdates.util.Constants;
+import io.github.moulberry.notenoughupdates.util.GuiTextures;
 import io.github.moulberry.notenoughupdates.util.LerpingFloat;
+import io.github.moulberry.notenoughupdates.util.NotificationHandler;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
-import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.gui.inventory.GuiInventory;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -43,8 +66,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Items;
-import net.minecraft.inventory.ContainerChest;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -62,82 +83,61 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Vector2f;
 
-import java.awt.Color;
+import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.github.moulberry.notenoughupdates.util.GuiTextures.*;
-
 public class NEUOverlay extends Gui {
-	private static final ResourceLocation SUPERGEHEIMNISVERMOGEN =
-		new ResourceLocation("notenoughupdates:supersecretassets/bald.png");
+	private static final ResourceLocation SUPERGEHEIMNISVERMOGEN = new ResourceLocation(
+		"notenoughupdates:supersecretassets/bald.png");
+
+	private static final ResourceLocation ATMOULBERRYWHYISMYLUNARCLIENTBUGGING = new ResourceLocation(
+		"notenoughupdates:supersecretassets/lunar.png");
 	private static final ResourceLocation SEARCH_BAR = new ResourceLocation("notenoughupdates:search_bar.png");
 	private static final ResourceLocation SEARCH_BAR_GOLD = new ResourceLocation("notenoughupdates:search_bar_gold.png");
 
-	private static final ResourceLocation ARMOR_DISPLAY =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay.png");
-	private static final ResourceLocation ARMOR_DISPLAY_GREY =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_grey.png");
-	private static final ResourceLocation ARMOR_DISPLAY_DARK =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_phq_dark.png");
-	private static final ResourceLocation ARMOR_DISPLAY_FSR =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_fsr.png");
-	private static final ResourceLocation ARMOR_DISPLAY_TRANSPARENT =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_transparent.png");
-	private static final ResourceLocation ARMOR_DISPLAY_TRANSPARENT_PET =
-		new ResourceLocation("notenoughupdates:armordisplay/armordisplay_transparent_pet.png");
-
-	private static final ResourceLocation QUESTION_MARK = new ResourceLocation("notenoughupdates:pv_unknown.png");
-
-	private static final ResourceLocation PET_DISPLAY =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo.png");
-	private static final ResourceLocation PET_DISPLAY_GREY =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_dark.png");
-	private static final ResourceLocation PET_DISPLAY_DARK =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_phqdark.png");
-	private static final ResourceLocation PET_DISPLAY_FSR =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_fsr.png");
-	private static final ResourceLocation PET_DISPLAY_TRANSPARENT =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplaysolo_transparent.png");
-
-	private static final ResourceLocation PET_ARMOR_DISPLAY =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor.png");
-	private static final ResourceLocation PET_ARMOR_DISPLAY_GREY =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_dark.png");
-	private static final ResourceLocation PET_ARMOR_DISPLAY_DARK =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_phqdark.png");
-	private static final ResourceLocation PET_ARMOR_DISPLAY_FSR =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_fsr.png");
-	private static final ResourceLocation PET_ARMOR_DISPLAY_TRANSPARENT =
-		new ResourceLocation("notenoughupdates:petdisplay/petdisplayarmor_transparent.png");
-
-	private static boolean renderingArmorHud;
-	private static boolean renderingPetHud;
-	public static boolean shouldUseCachedPet;
-	public static long cachedPetTimer;
-
 	private final NEUManager manager;
 
-	private final String mobRegex = ".*?((_MONSTER)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
+	private final String mobRegex = ".*?((_MONSTER)|(_NPC)|(_ANIMAL)|(_MINIBOSS)|(_BOSS)|(_SC))$";
 	private final String petRegex = ".*?;[0-5]$";
 
 	private final ResourceLocation[] sortIcons = new ResourceLocation[]{
-		sort_all, sort_mob, sort_pet, sort_tool, sort_armor, sort_accessory
+		GuiTextures.sort_all,
+		GuiTextures.sort_mob,
+		GuiTextures.sort_pet,
+		GuiTextures.sort_tool,
+		GuiTextures.sort_armor,
+		GuiTextures.sort_accessory
 	};
 	private final ResourceLocation[] sortIconsActive = new ResourceLocation[]{
-		sort_all_active, sort_mob_active, sort_pet_active, sort_tool_active, sort_armor_active, sort_accessory_active
+		GuiTextures.sort_all_active,
+		GuiTextures.sort_mob_active,
+		GuiTextures.sort_pet_active,
+		GuiTextures.sort_tool_active,
+		GuiTextures.sort_armor_active,
+		GuiTextures.sort_accessory_active
 	};
 
 	private final ResourceLocation[] orderIcons = new ResourceLocation[]{
-		order_alphabetical, order_rarity, order_value
+		GuiTextures.order_alphabetical, GuiTextures.order_rarity, GuiTextures.order_value
 	};
 	private final ResourceLocation[] orderIconsActive = new ResourceLocation[]{
-		order_alphabetical_active, order_rarity_active, order_value_active
+		GuiTextures.order_alphabetical_active, GuiTextures.order_rarity_active, GuiTextures.order_value_active
 	};
 
 	//Various constants used for GUI structure
@@ -166,6 +166,7 @@ public class NEUOverlay extends Gui {
 	private List<JsonObject> selectedItemGroup = null;
 
 	private boolean itemPaneOpen = false;
+	private long itemPaneShouldOpen = -1;
 
 	private int page = 0;
 
@@ -186,8 +187,8 @@ public class NEUOverlay extends Gui {
 
 	private boolean redrawItems = false;
 
-	private boolean searchBarHasFocus = false;
-	private final GuiTextField textField = new GuiTextField(0, null, 0, 0, 0, 0);
+	public static boolean searchBarHasFocus = false;
+	private static final GuiTextField textField = new GuiTextField(0, null, 0, 0, 0, 0);
 
 	private static final int COMPARE_MODE_ALPHABETICAL = 0;
 	private static final int COMPARE_MODE_RARITY = 1;
@@ -241,15 +242,17 @@ public class NEUOverlay extends Gui {
 				}
 				if (Mouse.getEventButtonState()) {
 					setSearchBarFocus(true);
+
 					if (Mouse.getEventButton() == 1) { //Right mouse button down
 						textField.setText("");
 						updateSearch();
 					} else {
 						if (System.currentTimeMillis() - millisLastLeftClick < 300) {
 							searchMode = !searchMode;
+							itemPaneShouldOpen = -1;
 							lastSearchMode = System.currentTimeMillis();
 							if (searchMode && NotEnoughUpdates.INSTANCE.config.hidden.firstTimeSearchFocus) {
-								NEUEventListener.displayNotification(Lists.newArrayList(
+								NotificationHandler.displayNotification(Lists.newArrayList(
 									"\u00a7eSearch Highlight",
 									"\u00a77In this mode NEU will gray out non matching items in",
 									"\u00a77your inventory or chests.",
@@ -328,7 +331,7 @@ public class NEUOverlay extends Gui {
 				}
 
 				//Search bar text
-				fr.drawString(textField.getText(), (int) x + 5,
+				fr.drawString(NeuSearchCalculator.format(textField.getText()), (int) x + 5,
 					(int) y - 4 + getHeight() / 2, Color.WHITE.getRGB()
 				);
 
@@ -366,8 +369,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void recalculate() {
-			}
+			public void recalculate() {}
 		};
 	}
 
@@ -384,8 +386,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void recalculate() {
-			}
+			public void recalculate() {}
 
 			@Override
 			public void mouseClick(float x, float y, int mouseX, int mouseY) {
@@ -398,8 +399,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void mouseClickOutside() {
-			}
+			public void mouseClickOutside() {}
 
 			@Override
 			public void render(float x, float y) {
@@ -409,13 +409,13 @@ public class NEUOverlay extends Gui {
 				if (!NotEnoughUpdates.INSTANCE.config.toolbar.enableSettingsButton) {
 					return;
 				}
-				Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.quickcommand_background);
 				GlStateManager.color(1, 1, 1, 1);
 				Utils.drawTexturedRect(x, y,
 					searchYSize + paddingUnscaled * 2, searchYSize + paddingUnscaled * 2, GL11.GL_NEAREST
 				);
 
-				Minecraft.getMinecraft().getTextureManager().bindTexture(settings);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.settings);
 				GlStateManager.color(1f, 1f, 1f, 1f);
 				Utils.drawTexturedRect((int) x + paddingUnscaled, (int) y + paddingUnscaled,
 					searchYSize, searchYSize
@@ -439,8 +439,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void recalculate() {
-			}
+			public void recalculate() {}
 
 			@Override
 			public void mouseClick(float x, float y, int mouseX, int mouseY) {
@@ -457,8 +456,7 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void mouseClickOutside() {
-			}
+			public void mouseClickOutside() {}
 
 			@Override
 			public void render(float x, float y) {
@@ -469,13 +467,13 @@ public class NEUOverlay extends Gui {
 					return;
 				}
 
-				Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.quickcommand_background);
 				GlStateManager.color(1, 1, 1, 1);
 				Utils.drawTexturedRect(x, y,
 					searchYSize + paddingUnscaled * 2, searchYSize + paddingUnscaled * 2, GL11.GL_NEAREST
 				);
 
-				Minecraft.getMinecraft().getTextureManager().bindTexture(help);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.help);
 				GlStateManager.color(1f, 1f, 1f, 1f);
 				Utils.drawTexturedRect((int) x + paddingUnscaled, (int) y + paddingUnscaled,
 					getSearchBarYSize(), getSearchBarYSize()
@@ -499,16 +497,15 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void recalculate() {
-			}
+			public void recalculate() {}
 
 			@Override
 			public void mouseClick(float x, float y, int mouseX, int mouseY) {
 				if (!NotEnoughUpdates.INSTANCE.config.toolbar.quickCommands) return;
+				if (EnchantingSolvers.disableButtons()) return;
 
 				if ((NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType != 0 && Mouse.getEventButtonState()) ||
-					(NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType == 0 &&
-						!Mouse.getEventButtonState() &&
+					(NotEnoughUpdates.INSTANCE.config.toolbar.quickCommandsClickType == 0 && !Mouse.getEventButtonState() &&
 						Mouse.getEventButton() != -1)) {
 					if (quickCommandStr.contains(":")) {
 						String command = quickCommandStr.split(":")[0].trim();
@@ -523,12 +520,12 @@ public class NEUOverlay extends Gui {
 			}
 
 			@Override
-			public void mouseClickOutside() {
-			}
+			public void mouseClickOutside() {}
 
 			@Override
 			public void render(float x, float y) {
 				if (!NotEnoughUpdates.INSTANCE.config.toolbar.quickCommands) return;
+				if (EnchantingSolvers.disableButtons()) return;
 
 				int paddingUnscaled = getPaddingUnscaled();
 				int bigItemSize = getSearchBarYSize();
@@ -574,7 +571,7 @@ public class NEUOverlay extends Gui {
 					tag.setString("qc_id", quickCommandStrSplit[0].toLowerCase().trim());
 					render.setTagCompound(tag);
 
-					Minecraft.getMinecraft().getTextureManager().bindTexture(quickcommand_background);
+					Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.quickcommand_background);
 					GlStateManager.color(1, 1, 1, 1);
 					Utils.drawTexturedRect(x, y,
 						bigItemSize + paddingUnscaled * 2, bigItemSize + paddingUnscaled * 2, GL11.GL_NEAREST
@@ -582,8 +579,7 @@ public class NEUOverlay extends Gui {
 
 					int mouseX = Mouse.getX() * Utils.peekGuiScale().getScaledWidth() / Minecraft.getMinecraft().displayWidth;
 					int mouseY = Utils.peekGuiScale().getScaledHeight() -
-						Mouse.getY() * Utils.peekGuiScale().getScaledHeight() / Minecraft.getMinecraft().displayHeight -
-						1;
+						Mouse.getY() * Utils.peekGuiScale().getScaledHeight() / Minecraft.getMinecraft().displayHeight - 1;
 
 					if (mouseX > x && mouseX < x + bigItemSize) {
 						if (mouseY > y && mouseY < y + bigItemSize) {
@@ -619,8 +615,11 @@ public class NEUOverlay extends Gui {
 	}
 
 	private MBGuiGroupAligned createSearchBarGroup() {
-		List<MBGuiElement> children =
-			Lists.newArrayList(createSettingsButton(this), createSearchBar(), createHelpButton(this));
+		List<MBGuiElement> children = Lists.newArrayList(
+			createSettingsButton(this),
+			createSearchBar(),
+			createHelpButton(this)
+		);
 		return new MBGuiGroupAligned(children, false) {
 			public int getPadding() {
 				return getPaddingUnscaled() * 4;
@@ -714,19 +713,33 @@ public class NEUOverlay extends Gui {
 	public void showInfo(JsonObject item) {
 		if (item.has("info") && item.has("infoType")) {
 			JsonArray lore = item.get("info").getAsJsonArray();
-			StringBuilder loreBuilder = new StringBuilder();
-			for (int i = 0; i < lore.size(); i++) {
-				loreBuilder.append(lore.get(i).getAsString());
-				if (i != lore.size() - 1)
-					loreBuilder.append("\n");
+			String infoType = item.get("infoType").getAsString();
+			String infoText = "";
+			if (infoType.equals("WIKI_URL")) {
+				for (JsonElement url : lore) {
+					infoText = url.getAsString();
+					if (
+						url.getAsString().startsWith("https://wiki.hypixel.net/") && NotEnoughUpdates.INSTANCE.config.misc.wiki == 0
+							|| url.getAsString().startsWith("https://hypixel-skyblock.fandom.com/") &&
+							NotEnoughUpdates.INSTANCE.config.misc.wiki == 1) break;
+				}
+			} else {
+				StringBuilder loreBuilder = new StringBuilder();
+				for (int i = 0; i < lore.size(); i++) {
+					loreBuilder.append(lore.get(i).getAsString());
+					if (i != lore.size() - 1)
+						loreBuilder.append("\n");
+				}
+				infoText = loreBuilder.toString();
 			}
-			String infoText = loreBuilder.toString();
 			String internalname = item.get("internalname").getAsString();
 			String name = item.get("displayname").getAsString();
-			String infoType = item.get("infoType").getAsString();
-			displayInformationPane(new TextInfoPane(this, manager, "Loading", "Loading your requested information about " +
-				name +
-				"."));
+			displayInformationPane(new TextInfoPane(
+				this,
+				manager,
+				EnumChatFormatting.GRAY + "Loading",
+				EnumChatFormatting.GRAY + "Loading your requested information about " + name + EnumChatFormatting.GRAY + "."
+			));
 			infoPaneLoadingJob = InfoPane.create(this, manager, infoType, name, internalname, infoText)
 																	 .thenAccept(this::displayInformationPane);
 		}
@@ -740,7 +753,9 @@ public class NEUOverlay extends Gui {
 				if (slot != null) {
 					ItemStack hover = slot.getStack();
 					if (hover != null) {
-						textField.setText("id:" + manager.getInternalNameForItem(hover));
+						if (manager.getInternalNameForItem(hover) != null) {
+							textField.setText("id:" + manager.getInternalNameForItem(hover));
+						}
 						itemPaneOpen = true;
 						updateSearch();
 					}
@@ -752,7 +767,7 @@ public class NEUOverlay extends Gui {
 	/**
 	 * Handles the mouse input, cancelling the forge event if a NEU gui element is clicked.
 	 */
-	public boolean mouseInput() {
+	public synchronized boolean mouseInput() {
 		if (disabled) {
 			return false;
 		}
@@ -785,6 +800,10 @@ public class NEUOverlay extends Gui {
 		if (selectedItemGroup != null) {
 			int selectedX = Math.min(selectedItemGroupX, width - getBoxPadding() - 18 * selectedItemGroup.size());
 			if (mouseY > selectedItemGroupY + 17 && mouseY < selectedItemGroupY + 35) {
+				if (!Mouse.getEventButtonState()) {
+					Utils.pushGuiScale(-1);
+					return true; //End early if the mouse isn't pressed, but still cancel event.
+				}
 				for (int i = 0; i < selectedItemGroup.size(); i++) {
 					if (mouseX >= selectedX - 1 + 18 * i && mouseX <= selectedX + 17 + 18 * i) {
 						JsonObject item = selectedItemGroup.get(i);
@@ -941,7 +960,7 @@ public class NEUOverlay extends Gui {
 		return paddingUnscaled;
 	}
 
-	public GuiTextField getTextField() {
+	public static GuiTextField getTextField() {
 		return textField;
 	}
 
@@ -1006,7 +1025,6 @@ public class NEUOverlay extends Gui {
 	 */
 	public boolean keyboardInput(boolean hoverInv) {
 		if (Minecraft.getMinecraft().currentScreen == null) return false;
-		Keyboard.enableRepeatEvents(true);
 
 		int keyPressed = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter() + 256 : Keyboard.getEventKey();
 
@@ -1062,7 +1080,7 @@ public class NEUOverlay extends Gui {
 						internalname.set(manager.getInternalNameForItem(hover));
 						itemstack.set(hover);
 					}
-				} else if (!hoverInv) {
+				} else {
 					Utils.pushGuiScale(NotEnoughUpdates.INSTANCE.config.itemlist.paneGuiScale);
 
 					int width = Utils.peekGuiScale().getScaledWidth();
@@ -1097,9 +1115,10 @@ public class NEUOverlay extends Gui {
 				}
 				if (internalname.get() != null) {
 					if (itemstack.get() != null) {
-						if (NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing && Keyboard.getEventCharacter() == 'k') {
-							Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
-								internalname.get(), manager.getJsonForItem(itemstack.get())
+						if (NotEnoughUpdates.INSTANCE.config.apiData.repositoryEditing && Keyboard.getEventCharacter() == 'k') {
+							Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(
+								internalname.get(),
+								manager.getJsonForItem(itemstack.get())
 							));
 							return true;
 						}
@@ -1120,11 +1139,9 @@ public class NEUOverlay extends Gui {
 								Minecraft.getMinecraft().thePlayer.inventory.addItemStackToInventory(
 									manager.jsonToStack(item));
 							}
-						} else if (NotEnoughUpdates.INSTANCE.config.hidden.enableItemEditing &&
+						} else if (NotEnoughUpdates.INSTANCE.config.apiData.repositoryEditing &&
 							Keyboard.getEventCharacter() == 'k') {
-							Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(manager,
-								internalname.get(), item
-							));
+							Minecraft.getMinecraft().displayGuiScreen(new NEUItemEditor(internalname.get(), item));
 							return true;
 						} else if (keyPressed == manager.keybindItemSelect.getKeyCode() &&
 							NotEnoughUpdates.INSTANCE.config.toolbar.searchBar) {
@@ -1151,40 +1168,6 @@ public class NEUOverlay extends Gui {
 			getFavourites().add(internalname);
 		}
 		updateSearch();
-	}
-
-	String[] rarityArr = new String[]{
-		EnumChatFormatting.WHITE + EnumChatFormatting.BOLD.toString() + "COMMON",
-		EnumChatFormatting.GREEN + EnumChatFormatting.BOLD.toString() + "UNCOMMON",
-		EnumChatFormatting.BLUE + EnumChatFormatting.BOLD.toString() + "RARE",
-		EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD.toString() + "EPIC",
-		EnumChatFormatting.GOLD + EnumChatFormatting.BOLD.toString() + "LEGENDARY",
-		EnumChatFormatting.LIGHT_PURPLE + EnumChatFormatting.BOLD.toString() + "MYTHIC",
-		EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "SPECIAL",
-	};
-
-	/**
-	 * Finds the rarity from the lore of an item.
-	 * -1 = UNKNOWN
-	 * 0 = COMMON
-	 * 1 = UNCOMMON
-	 * 2 = RARE
-	 * 3 = EPIC
-	 * 4 = LEGENDARY
-	 * 5 = MYTHIC
-	 * 6 = SPECIAL
-	 */
-	public int getRarity(JsonArray lore) {
-		for (int i = lore.size() - 1; i >= 0; i--) {
-			String line = lore.get(i).getAsString();
-
-			for (int j = 0; j < rarityArr.length; j++) {
-				if (line.startsWith(rarityArr[j])) {
-					return j;
-				}
-			}
-		}
-		return -1;
 	}
 
 	/**
@@ -1214,19 +1197,21 @@ public class NEUOverlay extends Gui {
 		return (o1, o2) -> {
 			//1 (mult) if o1 should appear after o2
 			//-1 (-mult) if o2 should appear after o1
-			if (getFavourites().contains(o1.get("internalname").getAsString()) &&
-				!getFavourites().contains(o2.get("internalname").getAsString())) {
+			if (getFavourites().contains(o1.get("internalname").getAsString()) && !getFavourites().contains(o2
+				.get("internalname")
+				.getAsString())) {
 				return -1;
 			}
-			if (!getFavourites().contains(o1.get("internalname").getAsString()) &&
-				getFavourites().contains(o2.get("internalname").getAsString())) {
+			if (!getFavourites().contains(o1.get("internalname").getAsString()) && getFavourites().contains(o2
+				.get("internalname")
+				.getAsString())) {
 				return 1;
 			}
 
 			int mult = getCompareAscending().get(getCompareMode()) ? 1 : -1;
 			if (getCompareMode() == COMPARE_MODE_RARITY) {
-				int rarity1 = getRarity(o1.get("lore").getAsJsonArray());
-				int rarity2 = getRarity(o2.get("lore").getAsJsonArray());
+				int rarity1 = Utils.getRarityFromLore(o1.get("lore").getAsJsonArray());
+				int rarity2 = Utils.getRarityFromLore(o2.get("lore").getAsJsonArray());
 
 				if (rarity1 < rarity2) return mult;
 				if (rarity1 > rarity2) return -mult;
@@ -1234,8 +1219,8 @@ public class NEUOverlay extends Gui {
 				String internal1 = o1.get("internalname").getAsString();
 				String internal2 = o2.get("internalname").getAsString();
 
-				float cost1 = manager.auctionManager.getLowestBin(internal1);
-				float cost2 = manager.auctionManager.getLowestBin(internal2);
+				double cost1 = manager.auctionManager.getBazaarOrBin(internal1);
+				double cost2 = manager.auctionManager.getBazaarOrBin(internal2);
 
 				if (cost1 < cost2) return mult;
 				if (cost1 > cost2) return -mult;
@@ -1280,7 +1265,7 @@ public class NEUOverlay extends Gui {
 		for (int i = lore.size() - 1; i >= 0; i--) {
 			String line = lore.get(i).getAsString();
 
-			for (String rarity : rarityArr) {
+			for (String rarity : Utils.rarityArrC) {
 				for (int j = 0; j < typeMatches.length; j++) {
 					if (line.trim().equals(rarity + " " + typeMatches[j])) {
 						return j;
@@ -1295,14 +1280,13 @@ public class NEUOverlay extends Gui {
 	 * Checks whether an item matches the current sort mode.
 	 */
 	public boolean checkMatchesSort(String internalname, JsonObject item) {
-		if (!NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems &&
-			item.has("vanilla") &&
+		if (!NotEnoughUpdates.INSTANCE.config.itemlist.showVanillaItems && item.has("vanilla") &&
 			item.get("vanilla").getAsBoolean()) {
 			return false;
 		}
 
 		if (getSortMode() == SORT_MODE_ALL) {
-			return !internalname.matches(mobRegex);
+			return NotEnoughUpdates.INSTANCE.config.itemlist.alwaysShowMonsters || !internalname.matches(mobRegex);
 		} else if (getSortMode() == SORT_MODE_MOB) {
 			return internalname.matches(mobRegex);
 		} else if (getSortMode() == SORT_MODE_PET) {
@@ -1321,13 +1305,13 @@ public class NEUOverlay extends Gui {
 				"DUNGEON SWORD",
 				"DUNGEON BOW",
 				"DRILL",
-				"GAUNTLET"
+				"GAUNTLET",
+				"LONGSWORD",
+				"DEPLOYABLE"
 			) >= 0;
 		} else if (getSortMode() == SORT_MODE_ARMOR) {
 			return checkItemType(
-				item
-					.get("lore")
-					.getAsJsonArray(),
+				item.get("lore").getAsJsonArray(),
 				"HELMET",
 				"CHESTPLATE",
 				"LEGGINGS",
@@ -1335,9 +1319,13 @@ public class NEUOverlay extends Gui {
 				"DUNGEON HELMET",
 				"DUNGEON CHESTPLATE",
 				"DUNGEON LEGGINGS",
-				"DUNGEON BOOTS"
-			) >=
-				0;
+				"DUNGEON BOOTS",
+				"BELT",
+				"GLOVES",
+				"CLOAK",
+				"NECKLACE",
+				"BRACELET"
+			) >= 0;
 		} else if (getSortMode() == SORT_MODE_ACCESSORY) {
 			return checkItemType(item.get("lore").getAsJsonArray(), "ACCESSORY", "HATCCESSORY", "DUNGEON ACCESSORY") >= 0;
 		}
@@ -1449,7 +1437,7 @@ public class NEUOverlay extends Gui {
 	 * Returns an index-able array containing the elements in searchedItems.
 	 * Whenever searchedItems is updated in updateSearch(), the array is recreated here.
 	 */
-	public List<JsonObject> getSearchedItems() {
+	public synchronized List<JsonObject> getSearchedItems() {
 		if (searchedItems == null) {
 			updateSearch();
 			return new ArrayList<>();
@@ -1472,7 +1460,7 @@ public class NEUOverlay extends Gui {
 		if (index < getSlotsXSize() * getSlotsYSize()) {
 			int actualIndex = index + getSlotsXSize() * getSlotsYSize() * page;
 			List<JsonObject> searchedItems = getSearchedItems();
-			if (actualIndex < searchedItems.size()) {
+			if (0 <= actualIndex && actualIndex < searchedItems.size()) {
 				return searchedItems.get(actualIndex);
 			} else {
 				return null;
@@ -1620,12 +1608,12 @@ public class NEUOverlay extends Gui {
 
 		drawRect(leftSide - 1, top, leftSide - 1 + buttonXSize, top + ySize, fg.getRGB());
 		GlStateManager.color(1f, 1f, 1f, 1f);
-		Minecraft.getMinecraft().getTextureManager().bindTexture(rightarrow);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.rightarrow);
 		Utils.drawTexturedRect(leftSide - 1 + leftPressed,
 			top + leftPressed,
 			buttonXSize, ySize, 1, 0, 0, 1
 		);
-		Minecraft.getMinecraft().getTextureManager().bindTexture(rightarrow_overlay);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.rightarrow_overlay);
 		Utils.drawTexturedRect(leftSide - 1,
 			top,
 			buttonXSize, ySize, 1 - leftPressed, leftPressed, 1 - leftPressed, leftPressed
@@ -1639,12 +1627,12 @@ public class NEUOverlay extends Gui {
 
 		drawRect(rightSide + 1 - buttonXSize, top, rightSide + 1, top + ySize, fg.getRGB());
 		GlStateManager.color(1f, 1f, 1f, 1f);
-		Minecraft.getMinecraft().getTextureManager().bindTexture(rightarrow);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.rightarrow);
 		Utils.drawTexturedRect(rightSide + 1 - buttonXSize + rightPressed,
 			top + rightPressed,
 			buttonXSize, ySize
 		);
-		Minecraft.getMinecraft().getTextureManager().bindTexture(rightarrow_overlay);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.rightarrow_overlay);
 		Utils.drawTexturedRect(rightSide + 1 - buttonXSize,
 			top,
 			buttonXSize, ySize, 1 - rightPressed, rightPressed, 1 - rightPressed, rightPressed
@@ -1802,129 +1790,13 @@ public class NEUOverlay extends Gui {
 
 	int guiScaleLast = 0;
 	private boolean showVanillaLast = false;
-
-	private boolean wardrobeOpen = false;
-
-	private boolean isInNamedGui(String guiName) {
-		GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
-		if (guiScreen instanceof GuiChest) {
-			GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
-			ContainerChest container = (ContainerChest) chest.inventorySlots;
-			IInventory lower = container.getLowerChestInventory();
-			String containerName = lower.getDisplayName().getUnformattedText();
-			wardrobeOpen = containerName.contains(guiName);
-		}
-		if (guiScreen instanceof GuiInventory) {
-			wardrobeOpen = false;
-		}
-		return wardrobeOpen;
-	}
-
-	private int wardrobePage = -1;
-
-	private int getWardrobePage() {
-		GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
-		if (guiScreen instanceof GuiChest) {
-			if (isInNamedGui("Wardrobe")) {
-				GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
-				ContainerChest container = (ContainerChest) chest.inventorySlots;
-				IInventory lower = container.getLowerChestInventory();
-				String containerName = lower.getDisplayName().getUnformattedText();
-				try {
-					wardrobePage = Integer.parseInt(containerName.substring(10, 11));
-				} catch (NumberFormatException e) {
-					System.out.println(containerName.charAt(10));
-					System.out.println("Did hypixel change the wardrobe string?");
-					wardrobePage = -1;
-				}
-			} else wardrobePage = -1;
-		}
-		return wardrobePage;
-	}
-
-	private ItemStack getChestSlotsAsItemStack(int slot) {
-		GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
-		if (guiScreen instanceof GuiChest) {
-			GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
-			return chest.inventorySlots.getSlot(slot).getStack();
-		} else {
-			return null;
-		}
-	}
-
-	private int selectedArmor = 9;
-
-	private int getEquippedArmor() {
-		if (!isInNamedGui("Wardrobe")) return selectedArmor;
-
-		ItemStack nullTest1 = getChestSlotsAsItemStack(8);
-		ItemStack nullTest2 = getChestSlotsAsItemStack(17);
-		ItemStack nullTest3 = getChestSlotsAsItemStack(26);
-		ItemStack nullTest4 = getChestSlotsAsItemStack(35);
-		ItemStack nullTest5 = getChestSlotsAsItemStack(44);
-		if (nullTest1 != null || nullTest2 != null || nullTest3 != null || nullTest4 != null || nullTest5 != null) {
-			selectedArmor = 9;
-		}
-		for (int ii = 1; ii < 5; ii++) {
-			if (ii != 1 && selectedArmor != 9) continue;
-			if (getWardrobePage() != ii) continue;
-			for (int i = 8; i < 54; i += 9) {
-				ItemStack stack1 = getChestSlotsAsItemStack(i);
-				if (stack1 == null) continue;
-				String[] lore1 = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack1.getTagCompound());
-				for (String line : lore1) {
-					if (line.contains("to unequip this armor")) {
-						selectedArmor = i;
-						break;
-					}
-				}
-			}
-		}
-		return selectedArmor;
-	}
-
-	private ItemStack getWardrobeSlot(int armourSlot) {
-		if (isInNamedGui("Wardrobe")) {
-			if (getChestSlotsAsItemStack(getEquippedArmor() - armourSlot) != null && getEquippedArmor() != 9) {
-				return getChestSlotsAsItemStack(getEquippedArmor() - armourSlot);
-			} else return null;
-		} else return null;
-	}
-
-	public boolean isWardrobeSystemOnMainServer() {
-		JsonElement alphaWardrobeElement = Utils.getElement(Constants.DISABLE, "wardrobeFeature");
-		if (alphaWardrobeElement == null || !alphaWardrobeElement.isJsonObject()) {
-			return true;
-		}
-		JsonObject isWardrobe = alphaWardrobeElement.getAsJsonObject();
-		if (isWardrobe.has("enableNewWardrob")) {
-			return isWardrobe.get("enableNewWardrob").getAsBoolean();
-		} else {
-			return true;
-		}
-	}
-
-	public ItemStack slot1 = null;
-	public ItemStack slot2 = null;
-	public ItemStack slot3 = null;
-	public ItemStack slot4 = null;
-	public ItemStack petSlot = null;
-
-	public static boolean isRenderingArmorHud() {
-		return renderingArmorHud;
-	}
-
-	public static boolean isRenderingPetHud() {
-		return renderingPetHud;
-	}
-
 	/**
 	 * Renders the search bar, quick commands, item selection (right), item info (left) and armor hud gui elements.
 	 */
 	public void render(boolean hoverInv) {
-		if (disabled) return;
-		renderingArmorHud = false;
-		renderingPetHud = false;
+		if (disabled) {
+			return;
+		}
 		GlStateManager.enableDepth();
 
 		FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
@@ -1948,236 +1820,13 @@ public class NEUOverlay extends Gui {
 			Utils.drawTexturedRect((width - 64) / 2f, (height - 64) / 2f - 114, 64, 64, GL11.GL_LINEAR);
 			GlStateManager.bindTexture(0);
 		}
-		GuiScreen guiScreen = Minecraft.getMinecraft().currentScreen;
 
-		if (NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud &&
-			NotEnoughUpdates.INSTANCE.config.misc.hidePotionEffect
-			&&
-			NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard() &&
-			isWardrobeSystemOnMainServer()) {
-			if (getWardrobeSlot(1) != null) {
-				slot1 = getWardrobeSlot(4);
-				slot2 = getWardrobeSlot(3);
-				slot3 = getWardrobeSlot(2);
-				slot4 = getWardrobeSlot(1);
-			}
-			if (guiScreen instanceof GuiInventory) {
-				renderingArmorHud = true;
-				selectedArmor = 9;
-
-				List<String> tooltipToDisplay = null;
-				if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 0) {
-					Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY);
-				}
-				if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 1) {
-					Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_GREY);
-				}
-				if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 2) {
-					Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_DARK);
-				}
-				if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 3) {
-					if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 3 &&
-						NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay &&
-						petSlot != null) {
-						Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_TRANSPARENT_PET);
-					} else {
-						Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_TRANSPARENT);
-					}
-				}
-				if (NotEnoughUpdates.INSTANCE.config.customArmour.colourStyle == 4) {
-					Minecraft.getMinecraft().getTextureManager().bindTexture(ARMOR_DISPLAY_FSR);
-				}
-
-				GlStateManager.color(1, 1, 1, 1);
-				GL11.glTranslatef(0, 0, 401);
-				float yNumber = (float) (height - 167) / 2f;
-				Utils.drawTexturedRect((float) ((width - 224.1) / 2f), yNumber, 31, 86, GL11.GL_NEAREST);
-				GlStateManager.bindTexture(0);
-
-				Utils.drawItemStack(slot1, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105));
-				Utils.drawItemStack(slot2, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105) + 18);
-				Utils.drawItemStack(slot3, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105) + 36);
-				Utils.drawItemStack(slot4, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105) + 54);
-				if (slot1 == null) {
-					Minecraft.getMinecraft().getTextureManager().bindTexture(QUESTION_MARK);
-					GlStateManager.color(1, 1, 1, 1);
-					Utils.drawTexturedRect(((width - 208) / 2f), ((height + 60) / 2f - 105), 16, 16, GL11.GL_NEAREST);
-					GlStateManager.bindTexture(0);
-
-					tooltipToDisplay = Lists.newArrayList(
-						EnumChatFormatting.RED + "Warning",
-						EnumChatFormatting.GREEN + "You need to open /wardrobe",
-						EnumChatFormatting.GREEN + "To cache your armour"
-					);
-					if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
-						if (mouseY >= ((height + 60) / 2f - 105) &&
-							mouseY <= ((height + 60) / 2f - 105) + 70 &&
-							NotEnoughUpdates.INSTANCE.config.customArmour.sendWardrobeCommand) {
-							if (Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
-								if (Mouse.getEventButtonState()) {
-									if (ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/wardrobe") ==
-										0) {
-										NotEnoughUpdates.INSTANCE.sendChatMessage("/wardrobe");
-									}
-								}
-							}
-						}
-						if (mouseY >= ((height + 60) / 2f - 105) && mouseY <= ((height + 60) / 2f - 105) + 16) {
-							Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
-							GL11.glTranslatef(0, 0, -401);
-						}
-					}
-
-				}
-				if (slot1 != null && slot2 != null && slot3 != null && slot4 != null) {
-					if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
-						if (mouseY >= ((height + 60) / 2f - 105) &&
-							mouseY <= ((height + 60) / 2f - 105) + 70 &&
-							NotEnoughUpdates.INSTANCE.config.customArmour.sendWardrobeCommand) {
-							if (Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
-								if (Mouse.getEventButtonState()) {
-									if (ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/wardrobe") ==
-										0) {
-										NotEnoughUpdates.INSTANCE.sendChatMessage("/wardrobe");
-									}
-								}
-							}
-						}
-						//top slot
-						if (mouseY >= ((height + 60) / 2f - 105) && mouseY <= ((height + 60) / 2f - 105) + 16) {
-							tooltipToDisplay = slot1.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-							Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
-							tooltipToDisplay = null;
-							GL11.glTranslatef(0, 0, -401);
-						}
-						if (mouseY >= ((height + 60) / 2f - 105) + 18 && mouseY <= ((height + 60) / 2f - 105) + 34) {
-							tooltipToDisplay = slot2.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-							Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
-							tooltipToDisplay = null;
-							GL11.glTranslatef(0, 0, -401);
-						}
-						if (mouseY >= ((height + 60) / 2f - 105) + 36 && mouseY <= ((height + 60) / 2f - 105) + 52) {
-							tooltipToDisplay = slot3.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-							Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
-							tooltipToDisplay = null;
-							GL11.glTranslatef(0, 0, -401);
-						}
-						if (mouseY >= ((height + 60) / 2f - 105) + 54 && mouseY <= ((height + 60) / 2f - 105) + 70) {
-							tooltipToDisplay = slot4.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-							Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
-							tooltipToDisplay = null;
-							GL11.glTranslatef(0, 0, -401);
-						}
-					}
-					GL11.glTranslatef(0, 0, -401);
-				}
-			}
-		}
-		if (PetInfoOverlay.getCurrentPet() != null) {
-			if (NotEnoughUpdates.INSTANCE.config.petOverlay.petInvDisplay
-				&&
-				(NotEnoughUpdates.INSTANCE.manager
-					.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-						.getItemInformation()
-						.get(PetInfoOverlay.getCurrentPet().petType + ";" + PetInfoOverlay.getCurrentPet().rarity.petId))
-					.hasDisplayName()
-					||
-					NotEnoughUpdates.INSTANCE.manager
-						.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-							.getItemInformation()
-							.get(PetInfoOverlay.getCurrentPet().petType + ";" + (PetInfoOverlay.getCurrentPet().rarity.petId - 1)))
-						.hasDisplayName())
-				&&
-				NotEnoughUpdates.INSTANCE.config.misc.hidePotionEffect &&
-				NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
-				if (!NotEnoughUpdates.INSTANCE.manager
-					.jsonToStack(
-						NotEnoughUpdates.INSTANCE.manager
-							.getItemInformation()
-							.get(PetInfoOverlay.getCurrentPet().petType + ";" + PetInfoOverlay.getCurrentPet().rarity.petId))
-					.hasDisplayName()) {
-					petSlot = NotEnoughUpdates.INSTANCE.manager.jsonToStack(
-						NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(
-							PetInfoOverlay.getCurrentPet().petType + ";" + (PetInfoOverlay.getCurrentPet().rarity.petId - 1)));
-				} else {
-					petSlot = NotEnoughUpdates.INSTANCE.manager.jsonToStack(
-						NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(
-							PetInfoOverlay.getCurrentPet().petType + ";" + PetInfoOverlay.getCurrentPet().rarity.petId));
-				}
-				petSlot.getTagCompound().setBoolean("NEUPETINVDISPLAY", true);
-				petSlot
-					.getTagCompound()
-					.setBoolean("NEUHIDEPETTOOLTIP", NotEnoughUpdates.INSTANCE.config.petOverlay.hidePetTooltip);
-				ItemStack petInfo = petSlot;
-
-				if (guiScreen instanceof GuiInventory) {
-					GL11.glTranslatef(0, 0, 401);
-					if (!NotEnoughUpdates.INSTANCE.config.customArmour.enableArmourHud || !isWardrobeSystemOnMainServer()) {
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 0) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY);
-						}
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 1) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY_GREY);
-						}
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 2) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY_DARK);
-						}
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 3) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY_TRANSPARENT);
-						}
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 4) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_DISPLAY_FSR);
-						}
-					} else {
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 0) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY);
-						}
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 1) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY_GREY);
-						}
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 2) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY_DARK);
-						}
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 3) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY_TRANSPARENT);
-						}
-						if (NotEnoughUpdates.INSTANCE.config.petOverlay.colourStyle == 4) {
-							Minecraft.getMinecraft().getTextureManager().bindTexture(PET_ARMOR_DISPLAY_FSR);
-						}
-					}
-
-					GlStateManager.color(1, 1, 1, 1);
-					float yNumber = (float) (height - 23) / 2f;
-					Utils.drawTexturedRect((float) ((width - 224.1) / 2f), yNumber, 31, 32, GL11.GL_NEAREST);
-					GlStateManager.bindTexture(0);
-
-					Utils.drawItemStack(petInfo, (int) ((width - 208) / 2f), (int) ((height + 60) / 2f - 105) + 72);
-					renderingPetHud = true;
-
-					List<String> tooltipToDisplay = null;
-					if (petInfo != null) {
-						if (mouseX >= ((width - 208) / 2f) && mouseX < ((width - 208) / 2f) + 16) {
-							if (mouseY >= ((height + 60) / 2f - 105) + 72 &&
-								mouseY <= ((height + 60) / 2f - 105) + 88 &&
-								NotEnoughUpdates.INSTANCE.config.petOverlay.sendPetsCommand) {
-								if (Minecraft.getMinecraft().thePlayer.inventory.getItemStack() == null) {
-									if (Mouse.getEventButtonState()) {
-										if (ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/pets") ==
-											0) {
-											NotEnoughUpdates.INSTANCE.sendChatMessage("/pets");
-										}
-									}
-								}
-								tooltipToDisplay = petInfo.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-								Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
-								tooltipToDisplay = null;
-								GL11.glTranslatef(0, 0, -80);
-							}
-						}
-
-					}
-				}
-			}
+		if (textField.getText().toLowerCase().contains("lunar")) {
+			Minecraft.getMinecraft().getTextureManager().bindTexture(ATMOULBERRYWHYISMYLUNARCLIENTBUGGING);
+			GlStateManager.color(1, 1, 1, 1);
+			GlStateManager.translate(0, 0, 100);
+			Utils.drawTexturedRect((width + 410) / 2f, (height + 450) / 2f - 114, 113, 64, GL11.GL_LINEAR);
+			GlStateManager.bindTexture(0);
 		}
 
 		SunTzu.setEnabled(textField.getText().toLowerCase().startsWith("potato"));
@@ -2208,6 +1857,13 @@ public class NEUOverlay extends Gui {
 			(int) (fgFavourite2.getBlue() * 0.8f), fgFavourite2.getAlpha()
 		);
 
+		if (!NotEnoughUpdates.INSTANCE.config.itemlist.openWhenSearching && searchMode) {
+			itemPaneOpen = false;
+		}
+		if (itemPaneShouldOpen != -1 && System.currentTimeMillis() > itemPaneShouldOpen) {
+			itemPaneOpen = true;
+			itemPaneShouldOpen = -1;
+		}
 		if (itemPaneOpen) {
 			if (itemPaneTabOffset.getValue() == 0) {
 				if (itemPaneOffsetFactor.getTarget() != 2 / 3f) {
@@ -2252,7 +1908,7 @@ public class NEUOverlay extends Gui {
 
 		//Tab
 		if (NotEnoughUpdates.INSTANCE.config.itemlist.tabOpen) {
-			Minecraft.getMinecraft().getTextureManager().bindTexture(itemPaneTabArrow);
+			Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.itemPaneTabArrow);
 			GlStateManager.color(1f, 1f, 1f, 0.3f);
 			Utils.drawTexturedRect(width - itemPaneTabOffset.getValue() * 64 / 20f, height / 2f - 32, 64, 64);
 			GlStateManager.bindTexture(0);
@@ -2308,17 +1964,14 @@ public class NEUOverlay extends Gui {
 				int orderIconX = leftSide + getBoxPadding() + getItemBoxXPadding() + i * scaledItemPaddedSize;
 				drawRect(orderIconX, iconTop, scaledITEM_SIZE + orderIconX, iconTop + scaledITEM_SIZE, fg.getRGB());
 
-				Minecraft
-					.getMinecraft()
-					.getTextureManager()
-					.bindTexture(getCompareMode() == i ? orderIconsActive[i] : orderIcons[i]);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(
+					getCompareMode() == i ? orderIconsActive[i] : orderIcons[i]);
 				GlStateManager.color(1f, 1f, 1f, 1f);
 				Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
 
-				Minecraft
-					.getMinecraft()
-					.getTextureManager()
-					.bindTexture(getCompareAscending().get(i) ? ascending_overlay : descending_overlay);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(getCompareAscending().get(i)
+					? GuiTextures.ascending_overlay
+					: GuiTextures.descending_overlay);
 				GlStateManager.color(1f, 1f, 1f, 1f);
 				Utils.drawTexturedRect(orderIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
 				GlStateManager.bindTexture(0);
@@ -2341,10 +1994,8 @@ public class NEUOverlay extends Gui {
 			for (int i = 0; i < sortIcons.length; i++) {
 				int sortIconX = rightSide - scaledITEM_SIZE - i * scaledItemPaddedSize;
 				drawRect(sortIconX, iconTop, scaledITEM_SIZE + sortIconX, iconTop + scaledITEM_SIZE, fg.getRGB());
-				Minecraft
-					.getMinecraft()
-					.getTextureManager()
-					.bindTexture(getSortMode() == i ? sortIconsActive[i] : sortIcons[i]);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(
+					getSortMode() == i ? sortIconsActive[i] : sortIcons[i]);
 				GlStateManager.color(1f, 1f, 1f, 1f);
 				Utils.drawTexturedRect(sortIconX, iconTop, scaledITEM_SIZE, scaledITEM_SIZE, 0, 1, 0, 1, GL11.GL_NEAREST);
 				GlStateManager.bindTexture(0);
@@ -2504,7 +2155,7 @@ public class NEUOverlay extends Gui {
 			activeInfoPane.render(width, height, bg, fg, Utils.peekGuiScale(), mouseX, mouseY);
 
 			GlStateManager.color(1f, 1f, 1f, 1f);
-			Minecraft.getMinecraft().getTextureManager().bindTexture(close);
+			Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.close);
 			Utils.drawTexturedRect(rightSide - getBoxPadding() - 8, getBoxPadding() - 8, 16, 16);
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
@@ -2550,7 +2201,6 @@ public class NEUOverlay extends Gui {
 		GlStateManager.enableAlpha();
 		GlStateManager.alphaFunc(516, 0.1F);
 		GlStateManager.disableLighting();
-
 		Utils.pushGuiScale(-1);
 
 		if (System.currentTimeMillis() - lastSearchMode > 120000 &&
@@ -2559,6 +2209,7 @@ public class NEUOverlay extends Gui {
 			searchMode = false;
 		}
 	}
+
 
 	/**
 	 * Used in SettingsInfoPane to redraw the items when a setting changes.
@@ -2585,8 +2236,7 @@ public class NEUOverlay extends Gui {
 		int sw = width * Utils.peekGuiScale().getScaleFactor();
 		int sh = height * Utils.peekGuiScale().getScaleFactor();
 		for (int i = 0; i < itemFramebuffers.length; i++) {
-			if (itemFramebuffers[i] == null ||
-				itemFramebuffers[i].framebufferWidth != sw ||
+			if (itemFramebuffers[i] == null || itemFramebuffers[i].framebufferWidth != sw ||
 				itemFramebuffers[i].framebufferHeight != sh) {
 				if (itemFramebuffers[i] == null) {
 					itemFramebuffers[i] = new Framebuffer(sw, sh, true);
@@ -2772,7 +2422,7 @@ public class NEUOverlay extends Gui {
 					return;
 				}
 
-				Minecraft.getMinecraft().getTextureManager().bindTexture(item_mask);
+				Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.item_mask);
 				if (getFavourites().contains(json.get("internalname").getAsString())) {
 					if (NotEnoughUpdates.INSTANCE.config.itemlist.itemStyle == 0) {
 						GlStateManager.color(fgFavourite2.getRed() / 255f, fgFavourite2.getGreen() / 255f,
@@ -2854,7 +2504,7 @@ public class NEUOverlay extends Gui {
 
 				GlStateManager.translate(0, 0, 50);
 				if (searchedItemsSubgroup.containsKey(json.get("internalname").getAsString())) {
-					Minecraft.getMinecraft().getTextureManager().bindTexture(item_haschild);
+					Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.item_haschild);
 					GlStateManager.color(1, 1, 1, 1);
 					Utils.drawTexturedRect(x - 1, y - 1, ITEM_SIZE + 2, ITEM_SIZE + 2, GL11.GL_NEAREST);
 				}

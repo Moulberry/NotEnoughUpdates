@@ -1,8 +1,33 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigAccordionId;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorAccordion;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorBoolean;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorButton;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDraggableList;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDropdown;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +52,15 @@ public class MiscOverlays {
 
 	@Expose
 	@ConfigOption(
+		name = "Todo Overlay Tab",
+		desc = "Only show the todo overlay when tab list is open"
+	)
+	@ConfigEditorBoolean
+	@ConfigAccordionId(id = 0)
+	public boolean todoOverlayOnlyShowTab = false;
+
+	@Expose
+	@ConfigOption(
 		name = "Todo Text",
 		desc = "\u00a7eDrag text to change the appearance of the overlay\n" +
 			"\u00a7rIf you want to see the time until something is available, click \"Add\" and then the respective timer"
@@ -40,12 +74,13 @@ public class MiscOverlays {
 			"\u00a73Fetchur: \u00a7e3h38m",
 			"\u00a73Commissions: \u00a7e3h38m",
 			"\u00a73Experiments: \u00a7e3h38m",
-			"\u00a73Daily Mithril Powder: \u00a7e3h38m",
-			"\u00a73Daily Gemstone Powder: \u00a7e3h38m",
+			"\u00a73Mithril Powder: \u00a7e3h38m",
+			"\u00a73Gemstone Powder: \u00a7e3h38m",
+			"\u00a73Heavy Pearls: \u00a7e3h38m",
 		}
 	)
 	@ConfigAccordionId(id = 0)
-	public List<Integer> todoText2 = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8));
+	public List<Integer> todoText2 = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9));
 
 	@ConfigOption(
 		name = "Show Only If Soon",
@@ -141,8 +176,8 @@ public class MiscOverlays {
 
 	@Expose
 	@ConfigOption(
-		name = "Daily Mithril Powder Display",
-		desc = "Change the way the daily mithril powder displays\n" +
+		name = "Mithril Powder Display",
+		desc = "Change the way the mithril powder displays\n" +
 			"Only when ready, When very Soon, When soon, When kinda soon or always."
 	)
 	@ConfigAccordionId(id = 1)
@@ -153,8 +188,8 @@ public class MiscOverlays {
 
 	@Expose
 	@ConfigOption(
-		name = "Daily Gemstone Powder Display",
-		desc = "Change the way the daily gemstone powder displays\n" +
+		name = "Gemstone Powder Display",
+		desc = "Change the way the gemstone powder displays\n" +
 			"Only when ready, When very Soon, When soon, When kinda soon or always."
 	)
 	@ConfigAccordionId(id = 1)
@@ -162,6 +197,19 @@ public class MiscOverlays {
 		values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
 	)
 	public int dailyGemstonePowderDisplay = 0;
+
+	@Expose
+	@ConfigOption(
+		name = "Heavy Pearl Display",
+		desc = "Change the way the heavy pearl displays\n" +
+			"Only when ready, When very Soon, When soon, When kinda soon or always."
+	)
+	@ConfigAccordionId(id = 1)
+	@ConfigEditorDropdown(
+		values = {"Only when ready", "When very Soon", "When soon", "When Kinda Soon", "Always"}
+	)
+
+	public int dailyHeavyPearlDisplay = 0;
 
 	@ConfigOption(
 		name = "Colours",

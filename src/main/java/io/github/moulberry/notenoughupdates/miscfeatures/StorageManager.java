@@ -1,6 +1,35 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.miscgui.StorageOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -9,18 +38,38 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTException;
+import net.minecraft.nbt.NBTTagByte;
+import net.minecraft.nbt.NBTTagByteArray;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagDouble;
+import net.minecraft.nbt.NBTTagFloat;
+import net.minecraft.nbt.NBTTagInt;
+import net.minecraft.nbt.NBTTagIntArray;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagLong;
+import net.minecraft.nbt.NBTTagShort;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraft.network.play.client.C0EPacketClickWindow;
 import net.minecraft.network.play.server.S2DPacketOpenWindow;
 import net.minecraft.network.play.server.S2EPacketCloseWindow;
 import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraft.network.play.server.S30PacketWindowItems;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -35,11 +84,12 @@ public class StorageManager {
 	private static final StorageManager INSTANCE = new StorageManager();
 	private static final Gson GSON = new GsonBuilder()
 		.registerTypeAdapter(ItemStack.class, new ItemStackSerializer())
-		.registerTypeAdapter(ItemStack.class, new ItemStackDeserilizer()).create();
+		.registerTypeAdapter(ItemStack.class, new ItemStackDeserializer()).create();
 
 	public static class ItemStackSerializer implements JsonSerializer<ItemStack> {
 		@Override
 		public JsonElement serialize(ItemStack src, Type typeOfSrc, JsonSerializationContext context) {
+			fixPetInfo(src);
 			NBTTagCompound tag = src.serializeNBT();
 			return nbtToJson(tag);
 		}
@@ -47,7 +97,7 @@ public class StorageManager {
 
 	private static final Pattern JSON_FIX_REGEX = Pattern.compile("\"([^,:]+)\":");
 
-	public static class ItemStackDeserilizer implements JsonDeserializer<ItemStack> {
+	public static class ItemStackDeserializer implements JsonDeserializer<ItemStack> {
 		@Override
 		public ItemStack deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
 			throws JsonParseException {
@@ -85,6 +135,63 @@ public class StorageManager {
 
 	private static JsonObject nbtToJson(NBTTagCompound NBTTagCompound) {
 		return (JsonObject) loadJson(NBTTagCompound);
+	}
+
+	private static class PetInfo {
+		String type;
+		Boolean active;
+		Double exp;
+		String tier;
+		Boolean hideInfo;
+		Integer candyUsed;
+		String uuid;
+		Boolean hideRightClick;
+		String heldItem;
+		String skin;
+
+		private <T> void appendIfNotNull(StringBuilder builder, String key, T value) {
+			if (value != null) {
+				if (builder.indexOf("{") != builder.length()-1) {
+					builder.append(",");
+				}
+				builder.append(key).append(":");
+				if (value instanceof String) {
+					builder.append("\"").append(value).append("\"");
+				} else {
+					builder.append(value);
+				}
+			}
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder object = new StringBuilder();
+			object.append("{");
+			appendIfNotNull(object, "type", type);
+			appendIfNotNull(object, "active", active);
+			appendIfNotNull(object, "exp", exp);
+			appendIfNotNull(object, "tier", tier);
+			appendIfNotNull(object, "hideInfo", hideInfo);
+			appendIfNotNull(object, "candyUsed", candyUsed);
+			appendIfNotNull(object, "uuid", uuid);
+			appendIfNotNull(object, "hideRightClick", hideRightClick);
+			appendIfNotNull(object, "heldItem", heldItem);
+			appendIfNotNull(object, "skin", skin);
+			object.append("}");
+			return object.toString();
+		}
+	}
+
+	private static void fixPetInfo(ItemStack src) {
+		if (src.getTagCompound() == null || !src.getTagCompound().hasKey("ExtraAttributes") || !src.getTagCompound().getCompoundTag("ExtraAttributes").hasKey("petInfo")) return;
+		PetInfo oldPetInfo = GSON.fromJson(src.getTagCompound().getCompoundTag("ExtraAttributes").getString("petInfo"), PetInfo.class);
+		src.getTagCompound().getCompoundTag("ExtraAttributes").removeTag("petInfo");
+		try {
+			src.getTagCompound().getCompoundTag("ExtraAttributes").setTag(
+				"petInfo",
+				JsonToNBT.getTagFromJson(oldPetInfo.toString())
+			);
+		} catch (NBTException | NullPointerException ignored) {}
 	}
 
 	private static JsonElement loadJson(NBTBase tag) {
@@ -187,7 +294,7 @@ public class StorageManager {
 
 	private boolean shouldRenderStorageOverlayCached = false;
 
-	private static final Pattern WINDOW_REGEX = Pattern.compile(".+ Backpack (?:\u2726 )?\\((\\d+)/(\\d+)\\)");
+	private static final Pattern WINDOW_REGEX = Pattern.compile(".+ Backpack (?:✦ )?\\(Slot #(\\d+)\\)");
 	private static final Pattern ECHEST_WINDOW_REGEX = Pattern.compile("Ender Chest \\((\\d+)/(\\d+)\\)");
 
 	public void loadConfig(File file) {
@@ -508,8 +615,8 @@ public class StorageManager {
 				int index = slot - 9;
 
 				boolean changed = false;
-				if (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane) &&
-					stack.getMetadata() == 14) {
+				if ((stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane) &&
+					stack.getMetadata() == 14) || (stack.getItem() == Items.dye && stack.getMetadata() == 8)) {
 					if (storagePresent[index]) changed = true;
 					storagePresent[index] = false;
 					removePage(index);
@@ -549,7 +656,8 @@ public class StorageManager {
 
 				boolean changed = false;
 
-				if (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane)) {
+				if (stack.getItem() == Item.getItemFromBlock(Blocks.stained_glass_pane)
+					|| (stack.getItem() == Items.dye && stack.getMetadata() == 8)) {
 					if (storagePresent[index]) changed = true;
 					storagePresent[index] = false;
 					removePage(index);

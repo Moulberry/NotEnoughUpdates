@@ -1,12 +1,31 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
+import io.github.moulberry.notenoughupdates.listener.RenderListener;
 import io.github.moulberry.notenoughupdates.profileviewer.PlayerStats;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -33,8 +52,14 @@ import org.lwjgl.opengl.GL14;
 import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,14 +120,30 @@ public class AccessoryBagOverlay {
 			int mouseX = Mouse.getX() / scaledResolution.getScaleFactor();
 			int mouseY = height - Mouse.getY() / scaledResolution.getScaleFactor();
 
-			int xSize =
-				(int) Utils.getField(GuiContainer.class, Minecraft.getMinecraft().currentScreen, "xSize", "field_146999_f");
-			int ySize =
-				(int) Utils.getField(GuiContainer.class, Minecraft.getMinecraft().currentScreen, "ySize", "field_147000_g");
-			int guiLeft =
-				(int) Utils.getField(GuiContainer.class, Minecraft.getMinecraft().currentScreen, "guiLeft", "field_147003_i");
-			int guiTop =
-				(int) Utils.getField(GuiContainer.class, Minecraft.getMinecraft().currentScreen, "guiTop", "field_147009_r");
+			int xSize = (int) Utils.getField(
+				GuiContainer.class,
+				Minecraft.getMinecraft().currentScreen,
+				"xSize",
+				"field_146999_f"
+			);
+			int ySize = (int) Utils.getField(
+				GuiContainer.class,
+				Minecraft.getMinecraft().currentScreen,
+				"ySize",
+				"field_147000_g"
+			);
+			int guiLeft = (int) Utils.getField(
+				GuiContainer.class,
+				Minecraft.getMinecraft().currentScreen,
+				"guiLeft",
+				"field_147003_i"
+			);
+			int guiTop = (int) Utils.getField(
+				GuiContainer.class,
+				Minecraft.getMinecraft().currentScreen,
+				"guiTop",
+				"field_147009_r"
+			);
 
 			if (mouseX < guiLeft + xSize + 3 || mouseX > guiLeft + xSize + 80 + 28) return false;
 			if (mouseY < guiTop || mouseY > guiTop + 166) return false;
@@ -797,7 +838,7 @@ public class AccessoryBagOverlay {
 
 	private static Comparator<String> getItemComparator() {
 		return (o1, o2) -> {
-			float cost1;
+			double cost1;
 			JsonObject o1Auc = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(o1);
 			if (o1Auc != null && o1Auc.has("price")) {
 				cost1 = o1Auc.get("price").getAsFloat();
@@ -806,9 +847,9 @@ public class AccessoryBagOverlay {
 				if (info != null)
 					cost1 = info.craftCost;
 				else
-					cost1 = 0;
+					cost1 = -1;
 			}
-			float cost2;
+			double cost2;
 			JsonObject o2Auc = NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAuctionInfo(o2);
 			if (o2Auc != null && o2Auc.has("price")) {
 				cost2 = o2Auc.get("price").getAsFloat();
@@ -817,7 +858,7 @@ public class AccessoryBagOverlay {
 				if (info != null)
 					cost2 = info.craftCost;
 				else
-					cost2 = 0;
+					cost2 = -1;
 			}
 
 			if (cost1 == -1 && cost2 == -1) return o1.compareTo(o2);
@@ -834,16 +875,17 @@ public class AccessoryBagOverlay {
 	private static boolean inAccessoryBag = false;
 
 	public static boolean isInAccessoryBag() {
-		return inAccessoryBag;
+		return inAccessoryBag && NotEnoughUpdates.INSTANCE.config.accessoryBag.enableOverlay;
 	}
 
 	public static void renderOverlay() {
 		inAccessoryBag = false;
-		if (Minecraft.getMinecraft().currentScreen instanceof GuiChest && NEUEventListener.inventoryLoaded) {
+		if (Minecraft.getMinecraft().currentScreen instanceof GuiChest && RenderListener.inventoryLoaded) {
 			GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
 			ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
 			String containerName = cc.getLowerChestInventory().getDisplayName().getUnformattedText();
-			if (containerName.trim().startsWith("Accessory Bag")) {
+			if (containerName.trim().startsWith("Accessory Bag") && !containerName.contains("Thaumaturgy") &&
+				!containerName.contains("Upgrades")) {
 				inAccessoryBag = true;
 				try {
 					int xSize = (int) Utils.getField(GuiContainer.class, eventGui, "xSize", "field_146999_f");

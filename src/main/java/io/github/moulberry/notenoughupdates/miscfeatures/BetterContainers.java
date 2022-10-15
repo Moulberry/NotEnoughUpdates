@@ -1,8 +1,28 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import com.google.gson.JsonObject;
-import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.events.SlotClickEvent;
+import io.github.moulberry.notenoughupdates.listener.RenderListener;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.renderer.GlStateManager;
@@ -18,6 +38,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -69,7 +90,7 @@ public class BetterContainers {
 	public static void bindHook(TextureManager textureManager, ResourceLocation location) {
 		long currentMillis = System.currentTimeMillis();
 
-		if (isChestOpen() && NEUEventListener.inventoryLoaded) {
+		if (isChestOpen() && RenderListener.inventoryLoaded) {
 			int invHashcode = lastInvHashcode;
 
 			if (currentMillis - lastHashcodeCheck > 50) {
@@ -544,4 +565,17 @@ public class BetterContainers {
 			return 0;
 		}
 	}
+
+	@SubscribeEvent
+	public void onMouseClick(SlotClickEvent event) {
+		if (!isOverriding()) return;
+		boolean isBlankStack = BetterContainers.isBlankStack(event.slot.slotNumber, event.slot.getStack());
+		if (!(isBlankStack ||
+			BetterContainers.isButtonStack(event.slot.slotNumber, event.slot.getStack()))) return;
+		clickSlot(event.slotId);
+		if (isBlankStack) {
+			event.usePickblockInstead();
+		}
+	}
+
 }

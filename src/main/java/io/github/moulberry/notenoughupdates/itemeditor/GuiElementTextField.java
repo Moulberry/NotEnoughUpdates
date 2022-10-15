@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.itemeditor;
 
 import io.github.moulberry.notenoughupdates.util.Utils;
@@ -158,7 +177,12 @@ public class GuiElementTextField extends GuiElement {
 
 		String textNC = textNoColour.substring(0, cursorIndex);
 		int colorCodes = StringUtils.countMatches(textNC, "\u00B6");
-		String line = text.substring(cursorIndex + (((options & COLOUR) != 0) ? colorCodes * 2 : 0)).split("\n")[0];
+		String[] lines = text.substring(cursorIndex + (((options & COLOUR) != 0) ? colorCodes * 2 : 0)).split("\n");
+		if (lines.length < 1) {
+			return 0;
+		}
+		String line = lines[0];
+
 		int padding = Math.min(5, searchBarXSize - strLenNoColor(line)) / 2;
 		String trimmed = Minecraft.getMinecraft().fontRendererObj.trimStringToWidth(line, xComp - padding);
 		int linePos = strLenNoColor(trimmed);
@@ -210,6 +234,33 @@ public class GuiElementTextField extends GuiElement {
 	@Override
 	public void keyTyped(char typedChar, int keyCode) {
 		if (focus) {
+			//allows for pasting formatted text that includes "§"
+			if (GuiScreen.isKeyComboCtrlV(keyCode)) {
+				textField.setEnabled(false);
+
+				int selectionEnd = textField.getSelectionEnd();
+				int cursorPosition = textField.getCursorPosition();
+
+				if (cursorPosition < selectionEnd) {
+					//swap selectionEnd and cursorPosition
+					selectionEnd = selectionEnd ^ cursorPosition;
+					cursorPosition = selectionEnd ^ cursorPosition;
+					selectionEnd = selectionEnd ^ cursorPosition;
+				}
+
+				String clipboardContent = GuiScreen.getClipboardString();
+
+				StringBuilder stringBuilder = new StringBuilder(getText())
+					.replace(selectionEnd, cursorPosition, "")
+					.insert(selectionEnd, clipboardContent);
+
+				//writeText removes unwanted chars from the String which includes "§"
+				textField.setText(stringBuilder.toString());
+				textField.setCursorPosition(selectionEnd + clipboardContent.length());
+			} else {
+				textField.setEnabled(true);
+			}
+
 			if ((options & MULTILINE) != 0) { //Carriage return
 				Pattern patternControlCode = Pattern.compile("(?i)\\u00A7([^\\u00B6\n])(?!\\u00B6)");
 

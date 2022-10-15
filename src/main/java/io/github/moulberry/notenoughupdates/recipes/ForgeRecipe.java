@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.recipes;
 
 import com.google.common.collect.Sets;
@@ -15,12 +34,18 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class ForgeRecipe implements NeuRecipe {
 
-	private static final ResourceLocation BACKGROUND =
-		new ResourceLocation("notenoughupdates", "textures/gui/forge_recipe.png");
+	private static final ResourceLocation BACKGROUND = new ResourceLocation(
+		"notenoughupdates",
+		"textures/gui/forge_recipe_tall.png"
+	);
 
 	private static final int SLOT_IMAGE_U = 176;
 	private static final int SLOT_IMAGE_V = 0;
@@ -28,7 +53,7 @@ public class ForgeRecipe implements NeuRecipe {
 	private static final int SLOT_PADDING = 1;
 	private static final int EXTRA_INFO_MAX_WIDTH = 75;
 	public static final int EXTRA_INFO_X = 132;
-	public static final int EXTRA_INFO_Y = 25;
+	public static final int EXTRA_INFO_Y = 55;
 
 	public enum ForgeType {
 		REFINING, ITEM_FORGING
@@ -77,6 +102,11 @@ public class ForgeRecipe implements NeuRecipe {
 	}
 
 	@Override
+	public RecipeType getType() {
+		return RecipeType.FORGE;
+	}
+
+	@Override
 	public Set<Ingredient> getIngredients() {
 		return Sets.newHashSet(inputs);
 	}
@@ -102,7 +132,7 @@ public class ForgeRecipe implements NeuRecipe {
 			int[] slotCoordinates = getSlotCoordinates(i, inputs.size());
 			slots.add(new RecipeSlot(slotCoordinates[0], slotCoordinates[1], itemStack));
 		}
-		slots.add(new RecipeSlot(124, 35, output.getItemStack()));
+		slots.add(new RecipeSlot(124, 66, output.getItemStack()));
 		return slots;
 	}
 
@@ -214,14 +244,14 @@ public class ForgeRecipe implements NeuRecipe {
 		);
 	}
 
-	private static final int RECIPE_CENTER_X = 40;
-	private static final int RECIPE_CENTER_Y = 34;
-	private static final int SLOT_DISTANCE_FROM_CENTER = 22;
+	private static final int RECIPE_CENTER_X = 49;
+	private static final int RECIPE_CENTER_Y = 74;
+	private static final int SLOT_DISTANCE_FROM_CENTER = 30;
 	private static final int RECIPE_FALLBACK_X = 20;
 	private static final int RECIPE_FALLBACK_Y = 15;
 
 	static int[] getSlotCoordinates(int slotNumber, int totalSlotCount) {
-		if (totalSlotCount > 6) {
+		if (totalSlotCount > 8) {
 			return new int[]{
 				RECIPE_FALLBACK_X + (slotNumber % 4) * GuiItemRecipe.SLOT_SPACING,
 				RECIPE_FALLBACK_Y + (slotNumber / 4) * GuiItemRecipe.SLOT_SPACING,
@@ -236,7 +266,10 @@ public class ForgeRecipe implements NeuRecipe {
 		double rad = Math.PI * 2 * slotNumber / totalSlotCount;
 		int x = (int) (Math.cos(rad) * SLOT_DISTANCE_FROM_CENTER);
 		int y = (int) (Math.sin(rad) * SLOT_DISTANCE_FROM_CENTER);
-		return new int[]{RECIPE_CENTER_X + x, RECIPE_CENTER_Y + y};
+		return new int[]{
+			RECIPE_CENTER_X + x - GuiItemRecipe.SLOT_SIZE / 2,
+			RECIPE_CENTER_Y + y - GuiItemRecipe.SLOT_SIZE / 2
+		};
 	}
 
 	static String formatDuration(int seconds) {

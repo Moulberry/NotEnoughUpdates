@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.common.collect.Lists;
@@ -31,8 +50,8 @@ public class OverlayManager {
 			"\u00a73Fetchur: \u00a7eReady!",
 			"\u00a73Commissions: \u00a7eReady!",
 			"\u00a73Experiments: \u00a7eReady!",
-			"\u00a73Daily Mithril Powder: \u00a7eReady",
-			"\u00a73Daily Gemstone Powder: \u00a7eReady",
+			"\u00a73Mithril Powder: \u00a7eReady",
+			"\u00a73Gemstone Powder: \u00a7eReady",
 			"\u00a73Cakes: \u00a7e1d21h",
 			"\u00a73Cookie Buff: \u00a7e2d23h",
 			"\u00a73Godpot: \u00a7e19h",
@@ -40,8 +59,8 @@ public class OverlayManager {
 			"\u00a73Fetchur: \u00a7e3h38m",
 			"\u00a73Commissions: \u00a7e3h38m",
 			"\u00a73Experiments: \u00a7e3h38m",
-			"\u00a73Daily Mithril Powder: \u00a7e3h38m",
-			"\u00a73Daily Gemstone Powder: \u00a7e3h38m"
+			"\u00a73Mithril Powder: \u00a7e3h38m",
+			"\u00a73Gemstone Powder: \u00a7e3h38m"
 		);
 		textOverlays.add(
 			timersOverlay = new TimersOverlay(NotEnoughUpdates.INSTANCE.config.miscOverlays.todoPosition, () -> {
@@ -81,7 +100,7 @@ public class OverlayManager {
 		List<String> farmingDummy = Lists.newArrayList(
 			"\u00a7bCounter: \u00a7e37,547,860",
 			"\u00a7bCrops/m: \u00a7e38.29",
-			"\u00a7bFarm: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+			"\u00a7bFarming: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
 			"\u00a7bCurrent XP: \u00a7e6,734",
 			"\u00a7bRemaining XP: \u00a7e3,265",
 			"\u00a7bXP/h: \u00a7e238,129",
@@ -103,7 +122,7 @@ public class OverlayManager {
 		List<String> miningSkillDummy = Lists.newArrayList(
 			"\u00a7bCompact: \u00a7e547,860",
 			"\u00a7bBlocks/m: \u00a7e38.29",
-			"\u00a7bMine: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+			"\u00a7bMining: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
 			"\u00a7bCurrent XP: \u00a7e6,734",
 			"\u00a7bRemaining XP: \u00a7e3,265",
 			"\u00a7bXP/h: \u00a7e238,129",

@@ -1,7 +1,34 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigAccordionId;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorAccordion;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorBoolean;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorButton;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDropdown;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorKeybind;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorSlider;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
+import org.lwjgl.input.Keyboard;
 
 public class Misc {
 	@Expose
@@ -36,17 +63,28 @@ public class Misc {
 	public boolean fariySoulAccordion = false;
 	@Expose
 	@ConfigOption(
-		name = "Fairy Souls Finder",
-		desc = "Shows waypoints to fairy souls (/neusouls)"
+		name = "Track Fairy Souls",
+		desc = "Track Found Fairy Souls"
 	)
-	@ConfigEditorBoolean
+	@ConfigEditorBoolean(runnableId = 20)
+	@ConfigAccordionId(id = 0)
+	public boolean trackFairySouls = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Show Waypoints",
+		desc = "Show Fairy Soul Waypoints (Requires fairy soul tracking)"
+	)
+	@ConfigEditorBoolean(
+		runnableId = 15
+	)
 	@ConfigAccordionId(id = 0)
 	public boolean fariySoul = false;
 
 	@Expose
 	@ConfigOption(
-		name = "Clear Fairy Souls",
-		desc = "Clears waypoints to fairy souls (/neusouls clear)"
+		name = "Mark All As Found",
+		desc = "Mark all fairy souls in current location as found"
 	)
 	@ConfigEditorButton(
 		runnableId = 16,
@@ -57,8 +95,8 @@ public class Misc {
 
 	@Expose
 	@ConfigOption(
-		name = "Unclear Fairy Souls",
-		desc = "Shows all waypoints to fairy souls (/neusouls unclear)"
+		name = "Mark All As Missing",
+		desc = "Mark all fairy souls in current location as missing"
 	)
 	@ConfigEditorButton(
 		runnableId = 17,
@@ -88,13 +126,11 @@ public class Misc {
 	@Expose
 	@ConfigOption(
 		name = "Damage Indicator Style",
-		desc = "Change the style of Skyblock damage indicators to be easier to read\n" +
+		desc = "Change Skyblock damage indicators to use shortened numbers\n" +
 			"\u00A7cSome old animations mods break this feature"
 	)
-	@ConfigEditorDropdown(
-		values = {"Off", "Commas", "Shortened"}
-	)
-	public int damageIndicatorStyle = 1;
+	@ConfigEditorBoolean
+	public boolean damageIndicatorStyle2 = false;
 
 	@Expose
 	@ConfigOption(
@@ -107,6 +143,7 @@ public class Misc {
 
 	@Expose
 	@ConfigOption(
+
 		name = "Edit Enchant Colours",
 		desc = "Change the colours of certain skyblock enchants (/neuec)"
 	)
@@ -140,5 +177,64 @@ public class Misc {
 	)
 	@ConfigEditorBoolean
 	public boolean disableNPCRetexturing = false;
+
+	@Expose
+	@ConfigOption(
+		name = "Wiki",
+		desc = "The wiki to use in the wiki renderer."
+	)
+	@ConfigEditorDropdown(values = {
+		"Hypixel",
+		"Fandom"
+	})
+	public int wiki = 0;
+
+	@Expose
+	@ConfigOption(
+		name = "Waypoint Keybind",
+		desc = "Press this keybind to show waypoints to various NPCs"
+	)
+	@ConfigEditorKeybind(defaultKey = Keyboard.KEY_NONE)
+	public int keybindWaypoint = Keyboard.KEY_NONE;
+
+	@Expose
+	@ConfigOption(
+		name = "Untrack close Waypoints",
+		desc = "Automatically untrack waypoints once you get close to them."
+	)
+	@ConfigEditorBoolean
+	public boolean untrackCloseWaypoints = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Warp twice",
+		desc = "Warp twice when using SHIFT+<waypoint keybind> to /warp to a waypoint."
+	)
+	@ConfigEditorBoolean
+	public boolean warpTwice = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Calculator",
+		desc = "Replace calculations like §9\"1+2\"§7 with the calculation result in sign popups (AH/BZ) and in the neu search bar"
+	)
+	@ConfigEditorDropdown(values = {"Off", "Enabled with ! Prefix", "Always enabled"})
+	public int calculationMode = 2;
+
+	@Expose
+	@ConfigOption(
+		name = "Enable Abiphone Warning",
+		desc = "Asks for confirmation when removing a contact in the abiphone"
+	)
+	@ConfigEditorBoolean
+	public boolean abiphoneWarning = true;
+
+	@Expose
+	@ConfigOption(
+		name = "Enable Coop Warning",
+		desc = "Asks for confirmation when clicking the coop diamond in profile menu"
+	)
+	@ConfigEditorBoolean
+	public boolean coopWarning = true;
 
 }

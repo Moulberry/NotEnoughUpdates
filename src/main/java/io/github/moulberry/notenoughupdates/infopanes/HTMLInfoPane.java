@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.infopanes;
 
 import info.bliki.htmlcleaner.TagNode;
@@ -14,6 +33,7 @@ import io.github.moulberry.notenoughupdates.util.AllowEmptyHTMLTag;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -25,15 +45,26 @@ import org.apache.commons.lang3.SystemUtils;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class HTMLInfoPane extends TextInfoPane {
 	private static final WikiModel wikiModel;
@@ -46,6 +77,10 @@ public class HTMLInfoPane extends TextInfoPane {
 	private BufferedImage imageTemp = null;
 	private int imageHeight = 0;
 	private int imageWidth = 0;
+
+	private float xMin = 0;
+	private int mouseOffset = 0;
+	private boolean selected = false;
 
 	private static boolean hasAttemptedDownload = false;
 
@@ -61,6 +96,16 @@ public class HTMLInfoPane extends TextInfoPane {
 		conf.addTokenTag("infobox", new IgnoreTag("infobox"));
 		conf.addTokenTag("tabber", new IgnoreTag("tabber"));
 		conf.addTokenTag("kbd", new HTMLTag("kbd"));
+		conf.addTokenTag("td", new AllowEmptyHTMLTag("td"));
+		conf.addTokenTag("tbody", new AllowEmptyHTMLTag("tbody"));
+		conf.addTokenTag("style", new AllowEmptyHTMLTag("style"));
+		conf.addTokenTag("article", new AllowEmptyHTMLTag("article"));
+		conf.addTokenTag("section", new AllowEmptyHTMLTag("section"));
+		conf.addTokenTag("link", new AllowEmptyHTMLTag("link"));
+		conf.addTokenTag("wbr", new AllowEmptyHTMLTag("wbr"));
+		conf.addTokenTag("dl", new AllowEmptyHTMLTag("dl"));
+		conf.addTokenTag("dd", new AllowEmptyHTMLTag("dd"));
+		conf.addTokenTag("dt", new AllowEmptyHTMLTag("dt"));
 		wikiModel = new WikiModel(conf, "https://hypixel-skyblock.fandom.com/wiki/Special:Filepath/${image}",
 			"https://hypixel-skyblock.fandom.com/wiki/${title}"
 		) {
@@ -101,7 +146,7 @@ public class HTMLInfoPane extends TextInfoPane {
 	) {
 		return manager.getWebFile(wikiUrl).thenApply(f -> {
 			if (f == null) {
-				return new HTMLInfoPane(overlay, manager, "error", "error", "Failed to load wiki url: " + wikiUrl);
+				return new HTMLInfoPane(overlay, manager, "error", "error", "Failed to load wiki url: " + wikiUrl, false);
 			}
 
 			StringBuilder sb = new StringBuilder();
@@ -114,9 +159,16 @@ public class HTMLInfoPane extends TextInfoPane {
 					sb.append(l).append("\n");
 				}
 			} catch (IOException e) {
-				return new HTMLInfoPane(overlay, manager, "error", "error", "Failed to load wiki url: " + wikiUrl);
+				return new HTMLInfoPane(overlay, manager, "error", "error", "Failed to load wiki url: " + wikiUrl, false);
 			}
-			return createFromWikiText(overlay, manager, name, f.getName(), sb.toString());
+			return createFromWikiText(
+				overlay,
+				manager,
+				name,
+				f.getName(),
+				sb.toString(),
+				wikiUrl.startsWith("https://wiki.hypixel.net/")
+			);
 		});
 	}
 
@@ -126,30 +178,55 @@ public class HTMLInfoPane extends TextInfoPane {
 	 * a more permanent solution that can be abstracted to work with arbitrary wiki codes (eg. moulberry.github.io/
 	 * files/neu_help.html).
 	 */
+
+	private static final Pattern replacePattern = Pattern.compile(
+		"<nav class=\"page-actions-menu\">.*</nav>|",
+		Pattern.DOTALL
+	);
+
 	public static HTMLInfoPane createFromWikiText(
 		NEUOverlay overlay, NEUManager manager, String name, String filename,
-		String wiki
+		String wiki, boolean isOfficialWiki
 	) {
-		String[] split = wiki.split("</infobox>");
-		wiki = split[split.length - 1]; //Remove everything before infobox
-		wiki = wiki.split("<span class=\"navbox-vde\">")[0]; //Remove navbox
-		wiki = wiki.split("<table class=\"navbox mw-collapsible\"")[0];
-		wiki = "__NOTOC__\n" + wiki; //Remove TOC
+		if (isOfficialWiki) {
+			wiki = wiki.split("<main id=\"content\" class=\"mw-body\">")[1].split("</main>")[0]; // hide top bar
+			wiki = wiki.split("<div class=\"container-navbox\">")[0]; // hide giant bottom list
+			wiki = wiki.split("<div class=\"categoryboxcontainer\">")[0]; // hide small bottom category thing
+			wiki = replacePattern.matcher(wiki).replaceAll("");
+			wiki = wiki.replaceAll(
+				"<div id=\"siteNotice\"></div><div id=\"mw-dismissablenotice-anonplace\"></div><script>.*</script>",
+				""
+			); // hide beta box
+			wiki = wiki.replaceAll("<h1 id=\"section_0\">.*</h1>", ""); // hide title
+			wiki = wiki.replace("src=\"/", "src=\"https://wiki.hypixel.net/");
+			wiki = wiki.replace("\uD83D\uDDF8", "✓"); // replace checkmark with one that renders
+			wiki = wiki.replace("\uD83E\uDC10", "\u27F5"); // replace left arrow with one that renders
+			wiki = wiki.replace("\uD83E\uDC12", "\u27F6"); // replace right arrow with one that renders
+		} else {
+			String[] split = wiki.split("</infobox>");
+			wiki = split[split.length - 1]; //Remove everything before infobox
+			wiki = wiki.split("<span class=\"navbox-vde\">")[0]; //Remove navbox
+			wiki = wiki.split("<table class=\"navbox mw-collapsible\"")[0];
+			wiki = "__NOTOC__\n" + wiki; //Remove TOC
+		}
 		try (PrintWriter out = new PrintWriter(new File(manager.configLocation, "debug/parsed.txt"))) {
 			out.println(wiki);
 		} catch (IOException ignored) {
 		}
 		String html;
 		try {
-			html = wikiModel.render(wiki);
-		} catch (IOException e) {
-			return new HTMLInfoPane(overlay, manager, "error", "error", "Could not render wiki.");
+			if (isOfficialWiki)
+				html = wiki;
+			else
+				html = wikiModel.render(wiki);
+		} catch (Exception e) {
+			return new HTMLInfoPane(overlay, manager, "error", "error", "Could not render wiki.", false);
 		}
 		try (PrintWriter out = new PrintWriter(new File(manager.configLocation, "debug/html.txt"))) {
 			out.println(html);
 		} catch (IOException ignored) {
 		}
-		return new HTMLInfoPane(overlay, manager, name, filename, html);
+		return new HTMLInfoPane(overlay, manager, name, filename, html, isOfficialWiki);
 	}
 
 	private String spaceEscape(String str) {
@@ -164,7 +241,14 @@ public class HTMLInfoPane extends TextInfoPane {
 	 * generation is done asynchronously as sometimes it can take up to 10 seconds for more
 	 * complex webpages.
 	 */
-	public HTMLInfoPane(NEUOverlay overlay, NEUManager manager, String name, String filename, String html) {
+	public HTMLInfoPane(
+		NEUOverlay overlay,
+		NEUManager manager,
+		String name,
+		String filename,
+		String html,
+		boolean isOfficial
+	) {
 		super(overlay, manager, name, "");
 		this.title = name;
 
@@ -180,7 +264,7 @@ public class HTMLInfoPane extends TextInfoPane {
 			return;
 		}
 
-		File cssFile = new File(manager.configLocation, "wikia.css");
+		File cssFile = new File(manager.configLocation, isOfficial ? "official-wiki.css" : "wikia.css");
 		File wkHtmlToImage = new File(manager.configLocation, "wkhtmltox-" + osId + "/bin/wkhtmltoimage");
 
 		//Use old binary folder
@@ -235,13 +319,20 @@ public class HTMLInfoPane extends TextInfoPane {
 			return;
 		}
 
+		if (!cssFile.exists() && isOfficial) {
+			try {
+				Files.copy(this.getClass().getResourceAsStream("/assets/notenoughupdates/official-wiki.css"), cssFile.toPath());
+			} catch (IOException e) {
+				e.printStackTrace();
+				return;
+			}
+		}
+
 		File input = new File(manager.configLocation, "tmp/input.html");
 		String outputFileName = filename.replaceAll("(?i)\\u00A7.", "")
 																		.replaceAll("[^a-zA-Z0-9_\\-]", "_");
 		File output = new File(manager.configLocation, "tmp/" +
 			outputFileName + ".png");
-		File outputExt = new File(manager.configLocation, "tmp/" +
-			outputFileName + "_ext.png");
 
 		input.deleteOnExit();
 		output.deleteOnExit();
@@ -412,12 +503,23 @@ public class HTMLInfoPane extends TextInfoPane {
 			}
 			int yScroll = scrollHeight.getValue();
 
+			float xSize = Math.min((paneWidth - overlay.getBoxPadding() * 2f) / imageWidth * scaleF, 1);
+			float xMax = xMin + xSize;
+
 			float vMin = yScroll / (imageHeight / scaleF);
 			float vMax = (yScroll + height - overlay.getBoxPadding() * 3) / (imageHeight / scaleF);
 			Utils.drawTexturedRect(leftSide + overlay.getBoxPadding(), overlay.getBoxPadding() * 2, imageW,
-				height - overlay.getBoxPadding() * 3,
-				0, 1, vMin, vMax
+				(height - overlay.getBoxPadding() * 3),
+				xMin, xMax, vMin, vMax
 			);
+			if (xSize < 1) {
+				int barX = (int) (xMin * imageW) + leftSide + overlay.getBoxPadding();
+				int barY = height - overlay.getBoxPadding() - 10;
+				int barWidth = (int) (xMax * imageW) + leftSide + overlay.getBoxPadding();
+				int barHeight = height - overlay.getBoxPadding() - 5;
+				boolean isHovered = mouseX >= barX && mouseX <= barWidth && mouseY >= barY && mouseY <= barHeight || selected;
+				Gui.drawRect(barX, barY, barWidth, barHeight, new Color(255, 255, 255, isHovered ? 150 : 100).getRGB());
+			}
 		} else {
 			scrollHeight.setValue(0);
 
@@ -435,6 +537,27 @@ public class HTMLInfoPane extends TextInfoPane {
 
 	@Override
 	public void mouseInput(int width, int height, int mouseX, int mouseY, boolean mouseDown) {
+		int paneWidth = (int) (width / 3 * overlay.getWidthMult());
+		int rightSide = (int) (width * overlay.getInfoPaneOffsetFactor());
+		int leftSide = rightSide - paneWidth;
+		int imageW = paneWidth - overlay.getBoxPadding() * 2;
+		float scaleF = IMAGE_WIDTH * ZOOM_FACTOR / (float) imageW;
+		float xSize = Math.min((paneWidth - overlay.getBoxPadding() * 2f) / imageWidth * scaleF, 1);
+		float xMax = xMin + xSize;
+		int barX = (int) (xMin * imageW) + leftSide + overlay.getBoxPadding();
+		int barY = height - overlay.getBoxPadding() - 10;
+		int barWidth = (int) (xMax * imageW) + leftSide + overlay.getBoxPadding();
+		int barHeight = height - overlay.getBoxPadding() - 5;
+		if (!mouseDown)
+			selected = false;
+		if (mouseX >= barX && mouseX <= barWidth && mouseY >= barY && mouseY <= barHeight && mouseDown || selected) {
+			if (!selected)
+				mouseOffset = mouseX - barX;
+			xMin = (mouseX - leftSide - overlay.getBoxPadding() / 2f - mouseOffset) / imageWidth * scaleF;
+			xMin = Math.max(0, xMin);
+			xMin = Math.min(xMin, 1 - xSize);
+			selected = true;
+		}
 		super.mouseInput(width, height, mouseX, mouseY, mouseDown);
 	}
 

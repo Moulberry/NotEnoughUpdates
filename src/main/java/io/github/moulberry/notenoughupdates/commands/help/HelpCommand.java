@@ -1,15 +1,32 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.commands.help;
 
 import com.google.common.collect.Lists;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.commands.ClientCommandBase;
 import net.minecraft.client.Minecraft;
-import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.ChatComponentText;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class HelpCommand extends ClientCommandBase {
 
@@ -33,8 +50,8 @@ public class HelpCommand extends ClientCommandBase {
 			"\u00a76/neulinks \u00a7r\u00a77- Shows links to neu/moulberry.",
 			"\u00a76/neuoverlay \u00a7r\u00a77- Opens GUI Editor for quickcommands and searchbar.",
 			"\u00a76/neuah \u00a7r\u00a77- Opens neu's custom ah GUI.",
-			"\u00a76/neumap \u00a7r\u00a77- Opens the dungeon map GUI.",
 			"\u00a76/neucalendar \u00a7r\u00a77- Opens neu's custom calendar GUI.",
+			"\u00a76/neucalc \u00a7r\u00a77- Run calculations.",
 			"",
 			"\u00a76\u00a7lOld commands:",
 			"\u00a76/peek \u00a7b?{user} \u00a72\u2D35 \u00a7r\u00a77- Shows quickly stats for a user.",
@@ -46,7 +63,7 @@ public class HelpCommand extends ClientCommandBase {
 			"\u00a76/neureloadrepo \u00a7r\u00a77- Debug command with repo.",
 			"",
 			"\u00a76\u00a7lDev commands:",
-			"\u00a76/neupackdev \u00a7r\u00a77- pack creator command - getnpc"
+			"\u00a76/neupackdev \u00a7r\u00a77- pack creator command - getnpc, getmob(s), getarmorstand(s), getall. Optional radius argument for all."
 		);
 		for (String neuHelpMessage : neuHelpMessages) {
 			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(neuHelpMessage));

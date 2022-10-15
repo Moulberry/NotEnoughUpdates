@@ -1,9 +1,27 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.recipes;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NEUManager;
-import io.github.moulberry.notenoughupdates.util.Utils;
-import net.minecraft.init.Items;
+import io.github.moulberry.notenoughupdates.util.ItemUtils;
 import net.minecraft.item.ItemStack;
 
 import java.util.HashMap;
@@ -75,9 +93,7 @@ public class Ingredient {
 	public ItemStack getItemStack() {
 		if (itemStack != null) return itemStack;
 		if (isCoins()) {
-			itemStack = new ItemStack(Items.gold_nugget);
-			itemStack.setStackDisplayName("\u00A7r\u00A76" + Utils.formatNumberWithDots(getCount()) + " Coins");
-			return itemStack;
+			return ItemUtils.getCoinItemStack(count);
 		}
 		JsonObject itemInfo = manager.getItemInformation().get(internalItemId);
 		itemStack = manager.jsonToStack(itemInfo);

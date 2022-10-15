@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import com.google.gson.JsonObject;
@@ -5,7 +24,7 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.GuiElement;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
-import io.github.moulberry.notenoughupdates.util.SBInfo;
+import io.github.moulberry.notenoughupdates.events.SlotClickEvent;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -15,6 +34,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -35,19 +55,20 @@ public class AuctionBINWarning extends GuiElement {
 	private boolean showWarning = false;
 	private List<String> sellingTooltip;
 	private String sellingName;
-	private int sellingPrice;
-	private int lowestPrice;
+	private long sellingPrice;
+	private long lowestPrice;
+	private long buyPercentage;
+	private int sellStackAmount;
+	private boolean isALoss = true;
 
 	private boolean shouldPerformCheck() {
-		if (!NotEnoughUpdates.INSTANCE.config.ahTweaks.enableBINWarning ||
-			!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+		if (!NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
 			sellingTooltip = null;
 			showWarning = false;
 			return false;
 		}
 
-		if (Minecraft.getMinecraft().currentScreen instanceof GuiChest &&
-			SBInfo.getInstance().lastOpenContainerName.startsWith("Create BIN Auction")) {
+		if (Utils.getOpenChestName().startsWith("Create BIN Auction")) {
 			return true;
 		} else {
 			sellingTooltip = null;
@@ -60,65 +81,73 @@ public class AuctionBINWarning extends GuiElement {
 		return shouldPerformCheck() && showWarning;
 	}
 
-	public boolean onMouseClick(Slot slotIn, int slotId, int clickedButton, int clickType) {
-		if (!shouldPerformCheck()) return false;
+	@SubscribeEvent
+	public void onMouseClick(SlotClickEvent event) {
+		if (!shouldPerformCheck()) return;
 
-		if (slotId == 29) {
-			GuiChest chest = (GuiChest) Minecraft.getMinecraft().currentScreen;
+		if (event.slotId != 29) {
+			return;
+		}
 
-			sellingPrice = -1;
+		sellingPrice = -1;
 
-			ItemStack priceStack = chest.inventorySlots.getSlot(31).getStack();
-			if (priceStack != null) {
-				String displayName = priceStack.getDisplayName();
-				Matcher priceMatcher = ITEM_PRICE_REGEX.matcher(displayName);
+		ItemStack priceStack = event.guiContainer.inventorySlots.getSlot(31).getStack();
+		if (priceStack != null) {
+			String displayName = priceStack.getDisplayName();
+			Matcher priceMatcher = ITEM_PRICE_REGEX.matcher(displayName);
 
-				if (priceMatcher.matches()) {
-					try {
-						sellingPrice = Integer.parseInt(priceMatcher.group(1).replace(",", ""));
-					} catch (NumberFormatException ignored) {
-					}
+			if (priceMatcher.matches()) {
+				try {
+					sellingPrice = Long.parseLong(priceMatcher.group(1).replace(",", ""));
+				} catch (NumberFormatException ignored) {
 				}
 			}
-
-			ItemStack sellStack = chest.inventorySlots.getSlot(13).getStack();
-			String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(sellStack);
-
-			if (internalname == null) {
-				return false;
-			}
-
-			JsonObject itemInfo = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(internalname);
-			if (itemInfo == null || !itemInfo.has("displayname")) {
-				sellingName = internalname;
-			} else {
-				sellingName = itemInfo.get("displayname").getAsString();
-			}
-
-			sellingTooltip = sellStack.getTooltip(
-				Minecraft.getMinecraft().thePlayer,
-				Minecraft.getMinecraft().gameSettings.advancedItemTooltips
-			);
-
-			lowestPrice = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
-			if (lowestPrice <= 0) {
-				lowestPrice = (int) NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAvgBin(internalname);
-			}
-
-			//TODO: Add option for warning if lowest price does not exist
-
-			float factor = 1 - NotEnoughUpdates.INSTANCE.config.ahTweaks.warningThreshold / 100;
-			if (factor < 0) factor = 0;
-			if (factor > 1) factor = 1;
-
-			if (sellingPrice > 0 && lowestPrice > 0 && sellingPrice < lowestPrice * factor) {
-				showWarning = true;
-				return true;
-			} else {
-				return false;
-			}
 		}
-		return false;
+
+		ItemStack sellStack = event.guiContainer.inventorySlots.getSlot(13).getStack();
+		String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(sellStack);
+		sellStackAmount = sellStack.stackSize;
+
+		if (internalname == null) {
+			return;
+		}
+
+		JsonObject itemInfo = NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(internalname);
+		if (itemInfo == null || !itemInfo.has("displayname")) {
+			sellingName = internalname;
+		} else {
+			sellingName = itemInfo.get("displayname").getAsString();
+		}
+
+		sellingTooltip = sellStack.getTooltip(
+			Minecraft.getMinecraft().thePlayer,
+			Minecraft.getMinecraft().gameSettings.advancedItemTooltips
+		);
+
+		lowestPrice = NotEnoughUpdates.INSTANCE.manager.auctionManager.getLowestBin(internalname);
+		if (lowestPrice <= 0) {
+			lowestPrice = (int) NotEnoughUpdates.INSTANCE.manager.auctionManager.getItemAvgBin(internalname);
+		}
+
+		float undercutFactor = 1 - NotEnoughUpdates.INSTANCE.config.ahTweaks.warningThreshold / 100;
+		if (undercutFactor < 0) undercutFactor = 0;
+		if (undercutFactor > 1) undercutFactor = 1;
+		float overcutFactor = 1 - NotEnoughUpdates.INSTANCE.config.ahTweaks.overcutWarningThreshold / 100;
+		if (overcutFactor < 0) overcutFactor = 0;
+		if (overcutFactor > 1) overcutFactor = 1;
+
+		if (lowestPrice == -1) {
+			return;
+		}
+		if (NotEnoughUpdates.INSTANCE.config.ahTweaks.underCutWarning &&
+			(sellingPrice > 0 && lowestPrice > 0 && sellingPrice < sellStackAmount * lowestPrice * undercutFactor)) {
+			showWarning = true;
+			event.setCanceled(true);
+		} else if (NotEnoughUpdates.INSTANCE.config.ahTweaks.overCutWarning &&
+			(sellingPrice > 0 && lowestPrice > 0 && sellingPrice > sellStackAmount * lowestPrice * (overcutFactor + 1))) {
+			showWarning = true;
+			event.setCanceled(true);
+		}
 	}
 
 	public void overrideIsMouseOverSlot(Slot slot, int mouseX, int mouseY, CallbackInfoReturnable<Boolean> cir) {
@@ -155,10 +184,10 @@ public class AuctionBINWarning extends GuiElement {
 		);
 
 		String lowestPriceStr;
-		if (lowestPrice > 999) {
-			lowestPriceStr = Utils.shortNumberFormat(lowestPrice, 0);
+		if (lowestPrice * sellStackAmount > 999) {
+			lowestPriceStr = Utils.shortNumberFormat(lowestPrice * sellStackAmount, 0);
 		} else {
-			lowestPriceStr = "" + lowestPrice;
+			lowestPriceStr = "" + lowestPrice * sellStackAmount;
 		}
 
 		String sellingPriceStr;
@@ -174,7 +203,9 @@ public class AuctionBINWarning extends GuiElement {
 			width / 2, height / 2 - 45 + 25, false, 170, 0xffffffff
 		);
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
-			"has a lowest BIN of \u00a76" + lowestPriceStr + "\u00a7r coins",
+			(lowestPrice > 0
+				? "has a lowest BIN of \u00a76" + lowestPriceStr + "\u00a7r coins"
+				: "\u00a7cWarning: No lowest BIN found!"),
 			Minecraft.getMinecraft().fontRendererObj,
 			width / 2,
 			height / 2 - 45 + 34,
@@ -183,8 +214,14 @@ public class AuctionBINWarning extends GuiElement {
 			0xffa0a0a0
 		);
 
-		int buyPercentage = 100 - sellingPrice * 100 / lowestPrice;
-		if (buyPercentage <= 0) buyPercentage = 1;
+		if (sellingPrice > lowestPrice * sellStackAmount) {
+			buyPercentage = sellingPrice * 100 / (lowestPrice * sellStackAmount);
+			isALoss = false;
+		} else if (sellingPrice < lowestPrice * sellStackAmount) {
+			buyPercentage = 100 - sellingPrice * 100 / (lowestPrice * sellStackAmount);
+			if (buyPercentage <= 0) buyPercentage = 1;
+			isALoss = true;
+		}
 
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
 			"Continue selling it for",
@@ -196,7 +233,8 @@ public class AuctionBINWarning extends GuiElement {
 			0xffa0a0a0
 		);
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
-			"\u00a76" + sellingPriceStr + "\u00a7r coins? (\u00a7c-" + buyPercentage + "%\u00a7r)",
+			"\u00a76" + sellingPriceStr + "\u00a7r coins?" +
+				(lowestPrice > 0 ? "(\u00a7" + (isALoss ? "c-" : "a+") + buyPercentage + "%\u00a7r)" : ""),
 			Minecraft.getMinecraft().fontRendererObj,
 			width / 2,
 			height / 2 - 45 + 59,
@@ -218,7 +256,7 @@ public class AuctionBINWarning extends GuiElement {
 			0xff00ff00
 		);
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
-			EnumChatFormatting.RED + "[n]o",
+			EnumChatFormatting.RED + "[N]o",
 			Minecraft.getMinecraft().fontRendererObj,
 			width / 2 + 23,
 			height / 2 + 31,

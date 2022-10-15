@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.overlays;
 
 import com.google.gson.JsonObject;
@@ -175,18 +194,17 @@ public class FarmingOverlay extends TextOverlay {
 		}
 
 		if (!NotEnoughUpdates.INSTANCE.config.skillOverlays.useBZPrice || internalname != null && (internalname.equals(
-			"TREECAPITATOR_AXE"))
-			|| internalname != null && (internalname.equals("JUNGLE_AXE"))) {
-			if (internalname != null && internalname.startsWith("THEORETICAL_HOE_WARTS") ||
-				(internalname != null && internalname.equals("COCO_CHOPPER"))) {
+			"TREECAPITATOR_AXE")) || internalname != null && (internalname.equals("JUNGLE_AXE"))) {
+			if ((internalname != null && internalname.equals("COCO_CHOPPER"))) {
 				Coins = 3;
 			} else if (internalname != null && internalname.startsWith("THEORETICAL_HOE_POTATO") ||
-				(internalname != null && internalname.startsWith("THEORETICAL_HOE_CARROT"))
-				|| (internalname != null && internalname.equals("CACTUS_KNIFE")) ||
+				(internalname != null && internalname.startsWith("THEORETICAL_HOE_CARROT")) ||
+				(internalname != null && internalname.equals("CACTUS_KNIFE")) ||
 				(internalname != null && internalname.startsWith("THEORETICAL_HOE_WHEAT"))) {
 				Coins = 1;
-			} else if (internalname != null && internalname.startsWith("THEORETICAL_HOE_CANE") ||
-				(internalname != null && internalname.equals("TREECAPITATOR_AXE"))
+			} else if (internalname != null && internalname.startsWith("THEORETICAL_HOE_CANE")
+				|| (internalname != null && internalname.equals("TREECAPITATOR_AXE"))
+				|| (internalname != null && internalname.startsWith("THEORETICAL_HOE_WARTS"))
 				|| (internalname != null && internalname.equals("JUNGLE_AXE"))) {
 				Coins = 2;
 			} else if ((internalname != null && internalname.equals("PUMPKIN_DICER")) ||

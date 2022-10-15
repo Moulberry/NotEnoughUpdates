@@ -13,6 +13,7 @@ out
 *.iml
 .idea/*
 !.idea/codeStyles
+!.idea/copyright
 
 # gradle
 build
@@ -23,3 +24,6 @@ gradle.properties
 eclipse
 run
 .vscode
+infer-out/
+ciwork/
+.DS_STORE

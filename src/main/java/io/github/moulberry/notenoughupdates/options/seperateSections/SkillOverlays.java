@@ -1,8 +1,36 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.options.seperateSections;
 
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.config.annotations.*;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigAccordionId;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorAccordion;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorBoolean;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorButton;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDraggableList;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorDropdown;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorFSR;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorKeybind;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigEditorSlider;
+import io.github.moulberry.notenoughupdates.core.config.annotations.ConfigOption;
 import org.lwjgl.input.Keyboard;
 
 import java.util.ArrayList;
@@ -47,7 +75,7 @@ public class SkillOverlays {
 		exampleText = {
 			"\u00a7bCounter: \u00a7e37,547,860",
 			"\u00a7bCrops/m: \u00a7e38.29",
-			"\u00a7bFarm: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+			"\u00a7bFarming: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
 			"\u00a7bCurrent XP: \u00a7e6,734",
 			"\u00a7bRemaining XP: \u00a7e3,265",
 			"\u00a7bXP/h: \u00a7e238,129",
@@ -117,7 +145,7 @@ public class SkillOverlays {
 		exampleText = {
 			"\u00a7bCompact: \u00a7e547,860",
 			"\u00a7bBlocks/m: \u00a7e38.29",
-			"\u00a7bMine: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
+			"\u00a7bMining: \u00a7e12\u00a77 [\u00a7e|||||||||||||||||\u00a78||||||||\u00a77] \u00a7e67%",
 			"\u00a7bCurrent XP: \u00a7e6,734",
 			"\u00a7bRemaining XP: \u00a7e3,265",
 			"\u00a7bXP/h: \u00a7e238,129",
@@ -246,7 +274,7 @@ public class SkillOverlays {
 	@Expose
 	@ConfigOption(
 		name = "\u00A7cWarning",
-		desc = "The combat display will only show if you have a Book of Stats on the item you are using"
+		desc = "The combat display will only show if you have a Book of Stats or the Champion enchant"
 	)
 	@ConfigEditorFSR(
 		runnableId = 12,
@@ -277,11 +305,12 @@ public class SkillOverlays {
 			"\u00a7bCurrent XP: \u00a7e6,734",
 			"\u00a7bRemaining XP: \u00a7e3,265",
 			"\u00a7bXP/h: \u00a7e238,129",
-			"\u00a7bETA: \u00a7e13h12m"
+			"\u00a7bETA: \u00a7e13h12m",
+			"\u00a7bChampion XP: \u00a7e3,523"
 		}
 	)
 	@ConfigAccordionId(id = 4)
-	public List<Integer> combatText = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5));
+	public List<Integer> combatText = new ArrayList<>(Arrays.asList(0, 6, 1, 2, 3, 4, 5));
 
 	@Expose
 	@ConfigOption(
@@ -309,7 +338,7 @@ public class SkillOverlays {
 	@Expose
 	@ConfigOption(
 		name = "Always show combat overlay",
-		desc = "Shows combat overlay even if you dont have Book of Stats"
+		desc = "Shows combat overlay even if you dont have Book of Stats or the Champion enchant"
 	)
 	@ConfigEditorBoolean
 	@ConfigAccordionId(id = 4)

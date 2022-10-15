@@ -1,11 +1,37 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.mixins;
 
-import io.github.moulberry.notenoughupdates.NEUEventListener;
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.miscfeatures.*;
+import io.github.moulberry.notenoughupdates.events.SlotClickEvent;
+import io.github.moulberry.notenoughupdates.listener.RenderListener;
+import io.github.moulberry.notenoughupdates.miscfeatures.AbiphoneWarning;
+import io.github.moulberry.notenoughupdates.miscfeatures.AuctionBINWarning;
+import io.github.moulberry.notenoughupdates.miscfeatures.AuctionSortModeWarning;
+import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
+import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
+import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.miscgui.GuiCustomEnchant;
 import io.github.moulberry.notenoughupdates.miscgui.StorageOverlay;
+import io.github.moulberry.notenoughupdates.miscgui.hex.GuiCustomHex;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -33,7 +59,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mixin(GuiContainer.class)
 public abstract class MixinGuiContainer extends GuiScreen {
@@ -70,8 +95,9 @@ public abstract class MixinGuiContainer extends GuiScreen {
 					NBTTagCompound tag = eventGui.inventorySlots.inventorySlots.get(22).getStack().getTagCompound();
 					if (tag.hasKey("SkullOwner") && tag.getCompoundTag("SkullOwner").hasKey("Name")) {
 						String tagName = tag.getCompoundTag("SkullOwner").getString("Name");
-						String displayname = Utils.cleanColour(cc.inventorySlots.get(22).getStack().getDisplayName());
-						if (tagName.equals(displayname.substring(displayname.length() - tagName.length()))) {
+						String displayName = Utils.cleanColour(cc.inventorySlots.get(22).getStack().getDisplayName());
+						if (displayName.length() - tagName.length() >= 0 && tagName.equals(displayName.substring(
+							displayName.length() - tagName.length()))) {
 							ci.cancel();
 
 							this.zLevel = 100.0F;
@@ -100,7 +126,8 @@ public abstract class MixinGuiContainer extends GuiScreen {
 		else if (!($this instanceof GuiChest))
 			BetterContainers.profileViewerStackIndex = -1;
 
-		if (slot.getStack() == null && NotEnoughUpdates.INSTANCE.overlay.searchMode && NEUEventListener.drawingGuiScreen) {
+		if (slot.getStack() == null && NotEnoughUpdates.INSTANCE.overlay.searchMode && RenderListener.drawingGuiScreen &&
+			NotEnoughUpdates.INSTANCE.isOnSkyblock()) {
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(0, 0, 100 + Minecraft.getMinecraft().getRenderItem().zLevel);
 			GlStateManager.depthMask(false);
@@ -164,7 +191,9 @@ public abstract class MixinGuiContainer extends GuiScreen {
 	public void isMouseOverSlot(Slot slotIn, int mouseX, int mouseY, CallbackInfoReturnable<Boolean> cir) {
 		StorageOverlay.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
 		GuiCustomEnchant.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
+		GuiCustomHex.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
 		AuctionBINWarning.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
+		AbiphoneWarning.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
 	}
 
 	@Redirect(method = "drawScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;drawGradientRect(IIIIII)V"))
@@ -274,60 +303,20 @@ public abstract class MixinGuiContainer extends GuiScreen {
 
 	@Inject(method = "handleMouseClick", at = @At(value = "HEAD"), cancellable = true)
 	public void handleMouseClick(Slot slotIn, int slotId, int clickedButton, int clickType, CallbackInfo ci) {
+		if (slotIn == null) return;
 		GuiContainer $this = (GuiContainer) (Object) this;
-
-		if (AuctionBINWarning.getInstance().onMouseClick(slotIn, slotId, clickedButton, clickType)) {
+		SlotClickEvent event = new SlotClickEvent($this, slotIn, slotId, clickedButton, clickType);
+		event.post();
+		if (event.isCanceled()) {
 			ci.cancel();
 			return;
 		}
-
-		AtomicBoolean ret = new AtomicBoolean(false);
-		SlotLocking.getInstance().onWindowClick(slotIn, slotId, clickedButton, clickType, (tuple) -> {
+		if (event.usePickblockInstead) {
+			$this.mc.playerController.windowClick(
+				$this.inventorySlots.windowId,
+				slotId, 2, 3, $this.mc.thePlayer
+			);
 			ci.cancel();
-
-			if (tuple == null) {
-				ret.set(true);
-			} else {
-				int newSlotId = tuple.getLeft();
-				int newClickedButton = tuple.getMiddle();
-				int newClickedType = tuple.getRight();
-
-				ret.set(true);
-				$this.mc.playerController.windowClick(
-					$this.inventorySlots.windowId,
-					newSlotId,
-					newClickedButton,
-					newClickedType,
-					$this.mc.thePlayer
-				);
-			}
-		});
-		if (ret.get()) return;
-
-		if (slotIn != null && slotIn.getStack() != null) {
-			if (EnchantingSolvers.onStackClick(slotIn.getStack(), $this.inventorySlots.windowId,
-				slotId, clickedButton, clickType
-			)) {
-				ci.cancel();
-			} else {
-				PetInfoOverlay.onStackClick(slotIn.getStack(), $this.inventorySlots.windowId,
-					slotId, clickedButton, clickType
-				);
-			}
-		}
-		if (slotIn != null && BetterContainers.isOverriding() && (BetterContainers.isBlankStack(
-			slotIn.slotNumber,
-			slotIn.getStack()
-		) ||
-			BetterContainers.isButtonStack(slotIn.slotNumber, slotIn.getStack()))) {
-			BetterContainers.clickSlot(slotIn.getSlotIndex());
-
-			if (BetterContainers.isBlankStack(slotIn.slotNumber, slotIn.getStack())) {
-				$this.mc.playerController.windowClick($this.inventorySlots.windowId, slotId, 2, clickType, $this.mc.thePlayer);
-				ci.cancel();
-			} else {
-				Utils.playPressSound();
-			}
 		}
 	}
 }

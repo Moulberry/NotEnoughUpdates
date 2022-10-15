@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.dungeons;
 
 import com.google.common.collect.Iterables;
@@ -660,17 +679,6 @@ public class DungeonMap {
 						float deltaX = entityPos.getRenderX() - pos.getRenderX();
 						float deltaY = entityPos.getRenderY() - pos.getRenderY();
 
-                        /*if(deltaX > (renderRoomSize + renderConnSize)/2) {
-                            deltaX -= (renderRoomSize + renderConnSize);
-                        } else if(deltaX < -(renderRoomSize + renderConnSize)/2) {
-                            deltaX += (renderRoomSize + renderConnSize);
-                        }
-                        if(deltaY > (renderRoomSize + renderConnSize)/2) {
-                            deltaY -= (renderRoomSize + renderConnSize);
-                        } else if(deltaY < -(renderRoomSize + renderConnSize)/2) {
-                            deltaY += (renderRoomSize + renderConnSize);
-                        }*/
-
 						x += deltaX;
 						y += deltaY;
 
@@ -718,7 +726,7 @@ public class DungeonMap {
 					}
 					GlStateManager.color(1, 1, 1, 1);
 					if ((!NotEnoughUpdates.INSTANCE.config.dungeons.showOwnHeadAsMarker ||
-						playerMarkerMapPositions.size() <= 1 || minU != 1 / 4f) &&
+						playerMarkerMapPositions.size() < 1 || minU != 1 / 4f) &&
 						NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerHeads >= 1 &&
 						playerSkinMap.containsKey(entry.getKey())) {
 						Minecraft.getMinecraft().getTextureManager().bindTexture(playerSkinMap.get(entry.getKey()));
@@ -1153,7 +1161,7 @@ public class DungeonMap {
 				String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
 				line = Utils.cleanColour(line);
 
-				if (line.contains("(F1)") || line.contains("(E0)") || line.contains("(M1)")) {
+				if (line.contains("(F1)") || line.contains("(E)") || line.contains("(M1)")) {
 					isFloorOne = true;
 					break;
 				}
@@ -1278,15 +1286,15 @@ public class DungeonMap {
 					if (entity instanceof EntityPlayer) {
 						EntityPlayer player = (EntityPlayer) entity;
 
-						float roomX = (float) player.posX / (roomSizeBlocks + 1);
-						float roomY = (float) player.posZ / (roomSizeBlocks + 1);
+						float roomX = (float) (player.posX + 200) / (roomSizeBlocks + 1);
+						float roomY = (float) (player.posZ + 200) / (roomSizeBlocks + 1);
 
 						float playerRoomOffsetX = (float) Math.floor(roomX);
 						float playerConnOffsetX = (float) Math.floor(roomX);
 						float playerRoomOffsetY = (float) Math.floor(roomY);
 						float playerConnOffsetY = (float) Math.floor(roomY);
 
-						float roomXInBlocks = (float) player.posX % (roomSizeBlocks + 1);
+						float roomXInBlocks = (float) (player.posX + 200) % (roomSizeBlocks + 1);
 						if (roomXInBlocks < 2) { //0,1
 							playerConnOffsetX -= 2 / 5f - roomXInBlocks / 5f;
 						} else if (roomXInBlocks > roomSizeBlocks - 2) { //31,30,29
@@ -1296,7 +1304,7 @@ public class DungeonMap {
 							playerRoomOffsetX += (roomXInBlocks - 2) / (roomSizeBlocks - 4);
 						}
 
-						float roomYInBlocks = (float) player.posZ % (roomSizeBlocks + 1);
+						float roomYInBlocks = (float) (player.posZ + 200) % (roomSizeBlocks + 1);
 						if (roomYInBlocks < 2) { //0,1
 							playerConnOffsetY -= 2 / 5f - roomYInBlocks / 5f;
 						} else if (roomYInBlocks > roomSizeBlocks - 2) { //31,30,29
@@ -1606,7 +1614,6 @@ public class DungeonMap {
                     if(player.getUniqueID().toString().charAt(14) == '4') {
                         actualPlayers.add(player.getName());
                         System.out.println(player.getName());
-
                     }
                 }*/
 				int players = 0;

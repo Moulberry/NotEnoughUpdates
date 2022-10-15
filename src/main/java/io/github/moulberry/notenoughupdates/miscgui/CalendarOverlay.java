@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.gson.JsonArray;
@@ -36,7 +55,12 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +74,8 @@ public class CalendarOverlay {
 	private static JsonObject farmingEventTypes = null;
 
 	private static boolean enabled = false;
+
+	public static boolean ableToClickCalendar = true;
 
 	public static void setEnabled(boolean enabled) {
 		CalendarOverlay.enabled = enabled;
@@ -455,8 +481,7 @@ public class CalendarOverlay {
 
 				guiLeft = (width - xSize) / 2;
 				guiTop = 5;
-
-				if (mouseX >= guiLeft && mouseX <= guiLeft + xSize) {
+				if (mouseX >= guiLeft && mouseX <= guiLeft + xSize && ableToClickCalendar) {
 					if (mouseY >= guiTop && mouseY <= guiTop + ySize) {
 						ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neucalendar");
 					}
@@ -659,6 +684,8 @@ public class CalendarOverlay {
 							}
 						}
 					}
+				} else {
+					Minecraft.getMinecraft().dispatchKeypresses();
 				}
 			}
 		}
@@ -839,8 +866,8 @@ public class CalendarOverlay {
 			SBEvent firstEvent = null;
 			List<SBEvent> nextFavourites = new ArrayList<>();
 			List<Long> nextFavouritesTime = new ArrayList<>();
-			long timeUntilMajor = 0;
-			SBEvent nextMajorEvent = null;
+			long timeUntilMayor = 0;
+			SBEvent nextMayorEvent = null;
 
 			List<String> eventFavourites = NotEnoughUpdates.INSTANCE.config.hidden.eventFavourites;
 
@@ -863,10 +890,10 @@ public class CalendarOverlay {
 						}
 					}
 
-					if (nextMajorEvent == null && !sbEvent.id.split(":")[0].equals("jacob_farming") &&
+					if (nextMayorEvent == null && !sbEvent.id.split(":")[0].equals("jacob_farming") &&
 						!sbEvent.id.equals("dark_auction")) {
-						nextMajorEvent = sbEvent;
-						timeUntilMajor = timeUntilMillis;
+						nextMayorEvent = sbEvent;
+						timeUntilMayor = timeUntilMillis;
 					}
 
 					if (firstEvent == null) {
@@ -893,7 +920,7 @@ public class CalendarOverlay {
 						}
 					}
 
-					if (nextFavourites.size() >= 3 && nextMajorEvent != null) {
+					if (nextFavourites.size() >= 3 && nextMayorEvent != null) {
 						break out;
 					}
 				}
@@ -974,18 +1001,18 @@ public class CalendarOverlay {
 								if (sbEvent.id.split(":")[0].equals("jacob_farming") && sbEvent.desc != null) {
 									tooltipToDisplay.addAll(sbEvent.desc);
 								}
-								if (nextMajorEvent != null || i < nextFavourites.size() - 1) {
+								if (nextMayorEvent != null || i < nextFavourites.size() - 1) {
 									tooltipToDisplay.add("");
 								}
 							}
-							if (nextMajorEvent != null) {
-								tooltipToDisplay.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "Next Major:");
-								tooltipToDisplay.add(nextMajorEvent.display);
+							if (nextMayorEvent != null) {
+								tooltipToDisplay.add(EnumChatFormatting.YELLOW.toString() + EnumChatFormatting.BOLD + "Next Mayor:");
+								tooltipToDisplay.add(nextMayorEvent.display);
 								tooltipToDisplay.add(EnumChatFormatting.GRAY + "Starts in: " + EnumChatFormatting.YELLOW +
-									prettyTime(timeUntilMajor, false));
-								if (nextMajorEvent.lastsFor >= 0) {
+									prettyTime(timeUntilMayor, false));
+								if (nextMayorEvent.lastsFor >= 0) {
 									tooltipToDisplay.add(EnumChatFormatting.GRAY + "Lasts for: " + EnumChatFormatting.YELLOW +
-										prettyTime(nextMajorEvent.lastsFor, true));
+										prettyTime(nextMayorEvent.lastsFor, true));
 								}
 							}
 
@@ -1000,6 +1027,21 @@ public class CalendarOverlay {
 						GlStateManager.translate(0, 0, -100);
 					}
 				}
+			} else if (!enabled && NotEnoughUpdates.INSTANCE.config.calendar.showEventTimerInInventory) {
+				FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
+
+				GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+				GlStateManager.disableFog();
+				GlStateManager.disableLighting();
+				GlStateManager.disableColorMaterial();
+
+				renderBlurredBackground(10, width, height, guiLeft + 3, guiTop + 3, xSize - 6, ySize - 6);
+
+				Minecraft.getMinecraft().getTextureManager().bindTexture(DISPLAYBAR);
+				Utils.drawTexturedRect(guiLeft, guiTop, xSize, 20, GL11.GL_NEAREST);
+
+				String nextS = EnumChatFormatting.RED + "Open calendar to see events";
+				fr.drawString(nextS, guiLeft + 8, guiTop + 6, -1, false);
 			}
 		}
 		GlStateManager.translate(0, 0, -10);

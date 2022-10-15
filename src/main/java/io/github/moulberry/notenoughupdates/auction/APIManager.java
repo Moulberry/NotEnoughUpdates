@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.auction;
 
 import com.google.gson.JsonArray;
@@ -27,10 +46,21 @@ import net.minecraft.util.ResourceLocation;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Base64;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class APIManager {
 	private final NEUManager manager;
@@ -41,6 +71,9 @@ public class APIManager {
 	private final HashSet<String> playerBids = new HashSet<>();
 	private final HashSet<String> playerBidsNotified = new HashSet<>();
 	private final HashSet<String> playerBidsFinishedNotified = new HashSet<>();
+	private final int LOWEST_BIN_UPDATE_INTERVAL = 2 * 60 * 1000; // 2 minutes
+	private final int AUCTION_AVG_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+	private final int BAZAAR_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 	private JsonObject lowestBins = null;
 	private JsonObject auctionPricesAvgLowestBinJson = null;
@@ -92,7 +125,7 @@ public class APIManager {
 	public class Auction {
 		public String auctioneerUuid;
 		public long end;
-		public int starting_bid;
+		public long starting_bid;
 		public int highest_bid_amount;
 		public int bid_count;
 		public boolean bin;
@@ -106,7 +139,7 @@ public class APIManager {
 		public int enchLevel = 0; //0 = clean, 1 = ench, 2 = ench/hpb
 
 		public Auction(
-			String auctioneerUuid, long end, int starting_bid, int highest_bid_amount, int bid_count,
+			String auctioneerUuid, long end, long starting_bid, int highest_bid_amount, int bid_count,
 			boolean bin, String category, String rarity, int dungeonTier, String item_tag_str
 		) {
 			this.auctioneerUuid = auctioneerUuid;
@@ -135,6 +168,7 @@ public class APIManager {
 				return stack;
 			} else {
 				JsonObject item = manager.getJsonFromNBT(item_tag);
+				if (item == null) return null;
 				ItemStack stack = manager.jsonToStack(item, false);
 
 				JsonObject itemDefault = manager.getItemInformation().get(item.get("internalname").getAsString());
@@ -180,8 +214,8 @@ public class APIManager {
 		customAH.tick();
 		long currentTime = System.currentTimeMillis();
 		if (NotEnoughUpdates.INSTANCE.config.neuAuctionHouse.enableNeuAuctionHouse &&
-			NotEnoughUpdates.INSTANCE.config.apiKey.apiKey != null &&
-			!NotEnoughUpdates.INSTANCE.config.apiKey.apiKey.isEmpty()) {
+			NotEnoughUpdates.INSTANCE.config.apiData.apiKey != null &&
+			!NotEnoughUpdates.INSTANCE.config.apiData.apiKey.isEmpty()) {
 			if (currentTime - lastAuctionUpdate > 60 * 1000) {
 				lastAuctionUpdate = currentTime;
 				updatePageTick();
@@ -203,15 +237,16 @@ public class APIManager {
 				}
 			}
 		}
-		if (currentTime - lastAuctionAvgUpdate > 5 * 60 * 1000) { //5 minutes
-			lastAuctionAvgUpdate = currentTime - 4 * 60 * 1000; //Try again in 1 minute if updateAvgPrices doesn't succeed
+		if (currentTime - lastAuctionAvgUpdate > AUCTION_AVG_UPDATE_INTERVAL) {
+			lastAuctionAvgUpdate = currentTime - AUCTION_AVG_UPDATE_INTERVAL + 60 * 1000; // Try again in 1 minute on failure
 			updateAvgPrices();
 		}
-		if (currentTime - lastBazaarUpdate > 5 * 60 * 1000) { //5 minutes
-			lastBazaarUpdate = currentTime;
+		if (currentTime - lastBazaarUpdate > BAZAAR_UPDATE_INTERVAL) {
+			lastBazaarUpdate = currentTime - BAZAAR_UPDATE_INTERVAL + 60 * 1000; // Try again in 1 minute on failure
 			updateBazaar();
 		}
-		if (currentTime - lastLowestBinUpdate > 2 * 60 * 1000) {
+		if (currentTime - lastLowestBinUpdate > LOWEST_BIN_UPDATE_INTERVAL) {
+			lastLowestBinUpdate = currentTime - LOWEST_BIN_UPDATE_INTERVAL + 30 * 1000;  // Try again in 30 seconds on failure
 			updateLowestBin();
 		}
 	}
@@ -241,34 +276,37 @@ public class APIManager {
 		return keys;
 	}
 
-	public int getLowestBin(String internalname) {
-		if (lowestBins != null && lowestBins.has(internalname)) {
-			JsonElement e = lowestBins.get(internalname);
+	public long getLowestBin(String internalName) {
+		if (lowestBins != null && lowestBins.has(internalName)) {
+			JsonElement e = lowestBins.get(internalName);
 			if (e.isJsonPrimitive() && e.getAsJsonPrimitive().isNumber()) {
-				return e.getAsInt();
+				return e.getAsBigDecimal().longValue();
 			}
 		}
 		return -1;
 	}
 
 	public void updateLowestBin() {
-		manager.hypixelApi.getMyApiGZIPAsync("lowestbin.json.gz", (jsonObject) -> {
-			if (lowestBins == null) {
-				lowestBins = new JsonObject();
-			}
-			if (!jsonObject.entrySet().isEmpty()) {
-				lastLowestBinUpdate = System.currentTimeMillis();
-			}
-			for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-				lowestBins.add(entry.getKey(), entry.getValue());
-			}
-			if (!didFirstUpdate) {
-				ItemPriceInformation.updateAuctionableItemsList();
-				didFirstUpdate = true;
-			}
-			GuiPriceGraph.addToCache(lowestBins, false);
-		}, () -> {
-		});
+		manager.apiUtils
+			.newMoulberryRequest("lowestbin.json.gz")
+			.gunzip()
+			.requestJson()
+			.thenAccept(jsonObject -> {
+				if (lowestBins == null) {
+					lowestBins = new JsonObject();
+				}
+				if (!jsonObject.entrySet().isEmpty()) {
+					lastLowestBinUpdate = System.currentTimeMillis();
+				}
+				for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
+					lowestBins.add(entry.getKey(), entry.getValue());
+				}
+				if (!didFirstUpdate) {
+					ItemPriceInformation.updateAuctionableItemsList();
+					didFirstUpdate = true;
+				}
+				GuiPriceGraph.addToCache(lowestBins, false);
+			});
 	}
 
 	private void ahNotification() {
@@ -377,6 +415,7 @@ public class APIManager {
 				int page = pagesToDownload.pop();
 				getPageFromAPI(page);
 			} catch (NoSuchElementException ignored) {
+				return;
 			} //Weird race condition?
 		}
 	}
@@ -424,20 +463,23 @@ public class APIManager {
 			}
 		};
 
-		manager.hypixelApi.getMyApiGZIPAsync("auctionLast.json.gz", process, () ->
-			System.out.println("Error downloading auction from Moulberry's jank API. :("));
+		manager.apiUtils.newMoulberryRequest("auctionLast.json.gz")
+										.gunzip().requestJson().thenAccept(process);
 
-		manager.hypixelApi.getMyApiGZIPAsync("auction.json.gz", jsonObject -> {
-			if (jsonObject.get("success").getAsBoolean()) {
-				long apiUpdate = (long) jsonObject.get("time").getAsFloat();
-				if (lastApiUpdate == apiUpdate) {
-					lastAuctionUpdate -= 30 * 1000;
+		manager.apiUtils
+			.newMoulberryRequest("auction.json.gz")
+			.gunzip().requestJson()
+			.thenAccept(jsonObject -> {
+				if (jsonObject.get("success").getAsBoolean()) {
+					long apiUpdate = (long) jsonObject.get("time").getAsFloat();
+					if (lastApiUpdate == apiUpdate) {
+						lastAuctionUpdate -= 30 * 1000;
+					}
+					lastApiUpdate = apiUpdate;
+
+					process.accept(jsonObject);
 				}
-				lastApiUpdate = apiUpdate;
-
-				process.accept(jsonObject);
-			}
-		}, () -> System.out.println("Error downloading auction from Moulberry's jank API. :("));
+			});
 
 	}
 
@@ -508,7 +550,7 @@ public class APIManager {
 		String auctionUuid = auction.get("uuid").getAsString();
 		String auctioneerUuid = auction.get("auctioneer").getAsString();
 		long end = auction.get("end").getAsLong();
-		int starting_bid = auction.get("starting_bid").getAsInt();
+		long starting_bid = auction.get("starting_bid").getAsLong();
 		int highest_bid_amount = auction.get("highest_bid_amount").getAsInt();
 		int bid_count = auction.get("bids").getAsJsonArray().size();
 		boolean bin = false;
@@ -637,8 +679,10 @@ public class APIManager {
 		//System.out.println("Trying to update page: " + page);
 		HashMap<String, String> args = new HashMap<>();
 		args.put("page", "" + page);
-		manager.hypixelApi.getHypixelApiAsync(null, "skyblock/auctions",
-			args, jsonObject -> {
+		manager.apiUtils
+			.newAnonymousHypixelApiRequest("skyblock/auctions")
+			.requestJson()
+			.thenAccept(jsonObject -> {
 				if (jsonObject == null) return;
 
 				if (jsonObject.get("success").getAsBoolean()) {
@@ -665,16 +709,30 @@ public class APIManager {
 				} else {
 					pagesToDownload.addLast(page);
 				}
-			}, () -> pagesToDownload.addLast(page)
-		);
+			})
+			.handle((ignored, ex) -> {
+				if (ex != null) {
+					pagesToDownload.addLast(page);
+				}
+				return null;
+			});
+	}
+
+	private static final Pattern BAZAAR_ENCHANTMENT_PATTERN = Pattern.compile("ENCHANTMENT_(\\D*)_(\\d+)");
+
+	public String transformHypixelBazaarToNEUItemId(String hypixelId) {
+		Matcher matcher = BAZAAR_ENCHANTMENT_PATTERN.matcher(hypixelId);
+		if (matcher.matches()) {
+			return matcher.group(1) + ";" + matcher.group(2);
+		}
+		return hypixelId.replace(":", "-");
 	}
 
 	public void updateBazaar() {
-		manager.hypixelApi.getHypixelApiAsync(
-			NotEnoughUpdates.INSTANCE.config.apiKey.apiKey,
-			"skyblock/bazaar",
-			new HashMap<>(),
-			(jsonObject) -> {
+		manager.apiUtils
+			.newHypixelApiRequest("skyblock/bazaar")
+			.requestJson()
+			.thenAccept(jsonObject -> {
 				if (!jsonObject.get("success").getAsBoolean()) return;
 
 				craftCost.clear();
@@ -705,24 +763,27 @@ public class APIManager {
 							}
 						}
 
-						bazaarJson.add(entry.getKey().replace(":", "-"), productInfo);
+						bazaarJson.add(transformHypixelBazaarToNEUItemId(entry.getKey()), productInfo);
 					}
 				}
 				GuiPriceGraph.addToCache(bazaarJson, true);
-			}
-		);
+			});
 	}
 
 	public void updateAvgPrices() {
-		manager.hypixelApi.getMyApiGZIPAsync("auction_averages/3day.json.gz", (jsonObject) -> {
-			craftCost.clear();
-			auctionPricesJson = jsonObject;
-			lastAuctionAvgUpdate = System.currentTimeMillis();
-		}, () -> {
-		});
-		manager.hypixelApi.getMyApiGZIPAsync("auction_averages_lbin/1day.json.gz", (jsonObject) ->
-			auctionPricesAvgLowestBinJson = jsonObject, () -> {
-		});
+		manager.apiUtils
+			.newMoulberryRequest("auction_averages/3day.json.gz")
+			.gunzip().requestJson().thenAccept((jsonObject) -> {
+						 craftCost.clear();
+						 auctionPricesJson = jsonObject;
+						 lastAuctionAvgUpdate = System.currentTimeMillis();
+					 });
+		manager.apiUtils
+			.newMoulberryRequest("auction_averages_lbin/1day.json.gz")
+			.gunzip().requestJson()
+			.thenAccept((jsonObject) -> {
+				auctionPricesAvgLowestBinJson = jsonObject;
+			});
 	}
 
 	public Set<String> getItemAuctionInfoKeySet() {
@@ -743,13 +804,13 @@ public class APIManager {
 		return e.getAsJsonObject();
 	}
 
-	public float getItemAvgBin(String internalname) {
+	public double getItemAvgBin(String internalName) {
 		if (auctionPricesAvgLowestBinJson == null) return -1;
-		JsonElement e = auctionPricesAvgLowestBinJson.get(internalname);
+		JsonElement e = auctionPricesAvgLowestBinJson.get(internalName);
 		if (e == null) {
 			return -1;
 		}
-		return Math.round(e.getAsFloat());
+		return Math.round(e.getAsDouble());
 	}
 
 	public Set<String> getBazaarKeySet() {
@@ -761,9 +822,18 @@ public class APIManager {
 		return keys;
 	}
 
-	public JsonObject getBazaarInfo(String internalname) {
+	public double getBazaarOrBin(String internalName) {
+		JsonObject bazaarInfo = manager.auctionManager.getBazaarInfo(internalName);
+		if (bazaarInfo != null && bazaarInfo.get("curr_buy") != null) {
+			return bazaarInfo.get("curr_buy").getAsFloat();
+		} else {
+			return manager.auctionManager.getLowestBin(internalName);
+		}
+	}
+
+	public JsonObject getBazaarInfo(String internalName) {
 		if (bazaarJson == null) return null;
-		JsonElement e = bazaarJson.get(internalname);
+		JsonElement e = bazaarJson.get(internalName);
 		if (e == null) {
 			return null;
 		}
@@ -791,7 +861,7 @@ public class APIManager {
 	public static class CraftInfo {
 		public boolean fromRecipe = false;
 		public boolean vanillaItem = false;
-		public float craftCost = -1;
+		public double craftCost = -1;
 	}
 
 	public CraftInfo getCraftCost(String internalname) {
@@ -807,10 +877,10 @@ public class APIManager {
 		visited.add(internalname);
 
 		boolean vanillaItem = isVanillaItem(internalname);
-		float craftCost = Float.POSITIVE_INFINITY;
+		double craftCost = Double.POSITIVE_INFINITY;
 
 		JsonObject auctionInfo = getItemAuctionInfo(internalname);
-		float lowestBin = getLowestBin(internalname);
+		double lowestBin = getLowestBin(internalname);
 		JsonObject bazaarInfo = getBazaarInfo(internalname);
 
 		if (bazaarInfo != null && bazaarInfo.get("curr_buy") != null) {
@@ -857,7 +927,7 @@ public class APIManager {
 					}
 				}
 		visited.remove(internalname);
-		if (Float.isInfinite(craftCost)) {
+		if (Double.isInfinite(craftCost)) {
 			return null;
 		}
 		CraftInfo craftInfo = new CraftInfo();

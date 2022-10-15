@@ -1,13 +1,34 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.lerp.LerpingInteger;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
-import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -66,7 +87,9 @@ public class GuiEnchantColour extends GuiScreen {
 	private static final Pattern settingPattern = Pattern.compile(".*:[>=<]:[0-9]+:[a-zA-Z0-9]+(:[a-zA-Z0-9]+)?");
 
 	private ItemStack maxedBook;
+	private ItemStack maxedAttBook;
 	private int maxedBookFound = 0;
+	private int maxedAttBookFound = 0;
 
 	private List<String> getEnchantColours() {
 		return NotEnoughUpdates.INSTANCE.config.hidden.enchantColours;
@@ -227,14 +250,42 @@ public class GuiEnchantColour extends GuiScreen {
 		if (maxedBookFound == 1) {
 			Utils.drawItemStack(maxedBook, guiLeft + xSize + 3, guiTopSidebar - 34);
 		}
+		if (maxedAttBookFound == 0) {
+			try {
+				if (NotEnoughUpdates.INSTANCE.manager.jsonToStack(
+					NotEnoughUpdates.INSTANCE.manager.getItemInformation().get("MAXED_ATTRIBUTE_SHARD")).hasDisplayName()) {
+					maxedAttBook = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
+						.getItemInformation()
+						.get("MAXED_ATTRIBUTE_SHARD"));
+					maxedAttBookFound = 1;
+				} else {
+					maxedAttBookFound = 2;
+				}
 
-		if (mouseX >= guiLeft + xSize + 3 && mouseX < guiLeft + xSize + 19) {
+			} catch (Exception ignored) {
+				maxedAttBookFound = 2;
+			}
+		}
+		if (maxedAttBookFound == 1) {
+			Utils.drawItemStack(maxedAttBook, guiLeft + xSize + 3, guiTopSidebar - 52);
+		}
+
+		if (mouseX >= guiLeft + xSize + 3 && mouseX < guiLeft + xSize + 39) {
+			boolean renderingTooltip = false;
+
 			if (mouseY >= guiTopSidebar - 34 && mouseY <= guiTopSidebar - 18 && maxedBookFound == 1) {
 				tooltipToDisplay = maxedBook.getTooltip(Minecraft.getMinecraft().thePlayer, false);
 				Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
 				tooltipToDisplay = null;
+				renderingTooltip = true;
 			}
-			if (mouseY >= guiTopSidebar - 18 && mouseY <= guiTopSidebar - 2) {
+			if (mouseY >= guiTopSidebar - 52 && mouseY <= guiTopSidebar - 34 && maxedAttBookFound == 1 && !renderingTooltip) {
+				tooltipToDisplay = maxedAttBook.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+				Utils.drawHoveringText(tooltipToDisplay, mouseX, mouseY, width, height, -1, fr);
+				tooltipToDisplay = null;
+				renderingTooltip = true;
+			}
+			if (mouseY >= guiTopSidebar - 18 && mouseY <= guiTopSidebar - 2 && !renderingTooltip) {
 				tooltipToDisplay = Lists.newArrayList(
 					EnumChatFormatting.AQUA + "NEUEC Colouring Guide",
 					EnumChatFormatting.GREEN + "",
@@ -392,6 +443,11 @@ public class GuiEnchantColour extends GuiScreen {
 				0x80000000
 			);
 		}
+	}
+
+	@Override
+	public void onGuiClosed() {
+		NotEnoughUpdates.INSTANCE.saveConfig();
 	}
 
 	@Override
@@ -573,10 +629,12 @@ public class GuiEnchantColour extends GuiScreen {
 						getEnchantOpString(guiElementTextFields.get(yIndex), comparators.get(yIndex), modifiers.get(yIndex))
 					);
 				} else if (mouseX > guiLeft + 160 && mouseX < guiLeft + 160 + 20) {
-					NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.remove(yIndex);
-					guiElementTextFields.remove(yIndex);
-					comparators.remove(yIndex);
-					modifiers.remove(yIndex);
+					if (NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.size() > 0) {
+						NotEnoughUpdates.INSTANCE.config.hidden.enchantColours.remove(yIndex);
+						guiElementTextFields.remove(yIndex);
+						comparators.remove(yIndex);
+						modifiers.remove(yIndex);
+					}
 				}
 			}
 		}

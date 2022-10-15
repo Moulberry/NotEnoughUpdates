@@ -1,7 +1,36 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.util;
 
-import com.google.gson.*;
-import io.github.moulberry.notenoughupdates.collectionlog.CollectionConstant;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import io.github.moulberry.notenoughupdates.events.RepositoryReloadEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.lang.reflect.Type;
 import java.util.concurrent.locks.ReentrantLock;
@@ -40,11 +69,14 @@ public class Constants {
 	public static JsonObject ESSENCECOSTS;
 	public static JsonObject FAIRYSOULS;
 	public static JsonObject REFORGESTONES;
-	public static CollectionConstant COLLECTIONLOG;
+	public static JsonObject TROPHYFISH;
+	public static JsonObject WEIGHT;
+	public static JsonObject RNGSCORE;
 
 	private static final ReentrantLock lock = new ReentrantLock();
 
-	public static void reload() {
+	@SubscribeEvent
+	public void reload(RepositoryReloadEvent event) {
 		try {
 			lock.lock();
 
@@ -59,7 +91,11 @@ public class Constants {
 			ESSENCECOSTS = Utils.getConstant("essencecosts", gson);
 			FAIRYSOULS = Utils.getConstant("fairy_souls", gson);
 			REFORGESTONES = Utils.getConstant("reforgestones", gson);
-			//COLLECTIONLOG = Utils.getConstant("collectionlog", gson, CollectionConstant.class);
+			TROPHYFISH = Utils.getConstant("trophyfish", gson);
+			WEIGHT = Utils.getConstant("weight", gson);
+			RNGSCORE = Utils.getConstant("rngscore", gson);
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		} finally {
 			lock.unlock();
 		}

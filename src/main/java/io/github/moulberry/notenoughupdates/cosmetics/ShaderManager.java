@@ -1,6 +1,27 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.cosmetics;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL43;
@@ -14,7 +35,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
-public class ShaderManager {
+public class ShaderManager implements IResourceManagerReloadListener {
 	private final ResourceLocation shaderLocation = new ResourceLocation("notenoughupdates:shaders");
 	private final HashMap<String, Shader> shaderMap = new HashMap<>();
 
@@ -22,6 +43,14 @@ public class ShaderManager {
 
 	public static ShaderManager getInstance() {
 		return INSTANCE;
+	}
+
+	@Override
+	public void onResourceManagerReload(IResourceManager iResourceManager) {
+		shaderMap.values().forEach(it -> {
+			GL20.glDeleteProgram(it.program);
+		});
+		shaderMap.clear();
 	}
 
 	public static class Shader {

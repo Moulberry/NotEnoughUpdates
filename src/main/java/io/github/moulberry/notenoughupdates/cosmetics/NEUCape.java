@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.cosmetics;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
@@ -18,13 +37,22 @@ import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL42;
+import org.lwjgl.opengl.GL43;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.TreeMap;
 
 public class NEUCape {
 	private int currentFrame = 0;
@@ -43,6 +71,10 @@ public class NEUCape {
 	private final Random random = new Random();
 
 	private long eventMillis;
+	private float dvdPositionX = 100;
+	private float dvdPositionY = 100;
+	private float dvdVelocityX = -10;
+	private float dvdVelocityY = 10;
 	private float eventLength;
 	private float eventRandom;
 
@@ -101,6 +133,8 @@ public class NEUCape {
 				shaderName = "tunnel";
 			} else if (capeName.equalsIgnoreCase("planets")) {
 				shaderName = "planets";
+			} else if (capeName.equalsIgnoreCase("screensaver")) {
+				shaderName = "screensaver";
 			} else {
 				shaderName = "shiny_cape";
 			}
@@ -322,6 +356,9 @@ public class NEUCape {
 				Minecraft.getMinecraft().displayWidth,
 				Minecraft.getMinecraft().displayHeight
 			));
+		} else if (shaderName.equalsIgnoreCase("screensaver")) {
+			shaderManager.loadData(shaderId, "something", (int) ((System.currentTimeMillis() / 4) % 256));
+			shaderManager.loadData(shaderId, "dvdPosition", new Vector2f(dvdPositionX, dvdPositionY));
 		}
 	}
 
@@ -530,6 +567,19 @@ public class NEUCape {
 	private int crouchTicks = 0;
 	long startTime = 0;
 
+	public float deltaYComparedToLine(float x0, float y0, float x1, float y1) {
+		float m = (y1 - y0) / (x1 - x0);
+		float b = y0 - m * x0;
+		float lineAtX = dvdPositionX * m + b;
+		return dvdPositionY - lineAtX;
+	}
+
+	public float projectOntoLine(float x0, float y0, float x1, float y1, float x) {
+		float m = (y1 - y0) / (x1 - x0);
+		float b = y0 - m * x0;
+		return x * m + b;
+	}
+
 	private void updateCape(EntityPlayer player) {
 		Vector3f capeTranslation = updateFixedCapeNodes(player);
 
@@ -545,6 +595,30 @@ public class NEUCape {
 			if (currentTime - startTime > eventMillis - startTime + eventLength) {
 				eventMillis = currentTime;
 				eventLength = random.nextFloat() * 3000 + 3000;
+			}
+		} else if (shaderName.equals("screensaver")) {
+			dvdPositionX += dvdVelocityX;
+			dvdPositionY += dvdVelocityY;
+			float diskSizeX = 162 / 2F, diskSizeY = 78 / 2F;
+			// Left line
+			if (deltaYComparedToLine(0, 404, 47, 0) < 0) {
+				dvdVelocityX = 10;
+				dvdPositionX = projectOntoLine(404, 0, 0, 47, dvdPositionY);
+			}
+			// Bottom line
+			if (deltaYComparedToLine(0, 404 - diskSizeY, 292, 404 - diskSizeY) > 0) {
+				dvdVelocityY = -10;
+				dvdPositionY = 404 - diskSizeY;
+			}
+			// Top line
+			if (deltaYComparedToLine(47, 0, 246, 0) < 0) {
+				dvdVelocityY = 10;
+				dvdPositionY = 0;
+			}
+			// Right line
+			if (deltaYComparedToLine(246 - diskSizeX, 0, 293 - diskSizeX, 404) < 0) {
+				dvdVelocityX = -10;
+				dvdPositionX = projectOntoLine(0, 246 - diskSizeX, 404, 293 - diskSizeX, dvdPositionY);
 			}
 		}
 

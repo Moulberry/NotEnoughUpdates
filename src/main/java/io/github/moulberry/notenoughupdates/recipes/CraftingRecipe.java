@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2022 NotEnoughUpdates contributors
+ *
+ * This file is part of NotEnoughUpdates.
+ *
+ * NotEnoughUpdates is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * NotEnoughUpdates is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package io.github.moulberry.notenoughupdates.recipes;
 
 import com.google.common.collect.Sets;
@@ -17,10 +36,11 @@ import java.util.Set;
 
 public class CraftingRecipe implements NeuRecipe {
 
-	public static final ResourceLocation BACKGROUND = new ResourceLocation("textures/gui/container/crafting_table.png");
+	public static final ResourceLocation BACKGROUND = new ResourceLocation("notenoughupdates",
+		"textures/gui/crafting_table_tall.png");
 
 	private static final int EXTRA_STRING_X = 132;
-	private static final int EXTRA_STRING_Y = 25;
+	private static final int EXTRA_STRING_Y = 50;
 
 	private final NEUManager manager;
 	private final Ingredient[] inputs;
@@ -42,6 +62,11 @@ public class CraftingRecipe implements NeuRecipe {
 		Set<Ingredient> ingredients = Sets.newHashSet(inputs);
 		ingredients.remove(null);
 		return ingredients;
+	}
+
+	@Override
+	public RecipeType getType() {
+		return RecipeType.CRAFTING;
 	}
 
 	@Override
@@ -72,10 +97,10 @@ public class CraftingRecipe implements NeuRecipe {
 				if (input == null) continue;
 				ItemStack item = input.getItemStack();
 				if (item == null) continue;
-				slots.add(new RecipeSlot(30 + x * GuiItemRecipe.SLOT_SPACING, 17 + y * GuiItemRecipe.SLOT_SPACING, item));
+				slots.add(new RecipeSlot(30 + x * GuiItemRecipe.SLOT_SPACING, 48 + y * GuiItemRecipe.SLOT_SPACING, item));
 			}
 		}
-		slots.add(new RecipeSlot(124, 35, outputIngredient.getItemStack()));
+		slots.add(new RecipeSlot(124, 66, outputIngredient.getItemStack()));
 		return slots;
 	}
 
