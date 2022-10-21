@@ -295,11 +295,18 @@ public class ChatListener {
 			unformatted.startsWith("  ") || unformatted.startsWith("✦") || unformatted.equals(
 			"  You've earned a Crystal Loot Bundle!"))
 			OverlayManager.crystalHollowOverlay.message(unformatted);
+
 		Matcher LvlMatcher = SKYBLOCK_LVL_MESSAGE.matcher(unformatted);
 		if (LvlMatcher.matches()) {
-			if (Integer.parseInt(LvlMatcher.group(1)) < NotEnoughUpdates.INSTANCE.config.misc.filterChatLevel && NotEnoughUpdates.INSTANCE.config.misc.filterChatLevel != 0) {
+			if (Integer.parseInt(LvlMatcher.group(1)) < NotEnoughUpdates.INSTANCE.config.misc.filterChatLevel &&
+				NotEnoughUpdates.INSTANCE.config.misc.filterChatLevel != 0) {
 				e.setCanceled(true);
 			}
 		}
+
+		if (unformatted.equals("You uncovered a treasure chest!") ||
+			unformatted.equals("You have successfully picked the lock on this chest!")
+			|| (unformatted.startsWith("You received +") && unformatted.endsWith(" Powder")))
+			OverlayManager.powderGrindingOverlay.message(unformatted);
 	}
 }
