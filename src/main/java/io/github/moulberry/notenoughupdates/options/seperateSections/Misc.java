@@ -239,6 +239,18 @@ public class Misc {
 
 	@Expose
 	@ConfigOption(
+		name = "Filter Skyblock Levels in Chat",
+		desc = "Requires the \"SkyBlock Levels in Chat\" skyblock setting to be on"
+	)
+	@ConfigEditorSlider(
+		minValue = 0,
+		maxValue = 300,
+		minStep = 10
+	)
+	public int filterChatLevel = 0;
+
+	@Expose
+	@ConfigOption(
 		name = "Enable text field tweaks",
 		desc = "Allows the use of ctrl + z, ctrl + y and ctrl + Lshift + z in text fields"
 	)
