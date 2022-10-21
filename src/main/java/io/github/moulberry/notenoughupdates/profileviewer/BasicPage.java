@@ -49,6 +49,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
+import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -225,7 +226,31 @@ public class BasicPage extends GuiProfileViewerPage {
 			}
 		}
 
-		long networth = profile.getNetWorth(profileId);
+		long networth;
+		ArrayList<String> nwCategoryHover = new ArrayList<>();
+		if (NotEnoughUpdates.INSTANCE.config.profileViewer.useSoopyNetworth) {
+			ProfileViewer.Profile.SoopyNetworthData nwData = profile.getSoopyNetworth(profileId, () -> {});
+			if (nwData == null) {
+				networth = -2l;
+			} else {
+				networth = nwData.getTotal();
+
+				for (String category : nwData.getCategories()) {
+					if (nwData.getCategory(category) == 0) continue;
+
+					nwCategoryHover.add(EnumChatFormatting.GREEN +
+						WordUtils.capitalizeFully(category.replace("_", " ")) +
+						": " +
+						EnumChatFormatting.GOLD +
+						GuiProfileViewer.numberFormat.format(nwData.getCategory(category)));
+				}
+
+				nwCategoryHover.add("");
+			}
+		} else {
+			networth = profile.getNetWorth(profileId);
+		}
+
 		if (networth > 0) {
 			Utils.drawStringCentered(
 				EnumChatFormatting.GREEN + "Net Worth: " + EnumChatFormatting.GOLD +
@@ -245,7 +270,7 @@ public class BasicPage extends GuiProfileViewerPage {
 								.get("avg_buy")
 								.getAsDouble()
 					);
-				String networthIRLMoney = Long.toString(Math.round(((networthInCookies * 325) / 675) * 4.99));
+				String networthIRLMoney = GuiProfileViewer.numberFormat.format(Math.round(((networthInCookies * 325) / 675) * 4.99));
 				if (
 					mouseX > guiLeft + 8 &&
 						mouseX < guiLeft + 8 + fr.getStringWidth("Net Worth: " + GuiProfileViewer.numberFormat.format(networth))
@@ -262,7 +287,9 @@ public class BasicPage extends GuiProfileViewerPage {
 									networthIRLMoney
 							);
 						getInstance().tooltipToDisplay.add("");
+
 						if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+							getInstance().tooltipToDisplay.addAll(nwCategoryHover);
 							getInstance().tooltipToDisplay.add(EnumChatFormatting.RED + "This is calculated using the current");
 							getInstance().tooltipToDisplay.add(
 								EnumChatFormatting.RED + "price of booster cookies on bazaar and the price");
@@ -282,7 +309,26 @@ public class BasicPage extends GuiProfileViewerPage {
 					}
 				}
 			} catch (Exception ignored) {
+				ignored.printStackTrace();
 			}
+		} else {
+			//Networth is under 0
+			//If = -1 -> an error occured
+			//If = -2 -> still loading networth
+
+			String stateStr = EnumChatFormatting.RED + "An error occured";
+			if (networth == -2) {
+				stateStr = EnumChatFormatting.YELLOW + "Loading...";
+			}
+
+			Utils.drawStringCentered(
+				EnumChatFormatting.GREEN + "Net Worth: " + stateStr,
+				fr,
+				guiLeft + 63,
+				guiTop + 38,
+				true,
+				0
+			);
 		}
 
 		if (status != null) {
