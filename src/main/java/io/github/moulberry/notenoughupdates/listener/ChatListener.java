@@ -201,11 +201,11 @@ public class ChatListener {
 		String unformatted = Utils.cleanColour(e.message.getUnformattedText());
 		Matcher matcher = SLAYER_XP.matcher(unformatted);
 		if (unformatted.startsWith("You are playing on profile: ")) {
-			neu.manager.setCurrentProfile(unformatted
+			SBInfo.getInstance().setCurrentProfile(unformatted
 				.substring("You are playing on profile: ".length())
 				.split(" ")[0].trim());
 		} else if (unformatted.startsWith("Your profile was changed to: ")) {//Your profile was changed to:
-			neu.manager.setCurrentProfile(unformatted
+			SBInfo.getInstance().setCurrentProfile(unformatted
 				.substring("Your profile was changed to: ".length())
 				.split(" ")[0].trim());
 		} else if (unformatted.startsWith("Your new API key is ")) {
@@ -214,8 +214,7 @@ public class ChatListener {
 					0,
 					36
 				);
-			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.YELLOW + "[NEU] API Key automatically configured"));
+			Utils.addChatMessage(EnumChatFormatting.YELLOW + "[NEU] API Key automatically configured");
 			NotEnoughUpdates.INSTANCE.saveConfig();
 		} else if (unformatted.startsWith("Player List Info is now disabled!")) {
 			SBInfo.getInstance().hasNewTab = false;

@@ -132,6 +132,8 @@ public class NEUManager {
 	private final HashMap<String, Set<NeuRecipe>> recipesMap = new HashMap<>();
 	private final HashMap<String, Set<NeuRecipe>> usagesMap = new HashMap<>();
 
+	private final Map<String, String> displayNameCache = new HashMap<>();
+
 	public String latestRepoCommit = null;
 
 	public File configLocation;
@@ -155,10 +157,6 @@ public class NEUManager {
 
 		this.repoLocation = new File(configLocation, "repo");
 		repoLocation.mkdir();
-	}
-
-	public void setCurrentProfile(String currentProfile) {
-		SBInfo.getInstance().currentProfile = currentProfile;
 	}
 
 	public String getCurrentProfile() {
@@ -1606,6 +1604,7 @@ public class NEUManager {
 				new RepositoryReloadEvent(repoLocation, !hasBeenLoadedBefore).post();
 				hasBeenLoadedBefore = true;
 				comp.complete(null);
+				displayNameCache.clear();
 			} catch (Exception e) {
 				comp.completeExceptionally(e);
 			}
@@ -1621,5 +1620,31 @@ public class NEUManager {
 
 	public boolean isValidInternalName(String internalName) {
 		return itemMap.containsKey(internalName);
+	}
+
+	public String getDisplayName(String internalName) {
+		if (displayNameCache.containsKey(internalName)) {
+			return displayNameCache.get(internalName);
+		}
+
+		String displayName = null;
+		TreeMap<String, JsonObject> itemInformation = NotEnoughUpdates.INSTANCE.manager.getItemInformation();
+		if (itemInformation.containsKey(internalName)) {
+			JsonObject jsonObject = itemInformation.get(internalName);
+			if (jsonObject.has("displayname")) {
+				displayName = jsonObject.get("displayname").getAsString();
+			}
+		}
+
+		if (displayName == null) {
+			displayName = internalName;
+			Utils.showOutdatedRepoNotification();
+			if (NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+				Utils.addChatMessage("§c[NEU] Found no display name in repo for '" + internalName + "'!");
+			}
+		}
+
+		displayNameCache.put(internalName, displayName);
+		return displayName;
 	}
 }
