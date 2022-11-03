@@ -66,6 +66,7 @@ import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.Custom
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.CustomBlockSounds;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.DwarvenMinesTextures;
 import io.github.moulberry.notenoughupdates.miscfeatures.updater.AutoUpdater;
+import io.github.moulberry.notenoughupdates.miscfeatures.world.GlowingMushroomHighlighter;
 import io.github.moulberry.notenoughupdates.miscgui.CalendarOverlay;
 import io.github.moulberry.notenoughupdates.miscgui.InventoryStorageSelector;
 import io.github.moulberry.notenoughupdates.miscgui.SignCalculator;
@@ -329,6 +330,7 @@ public class NotEnoughUpdates {
 		MinecraftForge.EVENT_BUS.register(AuctionBINWarning.getInstance());
 		MinecraftForge.EVENT_BUS.register(MinionHelperManager.getInstance());
 		MinecraftForge.EVENT_BUS.register(navigation);
+		MinecraftForge.EVENT_BUS.register(new GlowingMushroomHighlighter());
 		MinecraftForge.EVENT_BUS.register(new WorldListener(this));
 		MinecraftForge.EVENT_BUS.register(TitleUtil.getInstance());
 
