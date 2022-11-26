@@ -67,6 +67,7 @@ import io.github.moulberry.notenoughupdates.miscfeatures.WitherCloakChanger;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.CustomBiomes;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.CustomBlockSounds;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.DwarvenMinesTextures;
+import io.github.moulberry.notenoughupdates.miscfeatures.item.enchants.EnchantStyleCustomizer;
 import io.github.moulberry.notenoughupdates.miscfeatures.updater.AutoUpdater;
 import io.github.moulberry.notenoughupdates.miscfeatures.world.EnderNodeHighlighter;
 import io.github.moulberry.notenoughupdates.miscfeatures.world.GlowingMushroomHighlighter;
@@ -340,6 +341,7 @@ public class NotEnoughUpdates {
 		MinecraftForge.EVENT_BUS.register(navigation);
 		MinecraftForge.EVENT_BUS.register(new GlowingMushroomHighlighter());
 		MinecraftForge.EVENT_BUS.register(new WorldListener(this));
+		MinecraftForge.EVENT_BUS.register(EnchantStyleCustomizer.INSTANCE);
 		MinecraftForge.EVENT_BUS.register(TitleUtil.getInstance());
 		MinecraftForge.EVENT_BUS.register(EnderNodeHighlighter.getInstance());
 		MinecraftForge.EVENT_BUS.register(AbiphoneFavourites.getInstance());
