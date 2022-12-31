@@ -344,9 +344,9 @@ public class TimersOverlay extends TextTabOverlay {
 							}
 						}
 					} catch (Exception e) {
-						e.printStackTrace();
 						if (!hasErrorMessage) {
 							Utils.addChatMessage(EnumChatFormatting.YELLOW + "[NEU] Unable to work out your god pot timer");
+							e.printStackTrace();
 							hasErrorMessage = true;
 						}
 						break;
@@ -358,6 +358,7 @@ public class TimersOverlay extends TextTabOverlay {
 					foundCookieBuffText = true;
 				} else if (foundCookieBuffText) {
 					String clean = line.replaceAll("(\u00a7.)", "");
+					clean = clean.replaceAll("(\\d)([smhdy])", "$1 $2");
 					String[] cleanSplit = clean.split(" ");
 					hidden.cookieBuffRemaining = 0;
 					if (line.contains("Not")) break;
