@@ -269,12 +269,16 @@ public class MiningOverlay extends TextTabOverlay {
 			for (NetworkPlayerInfo info : players) {
 				String name = Minecraft.getMinecraft().ingameGUI.getTabList().getPlayerName(info);
 				if (name.contains("Mithril Powder:")) {
-					mithrilPowder = DARK_AQUA + Utils.trimWhitespaceAndFormatCodes(name).replaceAll("\u00a7[f|F|r]", "");
+					String formatMithrilPowder = Utils.trimWhitespaceAndFormatCodes(name).replaceAll("\u00a7[f|F|r]", "");
+					String mithrilPowderNumberString = formatMithrilPowder.split(" ")[formatMithrilPowder.split(" ").length - 1];
+					mithrilPowder = DARK_AQUA + formatMithrilPowder.replace(mithrilPowderNumberString, String.format("%,d", Integer.parseInt(mithrilPowderNumberString)));
 					continue;
 				}
 
 				if (name.contains("Gemstone Powder:")) {
-					gemstonePowder = DARK_AQUA + Utils.trimWhitespaceAndFormatCodes(name).replaceAll("\u00a7[f|F|r]", "");
+					String formatGemstonePowder = Utils.trimWhitespaceAndFormatCodes(name).replaceAll("\u00a7[f|F|r]", "");
+					String gemstonePowderNumberString = formatGemstonePowder.split(" ")[formatGemstonePowder.split(" ").length - 1];
+					gemstonePowder = DARK_AQUA + formatGemstonePowder.replace(gemstonePowderNumberString, String.format("%,d", Integer.parseInt(gemstonePowderNumberString)));
 					continue;
 				}
 
