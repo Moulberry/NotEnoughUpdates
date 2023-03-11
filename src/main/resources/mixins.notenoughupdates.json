@@ -37,6 +37,7 @@
     "MixinMinecraft",
     "MixinMouseHelper",
     "MixinNetHandlerPlayClient",
+    "MixinOFDynamicLights",
     "MixinPlayerControllerMP",
     "MixinRender",
     "MixinRendererLivingEntity",
