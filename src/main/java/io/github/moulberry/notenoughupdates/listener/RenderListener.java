@@ -159,6 +159,7 @@ public class RenderListener {
 		if (neu.hasSkyblockScoreboard() && event.type.equals(RenderGameOverlayEvent.ElementType.ALL)) {
 			DungeonWin.render(event.partialTicks);
 			GlStateManager.pushMatrix();
+			Utils.pushGuiScale(NotEnoughUpdates.INSTANCE.config.locationedit.guiScale);
 			GlStateManager.translate(0, 0, -200);
 			label:
 			for (TextOverlay overlay : OverlayManager.textOverlays) {
@@ -173,6 +174,7 @@ public class RenderListener {
 				GlStateManager.enableDepth();
 				overlay.render();
 			}
+			Utils.pushGuiScale(0);
 			GlStateManager.popMatrix();
 			OverlayManager.dontRenderOverlay = new ArrayList<>();
 		}
