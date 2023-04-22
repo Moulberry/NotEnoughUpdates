@@ -70,12 +70,14 @@ public class ApiUtil {
 		.thenComparing(NameValuePair::getValue);
 
 	private static final ExecutorService executorService = Executors.newFixedThreadPool(3);
+
 	private static String getUserAgent() {
 		if (NotEnoughUpdates.INSTANCE.config.hidden.customUserAgent != null) {
 			return NotEnoughUpdates.INSTANCE.config.hidden.customUserAgent;
 		}
 		return "NotEnoughUpdates/" + NotEnoughUpdates.VERSION;
 	}
+
 	private static SSLContext ctx;
 	private final Map<String, CompletableFuture<Void>> updateTasks = new HashMap<>();
 	private static boolean notifiedOfInvalidApiKey;
@@ -209,6 +211,9 @@ public class ApiUtil {
 						if (this.postContentType != null) {
 							conn.setRequestProperty("Content-Type", this.postContentType);
 						}
+						if (!shouldGunzip) {
+							conn.setRequestProperty("Accept-Encoding", "gzip"); // Tell the server we can accept gzip
+						}
 						if (this.postData != null) {
 							conn.setDoOutput(true);
 							OutputStream os = conn.getOutputStream();
@@ -221,7 +226,7 @@ public class ApiUtil {
 
 						inputStream = conn.getInputStream();
 
-						if (shouldGunzip) {
+						if (shouldGunzip || "gzip".equals(conn.getContentEncoding())) {
 							inputStream = new GZIPInputStream(inputStream);
 						}
 
