@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -67,7 +67,6 @@ import io.github.moulberry.notenoughupdates.options.seperateSections.Toolbar;
 import io.github.moulberry.notenoughupdates.options.seperateSections.TooltipTweaks;
 import io.github.moulberry.notenoughupdates.options.seperateSections.TradeMenu;
 import io.github.moulberry.notenoughupdates.options.seperateSections.WardrobeKeybinds;
-import io.github.moulberry.notenoughupdates.options.seperateSections.WorldConfig;
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
@@ -94,10 +93,7 @@ public class NEUConfig extends Config {
 		}
 		GuiScreen savedGui = Minecraft.getMinecraft().currentScreen;
 		Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(overlayPositions, () -> {
-		}, () -> {
-		}, () -> {
-			NotEnoughUpdates.INSTANCE.openGui = savedGui;
-		}));
+		}, () -> NotEnoughUpdates.INSTANCE.openGui = savedGui));
 	}
 
 	@Override
