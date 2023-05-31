@@ -34,8 +34,6 @@ import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.miscgui.GuiInvButtonEditor;
 import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
 import io.github.moulberry.notenoughupdates.options.customtypes.NEUDebugFlag;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Garden;
-import io.github.moulberry.notenoughupdates.options.seperateSections.WorldConfig;
 import io.github.moulberry.notenoughupdates.options.seperateSections.AHGraph;
 import io.github.moulberry.notenoughupdates.options.seperateSections.AHTweaks;
 import io.github.moulberry.notenoughupdates.options.seperateSections.AccessoryBag;
@@ -47,6 +45,7 @@ import io.github.moulberry.notenoughupdates.options.seperateSections.DungeonMapC
 import io.github.moulberry.notenoughupdates.options.seperateSections.Dungeons;
 import io.github.moulberry.notenoughupdates.options.seperateSections.Enchanting;
 import io.github.moulberry.notenoughupdates.options.seperateSections.Fishing;
+import io.github.moulberry.notenoughupdates.options.seperateSections.Garden;
 import io.github.moulberry.notenoughupdates.options.seperateSections.ImprovedSBMenu;
 import io.github.moulberry.notenoughupdates.options.seperateSections.InventoryButtons;
 import io.github.moulberry.notenoughupdates.options.seperateSections.ItemOverlays;
@@ -57,7 +56,6 @@ import io.github.moulberry.notenoughupdates.options.seperateSections.MinionHelpe
 import io.github.moulberry.notenoughupdates.options.seperateSections.Misc;
 import io.github.moulberry.notenoughupdates.options.seperateSections.MiscOverlays;
 import io.github.moulberry.notenoughupdates.options.seperateSections.Museum;
-import io.github.moulberry.notenoughupdates.options.seperateSections.NeuAuctionHouse;
 import io.github.moulberry.notenoughupdates.options.seperateSections.Notifications;
 import io.github.moulberry.notenoughupdates.options.seperateSections.PetOverlay;
 import io.github.moulberry.notenoughupdates.options.seperateSections.ProfileViewer;
@@ -306,13 +304,6 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
-		name = "NEU Auction House",
-		desc = "NEU Auction House"
-	)
-	public NeuAuctionHouse neuAuctionHouse = new NeuAuctionHouse();
-
-	@Expose
-	@Category(
 		name = "Improved SB Menus",
 		desc = "Improved SB Menus"
 	)
@@ -519,7 +510,6 @@ public class NEUConfig extends Config {
 			add("/storage:Storage:CHEST");
 			add("/wardrobe:Wardrobe:LEATHER_CHESTPLATE");
 			add("/pets:Pets:BONE");
-			add("neuah:NEU Auction House:GOLD_BLOCK");
 			add("/bz:Bazaar:GOLD_BARDING");
 		}};
 	}
