@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -50,6 +50,8 @@ public class FrozenTreasuresHighlighter extends GenericBlockHighlighter {
 		add("http://textures.minecraft.net/texture/cb2b5d48e57577563aca31735519cb622219bc058b1f34648b67b8e71bc0fa");
 		// Rat
 		add("http://textures.minecraft.net/texture/a8abb471db0ab78703011979dc8b40798a941f3a4dec3ec61cbeec2af8cffe8");
+		// Mayor Jerry
+		add("http://textures.minecraft.net/texture/41b830eb4082acec836bc835e40a11282bb51193315f91184337e8d3555583");
 	}};
 
 	public static FrozenTreasuresHighlighter getInstance() {return INSTANCE;}
@@ -91,7 +93,7 @@ public class FrozenTreasuresHighlighter extends GenericBlockHighlighter {
 						.getString("Value");
 
 					// Decode and find texture url from the texture value
-					String trimmedJson = new String(Base64.getDecoder().decode(textureValue)).replace(" ", "");
+					String trimmedJson = new String(Base64.getDecoder().decode(textureValue.replace(";", ""))).replace(" ", "");
 
 
 					String textureUrl = "";
