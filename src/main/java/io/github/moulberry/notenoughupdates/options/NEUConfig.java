@@ -30,6 +30,7 @@ import io.github.moulberry.notenoughupdates.core.config.annotations.Category;
 import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
 import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
+import io.github.moulberry.notenoughupdates.miscfeatures.IQTest;
 import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.miscgui.GuiInvButtonEditor;
 import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
@@ -167,6 +168,9 @@ public class NEUConfig extends Config {
 				return;
 			case 26:
 				OverlayManager.powderGrindingOverlay.reset();
+				return;
+			case 27:
+				IQTest.testIQ();
 				return;
 			default:
 				System.err.printf("Unknown runnableId = %d in category %s%n", runnableId, activeConfigCategory);
