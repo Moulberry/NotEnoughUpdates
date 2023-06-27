@@ -28,6 +28,8 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.JsonUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
@@ -39,17 +41,26 @@ import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.Base64;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ProfileViewerUtils {
+	static Map<String, ItemStack> playerSkullCache = new HashMap<>();
+	static Map<String, Long> lastSoopyRequestTime = new HashMap<>();
+	static Map<String, JsonObject> soopyDataCache = new HashMap<>();
 
 	public static JsonArray readInventoryInfo(JsonObject profileInfo, String bagName) {
-		String bytes = Utils.getElementAsString(Utils.getElement(profileInfo, bagName + ".data"), "Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA=");
+		String bytes = Utils.getElementAsString(
+			Utils.getElement(profileInfo, bagName + ".data"),
+			"Hz8IAAAAAAAAAD9iYD9kYD9kAAMAPwI/Gw0AAAA="
+		);
 
 		NBTTagCompound nbt;
 		try {
@@ -86,7 +97,8 @@ public class ProfileViewerUtils {
 			}
 			JsonArray lastElementJsonArray = new JsonArray();
 			lastElementJsonArray.add(new JsonPrimitive(lastElement));
-			return new AbstractMap.SimpleEntry<>(tag.getCompoundTag("ExtraAttributes").getString("id"),
+			return new AbstractMap.SimpleEntry<>(
+				tag.getCompoundTag("ExtraAttributes").getString("id"),
 				Utils.getRarityFromLore(lastElementJsonArray)
 			);
 		}).sorted(Comparator.comparingInt(e -> -e.getValue())).collect(Collectors.toMap(
@@ -191,5 +203,76 @@ public class ProfileViewerUtils {
 		levelObj.level = Math.min(levelingArray.size(), levelCap);
 		levelObj.maxed = true;
 		return levelObj;
+	}
+
+	public static void saveSearch(String username) {
+		String nameLower = username.toLowerCase();
+		if (nameLower.equals(Minecraft.getMinecraft().thePlayer.getName().toLowerCase())) return;
+		List<String> previousProfileSearches = NotEnoughUpdates.INSTANCE.config.hidden.previousProfileSearches;
+		previousProfileSearches.remove(nameLower);
+		previousProfileSearches.add(0, nameLower);
+		while (previousProfileSearches.size() > 6) {
+			previousProfileSearches.remove(previousProfileSearches.size() - 1);
+		}
+	}
+
+	private static ItemStack fallBackSkull() {
+		return Utils.createSkull(
+			"Simon",
+			"f3c4dfb91c7b40ac81fd462538538523",
+			"ewogICJ0aW1lc3RhbXAiIDogMTY4NzQwMTM4MjY4MywKICAicHJvZmlsZUlkIiA6ICJmM2M0ZGZiOTFjN2I0MGFjODFmZDQ2MjUzODUzODUyMyIsCiAgInByb2ZpbGVOYW1lIiA6ICJTaW1vbiIsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS9kN2ViYThhZWU0ZmQxMTUxMmI3ZTFhMjc5YTE0YWM2NDhlNDQzNDgxYjlmMzcxMzZhNzEwMThkMzg3Mjk0Y2YzIgogICAgfQogIH0KfQ"
+		);
+	}
+
+	public static ItemStack getPlayerData(String username) {
+		String nameLower = username.toLowerCase();
+		if (!playerSkullCache.containsKey(nameLower)) {
+			playerSkullCache.put(nameLower, fallBackSkull());
+
+			getPlayerSkull(nameLower, skull -> {
+				if (skull == null) {
+					skull = fallBackSkull();
+				}
+
+				playerSkullCache.put(nameLower, skull);
+			});
+		}
+		return playerSkullCache.get(nameLower);
+	}
+
+	private static void getPlayerSkull(String username, Consumer<ItemStack> callback) {
+		if (NotEnoughUpdates.profileViewer.nameToUuid.containsKey(username) &&
+			NotEnoughUpdates.profileViewer.nameToUuid.get(username) == null) {
+			callback.accept(null);
+			return;
+		}
+		NotEnoughUpdates.profileViewer.getPlayerUUID(username, uuid -> {
+			if (uuid == null) {
+				callback.accept(null);
+			} else {
+				NotEnoughUpdates.INSTANCE.manager.apiUtils
+					.request()
+					.url("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false")
+					.requestJson()
+					.thenAcceptAsync(jsonObject -> {
+						if (jsonObject.has("properties") && jsonObject.get("properties").isJsonArray()) {
+							JsonArray propertiesArray = jsonObject.getAsJsonArray("properties");
+							if (propertiesArray.size() > 0) {
+								JsonObject textureObject = propertiesArray.get(0).getAsJsonObject();
+								if (textureObject.has("value") && textureObject.get("value").isJsonPrimitive()
+									&& textureObject.get("value").getAsJsonPrimitive().isString()) {
+
+									ItemStack skull = Utils.createSkull(
+										username,
+										uuid,
+										textureObject.get("value").getAsString()
+									);
+									callback.accept(skull);
+								}
+							}
+						}
+					});
+			}
+		});
 	}
 }
