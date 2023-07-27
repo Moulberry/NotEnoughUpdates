@@ -100,6 +100,8 @@ public class SkyblockProfiles {
 	private long soopyNetworthLeaderboardPosition = -1; // -1 = default, -2 = loading, -3 = error
 	private long soopyWeightLeaderboardPosition = -1; // -1 = default, -2 = loading, -3 = error
 	private JsonObject guildInformation = null;
+	// Assume the player is in a guild until proven otherwise
+	private boolean isInGuild = true;
 	private JsonObject playerStatus = null;
 	private JsonObject bingoInformation = null;
 	private long lastPlayerInfoState = 0;
@@ -390,7 +392,8 @@ public class SkyblockProfiles {
 				updatingGuildInfoState.set(false);
 
 				if (jsonObject != null && jsonObject.has("success") && jsonObject.get("success").getAsBoolean()) {
-					if (!jsonObject.has("guild")) {
+					if (jsonObject.get("guild").isJsonNull()) {
+						isInGuild = false;
 						return null;
 					}
 
@@ -404,6 +407,10 @@ public class SkyblockProfiles {
 			});
 
 		return null;
+	}
+
+	public boolean isPlayerInGuild() {
+		return isInGuild;
 	}
 
 	public List<String> getProfileNames() {
