@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -75,6 +75,7 @@ public class CollectionsPage extends GuiProfileViewerPage {
 	private static ItemStack selectedCollectionCategory = null;
 	private int page = 0;
 	private int maxPage = 0;
+
 
 	public CollectionsPage(GuiProfileViewer instance) {
 		super(instance);
