@@ -473,7 +473,7 @@ public class ItemOverlays {
 	@Expose
 	@ConfigOption(
 		name = "Pickaxe Ability Cooldown",
-		desc = "Show the cooldown duration of the pickaxe ability as the durability."
+		desc = "Show the cooldown duration of the pickaxe ability."
 	)
 	@ConfigEditorBoolean
 	public boolean pickaxeAbility = true;
@@ -481,7 +481,7 @@ public class ItemOverlays {
 	@Expose
 	@ConfigOption(
 		name = "Bonzo Mask Ability Cooldown",
-		desc = "Show the cooldown duration of a bonzo mask ability as the durability."
+		desc = "Show the cooldown duration of a bonzo mask ability."
 	)
 	@ConfigEditorBoolean
 	public boolean bonzoAbility = true;
@@ -489,7 +489,7 @@ public class ItemOverlays {
 	@Expose
 	@ConfigOption(
 		name = "Spirit Mask Ability Cooldown",
-		desc = "Show the cooldown duration of the spirit mask ability as the durability."
+		desc = "Show the cooldown duration of the spirit mask ability."
 	)
 	@ConfigEditorBoolean
 	public boolean spiritAbility = true;
