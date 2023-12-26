@@ -99,7 +99,11 @@ public class SkillRelatedTaskLevel extends GuiTaskLevel{
 		}
 
 		int sbXpCommissionMilestone = 0;
-		JsonArray tutorialArray = object.get("tutorial").getAsJsonArray();
+		JsonArray tutorialArray = Utils.getElementOrDefault(
+			selectedProfile.getProfileJson(),
+			"objectives.tutorial",
+			new JsonArray()
+		).getAsJsonArray();
 		JsonArray commissionMilestoneXpArray = miningObj.get("commission_milestone_xp").getAsJsonArray();
 		for (JsonElement jsonElement : tutorialArray) {
 			if (jsonElement.getAsJsonPrimitive().isString() && jsonElement.getAsString().startsWith(
@@ -115,7 +119,7 @@ public class SkillRelatedTaskLevel extends GuiTaskLevel{
 		// rock mines
 		float pet_milestone_ores_mined = Utils.getElementAsFloat(Utils.getElement(
 			object,
-			"stats.pet_milestone_ores_mined"
+			"player_stats.pets.milestone.ores_mined"
 		), 0);
 
 		int sbXpRockPet = 0;
@@ -131,8 +135,8 @@ public class SkillRelatedTaskLevel extends GuiTaskLevel{
 		// farming
 		JsonObject farmingObj = skillRelatedTask.get("farming").getAsJsonObject();
 		int anitaShopUpgradesXp = farmingObj.get("anita_shop_upgrades_xp").getAsInt();
-		int doubleDrops = Utils.getElementAsInt(Utils.getElement(object, "jacob2.perks.double_drops"), 0);
-		int farmingLevelCap = Utils.getElementAsInt(Utils.getElement(object, "jacob2.perks.farming_level_cap"), 0);
+		int doubleDrops = Utils.getElementAsInt(Utils.getElement(object, "jacobs_contest.perks.double_drops"), 0);
+		int farmingLevelCap = Utils.getElementAsInt(Utils.getElement(object, "jacobs_contest.perks.farming_level_cap"), 0);
 
 		int sbXpGainedByAnita = (doubleDrops + farmingLevelCap) * anitaShopUpgradesXp;
 
@@ -156,7 +160,7 @@ public class SkillRelatedTaskLevel extends GuiTaskLevel{
 
 		}
 		float petMilestoneKilled = Utils.getElementAsFloat(
-			Utils.getElement(object, "stats.pet_milestone_sea_creatures_killed"),
+			Utils.getElement(object, "player_stats.pets.milestone.sea_creatures_killed"),
 			0
 		);
 

@@ -336,17 +336,19 @@ public class BasicPage extends GuiProfileViewerPage {
 					guiLeft + 68, guiTop + 38, true, 0
 				);
 			}
+			double networthInCookies = -1;
 			if (NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo("BOOSTER_COOKIE") != null &&
-				NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo("BOOSTER_COOKIE").has("avg_buy")) {
-				double networthInCookies =
-					(
+				NotEnoughUpdates.INSTANCE.manager.auctionManager.getBazaarInfo("BOOSTER_COOKIE").has("avg_buy"))
+
+				networthInCookies = (
 						networth /
 							NotEnoughUpdates.INSTANCE.manager.auctionManager
 								.getBazaarInfo("BOOSTER_COOKIE")
 								.get("avg_buy")
 								.getAsDouble()
 					);
-				String networthIRLMoney = StringUtils.formatNumber(Math.round(
+
+			String networthIRLMoney = StringUtils.formatNumber(Math.round(
 					((networthInCookies * 325) / 675) * 4.99));
 
 				if (mouseX > guiLeft + offset - fontWidth / 2 && mouseX < guiLeft + offset + fontWidth / 2) {
@@ -359,7 +361,7 @@ public class BasicPage extends GuiProfileViewerPage {
 									EnumChatFormatting.DARK_GREEN +
 									"$" +
 									EnumChatFormatting.GOLD +
-									networthIRLMoney
+									(networthInCookies >= 0 ? networthIRLMoney : EnumChatFormatting.RED + "ERROR")
 							);
 
 						if (NotEnoughUpdates.INSTANCE.config.profileViewer.useSoopyNetworth
@@ -375,7 +377,8 @@ public class BasicPage extends GuiProfileViewerPage {
 
 						if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
 							getInstance().tooltipToDisplay.addAll(nwCategoryHover);
-							getInstance().tooltipToDisplay.add(EnumChatFormatting.RED + "This is calculated using the current");
+							getInstance().tooltipToDisplay.add(
+								EnumChatFormatting.RED + "The IRL price is calculated using the current");
 							getInstance().tooltipToDisplay.add(
 								EnumChatFormatting.RED + "price of booster cookies on bazaar and the price");
 							getInstance().tooltipToDisplay.add(
@@ -387,13 +390,10 @@ public class BasicPage extends GuiProfileViewerPage {
 						} else {
 							getInstance().tooltipToDisplay.add(EnumChatFormatting.GRAY + "[SHIFT for Info]");
 						}
-						if (!NotEnoughUpdates.INSTANCE.config.hidden.dev) {
-							getInstance().tooltipToDisplay.add("");
-							getInstance().tooltipToDisplay.add(EnumChatFormatting.RED + "THIS IS IN NO WAY ENDORSING IRL TRADING!");
-						}
+						getInstance().tooltipToDisplay.add("");
+						getInstance().tooltipToDisplay.add(EnumChatFormatting.RED + "THIS IS IN NO WAY ENDORSING IRL TRADING!");
 					}
 				}
-			}
 		} else {
 			int errFontWidth = fr.getStringWidth("Net Worth: " + stateStr);
 			if (errFontWidth >= 117) {
@@ -699,8 +699,8 @@ public class BasicPage extends GuiProfileViewerPage {
 							"% to " + level.maxLevel + ")");
 						if (entry.getKey().equals("farming")) {
 							// double drops + pelts
-							int doubleDrops = Utils.getElementAsInt(Utils.getElement(selectedProfile.getProfileJson(), "jacob2.perks.double_drops"), 0);
-							int peltCount = Utils.getElementAsInt(Utils.getElement(selectedProfile.getProfileJson(), "trapper_quest.pelt_count"), 0);
+							int doubleDrops = Utils.getElementAsInt(Utils.getElement(selectedProfile.getProfileJson(), "jacobs_contest.perks.double_drops"), 0);
+							int peltCount = Utils.getElementAsInt(Utils.getElement(selectedProfile.getProfileJson(), "quests.trapper_quest.pelt_count"), 0);
 
 							if (doubleDrops == 15) {
 								tooltipToDisplay.add("§7Double Drops: §6" + (doubleDrops * 2) + "%");
@@ -709,7 +709,9 @@ public class BasicPage extends GuiProfileViewerPage {
 							tooltipToDisplay.add("§7Pelts: §e" + peltCount);
 
 							// medals
-							JsonObject medals_inv = Utils.getElement(selectedProfile.getProfileJson(), "jacob2.medals_inv").getAsJsonObject();
+							JsonObject medals_inv = Utils
+								.getElementOrDefault(selectedProfile.getProfileJson(), "jacobs_contest.medals_inv", new JsonObject())
+								.getAsJsonObject();
 							tooltipToDisplay.add(" ");
 							for (String medalName : medalNames) {
 								String textWithoutFormattingCodes =
@@ -737,7 +739,7 @@ public class BasicPage extends GuiProfileViewerPage {
 							for (int i = 0; i < 5; i++) {
 								if (i >= maxLevel) break;
 								float tier = Utils.getElementAsFloat(
-									Utils.getElement(selectedProfile.getProfileJson(), "slayer_bosses." + slayerNameLower + ".boss_kills_tier_" + i),
+									Utils.getElement(selectedProfile.getProfileJson(), "slayer.slayer_bosses." + slayerNameLower + ".boss_kills_tier_" + i),
 									0
 								);
 								tooltipToDisplay.add(EnumChatFormatting.GRAY + "T" + (i + 1) + " Kills: " +

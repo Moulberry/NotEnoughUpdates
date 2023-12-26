@@ -72,7 +72,7 @@ public class SkyblockProfiles {
 		"inv_contents",
 		"talisman_bag",
 		"candy_inventory_contents",
-		"equippment_contents"
+		"equipment_contents"
 	);
 	private static final List<String> skills = Arrays.asList(
 		"taming",
@@ -216,6 +216,17 @@ public class SkyblockProfiles {
 		return highestProfileName.equals(profileName);
 	}
 
+	private long handleSoopyApiResponse(JsonObject response) {
+		if (response == null
+			|| !response.has("success")
+			|| !response.get("success").getAsBoolean()
+			|| !response.has("data")) {
+			return -3; // Error
+		} else {
+			return response.get("data").getAsLong();
+		}
+	}
+
 	private void loadSoopyData(Runnable callback) {
 		if (updatingSoopyData.get()) {
 			return;
@@ -226,36 +237,20 @@ public class SkyblockProfiles {
 		soopyNetworthLeaderboardPosition = -2; // Loading
 		profileViewer.getManager().apiUtils
 			.request()
-			.url("https://soopy.dev/api/v2/leaderboard/networth/user/" + this.uuid)
+			.url("https://api.soopy.dev/lb/lbpos/networth/" + this.uuid)
 			.requestJson()
 			.handle((jsonObject, throwable) -> {
-				if (jsonObject == null || !jsonObject.has("success") || !jsonObject.get("success").getAsBoolean()
-					|| !jsonObject.has("data")
-					|| !jsonObject.getAsJsonObject("data").has("data")
-					|| !jsonObject.getAsJsonObject("data").getAsJsonObject("data").has("position")) {
-					soopyNetworthLeaderboardPosition = -3; // Error
-				} else {
-					soopyNetworthLeaderboardPosition = jsonObject.getAsJsonObject("data").getAsJsonObject("data").get(
-						"position").getAsLong();
-				}
+				soopyNetworthLeaderboardPosition = handleSoopyApiResponse(jsonObject);
 				return null;
 			});
 
 		soopyWeightLeaderboardPosition = -2; // Loading
 		profileViewer.getManager().apiUtils
 			.request()
-			.url("https://soopy.dev/api/v2/leaderboard/weight/user/" + this.uuid)
+			.url("https://api.soopy.dev/lb/lbpos/weight/" + this.uuid)
 			.requestJson()
 			.handle((jsonObject, throwable) -> {
-				if (jsonObject == null || !jsonObject.has("success") || !jsonObject.get("success").getAsBoolean()
-					|| !jsonObject.has("data")
-					|| !jsonObject.getAsJsonObject("data").has("data")
-					|| !jsonObject.getAsJsonObject("data").getAsJsonObject("data").has("position")) {
-					soopyWeightLeaderboardPosition = -3; // Error
-				} else {
-					soopyWeightLeaderboardPosition = jsonObject.getAsJsonObject("data").getAsJsonObject("data").get(
-						"position").getAsLong();
-				}
+				soopyWeightLeaderboardPosition = handleSoopyApiResponse(jsonObject);
 				return null;
 			});
 
@@ -271,7 +266,7 @@ public class SkyblockProfiles {
 			ProfileViewerUtils.lastSoopyRequestTime.put(uuid, currentTime);
 			profileViewer.getManager().apiUtils
 				.request()
-				.url("https://soopy.dev/api/v2/player_networth/" + this.uuid)
+				.url("https://soopy.dev/api/v2/player_networth2/" + this.uuid)
 				.method("POST")
 				.postData("application/json", profilesArray.toString())
 				.requestJson()
@@ -751,12 +746,22 @@ public class SkyblockProfiles {
 				JsonArray contents = new JsonArray();
 
 				if (invName.equals("backpack_contents")) {
-					JsonObject backpackData = getBackpackData(Utils.getElement(profileJson, "backpack_contents"));
+					JsonObject backpackData = getBackpackData(Utils.getElement(profileJson, "inventory.backpack_contents"));
 					inventoryNameToInfo.put("backpack_sizes", backpackData.getAsJsonArray("backpack_sizes"));
 					contents = backpackData.getAsJsonArray("contents");
 				} else {
+					String path = "inventory." + invName + ".data";
+					if (invName.endsWith("bag") || invName.equals("quiver")) {
+						path = "inventory.bag_contents." + invName + ".data";
+					} else if (invName.equals("candy_inventory_contents")) {
+						path = "shared_inventory.candy_inventory_contents"; //the mappings said that this is the new path but i cant verify that because the data doesnt exist.
+					}
+
 					String contentBytes = Utils.getElementAsString(
-						Utils.getElement(profileJson, invName + ".data"),
+						Utils.getElement(
+							profileJson,
+							path
+						),
 						defaultNbtData
 					);
 
@@ -851,7 +856,7 @@ public class SkyblockProfiles {
 		}
 
 		public boolean skillsApiEnabled() {
-			return getProfileJson().has("experience_skill_combat");
+			return Utils.getElementAsLong(Utils.getElement(getProfileJson(), "player_data.experience.SKILL_COMBAT"), -1 ) != -1;
 		}
 
 		/**
@@ -883,13 +888,13 @@ public class SkyblockProfiles {
 						.getAsJsonObject()
 						.entrySet()) {
 						skillExperience += Utils.getElementAsFloat(
-							Utils.getElement(memberProfileJson.getValue(), "experience_skill_social2"),
+							Utils.getElement(memberProfileJson.getValue(), "player_data.experience.SKILL_SOCIAL"),
 							0
 						);
 					}
 				} else {
 					skillExperience += Utils.getElementAsFloat(
-						Utils.getElement(profileJson, "experience_skill_" + skillName),
+						Utils.getElement(profileJson, "player_data.experience.SKILL_" + skillName.toUpperCase()),
 						0
 					);
 				}
@@ -903,7 +908,7 @@ public class SkyblockProfiles {
 
 				int maxLevel = ProfileViewerUtils.getLevelingCap(leveling, skillName);
 				if (skillName.equals("farming")) {
-					maxLevel += Utils.getElementAsInt(Utils.getElement(profileJson, "jacob2.perks.farming_level_cap"), 0);
+					maxLevel += Utils.getElementAsInt(Utils.getElement(profileJson, "jacobs_contest.perks.farming_level_cap"), 0);
 				}
 				out.put(skillName, ProfileViewerUtils.getLevel(levelingArray, skillExperience, maxLevel, false));
 			}
@@ -965,7 +970,7 @@ public class SkyblockProfiles {
 			for (String slayerName : Weight.SLAYER_NAMES) {
 				float slayerExperience = Utils.getElementAsFloat(Utils.getElement(
 					profileJson,
-					"slayer_bosses." + slayerName + ".xp"
+					"slayer.slayer_bosses." + slayerName + ".xp"
 				), 0);
 				out.put(
 					slayerName,
@@ -995,12 +1000,13 @@ public class SkyblockProfiles {
 				return petsInfo;
 			}
 
-			JsonElement petsEle = getProfileJson().get("pets");
-			if (petsEle != null && petsEle.isJsonArray()) {
-				JsonArray petsArr = petsEle.getAsJsonArray();
+			JsonArray petsArray = Utils
+				.getElementOrDefault(getProfileJson(), "pets_data.pets", new JsonArray())
+				.getAsJsonArray();
+			if (petsArray.size() > 0) {
 				JsonObject activePet = null;
 
-				for (JsonElement petEle : petsEle.getAsJsonArray()) {
+				for (JsonElement petEle : petsArray.getAsJsonArray()) {
 					JsonObject petObj = petEle.getAsJsonObject();
 					if (petObj.has("active") && petObj.get("active").getAsBoolean()) {
 						activePet = petObj;
@@ -1011,7 +1017,7 @@ public class SkyblockProfiles {
 				// TODO: STOP DOING THIS AAAAA
 				petsInfo = new JsonObject();
 				petsInfo.add("active_pet", activePet);
-				petsInfo.add("pets", petsArr);
+				petsInfo.add("pets", petsArray);
 				return petsInfo;
 			}
 
@@ -1162,7 +1168,7 @@ public class SkyblockProfiles {
 			}
 
 			float bankBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "banking.balance"), 0);
-			float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
+			float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "currencies.coin_purse"), 0);
 			networth += bankBalance + purseBalance;
 
 			return this.networth = networth;
@@ -1188,7 +1194,6 @@ public class SkyblockProfiles {
 
 		public void updateBeastMasterMultiplier() {
 			if (!getUuid().equals(Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", ""))) return;
-			JsonObject stats = getProfileJson().get("stats").getAsJsonObject();
 			boolean hasBeastmasterCrest = false;
 			PetInfoOverlay.Rarity currentBeastRarity = PetInfoOverlay.Rarity.COMMON;
 			for (JsonElement talisman : getInventoryInfo().get("talisman_bag")) {
@@ -1205,8 +1210,9 @@ public class SkyblockProfiles {
 				}
 			}
 			if (hasBeastmasterCrest) {
-				if (stats.has("mythos_kills")) {
-					int mk = stats.get("mythos_kills").getAsInt();
+				JsonObject stats = getProfileJson().get("player_stats").getAsJsonObject();
+
+				int mk = Utils.getElementAsInt(Utils.getElement(stats, "mythos.kills"), 0);
 					float petXpBoost = mk > 10000 ? 1f : mk > 7500 ? 0.9f : mk > 5000 ? 0.8f : mk > 2500 ? 0.7f :
 						mk > 1000
 							? 0.6f
@@ -1217,10 +1223,8 @@ public class SkyblockProfiles {
 									: mk > 100
 										? 0.3f
 										: mk > 25 ? 0.2f : 0.1f;
-					PetInfoOverlay.getConfig().beastMultiplier = petXpBoost * currentBeastRarity.beastcreatMultiplyer;
-				} else {
-					PetInfoOverlay.getConfig().beastMultiplier = 0.1f * currentBeastRarity.beastcreatMultiplyer;
-				}
+				PetInfoOverlay.getConfig().beastMultiplier =
+					(petXpBoost == 0 ? 0.1f : petXpBoost) * currentBeastRarity.beastcreatMultiplyer;
 			}
 		}
 

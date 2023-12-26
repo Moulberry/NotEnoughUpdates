@@ -166,11 +166,10 @@ public class SlayingTaskLevel extends GuiTaskLevel {
 
 		int sbXpBestiary = GuiProfileViewer.getSelectedProfile().getBestiaryXp();
 
-		int mythologicalKillsXp = 0;
-		if (object.has("stats")) {
-			JsonObject stats = object.get("stats").getAsJsonObject();
-			if (stats.has("mythos_kills")) mythologicalKillsXp += (stats.get("mythos_kills").getAsLong() / 100);
-		}
+		int mythologicalKillsXp = Utils.getElementAsInt(Utils.getElement(
+			selectedProfile.getProfileJson(),
+			"player_stats.mythos.kills"
+		), 0) / 100;
 
 		int mythologicalKillsMax = slayingTask.get("mythological_kills").getAsInt();
 		if (mythologicalKillsXp > mythologicalKillsMax) mythologicalKillsXp = mythologicalKillsMax;
@@ -196,7 +195,7 @@ public class SlayingTaskLevel extends GuiTaskLevel {
 			for (int i = 0; i < 5; i++) {
 				if (i >= maxLevel) break;
 				float tier = Utils.getElementAsFloat(
-					Utils.getElement(object, "slayer_bosses." + entry.getKey() + ".boss_kills_tier_" + i),
+					Utils.getElement(object, "slayer.slayer_bosses." + entry.getKey() + ".boss_kills_tier_" + i),
 					0
 				);
 				if (tier != 0) {

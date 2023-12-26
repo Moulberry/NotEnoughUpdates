@@ -133,8 +133,10 @@ public class ExtraPage extends GuiProfileViewerPage {
 				return;
 			}
 			String displayName = itemInformation.get(essenceName).getAsJsonObject().get("displayname").getAsString();
-			int essenceNumber =
-				profileInfo.has(essenceName.toLowerCase()) ? profileInfo.get(essenceName.toLowerCase()).getAsInt() : 0;
+			int essenceNumber = Utils.getElementAsInt(Utils.getElement(
+				profileInfo,
+				"currencies.essence." + essenceName.replace("ESSENCE_", "") + ".current"
+			), 0);
 
 			Utils.renderAlignedString(
 				EnumChatFormatting.GOLD + displayName,
@@ -153,12 +155,7 @@ public class ExtraPage extends GuiProfileViewerPage {
 				if (essenceShops.get(essenceName) == null) continue;
 
 				for (Map.Entry<String, JsonElement> entry : essenceShops.get(essenceName).getAsJsonObject().entrySet()) {
-					int perkTier =
-						(profileInfo.has("perks") && profileInfo.get("perks").getAsJsonObject().has(entry.getKey()) ? profileInfo
-							.get("perks")
-							.getAsJsonObject()
-							.get(entry.getKey())
-							.getAsInt() : 0);
+					int perkTier = Utils.getElementAsInt(Utils.getElement(profileInfo, "player_data.perks." + entry.getKey()), 0);
 					int max = entry.getValue().getAsJsonObject().get("costs").getAsJsonArray().size();
 					EnumChatFormatting formatting = perkTier == max ? EnumChatFormatting.GREEN : EnumChatFormatting.AQUA;
 					String name = entry.getValue().getAsJsonObject().get("name").getAsString();
@@ -190,8 +187,11 @@ public class ExtraPage extends GuiProfileViewerPage {
 		float yStartBottom = 105;
 		float yOffset = 10;
 
-		float bankBalance = Utils.getElementAsFloat(Utils.getElement(selectedProfile.getOuterProfileJson(), "banking.balance"), 0);
-		float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "coin_purse"), 0);
+		float bankBalance = Utils.getElementAsFloat(Utils.getElement(
+			selectedProfile.getOuterProfileJson(),
+			"banking.balance"
+		), 0);
+		float purseBalance = Utils.getElementAsFloat(Utils.getElement(profileInfo, "currencies.coin_purse"), 0);
 
 		Utils.renderAlignedString(
 			EnumChatFormatting.GOLD + "Bank Balance",
@@ -209,7 +209,7 @@ public class ExtraPage extends GuiProfileViewerPage {
 		);
 
 		{
-			String first_join = getTimeSinceString(profileInfo, "first_join");
+			String first_join = getTimeSinceString(profileInfo, "profile.first_join");
 			if (first_join != null) {
 				Utils.renderAlignedString(
 					EnumChatFormatting.AQUA + "Joined",
@@ -275,7 +275,7 @@ public class ExtraPage extends GuiProfileViewerPage {
 			76
 		));
 
-		float fairySouls = Utils.getElementAsFloat(Utils.getElement(profileInfo, "fairy_souls_collected"), 0);
+		float fairySouls = Utils.getElementAsFloat(Utils.getElement(profileInfo, "fairy_soul.total_collected"), 0);
 
 		int fairySoulMax = 227;
 		if (Constants.FAIRYSOULS != null && Constants.FAIRYSOULS.has("Max Souls")) {
@@ -350,16 +350,19 @@ public class ExtraPage extends GuiProfileViewerPage {
 			);
 		}
 
-		float auctions_bids = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_bids"), 0);
+		float auctions_bids = Utils.getElementAsFloat(Utils.getElement(profileInfo, "player_stats.auctions.bids"), 0);
 		float auctions_highest_bid = Utils.getElementAsFloat(
-			Utils.getElement(profileInfo, "stats.auctions_highest_bid"),
+			Utils.getElement(profileInfo, "player_stats.auctions.highest_bid"),
 			0
 		);
-		float auctions_won = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_won"), 0);
-		float auctions_created = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_created"), 0);
-		float auctions_gold_spent = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.auctions_gold_spent"), 0);
+		float auctions_won = Utils.getElementAsFloat(Utils.getElement(profileInfo, "player_stats.auctions.won"), 0);
+		float auctions_created = Utils.getElementAsFloat(Utils.getElement(profileInfo, "player_stats.auctions.created"), 0);
+		float auctions_gold_spent = Utils.getElementAsFloat(Utils.getElement(
+			profileInfo,
+			"player_stats.auctions.gold_spent"
+		), 0);
 		float auctions_gold_earned = Utils.getElementAsFloat(
-			Utils.getElement(profileInfo, "stats.auctions_gold_earned"),
+			Utils.getElement(profileInfo, "player_stats.auctions.gold_earned"),
 			0
 		);
 
@@ -408,21 +411,21 @@ public class ExtraPage extends GuiProfileViewerPage {
 
 		float pet_milestone_ores_mined = Utils.getElementAsFloat(Utils.getElement(
 			profileInfo,
-			"stats.pet_milestone_ores_mined"
+			"player_stats.pets.milestone.ores_mined"
 		), 0);
 		float pet_milestone_sea_creatures_killed = Utils.getElementAsFloat(
-			Utils.getElement(profileInfo, "stats.pet_milestone_sea_creatures_killed"),
+			Utils.getElement(profileInfo, "player_stats.pets.milestone.sea_creatures_killed"),
 			0
 		);
 
-		float items_fished = Utils.getElementAsFloat(Utils.getElement(profileInfo, "stats.items_fished"), 0);
+		float items_fished = Utils.getElementAsFloat(Utils.getElement(profileInfo, "player_stats.items_fished.total"), 0);
 		float items_fished_treasure = Utils.getElementAsFloat(
-			Utils.getElement(profileInfo, "stats.items_fished_treasure"),
+			Utils.getElement(profileInfo, "player_stats.items_fished.treasure"),
 			0
 		);
 		float items_fished_large_treasure = Utils.getElementAsFloat(Utils.getElement(
 			profileInfo,
-			"stats.items_fished_large_treasure"
+			"player_stats.items_fished.large_treasure"
 		), 0);
 
 		Utils.renderAlignedString(
@@ -462,36 +465,36 @@ public class ExtraPage extends GuiProfileViewerPage {
 			76
 		);
 
-		drawEssence(profileInfo, xStart, yStartTop, xOffset, yOffset, mouseX, mouseY);
+		drawEssence(selectedProfile.getProfileJson(), xStart, yStartTop, xOffset, yOffset, mouseX, mouseY);
 
 		if (topKills == null) {
 			topKills = new TreeMap<>();
-			JsonObject stats = Utils.getElementOrDefault(profileInfo, "stats", new JsonObject()).getAsJsonObject();
+			JsonObject stats = Utils
+				.getElementOrDefault(profileInfo, "player_stats.kills", new JsonObject())
+				.getAsJsonObject();
 			for (Map.Entry<String, JsonElement> entry : stats.entrySet()) {
-				if (entry.getKey().startsWith("kills_")) {
-					if (entry.getValue().isJsonPrimitive()) {
-						JsonPrimitive prim = (JsonPrimitive) entry.getValue();
-						if (prim.isNumber()) {
-							String name = WordUtils.capitalizeFully(entry.getKey().substring("kills_".length()).replace("_", " "));
-							Set<String> kills = topKills.computeIfAbsent(prim.getAsInt(), k -> new HashSet<>());
-							kills.add(name);
-						}
+				if (entry.getValue().isJsonPrimitive()) {
+					JsonPrimitive prim = (JsonPrimitive) entry.getValue();
+					if (prim.isNumber()) {
+						String name = WordUtils.capitalizeFully(entry.getKey().replace("_", " "));
+						Set<String> kills = topKills.computeIfAbsent(prim.getAsInt(), k -> new HashSet<>());
+						kills.add(name);
 					}
 				}
 			}
 		}
 		if (topDeaths == null) {
 			topDeaths = new TreeMap<>();
-			JsonObject stats = Utils.getElementOrDefault(profileInfo, "stats", new JsonObject()).getAsJsonObject();
+			JsonObject stats = Utils
+				.getElementOrDefault(profileInfo, "player_stats.deaths", new JsonObject())
+				.getAsJsonObject();
 			for (Map.Entry<String, JsonElement> entry : stats.entrySet()) {
-				if (entry.getKey().startsWith("deaths_")) {
-					if (entry.getValue().isJsonPrimitive()) {
-						JsonPrimitive prim = (JsonPrimitive) entry.getValue();
-						if (prim.isNumber()) {
-							String name = WordUtils.capitalizeFully(entry.getKey().substring("deaths_".length()).replace("_", " "));
-							Set<String> deaths = topDeaths.computeIfAbsent(prim.getAsInt(), k -> new HashSet<>());
-							deaths.add(name);
-						}
+				if (entry.getValue().isJsonPrimitive()) {
+					JsonPrimitive prim = (JsonPrimitive) entry.getValue();
+					if (prim.isNumber()) {
+						String name = WordUtils.capitalizeFully(entry.getKey().replace("_", " "));
+						Set<String> deaths = topDeaths.computeIfAbsent(prim.getAsInt(), k -> new HashSet<>());
+						deaths.add(name);
 					}
 				}
 			}
