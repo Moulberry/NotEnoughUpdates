@@ -17,7 +17,7 @@
  * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.moulberry.notenoughupdates.profileviewer.bestiary
+package io.github.moulberry.notenoughupdates.miscfeatures.profileviewer.bestiary
 
 import com.google.gson.JsonObject
 import io.github.moulberry.notenoughupdates.util.Constants
@@ -128,8 +128,12 @@ object BestiaryData {
         }
 
         for (categoryId in categoriesToParse) {
-            val categoryData = Constants.BESTIARY.getAsJsonObject(categoryId)!!
-            parsedCategories.add(parseCategory(categoryData, categoryId, killsMap, deathsMap))
+            val categoryData = Constants.BESTIARY.getAsJsonObject(categoryId)
+            if (categoryData != null) {
+                parsedCategories.add(parseCategory(categoryData, categoryId, killsMap, deathsMap))
+            } else {
+                Utils.showOutdatedRepoNotification("bestiary.json missing or outdated")
+            }
         }
 
         return parsedCategories
