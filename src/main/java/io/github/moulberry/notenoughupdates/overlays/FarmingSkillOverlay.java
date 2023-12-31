@@ -29,6 +29,7 @@ import io.github.moulberry.notenoughupdates.util.SidebarUtil;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import io.github.moulberry.notenoughupdates.util.XPInformation;
 import io.github.moulberry.notenoughupdates.util.hypixelapi.HypixelItemAPI;
+import lombok.val;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -40,6 +41,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 public class FarmingSkillOverlay extends TextOverlay {
 	private static final NumberFormat format = NumberFormat.getIntegerInstance();
@@ -87,6 +89,9 @@ public class FarmingSkillOverlay extends TextOverlay {
 	private float cpsResetTimer = 1;
 
 	private String skillType = "Farming";
+
+	private static final Pattern CONTEST_AMOUNT_PATTERN = Pattern.compile(
+		" (Collected|(BRONZE|SILVER|GOLD|PLATINUM|DIAMOND) with) (?<amount>[\\d,]+)");
 
 	public FarmingSkillOverlay(
 		Position position,
@@ -136,14 +141,17 @@ public class FarmingSkillOverlay extends TextOverlay {
 		inJacobContest = false;
 		if (isJacobTime()) {
 			int timeLeftInContest = (20 * 60) - ((int) ((System.currentTimeMillis() % 3600000 - 900000) / 1000));
-
 			int cropsFarmed = -1;
 			for (String line : SidebarUtil.readSidebarLines()) {
-				if (line.contains("Collected") || line.contains("BRONZE") || line.contains("SILVER") ||
-					line.contains("GOLD") || line.contains("PLATINUM") || line.contains("DIAMOND")) {
-					inJacobContest = true;
-					String l = line.replaceAll("[^A-Za-z0-9() ]", "");
-					cropsFarmed = Integer.parseInt(l.substring(l.lastIndexOf(" ") + 1).replace(",", ""));
+				val matcher = CONTEST_AMOUNT_PATTERN.matcher(line);
+				if (matcher.matches()) {
+					String amount = matcher.group("amount").replace(",", "");
+					try {
+						inJacobContest = true;
+						cropsFarmed = Integer.parseInt(amount);
+					} catch (NumberFormatException e) {
+						e.printStackTrace();
+					}
 				}
 				jacobPrediction = (int) (cropsFarmed + (cropsPerSecond * timeLeftInContest));
 			}
