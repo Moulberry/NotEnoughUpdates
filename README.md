@@ -65,7 +65,7 @@ NotEnoughUpdates (NEU) is a feature rich 1.8.9 Minecraft forge mod for Hypixel S
 - Onscreen overlays for: Farming, Dwarven Mines, Pets, and the Accessory bag.
 - A custom auction house accessed with `/neuah`.
 - Solvers for: Enchanting and The Puzzler.
-- A custom Action House Search GUI.
+- A custom Auction House Search GUI.
 - A custom storage GUI.
 - A custom enchanting table GUI.
 - Slot Locking
