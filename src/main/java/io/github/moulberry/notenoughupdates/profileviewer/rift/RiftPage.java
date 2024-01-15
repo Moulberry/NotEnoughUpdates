@@ -19,6 +19,7 @@
 
 package io.github.moulberry.notenoughupdates.profileviewer.rift;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -88,7 +89,9 @@ public class RiftPage extends GuiProfileViewerPage {
 			return;
 		}
 		JsonObject profileInfo = selectedProfile.getProfileJson();
-		if (!profileInfo.has("rift")) {
+		// TODO change everything to RiftJson walker moment
+		RiftJson rift = selectedProfile.getRiftJson();
+		if (!profileInfo.has("rift") || rift == null) {
 			drawErrorMessage();
 			return;
 		}
@@ -119,42 +122,28 @@ public class RiftPage extends GuiProfileViewerPage {
 		Minecraft.getMinecraft().getTextureManager().bindTexture(GuiProfileViewer.pv_elements);
 		Utils.drawTexturedRect(guiLeft + 35, guiTop + 156, 20, 20, 0, 20 / 256f, 0, 20 / 256f, GL11.GL_NEAREST);
 
-		JsonObject deadCats = Utils.getElementOrDefault(
-			selectedProfile.getProfileJson(),
-			"rift.dead_cats",
-			new JsonObject()
-		).getAsJsonObject();
-
-		if (deadCats != null && !deadCats.entrySet().isEmpty() && deadCats.has("found_cats")) {
-			JsonArray foundCats = Utils.getElementOrDefault(
-				selectedProfile.getProfileJson(),
-				"rift.dead_cats.found_cats",
-				new JsonArray()
-			).getAsJsonArray();
+		RiftJson.RiftDeadCats deadCats = rift.dead_cats;
+		if (deadCats != null && deadCats.found_cats != null) {
+			List<String> foundCats = deadCats.found_cats;
 
 			int size = foundCats.size();
 			int riftTime = size * 15;
 			int manaRegen = size * 2;
 
-			JsonObject montezuma = Utils.getElementOrDefault(
-				selectedProfile.getProfileJson(),
-				"rift.dead_cats.montezuma",
-				new JsonObject()
-			).getAsJsonObject();
+			RiftJson.RiftDeadCats.Pet montezuma = deadCats.montezuma;
 			if (montezuma != null) {
-				String montezumaType = montezuma.get("type").getAsString();
 
 				PetInfoOverlay.Pet pet = new PetInfoOverlay.Pet();
-				pet.petLevel = new PetLeveling.PetLevel(100, 100, 0, 0, 0, montezuma.get("exp").getAsInt());
-				pet.rarity = PetInfoOverlay.Rarity.valueOf(montezuma.get("tier").getAsString().toUpperCase());
-				pet.petType = montezumaType;
-				pet.candyUsed = montezuma.get("candyUsed").getAsInt();
-				ItemStack petItemstackFromPetInfo = ItemUtils.createPetItemstackFromPetInfo(pet);
-				Utils.drawItemStack(petItemstackFromPetInfo, guiLeft + 37, guiTop + 158, true);
+				pet.petLevel = new PetLeveling.PetLevel(100, 100, 0, 0, 0, montezuma.exp);
+				pet.rarity = PetInfoOverlay.Rarity.valueOf(montezuma.tier);
+				pet.petType = montezuma.type;
+				pet.candyUsed = montezuma.candyUsed;
+				ItemStack petItemStackFromPetInfo = ItemUtils.createPetItemstackFromPetInfo(pet);
+				Utils.drawItemStack(petItemStackFromPetInfo, guiLeft + 37, guiTop + 158, true);
 
 				if ((mouseX > guiLeft + 37 && mouseX < guiLeft + 37 + 20) &&
 					(mouseY > guiTop + 158 && mouseY < guiTop + 158 + 20)) {
-					List<String> tooltip = petItemstackFromPetInfo.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+					List<String> tooltip = petItemStackFromPetInfo.getTooltip(Minecraft.getMinecraft().thePlayer, false);
 					tooltip.set(3, "§7Found: §9" + size + "/9 Soul Pieces");
 					tooltip.set(5, "§7Rift Time: §a+" + riftTime + "s");
 					if (pet.rarity == PetInfoOverlay.Rarity.EPIC) tooltip.set(6, "§7Mana Regen: §a+" + manaRegen + "%");
