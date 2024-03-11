@@ -46,7 +46,6 @@ import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
 import io.github.moulberry.notenoughupdates.miscfeatures.customblockzones.CustomBlockSounds;
 import io.github.moulberry.notenoughupdates.miscfeatures.inventory.MuseumCheapestItemOverlay;
 import io.github.moulberry.notenoughupdates.miscfeatures.inventory.MuseumItemHighlighter;
-import io.github.moulberry.notenoughupdates.miscfeatures.updater.AutoUpdater;
 import io.github.moulberry.notenoughupdates.mixins.AccessorMinecraft;
 import io.github.moulberry.notenoughupdates.oneconfig.IOneConfigCompat;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
@@ -161,7 +160,6 @@ public class NotEnoughUpdates {
 	public long lastOpenedGui = 0;
 	public boolean packDevEnabled = false;
 	public Color[][] colourMap = null;
-	public AutoUpdater autoUpdater = new AutoUpdater(this);
 	private File configFile;
 	private long lastChatMessage = 0;
 	private long secondLastChatMessage = 0;
