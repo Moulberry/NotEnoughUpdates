@@ -56,6 +56,7 @@ import io.github.moulberry.notenoughupdates.miscfeatures.Navigation;
 import io.github.moulberry.notenoughupdates.miscfeatures.NullzeeSphere;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 import io.github.moulberry.notenoughupdates.miscfeatures.PowerStoneStatsDisplay;
+import io.github.moulberry.notenoughupdates.miscfeatures.RecipeSearch;
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
 import io.github.moulberry.notenoughupdates.miscfeatures.SunTzu;
@@ -315,6 +316,7 @@ public class NotEnoughUpdates {
 		MinecraftForge.EVENT_BUS.register(AbiphoneWarning.getInstance());
 		MinecraftForge.EVENT_BUS.register(new BetterContainers());
 		MinecraftForge.EVENT_BUS.register(AuctionBINWarning.getInstance());
+		MinecraftForge.EVENT_BUS.register(RecipeSearch.getInstance());
 		MinecraftForge.EVENT_BUS.register(navigation);
 
 		if (Minecraft.getMinecraft().getResourceManager() instanceof IReloadableResourceManager) {

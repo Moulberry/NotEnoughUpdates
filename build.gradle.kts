@@ -1,4 +1,4 @@
-/*
+	/*
  * Copyright (C) 2022 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.

@@ -379,6 +379,13 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
+		name = "Recipe Tweaks",
+		desc = "Tweaks for the Recipe Search"
+	)
+	public BazaarTweaks recipeTweaks = new BazaarTweaks();
+
+	@Expose
+	@Category(
 		name = "AH/BZ Graph",
 		desc = "Graph of auction and bazaar prices"
 	)
@@ -454,6 +461,8 @@ public class NEUConfig extends Config {
 		public ArrayList<String> previousAuctionSearches = new ArrayList<>();
 		@Expose
 		public ArrayList<String> previousBazaarSearches = new ArrayList<>();
+		@Expose
+		public ArrayList<String> previousRecipeSearches = new ArrayList<>();
 		@Expose
 		public ArrayList<String> eventFavourites = new ArrayList<>();
 		@Expose

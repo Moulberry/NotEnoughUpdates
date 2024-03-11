@@ -58,6 +58,7 @@ import io.github.moulberry.notenoughupdates.overlays.BazaarSearchOverlay;
 import io.github.moulberry.notenoughupdates.overlays.EquipmentOverlay;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.RancherBootOverlay;
+import io.github.moulberry.notenoughupdates.overlays.RecipeSearchOverlay;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.ItemUtils;
@@ -430,6 +431,11 @@ public class RenderListener {
 		}
 		if (BazaarSearchOverlay.shouldReplace()) {
 			BazaarSearchOverlay.render();
+			event.setCanceled(true);
+			return;
+		}
+		if (RecipeSearchOverlay.shouldReplace()) {
+			RecipeSearchOverlay.render();
 			event.setCanceled(true);
 			return;
 		}
@@ -1032,6 +1038,11 @@ public class RenderListener {
 			event.setCanceled(true);
 			return;
 		}
+		if (RecipeSearchOverlay.shouldReplace()) {
+			RecipeSearchOverlay.mouseEvent();
+			event.setCanceled(true);
+			return;
+		}
 		if (RancherBootOverlay.shouldReplace()) {
 			RancherBootOverlay.mouseEvent();
 			event.setCanceled(true);
@@ -1520,6 +1531,11 @@ public class RenderListener {
 		}
 		if (BazaarSearchOverlay.shouldReplace()) {
 			BazaarSearchOverlay.keyEvent();
+			event.setCanceled(true);
+			return;
+		}
+		if (RecipeSearchOverlay.shouldReplace()) {
+			RecipeSearchOverlay.keyEvent();
 			event.setCanceled(true);
 			return;
 		}
