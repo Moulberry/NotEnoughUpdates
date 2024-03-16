@@ -22,17 +22,29 @@ package io.github.moulberry.notenoughupdates.miscfeatures.updater
 import moe.nea.libautoupdate.GithubReleaseUpdateSource
 import moe.nea.libautoupdate.UpdateData
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.net.URL
 
 class SigningGithubSource(username: String, repo: String) :
     GithubReleaseUpdateSource(username, repo) {
+    override fun selectUpdate(updateStream: String?, releases: List<GithubRelease>): UpdateData? {
+        if (updateStream == "draft")
+            return findAsset(releases.firstOrNull { it.isDraft } ?: return null)
+        return super.selectUpdate(updateStream, releases)
+    }
 
-    val hashRegex = "sha256sum: `(?<hash>[a-f0-9]{64})`".toPattern()
+    override fun getReleaseApiUrl(): String {
+        if (File("releasedata.json").exists())
+            return File("releasedata.json").absoluteFile.toURL().toString()
+        return super.getReleaseApiUrl()
+    }
+
+    val hashRegex = "sha256sum: `(?<hash>[a-fA-F0-9]{64})`".toPattern()
     override fun findAsset(release: GithubRelease): UpdateData? {
         var asset = super.findAsset(release) ?: return null
         val match = release.body.lines()
-            .map { line -> hashRegex.matcher(line).takeIf { it.matches() } }
-            .firstOrNull() ?: return null
+            .firstNotNullOfOrNull { line -> hashRegex.matcher(line).takeIf { it.matches() } }
+            ?: return null
         // Inject our custom sha256sum
         asset = UpdateData(asset.versionName, asset.versionNumber, match.group("hash"), asset.download)
         // Verify at least 2 signatures are present on this release

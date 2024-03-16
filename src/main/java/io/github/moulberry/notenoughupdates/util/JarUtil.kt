@@ -19,9 +19,12 @@
 
 package io.github.moulberry.notenoughupdates.util
 
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates
 import java.io.File
 import java.io.InputStream
+import java.net.URL
 import java.util.jar.JarFile
+import kotlin.io.path.toPath
 
 object JarUtil {
 
@@ -30,7 +33,7 @@ object JarUtil {
         fun read(path: String): InputStream
     }
 
-    val access = JarUtil::class.java.protectionDomain.codeSource.location.let {
+    val access = NotEnoughUpdates::class.java.protectionDomain.codeSource.location.let {
         if (it.protocol.equals("jar")) {
             val jarFilePath = it.toString().split("!")[0]
             val jarFile = JarFile(jarFilePath)
@@ -47,8 +50,8 @@ object JarUtil {
             }
         } else {
             val baseFilePath = it.toString().replace("\\", "/")
-                .replace(JarUtil::class.java.getCanonicalName().replace(".", "/") + ".class", "")
-            val baseFile = File(baseFilePath)
+                .replace(NotEnoughUpdates::class.java.getCanonicalName().replace(".", "/") + ".class", "")
+            val baseFile = URL(baseFilePath).toURI().toPath().toFile()
             object : Access {
                 override fun listFiles(path: String): List<String> {
                     return baseFile.resolve(path).listFiles()?.map { it.name } ?: listOf()

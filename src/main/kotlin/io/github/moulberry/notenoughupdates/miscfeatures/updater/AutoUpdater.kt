@@ -20,18 +20,50 @@
 package io.github.moulberry.notenoughupdates.miscfeatures.updater
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe
+import io.github.moulberry.notenoughupdates.events.RegisterBrigadierCommandEvent
+import io.github.moulberry.notenoughupdates.util.brigadier.reply
+import io.github.moulberry.notenoughupdates.util.brigadier.thenExecute
 import moe.nea.libautoupdate.CurrentVersion
 import moe.nea.libautoupdate.UpdateContext
-import moe.nea.libautoupdate.UpdateSource
 import moe.nea.libautoupdate.UpdateTarget
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import java.util.concurrent.CompletableFuture
 
+@NEUAutoSubscribe
 object AutoUpdater {
     val updateContext = UpdateContext(
-        SigningGithubSource("NotEnoughUpdates","NotEnoughUpdates"),
+        SigningGithubSource("NotEnoughUpdates", "NotEnoughUpdates"),
         UpdateTarget.deleteAndSaveInTheSameFolder(AutoUpdater::class.java),
         CurrentVersion.ofTag(NotEnoughUpdates.VERSION.substringBefore("+")),
         "notenoughupdates"
     )
+
+    init {
+        updateContext.cleanup()
+    }
+
+    @SubscribeEvent
+    fun testCommand(event: RegisterBrigadierCommandEvent) {
+        event.command("testneuupdate") {
+            thenExecute {
+                updateContext.checkUpdate("pre")
+                    .thenCompose {
+                        if (it.isUpdateAvailable)
+                            it.launchUpdate().thenApply { true }
+                        else
+                            CompletableFuture.completedFuture(false)
+                    }
+                    .thenAccept {
+                        if (it) {
+                            reply("Updated!")
+                        } else {
+                            reply("No updated :(")
+                        }
+                    }
+            }
+        }
+    }
 
 
 }

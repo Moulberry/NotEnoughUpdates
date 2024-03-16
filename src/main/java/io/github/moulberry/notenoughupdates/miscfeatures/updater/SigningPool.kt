@@ -54,6 +54,7 @@ object SigningPool {
     val keyPool = load().associateBy { it.name }
 
     fun verifySignature(name: String, inputStream: InputStream, signatureBytes: ByteArray): Boolean {
+        load()
         val signature = Signature.getInstance("SHA256withRSA")
         signature.initVerify(keyPool[name]?.publicKey ?: return false)
 
