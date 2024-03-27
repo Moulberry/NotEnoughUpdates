@@ -20,6 +20,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
@@ -44,6 +45,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.Map;
 
+@NEUAutoSubscribe
 public class MiningStuff {
 	private static BlockPos overlayLoc = null;
 	private static long titaniumNotifMillis = 0;
@@ -150,12 +152,7 @@ public class MiningStuff {
 			if (alpha > 10) {
 				TextRenderUtils.drawStringCenteredScaledMaxWidth(
 					"Titanium has spawned nearby!",
-					Minecraft.getMinecraft().fontRendererObj,
-					0,
-					0,
-					true,
-					width / 4 - 20,
-					colour | (colour << 8) | (colour << 16) | (alpha << 24)
+					0, 0, true, width / 4 - 20, colour | (colour << 8) | (colour << 16) | (alpha << 24)
 				);
 			}
 

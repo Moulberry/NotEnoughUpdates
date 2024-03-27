@@ -23,23 +23,27 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.dungeons.DungeonWin;
 import io.github.moulberry.notenoughupdates.miscfeatures.CookieWarning;
 import io.github.moulberry.notenoughupdates.miscfeatures.CrystalMetalDetectorSolver;
+import io.github.moulberry.notenoughupdates.miscfeatures.EnderNodes;
 import io.github.moulberry.notenoughupdates.miscfeatures.StreamerMode;
+import io.github.moulberry.notenoughupdates.miscfeatures.world.EnderNodeHighlighter;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.SlayerOverlay;
-import io.github.moulberry.notenoughupdates.overlays.TimersOverlay;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
+import net.minecraft.util.StringUtils;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,10 +54,15 @@ import static io.github.moulberry.notenoughupdates.overlays.SlayerOverlay.timeSi
 import static io.github.moulberry.notenoughupdates.overlays.SlayerOverlay.timeSinceLastBoss2;
 
 public class ChatListener {
+
 	private final NotEnoughUpdates neu;
-	private static final Pattern SLAYER_XP = Pattern.compile(
+
+	private static final Pattern SLAYER_EXP_PATTERN = Pattern.compile(
 		"   (Spider|Zombie|Wolf|Enderman|Blaze) Slayer LVL (\\d) - (?:Next LVL in ([\\d,]+) XP!|LVL MAXED OUT!)");
-	AtomicBoolean missingRecipe = new AtomicBoolean(false);
+	private static final Pattern SKY_BLOCK_LEVEL_PATTERN = Pattern.compile("\\[(\\d{1,4})\\] .*");
+	private final Pattern PARTY_FINDER_PATTERN = Pattern.compile("§dParty Finder §r§f> (.*)§ejoined the (dungeon )?group!");
+
+	private AtomicBoolean missingRecipe = new AtomicBoolean(false);
 
 	public ChatListener(NotEnoughUpdates neu) {
 		this.neu = neu;
@@ -108,34 +117,68 @@ public class ChatListener {
 
 	private IChatComponent replaceSocialControlsWithPV(IChatComponent chatComponent) {
 
-		if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 > 0 && chatComponent.getChatStyle() != null &&
-			chatComponent.getChatStyle().getChatClickEvent() != null &&
-			chatComponent.getChatStyle().getChatClickEvent().getAction() == ClickEvent.Action.RUN_COMMAND &&
-			NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
-			if (chatComponent.getChatStyle().getChatClickEvent().getValue().startsWith("/socialoptions")) {
-				String username = chatComponent.getChatStyle().getChatClickEvent().getValue().substring(15);
-				if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 == 1) {
-					chatComponent.setChatStyle(Utils.createClickStyle(
-						ClickEvent.Action.RUN_COMMAND,
-						"/pv " + username,
-						"" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD +
-							username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s profile in " +
-							EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD + "NEU's" + EnumChatFormatting.RESET +
-							EnumChatFormatting.YELLOW + " profile viewer."
-					));
-					return chatComponent;
-				} else if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 == 2) {
-					chatComponent.setChatStyle(Utils.createClickStyle(
-						ClickEvent.Action.RUN_COMMAND,
-						"/ah " + username,
-						"" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD +
-							username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s /ah page"
-					));
-					return chatComponent;
-				}
-			} // wanted to add this for guild but guild uses uuid :sad:
+		if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 == 0 || !NotEnoughUpdates.INSTANCE.hasSkyblockScoreboard()) {
+			return chatComponent;
+		}
+
+		List<IChatComponent> siblings = chatComponent.getSiblings();
+		if (siblings.size() < 2) return chatComponent;
+
+		IChatComponent targetedComponent = siblings.get(siblings.size() - 2);
+
+		String chatClickCommand = getChatClickEvent(siblings.get(0));
+
+		if (chatClickCommand == null) {
+			chatClickCommand = getChatClickEvent(targetedComponent);
+		}
+		if (chatClickCommand == null) return chatComponent;
+
+		String username = chatClickCommand.equals("/viewprofile") ?
+			Utils.getNameFromChatComponent(chatComponent) :
+			targetedComponent.getChatStyle().getChatClickEvent().getValue().substring(15);
+		username = username.replaceAll("[^a-zA-Z0-9_]", "");
+
+		if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 == 1) {
+
+			ChatStyle pvClickStyle = getPVChatStyle(username);
+			targetedComponent.setChatStyle(pvClickStyle);
+
+			return chatComponent;
+		} else if (NotEnoughUpdates.INSTANCE.config.misc.replaceSocialOptions1 == 2) {
+
+			ChatStyle ahClickStyle = Utils.createClickStyle(
+				ClickEvent.Action.RUN_COMMAND,
+				"/ah " + username,
+				"" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD +
+					username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s /ah page"
+			);
+
+			targetedComponent.setChatStyle(ahClickStyle);
+			return chatComponent;
 		}
 		return chatComponent;
+	}
+
+	private String getChatClickEvent(IChatComponent sibling) {
+		if (sibling.getChatStyle() != null && sibling.getChatStyle().getChatClickEvent() != null) {
+			String clickEvent = sibling.getChatStyle().getChatClickEvent().getValue();
+
+			if (clickEvent.startsWith("/socialoptions")) return "/socialoptions";
+			if (clickEvent.startsWith("/viewprofile")) return "/viewprofile";
+		}
+		return null;
+	}
+
+	private static ChatStyle getPVChatStyle(String username) {
+		username = username.replaceAll("[^a-zA-Z0-9_]", "");
+		return Utils.createClickStyle(
+			ClickEvent.Action.RUN_COMMAND,
+			"/pv " + username,
+			"" + EnumChatFormatting.YELLOW + "Click to open " + EnumChatFormatting.AQUA + EnumChatFormatting.BOLD +
+				username + EnumChatFormatting.RESET + EnumChatFormatting.YELLOW + "'s profile in " +
+				EnumChatFormatting.DARK_PURPLE + EnumChatFormatting.BOLD + "NEU's" + EnumChatFormatting.RESET +
+				EnumChatFormatting.YELLOW + " profile viewer."
+		);
 	}
 
 	/**
@@ -147,35 +190,28 @@ public class ChatListener {
 	public void onGuiChat(ClientChatReceivedEvent e) {
 		if (e.type == 2) {
 			CrystalMetalDetectorSolver.process(e.message);
-			TimersOverlay.processActionBar(e.message.getUnformattedText());
 			e.message = processChatComponent(e.message);
 			return;
 		} else if (e.type == 0) {
 			e.message = replaceSocialControlsWithPV(e.message);
+			if (NotEnoughUpdates.INSTANCE.config.misc.dungeonGroupsPV) {
+				e.message = dungeonPartyJoinPV(e.message);
+			}
 		}
 
 		DungeonWin.onChatMessage(e);
 
 		String r = null;
 		String unformatted = Utils.cleanColour(e.message.getUnformattedText());
-		Matcher matcher = SLAYER_XP.matcher(unformatted);
+		Matcher matcher = SLAYER_EXP_PATTERN.matcher(unformatted);
 		if (unformatted.startsWith("You are playing on profile: ")) {
-			neu.manager.setCurrentProfile(unformatted
+			SBInfo.getInstance().setCurrentProfile(unformatted
 				.substring("You are playing on profile: ".length())
 				.split(" ")[0].trim());
 		} else if (unformatted.startsWith("Your profile was changed to: ")) {//Your profile was changed to:
-			neu.manager.setCurrentProfile(unformatted
+			SBInfo.getInstance().setCurrentProfile(unformatted
 				.substring("Your profile was changed to: ".length())
 				.split(" ")[0].trim());
-		} else if (unformatted.startsWith("Your new API key is ")) {
-			NotEnoughUpdates.INSTANCE.config.apiData.apiKey =
-				unformatted.substring("Your new API key is ".length()).substring(
-					0,
-					36
-				);
-			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-				EnumChatFormatting.YELLOW + "[NEU] API Key automatically configured"));
-			NotEnoughUpdates.INSTANCE.saveConfig();
 		} else if (unformatted.startsWith("Player List Info is now disabled!")) {
 			SBInfo.getInstance().hasNewTab = false;
 		} else if (unformatted.startsWith("Player List Info is now enabled!")) {
@@ -188,20 +224,20 @@ public class ChatListener {
 		} else if (e.message.getFormattedText().startsWith(
 			EnumChatFormatting.RESET.toString() + EnumChatFormatting.RED + "Invalid recipe ")) {
 			r = "";
+		} else if (unformatted.equals("  SLAYER QUEST FAILED!")) {
+			SlayerOverlay.isSlain = false;
+			timeSinceLastBoss = 0;
 		} else if (unformatted.equals("  NICE! SLAYER BOSS SLAIN!")) {
 			SlayerOverlay.isSlain = true;
 		} else if (unformatted.equals("  SLAYER QUEST STARTED!")) {
 			SlayerOverlay.isSlain = false;
-			if (timeSinceLastBoss == 0) {
-				SlayerOverlay.timeSinceLastBoss = System.currentTimeMillis();
-			} else {
+			if (timeSinceLastBoss != 0) {
 				timeSinceLastBoss2 = timeSinceLastBoss;
-				timeSinceLastBoss = System.currentTimeMillis();
 			}
+			timeSinceLastBoss = System.currentTimeMillis();
 		} else if (unformatted.startsWith("   RNG Meter")) {
 			RNGMeter = unformatted.substring("   RNG Meter - ".length());
 		} else if (matcher.matches()) {
-			//matcher.group(1);
 			SlayerOverlay.slayerLVL = matcher.group(2);
 			if (!SlayerOverlay.slayerLVL.equals("9")) {
 				SlayerOverlay.slayerXp = matcher.group(3);
@@ -222,14 +258,6 @@ public class ChatListener {
 						"/neucalc " + unformatted.substring("QUICK MATHS! Solve: ".length())
 					);
 				}
-			}
-		}
-		if (e.message.getFormattedText().contains(
-			EnumChatFormatting.YELLOW + "Visit the Auction House to collect your item!")) {
-			if (NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBid != null &&
-				System.currentTimeMillis() - NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBidMillis < 5000) {
-				NotEnoughUpdates.INSTANCE.sendChatMessage("/viewauction " +
-					NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.niceAucId(NotEnoughUpdates.INSTANCE.manager.auctionManager.customAH.latestBid));
 			}
 		}
 		if (r != null) {
@@ -254,5 +282,35 @@ public class ChatListener {
 			unformatted.startsWith("  ") || unformatted.startsWith("✦") || unformatted.equals(
 			"  You've earned a Crystal Loot Bundle!"))
 			OverlayManager.crystalHollowOverlay.message(unformatted);
+
+		Matcher LvlMatcher = SKY_BLOCK_LEVEL_PATTERN.matcher(unformatted);
+		if (LvlMatcher.matches()) {
+			if (Integer.parseInt(LvlMatcher.group(1)) < NotEnoughUpdates.INSTANCE.config.misc.filterChatLevel &&
+				NotEnoughUpdates.INSTANCE.config.misc.filterChatLevel != 0) {
+				e.setCanceled(true);
+			}
+		}
+
+		OverlayManager.powderGrindingOverlay.onMessage(unformatted);
+
+		if (unformatted.startsWith("ENDER NODE!"))
+			EnderNodeHighlighter.getInstance().highlightedBlocks.clear();
+
+		if (unformatted.equals("ENDER NODE! You found Endermite Nest!"))
+			EnderNodes.displayEndermiteNotif();
+	}
+
+	private IChatComponent dungeonPartyJoinPV(IChatComponent message) {
+		String text = message.getFormattedText();
+		Matcher matcher = PARTY_FINDER_PATTERN.matcher(text);
+
+		if (matcher.find()) {
+			String name = StringUtils.stripControlCodes(matcher.group(1)).trim();
+			ChatComponentText componentText = new ChatComponentText(text);
+			componentText.setChatStyle(getPVChatStyle(name));
+			return componentText;
+		} else {
+			return message;
+		}
 	}
 }

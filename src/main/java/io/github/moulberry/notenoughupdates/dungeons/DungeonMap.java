@@ -22,9 +22,12 @@ package io.github.moulberry.notenoughupdates.dungeons;
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.core.BackgroundBlur;
 import io.github.moulberry.notenoughupdates.core.config.Position;
+import io.github.moulberry.notenoughupdates.util.ItemUtils;
 import io.github.moulberry.notenoughupdates.util.NEUResourceManager;
+import io.github.moulberry.notenoughupdates.util.SidebarUtil;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.block.material.MapColor;
@@ -47,10 +50,7 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemStack;
-import net.minecraft.scoreboard.Score;
-import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
-import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.Matrix4f;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec4b;
@@ -65,9 +65,15 @@ import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
+@NEUAutoSubscribe
 public class DungeonMap {
 	private static final ResourceLocation GREEN_CHECK = new ResourceLocation(
 		"notenoughupdates:dungeon_map/green_check.png");
@@ -122,9 +128,6 @@ public class DungeonMap {
 	private int startRoomY = -1;
 	private int connectorSize = 5;
 	private int roomSize = 0;
-
-	//private final List<MapDecoration> decorations = new ArrayList<>();
-	//private final List<MapDecoration> lastDecorations = new ArrayList<>();
 	private long lastDecorationsMillis = -1;
 	private long lastLastDecorationsMillis = -1;
 
@@ -501,8 +504,10 @@ public class DungeonMap {
 			mapSizeX = borderSizeOption == 0 ? 90 : borderSizeOption == 1 ? 120 : borderSizeOption == 2 ? 160 : 240;
 		}
 		mapSizeY = mapSizeX;
-		int roomsSizeX = (maxRoomX - minRoomX) * (renderRoomSize + renderConnSize) + renderRoomSize;
-		int roomsSizeY = (maxRoomY - minRoomY) * (renderRoomSize + renderConnSize) + renderRoomSize;
+		int roomsSizeX = (maxRoomX - minRoomX) * (renderRoomSize + renderConnSize) + renderRoomSize +
+			(isFloorOne ? getRenderRoomSize() : 0);
+		int roomsSizeY = (maxRoomY - minRoomY) * (renderRoomSize + renderConnSize) + renderRoomSize +
+			(isEntrance ? getRenderRoomSize() : 0);
 		int mapCenterX = mapSizeX / 2;
 		int mapCenterY = mapSizeY / 2;
 		int scaleFactor = 8;
@@ -672,12 +677,12 @@ public class DungeonMap {
 					float angle = pos.rotation;
 
 					boolean doInterp = NotEnoughUpdates.INSTANCE.config.dungeonMap.dmPlayerInterp;
-					if (!isFloorOne && playerEntityMapPositions.containsKey(name)) {
+					if (playerEntityMapPositions.containsKey(name)) {
 						MapPosition entityPos = playerEntityMapPositions.get(name);
 						angle = entityPos.rotation;
 
-						float deltaX = entityPos.getRenderX() - pos.getRenderX();
-						float deltaY = entityPos.getRenderY() - pos.getRenderY();
+						float deltaX = entityPos.getRenderX() - pos.getRenderX() + (isFloorOne ? getRenderRoomSize() : 0);
+						float deltaY = entityPos.getRenderY() - pos.getRenderY() + (isEntrance ? getRenderRoomSize() : 0);
 
 						x += deltaX;
 						y += deltaY;
@@ -1122,6 +1127,7 @@ public class DungeonMap {
 	}
 
 	private boolean isFloorOne = false;
+	private boolean isEntrance = false;
 	private boolean failMap = false;
 	private long lastClearCache = 0;
 
@@ -1149,20 +1155,13 @@ public class DungeonMap {
 			lastClearCache = System.currentTimeMillis();
 
 			isFloorOne = false;
-			Scoreboard scoreboard = Minecraft.getMinecraft().thePlayer.getWorldScoreboard();
 
-			ScoreObjective sidebarObjective = scoreboard.getObjectiveInDisplaySlot(1);
-
-			List<Score> scores = new ArrayList<>(scoreboard.getSortedScores(sidebarObjective));
-
-			for (int i = scores.size() - 1; i >= 0; i--) {
-				Score score = scores.get(i);
-				ScorePlayerTeam scoreplayerteam1 = scoreboard.getPlayersTeam(score.getPlayerName());
-				String line = ScorePlayerTeam.formatPlayerName(scoreplayerteam1, score.getPlayerName());
-				line = Utils.cleanColour(line);
-
+			for (String line : SidebarUtil.readSidebarLines()) {
 				if (line.contains("(F1)") || line.contains("(E)") || line.contains("(M1)")) {
 					isFloorOne = true;
+					if (line.contains("(E)")) {
+						isEntrance = true;
+					}
 					break;
 				}
 			}
@@ -1475,9 +1474,7 @@ public class DungeonMap {
 						}
 					}
 
-					//System.out.println("--- PERM START ---");
 					for (Map.Entry<String, Integer> entry : smallestPermutation.entrySet()) {
-						//System.out.println(entry.getKey() + ":" + entry.getValue() + " : Total dist: " + smallestTotalDistance);
 						finalUsedIndexes.add(entry.getValue());
 						playerMarkerMapPositions.put(entry.getKey(), positions.get(entry.getValue()));
 					}
@@ -1533,7 +1530,13 @@ public class DungeonMap {
 			}
 
 			ItemStack stack = Minecraft.getMinecraft().thePlayer.inventory.mainInventory[8];
-			boolean holdingBow = stack != null && stack.getItem() == Items.arrow && colourMap != null;
+			boolean holdingBow = false;
+			if (stack != null) {
+				holdingBow |= stack.getItem() == Items.arrow;
+				String customname = ItemUtils.getDisplayName(stack.getTagCompound());
+				holdingBow |= customname != null && customname.endsWith("Arrow");
+			}
+			holdingBow &= colourMap != null;
 			if (holdingBow || (stack != null && stack.getItem() instanceof ItemMap)) {
 				Map<String, Vec4b> decorations = null;
 

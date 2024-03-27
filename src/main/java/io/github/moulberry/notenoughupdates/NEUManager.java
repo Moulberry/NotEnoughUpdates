@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -26,6 +26,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.auction.APIManager;
+import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.events.RepositoryReloadEvent;
 import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.miscgui.KatSitterOverlay;
@@ -34,12 +35,12 @@ import io.github.moulberry.notenoughupdates.recipes.CraftingOverlay;
 import io.github.moulberry.notenoughupdates.recipes.CraftingRecipe;
 import io.github.moulberry.notenoughupdates.recipes.Ingredient;
 import io.github.moulberry.notenoughupdates.recipes.NeuRecipe;
-import io.github.moulberry.notenoughupdates.util.Constants;
-import io.github.moulberry.notenoughupdates.util.HotmInformation;
+import io.github.moulberry.notenoughupdates.recipes.RecipeHistory;
 import io.github.moulberry.notenoughupdates.util.ApiUtil;
+import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.ItemResolutionQuery;
 import io.github.moulberry.notenoughupdates.util.ItemUtils;
-import io.github.moulberry.notenoughupdates.util.SBInfo;
+import io.github.moulberry.notenoughupdates.util.UrsaClient;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
@@ -47,8 +48,8 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
@@ -62,7 +63,6 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -74,6 +74,9 @@ import java.io.Reader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -102,7 +105,7 @@ public class NEUManager {
 	private final TreeMap<String, JsonObject> itemMap = new TreeMap<>();
 	private boolean hasBeenLoadedBefore = false;
 
-	private final TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
+	public final TreeMap<String, HashMap<String, List<Integer>>> titleWordMap = new TreeMap<>();
 	private final TreeMap<String, HashMap<String, List<Integer>>> loreWordMap = new TreeMap<>();
 
 	public final KeyBinding keybindGive =
@@ -113,18 +116,23 @@ public class NEUManager {
 		new KeyBinding("Show usages for item", Keyboard.KEY_U, "NotEnoughUpdates");
 	public final KeyBinding keybindViewRecipe =
 		new KeyBinding("Show recipe for item", Keyboard.KEY_R, "NotEnoughUpdates");
+	public final KeyBinding keybindPreviousRecipe =
+		new KeyBinding("Show previous recipe", Keyboard.KEY_LBRACKET, "NotEnoughUpdates");
+	public final KeyBinding keybindNextRecipe =
+		new KeyBinding("Show next recipe", Keyboard.KEY_RBRACKET, "NotEnoughUpdates");
 	public final KeyBinding keybindToggleDisplay = new KeyBinding("Toggle NEU overlay", 0, "NotEnoughUpdates");
 	public final KeyBinding keybindClosePanes = new KeyBinding("Close NEU panes", 0, "NotEnoughUpdates");
 	public final KeyBinding keybindItemSelect = new KeyBinding("Select Item", -98 /*middle*/, "NotEnoughUpdates");
 	public final KeyBinding[] keybinds = new KeyBinding[]{
-		keybindGive, keybindFavourite, keybindViewUsages, keybindViewRecipe,
-		keybindToggleDisplay, keybindClosePanes, keybindItemSelect
+		keybindGive, keybindFavourite, keybindViewUsages, keybindViewRecipe, keybindPreviousRecipe,
+		keybindNextRecipe, keybindToggleDisplay, keybindClosePanes, keybindItemSelect
 	};
 
 	public String viewItemAttemptID = null;
 	public long viewItemAttemptTime = 0;
 
 	public final ApiUtil apiUtils = new ApiUtil();
+	public final UrsaClient ursaClient = new UrsaClient(apiUtils);
 
 	private final Map<String, ItemStack> itemstackCache = new HashMap<>();
 
@@ -132,22 +140,24 @@ public class NEUManager {
 	private final HashMap<String, Set<NeuRecipe>> recipesMap = new HashMap<>();
 	private final HashMap<String, Set<NeuRecipe>> usagesMap = new HashMap<>();
 
+	private final Map<String, String> displayNameCache = new HashMap<>();
+
 	public String latestRepoCommit = null;
 
 	public File configLocation;
 	public File repoLocation;
-	public File configFile;
-	public HotmInformation hotm;
 
 	public KatSitterOverlay katSitterOverlay;
 
 	public CraftingOverlay craftingOverlay;
 
+	private static boolean repoDownloadFailed = false;
+	public boolean onBackupRepo = false;
+
 	public NEUManager(NotEnoughUpdates neu, File configLocation) {
 		this.neu = neu;
 		this.configLocation = configLocation;
 		this.auctionManager = new APIManager(this);
-		this.hotm = new HotmInformation(neu);
 		this.craftingOverlay = new CraftingOverlay(this);
 		this.katSitterOverlay = new KatSitterOverlay();
 
@@ -155,28 +165,6 @@ public class NEUManager {
 
 		this.repoLocation = new File(configLocation, "repo");
 		repoLocation.mkdir();
-	}
-
-	public void setCurrentProfile(String currentProfile) {
-		SBInfo.getInstance().currentProfile = currentProfile;
-	}
-
-	public String getCurrentProfile() {
-		return SBInfo.getInstance().currentProfile;
-	}
-
-	public <T> T getJsonFromFile(File file, Class<T> clazz) {
-		try (
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-				new FileInputStream(file),
-				StandardCharsets.UTF_8
-			))
-		) {
-			T obj = gson.fromJson(reader, clazz);
-			return obj;
-		} catch (Exception e) {
-			return null;
-		}
 	}
 
 	/**
@@ -219,16 +207,18 @@ public class NEUManager {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				if (latestRepoCommit == null || latestRepoCommit.isEmpty()) return false;
+				if (latestRepoCommit == null || latestRepoCommit.isEmpty()) {
+					repoDownloadFailed = true;
+					return false;
+				}
 
 				if (new File(configLocation, "repo").exists() && new File(configLocation, "repo/items").exists()) {
 					if (currentCommitJSON != null && currentCommitJSON.get("sha").getAsString().equals(latestRepoCommit)) {
 						return false;
 					}
 				}
-				Utils.recursiveDelete(repoLocation);
-				repoLocation.mkdirs();
 
+				repoLocation.mkdirs();
 				File itemsZip = new File(repoLocation, "neu-items-master.zip");
 				try {
 					itemsZip.createNewFile();
@@ -241,11 +231,14 @@ public class NEUManager {
 				urlConnection.setConnectTimeout(15000);
 				urlConnection.setReadTimeout(30000);
 
+				Utils.recursiveDelete(repoLocation);
+				repoLocation.mkdirs();
 				try (InputStream is = urlConnection.getInputStream()) {
 					FileUtils.copyInputStreamToFile(is, itemsZip);
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.err.println("Failed to download NEU Repo! Please report this issue to the mod creator");
+					repoDownloadFailed = true;
 					return false;
 				}
 
@@ -271,10 +264,46 @@ public class NEUManager {
 	 * downloading of new/updated files. This then calls the "loadItem" method for every item in the local repository.
 	 */
 	public void loadItemInformation() {
-		if (NotEnoughUpdates.INSTANCE.config.apiData.autoupdate) {
-			fetchRepository().thenRun(this::reloadRepository);
+		if (NotEnoughUpdates.INSTANCE.config.apiData.autoupdate_new) {
+			fetchRepository().thenRun(() -> {
+				if (repoDownloadFailed) {
+					System.out.println("switching over to the backup repo");
+					switchToBackupRepo();
+				}
+			}).thenRun(this::reloadRepository);
 		} else {
 			reloadRepository();
+		}
+	}
+
+	/**
+	 * Copies the included backup repo to the location of the download, then pretends that the download worked and continues as normal
+	 */
+	public void switchToBackupRepo() {
+		Path destination = new File(repoLocation, "neu-items-master.zip").toPath();
+		onBackupRepo = true;
+
+		try (
+			InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(
+				"assets/notenoughupdates/repo.zip")
+		) {
+			if (inputStream == null) {
+				System.out.println("Failed to copy backup repo");
+				return;
+			}
+			Files.copy(inputStream, destination, StandardCopyOption.REPLACE_EXISTING);
+
+			unzipIgnoreFirstFolder(destination.toAbsolutePath().toString(), repoLocation.getAbsolutePath());
+			JsonObject newCurrentCommitJSON = new JsonObject();
+			newCurrentCommitJSON.addProperty("sha", "backuprepo");
+			try {
+				writeJson(newCurrentCommitJSON, new File(configLocation, "currentCommit.json"));
+			} catch (IOException ignored) {
+			}
+			System.out.println("Successfully switched to backup repo");
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("Failed to load backup repo");
 		}
 	}
 
@@ -285,7 +314,7 @@ public class NEUManager {
 	public void loadItem(String internalName) {
 		itemstackCache.remove(internalName);
 		try {
-			JsonObject json = getJsonFromFile(new File(new File(repoLocation, "items"), internalName + ".json"));
+			JsonObject json = getJsonFromFile(getItemFileForInternalName(internalName));
 			if (json == null) {
 				return;
 			}
@@ -320,7 +349,7 @@ public class NEUManager {
 				synchronized (titleWordMap) {
 					int wordIndex = 0;
 					for (String str : json.get("displayname").getAsString().split(" ")) {
-						str = clean(str);
+						str = cleanForTitleMapSearch(str);
 						if (!titleWordMap.containsKey(str)) {
 							titleWordMap.put(str, new HashMap<>());
 						}
@@ -338,7 +367,7 @@ public class NEUManager {
 					int wordIndex = 0;
 					for (JsonElement element : json.get("lore").getAsJsonArray()) {
 						for (String str : element.getAsString().split(" ")) {
-							str = clean(str);
+							str = cleanForTitleMapSearch(str);
 							if (!loreWordMap.containsKey(str)) {
 								loreWordMap.put(str, new HashMap<>());
 							}
@@ -429,6 +458,33 @@ public class NEUManager {
 	}
 
 	/**
+	 * SearchString but with AND | OR support
+	 */
+
+	public boolean multiSearchString(String match, String query) {
+		boolean totalMatches = false;
+
+		StringBuilder query2 = new StringBuilder();
+		char lastOp = '|';
+		for (char c : query.toCharArray()) {
+			if (c == '|' || c == '&') {
+				boolean matches = searchString(match, query2.toString());
+				totalMatches = lastOp == '|' ? totalMatches || matches : totalMatches && matches;
+
+				query2 = new StringBuilder();
+				lastOp = c;
+			} else {
+				query2.append(c);
+			}
+		}
+
+		boolean matches = searchString(match, query2.toString());
+		totalMatches = lastOp == '|' ? totalMatches || matches : totalMatches && matches;
+
+		return totalMatches;
+	}
+
+	/**
 	 * Searches a string for a query. This method is used to mimic the behaviour of the more complex map-based search
 	 * function. This method is used for the chest-item-search feature.
 	 */
@@ -439,8 +495,8 @@ public class NEUManager {
 		int lastStringMatch = -1;
 		ArrayList<DebugMatch> debugMatches = new ArrayList<>();
 
-		toSearch = clean(toSearch).toLowerCase();
-		query = clean(query).toLowerCase();
+		toSearch = cleanForTitleMapSearch(toSearch).toLowerCase();
+		query = cleanForTitleMapSearch(query).toLowerCase();
 		String[] splitToSearch = toSearch.split(" ");
 		String[] queryArray = query.split(" ");
 
@@ -490,7 +546,7 @@ public class NEUManager {
 	public boolean doesStackMatchSearch(ItemStack stack, String query) {
 		if (query.startsWith("title:")) {
 			query = query.substring(6);
-			return searchString(stack.getDisplayName(), query);
+			return multiSearchString(stack.getDisplayName(), query);
 		} else if (query.startsWith("desc:")) {
 			query = query.substring(5);
 			String lore = "";
@@ -504,7 +560,7 @@ public class NEUManager {
 					}
 				}
 			}
-			return searchString(lore, query);
+			return multiSearchString(lore, query);
 		} else if (query.startsWith("id:")) {
 			query = query.substring(3);
 			String internalName = getInternalNameForItem(stack);
@@ -516,11 +572,16 @@ public class NEUManager {
 				for (char c : query.toCharArray()) {
 					sb.append(c).append(" ");
 				}
-				result = result || searchString(stack.getDisplayName(), sb.toString());
+				result = result || multiSearchString(stack.getDisplayName(), sb.toString());
 			}
-			result = result || searchString(stack.getDisplayName(), query);
+
+
+			result = result || multiSearchString(stack.getDisplayName(), query);
 
 			String lore = "";
+			if (stack.getItem() instanceof ItemArmor && ((ItemArmor)stack.getItem()).getArmorMaterial() == ItemArmor.ArmorMaterial.LEATHER) {
+				lore = String.format("#%06x ",((ItemArmor)stack.getItem()).getColor(stack));
+			}
 			NBTTagCompound tag = stack.getTagCompound();
 			if (tag != null) {
 				NBTTagCompound display = tag.getCompoundTag("display");
@@ -532,7 +593,7 @@ public class NEUManager {
 				}
 			}
 
-			result = result || searchString(lore, query);
+			result = result || multiSearchString(lore, query);
 
 			return result;
 		}
@@ -655,7 +716,7 @@ public class NEUManager {
 	public Set<String> search(String query, TreeMap<String, HashMap<String, List<Integer>>> wordMap) {
 		HashMap<String, List<Integer>> matches = null;
 
-		query = clean(query).toLowerCase();
+		query = cleanForTitleMapSearch(query).toLowerCase();
 		for (String queryWord : query.split(" ")) {
 			HashMap<String, List<Integer>> matchesToKeep = new HashMap<>();
 			for (HashMap<String, List<Integer>> wordMatches : subMapWithKeysThatAreSuffixes(queryWord, wordMap).values()) {
@@ -705,18 +766,7 @@ public class NEUManager {
 		return inputWithoutLastChar + incrementedLastChar;
 	}
 
-	public JsonObject getJsonFromItemBytes(String item_bytes) {
-		try {
-			NBTTagCompound tag =
-				CompressedStreamTools.readCompressed(new ByteArrayInputStream(Base64.getDecoder().decode(item_bytes)));
-			//System.out.println(tag.toString());
-			return getJsonFromNBT(tag);
-		} catch (IOException e) {
-			return null;
-		}
-	}
-
-	public String getUUIDFromNBT(NBTTagCompound tag) {
+	public static String getUUIDFromNBT(NBTTagCompound tag) {
 		String uuid = null;
 		if (tag != null && tag.hasKey("ExtraAttributes", 10)) {
 			NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
@@ -745,16 +795,6 @@ public class NEUManager {
 		return null;
 	}
 
-	/**
-	 * Replaced with {@link #createItemResolutionQuery()}
-	 */
-	@Deprecated
-	public String getInternalnameFromNBT(NBTTagCompound tag) {
-		return createItemResolutionQuery()
-			.withItemNBT(tag)
-			.resolveInternalName();
-	}
-
 	public String[] getLoreFromNBT(NBTTagCompound tag) {
 		return ItemUtils.getLore(tag).toArray(new String[0]);
 	}
@@ -773,7 +813,9 @@ public class NEUManager {
 
 		if (id == 141) id = 391; //for some reason hypixel thinks carrots have id 141
 
-		String internalname = getInternalnameFromNBT(tag);
+		String internalname = createItemResolutionQuery()
+			.withItemNBT(tag)
+			.resolveInternalName();
 		if (internalname == null) return null;
 
 		NBTTagCompound display = tag.getCompoundTag("display");
@@ -785,8 +827,6 @@ public class NEUManager {
 			itemid = itemMc.getRegistryName();
 		}
 		String displayName = display.getString("Name");
-		String[] info = new String[0];
-		String clickcommand = "";
 
 		JsonObject item = new JsonObject();
 		item.addProperty("internalname", internalname);
@@ -830,8 +870,8 @@ public class NEUManager {
 		return item;
 	}
 
-	private String clean(String str) {
-		return str.replaceAll("(\u00a7.)|[^0-9a-zA-Z ]", "").toLowerCase().trim();
+	public static String cleanForTitleMapSearch(String str) {
+		return str.replaceAll("(\u00a7.)|[^#0-9a-zA-Z ]", "").toLowerCase().trim();
 	}
 
 	public void showRecipe(JsonObject item) {
@@ -856,8 +896,11 @@ public class NEUManager {
 				break;
 			case "viewpotion":
 				neu.sendChatMessage("/viewpotion " + internalName.split(";")[0].toLowerCase(Locale.ROOT));
+				break;
+			default:
+				displayGuiItemRecipe(internalName);
 		}
-		displayGuiItemRecipe(internalName);
+
 	}
 
 	public void showRecipe(String internalName) {
@@ -930,10 +973,14 @@ public class NEUManager {
 			.resolveInternalName();
 	}
 
-	public String getUUIDForItem(ItemStack stack) {
+	public static String getUUIDForItem(ItemStack stack) {
 		if (stack == null) return null;
 		NBTTagCompound tag = stack.getTagCompound();
 		return getUUIDFromNBT(tag);
+	}
+
+	public File getItemFileForInternalName(String internalName) {
+		return new File(new File(repoLocation, "items"), internalName + ".json");
 	}
 
 	public void writeItemToFile(ItemStack stack) {
@@ -949,7 +996,7 @@ public class NEUManager {
 		json.addProperty("modver", NotEnoughUpdates.VERSION);
 
 		try {
-			writeJson(json, new File(new File(repoLocation, "items"), internalname + ".json"));
+			writeJson(json, getItemFileForInternalName(internalname));
 		} catch (IOException ignored) {
 		}
 
@@ -961,6 +1008,7 @@ public class NEUManager {
 		List<NeuRecipe> usages = getAvailableUsagesFor(internalName);
 		if (usages.isEmpty()) return false;
 		NotEnoughUpdates.INSTANCE.openGui = (new GuiItemRecipe(usages, this));
+		RecipeHistory.add(NotEnoughUpdates.INSTANCE.openGui);
 		return true;
 	}
 
@@ -969,6 +1017,7 @@ public class NEUManager {
 		List<NeuRecipe> recipes = getAvailableRecipesFor(internalName);
 		if (recipes.isEmpty()) return false;
 		NotEnoughUpdates.INSTANCE.openGui = (new GuiItemRecipe(recipes, this));
+		RecipeHistory.add(NotEnoughUpdates.INSTANCE.openGui);
 		return true;
 	}
 
@@ -1155,6 +1204,19 @@ public class NEUManager {
 		json.addProperty("crafttext", crafttext);
 		json.addProperty("clickcommand", clickcommand);
 		json.addProperty("damage", damage);
+		nbttag.setInteger("HideFlags", 254);
+		NBTTagCompound display = nbttag.getCompoundTag("display");
+		nbttag.setTag("display", display);
+		display.setString("Name", displayName);
+		NBTTagList loreList = new NBTTagList();
+		for (String loreLine : lore) {
+			loreList.appendTag(new NBTTagString(loreLine));
+		}
+		display.setTag("Lore", loreList);
+		NBTTagCompound extraAttributes = nbttag.getCompoundTag("ExtraAttributes");
+		nbttag.setTag("ExtraAttributes", extraAttributes);
+		extraAttributes.setString("id", internalname);
+
 		json.addProperty("nbttag", nbttag.toString());
 		json.addProperty("modver", NotEnoughUpdates.VERSION);
 		json.addProperty("infoType", infoType);
@@ -1174,25 +1236,6 @@ public class NEUManager {
 		json.add("lore", jsonlore);
 
 		return json;
-	}
-
-	public boolean writeItemJson(
-		String internalname, String itemid, String displayName, String[] lore, String crafttext,
-		String infoType, String[] info, String clickcommand, int damage, NBTTagCompound nbttag
-	) {
-		return writeItemJson(
-			new JsonObject(),
-			internalname,
-			itemid,
-			displayName,
-			lore,
-			crafttext,
-			infoType,
-			info,
-			clickcommand,
-			damage,
-			nbttag
-		);
 	}
 
 	public boolean writeItemJson(
@@ -1227,6 +1270,7 @@ public class NEUManager {
 	}
 
 	public void writeJson(JsonObject json, File file) throws IOException {
+		file.getParentFile().mkdirs();
 		file.createNewFile();
 
 		try (
@@ -1314,16 +1358,18 @@ public class NEUManager {
 						for (int i = 0; i < otherNumsMax.size(); i++) {
 							replacements.put(
 								"" + i,
-								(addZero ? "0\u27A1" : "") +
-									removeUnusedDecimal(Math.floor(otherNumsMin.get(i).getAsFloat() * 10) / 10f) +
-									"\u27A1" + removeUnusedDecimal(Math.floor(otherNumsMax.get(i).getAsFloat() * 10) / 10f)
+								(addZero ? "0\u27A1" : "") + StringUtils.formatNumber(otherNumsMin.get(i).getAsDouble()) +
+									"\u27A1" + StringUtils.formatNumber(otherNumsMax.get(i).getAsDouble())
 							);
 						}
 
 						for (Map.Entry<String, JsonElement> entry : max.get("statNums").getAsJsonObject().entrySet()) {
-							int statMax = (int) Math.floor(entry.getValue().getAsFloat());
-							int statMin = (int) Math.floor(min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsFloat());
-							String statStr = (statMin > 0 ? "+" : "") + statMin + "\u27A1" + statMax;
+							double statMax = entry.getValue().getAsDouble();
+							double statMin = min.get("statNums").getAsJsonObject().get(entry.getKey()).getAsDouble();
+
+							String statStr =
+								(statMin > 0 ? "+" : "") + StringUtils.formatNumber(statMin) + "\u27A1" + StringUtils.formatNumber(
+									statMax);
 							statStr = (addZero ? "0\u27A1" : "") + statStr;
 							replacements.put(entry.getKey(), statStr);
 						}
@@ -1544,11 +1590,13 @@ public class NEUManager {
 			})
 			.exceptionally(ex -> {
 				ex.printStackTrace();
+				System.out.println("switching over to the backup repo");
+				switchToBackupRepo();
 				return Arrays.asList(
 					"§cRepository not fully reloaded.",
 					"§cThere was an error reloading your repository.",
 					"§cThis might be caused by an outdated version of neu",
-					"§c(or by not using the dangerous repository if you are using a prerelease of neu).",
+					"§c(or by not using the prerelease repository if you are using a prerelease of neu).",
 					"§aYour repository will still work, but is in a suboptimal state.",
 					"§eJoin §bdiscord.gg/moulberry §efor help."
 				);
@@ -1564,6 +1612,7 @@ public class NEUManager {
 					recipes.clear();
 					recipesMap.clear();
 					usagesMap.clear();
+					itemMap.clear();
 
 					File[] itemFiles = new File(repoLocation, "items").listFiles();
 					if (itemFiles != null) {
@@ -1577,6 +1626,7 @@ public class NEUManager {
 				new RepositoryReloadEvent(repoLocation, !hasBeenLoadedBefore).post();
 				hasBeenLoadedBefore = true;
 				comp.complete(null);
+				displayNameCache.clear();
 			} catch (Exception e) {
 				comp.completeExceptionally(e);
 			}
@@ -1592,5 +1642,31 @@ public class NEUManager {
 
 	public boolean isValidInternalName(String internalName) {
 		return itemMap.containsKey(internalName);
+	}
+
+	public String getDisplayName(String internalName) {
+		if (displayNameCache.containsKey(internalName)) {
+			return displayNameCache.get(internalName);
+		}
+
+		String displayName = null;
+		TreeMap<String, JsonObject> itemInformation = NotEnoughUpdates.INSTANCE.manager.getItemInformation();
+		if (itemInformation.containsKey(internalName)) {
+			JsonObject jsonObject = itemInformation.get(internalName);
+			if (jsonObject.has("displayname")) {
+				displayName = jsonObject.get("displayname").getAsString();
+			}
+		}
+
+		if (displayName == null) {
+			displayName = internalName;
+			Utils.showOutdatedRepoNotification(internalName);
+			if (NotEnoughUpdates.INSTANCE.config.hidden.dev) {
+				Utils.addChatMessage("§c[NEU] Found no display name in repo for '" + internalName + "'!");
+			}
+		}
+
+		displayNameCache.put(internalName, displayName);
+		return displayName;
 	}
 }

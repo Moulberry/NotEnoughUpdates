@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -86,8 +86,14 @@ public class FishingSkillOverlay
 	}
 
 	@Override
+	public boolean isEnabled() {
+		// NopoTheGamer named this variable
+		return NotEnoughUpdates.INSTANCE.config.skillOverlays.FishingSkillOverlay;
+	}
+
+	@Override
 	public void update() {
-		if (!NotEnoughUpdates.INSTANCE.config.skillOverlays.FishingSkillOverlay) {
+		if (!isEnabled()) {
 			expertise = -1;
 			overlayStrings = null;
 			return;
@@ -180,7 +186,7 @@ public class FishingSkillOverlay
 				float delta = totalXp - lastTotalXp;
 
 				if (delta > 0 && delta < 1000) {
-					xpGainTimer = 3;
+					xpGainTimer = NotEnoughUpdates.INSTANCE.config.skillOverlays.fishingPauseTimer;
 
 					xpGainQueue.add(0, delta);
 					while (xpGainQueue.size() > 30) {
@@ -379,7 +385,7 @@ public class FishingSkillOverlay
             if(yaw > 180) yaw -= 360;
 
             lineMap.put(6, EnumChatFormatting.AQUA+"Yaw: "+EnumChatFormatting.YELLOW+
-                    String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u1D52");*/
+                    String.format("%.2f", yaw)+EnumChatFormatting.BOLD+"\u00b0");*/
 			int key = NotEnoughUpdates.INSTANCE.config.skillOverlays.fishKey;
 
 			ISound sound = new PositionedSound(new ResourceLocation("random.orb")) {{

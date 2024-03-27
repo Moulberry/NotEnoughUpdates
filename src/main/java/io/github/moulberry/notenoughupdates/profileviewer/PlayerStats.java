@@ -24,12 +24,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 import io.github.moulberry.notenoughupdates.profileviewer.info.QuiverInfo;
 import io.github.moulberry.notenoughupdates.util.Constants;
-import io.github.moulberry.notenoughupdates.util.JsonUtils;
+import io.github.moulberry.notenoughupdates.util.PetLeveling;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
@@ -38,17 +38,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class PlayerStats {
 
@@ -168,12 +162,14 @@ public class PlayerStats {
 		return skillBonus;
 	}
 
-	private static Stats getTamingBonus(JsonObject profile) {
+	public static int getPetScore(JsonObject profile) {
 		JsonObject bonuses = Constants.BONUSES;
-		if (bonuses == null) return null;
-
+		if (bonuses == null) {
+			Utils.showOutdatedRepoNotification("bonuses.json");
+			return 0;
+		}
 		JsonElement petsElement = Utils.getElement(profile, "pets");
-		if (petsElement == null) return new Stats();
+		if (petsElement == null) return 0;
 
 		JsonArray pets = petsElement.getAsJsonArray();
 
@@ -188,10 +184,18 @@ public class PlayerStats {
 		for (String value : highestRarityMap.values()) {
 			petScore += Utils.getElementAsFloat(Utils.getElement(bonuses, "pet_value." + value.toUpperCase()), 0);
 		}
+		return petScore;
+	}
+
+	private static Stats getTamingBonus(JsonObject profile) {
+		JsonObject bonuses = Constants.BONUSES;
+		if (bonuses == null) return null;
 
 		JsonElement petRewardsElement = Utils.getElement(bonuses, "pet_rewards");
 		if (petRewardsElement == null) return null;
 		JsonObject petRewards = petRewardsElement.getAsJsonObject();
+
+		int petScore = getPetScore(profile);
 
 		Stats petBonus = new Stats();
 		for (int i = 0; i <= petScore; i++) {
@@ -230,7 +234,7 @@ public class PlayerStats {
 	public static Stats getPassiveBonuses(Map<String, ProfileViewer.Level> skyblockInfo, JsonObject profile) {
 		Stats passiveBonuses = new Stats();
 
-		Stats fairyBonus = getFairyBonus((int) Utils.getElementAsFloat(Utils.getElement(profile, "fairy_exchanges"), 0));
+		Stats fairyBonus = getFairyBonus((int) Utils.getElementAsFloat(Utils.getElement(profile, "fairy_soul.fairy_exchanges"), 0));
 		Stats skillBonus = getSkillBonus(skyblockInfo);
 		Stats petBonus = getTamingBonus(profile);
 
@@ -284,29 +288,22 @@ public class PlayerStats {
 
 	private static Stats getSetBonuses(
 		Stats stats,
-		JsonObject inventoryInfo,
-		JsonObject collectionInfo,
+		Map<String, JsonArray> inventoryInfo,
 		Map<String, ProfileViewer.Level> skyblockInfo,
 		JsonObject profile
 	) {
-		JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
+		JsonArray armor = inventoryInfo.get("inv_armor");
 
 		Stats bonuses = new Stats();
 
 		String fullset = getFullset(armor, -1);
 
 		if (fullset != null) {
+			// TODO @nea: repo based stat delivery? (with lisp)
 			switch (fullset) {
 				case "LAPIS_ARMOR_":
 					bonuses.addStat(HEALTH, 60);
 					break;
-				case "EMERALD_ARMOR_":
-				{
-					int bonus = (int) Math.floor(Utils.getElementAsFloat(Utils.getElement(collectionInfo, "EMERALD"), 0) / 3000);
-					bonuses.addStat(HEALTH, bonus);
-					bonuses.addStat(DEFENCE, bonus);
-				}
-				break;
 				case "FAIRY_":
 					bonuses.addStat(HEALTH, Utils.getElementAsFloat(Utils.getElement(profile, "fairy_souls_collected"), 0));
 					break;
@@ -341,7 +338,7 @@ public class PlayerStats {
 		if (chestplateElement != null && chestplateElement.isJsonObject()) {
 			JsonObject chestplate = chestplateElement.getAsJsonObject();
 			if (chestplate.get("internalname").getAsString().equals("OBSIDIAN_CHESTPLATE")) {
-				JsonArray inventory = Utils.getElement(inventoryInfo, "inv_contents").getAsJsonArray();
+				JsonArray inventory = inventoryInfo.get("inv_contents");
 				for (int i = 0; i < inventory.size(); i++) {
 					JsonElement itemElement = inventory.get(i);
 					if (itemElement != null && itemElement.isJsonObject()) {
@@ -424,7 +421,7 @@ public class PlayerStats {
 					if (itemBonuses.containsKey(internalname)) {
 						continue;
 					}
-					if (!talismanOnly || Utils.checkItemType(item.get("lore").getAsJsonArray(), true, "ACCESSORY", "HATCCESSORY") >= 0) {
+					if (!talismanOnly || Utils.checkItemType(item.get("lore").getAsJsonArray(), true, "ACCESSORY", "HATCESSORY") >= 0) {
 						Stats itemBonus = getStatForItem(internalname, item, item.get("lore").getAsJsonArray());
 
 						itemBonuses.put(internalname, itemBonus);
@@ -479,7 +476,7 @@ public class PlayerStats {
 					return new Stats();
 				}
 
-				String tierNum = GuiProfileViewer.MINION_RARITY_TO_NUM.get(tier);
+				String tierNum = GuiProfileViewer.RARITY_TO_NUM.get(tier);
 				float exp = pet.get("exp").getAsFloat();
 				if (tierNum == null) return new Stats();
 
@@ -491,11 +488,13 @@ public class PlayerStats {
 					tierNum = "" + (Integer.parseInt(tierNum) + 1);
 				}
 
-				GuiProfileViewer.PetLevel levelObj = GuiProfileViewer.getPetLevel(petname, tier, exp);
-				if (levelObj == null) return null;
-				float level = levelObj.level;
-				float currentLevelRequirement = levelObj.currentLevelRequirement;
-				float maxXP = levelObj.maxXP;
+				PetLeveling.PetLevel levelObj = PetLeveling.getPetLevelingForPet(
+					petname,
+					PetInfoOverlay.Rarity.valueOf(tier)
+				).getPetLevel(exp);
+				float level = levelObj.getCurrentLevel();
+				float currentLevelRequirement = levelObj.getExpRequiredForNextLevel();
+				float maxXP = levelObj.getMaxLevel();
 				pet.addProperty("level", level);
 				pet.addProperty("currentLevelRequirement", currentLevelRequirement);
 				pet.addProperty("maxXP", maxXP);
@@ -554,10 +553,10 @@ public class PlayerStats {
 		return new Stats();
 	}
 
-	private static float getStatMult(JsonObject inventoryInfo) {
+	private static float getStatMult(Map<String, JsonArray> inventoryInfo) {
 		float mult = 1f;
 
-		JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
+		JsonArray armor = inventoryInfo.get("inv_armor");
 
 		String fullset = getFullset(armor, -1);
 
@@ -570,8 +569,6 @@ public class PlayerStats {
 			if (itemElement == null || !itemElement.isJsonObject()) continue;
 
 			JsonObject item = itemElement.getAsJsonObject();
-			String internalname = item.get("internalname").getAsString();
-
 			String reforge = Utils.getElementAsString(Utils.getElement(item, "ExtraAttributes.modifier"), "");
 
 			if (reforge.equals("renowned")) {
@@ -582,9 +579,9 @@ public class PlayerStats {
 		return mult;
 	}
 
-	private static void applyLimits(Stats stats, JsonObject inventoryInfo) {
+	private static void applyLimits(Stats stats, Map<String, JsonArray> inventoryInfo) {
 		//>0
-		JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
+		JsonArray armor = inventoryInfo.get("inv_armor");
 
 		String fullset = getFullset(armor, 3);
 
@@ -610,20 +607,19 @@ public class PlayerStats {
 	}
 
 	public static Stats getStats(
-		Map<String, ProfileViewer.Level> skyblockInfo,
-		JsonObject inventoryInfo,
-		JsonObject collectionInfo,
+		Map<String, ProfileViewer.Level> levelingInfo,
+		Map<String, JsonArray> inventoryInfo,
 		JsonObject petsInfo,
 		JsonObject profile
 	) {
-		if (skyblockInfo == null || inventoryInfo == null || collectionInfo == null || profile == null) return null;
+		if (levelingInfo == null || inventoryInfo == null || profile == null) return null;
 
-		JsonArray armor = Utils.getElement(inventoryInfo, "inv_armor").getAsJsonArray();
-		JsonArray inventory = Utils.getElement(inventoryInfo, "inv_contents").getAsJsonArray();
-		JsonArray talisman_bag = Utils.getElement(inventoryInfo, "talisman_bag").getAsJsonArray();
+		JsonArray armor = inventoryInfo.get("inv_armor");
+		JsonArray inventory = inventoryInfo.get("inv_contents");
+		JsonArray talisman_bag = inventoryInfo.get("talisman_bag");
 
-		Stats passiveBonuses = getPassiveBonuses(skyblockInfo, profile);
-		Stats hotmBonuses = getHOTMBonuses(skyblockInfo, profile);
+		Stats passiveBonuses = getPassiveBonuses(levelingInfo, profile);
+		Stats hotmBonuses = getHOTMBonuses(levelingInfo, profile);
 		Stats armorBonuses = getItemBonuses(false, armor);
 		Stats talismanBonuses = getItemBonuses(true, inventory, talisman_bag);
 
@@ -637,11 +633,10 @@ public class PlayerStats {
 		}
 
 		Stats petBonus = getPetStatBonuses(petsInfo);
-		if (petBonus == null) return null;
 
 		stats = stats.add(passiveBonuses).add(armorBonuses).add(talismanBonuses).add(petBonus).add(hotmBonuses);
 
-		stats.add(getSetBonuses(stats, inventoryInfo, collectionInfo, skyblockInfo, profile));
+		stats.add(getSetBonuses(stats, inventoryInfo, levelingInfo, profile));
 
 		stats.scaleAll(getStatMult(inventoryInfo));
 
@@ -651,92 +646,11 @@ public class PlayerStats {
 	}
 
 	/**
-	 * Calculates the amount of Magical Power the player has using the list of accessories
-	 *
-	 * @param inventoryInfo inventory info object
-	 * @return the amount of Magical Power or -1
-	 * @see io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer.Profile#getInventoryInfo(String)
-	 */
-	public static int getMagicalPower(JsonObject inventoryInfo) {
-		if (inventoryInfo == null || !inventoryInfo.has("talisman_bag") || !inventoryInfo.get("talisman_bag").isJsonArray()) {
-			return -1;
-		}
-
-		Map<String, Integer> accessories = JsonUtils.getJsonArrayAsStream(inventoryInfo.get("talisman_bag").getAsJsonArray())
-																								.map(o -> {
-				try {
-					return JsonToNBT.getTagFromJson(o.getAsJsonObject().get("nbttag").getAsString());
-				} catch (Exception ignored) {
-					return null;
-				}
-			}).filter(Objects::nonNull).map(tag -> {
-				NBTTagList loreTagList = tag.getCompoundTag("display").getTagList("Lore", 8);
-				String lastElement = loreTagList.getStringTagAt(loreTagList.tagCount() - 1);
-				if (lastElement.contains(EnumChatFormatting.OBFUSCATED.toString())) {
-					lastElement = lastElement.substring(lastElement.indexOf(' ')).trim().substring(4);
-				}
-				JsonArray lastElementJsonArray = new JsonArray();
-				lastElementJsonArray.add(new JsonPrimitive(lastElement));
-				return new AbstractMap.SimpleEntry<>(
-					tag.getCompoundTag("ExtraAttributes").getString("id"),
-					Utils.getRarityFromLore(lastElementJsonArray)
-				);
-			}).sorted(Comparator.comparingInt(e -> -e.getValue())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2)->v1, LinkedHashMap::new));
-
-		Set<String> ignoredTalismans = new HashSet<>();
-		int powderAmount = 0;
-		for (Map.Entry<String, Integer> entry : accessories.entrySet()) {
-			if (ignoredTalismans.contains(entry.getKey())) {
-				continue;
-			}
-
-			JsonArray children = Utils.getElementOrDefault(Constants.PARENTS, entry.getKey(), new JsonArray()).getAsJsonArray();
-			for (JsonElement child : children) {
-				ignoredTalismans.add(child.getAsString());
-			}
-
-			if (entry.getKey().equals("HEGEMONY_ARTIFACT")) {
-				switch (entry.getValue()) {
-					case 4:
-						powderAmount += 16;
-						break;
-					case 5:
-						powderAmount += 22;
-						break;
-				}
-			}
-			switch (entry.getValue()) {
-				case 0:
-				case 6:
-					powderAmount += 3;
-					break;
-				case 1:
-				case 7:
-					powderAmount += 5;
-					break;
-				case 2:
-					powderAmount += 8;
-					break;
-				case 3:
-					powderAmount += 12;
-					break;
-				case 4:
-					powderAmount += 16;
-					break;
-				case 5:
-					powderAmount += 22;
-					break;
-			}
-		}
-		return powderAmount;
-	}
-
-	/**
 	 * Finds the Magical Power the player selected if applicable
 	 *
 	 * @param profileInfo profile information object
 	 * @return selected magical power as a String or null
-	 * @see io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer.Profile#getProfileInformation(String)
+	 * @see SkyblockProfiles.SkyblockProfile#getLevelingInfo()
 	 */
 	public static @Nullable String getSelectedMagicalPower(JsonObject profileInfo) {
 		String abs = "accessory_bag_storage";
@@ -753,16 +667,15 @@ public class PlayerStats {
 		return selectedPower.substring(0, 1).toUpperCase() + selectedPower.substring(1);
 	}
 
-	public static @Nullable QuiverInfo getQuiverInfo(JsonObject inventoryInfo, JsonObject profileInfo) {
+	public static @Nullable QuiverInfo getQuiverInfo(Map<String, JsonArray> inventoryInfo, JsonObject profileInfo) {
 		if (inventoryInfo == null
-			|| !inventoryInfo.has("quiver")
-			|| !inventoryInfo.get("quiver").isJsonArray()) {
+			|| !inventoryInfo.containsKey("quiver")) {
 			return null;
 		}
 		QuiverInfo quiverInfo = new QuiverInfo();
 		quiverInfo.arrows = new HashMap<>();
 
-		JsonArray quiver = inventoryInfo.getAsJsonArray("quiver");
+		JsonArray quiver = inventoryInfo.get("quiver");
 		for (JsonElement quiverEntry : quiver) {
 			if (quiverEntry == null || quiverEntry.isJsonNull() || !quiverEntry.isJsonObject()) {
 				continue;
@@ -778,9 +691,7 @@ public class PlayerStats {
 			quiverInfo.arrows.putIfAbsent(internalName, count);
 		}
 
-		if (profileInfo.has("favorite_arrow")) {
-			quiverInfo.selectedArrow = profileInfo.get("favorite_arrow").getAsString();
-		}
+		quiverInfo.selectedArrow = Utils.getElementAsString(Utils.getElement(profileInfo, "item_data.favorite_arrow"), null);
 
 		return quiverInfo;
 	}

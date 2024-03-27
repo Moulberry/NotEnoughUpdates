@@ -21,33 +21,38 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.core.ChromaColour;
+import io.github.moulberry.notenoughupdates.core.config.ConfigUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.entity.layers.LayerArmorBase;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.IResourceManagerReloadListener;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.init.Items;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.function.Consumer;
 
+@NEUAutoSubscribe
 public class ItemCustomizeManager {
 	public static class ReloadListener implements IResourceManagerReloadListener {
 		@Override
@@ -67,8 +72,6 @@ public class ItemCustomizeManager {
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static ItemDataMap itemDataMap = new ItemDataMap();
-	private static final HashMap<Integer, String> itemUuidCache = new HashMap<>();
-
 	public static class ItemDataMap {
 		public HashMap<String, ItemData> itemData = new HashMap<>();
 	}
@@ -82,6 +85,9 @@ public class ItemCustomizeManager {
 		public String customGlintColour = DEFAULT_GLINT_COLOR;
 
 		public String customLeatherColour = null;
+
+		public String defaultItem = null;
+		public String customItem = null;
 	}
 
 	public static void putItemData(String uuid, ItemData data) {
@@ -269,25 +275,10 @@ public class ItemCustomizeManager {
 		return CUSTOM_GLINT_TEXTURE;
 	}
 
-	private static String getUuidForItem(ItemStack stack) {
-		if (!stack.hasTagCompound()) return null;
-
-		int nbtHash = stack.getTagCompound().hashCode();
-
-		if (itemUuidCache.containsKey(nbtHash)) {
-			return itemUuidCache.get(nbtHash);
-		}
-
-		String uuid = NotEnoughUpdates.INSTANCE.manager.getUUIDForItem(stack);
-
-		itemUuidCache.put(nbtHash, uuid);
-		return uuid;
-	}
-
 	public static ItemData getDataForItem(ItemStack stack) {
 		if (stack == null) return null;
 
-		String uuid = getUuidForItem(stack);
+		String uuid = NEUManager.getUUIDForItem(stack);
 
 		if (uuid == null) {
 			return null;
@@ -297,37 +288,118 @@ public class ItemCustomizeManager {
 	}
 
 	public static void tick() {
-		itemUuidCache.clear();
 		disableTextureBinding = false;
 	}
 
 	public static void loadCustomization(File file) {
-		try (
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-				new FileInputStream(file),
-				StandardCharsets.UTF_8
-			))
-		) {
-			itemDataMap = GSON.fromJson(reader, ItemDataMap.class);
-		} catch (Exception ignored) {
-		}
+		itemDataMap = ConfigUtil.loadConfig(ItemDataMap.class, file, GSON);
 		if (itemDataMap == null) {
 			itemDataMap = new ItemDataMap();
 		}
 	}
 
 	public static void saveCustomization(File file) {
+		ConfigUtil.saveConfig(itemDataMap, file, GSON);
+	}
+
+	public static Item getCustomItem(ItemStack stack) {
+		ItemData data = getDataForItem(stack);
+		if (data == null || data.customItem == null || data.customItem.length() == 0 || data.customItem.split(":").length == 0) return stack.getItem();
+		Item newItem = Item.getByNameOrId(data.customItem.split(":")[0]);
+		if (newItem == null) return stack.getItem();
+		return newItem;
+	}
+
+	public static Item getCustomItem(ItemStack stack, String newItemString) {
+		if (newItemString.split(":").length == 0) return stack.getItem();
+		Item newItem = Item.getByNameOrId(newItemString.split(":")[0]);
+		if (newItem == null) return stack.getItem();
+		return newItem;
+	}
+
+	static Random random = new Random();
+	static HashMap<Integer, Long> lastUpdate = new HashMap<>();
+	static HashMap<Integer, Integer> damageMap = new HashMap<>();
+
+	public static int getCustomItemDamage(ItemStack stack) {
+		ItemData data = getDataForItem(stack);
+		if (data == null || data.customItem == null || data.customItem.length() == 0) return stack.getMetadata();
 		try {
-			file.createNewFile();
-			try (
-				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(file),
-					StandardCharsets.UTF_8
-				))
-			) {
-				writer.write(GSON.toJson(itemDataMap));
+			String damageString = data.customItem.split(":")[1];
+			if (damageString.equals("?")) {
+				ArrayList<ItemStack> list = new ArrayList<>();
+				getCustomItem(stack).getSubItems(getCustomItem(stack), null, list);
+				if (damageMap.get(stack.getTagCompound().hashCode()) == null || System.currentTimeMillis() - lastUpdate.get(stack.getTagCompound().hashCode()) > 250) {
+					damageMap.put(stack.getTagCompound().hashCode(), random.nextInt(list.size()));
+
+					lastUpdate.put(stack.getTagCompound().hashCode(), System.currentTimeMillis());
+				}
+				return damageMap.get(stack.getTagCompound().hashCode());
 			}
-		} catch (Exception ignored) {
+			return Integer.parseInt(data.customItem.split(":")[1]);
+		} catch (Exception e) {
+			if (Item.getByNameOrId(data.defaultItem) == Items.skull && getCustomItem(stack) != Items.skull) return 0;
+			return stack.getMetadata();
 		}
 	}
+
+	@SubscribeEvent
+	public void onWorldUnload(WorldEvent.Unload event) {
+		damageMap.clear();
+		lastUpdate.clear();
+	}
+
+	public static boolean shouldRenderLeatherColour(ItemStack stack) {
+		ItemData data = getDataForItem(stack);
+		if (data == null || data.customItem == null || data.customItem.length() == 0) return stack.getItem() instanceof ItemArmor &&
+			((ItemArmor) stack.getItem()).getArmorMaterial() == ItemArmor.ArmorMaterial.LEATHER;
+		Item item = Item.getByNameOrId(data.customItem);
+		if (item == null) return stack.getItem() instanceof ItemArmor &&
+			((ItemArmor) stack.getItem()).getArmorMaterial() == ItemArmor.ArmorMaterial.LEATHER;
+		return item instanceof ItemArmor &&
+			((ItemArmor) item).getArmorMaterial() == ItemArmor.ArmorMaterial.LEATHER;
+	}
+
+	public static boolean hasCustomItem(ItemStack stack) {
+		ItemData data = getDataForItem(stack);
+		if (data == null || data.customItem == null || data.customItem.length() == 0 || data.defaultItem == null || data.customItem.equals(data.defaultItem) || data.customItem.split(":").length == 0) return false;
+		Item item = Item.getByNameOrId(data.customItem.split(":")[0]);
+		Item defaultItem = Item.getByNameOrId(data.defaultItem);
+		if (item == null) {
+			data.customItem = null;
+			return false;
+		}
+		return defaultItem != item;
+	}
+
+	public static ItemStack useCustomArmour(LayerArmorBase<?> instance, EntityLivingBase entitylivingbaseIn, int armorSlot) {
+		ItemStack stack = instance.getCurrentArmor(entitylivingbaseIn, armorSlot);
+		if (stack == null) return stack;
+		ItemStack newStack = stack.copy();
+		newStack.setItem(ItemCustomizeManager.getCustomItem(newStack));
+		newStack.setItemDamage(ItemCustomizeManager.getCustomItemDamage(newStack));
+		if (armorSlot != 4) {
+			if (newStack.getItem() instanceof ItemArmor) return newStack;
+			else return stack;
+		}
+		return newStack;
+	}
+
+	public static ItemStack useCustomItem(ItemStack stack) {
+		if (stack == null) return stack;
+		if (!ItemCustomizeManager.hasCustomItem(stack)) return stack;
+		ItemStack newStack = stack.copy();
+		newStack.setItem(ItemCustomizeManager.getCustomItem(newStack));
+		newStack.setItemDamage(ItemCustomizeManager.getCustomItemDamage(newStack));
+		return newStack;
+	}
+
+	public static ItemStack setHeadArmour(EntityLivingBase instance, int i) {
+		if (instance.getCurrentArmor(3) == null) return null;
+		ItemStack stack = instance.getCurrentArmor(3).copy();
+		stack.setItem(ItemCustomizeManager.getCustomItem(stack));
+		stack.setItemDamage(ItemCustomizeManager.getCustomItemDamage(stack));
+		return stack;
+	}
+
 }

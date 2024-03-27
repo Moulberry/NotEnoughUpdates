@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -19,6 +19,7 @@
 
 package io.github.moulberry.notenoughupdates.overlays;
 
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -63,6 +64,10 @@ public abstract class TextOverlay {
 			return getSize(dummyStrings);
 		}
 		return new Vector2f(100, 50);
+	}
+
+	public boolean isEnabled() {
+		return true;
 	}
 
 	public void tick() {
@@ -118,13 +123,20 @@ public abstract class TextOverlay {
 		return new Vector2f();
 	}
 
-	protected Vector2f getPosition(int overlayWidth, int overlayHeight) {
-		ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+	protected Vector2f getPosition(int overlayWidth, int overlayHeight, boolean scaled) {
+		GlStateManager.pushMatrix();
+		ScaledResolution scaledResolution;
+		if (!scaled) scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+		else scaledResolution = Utils.pushGuiScale(NotEnoughUpdates.INSTANCE.config.locationedit.guiScale);
 
 		int x = position.getAbsX(scaledResolution, overlayWidth);
 		int y = position.getAbsY(scaledResolution, overlayHeight);
-
+		GlStateManager.popMatrix();
 		return new Vector2f(x, y);
+	}
+
+	public Position getPosition() {
+		return position;
 	}
 
 	protected void renderLine(String line, Vector2f position, boolean dummy) {
@@ -137,12 +149,11 @@ public abstract class TextOverlay {
 		overlayHeight = (int) size.y;
 		overlayWidth = (int) size.x;
 
-		Vector2f position = getPosition(overlayWidth, overlayHeight);
+		Vector2f position = getPosition(overlayWidth, overlayHeight, !dummy);
 		int x = (int) position.x;
 		int y = (int) position.y;
 
 		TextOverlayStyle style = styleSupplier.get();
-
 		if (style == TextOverlayStyle.BACKGROUND) Gui.drawRect(x, y, x + overlayWidth, y + overlayHeight, 0x80000000);
 
 		GlStateManager.enableBlend();
@@ -173,6 +184,9 @@ public abstract class TextOverlay {
 				for (String s2 : s.split("\n")) {
 					Vector2f pos = new Vector2f(x + paddingX, y + paddingY + yOff);
 					renderLine(s2, pos, dummy);
+					if (s2.startsWith("CUSTOM")) {
+						s2 = s2.split(":", 2)[1];
+					}
 
 					int xPad = (int) pos.x;
 					int yPad = (int) pos.y;

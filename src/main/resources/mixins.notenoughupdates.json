@@ -5,11 +5,13 @@
   "plugin": "io.github.moulberry.notenoughupdates.envcheck.NEUMixinConfigPlugin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "AccessorCommandHandler",
     "AccessorEntityAgeable",
     "AccessorEntityArmorStand",
     "AccessorGuiPlayerTabOverlay",
     "MixinAbstractClientPlayer",
     "MixinContainer",
+    "MixinCrashReport",
     "MixinEffectRenderer",
     "MixinEntity",
     "MixinEntityAgeable",
@@ -21,8 +23,11 @@
     "MixinGuiChest",
     "MixinGuiContainer",
     "MixinGuiIngame",
+    "MixinGuiIngameForge",
     "MixinGuiInventory",
     "MixinGuiScreen",
+    "MixinGuiUtils",
+    "MixinInventoryBasic",
     "MixinInventoryEffectRenderer",
     "MixinInventoryPlayer",
     "MixinItemCameraTransforms",
@@ -33,6 +38,8 @@
     "MixinMinecraft",
     "MixinMouseHelper",
     "MixinNetHandlerPlayClient",
+    "MixinOFDynamicLights",
+    "MixinOptifineCustomItems",
     "MixinPlayerControllerMP",
     "MixinRender",
     "MixinRendererLivingEntity",
@@ -51,6 +58,11 @@
     "AccessorGuiContainer",
     "AccessorGuiEditSign",
     "AccessorMinecraft",
-    "MixinGuiEditSign"
+    "MixinEntityChargedCreeper",
+    "MixinGuiEditSign",
+    "MixinGuiTextField",
+    "MixinLayerDeadmau5Head",
+    "MixinThreadDownloadImageData",
+    "MixinThreadDownloadImageDataThread"
   ]
 }

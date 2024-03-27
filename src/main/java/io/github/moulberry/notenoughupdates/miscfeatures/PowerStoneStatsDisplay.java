@@ -19,9 +19,14 @@
 
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
+import io.github.moulberry.notenoughupdates.events.ProfileDataLoadedEvent;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
+import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerUtils;
 import io.github.moulberry.notenoughupdates.util.ItemUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -34,14 +39,12 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 
+@NEUAutoSubscribe
 public class PowerStoneStatsDisplay {
 	private static PowerStoneStatsDisplay instance = null;
-	private final NumberFormat format = NumberFormat.getInstance(Locale.US);
 	private boolean dirty = true;
 
 	public static PowerStoneStatsDisplay getInstance() {
@@ -52,13 +55,23 @@ public class PowerStoneStatsDisplay {
 	}
 
 	@SubscribeEvent
-	public void onTick(TickEvent event) {
-		if (!dirty) return;
+	public void onProfileDataLoaded(ProfileDataLoadedEvent event) {
+		JsonObject profileInfo = event.getProfileInfo();
+		if (profileInfo == null) return;
 
-		if (!Utils.getOpenChestName().equals("SkyBlock Menu")) {
-			dirty = false;
-			return;
-		}
+		JsonArray inventoryInfo = ProfileViewerUtils.readInventoryInfo(profileInfo, "talisman_bag");
+		if (inventoryInfo == null) return;
+
+		NEUConfig.HiddenProfileSpecific configProfileSpecific = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+		if (configProfileSpecific == null) return;
+		configProfileSpecific.magicalPower = ProfileViewerUtils.getMagicalPower(inventoryInfo, profileInfo);
+	}
+
+	@SubscribeEvent
+	public void onTick(TickEvent event) {
+		if (!NotEnoughUpdates.INSTANCE.config.tooltipTweaks.powerStoneStats) return;
+		if (!dirty) return;
+		if (!Utils.getOpenChestName().equals("Your Bags")) return;
 
 		EntityPlayerSP p = Minecraft.getMinecraft().thePlayer;
 		Container openContainer = p.openContainer;
@@ -68,6 +81,7 @@ public class PowerStoneStatsDisplay {
 
 			String displayName = stack.getDisplayName();
 			if (!"§aAccessory Bag".equals(displayName)) continue;
+			dirty = false;
 
 			for (String line : ItemUtils.getLore(stack)) {
 				if (line.startsWith("§7Magical Power: ")) {
@@ -75,7 +89,6 @@ public class PowerStoneStatsDisplay {
 					NEUConfig.HiddenProfileSpecific configProfileSpecific = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
 					if (configProfileSpecific == null) return;
 					configProfileSpecific.magicalPower = Integer.parseInt(rawNumber);
-					dirty = false;
 				}
 			}
 		}
@@ -135,7 +148,7 @@ public class PowerStoneStatsDisplay {
 					return;
 				}
 
-				event.toolTip.set(index, "§7At §6" + format.format((double) magicalPower) + " Magical Power§7:");
+				event.toolTip.set(index, "§7At §6" + StringUtils.formatNumber((double) magicalPower) + " Magical Power§7:");
 				foundMagicalPower = true;
 				continue;
 			}
@@ -159,7 +172,7 @@ public class PowerStoneStatsDisplay {
 				}
 				double realStat = (currentStat / scaledCurrentPower) * scaledMagicalPower;
 
-				String format = this.format.format((double) Math.round(realStat));
+				String format = StringUtils.formatNumber((double) Math.round(realStat));
 				format += rawStat.substring(rawStat.length() - 1);
 
 				event.toolTip.set(index, line.replace(rawStat, format));

@@ -20,7 +20,9 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.core.ChromaColour;
+import io.github.moulberry.notenoughupdates.events.SpawnParticleEvent;
 import io.github.moulberry.notenoughupdates.util.SpecialColour;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.block.state.IBlockState;
@@ -52,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@NEUAutoSubscribe
 public class FishingHelper {
 	private static final FishingHelper INSTANCE = new FishingHelper();
 
@@ -147,7 +150,18 @@ public class FishingHelper {
 		int ticksExisted = hook.ticksExisted;
 		float seconds = ticksExisted / 20F;
 		int color;
-		if (seconds >= 30) {
+		float maxSlugTime = 20;
+		PetInfoOverlay.Pet pet = PetInfoOverlay.getCurrentPet();
+		if (NotEnoughUpdates.INSTANCE.config.fishing.enableSlugCheck && pet != null) {
+			if (pet.petLevel != null &&
+				pet.petType.equalsIgnoreCase("slug")
+			) {
+				double slugFactor = 0.005 * pet.petLevel.getCurrentLevel();
+				maxSlugTime = (float) (maxSlugTime * (1 - slugFactor));
+			}
+		}
+
+		if (seconds >= maxSlugTime) {
 			color = ChromaColour.specialToChromaRGB(NotEnoughUpdates.INSTANCE.config.fishing.fishingTimerColor30SecPlus);
 			if (NotEnoughUpdates.INSTANCE.config.fishing.fishingSound30Sec && !playedSound) {
 				ISound sound = new PositionedSound(new ResourceLocation("random.orb")) {{
@@ -171,11 +185,7 @@ public class FishingHelper {
 
 		Utils.drawStringCentered(
 			String.format("%.02fs", seconds),
-			Minecraft.getMinecraft().fontRendererObj,
-			0,
-			-baseHeight - Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT,
-			false,
-			color
+			0, -baseHeight - Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT, false, color
 		);
 
 	}
@@ -380,27 +390,27 @@ public class FishingHelper {
 		return 1 / (d + (1 / (ZERO_PITCH - MAX_PITCH))) * (1 - d / MAX_DISTANCE) + MAX_PITCH;
 	}
 
-	public boolean onSpawnParticle(
-		EnumParticleTypes particleType,
-		double x,
-		double y,
-		double z,
-		double xOffset,
-		double yOffset,
-		double zOffset
-	) {
+	@SubscribeEvent
+	public void onSpawnParticle(SpawnParticleEvent event) {
+		EnumParticleTypes particleType = event.getParticleTypes();
+		double x = event.getXCoord();
+		double y = event.getYCoord();
+		double z = event.getZCoord();
+		double xOffset = event.getXOffset();
+		double yOffset = event.getYOffset();
+		double zOffset = event.getZOffset();
 
 		if (!NotEnoughUpdates.INSTANCE.config.fishing.hideOtherPlayerAll &&
 			!NotEnoughUpdates.INSTANCE.config.fishing.enableCustomParticles &&
 			!NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarning &&
 			!NotEnoughUpdates.INSTANCE.config.fishing.incomingFishWarningR) {
-			return false;
+			return;
 		}
 		if (hookEntities.isEmpty()) {
-			return false;
+			return;
 		}
 
-		if ((particleType == EnumParticleTypes.WATER_WAKE || particleType == EnumParticleTypes.SMOKE_NORMAL) && Math.abs(
+		if ((particleType == EnumParticleTypes.WATER_WAKE || particleType == EnumParticleTypes.SMOKE_NORMAL || particleType == EnumParticleTypes.FLAME) && Math.abs(
 			yOffset - 0.01f) < 0.001f) {
 			double angle1 = calculateAngleFromOffsets(xOffset, -zOffset);
 			double angle2 = calculateAngleFromOffsets(-xOffset, zOffset);
@@ -610,22 +620,24 @@ public class FishingHelper {
 					particleTypeI = NotEnoughUpdates.INSTANCE.config.fishing.yourParticleType;
 					particleCustomColour = NotEnoughUpdates.INSTANCE.config.fishing.yourParticleColour;
 				} else if (NotEnoughUpdates.INSTANCE.config.fishing.hideOtherPlayerAll) {
-					return true;
+					event.cancel();
+					return;
 				} else {
 					particleTypeI = NotEnoughUpdates.INSTANCE.config.fishing.otherParticleType;
 					particleCustomColour = NotEnoughUpdates.INSTANCE.config.fishing.otherParticleColour;
 				}
 
 				if (!NotEnoughUpdates.INSTANCE.config.fishing.enableCustomParticles) {
-					return false;
+					return;
 				}
 
 				int argb = SpecialColour.specialToChromaRGB(particleCustomColour);
 
 				if (particleTypeI == 0) {
-					return false;
+					return;
 				} else if (particleTypeI == 1) {
-					return true;
+					event.cancel();
+					return;
 				}
 
 				if (Minecraft.getMinecraft() != null && Minecraft.getMinecraft().getRenderViewEntity() != null &&
@@ -633,11 +645,13 @@ public class FishingHelper {
 					int i = Minecraft.getMinecraft().gameSettings.particleSetting;
 
 					if (i == 1 && Minecraft.getMinecraft().theWorld.rand.nextInt(3) == 0) {
-						return true;
+						event.cancel();
+						return;
 					}
 
 					if (i >= 2) {
-						return true;
+						event.cancel();
+						return;
 					}
 
 					double xDist = Minecraft.getMinecraft().getRenderViewEntity().posX - x;
@@ -678,7 +692,8 @@ public class FishingHelper {
 						}
 
 						if (customColour && (((argb >> 24) & 0xFF) < 10)) {
-							return true;
+							event.cancel();
+							return;
 						}
 
 						EntityFX fx = Minecraft.getMinecraft().effectRenderer.spawnEffectParticle(
@@ -706,10 +721,9 @@ public class FishingHelper {
 					}
 				}
 
-				return true;
+				event.cancel();
+				return;
 			}
 		}
-
-		return false;
 	}
 }

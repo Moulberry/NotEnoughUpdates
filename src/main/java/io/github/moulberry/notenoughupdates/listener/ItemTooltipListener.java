@@ -30,9 +30,8 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.MiscUtils;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
-import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
-import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.Constants;
+import io.github.moulberry.notenoughupdates.util.PetLeveling;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
@@ -44,7 +43,6 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.lang3.text.WordUtils;
@@ -58,7 +56,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -77,7 +74,6 @@ public class ItemTooltipListener {
 	private boolean showReforgeStoneStats = true;
 	private boolean pressedArrowLast = false;
 	private boolean pressedShiftLast = false;
-	private int sbaloaded = -1;
 
 	public ItemTooltipListener(NotEnoughUpdates neu) {
 		this.neu = neu;
@@ -86,17 +82,6 @@ public class ItemTooltipListener {
 		percentStats.add("crit_chance");
 		percentStats.add("sea_creature_chance");
 		percentStats.add("ability_damage");
-	}
-
-	private boolean isSkyblockAddonsLoaded() {
-		if (sbaloaded == -1) {
-			if (Loader.isModLoaded("skyblockaddons")) {
-				sbaloaded = 1;
-			} else {
-				sbaloaded = 0;
-			}
-		}
-		return sbaloaded == 1;
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOW)
@@ -116,10 +101,6 @@ public class ItemTooltipListener {
 
 		boolean hasEnchantments = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").hasKey(
 			"enchantments",
-			10
-		);
-		boolean hasAttributes = event.itemStack.getTagCompound().getCompoundTag("ExtraAttributes").hasKey(
-			"attributes",
 			10
 		);
 		Set<String> enchantIds = new HashSet<>();
@@ -177,10 +158,11 @@ public class ItemTooltipListener {
 		boolean passedEnchants = false;
 
 		boolean dungeonProfit = false;
-		int index = 0;
 		List<String> newTooltip = new ArrayList<>();
 
-		for (String line : event.toolTip) {
+		for (int k = 0; k < event.toolTip.size(); k++) {
+			String line = event.toolTip.get(k);
+
 			if (line.endsWith(EnumChatFormatting.DARK_GRAY + "Reforge Stone") &&
 				NotEnoughUpdates.INSTANCE.config.tooltipTweaks.showReforgeStats) {
 				JsonObject reforgeStones = Constants.REFORGESTONES;
@@ -314,7 +296,7 @@ public class ItemTooltipListener {
 
 						if (reforgeCost >= 0) {
 							String text = EnumChatFormatting.BLUE + "Apply Cost: " + EnumChatFormatting.GOLD +
-								NumberFormat.getNumberInstance().format(reforgeCost) + " coins";
+								StringUtils.formatNumber(reforgeCost) + " coins";
 							newTooltip.add("");
 							newTooltip.add(text);
 						}
@@ -327,7 +309,7 @@ public class ItemTooltipListener {
 			} else if (line.contains("\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune")) {
 				line = line.replace(
 					"\u00A7cR\u00A76a\u00A7ei\u00A7an\u00A7bb\u00A79o\u00A7dw\u00A79 Rune",
-					Utils.chromaString("Rainbow Rune", index, false) + EnumChatFormatting.BLUE
+					Utils.chromaString("Rainbow Rune", k, false) + EnumChatFormatting.BLUE
 				);
 			} else if (hasEnchantments) {
 				if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) &&
@@ -380,149 +362,6 @@ public class ItemTooltipListener {
 					}
 				}
 			}
-			if (hasEnchantments || hasAttributes) {
-				ArrayList<String> addedEnchants = new ArrayList<>();
-				for (String op : NotEnoughUpdates.INSTANCE.config.hidden.enchantColours) {
-					List<String> colourOps = GuiEnchantColour.splitter.splitToList(op);
-					String enchantName = GuiEnchantColour.getColourOpIndex(colourOps, 0);
-					String comparator = GuiEnchantColour.getColourOpIndex(colourOps, 1);
-					String comparison = GuiEnchantColour.getColourOpIndex(colourOps, 2);
-					String colourCode = GuiEnchantColour.getColourOpIndex(colourOps, 3);
-					String modifier = GuiEnchantColour.getColourOpIndex(colourOps, 4);
-
-					int modifierI = GuiEnchantColour.getIntModifier(modifier);
-
-					assert enchantName != null;
-					if (enchantName.length() == 0) continue;
-					assert comparator != null;
-					if (comparator.length() == 0) continue;
-					assert comparison != null;
-					if (comparison.length() == 0) continue;
-					assert colourCode != null;
-					if (colourCode.length() == 0) continue;
-
-					int comparatorI = ">=<".indexOf(comparator.charAt(0));
-
-					int levelToFind;
-					try {
-						levelToFind = Integer.parseInt(comparison);
-					} catch (Exception e) {
-						continue;
-					}
-
-					if (comparatorI < 0) continue;
-					String regexText = "0123456789abcdefz";
-					if (isSkyblockAddonsLoaded()) {
-						regexText = regexText + "Z";
-					}
-
-					if (regexText.indexOf(colourCode.charAt(0)) < 0) continue;
-
-					//item_lore = item_lore.replaceAll("\\u00A79("+lvl4Max+" IV)", EnumChatFormatting.DARK_PURPLE+"$1");
-					//9([a-zA-Z ]+?) ([0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X))(,|$)
-					Pattern pattern;
-					try {
-						pattern = Pattern.compile(
-							"(\\u00A7b|\\u00A79|\\u00A7(b|9|l)\\u00A7d\\u00A7l)(?<enchantName>" + enchantName + ") " +
-								"(?<level>[0-9]+|(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX))((\\u00A79)?,|( \\u00A78(?:,?[0-9]+)*)?$)");
-					} catch (Exception e) {
-						continue;
-					}
-					Matcher matcher = pattern.matcher(line);
-					int matchCount = 0;
-					while (matcher.find() && matchCount < 5) {
-						if (Utils.cleanColour(matcher.group("enchantName")).startsWith(" ")) continue;
-
-						matchCount++;
-						int level = -1;
-						String levelStr = matcher.group("level");
-						if (levelStr == null || levelStr.isEmpty()) continue;
-						level = Utils.parseIntOrRomanNumeral(levelStr);
-						boolean matches = false;
-						if (level > 0) {
-							switch (comparator) {
-								case ">":
-									matches = level > levelToFind;
-									break;
-								case "=":
-									matches = level == levelToFind;
-									break;
-								case "<":
-									matches = level < levelToFind;
-									break;
-							}
-						}
-						if (matches) {
-							String enchantText = matcher.group("enchantName");
-							StringBuilder extraModifiersBuilder = new StringBuilder();
-
-							if ((modifierI & GuiEnchantColour.BOLD_MODIFIER) != 0) {
-								extraModifiersBuilder.append(EnumChatFormatting.BOLD);
-							}
-							if ((modifierI & GuiEnchantColour.ITALIC_MODIFIER) != 0) {
-								extraModifiersBuilder.append(EnumChatFormatting.ITALIC);
-							}
-							if ((modifierI & GuiEnchantColour.UNDERLINE_MODIFIER) != 0) {
-								extraModifiersBuilder.append(EnumChatFormatting.UNDERLINE);
-							}
-							if ((modifierI & GuiEnchantColour.OBFUSCATED_MODIFIER) != 0) {
-								extraModifiersBuilder.append(EnumChatFormatting.OBFUSCATED);
-							}
-							if ((modifierI & GuiEnchantColour.STRIKETHROUGH_MODIFIER) != 0) {
-								extraModifiersBuilder.append(EnumChatFormatting.STRIKETHROUGH);
-							}
-
-							String extraMods = extraModifiersBuilder.toString();
-
-							if (!colourCode.equals("z")) {
-								if (!addedEnchants.contains(enchantText)) {
-									line = line.replace("\u00A79" + enchantText, "\u00A7" + colourCode + extraMods + enchantText);
-									line = line.replace("\u00A7b" + enchantText, "\u00A7" + colourCode + extraMods + enchantText);
-									line = line.replace(
-										"\u00A79\u00A7d\u00A7l" + enchantText,
-										"\u00A7" + colourCode + extraMods + enchantText
-									);
-									line = line.replace(
-										"\u00A7b\u00A7d\u00A7l" + enchantText,
-										"\u00A7" + colourCode + extraMods + enchantText
-									);
-									line = line.replace(
-										"\u00A7l\u00A7d\u00A7l" + enchantText,
-										"\u00A7" + colourCode + extraMods + enchantText
-									);
-								}
-							} else {
-								int offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
-									"\\u00A79" + enchantText + ".*",
-									""
-								));
-								line = line.replace(
-									"\u00A79" + enchantText,
-									Utils.chromaString(enchantText, offset / 12f + index, false)
-								);
-
-								offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
-									"\\u00A79\\u00A7d\\u00A7l" + enchantText + ".*",
-									""
-								));
-								line = line.replace(
-									"\u00A79\u00A7d\u00A7l" + enchantText,
-									Utils.chromaString(enchantText, offset / 12f + index, true)
-								);
-								offset = Minecraft.getMinecraft().fontRendererObj.getStringWidth(line.replaceAll(
-									"\\u00A7l\\u00A7d\\u00A7l" + enchantText + ".*",
-									""
-								));
-								line = line.replace(
-									"\u00A7l\u00A7d\u00A7l" + enchantText,
-									Utils.chromaString(enchantText, offset / 12f + index, true)
-								);
-							}
-							addedEnchants.add(enchantText);
-						}
-					}
-				}
-			}
 
 			newTooltip.add(line);
 
@@ -543,7 +382,7 @@ public class ItemTooltipListener {
 				Minecraft.getMinecraft().currentScreen instanceof GuiChest) {
 				if (line.contains(EnumChatFormatting.GREEN + "Open Reward Chest")) {
 					dungeonProfit = true;
-				} else if (index == 7 && dungeonProfit) {
+				} else if (k == 7 && dungeonProfit) {
 					GuiChest eventGui = (GuiChest) Minecraft.getMinecraft().currentScreen;
 					ContainerChest cc = (ContainerChest) eventGui.inventorySlots;
 					IInventory lower = cc.getLowerChestInventory();
@@ -653,12 +492,11 @@ public class ItemTooltipListener {
 						}
 					}
 
-					NumberFormat format = NumberFormat.getInstance(Locale.US);
 					String valueStringBIN1;
 					String valueStringBIN2;
 					if (totalValue >= 0) {
 						valueStringBIN1 = EnumChatFormatting.YELLOW + "Value (BIN): ";
-						valueStringBIN2 = EnumChatFormatting.GOLD + format.format(totalValue) + " coins";
+						valueStringBIN2 = EnumChatFormatting.GOLD + StringUtils.formatNumber(totalValue) + " coins";
 					} else {
 						valueStringBIN1 = EnumChatFormatting.YELLOW + "Can't find BIN: ";
 						valueStringBIN2 = missingItem;
@@ -671,9 +509,9 @@ public class ItemTooltipListener {
 
 					String plStringBIN;
 					if (profitLossBIN >= 0) {
-						plStringBIN = prefix + "+" + format.format(profitLossBIN) + " coins";
+						plStringBIN = prefix + "+" + StringUtils.formatNumber(profitLossBIN) + " coins";
 					} else {
-						plStringBIN = prefix + "-" + format.format(-profitLossBIN) + " coins";
+						plStringBIN = prefix + "-" + StringUtils.formatNumber(-profitLossBIN) + " coins";
 					}
 
 					String neu = EnumChatFormatting.YELLOW + "[NEU] ";
@@ -684,14 +522,11 @@ public class ItemTooltipListener {
 					}
 
 					for (Map.Entry<String, Double> entry : itemValues.entrySet()) {
-						newTooltip.add(neu + entry.getKey() + prefix + "+" + format.format(entry.getValue().intValue()));
+						newTooltip.add(neu + entry.getKey() + prefix + "+" + StringUtils.formatNumber(entry.getValue().intValue()));
 					}
 				}
 			}
-
-			index++;
 		}
-
 
 		pressedShiftLast = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
 		pressedArrowLast = Keyboard.isKeyDown(Keyboard.KEY_LEFT) || Keyboard.isKeyDown(Keyboard.KEY_RIGHT);
@@ -715,7 +550,7 @@ public class ItemTooltipListener {
 		if (event.toolTip.size() < 7) return;
 		if (event.itemStack.getTagCompound().hasKey("NEUHIDEPETTOOLTIP")) return;
 		if (Utils.cleanColour(event.toolTip.get(1)).matches(petToolTipRegex)) {
-			GuiProfileViewer.PetLevel petLevel;
+			PetLeveling.PetLevel petLevel;
 
 			int xpLine = -1;
 			for (int i = event.toolTip.size() - 1; i >= 0; i--) {
@@ -743,9 +578,9 @@ public class ItemTooltipListener {
 
 			event.toolTip.add(
 				xpLine + 1,
-				EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW + myFormatter.format(petLevel.levelXp) +
+				EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW + myFormatter.format(petLevel.getExpInCurrentLevel()) +
 					EnumChatFormatting.GOLD + "/" + EnumChatFormatting.YELLOW +
-					myFormatter.format(petLevel.currentLevelRequirement)
+					myFormatter.format(petLevel.getExpRequiredForNextLevel())
 			);
 
 		}
@@ -819,7 +654,7 @@ public class ItemTooltipListener {
 			if (Keyboard.isKeyDown(Keyboard.KEY_H)) {
 				if (!copied) {
 					copied = true;
-					StringSelection selection = new StringSelection(sb.toString());
+					StringSelection selection = new StringSelection(sb.toString().replace("§r§7", ""));
 					Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
 				}
 			} else {
@@ -838,11 +673,11 @@ public class ItemTooltipListener {
 			boolean m = Keyboard.isKeyDown(Keyboard.KEY_M);
 			boolean n = Keyboard.isKeyDown(Keyboard.KEY_N);
 			boolean f = Keyboard.isKeyDown(Keyboard.KEY_F);
+			boolean b = Keyboard.isKeyDown(Keyboard.KEY_B);
 
 			if (!copied && f && NotEnoughUpdates.INSTANCE.config.hidden.dev) {
 				MiscUtils.copyToClipboard(NotEnoughUpdates.INSTANCE.manager.getSkullValueForItem(event.itemStack));
 			}
-
 
 			event.toolTip.add(
 				EnumChatFormatting.AQUA + "Internal Name: " + EnumChatFormatting.GRAY + internal + EnumChatFormatting.GOLD +
@@ -853,6 +688,12 @@ public class ItemTooltipListener {
 
 			if (event.itemStack.getTagCompound() != null) {
 				NBTTagCompound tag = event.itemStack.getTagCompound();
+
+				event.toolTip.add(EnumChatFormatting.AQUA + "NBT: " + EnumChatFormatting.GRAY + "[...]" +
+					EnumChatFormatting.GOLD + " [B]");
+				if (!copied && b) {
+					MiscUtils.copyToClipboard(tag.toString());
+				}
 
 				if (tag.hasKey("SkullOwner", 10)) {
 					GameProfile gameprofile = NBTUtil.readGameProfileFromNBT(tag.getCompoundTag("SkullOwner"));
@@ -881,7 +722,7 @@ public class ItemTooltipListener {
 				}
 			}
 
-			copied = k || m || n || f;
+			copied = k || m || n || f || b;
 		}
 	}
 }

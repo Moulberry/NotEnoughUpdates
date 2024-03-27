@@ -26,6 +26,7 @@ import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.ItemUtils;
+import io.github.moulberry.notenoughupdates.util.PetLeveling;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -64,15 +65,23 @@ public class PetsPage extends GuiProfileViewerPage {
 		int guiLeft = GuiProfileViewer.getGuiLeft();
 		int guiTop = GuiProfileViewer.getGuiTop();
 
-		ProfileViewer.Profile profile = GuiProfileViewer.getProfile();
-		String profileId = GuiProfileViewer.getProfileId();
-		JsonObject petsInfo = profile.getPetsInfo(profileId);
-		if (petsInfo == null) return;
 		JsonObject petsJson = Constants.PETS;
-		if (petsJson == null) return;
+		if (petsJson == null) {
+			return;
+		}
+
+		SkyblockProfiles.SkyblockProfile selectedProfile = getSelectedProfile();
+		if (selectedProfile == null) {
+			return;
+		}
+
+		JsonObject petsInfo = selectedProfile.getPetsInfo();
+		if (petsInfo == null) {
+			return;
+		}
 
 		String location = null;
-		JsonObject status = profile.getPlayerStatus();
+		JsonObject status = GuiProfileViewer.getProfile().getPlayerStatus();
 		if (status != null && status.has("mode")) {
 			location = status.get("mode").getAsString();
 		}
@@ -97,13 +106,13 @@ public class PetsPage extends GuiProfileViewerPage {
 			}
 			sortedPets.sort((pet1, pet2) -> {
 				String tier1 = pet1.get("tier").getAsString();
-				String tierNum1 = GuiProfileViewer.MINION_RARITY_TO_NUM.get(tier1);
+				String tierNum1 = GuiProfileViewer.RARITY_TO_NUM.get(tier1);
 				if (tierNum1 == null) return 1;
 				int tierNum1I = Integer.parseInt(tierNum1);
 				float exp1 = pet1.get("exp").getAsFloat();
 
 				String tier2 = pet2.get("tier").getAsString();
-				String tierNum2 = GuiProfileViewer.MINION_RARITY_TO_NUM.get(tier2);
+				String tierNum2 = GuiProfileViewer.RARITY_TO_NUM.get(tier2);
 				if (tierNum2 == null) return -1;
 				int tierNum2I = Integer.parseInt(tierNum2);
 				float exp2 = pet2.get("exp").getAsFloat();
@@ -118,19 +127,19 @@ public class PetsPage extends GuiProfileViewerPage {
 				PetInfoOverlay.Pet parsedPet = new PetInfoOverlay.Pet();
 				parsedPet.petType = pet.get("type").getAsString();
 				parsedPet.rarity = PetInfoOverlay.Rarity.valueOf(pet.get("tier").getAsString());
-				parsedPet.petLevel = GuiProfileViewer.getPetLevel(
+				parsedPet.petLevel = PetLeveling.getPetLevelingForPet(
 					parsedPet.petType,
-					parsedPet.rarity.name(),
-					pet.get("exp").getAsFloat()
-				);
+					parsedPet.rarity
+				).getPetLevel(pet.get("exp").getAsFloat());
 				parsedPet.petXpType = "unknown";
 				parsedPet.petItem = Utils.getElementAsString(pet.get("heldItem"), null);
 				parsedPet.skin = Utils.getElementAsString(pet.get("skin"), null);
 				parsedPet.candyUsed = pet.get("candyUsed").getAsInt();
 				sortedPetsStack.add(ItemUtils.createPetItemstackFromPetInfo(parsedPet));
-				pet.addProperty("level", parsedPet.petLevel.level);
-				pet.addProperty("currentLevelRequirement", parsedPet.petLevel.currentLevelRequirement);
-				pet.addProperty("maxXP", parsedPet.petLevel.maxXP);
+				pet.addProperty("level", parsedPet.petLevel.getCurrentLevel());
+				pet.addProperty("currentLevelRequirement", parsedPet.petLevel.getExpRequiredForNextLevel());
+				pet.addProperty("maxXP", parsedPet.petLevel.getExpRequiredForMaxLevel());
+				pet.addProperty("percentageToNextLevel", parsedPet.petLevel.getPercentageToNextLevel());
 			}
 		}
 
@@ -148,14 +157,7 @@ public class PetsPage extends GuiProfileViewerPage {
 		Minecraft.getMinecraft().getTextureManager().bindTexture(pv_pets);
 		Utils.drawTexturedRect(guiLeft, guiTop, getInstance().sizeX, getInstance().sizeY, GL11.GL_NEAREST);
 
-		Utils.drawStringCentered(
-			EnumChatFormatting.DARK_PURPLE + "Pets",
-			Minecraft.getMinecraft().fontRendererObj,
-			guiLeft + 100,
-			guiTop + 14,
-			true,
-			4210752
-		);
+		Utils.drawStringCentered(EnumChatFormatting.DARK_PURPLE + "Pets", guiLeft + 100, guiTop + 14, true, 4210752);
 		GlStateManager.color(1, 1, 1, 1);
 
 		JsonElement activePetElement = petsInfo.get("active_pet");
@@ -279,6 +281,7 @@ public class PetsPage extends GuiProfileViewerPage {
 
 			float level = pet.get("level").getAsFloat();
 			float currentLevelRequirement = pet.get("currentLevelRequirement").getAsFloat();
+			float percentageToNextLevel = pet.get("percentageToNextLevel").getAsFloat();
 			float exp = pet.get("exp").getAsFloat();
 			float maxXP = pet.get("maxXP").getAsFloat();
 
@@ -299,12 +302,12 @@ public class PetsPage extends GuiProfileViewerPage {
 
 			Utils.renderAlignedString(
 				EnumChatFormatting.YELLOW + "To Next LVL",
-				EnumChatFormatting.WHITE.toString() + (int) (level % 1 * 100) + "%",
+				EnumChatFormatting.WHITE.toString() + (int) (percentageToNextLevel * 100) + "%",
 				guiLeft + 319,
 				guiTop + 46,
 				98
 			);
-			getInstance().renderBar(guiLeft + 319, guiTop + 56, 98, level % 1);
+			getInstance().renderBar(guiLeft + 319, guiTop + 56, 98, percentageToNextLevel);
 
 			Utils.renderAlignedString(
 				EnumChatFormatting.YELLOW + "To Max LVL",
@@ -324,7 +327,7 @@ public class PetsPage extends GuiProfileViewerPage {
 			);
 			Utils.renderAlignedString(
 				EnumChatFormatting.YELLOW + "Current LVL XP",
-				EnumChatFormatting.WHITE + StringUtils.shortNumberFormat((level % 1) * currentLevelRequirement),
+				EnumChatFormatting.WHITE + StringUtils.shortNumberFormat(percentageToNextLevel * currentLevelRequirement),
 				guiLeft + 319,
 				guiTop + 143,
 				98

@@ -26,14 +26,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class GuiElementBoolean extends GuiElement {
 	public int x;
 	public int y;
-	private boolean value;
+	private Supplier<Boolean> value;
 	private final int clickRadius;
 	private final Consumer<Boolean> toggleCallback;
 
@@ -44,32 +44,34 @@ public class GuiElementBoolean extends GuiElement {
 	private static final int xSize = 48;
 	private static final int ySize = 14;
 
-	public GuiElementBoolean(int x, int y, boolean value, Consumer<Boolean> toggleCallback) {
+	public GuiElementBoolean(int x, int y, Supplier<Boolean> value, Consumer<Boolean> toggleCallback) {
 		this(x, y, value, 0, toggleCallback);
 	}
 
-	public GuiElementBoolean(int x, int y, boolean value, int clickRadius, Consumer<Boolean> toggleCallback) {
+	public GuiElementBoolean(int x, int y, Supplier<Boolean> value, int clickRadius, Consumer<Boolean> toggleCallback) {
 		this.x = x;
 		this.y = y;
 		this.value = value;
-		this.previewValue = value;
+		this.previewValue = value.get();
 		this.clickRadius = clickRadius;
 		this.toggleCallback = toggleCallback;
 		this.lastMillis = System.currentTimeMillis();
 
-		if (value) animation = 36;
+		if (previewValue) animation = 36;
 	}
 
 	@Override
 	public void render() {
 		GlStateManager.color(1, 1, 1, 1);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(GuiTextures.BAR);
+		RenderUtils.drawTexturedRect(x, y, xSize, ySize);
+
 		ResourceLocation buttonLoc = GuiTextures.ON;
-		ResourceLocation barLoc = GuiTextures.BAR_ON;
 		long currentMillis = System.currentTimeMillis();
 		long deltaMillis = currentMillis - lastMillis;
 		lastMillis = currentMillis;
 		boolean passedLimit = false;
-		if (previewValue != value) {
+		if (previewValue != value.get()) {
 			if ((previewValue && animation > 12) ||
 				(!previewValue && animation < 24)) {
 				passedLimit = true;
@@ -82,7 +84,7 @@ public class GuiElementBoolean extends GuiElement {
 		}
 		lastMillis -= deltaMillis % 10;
 
-		if (previewValue == value) {
+		if (previewValue == value.get()) {
 			animation = Math.max(0, Math.min(36, animation));
 		} else if (!passedLimit) {
 			if (previewValue) {
@@ -101,25 +103,16 @@ public class GuiElementBoolean extends GuiElement {
 		int animation = (int) (LerpUtils.sigmoidZeroOne(this.animation / 36f) * 36);
 		if (animation < 3) {
 			buttonLoc = GuiTextures.OFF;
-			barLoc = GuiTextures.BAR;
 		} else if (animation < 13) {
 			buttonLoc = GuiTextures.ONE;
-			barLoc = GuiTextures.BAR_ONE;
 		} else if (animation < 23) {
 			buttonLoc = GuiTextures.TWO;
-			barLoc = GuiTextures.BAR_TWO;
 		} else if (animation < 33) {
 			buttonLoc = GuiTextures.THREE;
-			barLoc = GuiTextures.BAR_THREE;
 		}
 
-		GL11.glTranslatef(0, 0, 100);
 		Minecraft.getMinecraft().getTextureManager().bindTexture(buttonLoc);
 		RenderUtils.drawTexturedRect(x + animation, y, 12, 14);
-		GL11.glTranslatef(0, 0, -100);
-
-		Minecraft.getMinecraft().getTextureManager().bindTexture(barLoc);
-		RenderUtils.drawTexturedRect(x, y, xSize, ySize);
 	}
 
 	@Override
@@ -128,14 +121,13 @@ public class GuiElementBoolean extends GuiElement {
 			mouseY > y - clickRadius && mouseY < y + ySize + clickRadius) {
 			if (Mouse.getEventButton() == 0) {
 				if (Mouse.getEventButtonState()) {
-					previewValue = !value;
-				} else if (previewValue == !value) {
-					value = !value;
-					toggleCallback.accept(value);
+					previewValue = !value.get();
+				} else if (previewValue == !value.get()) {
+					toggleCallback.accept(!value.get());
 				}
 			}
 		} else {
-			previewValue = value;
+			previewValue = value.get();
 		}
 		return false;
 	}

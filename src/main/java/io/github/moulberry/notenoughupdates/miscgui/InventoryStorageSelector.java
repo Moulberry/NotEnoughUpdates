@@ -20,11 +20,11 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.core.config.KeybindHelper;
 import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -40,6 +40,7 @@ import net.minecraftforge.fml.common.gameevent.InputEvent;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
+@NEUAutoSubscribe
 public class InventoryStorageSelector {
 	private static final InventoryStorageSelector INSTANCE = new InventoryStorageSelector();
 
@@ -79,31 +80,8 @@ public class InventoryStorageSelector {
 			!NotEnoughUpdates.INSTANCE.config.storageGUI.showInvBackpack) {
 			return;
 		}
-		if (Minecraft.getMinecraft().currentScreen != null) {
-			return;
-		}
 
-		if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowLeftKey)) {
-			NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex--;
-
-			int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size() - 1;
-			if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max)
-				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
-			if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0)
-				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
-		} else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowRightKey)) {
-			NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex++;
-
-			int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size() - 1;
-			if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max)
-				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
-			if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0)
-				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
-		} else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowDownKey)) {
-			sendToPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
-		}
-
-		if (isSlotSelected()) {
+		if (Minecraft.getMinecraft().currentScreen == null && isSlotSelected()) {
 			int useKeycode = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getKeyCode() + 100;
 			int attackKeycode = Minecraft.getMinecraft().gameSettings.keyBindAttack.getKeyCode() + 100;
 
@@ -148,24 +126,28 @@ public class InventoryStorageSelector {
 		if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.backpackHotkey)) {
 			Minecraft.getMinecraft().thePlayer.inventory.currentItem = 0;
 			isOverridingSlot = true;
-		} else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowLeftKey)) {
-			NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex--;
+		}
 
-			int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size() - 1;
-			if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max)
-				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
-			if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0)
-				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
-		} else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowRightKey)) {
-			NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex++;
+		if (NotEnoughUpdates.INSTANCE.config.storageGUI.arrowKeyBackpacks) {
+			if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowLeftKey)) {
+				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex--;
 
-			int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size() - 1;
-			if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max)
-				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
-			if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0)
-				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
-		} else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowDownKey)) {
-			sendToPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
+				int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size() - 1;
+				if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max)
+					NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
+				if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0)
+					NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
+			} else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowRightKey)) {
+				NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex++;
+
+				int max = StorageManager.getInstance().storageConfig.displayToStorageIdMap.size() - 1;
+				if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex > max)
+					NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = max;
+				if (NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex < 0)
+					NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex = 0;
+			} else if (KeybindHelper.isKeyPressed(NotEnoughUpdates.INSTANCE.config.storageGUI.arrowDownKey)) {
+				sendToPage(NotEnoughUpdates.INSTANCE.config.storageGUI.selectedIndex);
+			}
 		}
 
 		if (isSlotSelected()) {
@@ -284,7 +266,6 @@ public class InventoryStorageSelector {
 
 		int width = scaledResolution.getScaledWidth();
 		int height = scaledResolution.getScaledHeight();
-		FontRenderer fontRendererObj = Minecraft.getMinecraft().fontRendererObj;
 		int centerX = width / 2;
 
 		int offset = 91 + 10 + 12;
@@ -457,32 +438,18 @@ public class InventoryStorageSelector {
 				Utils.drawItemStack(held, centerX - 8, startY - 8);
 
 				GlStateManager.translate(0, 0, 100);
-				Utils.drawStringCentered(pageTitle, fontRendererObj, centerX, height - 76, true, 0xffff0000);
+				Utils.drawStringCentered(pageTitle, centerX, height - 76, true, 0xffff0000);
 				int keyCode = NotEnoughUpdates.INSTANCE.config.storageGUI.backpackScrollKey;
 				if (KeybindHelper.isKeyValid(keyCode) && !KeybindHelper.isKeyDown(keyCode)) {
 					String keyName = KeybindHelper.getKeyName(keyCode);
-					Utils.drawStringCentered(
-						"[" + keyName + "] Scroll Backpacks",
-						fontRendererObj,
-						centerX,
-						startY - 10,
-						true,
-						0xff32CD32
-					);
+					Utils.drawStringCentered("[" + keyName + "] Scroll Backpacks", centerX, startY - 10, true, 0xff32CD32);
 				}
 				GlStateManager.translate(0, 0, -200);
 
 			} else if (page == null) {
-				Utils.drawStringCentered(
-					"Run /storage to enable this feature!",
-					fontRendererObj,
-					centerX,
-					height - 80,
-					true,
-					0xffff0000
-				);
+				Utils.drawStringCentered("Run /storage to enable this feature!", centerX, height - 80, true, 0xffff0000);
 			} else {
-				Utils.drawStringCentered("Right-click to load items", fontRendererObj, centerX, height - 80, true, 0xffff0000);
+				Utils.drawStringCentered("Right-click to load items", centerX, height - 80, true, 0xffff0000);
 			}
 		}
 

@@ -19,14 +19,17 @@
 
 package io.github.moulberry.notenoughupdates.util;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.listener.ItemTooltipListener;
 import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
@@ -35,20 +38,37 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
+import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiFunction;
 
 public class ItemUtils {
+	private static final Gson smallPrintingGson = new Gson();
 
-	public static ItemStack getCoinItemStack(long coinAmount) {
+	public static ItemStack createSkullItemStack(String displayName, String uuid, String skinAbsoluteUrl) {
+		JsonObject object = new JsonObject();
+		JsonObject textures = new JsonObject();
+		JsonObject skin = new JsonObject();
+		skin.addProperty("url", skinAbsoluteUrl);
+		textures.add("SKIN", skin);
+		object.add("textures", textures);
+		String json = smallPrintingGson.toJson(object);
+		return Utils.createSkull(
+			displayName,
+			uuid,
+			Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8))
+		);
+	}
+
+	public static ItemStack getCoinItemStack(double coinAmount) {
 		String uuid = "2070f6cb-f5db-367a-acd0-64d39a7e5d1b";
 		String texture =
 			"eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTM4MDcxNzIxY2M1YjRjZDQwNmNlNDMxYTEzZjg2MDgzYTg5NzNlMTA2NGQyZjg4OTc4Njk5MzBlZTZlNTIzNyJ9fX0=";
@@ -63,7 +83,7 @@ public class ItemUtils {
 				"ewogICJ0aW1lc3RhbXAiIDogMTYzNTk1NzQ4ODQxNywKICAicHJvZmlsZUlkIiA6ICJmNThkZWJkNTlmNTA0MjIyOGY2MDIyMjExZDRjMTQwYyIsCiAgInByb2ZpbGVOYW1lIiA6ICJ1bnZlbnRpdmV0YWxlbnQiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvN2I5NTFmZWQ2YTdiMmNiYzIwMzY5MTZkZWM3YTQ2YzRhNTY0ODE1NjRkMTRmOTQ1YjZlYmMwMzM4Mjc2NmQzYiIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9";
 		}
 		ItemStack skull = Utils.createSkull(
-			"\u00A7r\u00A76" + NumberFormat.getInstance(Locale.US).format(coinAmount) + " Coins",
+			"§r§6" + StringUtils.formatNumber(coinAmount) + " Coins",
 			uuid,
 			texture
 		);
@@ -103,7 +123,24 @@ public class ItemUtils {
 		is.setTagCompound(tagCompound);
 	}
 
+	public static void setLore(ItemStack is, List<String> newLore) {
+		NBTTagCompound tagCompound = is.getTagCompound();
+		if (tagCompound == null) {
+			tagCompound = new NBTTagCompound();
+		}
+
+		NBTTagCompound display = tagCompound.getCompoundTag("display");
+		NBTTagList lore = new NBTTagList();
+		for (String s : newLore) {
+			lore.appendTag(new NBTTagString(s));
+		}
+		display.setTag("Lore", lore);
+		tagCompound.setTag("display", display);
+		is.setTagCompound(tagCompound);
+	}
+
 	public static List<String> getLore(ItemStack is) {
+		if (is == null) return new ArrayList<>();
 		return getLore(is.getTagCompound());
 	}
 
@@ -172,7 +209,24 @@ public class ItemUtils {
 		return text;
 	}
 
+	public static @NotNull NBTTagCompound getExtraAttributes(ItemStack itemStack) {
+		NBTTagCompound tag = getOrCreateTag(itemStack);
+		NBTTagCompound extraAttributes = tag.getCompoundTag("ExtraAttributes");
+		tag.setTag("ExtraAttributes", extraAttributes);
+		return extraAttributes;
+	}
+
 	public static ItemStack createPetItemstackFromPetInfo(PetInfoOverlay.Pet currentPet) {
+		if (currentPet == null) {
+			ItemStack stack = ItemUtils.createQuestionMarkSkull(EnumChatFormatting.RED + "Unknown Pet");
+			appendLore(stack, Arrays.asList(
+				"§cNull Pet",
+				"",
+				"§cIf you expected it to be there please send a message in",
+				"§c§l#neu-support §r§con §ldiscord.gg/moulberry"
+			));
+			return stack;
+		}
 		String petname = currentPet.petType;
 		String tier = Utils.getRarityFromInt(currentPet.rarity.petId).toUpperCase();
 		String heldItem = currentPet.petItem;
@@ -180,11 +234,13 @@ public class ItemUtils {
 		JsonObject heldItemJson = heldItem == null ? null : NotEnoughUpdates.INSTANCE.manager.getItemInformation().get(
 			heldItem);
 		String petId = currentPet.getPetId(false);
-		float exp = currentPet.petLevel.totalXp;
+		float exp = currentPet.petLevel.getExpTotal();
 
-		GuiProfileViewer.PetLevel levelObj = GuiProfileViewer.getPetLevel(petname, tier, exp);
+		PetLeveling.PetLevel levelObj = PetLeveling
+			.getPetLevelingForPet(petname, PetInfoOverlay.Rarity.valueOf(tier))
+			.getPetLevel(exp);
 
-		float level = levelObj.level;
+		int level = levelObj.getCurrentLevel();
 
 		ItemStack petItemstack = NotEnoughUpdates.INSTANCE.manager
 			.createItemResolutionQuery()
@@ -249,7 +305,8 @@ public class ItemUtils {
 				}
 				for (int i = 0; i < newLore.size(); i++) {
 					String cleaned = Utils.cleanColour(newLore.get(i));
-					if (cleaned.equals("Right-click to add this pet to")) {
+					if (cleaned.startsWith("Right-click to add this pet to")) {
+						if (heldItem == null) newLore.remove(i + 2);
 						newLore.remove(i + 1);
 						newLore.remove(i);
 						secondLastBlankLine = i - 1;
@@ -259,16 +316,20 @@ public class ItemUtils {
 				if (secondLastBlankLine != -1) {
 					List<String> petItemLore = new ArrayList<>();
 					if (heldItem != null) {
-						petItemLore.add(EnumChatFormatting.GOLD + "Held Item: " + heldItemJson.get("displayname").getAsString());
-						List<String> heldItemLore = JsonUtils.getJsonArrayOrEmpty(heldItemJson, "lore", JsonElement::getAsString);
-						int blanks = 0;
-						for (String heldItemLoreLine : heldItemLore) {
-							if (heldItemLoreLine.trim().isEmpty()) {
-								blanks++;
-							} else if (blanks == 2) {
-								petItemLore.add(heldItemLoreLine);
-							} else if (blanks > 2) {
-								break;
+						if (heldItemJson == null) {
+							petItemLore.add(EnumChatFormatting.RED + "Could not find held item in repo!");
+						} else {
+							petItemLore.add(EnumChatFormatting.GOLD + "Held Item: " + heldItemJson.get("displayname").getAsString());
+							List<String> heldItemLore = JsonUtils.getJsonArrayOrEmpty(heldItemJson, "lore", JsonElement::getAsString);
+							int blanks = 0;
+							for (String heldItemLoreLine : heldItemLore) {
+								if (heldItemLoreLine.trim().isEmpty()) {
+									blanks++;
+								} else if (blanks == 2) {
+									petItemLore.add(heldItemLoreLine);
+								} else if (blanks > 2) {
+									break;
+								}
 							}
 						}
 					}
@@ -277,6 +338,7 @@ public class ItemUtils {
 							petItemLore.add("");
 						}
 						petItemLore.add("§a(" + currentPet.candyUsed + "/10) Pet Candy Used");
+						if (heldItem == null) petItemLore.add("");
 					}
 					newLore.addAll(secondLastBlankLine + 1, petItemLore);
 				}
@@ -330,7 +392,7 @@ public class ItemUtils {
 				if (Utils.cleanColour(lore.getStringTagAt(0)).matches(ItemTooltipListener.petToolTipRegex) &&
 					lore.tagCount() > 7) {
 
-					GuiProfileViewer.PetLevel petLevel;
+					PetLeveling.PetLevel petLevel;
 
 					PetInfoOverlay.Pet pet = PetInfoOverlay.getPetFromStack(
 						stack.getTagCompound()
@@ -355,13 +417,13 @@ public class ItemUtils {
 					for (int i = 0; i < lore.tagCount(); i++) {
 						if (i == lore.tagCount() - 2) {
 							newLore.appendTag(new NBTTagString(""));
-							if (petLevel.level >= maxLvl) {
+							if (petLevel.getCurrentLevel() >= maxLvl) {
 								newLore.appendTag(new NBTTagString(
 									EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD + "MAX LEVEL"));
 							} else {
-								double levelPercent = (Math.round(petLevel.levelPercentage * 1000) / 10.0);
+								double levelPercent = (Math.round(petLevel.getPercentageToNextLevel() * 1000) / 10.0);
 								newLore.appendTag(new NBTTagString(
-									EnumChatFormatting.GRAY + "Progress to Level " + (int) (petLevel.level + 1) + ": " +
+									EnumChatFormatting.GRAY + "Progress to Level " + (petLevel.getCurrentLevel() + 1) + ": " +
 										EnumChatFormatting.YELLOW + levelPercent + "%"));
 								StringBuilder sb = new StringBuilder();
 
@@ -376,9 +438,9 @@ public class ItemUtils {
 								newLore.appendTag(new NBTTagString(sb.toString()));
 								newLore.appendTag(new NBTTagString(
 									EnumChatFormatting.GRAY + "EXP: " + EnumChatFormatting.YELLOW +
-										decimalFormatter.format(petLevel.levelXp) +
+										decimalFormatter.format(petLevel.getExpInCurrentLevel()) +
 										EnumChatFormatting.GOLD + "/" + EnumChatFormatting.YELLOW +
-										decimalFormatter.format(petLevel.currentLevelRequirement)
+										decimalFormatter.format(petLevel.getExpRequiredForNextLevel())
 								));
 							}
 						}
@@ -397,6 +459,26 @@ public class ItemUtils {
 		return ItemUtils.getLore(item).stream()
 										.anyMatch(line -> line.equals("§8§l* §8Co-op Soulbound §8§l*") ||
 											line.equals("§8§l* Soulbound §8§l*"));
+	}
+
+	public static String fixDraconicId(String id) {
+		if (id.equals("ASPECT_OF_THE_DRAGONS")) return "ASPECT_OF_THE_DRAGON";
+		if (id.equals("ENDER_HELMET")) return "END_HELMET";
+		if (id.equals("ENDER_CHESTPLATE")) return "END_CHESTPLATE";
+		if (id.equals("ENDER_LEGGINGS")) return "END_LEGGINGS";
+		if (id.equals("ENDER_BOOTS")) return "END_BOOTS";
+		return id;
+	}
+
+	public static ItemStack createItemStackFromId(String id, String displayname) {
+		Item item = Item.getByNameOrId(id);
+		if (item == null) {
+			return null;
+		}
+
+		ItemStack itemStack = new ItemStack(item);
+		itemStack.setStackDisplayName(displayname);
+		return itemStack;
 	}
 
 }

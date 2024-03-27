@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -47,11 +47,13 @@ public class SlayerOverlay extends TextOverlay {
 
 	private static String slayerEXP = "0";
 	private static int slayerIntXP;
+	private static int differenceFromLastXP = 0;
 	private static int untilNextSlayerLevel;
 	private static int xpToLevelUp;
 	private static boolean useSmallXpNext = true;
 	private static long agvSlayerTime = 0;
 	private static boolean isSlayerNine = false;
+	private static boolean slayerXPBuffActive = false;
 	private static int xpPerBoss = 0;
 	private static int bossesUntilNextLevel = 0;
 	private final HashSet<String> revenantLocations = new HashSet<>(Arrays.asList("Graveyard", "Coal Mine"));
@@ -66,16 +68,21 @@ public class SlayerOverlay extends TextOverlay {
 	}
 
 	private boolean shouldUpdate() {
-		if (!NotEnoughUpdates.INSTANCE.config.slayerOverlay.onlyShowWhenRelevant || SBInfo.getInstance().stranded)
+		if (!NotEnoughUpdates.INSTANCE.config.slayerOverlay.onlyShowWhenRelevant || SBInfo.getInstance().stranded) {
 			return true;
-		//Ignore if on stranded
+		}
+
 		String scoreboardLocation = SBInfo.getInstance().location;
 		String locrawLocation = SBInfo.getInstance().getLocation();
+		if ("None".equals(scoreboardLocation)) {
+			scoreboardLocation = SBInfo.getInstance().getLastScoreboardLocation();
+		}
 		//In case something is broken still show the overlay
 		if (locrawLocation == null || scoreboardLocation == null) return true;
 		switch (SBInfo.getInstance().slayer) {
 			case "Tarantula":
-				if (!locrawLocation.equals("combat_1")) return false;
+				if (!locrawLocation.equals("combat_1") &&
+					(!locrawLocation.equals("crimson_isle") || !scoreboardLocation.equals("Burning Desert"))) return false;
 				break;
 			case "Revenant":
 				if ((!locrawLocation.equals("hub") || !revenantLocations.contains(scoreboardLocation)) &&
@@ -100,9 +107,14 @@ public class SlayerOverlay extends TextOverlay {
 	}
 
 	@Override
+	public boolean isEnabled() {
+		return NotEnoughUpdates.INSTANCE.config.slayerOverlay.slayerOverlay;
+	}
+
+	@Override
 	public void update() {
 		shouldUpdate = shouldUpdate();
-		if (!NotEnoughUpdates.INSTANCE.config.slayerOverlay.slayerOverlay || !shouldUpdate) {
+		if (!isEnabled() || !shouldUpdate) {
 			overlayStrings = null;
 			return;
 		}
@@ -117,6 +129,22 @@ public class SlayerOverlay extends TextOverlay {
 			isSlayerNine = true;
 		} else if (!slayerXp.equals("0")) {
 			slayerEXP = slayerXp.replace(",", "");
+
+			differenceFromLastXP = slayerIntXP - Integer.parseInt(slayerEXP);
+			if (differenceFromLastXP != 0) {
+				switch (differenceFromLastXP) {
+					case 1875:
+					case 625:
+					case 125:
+					case 31:
+					case 6:
+						slayerXPBuffActive = true;
+						break;
+					default:
+						slayerXPBuffActive = false;
+				}
+			}
+
 			slayerIntXP = Integer.parseInt(slayerEXP);
 			isSlayerNine = false;
 		} else {
@@ -193,9 +221,14 @@ public class SlayerOverlay extends TextOverlay {
 		} else {
 			xpPerBoss = 0;
 		}
+
+		if (slayerXPBuffActive) {
+			xpPerBoss *= 1.25;
+		}
+
 		untilNextSlayerLevel = xpToLevelUp - slayerIntXP;
 		if (xpPerBoss != 0 && untilNextSlayerLevel != 0 && xpToLevelUp != 0) {
-			bossesUntilNextLevel = (xpToLevelUp - untilNextSlayerLevel) / xpPerBoss;
+			bossesUntilNextLevel = (int) Math.ceil((float) (xpToLevelUp - untilNextSlayerLevel) / (float)(xpPerBoss));
 		} else {
 			bossesUntilNextLevel = 0;
 		}

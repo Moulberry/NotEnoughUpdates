@@ -20,6 +20,7 @@
 package io.github.moulberry.notenoughupdates.recipes;
 
 import io.github.moulberry.notenoughupdates.NEUManager;
+import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
 import io.github.moulberry.notenoughupdates.mixins.AccessorGuiContainer;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -114,6 +115,8 @@ public class CraftingOverlay {
 		if (!Keyboard.getEventKeyState() ||
 			(Keyboard.getEventKey() != Keyboard.KEY_U && Keyboard.getEventKey() != Keyboard.KEY_R))
 			return;
+		if (EnchantingSolvers.currentSolver != EnchantingSolvers.SolverType.NONE) return;
+
 		runIfCraftingOverlayIsPresent(event.gui, (guiChest, chest) -> {
 			int mouseX = Utils.getMouseX();
 			int mouseY = Utils.getMouseY();
@@ -138,8 +141,7 @@ public class CraftingOverlay {
 				Utils.drawHoveringText(
 					recipeIngredient.getItemStack().getTooltip(Minecraft.getMinecraft().thePlayer, false),
 					mouseX, mouseY,
-					Utils.peekGuiScale().getScaledWidth(), Utils.peekGuiScale().getScaledHeight(), -1,
-					Minecraft.getMinecraft().fontRendererObj
+					Utils.peekGuiScale().getScaledWidth(), Utils.peekGuiScale().getScaledHeight(), -1
 				);
 			}
 		});

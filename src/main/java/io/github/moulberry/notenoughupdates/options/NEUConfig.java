@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -22,81 +22,160 @@ package io.github.moulberry.notenoughupdates.options;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
+import io.github.moulberry.moulconfig.Config;
+import io.github.moulberry.moulconfig.Social;
+import io.github.moulberry.moulconfig.annotations.Category;
+import io.github.moulberry.moulconfig.gui.MoulConfigEditor;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.core.GuiScreenElementWrapper;
-import io.github.moulberry.notenoughupdates.core.config.Config;
+import io.github.moulberry.notenoughupdates.core.config.GuiPositionEditor;
 import io.github.moulberry.notenoughupdates.core.config.Position;
-import io.github.moulberry.notenoughupdates.core.config.annotations.Category;
-import io.github.moulberry.notenoughupdates.core.config.gui.GuiPositionEditor;
+import io.github.moulberry.notenoughupdates.dungeons.GuiDungeonMapEditor;
 import io.github.moulberry.notenoughupdates.miscfeatures.FairySouls;
+import io.github.moulberry.notenoughupdates.miscfeatures.IQTest;
 import io.github.moulberry.notenoughupdates.miscgui.GuiEnchantColour;
 import io.github.moulberry.notenoughupdates.miscgui.GuiInvButtonEditor;
 import io.github.moulberry.notenoughupdates.miscgui.NEUOverlayPlacements;
+import io.github.moulberry.notenoughupdates.miscgui.customtodos.CustomTodo;
 import io.github.moulberry.notenoughupdates.options.customtypes.NEUDebugFlag;
-import io.github.moulberry.notenoughupdates.options.seperateSections.AHGraph;
-import io.github.moulberry.notenoughupdates.options.seperateSections.AHTweaks;
-import io.github.moulberry.notenoughupdates.options.seperateSections.AccessoryBag;
-import io.github.moulberry.notenoughupdates.options.seperateSections.ApiData;
-import io.github.moulberry.notenoughupdates.options.seperateSections.BazaarTweaks;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Calendar;
-import io.github.moulberry.notenoughupdates.options.seperateSections.CustomArmour;
-import io.github.moulberry.notenoughupdates.options.seperateSections.DungeonMapConfig;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Dungeons;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Enchanting;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Fishing;
-import io.github.moulberry.notenoughupdates.options.seperateSections.ImprovedSBMenu;
-import io.github.moulberry.notenoughupdates.options.seperateSections.InventoryButtons;
-import io.github.moulberry.notenoughupdates.options.seperateSections.ItemOverlays;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Itemlist;
-import io.github.moulberry.notenoughupdates.options.seperateSections.LocationEdit;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Mining;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Misc;
-import io.github.moulberry.notenoughupdates.options.seperateSections.MiscOverlays;
-import io.github.moulberry.notenoughupdates.options.seperateSections.NeuAuctionHouse;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Notifications;
-import io.github.moulberry.notenoughupdates.options.seperateSections.PetOverlay;
-import io.github.moulberry.notenoughupdates.options.seperateSections.ProfileViewer;
-import io.github.moulberry.notenoughupdates.options.seperateSections.SkillOverlays;
-import io.github.moulberry.notenoughupdates.options.seperateSections.SlayerOverlay;
-import io.github.moulberry.notenoughupdates.options.seperateSections.SlotLocking;
-import io.github.moulberry.notenoughupdates.options.seperateSections.StorageGUI;
-import io.github.moulberry.notenoughupdates.options.seperateSections.Toolbar;
-import io.github.moulberry.notenoughupdates.options.seperateSections.TooltipTweaks;
-import io.github.moulberry.notenoughupdates.options.seperateSections.TradeMenu;
+import io.github.moulberry.notenoughupdates.options.separatesections.AHGraph;
+import io.github.moulberry.notenoughupdates.options.separatesections.AHTweaks;
+import io.github.moulberry.notenoughupdates.options.separatesections.AccessoryBag;
+import io.github.moulberry.notenoughupdates.options.separatesections.ApiData;
+import io.github.moulberry.notenoughupdates.options.separatesections.BazaarTweaks;
+import io.github.moulberry.notenoughupdates.options.separatesections.Calendar;
+import io.github.moulberry.notenoughupdates.options.separatesections.CustomArmour;
+import io.github.moulberry.notenoughupdates.options.separatesections.DungeonMapConfig;
+import io.github.moulberry.notenoughupdates.options.separatesections.Dungeons;
+import io.github.moulberry.notenoughupdates.options.separatesections.Enchanting;
+import io.github.moulberry.notenoughupdates.options.separatesections.Fishing;
+import io.github.moulberry.notenoughupdates.options.separatesections.Garden;
+import io.github.moulberry.notenoughupdates.options.separatesections.ImprovedSBMenu;
+import io.github.moulberry.notenoughupdates.options.separatesections.InventoryButtons;
+import io.github.moulberry.notenoughupdates.options.separatesections.ItemOverlays;
+import io.github.moulberry.notenoughupdates.options.separatesections.Itemlist;
+import io.github.moulberry.notenoughupdates.options.separatesections.LocationEdit;
+import io.github.moulberry.notenoughupdates.options.separatesections.Mining;
+import io.github.moulberry.notenoughupdates.options.separatesections.MinionHelper;
+import io.github.moulberry.notenoughupdates.options.separatesections.Misc;
+import io.github.moulberry.notenoughupdates.options.separatesections.MiscOverlays;
+import io.github.moulberry.notenoughupdates.options.separatesections.Museum;
+import io.github.moulberry.notenoughupdates.options.separatesections.Notifications;
+import io.github.moulberry.notenoughupdates.options.separatesections.PetOverlay;
+import io.github.moulberry.notenoughupdates.options.separatesections.ProfileViewer;
+import io.github.moulberry.notenoughupdates.options.separatesections.SkillOverlays;
+import io.github.moulberry.notenoughupdates.options.separatesections.SlayerOverlay;
+import io.github.moulberry.notenoughupdates.options.separatesections.SlotLocking;
+import io.github.moulberry.notenoughupdates.options.separatesections.StorageGUI;
+import io.github.moulberry.notenoughupdates.options.separatesections.Toolbar;
+import io.github.moulberry.notenoughupdates.options.separatesections.TooltipTweaks;
+import io.github.moulberry.notenoughupdates.options.separatesections.TradeMenu;
+import io.github.moulberry.notenoughupdates.options.separatesections.WardrobeKeybinds;
+import io.github.moulberry.notenoughupdates.options.separatesections.WorldConfig;
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.util.NotificationHandler;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.ClientCommandHandler;
-import org.lwjgl.util.vector.Vector2f;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class NEUConfig extends Config {
-	private void editOverlay(String activeConfig, TextOverlay overlay, Position position) {
-		Vector2f size = overlay.getDummySize();
-		int width = (int) size.x;
-		int height = (int) size.y;
-		Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(position, width, height, () -> {
-			overlay.renderDummy();
-			OverlayManager.dontRenderOverlay = overlay.getClass();
-		}, () -> {
-		}, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)));
+	public void editOverlay() {
+		final LinkedHashMap<TextOverlay, Position> overlayPositions = new LinkedHashMap<TextOverlay, Position>();
+		for (TextOverlay overlay : OverlayManager.textOverlays) {
+			overlayPositions.put(overlay, overlay.getPosition());
+		}
+		GuiScreen savedGui = Minecraft.getMinecraft().currentScreen;
+		Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(overlayPositions, () -> {
+		}, () -> NotEnoughUpdates.INSTANCE.openGui = savedGui));
+	}
+
+	@Override
+	public void saveNow() {
+		NotEnoughUpdates.INSTANCE.saveConfig();
+	}
+
+	private Social social(String name, String iconName, String link) {
+		return new Social() {
+			@Override
+			public void onClick() {
+				Utils.openUrl(link);
+			}
+
+			@Override
+			public List<String> getTooltip() {
+				return Arrays.asList(name, "§7Open " + link);
+			}
+
+			@Override
+			public ResourceLocation getIcon() {
+				return new ResourceLocation("notenoughupdates:social/" + iconName + ".png");
+			}
+		};
+	}
+
+	@Override
+	public List<Social> getSocials() {
+		return Arrays.asList(
+			social(
+				"Twitch",
+				"twitch",
+				"https://twitch.tv/moulberry2"
+			),
+			social(
+				"Patreon",
+				"patreon",
+				"https://patreon.com/moulberry"
+			),
+			social(
+				"YouTube",
+				"youtube",
+				"https://www.youtube.com/channel/UCPh-OKmRSS3IQi9p6YppLcw"
+			),
+			social(
+				"Twitter",
+				"twitter",
+				"https://twitter.com/moulberry/"
+			),
+			social(
+				"GitHub",
+				"github",
+				"https://github.com/NotEnoughUpdates/NotEnoughUpdates"
+			),
+			social(
+				"Discord",
+				"discord",
+				"https://discord.gg/moulberry"
+			)
+		);
+	}
+
+	@Override
+	public String getTitle() {
+		return "§7NotEnoughUpdates v" + NotEnoughUpdates.VERSION + " by §5Moulberry";
 	}
 
 	@Override
 	public void executeRunnable(int runnableId) {
 		String activeConfigCategory = null;
-		if (Minecraft.getMinecraft().currentScreen instanceof GuiScreenElementWrapper) {
-			GuiScreenElementWrapper wrapper = (GuiScreenElementWrapper) Minecraft.getMinecraft().currentScreen;
-			if (wrapper.element instanceof NEUConfigEditor) {
-				activeConfigCategory = ((NEUConfigEditor) wrapper.element).getSelectedCategoryName();
+		if (Minecraft.getMinecraft().currentScreen instanceof io.github.moulberry.moulconfig.gui.GuiScreenElementWrapper) {
+			io.github.moulberry.moulconfig.gui.GuiScreenElementWrapper wrapper =
+				(io.github.moulberry.moulconfig.gui.GuiScreenElementWrapper) Minecraft.getMinecraft().currentScreen;
+			if (wrapper.element instanceof MoulConfigEditor) {
+				activeConfigCategory = ((MoulConfigEditor) wrapper.element).getSelectedCategory();
 			}
 		}
 
@@ -104,28 +183,14 @@ public class NEUConfig extends Config {
 			case -1:
 				return;
 			case 0:
-				ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neumap");
+				GuiScreen savedGui = Minecraft.getMinecraft().currentScreen;
+				NotEnoughUpdates.INSTANCE.openGui = new GuiDungeonMapEditor(() -> {
+					NotEnoughUpdates.INSTANCE.openGui = savedGui;
+				});
 				return;
 			case 1:
-				editOverlay(activeConfigCategory, OverlayManager.miningOverlay, mining.overlayPosition);
-				return;
-			case 2:
-				Minecraft.getMinecraft().displayGuiScreen(new GuiPositionEditor(
-					NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarPosition,
-					NotEnoughUpdates.INSTANCE.config.mining.drillFuelBarWidth, 12, () -> {
-				},
-					() -> {
-					}, () -> NotEnoughUpdates.INSTANCE.openGui = new GuiScreenElementWrapper(NEUConfigEditor.editor)
-				));
-				return;
-			case 3:
-				editOverlay(activeConfigCategory, OverlayManager.farmingOverlay, skillOverlays.farmingPosition);
-				return;
 			case 4:
-				editOverlay(activeConfigCategory, OverlayManager.petInfoOverlay, petOverlay.petInfoPosition);
-				return;
-			case 5:
-				editOverlay(activeConfigCategory, OverlayManager.timersOverlay, miscOverlays.todoPosition);
+				editOverlay();
 				return;
 			case 6:
 				NotEnoughUpdates.INSTANCE.openGui = new NEUOverlayPlacements();
@@ -136,23 +201,11 @@ public class NEUConfig extends Config {
 			case 8:
 				NotEnoughUpdates.INSTANCE.openGui = new GuiEnchantColour();
 				return;
-			case 9:
-				editOverlay(activeConfigCategory, OverlayManager.bonemerangOverlay, itemOverlays.bonemerangPosition);
-				return;
-			case 10:
-				editOverlay(activeConfigCategory, OverlayManager.crystalHollowOverlay, mining.crystalHollowOverlayPosition);
-				return;
-			case 11:
-				editOverlay(activeConfigCategory, OverlayManager.miningSkillOverlay, skillOverlays.miningPosition);
-				return;
 			case 12:
 				ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/dn");
 				return;
 			case 13:
 				ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/pv");
-				return;
-			case 14:
-				editOverlay(activeConfigCategory, OverlayManager.fishingSkillOverlay, skillOverlays.fishingPosition);
 				return;
 			case 15:
 				String command = NotEnoughUpdates.INSTANCE.config.misc.fariySoul ? "/neusouls on" : "/neusouls off";
@@ -163,12 +216,6 @@ public class NEUConfig extends Config {
 				return;
 			case 17:
 				ClientCommandHandler.instance.executeCommand(Minecraft.getMinecraft().thePlayer, "/neusouls unclear");
-				return;
-			case 18:
-				editOverlay(activeConfigCategory, OverlayManager.slayerOverlay, slayerOverlay.slayerPosition);
-				return;
-			case 19:
-				editOverlay(activeConfigCategory, OverlayManager.combatSkillOverlay, skillOverlays.combatPosition);
 				return;
 			case 20:
 				FairySouls.getInstance().setTrackFairySouls(NotEnoughUpdates.INSTANCE.config.misc.trackFairySouls);
@@ -187,15 +234,12 @@ public class NEUConfig extends Config {
 				NotEnoughUpdates.INSTANCE.config.apiData.repoUser = "NotEnoughUpdates";
 				NotEnoughUpdates.INSTANCE.config.apiData.repoName = "NotEnoughUpdates-REPO";
 				NotEnoughUpdates.INSTANCE.config.apiData.repoBranch = "master";
-				NotEnoughUpdates.INSTANCE.openGui =
-					new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, "apis"));
 				return;
-			case 24:
-				NotEnoughUpdates.INSTANCE.config.apiData.repoUser = "NotEnoughUpdates";
-				NotEnoughUpdates.INSTANCE.config.apiData.repoName = "NotEnoughUpdates-REPO";
-				NotEnoughUpdates.INSTANCE.config.apiData.repoBranch = "dangerous";
-				NotEnoughUpdates.INSTANCE.openGui =
-					new GuiScreenElementWrapper(new NEUConfigEditor(NotEnoughUpdates.INSTANCE.config, "apis"));
+			case 26:
+				OverlayManager.powderGrindingOverlay.reset();
+				return;
+			case 27:
+				IQTest.testIQ();
 				return;
 			default:
 				System.err.printf("Unknown runnableId = %d in category %s%n", runnableId, activeConfigCategory);
@@ -274,8 +318,8 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
-		name = "Todo Overlay",
-		desc = "Todo Overlay"
+		name = "Todo Overlays",
+		desc = "Todo Overlays"
 	)
 	public MiscOverlays miscOverlays = new MiscOverlays();
 
@@ -323,10 +367,10 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
-		name = "NEU Auction House",
-		desc = "NEU Auction House"
+		name = "Garden",
+		desc = "Garden"
 	)
-	public NeuAuctionHouse neuAuctionHouse = new NeuAuctionHouse();
+	public Garden garden = new Garden();
 
 	@Expose
 	@Category(
@@ -365,6 +409,13 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
+		name = "World Renderer",
+		desc = "In World Renderers"
+	)
+	public WorldConfig world = new WorldConfig();
+
+	@Expose
+	@Category(
 		name = "AH Tweaks",
 		desc = "Tweaks for Hypixel's (Not NEU's) Auction House"
 	)
@@ -379,10 +430,17 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
-		name = "AH/BZ Graph",
+		name = "Price Graph",
 		desc = "Graph of auction and bazaar prices"
 	)
 	public AHGraph ahGraph = new AHGraph();
+
+	@Expose
+	@Category(
+		name = "Wardrobe Keybinds",
+		desc = "Keybinds for your wardrobe"
+	)
+	public WardrobeKeybinds wardrobeKeybinds = new WardrobeKeybinds();
 
 	@Expose
 	@Category(
@@ -393,10 +451,24 @@ public class NEUConfig extends Config {
 
 	@Expose
 	@Category(
+		name = "Museum",
+		desc = "Museum overlays"
+	)
+	public Museum museum = new Museum();
+
+	@Expose
+	@Category(
 		name = "Profile Viewer",
 		desc = "Profile Viewer"
 	)
 	public ProfileViewer profileViewer = new ProfileViewer();
+
+	@Expose
+	@Category(
+		name = "Minion Helper",
+		desc = "Minion Helper"
+	)
+	public MinionHelper minionHelper = new MinionHelper();
 
 	@Expose
 	@Category(
@@ -422,6 +494,8 @@ public class NEUConfig extends Config {
 
 	public static class Hidden {
 		@Expose
+		public List<CustomTodo> customTodos = new ArrayList<>();
+		@Expose
 		public HashMap<String, NEUConfig.HiddenProfileSpecific> profileSpecific = new HashMap<>();
 		@Expose
 		public HashMap<String, NEUConfig.HiddenLocationSpecific> locationSpecific = new HashMap<>();
@@ -445,6 +519,8 @@ public class NEUConfig extends Config {
 		@Expose
 		public int compareMode = 0;
 		@Expose
+		public String customUserAgent = null;
+		@Expose
 		public int sortMode = 0;
 		@Expose
 		public ArrayList<Boolean> compareAscending = Lists.newArrayList(true, true, true);
@@ -455,11 +531,15 @@ public class NEUConfig extends Config {
 		@Expose
 		public ArrayList<String> previousBazaarSearches = new ArrayList<>();
 		@Expose
+		public ArrayList<String> previousProfileSearches = new ArrayList<>();
+		@Expose
 		public ArrayList<String> eventFavourites = new ArrayList<>();
 		@Expose
 		public ArrayList<String> quickCommands = createDefaultQuickCommands();
 		@Expose
 		public ArrayList<String> enchantColours = createDefaultEnchantColours();
+		@Expose
+		public Set<String> dynamicLightItems = new HashSet<>();
 
 		@Expose
 		public boolean firstTimeSearchFocus = true;
@@ -474,6 +554,9 @@ public class NEUConfig extends Config {
 
 		@Expose
 		public boolean hasOpenedWaypointMenu = false;
+
+		@Expose
+		public String externalEditor = null;
 
 	}
 
@@ -501,7 +584,6 @@ public class NEUConfig extends Config {
 			add("/storage:Storage:CHEST");
 			add("/wardrobe:Wardrobe:LEATHER_CHESTPLATE");
 			add("/pets:Pets:BONE");
-			add("neuah:NEU Auction House:GOLD_BLOCK");
 			add("/bz:Bazaar:GOLD_BARDING");
 		}};
 	}
@@ -528,6 +610,8 @@ public class NEUConfig extends Config {
 		public long fetchurCompleted = 0L;
 		@Expose
 		public long commissionsCompleted = 0L;
+		@Expose
+		public long lastFreeRiftInfusionApplied = 0L;
 		@Expose
 		public long experimentsCompleted = 0L;
 		@Expose
@@ -569,13 +653,38 @@ public class NEUConfig extends Config {
 		@Expose
 		public long dailyMithrilPowerCompleted = 0L;
 		@Expose
-		public HashMap<String, Boolean> unlockedWarpScrolls = new HashMap<>();
+		public Set<String> nonUnlockedWarpScrolls = new HashSet<>();
 		@Expose
 		public long dailyHeavyPearlCompleted = 0L;
+		@Expose
+		public long questBoardCompleted = 0L;
+		@Expose
+		public long dailyShopLimitCompleted = 0L;
 		@Expose
 		public HashMap<Integer, JsonObject> savedEquipment = new HashMap<>();
 		@Expose
 		public int magicalPower = 0;
+
+		@Expose
+		public int chestCount = 0;
+
+		@Expose
+		public int openedChestCount = 0;
+
+		@Expose
+		public int mithrilPowderFound = 0;
+
+		@Expose
+		public int gemstonePowderFound = 0;
+
+		@Expose
+		public List<String> abiphoneFavouriteContacts = new ArrayList<>();
+
+		@Expose
+		public boolean abiphoneShowOnlyFavourites = false;
+
+		@Expose
+		public Map<String, Integer> hotmTree = new HashMap<>();
 	}
 
 	public HiddenLocationSpecific getLocationSpecific() {

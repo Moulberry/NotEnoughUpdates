@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -21,28 +21,36 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
+import io.github.moulberry.notenoughupdates.events.SlotClickEvent;
+import io.github.moulberry.notenoughupdates.miscgui.customtodos.CustomTodoHud;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
+import io.github.moulberry.notenoughupdates.util.ItemResolutionQuery;
+import io.github.moulberry.notenoughupdates.util.ItemUtils;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import lombok.var;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.lwjgl.input.Keyboard;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Supplier;
@@ -52,9 +60,6 @@ import java.util.regex.Pattern;
 import static net.minecraft.util.EnumChatFormatting.DARK_AQUA;
 
 public class TimersOverlay extends TextTabOverlay {
-	private static final Pattern PATTERN_ACTIVE_EFFECTS = Pattern.compile(
-		"\u00a7r\u00a7r\u00a77You have a \u00a7r\u00a7cGod Potion \u00a7r\u00a77active! \u00a7r\u00a7d([0-9]*?:?[0-9]*?:?[0-9]*)\u00a7r");
-
 	public TimersOverlay(
 		Position position,
 		Supplier<List<String>> dummyStrings,
@@ -63,8 +68,10 @@ public class TimersOverlay extends TextTabOverlay {
 		super(position, dummyStrings, styleSupplier);
 	}
 
+	private static final Pattern PATTERN_ACTIVE_EFFECTS = Pattern.compile(
+		"\u00a7r\u00a7r\u00a77You have a \u00a7r\u00a7cGod Potion \u00a7r\u00a77active! \u00a7r\u00a7d([1-5][0-9]|[0-9])[\\s|^\\S]?(Seconds|Second|Minutes|Minute|Hours|Hour|Day|Days|h|m|s) ?([1-5][0-9]|[0-9])?([ms])?\u00a7r");
 	private static final Pattern CAKE_PATTERN = Pattern.compile(
-		"\u00a7r\u00a7d\u00a7lYum! \u00a7r\u00a7eYou gain .+ \u00a7r\u00a7efor \u00a7r\u00a7a48 \u00a7r\u00a7ehours!\u00a7r");
+		"§r§d§l(?:Big )?Yum! §r§eYou (?:refresh|gain) §r§.+ §r§efor §r§a48 §r§ehours!§r");
 	private static final Pattern PUZZLER_PATTERN =
 		Pattern.compile("\u00a7r\u00a7dPuzzler\u00a7r\u00a76 gave you .+ \u00a7r\u00a76for solving the puzzle!\u00a7r");
 	private static final Pattern FETCHUR_PATTERN =
@@ -75,6 +82,21 @@ public class TimersOverlay extends TextTabOverlay {
 		"\u00a7r\u00a79\u1805 \u00a7r\u00a7fYou've earned \u00a7r\u00a72.+ Mithril Powder \u00a7r\u00a7ffrom mining your first Mithril Ore of the day!\u00a7r");
 	private static final Pattern DAILY_GEMSTONE_POWDER = Pattern.compile(
 		"\u00a7r\u00a79\u1805 \u00a7r\u00a7fYou've earned \u00a7r\u00a7d.+ Gemstone Powder \u00a7r\u00a7ffrom mining your first Gemstone of the day!\u00a7r");
+	private static final Pattern DAILY_SHOP_LIMIT = Pattern.compile(
+		"\u00a7r\u00a7cYou may only buy up to 6,?400? of this item each day!\u00a7r");
+
+	@SubscribeEvent
+	public void onClickItem(SlotClickEvent event) {
+		NEUConfig.HiddenProfileSpecific hidden = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+		if (hidden == null) return;
+
+		if (event.slot == null || !event.slot.getHasStack()) return;
+		var itemStack = event.slot.getStack();
+		if (itemStack.getItem() != Item.getItemFromBlock(Blocks.double_plant) || itemStack.getItemDamage() != 1) return;
+		if (ItemUtils.getLore(itemStack).contains("§a§lFREE! §a(Every 4 hours)")) {
+			hidden.lastFreeRiftInfusionApplied = System.currentTimeMillis();
+		}
+	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
 	public void onChatMessageReceived(ClientChatReceivedEvent event) {
@@ -86,6 +108,10 @@ public class TimersOverlay extends TextTabOverlay {
 			Matcher cakeMatcher = CAKE_PATTERN.matcher(event.message.getFormattedText());
 			if (cakeMatcher.matches()) {
 				hidden.firstCakeAte = currentTime;
+				return;
+			}
+			if ("§r§d§lINFUSED! §r§7Used your free dimensional infusion!§r".equals(event.message.getFormattedText())) {
+				hidden.lastFreeRiftInfusionApplied = currentTime;
 				return;
 			}
 			Matcher puzzlerMatcher = PUZZLER_PATTERN.matcher(event.message.getFormattedText());
@@ -113,6 +139,11 @@ public class TimersOverlay extends TextTabOverlay {
 			Matcher dailyMithrilPowder = DAILY_MITHRIL_POWDER.matcher(event.message.getFormattedText());
 			if (dailyMithrilPowder.matches()) {
 				hidden.dailyMithrilPowerCompleted = currentTime;
+				return;
+			}
+			Matcher dailyShopLimit = DAILY_SHOP_LIMIT.matcher(event.message.getFormattedText());
+			if (dailyShopLimit.matches()) {
+				hidden.dailyShopLimitCompleted = currentTime;
 			}
 		}
 	}
@@ -124,12 +155,39 @@ public class TimersOverlay extends TextTabOverlay {
 		return super.getSize(strings);
 	}
 
-	private static final ItemStack CAKES_ICON = new ItemStack(Items.cake);
-	private static final ItemStack PUZZLER_ICON = new ItemStack(Items.book);
 	private static ItemStack[] FETCHUR_ICONS = null;
-	private static final ItemStack COMMISSIONS_ICON = new ItemStack(Items.iron_pickaxe);
-	private static final ItemStack EXPERIMENTS_ICON = new ItemStack(Items.enchanted_book);
-	private static final ItemStack COOKIE_ICON = new ItemStack(Items.cookie);
+
+	private static HashMap<String, ItemStack> todoItems;
+
+	private static void setupTodoItems() {
+		todoItems = new HashMap<String, ItemStack>() {
+			{
+				addItem("Mithril Powder", "INK_SACK-10");
+				addItem("God Potion", "GOD_POTION_2");
+				addItem("Crimson Isle Quest", "SIGN");
+				addItem("Daily Shop Limit", "HOPPER");
+				addItem("Rift", "DOUBLE_PLANT-1");
+				addItem("Cakes", "EPOCH_CAKE_PINK");
+				addItem("Experiments", "ENCHANTED_BOOK");
+				addItem("Puzzler", "BOOK");
+				addItem("Commission", "IRON_PICKAXE");
+				addItem("Heavy Pearls", "HEAVY_PEARL");
+				addItem("Gemstone Powder", "PERFECT_AMETHYST_GEM");
+				addItem("Mithril Powder", "MITHRIL_ORE");
+				addItem("Cookie Buff", "BOOSTER_COOKIE");
+			}
+
+			private void addItem(String eventName, String internalName) {
+				ItemStack itemStack = new ItemResolutionQuery(NotEnoughUpdates.INSTANCE.manager)
+					.withKnownInternalName(internalName).resolveToItemStack();
+				if (itemStack == null) {
+					Utils.showOutdatedRepoNotification(internalName);
+					return;
+				}
+				put(eventName, itemStack.copy());
+			}
+		};
+	}
 
 	@Override
 	protected void renderLine(String line, Vector2f position, boolean dummy) {
@@ -137,82 +195,89 @@ public class TimersOverlay extends TextTabOverlay {
 			return;
 		}
 		GlStateManager.enableDepth();
-
 		ItemStack icon = null;
+
+		if (todoItems == null) {
+			setupTodoItems();
+		}
 
 		String clean = Utils.cleanColour(line);
 		String beforeColon = clean.split(":")[0];
-		switch (beforeColon) {
-			case "Cakes":
-				icon = CAKES_ICON;
-				break;
-			case "Puzzler":
-				icon = PUZZLER_ICON;
-				break;
-			case "Godpot":
-				icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("GOD_POTION"));
-				break;
-			case "Fetchur": {
-				if (FETCHUR_ICONS == null) {
-					FETCHUR_ICONS = new ItemStack[]{
-						new ItemStack(Blocks.wool, 50, 14),
-						new ItemStack(Blocks.stained_glass, 20, 4),
-						new ItemStack(Items.compass, 1, 0),
-						new ItemStack(Items.prismarine_crystals, 20, 0),
-						new ItemStack(Items.fireworks, 1, 0),
-						NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-							.getItemInformation()
-							.get("CHEAP_COFFEE")),
-						new ItemStack(Items.oak_door, 1, 0),
-						new ItemStack(Items.rabbit_foot, 3, 0),
-						NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-							.getItemInformation()
-							.get("SUPERBOOM_TNT")),
-						new ItemStack(Blocks.pumpkin, 1, 0),
-						new ItemStack(Items.flint_and_steel, 1, 0),
-						new ItemStack(Blocks.quartz_ore, 50, 0),
-						//new ItemStack(Items.ender_pearl, 16, 0)
-					};
+		if (beforeColon.startsWith("CUSTOM")) {
+			icon = CustomTodoHud.INSTANCE.parseItem(CustomTodoHud.INSTANCE.decodeCustomItem(beforeColon));
+		} else
+			switch (beforeColon) {
+				case "Cakes":
+					icon = todoItems.get("Cakes");
+					break;
+				case "Puzzler":
+					icon = todoItems.get("Puzzler");
+					break;
+				case "Godpot":
+					icon = todoItems.get("God Potion");
+					break;
+				case "Fetchur": {
+					if (FETCHUR_ICONS == null) {
+						FETCHUR_ICONS = new ItemStack[]{
+							new ItemStack(Blocks.wool, 50, 14),
+							new ItemStack(Blocks.stained_glass, 20, 4),
+							new ItemStack(Items.compass, 1, 0),
+							new ItemStack(Items.prismarine_crystals, 20, 0),
+							new ItemStack(Items.fireworks, 1, 0),
+							NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
+								.getItemInformation()
+								.get("CHEAP_COFFEE")),
+							new ItemStack(Items.oak_door, 1, 0),
+							new ItemStack(Items.rabbit_foot, 3, 0),
+							NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
+								.getItemInformation()
+								.get("SUPERBOOM_TNT")),
+							new ItemStack(Blocks.pumpkin, 1, 0),
+							new ItemStack(Items.flint_and_steel, 1, 0),
+							new ItemStack(Blocks.emerald_ore, 50, 0),
+							//new ItemStack(Items.ender_pearl, 16, 0)
+						};
+					}
+
+					ZonedDateTime currentTimeEST = ZonedDateTime.now(ZoneId.of("America/Atikokan"));
+
+					long fetchurIndex = ((currentTimeEST.getDayOfMonth() + 1) % 12) - 1;
+					//Added because disabled fetchur and enabled it again but it was showing the wrong item
+					//Lets see if this stays correct
+
+					if (fetchurIndex < 0) fetchurIndex += 12;
+
+					icon = FETCHUR_ICONS[(int) fetchurIndex];
+					break;
 				}
-
-				ZonedDateTime currentTimeEST = ZonedDateTime.now(ZoneId.of("America/Atikokan"));
-
-				long fetchurIndex = ((currentTimeEST.getDayOfMonth() + 1) % 12) - 1;
-				//Added because disabled fetchur and enabled it again but it was showing the wrong item
-				//Lets see if this stays correct
-
-				if (fetchurIndex < 0) fetchurIndex += 12;
-
-				icon = FETCHUR_ICONS[(int) fetchurIndex];
-				break;
+				case "Commissions":
+					icon = todoItems.get("Commission");
+					break;
+				case "Experiments":
+					icon = todoItems.get("Experiments");
+					break;
+				case "Cookie Buff":
+					icon = todoItems.get("Cookie Buff");
+					break;
+				case "Mithril Powder":
+					icon = todoItems.get("Mithril Powder");
+					break;
+				case "Gemstone Powder":
+					icon = todoItems.get("Gemstone Powder");
+					break;
+				case "Heavy Pearls":
+					icon = todoItems.get("Heavy Pearls");
+					break;
+				case "Free Rift Infusion":
+					icon = todoItems.get("Rift");
+					break;
+				case "Crimson Isle Quests":
+					icon = todoItems.get("Crimson Isle Quest");
+					break;
+				case "NPC Buy Daily Limit":
+					icon = todoItems.get("Daily Shop Limit");
+					break;
 			}
-			case "Commissions":
-				icon = COMMISSIONS_ICON;
-				break;
-			case "Experiments":
-				icon = EXPERIMENTS_ICON;
-				break;
-			case "Cookie Buff":
-				icon = COOKIE_ICON;
-				break;
-			case "Mithril Powder":
-				icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("MITHRIL_ORE"));
-				break;
-			case "Gemstone Powder":
-				icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("PERFECT_AMETHYST_GEM"));
-				break;
-			case "Heavy Pearls":
-				icon = NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("HEAVY_PEARL"));
-				break;
-		}
 
 		if (icon != null) {
 			GlStateManager.pushMatrix();
@@ -227,6 +292,13 @@ public class TimersOverlay extends TextTabOverlay {
 		super.renderLine(line, position, dummy);
 	}
 
+	boolean hasErrorMessage = false;
+
+	@Override
+	public boolean isEnabled() {
+		return NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay2;
+	}
+
 	@Override
 	public void update() {
 
@@ -236,7 +308,7 @@ public class TimersOverlay extends TextTabOverlay {
 		if (hidden == null) return;
 
 		if (NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlayOnlyShowTab &&
-			!Keyboard.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindPlayerList.getKeyCode())) {
+			!lastTabState) {
 			overlayStrings = null;
 			return;
 		}
@@ -246,146 +318,218 @@ public class TimersOverlay extends TextTabOverlay {
 			ContainerChest container = (ContainerChest) chest.inventorySlots;
 			IInventory lower = container.getLowerChestInventory();
 			String containerName = lower.getDisplayName().getUnformattedText();
-
-			if (containerName.equals("Commissions") && lower.getSizeInventory() >= 18) {
-				if (hidden.commissionsCompleted == 0) {
-					hidden.commissionsCompleted = currentTime;
-				}
-				for (int i = 9; i < 18; i++) {
-					ItemStack stack = lower.getStackInSlot(i);
-					if (stack != null && stack.hasTagCompound()) {
-						String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
-						for (String line : lore) {
-							if (line.contains("(Daily")) {
-								hidden.commissionsCompleted = 0;
-								break;
+			ItemStack stack = lower.getStackInSlot(0);
+			switch (containerName.intern()) {
+				case "Dimensional Infusion":
+					if (lower.getSizeInventory() != 9 * 4) break;
+					var freeInfusionSlot = lower.getStackInSlot(13);
+					if (freeInfusionSlot == null || freeInfusionSlot.stackSize != 1 ||
+						freeInfusionSlot.getItem() != Item.getItemFromBlock(Blocks.double_plant) ||
+						freeInfusionSlot.getItemDamage() != 1) {
+						break;
+					}
+					if (ItemUtils.getLore(freeInfusionSlot).contains("§a§lFREE! §a(Every 4 hours)")) {
+						hidden.lastFreeRiftInfusionApplied = 0L;
+					}
+					break;
+				case "Commissions":
+					if (lower.getSizeInventory() < 18) {
+						break;
+					}
+					if (hidden.commissionsCompleted == 0) {
+						hidden.commissionsCompleted = currentTime;
+					}
+					for (int i = 9; i < 18; i++) {
+						stack = lower.getStackInSlot(i);
+						if (stack != null && stack.hasTagCompound()) {
+							String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+							for (String line : lore) {
+								if (line.contains("(Daily")) {
+									hidden.commissionsCompleted = 0;
+									break;
+								}
 							}
 						}
 					}
-				}
-			} else if (containerName.equals("Experimentation Table") && lower.getSizeInventory() >= 36) {
-				ItemStack stack = lower.getStackInSlot(31);
-				if (stack != null) {
-					if (stack.getItem() == Items.blaze_powder) {
-						if (hidden.experimentsCompleted == 0) {
+					break;
+				case "Experimentation Table":
+					if (lower.getSizeInventory() < 36) {
+						break;
+					}
+					stack = lower.getStackInSlot(31);
+					if (stack != null) {
+						if (stack.getItem() == Items.blaze_powder) {
+							if (hidden.experimentsCompleted == 0) {
+								hidden.experimentsCompleted = currentTime;
+								return;
+							}
+						}
+					}
+					ItemStack stackSuperPairs = lower.getStackInSlot(22);
+					if (stackSuperPairs != null && stackSuperPairs.getItem() == Items.skull &&
+						stackSuperPairs.getTagCompound() != null) {
+						String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stackSuperPairs.getTagCompound());
+						String text = lore[lore.length - 1];
+						String cleanText = Utils.cleanColour(text);
+						if (cleanText.equals("Experiments on cooldown!")) {
 							hidden.experimentsCompleted = currentTime;
 							return;
 						}
 					}
-				}
-				ItemStack stackSuperPairs = lower.getStackInSlot(22);
-				if (stackSuperPairs != null && stackSuperPairs.getItem() == Items.skull &&
-					stackSuperPairs.getTagCompound() != null) {
-					String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stackSuperPairs.getTagCompound());
-					String text = lore[lore.length - 1];
-					String cleanText = Utils.cleanColour(text);
-					if (cleanText.equals("Experiments on cooldown!")) {
-						hidden.experimentsCompleted = currentTime;
-						return;
+					hidden.experimentsCompleted = 0;
+					break;
+				case "Superpairs Rewards":
+					if (lower.getSizeInventory() < 27) {
+						break;
 					}
-				}
-				hidden.experimentsCompleted = 0;
-				return;
-			} else if (containerName.equals("Superpairs Rewards") && lower.getSizeInventory() >= 27) {
-				ItemStack stack = lower.getStackInSlot(13);
-				if (stack != null && Utils.cleanColour(stack.getDisplayName()).equals("Superpairs")) {
-					hidden.experimentsCompleted = currentTime;
-				}
+					stack = lower.getStackInSlot(13);
+					if (stack != null && Utils.cleanColour(stack.getDisplayName()).equals("Superpairs")) {
+						hidden.experimentsCompleted = currentTime;
+					}
+				case "SkyBlock Menu":
+					if (lower.getSizeInventory() < 54) {
+						break;
+					}
+					stack = lower.getStackInSlot(51);
+				case "Booster Cookie":
+					if (lower.getSizeInventory() < 54) {
+						break;
+					}
+					if (stack != lower.getStackInSlot(51)) {//if we didn't go into this case from the skyblock menu
+						stack = lower.getStackInSlot(13);
+					}
+
+					if (stack != null && Utils.cleanColour(stack.getDisplayName()).equals("Booster Cookie") &&
+						stack.getTagCompound() != null) {
+						String[] lore = NotEnoughUpdates.INSTANCE.manager.getLoreFromNBT(stack.getTagCompound());
+						for (String line : lore) {
+							if (line.contains("Duration: ")) {
+								String clean = line.replaceAll("(\u00a7.)", "");
+								clean = clean.replaceAll("(\\d)([smhdy])", "$1 $2");
+								String[] cleanSplit = clean.split(" ");
+								String[] removeDuration = Arrays.copyOfRange(cleanSplit, 1, cleanSplit.length);
+								hidden.cookieBuffRemaining = currentTime;
+								for (int i = 0; i + 1 < removeDuration.length; i++) {
+									if (i % 2 == 1) continue;
+
+									String number = removeDuration[i];
+									String unit = removeDuration[i + 1];
+									try {
+										long val = Integer.parseInt(number);
+										switch (unit) {
+											case "Years":
+											case "Year":
+											case "y":
+												hidden.cookieBuffRemaining += val * 365 * 24 * 60 * 60 * 1000;
+												break;
+											case "Months":
+											case "Month":
+												hidden.cookieBuffRemaining += val * 30 * 24 * 60 * 60 * 1000;
+												break;
+											case "Days":
+											case "Day":
+											case "d":
+												hidden.cookieBuffRemaining += val * 24 * 60 * 60 * 1000;
+												break;
+											case "Hours":
+											case "Hour":
+											case "h":
+												hidden.cookieBuffRemaining += val * 60 * 60 * 1000;
+												break;
+											case "Minutes":
+											case "Minute":
+											case "m":
+												hidden.cookieBuffRemaining += val * 60 * 1000;
+												break;
+											case "Seconds":
+											case "Second":
+											case "s":
+												hidden.cookieBuffRemaining += val * 1000;
+												break;
+										}
+									} catch (NumberFormatException e) {
+										e.printStackTrace();
+										hidden.cookieBuffRemaining = 0;
+										if (!hasErrorMessage) {
+											Utils.addChatMessage(
+												EnumChatFormatting.YELLOW + "[NEU] Unable to work out your cookie buff timer");
+											hasErrorMessage = true;
+										}
+										break;
+									}
+								}
+								break;
+							}
+						}
+					}
+					break;
 			}
 		}
 
-		boolean foundCookieBuffText = false;
 		boolean foundGodPotText = false;
+		boolean foundEffectsText = false;
 		if (SBInfo.getInstance().getLocation() != null && !SBInfo.getInstance().getLocation().equals("dungeon") &&
 			SBInfo.getInstance().footer != null) {
 			String formatted = SBInfo.getInstance().footer.getFormattedText();
 			for (String line : formatted.split("\n")) {
+				if (line.contains("Active Effects")) {
+					foundEffectsText = true;
+				}
 				Matcher activeEffectsMatcher = PATTERN_ACTIVE_EFFECTS.matcher(line);
 				if (activeEffectsMatcher.matches()) {
 					foundGodPotText = true;
-					String[] godpotRemaingTimeUnformatted = activeEffectsMatcher.group(1).split(":");
 					long godPotDuration = 0;
 					try {
-						int i = 0;
-						if (godpotRemaingTimeUnformatted.length == 4) {
-							godPotDuration =
-								godPotDuration + (long) Integer.parseInt(godpotRemaingTimeUnformatted[i]) * 24 * 60 * 60 * 1000;
-							i++;
+						long godpotRemainingTime;
+						for (int i = 1; i < activeEffectsMatcher.groupCount(); i += 2) {
+							if (activeEffectsMatcher.group(i) == null) {
+								continue;
+							}
+							godpotRemainingTime = Integer.parseInt(activeEffectsMatcher.group(i));
+							String godpotRemainingTimeType = activeEffectsMatcher.group(i + 1);
+							switch (godpotRemainingTimeType) {
+								case "Days":
+								case "Day":
+									godPotDuration += godpotRemainingTime * 24 * 60 * 60 * 1000;
+									break;
+								case "Hours":
+								case "Hour":
+								case "h":
+									godPotDuration += godpotRemainingTime * 60 * 60 * 1000;
+									break;
+								case "Minutes":
+								case "Minute":
+								case "m":
+									godPotDuration += godpotRemainingTime * 60 * 1000;
+									break;
+								case "Seconds":
+								case "Second":
+								case "s":
+									godPotDuration += godpotRemainingTime * 1000;
+									break;
+							}
 						}
-						if (godpotRemaingTimeUnformatted.length >= 3) {
-							godPotDuration =
-								godPotDuration + (long) Integer.parseInt(godpotRemaingTimeUnformatted[i]) * 60 * 60 * 1000;
-							i++;
+					} catch (Exception e) {
+						if (!hasErrorMessage) {
+							Utils.addChatMessage(EnumChatFormatting.YELLOW + "[NEU] Unable to work out your god pot timer");
+							e.printStackTrace();
+							hasErrorMessage = true;
 						}
-						if (godpotRemaingTimeUnformatted.length >= 2) {
-							godPotDuration = godPotDuration + (long) Integer.parseInt(godpotRemaingTimeUnformatted[i]) * 60 * 1000;
-							i++;
-						}
-						if (godpotRemaingTimeUnformatted.length >= 1) {
-							godPotDuration = godPotDuration + (long) Integer.parseInt(godpotRemaingTimeUnformatted[i]) * 1000;
-						}
-					} catch (Exception ignored) {
+						break;
 					}
 
 					hidden.godPotionDuration = godPotDuration;
 
-				} else if (line.contains("\u00a7d\u00a7lCookie Buff")) {
-					foundCookieBuffText = true;
-				} else if (foundCookieBuffText) {
-					String cleanNoSpace = line.replaceAll("(\u00a7.| )", "");
-
-					hidden.cookieBuffRemaining = 0;
-					StringBuilder number = new StringBuilder();
-					for (int i = 0; i < cleanNoSpace.length(); i++) {
-						char c = cleanNoSpace.charAt(i);
-
-						if (c >= '0' && c <= '9') {
-							number.append(c);
-						} else {
-							if (number.length() == 0) {
-								hidden.cookieBuffRemaining = 0;
-								break;
-							}
-							if ("ydhms".contains("" + c)) {
-								try {
-									long val = Integer.parseInt(number.toString());
-									switch (c) {
-										case 'y':
-											hidden.cookieBuffRemaining += val * 365 * 24 * 60 * 60 * 1000;
-											break;
-										case 'd':
-											hidden.cookieBuffRemaining += val * 24 * 60 * 60 * 1000;
-											break;
-										case 'h':
-											hidden.cookieBuffRemaining += val * 60 * 60 * 1000;
-											break;
-										case 'm':
-											hidden.cookieBuffRemaining += val * 60 * 1000;
-											break;
-										case 's':
-											hidden.cookieBuffRemaining += val * 1000;
-											break;
-									}
-								} catch (NumberFormatException e) {
-									hidden.cookieBuffRemaining = 0;
-									break;
-								}
-
-								number = new StringBuilder();
-							} else {
-								hidden.cookieBuffRemaining = 0;
-								break;
-							}
-						}
-					}
-
-					break;
 				}
 			}
 		}
 
-		if (!foundGodPotText) {
+		if (!foundGodPotText && foundEffectsText) {
 			hidden.godPotionDuration = 0;
+		}
+
+		if (SBInfo.getInstance().completedQuests != null && SBInfo.getInstance().completedQuests.size() == 5) {
+			hidden.questBoardCompleted = currentTime;
 		}
 
 		if (!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlay2) {
@@ -449,7 +593,7 @@ public class TimersOverlay extends TextTabOverlay {
 				1,
 				DARK_AQUA + "Cookie Buff: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] +
-					Utils.prettyTime(hidden.cookieBuffRemaining)
+					Utils.prettyTime(hidden.cookieBuffRemaining - currentTime)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.SOON.ordinal() &&
 			hidden.cookieBuffRemaining < TimeEnums.HALFDAY.time) {
@@ -457,7 +601,7 @@ public class TimersOverlay extends TextTabOverlay {
 				1,
 				DARK_AQUA + "Cookie Buff: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] +
-					Utils.prettyTime(hidden.cookieBuffRemaining)
+					Utils.prettyTime(hidden.cookieBuffRemaining - currentTime)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
 			hidden.cookieBuffRemaining < TimeEnums.DAY.time) {
@@ -465,14 +609,14 @@ public class TimersOverlay extends TextTabOverlay {
 				1,
 				DARK_AQUA + "Cookie Buff: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] +
-					Utils.prettyTime(hidden.cookieBuffRemaining)
+					Utils.prettyTime(hidden.cookieBuffRemaining - currentTime)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.cookieBuffDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
 			map.put(
 				1,
 				DARK_AQUA + "Cookie Buff: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] +
-					Utils.prettyTime(hidden.cookieBuffRemaining)
+					Utils.prettyTime(hidden.cookieBuffRemaining - currentTime)
 			);
 		}
 
@@ -519,6 +663,26 @@ public class TimersOverlay extends TextTabOverlay {
 			}
 		}
 
+		// Free Rift Infusion
+		var miscOverlay = NotEnoughUpdates.INSTANCE.config.miscOverlays;
+		long riftAvailableAgainIn = hidden.lastFreeRiftInfusionApplied + 1000 * 60 * 60 * 4 - currentTime;
+		if (riftAvailableAgainIn < 0) {
+			map.put(
+				12,
+				DARK_AQUA + "Free Rift Infusion: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready!"
+			);
+		} else if ((miscOverlay.freeRiftInfusionDisplay == 1 && riftAvailableAgainIn < TimeEnums.HALFANHOUR.time) ||
+			(miscOverlay.freeRiftInfusionDisplay == 2)) {
+			map.put(
+				12,
+				DARK_AQUA + "Free Rift Infusion: " +
+					EnumChatFormatting.values()[riftAvailableAgainIn < TimeEnums.HALFANHOUR.time
+						? miscOverlay.verySoonColour
+						: miscOverlay.defaultColour] + Utils.prettyTime(riftAvailableAgainIn)
+			);
+		}
+
 		long puzzlerEnd = hidden.puzzlerCompleted + 1000 * 60 * 60 * 24 - currentTime;
 		//Puzzler Display
 		if ((hidden.puzzlerCompleted + TimeEnums.DAY.time) < currentTime) {
@@ -560,11 +724,11 @@ public class TimersOverlay extends TextTabOverlay {
 			);
 		}
 
-		long midnightReset = (currentTime - 18000000) / 86400000 * 86400000 + 18000000; // 12am est
+		long midnightReset = (currentTime - 18000000) / TimeEnums.DAY.time * TimeEnums.DAY.time + 18000000; // 12am est
 		long pearlsReset = midnightReset - 18000000; //8pm est
-		long catacombsReset = currentTime / 86400000 * 86400000; // 7pm est
-		long timeDiffMidnightNow = midnightReset + 86400000 - currentTime;
-		long catacombsDiffNow = catacombsReset + 86400000 - currentTime;
+		long catacombsReset = currentTime / TimeEnums.DAY.time * TimeEnums.DAY.time; // 7pm est
+		long timeDiffMidnightNow = midnightReset + TimeEnums.DAY.time - currentTime;
+		long catacombsDiffNow = catacombsReset + TimeEnums.DAY.time - currentTime;
 		long fetchurComplete = hidden.fetchurCompleted;
 
 		//Fetchur Display
@@ -612,7 +776,7 @@ public class TimersOverlay extends TextTabOverlay {
 			map.put(
 				5,
 				DARK_AQUA + "Commissions: " +
-					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready!"
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready! "
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.commissionDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
 			(hidden.commissionsCompleted < (midnightReset - TimeEnums.HALFANHOUR.time))) {
@@ -648,50 +812,48 @@ public class TimersOverlay extends TextTabOverlay {
 		}
 
 		//Experiment Display
-		if (hidden.experimentsCompleted < midnightReset) {
+		if (hidden.experimentsCompleted < catacombsReset) {
 			map.put(
 				6,
 				DARK_AQUA + "Experiments: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready!"
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-			(hidden.experimentsCompleted < (midnightReset - TimeEnums.HALFANHOUR.time))) {
+			(hidden.experimentsCompleted < (catacombsReset - TimeEnums.HALFANHOUR.time))) {
 			map.put(
 				6,
 				DARK_AQUA + "Experiments: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] +
-					Utils.prettyTime(catacombsReset + 86400000 - currentTime)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-			(hidden.experimentsCompleted < (midnightReset - TimeEnums.HOUR.time))) {
+			(hidden.experimentsCompleted < (catacombsReset - TimeEnums.HOUR.time))) {
 			map.put(
 				6,
 				DARK_AQUA + "Experiments: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] +
-					Utils.prettyTime(catacombsReset + 86400000 - currentTime)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (
 			NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
-				(hidden.experimentsCompleted < (midnightReset - (TimeEnums.HOUR.time * 3)))) {
+				(hidden.experimentsCompleted < (catacombsReset - (TimeEnums.HOUR.time * 3)))) {
 			map.put(
 				6,
 				DARK_AQUA + "Experiments: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] +
-					Utils.prettyTime(catacombsReset + 86400000 - currentTime)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.experimentationDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
 			map.put(
 				6,
 				DARK_AQUA + "Experiments: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] +
-					Utils.prettyTime(catacombsReset + 86400000 - currentTime)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		}
 
 		// Daily Mithril Powder display
-		long mithrilPowderCompleted = hidden.dailyMithrilPowerCompleted + 1000 * 60 * 60 * 24 - currentTime;
-
-		if (hidden.dailyMithrilPowerCompleted < midnightReset) {
+		if (hidden.dailyMithrilPowerCompleted < catacombsReset) {
 			map.put(
 				7,
 				DARK_AQUA + "Mithril Powder: " +
@@ -699,29 +861,29 @@ public class TimersOverlay extends TextTabOverlay {
 			);
 		} else if (
 			NotEnoughUpdates.INSTANCE.config.miscOverlays.dailyMithrilPowderDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-				(hidden.dailyMithrilPowerCompleted < (midnightReset - TimeEnums.HALFANHOUR.time))) {
+				(hidden.dailyMithrilPowerCompleted < (catacombsReset - TimeEnums.HALFANHOUR.time))) {
 			map.put(
 				7,
 				DARK_AQUA + "Mithril Powder: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] +
-					Utils.prettyTime(timeDiffMidnightNow)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.dailyMithrilPowderDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-			(hidden.dailyMithrilPowerCompleted < (midnightReset - TimeEnums.HOUR.time))) {
+			(hidden.dailyMithrilPowerCompleted < (catacombsReset - TimeEnums.HOUR.time))) {
 			map.put(
 				7,
 				DARK_AQUA + "Mithril Powder: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] +
-					Utils.prettyTime(timeDiffMidnightNow)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (
 			NotEnoughUpdates.INSTANCE.config.miscOverlays.dailyMithrilPowderDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
-				(hidden.dailyMithrilPowerCompleted < (midnightReset - (TimeEnums.HOUR.time * 3)))) {
+				(hidden.dailyMithrilPowerCompleted < (catacombsReset - (TimeEnums.HOUR.time * 3)))) {
 			map.put(
 				7,
 				DARK_AQUA + "Mithril Powder: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] +
-					Utils.prettyTime(timeDiffMidnightNow)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.dailyMithrilPowderDisplay >=
 			DISPLAYTYPE.ALWAYS.ordinal()) {
@@ -729,12 +891,12 @@ public class TimersOverlay extends TextTabOverlay {
 				7,
 				DARK_AQUA + "Mithril Powder: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] +
-					Utils.prettyTime(timeDiffMidnightNow)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		}
 
 		// Daily Gemstone Powder Display
-		if (hidden.dailyGemstonePowderCompleted < midnightReset) {
+		if (hidden.dailyGemstonePowderCompleted < catacombsReset) {
 			map.put(
 				8,
 				DARK_AQUA + "Gemstone Powder: " +
@@ -742,29 +904,29 @@ public class TimersOverlay extends TextTabOverlay {
 			);
 		} else if (
 			NotEnoughUpdates.INSTANCE.config.miscOverlays.dailyGemstonePowderDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
-				(hidden.dailyGemstonePowderCompleted < (midnightReset - TimeEnums.HALFANHOUR.time))) {
+				(hidden.dailyGemstonePowderCompleted < (catacombsReset - TimeEnums.HALFANHOUR.time))) {
 			map.put(
 				8,
 				DARK_AQUA + "Gemstone Powder: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] +
-					Utils.prettyTime(timeDiffMidnightNow)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.dailyGemstonePowderDisplay >= DISPLAYTYPE.SOON.ordinal() &&
-			(hidden.dailyGemstonePowderCompleted < (midnightReset - TimeEnums.HOUR.time))) {
+			(hidden.dailyGemstonePowderCompleted < (catacombsReset - TimeEnums.HOUR.time))) {
 			map.put(
 				8,
 				DARK_AQUA + "Gemstone Powder: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] +
-					Utils.prettyTime(timeDiffMidnightNow)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (
 			NotEnoughUpdates.INSTANCE.config.miscOverlays.dailyGemstonePowderDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
-				(hidden.dailyGemstonePowderCompleted < (midnightReset - (TimeEnums.HOUR.time * 3)))) {
+				(hidden.dailyGemstonePowderCompleted < (catacombsReset - (TimeEnums.HOUR.time * 3)))) {
 			map.put(
 				8,
 				DARK_AQUA + "Gemstone Powder: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] +
-					Utils.prettyTime(timeDiffMidnightNow)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.dailyGemstonePowderDisplay >=
 			DISPLAYTYPE.ALWAYS.ordinal()) {
@@ -772,7 +934,7 @@ public class TimersOverlay extends TextTabOverlay {
 				8,
 				DARK_AQUA + "Gemstone Powder: " +
 					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] +
-					Utils.prettyTime(timeDiffMidnightNow)
+					Utils.prettyTime(catacombsDiffNow)
 			);
 		}
 
@@ -818,50 +980,143 @@ public class TimersOverlay extends TextTabOverlay {
 					Utils.prettyTime(pearlsReset + 86400000 - currentTime)
 			);
 		}
+		//Daily Crimson Isle Quests
+		if (hidden.questBoardCompleted < midnightReset) {
+			map.put(
+				10,
+				DARK_AQUA + "Crimson Isle Quests: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] +
+					(5 - SBInfo.getInstance().completedQuests.size()) + " left!"
+			);
+		} else if (
+			NotEnoughUpdates.INSTANCE.config.miscOverlays.questBoardDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+				(hidden.questBoardCompleted < (midnightReset - TimeEnums.HALFANHOUR.time))) {
+			map.put(
+				10,
+				DARK_AQUA + "Crimson Isle Quests: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] +
+					Utils.prettyTime(timeDiffMidnightNow)
+			);
+		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.questBoardDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+			(hidden.questBoardCompleted < (midnightReset - TimeEnums.HOUR.time))) {
+			map.put(
+				10,
+				DARK_AQUA + "Crimson Isle Quests: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] +
+					Utils.prettyTime(timeDiffMidnightNow)
+			);
+		} else if (
+			NotEnoughUpdates.INSTANCE.config.miscOverlays.questBoardDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+				(hidden.questBoardCompleted < (midnightReset - (TimeEnums.HOUR.time * 3)))) {
+			map.put(
+				10,
+				DARK_AQUA + "Crimson Isle Quests: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] +
+					Utils.prettyTime(timeDiffMidnightNow)
+			);
+		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.questBoardDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+			map.put(
+				10,
+				DARK_AQUA + "Crimson Isle Quests: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] +
+					Utils.prettyTime(timeDiffMidnightNow)
+			);
+		}
+
+		//Daily Shop Limit
+		if (hidden.dailyShopLimitCompleted < catacombsReset) {
+			map.put(
+				11,
+				DARK_AQUA + "NPC Buy Daily Limit: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.readyColour] + "Ready!"
+			);
+		} else if (
+			NotEnoughUpdates.INSTANCE.config.miscOverlays.shopLimitDisplay >= DISPLAYTYPE.VERYSOON.ordinal() &&
+				(hidden.dailyShopLimitCompleted < (catacombsReset - TimeEnums.HALFANHOUR.time))) {
+			map.put(
+				11,
+				DARK_AQUA + "NPC Buy Daily Limit: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.verySoonColour] +
+					Utils.prettyTime(catacombsDiffNow)
+			);
+		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.shopLimitDisplay >= DISPLAYTYPE.SOON.ordinal() &&
+			(hidden.dailyShopLimitCompleted < (catacombsReset - TimeEnums.HOUR.time))) {
+			map.put(
+				11,
+				DARK_AQUA + "NPC Buy Daily Limit: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.soonColour] +
+					Utils.prettyTime(catacombsDiffNow)
+			);
+		} else if (
+			NotEnoughUpdates.INSTANCE.config.miscOverlays.shopLimitDisplay >= DISPLAYTYPE.KINDASOON.ordinal() &&
+				(hidden.dailyShopLimitCompleted < (catacombsReset - (TimeEnums.HOUR.time * 3)))) {
+			map.put(
+				11,
+				DARK_AQUA + "NPC Buy Daily Limit: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.kindaSoonColour] +
+					Utils.prettyTime(catacombsDiffNow)
+			);
+		} else if (NotEnoughUpdates.INSTANCE.config.miscOverlays.shopLimitDisplay >= DISPLAYTYPE.ALWAYS.ordinal()) {
+			map.put(
+				11,
+				DARK_AQUA + "NPC Buy Daily Limit: " +
+					EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.miscOverlays.defaultColour] +
+					Utils.prettyTime(catacombsDiffNow)
+			);
+		}
 
 		overlayStrings = new ArrayList<>();
 		for (int index : NotEnoughUpdates.INSTANCE.config.miscOverlays.todoText2) {
 			if (map.containsKey(index)) {
-				overlayStrings.add(map.get(index));
+				String text = map.get(index);
+				if (hideBecauseOfBingo(text)) continue;
+				overlayStrings.add(text);
 			}
 		}
+
+		CustomTodoHud.processInto(overlayStrings);
+
 		if (overlayStrings.isEmpty()) overlayStrings = null;
 	}
 
-	public static int beforePearls = -1;
-	public static int afterPearls = -1;
-	public static int availablePearls = -1;
+	private boolean hideBecauseOfBingo(String text) {
+		if (!SBInfo.getInstance().bingo) return false;
+		if (!NotEnoughUpdates.INSTANCE.config.miscOverlays.todoOverlayHideAtBingo) return false;
 
-	public static int heavyPearlCount() {
-		int heavyPearls = 0;
+		if (text.contains("Cookie Buff")) return true;
+		if (text.contains("Godpot")) return true;
+		if (text.contains("Heavy Pearls")) return true;
+		if (text.contains("Crimson Isle Quests")) return true;
 
-		List<ItemStack> inventory = Minecraft.getMinecraft().thePlayer.inventoryContainer.getInventory();
-		for (ItemStack item : inventory) {
-			if (item == null) {
-				continue;
-			} else if (!item.hasTagCompound()) {
-				continue;
-			}
-			NBTTagCompound itemData = item.getSubCompound("ExtraAttributes", false);
-			if (itemData == null) {
-				continue;
-			}
-			if (itemData.getString("id").equals("HEAVY_PEARL")) {
-				heavyPearls += item.stackSize;
-			}
-		}
-		return heavyPearls;
+		return false;
 	}
 
-	public static void processActionBar(String msg) {
-		if (SBInfo.getInstance().location.equals("Belly of the Beast")) {
-			try {
-				msg = Utils.cleanColour(msg);
-				msg = msg.substring(msg.indexOf("Pearls Collected: ") + 18);
-				availablePearls = Integer.parseInt(msg.substring(msg.indexOf("/") + 1));
-			} catch (Exception e) {
-				e.printStackTrace();
+	AxisAlignedBB matriarchArea = new AxisAlignedBB(-555, 36, -904, -532, 52, -870);
+
+	@SubscribeEvent
+	public void onMatriarchTick(TickEvent.ClientTickEvent event) {
+		if (event.phase != TickEvent.Phase.END) return;
+		if (!"crimson_isle".equals(SBInfo.getInstance().getLocation())) return;
+		var player = Minecraft.getMinecraft().thePlayer;
+		if (player == null) return;
+		if (!matriarchArea.isVecInside(player.getPositionVector())) return;
+		var matriarchRelevantArmorStands = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABB(
+			EntityArmorStand.class,
+			matriarchArea
+		);
+		boolean noMorePearlsAvailable = false;
+		for (var entityArmorStand : matriarchRelevantArmorStands) {
+			if (entityArmorStand.hasCustomName() &&
+				entityArmorStand.getCustomNameTag().contains("Heavy Pearls Available: 0")) {
+				noMorePearlsAvailable = true;
+				break;
 			}
+		}
+		if (noMorePearlsAvailable) {
+			var profileSpecific = NotEnoughUpdates.INSTANCE.config.getProfileSpecific();
+			if (profileSpecific != null)
+				profileSpecific.dailyHeavyPearlCompleted
+					= System.currentTimeMillis();
 		}
 	}
 

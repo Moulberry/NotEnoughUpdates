@@ -19,9 +19,7 @@
 
 package io.github.moulberry.notenoughupdates.util;
 
-import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
-import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewer;
-import net.minecraft.client.Minecraft;
+import io.github.moulberry.notenoughupdates.profileviewer.SkyblockProfiles;
 
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -31,7 +29,7 @@ public class ProfileApiSyncer {
 
 	private final HashMap<String, Long> resyncTimes = new HashMap<>();
 	private final HashMap<String, Runnable> syncingCallbacks = new HashMap<>();
-	private final HashMap<String, Consumer<ProfileViewer.Profile>> finishSyncCallbacks = new HashMap<>();
+	private final HashMap<String, Consumer<SkyblockProfiles>> finishSyncCallbacks = new HashMap<>();
 	private long lastResync;
 
 	public static ProfileApiSyncer getInstance() {
@@ -50,7 +48,7 @@ public class ProfileApiSyncer {
 		String id,
 		long timeBetween,
 		Runnable syncingCallback,
-		Consumer<ProfileViewer.Profile> finishSyncCallback
+		Consumer<SkyblockProfiles> finishSyncCallback
 	) {
 		resyncTimes.put(id, timeBetween);
 		syncingCallbacks.put(id, syncingCallback);
@@ -63,35 +61,5 @@ public class ProfileApiSyncer {
 			if (l > 0 && (l < time || time == -1)) time = l;
 		}
 		return time;
-	}
-
-	public void tick() {
-		if (Minecraft.getMinecraft().thePlayer == null) return;
-
-		long resyncTime = getCurrentResyncTime();
-
-		if (resyncTime < 0) return;
-
-		long currentTime = System.currentTimeMillis();
-
-		if (currentTime - lastResync > resyncTime) {
-			lastResync = currentTime;
-			resyncTimes.clear();
-
-			for (Runnable r : syncingCallbacks.values()) r.run();
-			syncingCallbacks.clear();
-
-			forceResync();
-		}
-	}
-
-	private void forceResync() {
-		if (Minecraft.getMinecraft().thePlayer == null) return;
-
-		String uuid = Minecraft.getMinecraft().thePlayer.getUniqueID().toString().replace("-", "");
-		NotEnoughUpdates.profileViewer.getProfileReset(uuid, (profile) -> {
-			for (Consumer<ProfileViewer.Profile> c : finishSyncCallbacks.values()) c.accept(profile);
-			finishSyncCallbacks.clear();
-		});
 	}
 }

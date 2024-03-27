@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -27,12 +27,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.TooltipTextScrolling;
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
+import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
+import lombok.var;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -57,6 +61,7 @@ import net.minecraft.network.play.client.C0DPacketCloseWindow;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.Matrix4f;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StatCollector;
@@ -70,18 +75,28 @@ import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.text.DecimalFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -116,7 +131,6 @@ public class Utils {
 		"VERY SPECIAL",
 		"SUPREME",
 		"^^ THAT ONE IS DIVINE ^^"
-//, "DIVINE"
 	};
 	public static String[] rarityArrC = new String[]{
 		EnumChatFormatting.WHITE + EnumChatFormatting.BOLD.toString() + "COMMON",
@@ -128,8 +142,6 @@ public class Utils {
 		EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "SPECIAL",
 		EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "VERY SPECIAL",
 		EnumChatFormatting.AQUA + EnumChatFormatting.BOLD.toString() + "DIVINE",
-		EnumChatFormatting.AQUA + EnumChatFormatting.BOLD.toString() + "DIVINE",
-		//EnumChatFormatting.AQUA+EnumChatFormatting.BOLD.toString()+"DIVINE",
 	};
 	public static final HashMap<String, String> rarityArrMap = new HashMap<String, String>() {{
 		put("COMMON", rarityArrC[0]);
@@ -141,12 +153,13 @@ public class Utils {
 		put("SPECIAL", rarityArrC[6]);
 		put("VERY SPECIAL", rarityArrC[7]);
 		put("DIVINE", rarityArrC[8]);
-		// put("DIVINE", rarityArrC[9]);
 	}};
 	public static Splitter PATH_SPLITTER = Splitter.on(".").omitEmptyStrings().limit(2);
 	private static ScaledResolution lastScale = new ScaledResolution(Minecraft.getMinecraft());
 	private static long startTime = 0;
+	private static final DecimalFormat simpleDoubleFormat = new DecimalFormat("0.0");
 
+	@SafeVarargs
 	public static <T> ArrayList<T> createList(T... values) {
 		ArrayList<T> list = new ArrayList<>();
 		Collections.addAll(list, values);
@@ -162,7 +175,7 @@ public class Utils {
 	}
 
 	public static ScaledResolution pushGuiScale(int scale) {
-		if (guiScales.size() == 0) {
+		if (guiScales.isEmpty()) {
 			if (Loader.isModLoaded("labymod")) {
 				GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixOld);
 				GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelviewMatrixOld);
@@ -170,7 +183,7 @@ public class Utils {
 		}
 
 		if (scale < 0) {
-			if (guiScales.size() > 0) {
+			if (!guiScales.isEmpty()) {
 				guiScales.pop();
 			}
 		} else {
@@ -181,8 +194,8 @@ public class Utils {
 			}
 		}
 
-		int newScale = guiScales.size() > 0
-			? Math.max(0, Math.min(4, guiScales.peek()))
+		int newScale = !guiScales.isEmpty()
+			? Math.max(0, guiScales.peek())
 			: Minecraft.getMinecraft().gameSettings.guiScale;
 		if (newScale == 0) newScale = Minecraft.getMinecraft().gameSettings.guiScale;
 
@@ -191,7 +204,7 @@ public class Utils {
 		ScaledResolution scaledresolution = new ScaledResolution(Minecraft.getMinecraft());
 		Minecraft.getMinecraft().gameSettings.guiScale = oldScale;
 
-		if (guiScales.size() > 0) {
+		if (!guiScales.isEmpty()) {
 			GlStateManager.viewport(0, 0, Minecraft.getMinecraft().displayWidth, Minecraft.getMinecraft().displayHeight);
 			GlStateManager.matrixMode(GL11.GL_PROJECTION);
 			GlStateManager.loadIdentity();
@@ -289,9 +302,9 @@ public class Utils {
 			while (matcher.find()) {
 				matcher.appendReplacement(
 					sb,
-					Utils.chromaString(matcher.group(1))
-							 .replace("\\", "\\\\")
-							 .replace("$", "\\$")
+					chromaString(matcher.group(1))
+						.replace("\\", "\\\\")
+						.replace("$", "\\$")
 				);
 			}
 			matcher.appendTail(sb);
@@ -302,7 +315,12 @@ public class Utils {
 	}
 
 	public static String chromaString(String str, float offset, boolean bold) {
+		return chromaString(str, offset, bold ? "§l" : "");
+	}
+
+	public static String chromaString(String str, float offset, String extraFormatting) {
 		str = cleanColour(str);
+		boolean bold = extraFormatting.contains("§l");
 
 		long currentTimeMillis = System.currentTimeMillis();
 		if (startTime == 0) startTime = currentTimeMillis;
@@ -321,20 +339,23 @@ public class Utils {
 
 			if (index < 0) index += rainbow.length;
 			rainbowText.append(rainbow[index]);
-			if (bold) rainbowText.append(EnumChatFormatting.BOLD);
+			rainbowText.append(extraFormatting);
 			rainbowText.append(c);
 		}
 		return rainbowText.toString();
 	}
 
 	public static String shortNumberFormat(double n, int iteration) {
+		if (n < 3 && n > 0) {
+			return simpleDoubleFormat.format(n);
+		}
+
+		if (n < 1000 && iteration == 0) return String.valueOf((int) n);
 		double d = ((long) n / 100) / 10.0;
 		boolean isRound = (d * 10) % 10 == 0;
-		return (d < 1000 ?
-			((d > 99.9 || isRound || (!isRound && d > 9.99) ?
-				(int) d * 10 / 10 : d + ""
-			) + "" + c[iteration])
-			: shortNumberFormat(d, iteration + 1));
+		return d < 1000 ?
+			(isRound || d > 9.99 ? (int) d * 10 / 10 : String.valueOf(d)) + String.valueOf(c[iteration])
+			: shortNumberFormat(d, iteration + 1);
 	}
 
 	public static String trimIgnoreColour(String str) {
@@ -453,6 +474,7 @@ public class Utils {
 		return list;
 	}
 
+	@SuppressWarnings("MalformedFormatString")
 	public static String floatToString(float f, int decimals) {
 		if (decimals <= 0) {
 			return String.valueOf(Math.round(f));
@@ -475,9 +497,9 @@ public class Utils {
 		Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.locationBlocksTexture).setBlurMipmap(true, true);
 		GlStateManager.enableRescaleNormal();
 		GlStateManager.enableAlpha();
-		GlStateManager.alphaFunc(516, 0.1F);
+		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
 		GlStateManager.enableBlend();
-		GlStateManager.blendFunc(770, 771);
+		GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 		setupGuiTransform(x, y, ibakedmodel.isGui3d());
 		ibakedmodel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(
@@ -556,6 +578,70 @@ public class Utils {
 		drawTexturedRect(x, y, width, height, 0, 1, 0, 1);
 	}
 
+	public static void drawPvSideButton(
+		int yIndex,
+		ItemStack itemStack,
+		boolean pressed,
+		GuiProfileViewer guiProfileViewer
+	) {
+		int guiLeft = GuiProfileViewer.getGuiLeft();
+		int guiTop = GuiProfileViewer.getGuiTop();
+
+		GlStateManager.disableLighting();
+		GlStateManager.enableBlend();
+		GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GlStateManager.enableAlpha();
+		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
+
+		int x = guiLeft - 28;
+		int y = guiTop + yIndex * 28;
+
+		float uMin = 193 / 256f;
+		float uMax = 223 / 256f;
+		float vMin = 200 / 256f;
+		float vMax = 228 / 256f;
+		if (pressed) {
+			uMin = 224 / 256f;
+			uMax = 1f;
+
+			if (yIndex != 0) {
+				vMin = 228 / 256f;
+				vMax = 1f;
+			}
+
+			guiProfileViewer.renderBlurredBackground(
+				guiProfileViewer.width,
+				guiProfileViewer.height,
+				x + 2,
+				y + 2,
+				30,
+				28 - 4
+			);
+		} else {
+			guiProfileViewer.renderBlurredBackground(
+				guiProfileViewer.width,
+				guiProfileViewer.height,
+				x + 2,
+				y + 2,
+				28 - 2,
+				28 - 4
+			);
+		}
+
+		GlStateManager.disableLighting();
+		GlStateManager.enableBlend();
+		GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GlStateManager.enableAlpha();
+		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
+
+		Minecraft.getMinecraft().getTextureManager().bindTexture(GuiProfileViewer.pv_elements);
+
+		drawTexturedRect(x, y, pressed ? 32 : 28, 28, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
+
+		GlStateManager.enableDepth();
+		drawItemStack(itemStack, x + 8, y + 7);
+	}
+
 	public static void drawTexturedRect(float x, float y, float width, float height, int filter) {
 		drawTexturedRect(x, y, width, height, 0, 1, 0, 1, filter);
 	}
@@ -598,7 +684,7 @@ public class Utils {
 
 	public static int checkItemTypePet(List<String> lore) {
 		for (int i = lore.size() - 1; i >= 0; i--) {
-			String line = Utils.cleanColour(lore.get(i));
+			String line = cleanColour(lore.get(i));
 			for (int i1 = 0; i1 < rarityArr.length; i1++) {
 				if (line.equals(rarityArr[i1])) {
 					return i1;
@@ -785,7 +871,7 @@ public class Utils {
 
 		Tessellator tessellator = Tessellator.getInstance();
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-		worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
+		worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
 		worldrenderer
 			.pos(x, y + height, 0.0D)
 			.tex(uMin, vMax).endVertex();
@@ -824,7 +910,7 @@ public class Utils {
 
 		Tessellator tessellator = Tessellator.getInstance();
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-		worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
+		worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
 		worldrenderer
 			.pos(x, y + height, 0.0D)
 			.tex(uMin, vMax).endVertex();
@@ -847,29 +933,43 @@ public class Utils {
 		return createItemStack(item, displayName, 0, lore);
 	}
 
+	public static ItemStack createItemStackArray(Item item, String displayName, String[] lore) {
+		return createItemStack(item, displayName, 0, lore);
+	}
+
 	public static ItemStack createItemStack(Block item, String displayName, String... lore) {
 		return createItemStack(Item.getItemFromBlock(item), displayName, lore);
 	}
 
 	public static ItemStack createItemStack(Item item, String displayName, int damage, String... lore) {
-		ItemStack stack = new ItemStack(item, 1, damage);
+		return createItemStack(item, displayName, damage, 1, lore);
+	}
+
+	public static ItemStack createItemStack(Item item, String displayName, int damage, int amount, String... lore) {
+		ItemStack stack = new ItemStack(item, amount, damage);
 		NBTTagCompound tag = new NBTTagCompound();
-		NBTTagCompound display = new NBTTagCompound();
-		NBTTagList Lore = new NBTTagList();
-
-		for (String line : lore) {
-			Lore.appendTag(new NBTTagString(line));
-		}
-
-		display.setString("Name", displayName);
-		display.setTag("Lore", Lore);
-
-		tag.setTag("display", display);
+		addNameAndLore(tag, displayName, lore);
 		tag.setInteger("HideFlags", 254);
 
 		stack.setTagCompound(tag);
 
 		return stack;
+	}
+
+	private static void addNameAndLore(NBTTagCompound tag, String displayName, String[] lore) {
+		NBTTagCompound display = new NBTTagCompound();
+
+		display.setString("Name", displayName);
+
+		if (lore != null) {
+			NBTTagList tagLore = new NBTTagList();
+			for (String line : lore) {
+				tagLore.appendTag(new NBTTagString(line));
+			}
+			display.setTag("Lore", tagLore);
+		}
+
+		tag.setTag("display", display);
 	}
 
 	public static ItemStack editItemStackInfo(
@@ -903,13 +1003,16 @@ public class Utils {
 	}
 
 	public static ItemStack createSkull(String displayName, String uuid, String value) {
+		return createSkull(displayName, uuid, value, null);
+	}
+
+	public static ItemStack createSkull(String displayName, String uuid, String value, String[] lore) {
 		ItemStack render = new ItemStack(Items.skull, 1, 3);
 		NBTTagCompound tag = new NBTTagCompound();
 		NBTTagCompound skullOwner = new NBTTagCompound();
 		NBTTagCompound properties = new NBTTagCompound();
 		NBTTagList textures = new NBTTagList();
 		NBTTagCompound textures_0 = new NBTTagCompound();
-		NBTTagCompound display = new NBTTagCompound();
 
 		skullOwner.setString("Id", uuid);
 		skullOwner.setString("Name", uuid);
@@ -917,8 +1020,7 @@ public class Utils {
 		textures_0.setString("Value", value);
 		textures.appendTag(textures_0);
 
-		display.setString("Name", displayName);
-		tag.setTag("display", display);
+		addNameAndLore(tag, displayName, lore);
 
 		properties.setTag("textures", textures);
 		skullOwner.setTag("Properties", properties);
@@ -927,6 +1029,11 @@ public class Utils {
 		return render;
 	}
 
+	public static void drawStringF(String str, float x, float y, boolean shadow, int colour) {
+		drawStringF(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, colour);
+	}
+
+	@Deprecated
 	public static void drawStringF(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
 		fr.drawString(str, x, y, colour, shadow);
 	}
@@ -950,6 +1057,11 @@ public class Utils {
 		return height;
 	}
 
+	public static void drawStringVertical(String str, float x, float y, boolean shadow, int colour) {
+		drawStringVertical(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, colour);
+	}
+
+	@Deprecated
 	public static void drawStringVertical(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
 		String format = FontRenderer.getFormatFromString(str);
 		str = cleanColour(str);
@@ -977,9 +1089,8 @@ public class Utils {
 		for (int xOff = -2; xOff <= 2; xOff++) {
 			for (int yOff = -2; yOff <= 2; yOff++) {
 				if (Math.abs(xOff) != Math.abs(yOff)) {
-					Utils.drawStringCenteredScaledMaxWidth(
-						Utils.cleanColourNotModifiers(str),
-						Minecraft.getMinecraft().fontRendererObj,
+					drawStringCenteredScaledMaxWidth(
+						cleanColourNotModifiers(str),
 						x + xOff / 2f * factor,
 						y + 4 + yOff / 2f * factor,
 						false,
@@ -991,9 +1102,7 @@ public class Utils {
 		}
 
 		GlStateManager.color(1, 1, 1, 1);
-		Utils.drawStringCenteredScaledMaxWidth(str, Minecraft.getMinecraft().fontRendererObj,
-			x, y + 4, false, maxLength, 4210752
-		);
+		drawStringCenteredScaledMaxWidth(str, x, y + 4, false, maxLength, 421075);
 	}
 
 	public static void renderAlignedString(String first, String second, float x, float y, int length) {
@@ -1004,7 +1113,7 @@ public class Utils {
 			for (int xOff = -2; xOff <= 2; xOff++) {
 				for (int yOff = -2; yOff <= 2; yOff++) {
 					if (Math.abs(xOff) != Math.abs(yOff)) {
-						fontRendererObj.drawString(Utils.cleanColourNotModifiers(first),
+						fontRendererObj.drawString(cleanColourNotModifiers(first),
 							x + xOff / 2f, y + yOff / 2f,
 							new Color(0, 0, 0, 200 / Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB(), false
 						);
@@ -1018,7 +1127,7 @@ public class Utils {
 			for (int xOff = -2; xOff <= 2; xOff++) {
 				for (int yOff = -2; yOff <= 2; yOff++) {
 					if (Math.abs(xOff) != Math.abs(yOff)) {
-						fontRendererObj.drawString(Utils.cleanColourNotModifiers(second),
+						fontRendererObj.drawString(cleanColourNotModifiers(second),
 							x + length - secondLen + xOff / 2f, y + yOff / 2f,
 							new Color(0, 0, 0, 200 / Math.max(Math.abs(xOff), Math.abs(yOff))).getRGB(), false
 						);
@@ -1033,6 +1142,18 @@ public class Utils {
 
 	public static void drawStringScaledMaxWidth(
 		String str,
+		float x,
+		float y,
+		boolean shadow,
+		int len,
+		int colour
+	) {
+		drawStringScaledMaxWidth(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, len, colour);
+	}
+
+	@Deprecated
+	public static void drawStringScaledMaxWidth(
+		String str,
 		FontRenderer fr,
 		float x,
 		float y,
@@ -1044,9 +1165,18 @@ public class Utils {
 		float factor = len / (float) strLen;
 		factor = Math.min(1, factor);
 
-		drawStringScaled(str, fr, x, y, shadow, colour, factor);
+		drawStringScaled(str, x, y, shadow, colour, factor);
 	}
 
+	public static void drawStringCentered(String str, float x, float y, boolean shadow, int colour) {
+		drawStringCentered(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, colour);
+	}
+
+	public static void drawStringCentered(String str, int x, int y, boolean shadow, int colour) {
+		drawStringCentered(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, colour);
+	}
+
+	@Deprecated
 	public static void drawStringCentered(String str, FontRenderer fr, float x, float y, boolean shadow, int colour) {
 		int strLen = fr.getStringWidth(str);
 
@@ -1058,6 +1188,18 @@ public class Utils {
 		GL11.glTranslatef(-x2, -y2, 0);
 	}
 
+	public static void drawStringScaled(
+		String str,
+		float x,
+		float y,
+		boolean shadow,
+		int colour,
+		float factor
+	) {
+		drawStringScaled(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, colour, factor);
+	}
+
+	@Deprecated
 	public static void drawStringScaled(
 		String str,
 		FontRenderer fr,
@@ -1081,9 +1223,39 @@ public class Utils {
 		int colour,
 		float factor
 	) {
-		drawStringScaled(str, fr, x - fr.getStringWidth(str) * factor, y, shadow, colour, factor);
+		drawStringScaled(str, x - fr.getStringWidth(str) * factor, y, shadow, colour, factor);
 	}
 
+	public static void drawStringScaledFillWidth(
+		String str,
+		float x, float y,
+		boolean shadow,
+		int colour,
+		int availableSpace
+	) {
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(x, y, 0);
+		var fr = Minecraft.getMinecraft().fontRendererObj;
+		var width = fr.getStringWidth(str);
+		float scale = ((float) availableSpace) / width;
+		GlStateManager.scale(scale, scale, 1f);
+		fr.drawString(str,  -width / 2F, 0, colour, shadow);
+		GlStateManager.popMatrix();
+	}
+
+	public static void drawStringScaledMax(
+		String str,
+		float x,
+		float y,
+		boolean shadow,
+		int colour,
+		float factor,
+		int len
+	) {
+		drawStringScaledMax(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, colour, factor, len);
+	}
+
+	@Deprecated
 	public static void drawStringScaledMax(
 		String str,
 		FontRenderer fr,
@@ -1105,6 +1277,18 @@ public class Utils {
 
 	public static void drawStringCenteredScaledMaxWidth(
 		String str,
+		float x,
+		float y,
+		boolean shadow,
+		int len,
+		int colour
+	) {
+		drawStringCenteredScaledMaxWidth(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, len, colour);
+	}
+
+	@Deprecated
+	public static void drawStringCenteredScaledMaxWidth(
+		String str,
 		FontRenderer fr,
 		float x,
 		float y,
@@ -1119,7 +1303,7 @@ public class Utils {
 
 		float fontHeight = 8 * factor;
 
-		drawStringScaled(str, fr, x - newLen / 2, y - fontHeight / 2, shadow, colour, factor);
+		drawStringScaled(str, x - newLen / 2, y - fontHeight / 2, shadow, colour, factor);
 	}
 
 	public static Matrix4f createProjectionMatrix(int width, int height) {
@@ -1137,18 +1321,48 @@ public class Utils {
 
 	public static void drawStringCenteredScaled(
 		String str,
-		FontRenderer fr,
-		float x,
-		float y,
+		float x, float y,
 		boolean shadow,
 		int len,
 		int colour
 	) {
-		int strLen = fr.getStringWidth(str);
+		int strLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(str);
 		float factor = len / (float) strLen;
 		float fontHeight = 8 * factor;
 
-		drawStringScaled(str, fr, x - len / 2, y - fontHeight / 2, shadow, colour, factor);
+		drawStringScaled(
+			str,
+			x - len / 2, y - fontHeight / 2,
+			shadow,
+			colour,
+			factor
+		);
+	}
+
+	public static void drawStringCenteredScaled(
+		String str,
+		float x, float y,
+		boolean shadow,
+		float factor
+	) {
+		drawStringCenteredScaled(str, Minecraft.getMinecraft().fontRendererObj, x, y, shadow, factor);
+	}
+
+	@Deprecated
+	public static void drawStringCenteredScaled(
+		String str,
+		FontRenderer fr,
+		float x,
+		float y,
+		boolean shadow,
+		float factor
+	) {
+		int strLen = fr.getStringWidth(str);
+
+		float x2 = x - strLen / 2f;
+		float y2 = y - fr.FONT_HEIGHT / 2f;
+
+		drawStringScaled(str, x2, y2, shadow, 0, factor);
 	}
 
 	public static void drawStringCenteredYScaled(
@@ -1164,7 +1378,7 @@ public class Utils {
 		float factor = len / (float) strLen;
 		float fontHeight = 8 * factor;
 
-		drawStringScaled(str, fr, x, y - fontHeight / 2, shadow, colour, factor);
+		drawStringScaled(str, x, y - fontHeight / 2, shadow, colour, factor);
 	}
 
 	public static void drawStringCenteredYScaledMaxWidth(
@@ -1181,12 +1395,11 @@ public class Utils {
 		factor = Math.min(1, factor);
 		float fontHeight = 8 * factor;
 
-		drawStringScaled(str, fr, x, y - fontHeight / 2, shadow, colour, factor);
+		drawStringScaled(str, x, y - fontHeight / 2, shadow, colour, factor);
 	}
 
 	public static int renderStringTrimWidth(
 		String str,
-		FontRenderer fr,
 		boolean shadow,
 		int x,
 		int y,
@@ -1194,12 +1407,11 @@ public class Utils {
 		int colour,
 		int maxLines
 	) {
-		return renderStringTrimWidth(str, fr, shadow, x, y, len, colour, maxLines, 1);
+		return renderStringTrimWidth(str, shadow, x, y, len, colour, maxLines, 1);
 	}
 
 	public static int renderStringTrimWidth(
 		String str,
-		FontRenderer fr,
 		boolean shadow,
 		int x,
 		int y,
@@ -1226,21 +1438,20 @@ public class Utils {
 		int lines = 0;
 		while ((lines++ < maxLines) || maxLines < 0) {
 			if (trimmed.length() == str.length()) {
-				drawStringScaled(trimmed, fr, x, y + yOff, shadow, colour, scale);
-				//fr.drawString(trimmed, x, y + yOff, colour, shadow);
+				drawStringScaled(trimmed, x, y + yOff, shadow, colour, scale);
 				break;
 			} else if (trimmed.isEmpty()) {
 				yOff -= 12 * scale;
 				break;
 			} else {
 				if (firstLine) {
-					drawStringScaled(trimmed, fr, x, y + yOff, shadow, colour, scale);
+					drawStringScaled(trimmed, x, y + yOff, shadow, colour, scale);
 					firstLine = false;
 				} else {
 					if (trimmed.startsWith(" ")) {
 						trimmed = trimmed.substring(1);
 					}
-					drawStringScaled(colourCodes + trimmed, fr, x, y + yOff, shadow, colour, scale);
+					drawStringScaled(colourCodes + trimmed, x, y + yOff, shadow, colour, scale);
 				}
 
 				excess = str.substring(trimmedCharacters);
@@ -1282,17 +1493,17 @@ public class Utils {
 		GlStateManager.disableTexture2D();
 		GlStateManager.enableBlend();
 		GlStateManager.disableAlpha();
-		GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-		GlStateManager.shadeModel(7425);
+		GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+		GlStateManager.shadeModel(GL11.GL_SMOOTH);
 		Tessellator tessellator = Tessellator.getInstance();
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-		worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+		worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
 		worldrenderer.pos(right, top, 0).color(f1, f2, f3, f).endVertex();
 		worldrenderer.pos(left, top, 0).color(f1, f2, f3, f).endVertex();
 		worldrenderer.pos(left, bottom, 0).color(f5, f6, f7, f4).endVertex();
 		worldrenderer.pos(right, bottom, 0).color(f5, f6, f7, f4).endVertex();
 		tessellator.draw();
-		GlStateManager.shadeModel(7424);
+		GlStateManager.shadeModel(GL11.GL_FLAT);
 		GlStateManager.disableBlend();
 		GlStateManager.enableAlpha();
 		GlStateManager.enableTexture2D();
@@ -1310,17 +1521,17 @@ public class Utils {
 		GlStateManager.disableTexture2D();
 		GlStateManager.enableBlend();
 		GlStateManager.disableAlpha();
-		GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-		GlStateManager.shadeModel(7425);
+		GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+		GlStateManager.shadeModel(GL11.GL_SMOOTH);
 		Tessellator tessellator = Tessellator.getInstance();
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-		worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+		worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
 		worldrenderer.pos(right, top, 0).color(f5, f6, f7, f4).endVertex();
 		worldrenderer.pos(left, top, 0).color(f1, f2, f3, f).endVertex();
 		worldrenderer.pos(left, bottom, 0).color(f1, f2, f3, f).endVertex();
 		worldrenderer.pos(right, bottom, 0).color(f5, f6, f7, f4).endVertex();
 		tessellator.draw();
-		GlStateManager.shadeModel(7424);
+		GlStateManager.shadeModel(GL11.GL_FLAT);
 		GlStateManager.disableBlend();
 		GlStateManager.enableAlpha();
 		GlStateManager.enableTexture2D();
@@ -1332,10 +1543,17 @@ public class Utils {
 		final int mouseY,
 		final int screenWidth,
 		final int screenHeight,
-		final int maxTextWidth,
-		FontRenderer font
+		final int maxTextWidth
 	) {
-		drawHoveringText(textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font, true);
+		drawHoveringText(
+			textLines,
+			mouseX,
+			mouseY,
+			screenWidth,
+			screenHeight,
+			maxTextWidth,
+			Minecraft.getMinecraft().fontRendererObj
+		);
 	}
 
 	public static JsonObject getConstant(String constant, Gson gson) {
@@ -1352,8 +1570,7 @@ public class Utils {
 					StandardCharsets.UTF_8
 				))
 			) {
-				T obj = gson.fromJson(reader, clazz);
-				return obj;
+				return gson.fromJson(reader, clazz);
 			} catch (Exception e) {
 				return null;
 			}
@@ -1377,12 +1594,28 @@ public class Utils {
 		return prim.getAsInt();
 	}
 
+	public static long getElementAsLong(JsonElement element, long def) {
+		if (element == null) return def;
+		if (!element.isJsonPrimitive()) return def;
+		JsonPrimitive prim = element.getAsJsonPrimitive();
+		if (!prim.isNumber()) return def;
+		return prim.getAsLong();
+	}
+
 	public static String getElementAsString(JsonElement element, String def) {
 		if (element == null) return def;
 		if (!element.isJsonPrimitive()) return def;
 		JsonPrimitive prim = element.getAsJsonPrimitive();
 		if (!prim.isString()) return def;
 		return prim.getAsString();
+	}
+
+	public static boolean getElementAsBool(JsonElement element, boolean def) {
+		if (element == null) return def;
+		if (!element.isJsonPrimitive()) return def;
+		JsonPrimitive prim = element.getAsJsonPrimitive();
+		if (!prim.isBoolean()) return def;
+		return prim.getAsBoolean();
 	}
 
 	public static JsonElement getElement(JsonElement element, String path) {
@@ -1438,12 +1671,7 @@ public class Utils {
 			if (c == '\u00A7') {
 				lastColourCode = i;
 			} else if (lastColourCode == i - 1) {
-				int colIndex = "0123456789abcdef".indexOf(c);
-				if (colIndex >= 0) {
-					currentColour = colIndex;
-				} else {
-					currentColour = 0;
-				}
+				currentColour = Math.max(0, "0123456789abcdef".indexOf(c));
 			} else if ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0) {
 				if (currentColour > 0) {
 					mostCommon[currentColour]++;
@@ -1471,17 +1699,38 @@ public class Utils {
 		scrollY.resetTimer();
 	}
 
+	@Deprecated
 	public static void drawHoveringText(
 		List<String> textLines,
-		final int mouseX,
-		final int mouseY,
-		final int screenWidth,
-		final int screenHeight,
+		int mouseX,
+		int mouseY,
+		int screenWidth,
+		int screenHeight,
 		final int maxTextWidth,
-		FontRenderer font,
-		boolean coloured
+		FontRenderer font
 	) {
 		if (!textLines.isEmpty()) {
+			int borderColorStart = 0x505000FF;
+			if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.tooltipBorderColours) {
+				if (!textLines.isEmpty()) {
+					String first = textLines.get(0);
+					borderColorStart = getPrimaryColour(first).getRGB() & 0x00FFFFFF |
+						((NotEnoughUpdates.INSTANCE.config.tooltipTweaks.tooltipBorderOpacity) << 24);
+				}
+			}
+			textLines = TooltipTextScrolling.handleTextLineRendering(textLines);
+			if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.guiScale != 0) {
+				ScaledResolution scaledResolution = Utils.pushGuiScale(NotEnoughUpdates.INSTANCE.config.tooltipTweaks.guiScale);
+				mouseX = Mouse.getX() * scaledResolution.getScaledWidth() / Minecraft.getMinecraft().displayWidth;
+
+				mouseY = scaledResolution.getScaledHeight() -
+					Mouse.getY() * scaledResolution.getScaledHeight() / Minecraft.getMinecraft().displayHeight;
+
+				screenWidth = scaledResolution.getScaledWidth();
+
+				screenHeight = scaledResolution.getScaledHeight();
+			}
+
 			GlStateManager.disableRescaleNormal();
 			RenderHelper.disableStandardItemLighting();
 			GlStateManager.disableLighting();
@@ -1557,19 +1806,21 @@ public class Utils {
 			}
 
 			//Scrollable tooltips
-			if (tooltipHeight + 6 > screenHeight) {
-				if (scrollY.getTarget() < 0) {
-					scrollY.setTarget(0);
-					scrollY.resetTimer();
-				} else if (screenHeight - tooltipHeight - 12 + (int) scrollY.getTarget() > 0) {
-					scrollY.setTarget(-screenHeight + tooltipHeight + 12);
+			if (!NotEnoughUpdates.INSTANCE.config.tooltipTweaks.scrollableTooltips) {
+				if (tooltipHeight + 6 > screenHeight) {
+					if (scrollY.getTarget() < 0) {
+						scrollY.setTarget(0);
+						scrollY.resetTimer();
+					} else if (screenHeight - tooltipHeight - 12 + (int) scrollY.getTarget() > 0) {
+						scrollY.setTarget(-screenHeight + tooltipHeight + 12);
+						scrollY.resetTimer();
+					}
+				} else {
+					scrollY.setValue(0);
 					scrollY.resetTimer();
 				}
-			} else {
-				scrollY.setValue(0);
-				scrollY.resetTimer();
+				scrollY.tick();
 			}
-			scrollY.tick();
 
 			if (tooltipY + tooltipHeight + 6 > screenHeight) {
 				tooltipY = screenHeight - tooltipHeight - 6 + (int) scrollY.getValue();
@@ -1622,15 +1873,6 @@ public class Utils {
 				backgroundColor,
 				backgroundColor
 			);
-			//TODO: Coloured Borders
-			int borderColorStart = 0x505000FF;
-			if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.tooltipBorderColours && coloured) {
-				if (textLines.size() > 0) {
-					String first = textLines.get(0);
-					borderColorStart = getPrimaryColour(first).getRGB() & 0x00FFFFFF |
-						((NotEnoughUpdates.INSTANCE.config.tooltipTweaks.tooltipBorderOpacity) << 24);
-				}
-			}
 			final int borderColorEnd = (borderColorStart & 0xFEFEFE) >> 1 | borderColorStart & 0xFF000000;
 			drawGradientRect(
 				zLevel,
@@ -1685,6 +1927,7 @@ public class Utils {
 			GlStateManager.enableDepth();
 			RenderHelper.enableStandardItemLighting();
 			GlStateManager.enableRescaleNormal();
+			if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.guiScale != 0) Utils.pushGuiScale(0);
 		}
 		GlStateManager.disableLighting();
 	}
@@ -1710,19 +1953,19 @@ public class Utils {
 		GlStateManager.disableTexture2D();
 		GlStateManager.enableBlend();
 		GlStateManager.disableAlpha();
-		GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-		GlStateManager.shadeModel(7425);
+		GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+		GlStateManager.shadeModel(GL11.GL_SMOOTH);
 
 		Tessellator tessellator = Tessellator.getInstance();
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-		worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+		worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
 		worldrenderer.pos(right, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).endVertex();
 		worldrenderer.pos(left, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).endVertex();
 		worldrenderer.pos(left, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
 		worldrenderer.pos(right, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
 		tessellator.draw();
 
-		GlStateManager.shadeModel(7424);
+		GlStateManager.shadeModel(GL11.GL_FLAT);
 		GlStateManager.disableBlend();
 		GlStateManager.enableAlpha();
 		GlStateManager.enableTexture2D();
@@ -1749,13 +1992,82 @@ public class Utils {
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
 		GlStateManager.disableTexture2D();
 		GlStateManager.color(f, f1, f2, f3);
-		worldrenderer.begin(7, DefaultVertexFormats.POSITION);
+		worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
 		worldrenderer.pos(left, bottom, 0.0D).endVertex();
 		worldrenderer.pos(right, bottom, 0.0D).endVertex();
 		worldrenderer.pos(right, top, 0.0D).endVertex();
 		worldrenderer.pos(left, top, 0.0D).endVertex();
 		tessellator.draw();
 		GlStateManager.enableTexture2D();
+	}
+
+	/**
+	 * Draws a solid color rectangle with the specified coordinates and color (ARGB format). Args: x1, y1, x2, y2, color
+	 *
+	 * @see Gui#drawRect
+	 */
+	public static void drawRect(float left, float top, float right, float bottom, int color) {
+		float i;
+		if (left < right) {
+			i = left;
+			left = right;
+			right = i;
+		}
+		if (top < bottom) {
+			i = top;
+			top = bottom;
+			bottom = i;
+		}
+		float f = (float) (color >> 24 & 0xFF) / 255.0f;
+		float g = (float) (color >> 16 & 0xFF) / 255.0f;
+		float h = (float) (color >> 8 & 0xFF) / 255.0f;
+		float j = (float) (color & 0xFF) / 255.0f;
+		Tessellator tessellator = Tessellator.getInstance();
+		WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+		GlStateManager.enableBlend();
+		GlStateManager.disableTexture2D();
+		GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+		GlStateManager.color(g, h, j, f);
+		worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
+		worldRenderer.pos(left, bottom, 0.0).endVertex();
+		worldRenderer.pos(right, bottom, 0.0).endVertex();
+		worldRenderer.pos(right, top, 0.0).endVertex();
+		worldRenderer.pos(left, top, 0.0).endVertex();
+		tessellator.draw();
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableBlend();
+	}
+
+	/**
+	 * Draws a default-size 16 by 16 item-overlay at <i>x</i> and <i>y</i>.
+	 *
+	 * @param x position of the overlay
+	 * @param y position of the overlay
+	 */
+	public static void drawHoverOverlay(int x, int y) {
+		drawHoverOverlay(x, y, 16, 16);
+	}
+
+	/**
+	 * Draws an item-overlay of given <i>width</i> and <i>height</i> at <i>x</i> and <i>y</i>.
+	 *
+	 * @param x      position of the overlay
+	 * @param y      position of the overlay
+	 * @param width  width of the overlay
+	 * @param height height of the overlay
+	 */
+	public static void drawHoverOverlay(int x, int y, int width, int height) {
+		GlStateManager.disableLighting();
+		GlStateManager.disableDepth();
+		GlStateManager.colorMask(true, true, true, false);
+		Utils.drawGradientRect(x, y, x + 16, y + 16, 0x80ffffff, 0x80ffffff);
+		GlStateManager.colorMask(true, true, true, true);
+		GlStateManager.enableLighting();
+		GlStateManager.enableDepth();
+	}
+
+	public static String prettyTime(Duration time) {
+		return prettyTime(time.toMillis());
 	}
 
 	public static String prettyTime(long millis) {
@@ -1793,7 +2105,7 @@ public class Utils {
 		GlStateManager.disableTexture2D();
 		GlStateManager.enableBlend();
 		GlStateManager.disableAlpha();
-		GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+		GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
 		GlStateManager.color(f1, f2, f3, f);
 		GL11.glLineWidth(width);
 		GL11.glBegin(GL11.GL_LINES);
@@ -1834,7 +2146,7 @@ public class Utils {
 
 		Tessellator tessellator = Tessellator.getInstance();
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-		worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
+		worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
 		worldrenderer
 			.pos(x1, y1, 0.0D)
 			.tex(uMin, vMax).endVertex();
@@ -1898,6 +2210,10 @@ public class Utils {
 			top <= y && y < top + height;
 	}
 
+	public static boolean isWithinRect(int x, int y, Rectangle rectangle) {
+		return isWithinRect(x, y, rectangle.getLeft(), rectangle.getTop(), rectangle.getWidth(), rectangle.getHeight());
+	}
+
 	public static int getNumberOfStars(ItemStack stack) {
 		if (stack != null && stack.hasTagCompound()) {
 			NBTTagCompound tag = stack.getTagCompound();
@@ -1941,12 +2257,16 @@ public class Utils {
 		return stringBuilder.toString();
 	}
 
-	public static void showOutdatedRepoNotification() {
+	private static long lastError = -1;
+
+	public static void showOutdatedRepoNotification(String missingFile) {
 		if (NotEnoughUpdates.INSTANCE.config.notifications.outdatedRepo) {
 			NotificationHandler.displayNotification(Lists.newArrayList(
 					EnumChatFormatting.RED + EnumChatFormatting.BOLD.toString() + "Missing repo data",
 					EnumChatFormatting.RED +
 						"Data used for many NEU features is not up to date, this should normally not be the case.",
+					EnumChatFormatting.RED +
+						"Please make sure you are on the latest version of NEU.",
 					EnumChatFormatting.RED + "You can try " + EnumChatFormatting.BOLD + "/neuresetrepo" + EnumChatFormatting.RESET +
 						EnumChatFormatting.RED + " and restart your game" +
 						" to see if that fixes the issue.",
@@ -1955,8 +2275,12 @@ public class Utils {
 						EnumChatFormatting.RESET + EnumChatFormatting.RED + " and message in " + EnumChatFormatting.BOLD +
 						"#neu-support" + EnumChatFormatting.RESET + EnumChatFormatting.RED + " to get support"
 				),
-				true, true
+				false, true
 			);
+		}
+		if (System.currentTimeMillis() - lastError > 1000) {
+			System.err.println("[NEU] Repo issue: " + missingFile);
+			lastError = System.currentTimeMillis();
 		}
 	}
 
@@ -1998,5 +2322,75 @@ public class Utils {
 
 	public static String getLastOpenChestName() {
 		return SBInfo.getInstance().lastOpenChestName;
+	}
+
+	public static String getNameFromChatComponent(IChatComponent chatComponent) {
+		String unformattedText = cleanColour(chatComponent.getSiblings().get(0).getUnformattedText());
+		String username = unformattedText.substring(unformattedText.indexOf(">") + 2, unformattedText.indexOf(":"));
+		// If the first character is a square bracket the user has a rank
+		// So we get the username from the space after the closing square bracket (end of their rank)
+		if (username.charAt(0) == '[') {
+			username = username.substring(username.indexOf(" ") + 1);
+		}
+		// If we still get any square brackets it means the user was talking in guild chat with a guild rank
+		// So we get the username up to the space before the guild rank
+		if (username.contains("[") || username.contains("]")) {
+			username = username.substring(0, username.indexOf(" "));
+		}
+		return username;
+	}
+
+	public static void addChatMessage(String message) {
+		EntityPlayerSP thePlayer = Minecraft.getMinecraft().thePlayer;
+		if (thePlayer != null) {
+			thePlayer.addChatMessage(new ChatComponentText(message));
+		} else {
+			System.out.println(message);
+		}
+	}
+
+	public static boolean openUrl(String url) {
+		try {
+			Desktop desk = Desktop.getDesktop();
+			desk.browse(new URI(url));
+			return true;
+		} catch (UnsupportedOperationException | IOException | URISyntaxException ignored) {
+			Runtime runtime = Runtime.getRuntime();
+			try {
+				runtime.exec("xdg-open " + url);
+				return true;
+			} catch (IOException e) {
+				playSound(new ResourceLocation("game.player.hurt"), true);
+				return false;
+			}
+		}
+	}
+
+	public static void sendLeftMouseClick(int windowId, int slot) {
+		Minecraft.getMinecraft().playerController.windowClick(
+			windowId,
+			slot, 0, 0, Minecraft.getMinecraft().thePlayer
+		);
+	}
+
+	public static String timeSinceMillisecond(long time) {
+		Instant lastSave = Instant.ofEpochMilli(time);
+		LocalDateTime lastSaveTime = LocalDateTime.ofInstant(lastSave, TimeZone.getDefault().toZoneId());
+		long timeDiff = System.currentTimeMillis() - lastSave.toEpochMilli();
+		LocalDateTime sinceOnline = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeDiff), ZoneId.of("UTC"));
+		String renderText;
+
+		if (timeDiff < 60000L) {
+			renderText = sinceOnline.getSecond() + " seconds ago";
+		} else if (timeDiff < 3600000L) {
+			renderText = sinceOnline.getMinute() + " minutes ago";
+		} else if (timeDiff < 86400000L) {
+			renderText = sinceOnline.getHour() + " hours ago";
+		} else if (timeDiff < 31556952000L) {
+			renderText = sinceOnline.getDayOfYear() + " days ago";
+		} else {
+			renderText = lastSaveTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+		}
+		return renderText;
 	}
 }

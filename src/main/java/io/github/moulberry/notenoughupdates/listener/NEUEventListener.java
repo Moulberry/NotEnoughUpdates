@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -34,17 +34,18 @@ import io.github.moulberry.notenoughupdates.miscfeatures.ItemCustomizeManager;
 import io.github.moulberry.notenoughupdates.miscfeatures.NPCRetexturing;
 import io.github.moulberry.notenoughupdates.miscgui.AccessoryBagOverlay;
 import io.github.moulberry.notenoughupdates.miscgui.GuiCustomEnchant;
-import io.github.moulberry.notenoughupdates.miscgui.hex.GuiCustomHex;
+import io.github.moulberry.notenoughupdates.miscgui.GuiItemRecipe;
 import io.github.moulberry.notenoughupdates.miscgui.StorageOverlay;
+import io.github.moulberry.notenoughupdates.miscgui.hex.GuiCustomHex;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.overlays.TextTabOverlay;
+import io.github.moulberry.notenoughupdates.recipes.RecipeHistory;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.NotificationHandler;
-import io.github.moulberry.notenoughupdates.util.ProfileApiSyncer;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
+import io.github.moulberry.notenoughupdates.util.TabSkillInfoParser;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import io.github.moulberry.notenoughupdates.util.XPInformation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.event.ClickEvent;
@@ -162,10 +163,14 @@ public class NEUEventListener {
 
 
 		if (longUpdate) {
+
+			if (!(Minecraft.getMinecraft().currentScreen instanceof GuiItemRecipe)) {
+				RecipeHistory.clear();
+			}
+
 			CrystalOverlay.tick();
 			FairySouls.getInstance().tick();
-			XPInformation.getInstance().tick();
-			ProfileApiSyncer.getInstance().tick();
+			TabSkillInfoParser.parseSkillInfo();
 			ItemCustomizeManager.tick();
 			BackgroundBlur.markDirty();
 			NPCRetexturing.getInstance().tick();
@@ -235,42 +240,29 @@ public class NEUEventListener {
 					if (!NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore) {
 						NotEnoughUpdates.INSTANCE.config.hidden.loadedModBefore = true;
 						if (Constants.MISC == null || !Constants.MISC.has("featureslist")) {
-							Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-								"" + EnumChatFormatting.DARK_RED + EnumChatFormatting.BOLD + "WARNING: " + EnumChatFormatting.RESET +
-									EnumChatFormatting.RED + "Could not load Feature List URL from repo."));
-							Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-								"" + EnumChatFormatting.RED + "Please run " + EnumChatFormatting.BOLD + "/neuresetrepo" +
-									EnumChatFormatting.RESET + EnumChatFormatting.RED + " and " + EnumChatFormatting.BOLD +
-									"restart your game" + EnumChatFormatting.RESET + EnumChatFormatting.RED + " in order to fix. " +
-									EnumChatFormatting.DARK_RED + EnumChatFormatting.BOLD + "If that doesn't fix it" +
-									EnumChatFormatting.RESET + EnumChatFormatting.RED +
-									", please join discord.gg/moulberry and post in #neu-support"));
-							Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
-							Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-								"" + EnumChatFormatting.GOLD + "To view the feature list after restarting type /neufeatures"));
+							Utils.showOutdatedRepoNotification("misc.json");
+							Utils.addChatMessage(
+								"" + EnumChatFormatting.GOLD + "To view the feature list after restarting type /neufeatures");
 						} else {
 							String url = Constants.MISC.get("featureslist").getAsString();
-							Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
-							Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(
-								EnumChatFormatting.BLUE + "It seems this is your first time using NotEnoughUpdates."));
+							Utils.addChatMessage("");
+							Utils.addChatMessage(EnumChatFormatting.BLUE + "It seems this is your first time using NotEnoughUpdates.");
 							ChatComponentText clickTextFeatures = new ChatComponentText(EnumChatFormatting.YELLOW +
 								"Click this message if you would like to view a list of NotEnoughUpdate's Features.");
 							clickTextFeatures.setChatStyle(Utils.createClickStyle(ClickEvent.Action.OPEN_URL, url));
 							Minecraft.getMinecraft().thePlayer.addChatMessage(clickTextFeatures);
 						}
-						Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+						Utils.addChatMessage("");
 						ChatComponentText clickTextHelp = new ChatComponentText(EnumChatFormatting.YELLOW +
 							"Click this message if you would like to view a list of NotEnoughUpdate's commands.");
 						clickTextHelp.setChatStyle(Utils.createClickStyle(ClickEvent.Action.RUN_COMMAND, "/neuhelp"));
 						Minecraft.getMinecraft().thePlayer.addChatMessage(clickTextHelp);
-						Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(""));
+						Utils.addChatMessage("");
 					}
 				}
 			}
 			if (currentTime - lastSkyblockScoreboard < 5 * 60 * 1000) { //5 minutes
 				neu.manager.auctionManager.tick();
-			} else {
-				neu.manager.auctionManager.markNeedsUpdate();
 			}
 		}
 	}

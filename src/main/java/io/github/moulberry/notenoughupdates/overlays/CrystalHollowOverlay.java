@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -21,8 +21,10 @@ package io.github.moulberry.notenoughupdates.overlays;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.config.Position;
+import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.miscfeatures.StorageManager;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
+import io.github.moulberry.notenoughupdates.util.ItemResolutionQuery;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -34,7 +36,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.util.vector.Vector2f;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static io.github.moulberry.notenoughupdates.util.Utils.showOutdatedRepoNotification;
 
 public class CrystalHollowOverlay extends TextOverlay {
 	private static final Minecraft mc = Minecraft.getMinecraft();
@@ -129,9 +132,14 @@ public class CrystalHollowOverlay extends TextOverlay {
 	}
 
 	@Override
+	public boolean isEnabled() {
+		return NotEnoughUpdates.INSTANCE.config.mining.crystalHollowOverlay;
+	}
+
+	@Override
 	public void update() {
 		overlayStrings = null;
-		if (!NotEnoughUpdates.INSTANCE.config.mining.crystalHollowOverlay || SBInfo.getInstance().getLocation() == null ||
+		if (!isEnabled() || SBInfo.getInstance().getLocation() == null ||
 			!SBInfo.getInstance().getLocation().equals("crystal_hollows"))
 			return;
 
@@ -208,11 +216,10 @@ public class CrystalHollowOverlay extends TextOverlay {
 					if (crystalCheck()) {
 						int count = getCountCrystal(hidden.crystals);
 						float percent = (float) count / hidden.crystals.size() * 100;
-						DecimalFormat df = new DecimalFormat("#.#");
 						overlayStrings.add(
 							EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] +
 								"Crystals: " + getColor(percent) +
-								df.format(percent) + "%");
+								StringUtils.formatToTenths(percent) + "%");
 					}
 					break;
 				case 3:
@@ -329,11 +336,10 @@ public class CrystalHollowOverlay extends TextOverlay {
 	) {
 		int count = getCount(parts, inventoryData, storageData);
 		float percent = (float) count / parts.size() * 100;
-		DecimalFormat df = new DecimalFormat("#.#");
 		overlayStrings.add(
 			EnumChatFormatting.values()[NotEnoughUpdates.INSTANCE.config.mining.crystalHollowPartColor] + text + ": " +
 				getColor(percent) +
-				df.format(percent) + "%");
+				StringUtils.formatToTenths(percent) + "%");
 	}
 
 	private EnumChatFormatting getColor(float percent) {
@@ -497,98 +503,35 @@ public class CrystalHollowOverlay extends TextOverlay {
 	private static Map<String, ItemStack> crystallHollowsIcons;
 
 	private static void setupCrystallHollowsIcons() {
-		crystallHollowsIcons = new HashMap<String, ItemStack>() {{
-			put(
-				"Scavenged Lapis Sword",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("DWARVEN_LAPIS_SWORD"))
-			);
-			put(
-				"Scavenged Golden Hammer",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("DWARVEN_GOLD_HAMMER"))
-			);
-			put(
-				"Scavenged Diamond Axe",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("DWARVEN_DIAMOND_AXE"))
-			);
-			put(
-				"Scavenged Emerald Hammer",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("DWARVEN_EMERALD_HAMMER"))
-			);
-			put(
-				"Electron Transmitter",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("ELECTRON_TRANSMITTER"))
-			);
-			put(
-				"FTX 3070",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("FTX_3070"))
-			);
-			put(
-				"Robotron Reflector",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("ROBOTRON_REFLECTOR"))
-			);
-			put(
-				"Superlite Motor",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("SUPERLITE_MOTOR"))
-			);
-			put(
-				"Control Switch",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("CONTROL_SWITCH"))
-			);
-			put(
-				"Synthetic Heart",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("SYNTHETIC_HEART"))
-			);
-			put(
-				"Amber",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("PERFECT_AMBER_GEM"))
-			);
-			put(
-				"Sapphire",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("PERFECT_SAPPHIRE_GEM"))
-			);
-			put(
-				"Jade",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("PERFECT_JADE_GEM"))
-			);
-			put(
-				"Amethyst",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("PERFECT_AMETHYST_GEM"))
-			);
-			put(
-				"Topaz",
-				NotEnoughUpdates.INSTANCE.manager.jsonToStack(NotEnoughUpdates.INSTANCE.manager
-					.getItemInformation()
-					.get("PERFECT_TOPAZ_GEM"))
-			);
-		}};
+		crystallHollowsIcons = new HashMap<String, ItemStack>() {
+			{
+				addItem("Scavenged Lapis Sword", "DWARVEN_LAPIS_SWORD");
+				addItem("Scavenged Golden Hammer", "DWARVEN_GOLD_HAMMER");
+				addItem("Scavenged Diamond Axe", "DWARVEN_DIAMOND_AXE");
+				addItem("Scavenged Emerald Hammer", "DWARVEN_EMERALD_HAMMER");
+				addItem("Electron Transmitter", "ELECTRON_TRANSMITTER");
+				addItem("FTX 3070", "FTX_3070");
+				addItem("Robotron Reflector", "ROBOTRON_REFLECTOR");
+				addItem("Superlite Motor", "SUPERLITE_MOTOR");
+				addItem("Control Switch", "CONTROL_SWITCH");
+				addItem("Synthetic Heart", "SYNTHETIC_HEART");
+				addItem("Amber", "PERFECT_AMBER_GEM");
+				addItem("Sapphire", "PERFECT_SAPPHIRE_GEM");
+				addItem("Jade", "PERFECT_JADE_GEM");
+				addItem("Amethyst", "PERFECT_AMETHYST_GEM");
+				addItem("Topaz", "PERFECT_TOPAZ_GEM");
+			}
+
+			private void addItem(String eventName, String internalName) {
+				ItemStack itemStack = new ItemResolutionQuery(NotEnoughUpdates.INSTANCE.manager)
+					.withKnownInternalName(internalName).resolveToItemStack();
+				if (itemStack == null) {
+					showOutdatedRepoNotification(internalName);
+					return;
+				}
+				put(eventName, itemStack.copy());
+			}
+		};
 	}
 
 	@Override

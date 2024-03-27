@@ -24,6 +24,7 @@ import com.google.gson.JsonParseException;
 import io.github.moulberry.notenoughupdates.NEUManager;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
+import lombok.var;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.inventory.GuiChest;
@@ -36,15 +37,17 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ItemResolutionQuery {
 
-	private static final Pattern ENCHANTED_BOOK_NAME_PATTERN = Pattern.compile("^((?:§.)+)([^§]+) ([IVXL]+)$");
+	private static final Pattern ENCHANTED_BOOK_NAME_PATTERN = Pattern.compile("^((?:§.)*)([^§]+) ([IVXL]+)$");
 	private static final String EXTRA_ATTRIBUTES = "ExtraAttributes";
 	private static final List<String> PET_RARITIES = Arrays.asList(
 		"COMMON",
@@ -107,6 +110,7 @@ public class ItemResolutionQuery {
 					resolvedName = resolvePetName();
 					break;
 				case "RUNE":
+				case "UNIQUE_RUNE":
 					resolvedName = resolveRuneName();
 					break;
 				case "ENCHANTED_BOOK":
@@ -115,6 +119,12 @@ public class ItemResolutionQuery {
 				case "PARTY_HAT_CRAB":
 				case "PARTY_HAT_CRAB_ANIMATED":
 					resolvedName = resolveCrabHatName();
+					break;
+				case "ABICASE":
+					resolvedName = resolvePhoneCase();
+					break;
+				case "PARTY_HAT_SLOTH":
+					resolvedName = resolveSlothHatName();
 					break;
 			}
 		}
@@ -185,38 +195,82 @@ public class ItemResolutionQuery {
 		return null;
 	}
 
+	/**
+	 * Search for an item by the display name
+	 *
+	 * @param displayName  The display name of the item we are searching
+	 * @param mayBeMangled Whether the item name may be mangled (for example: reforges, stars)
+	 * @return the internal neu item id of that item, or null
+	 */
+	public static String findInternalNameByDisplayName(String displayName, boolean mayBeMangled) {
+		var cleanDisplayName = StringUtils.cleanColour(displayName);
+		return filterInternalNameCandidates(
+			findInternalNameCandidatesForDisplayName(cleanDisplayName),
+			displayName,
+			mayBeMangled
+		);
+	}
+
+	public static String filterInternalNameCandidates(
+		Collection<String> candidateInternalNames,
+		String displayName,
+		boolean mayBeMangled
+	) {
+		var cleanDisplayName = StringUtils.cleanColour(displayName);
+		var manager = NotEnoughUpdates.INSTANCE.manager;
+		String bestMatch = null;
+		int bestMatchLength = -1;
+		for (String internalName : candidateInternalNames) {
+			var cleanItemDisplayName = StringUtils.cleanColour(manager.getDisplayName(internalName));
+			if (cleanItemDisplayName.length() == 0) continue;
+			if (mayBeMangled
+				? !cleanDisplayName.contains(cleanItemDisplayName)
+				: !cleanItemDisplayName.equals(cleanDisplayName)) {
+				continue;
+			}
+			if (cleanItemDisplayName.length() > bestMatchLength) {
+				bestMatchLength = cleanItemDisplayName.length();
+				bestMatch = internalName;
+			}
+		}
+		return bestMatch;
+	}
+
+	/**
+	 * Find potential item ids for a given display name. This function is over eager to give results,
+	 * and may give invalid results, but if there is a matching item in the repository it will return <em>at least</em>
+	 * that item. This should be used as a first filtering pass. Use {@link #findInternalNameByDisplayName} for a more
+	 * user-friendly API.
+	 *
+	 * @param displayName The display name of the item we are searching
+	 * @return a list of internal neu item ids some of which may have a matching display name
+	 */
+	public static Set<String> findInternalNameCandidatesForDisplayName(String displayName) {
+		var cleanDisplayName = NEUManager.cleanForTitleMapSearch(displayName);
+		var titleWordMap = NotEnoughUpdates.INSTANCE.manager.titleWordMap;
+		var candidates = new HashSet<String>();
+		for (var partialDisplayName : cleanDisplayName.split(" ")) {
+			if ("".equals(partialDisplayName)) continue;
+			if (!titleWordMap.containsKey(partialDisplayName)) continue;
+			candidates.addAll(titleWordMap.get(partialDisplayName).keySet());
+		}
+		return candidates;
+	}
+
 	private String resolveItemInCatacombsRngMeter() {
 		List<String> lore = ItemUtils.getLore(compound);
 		if (lore.size() > 16) {
 			String s = lore.get(15);
 			if (s.equals("§7Selected Drop")) {
 				String displayName = lore.get(16);
-				return getInternalNameByDisplayName(displayName);
+				return findInternalNameByDisplayName(displayName, false);
 			}
 		}
 
 		return null;
 	}
 
-	private String getInternalNameByDisplayName(String displayName) {
-		String cleanDisplayName = StringUtils.cleanColour(displayName);
-		for (Map.Entry<String, JsonObject> entry : NotEnoughUpdates.INSTANCE.manager
-			.getItemInformation()
-			.entrySet()) {
-
-			JsonObject object = entry.getValue();
-			if (object.has("displayname")) {
-				String name = object.get("displayname").getAsString();
-				if (StringUtils.cleanColour(name).equals(cleanDisplayName)) {
-					return entry.getKey();
-				}
-			}
-		}
-
-		return null;
-	}
-
-	private String resolveEnchantmentByName(String name) {
+	public static String resolveEnchantmentByName(String name) {
 		Matcher matcher = ENCHANTED_BOOK_NAME_PATTERN.matcher(name);
 		if (!matcher.matches()) return null;
 		String format = matcher.group(1).toLowerCase(Locale.ROOT);
@@ -224,15 +278,32 @@ public class ItemResolutionQuery {
 		String romanLevel = matcher.group(3);
 		boolean ultimate = (format.contains("§l"));
 
-		return (ultimate ? "ULTIMATE_" : "")
-			+ enchantmentName.replace(" ", "_").toUpperCase(Locale.ROOT)
+		return ((ultimate && !enchantmentName.equals("Ultimate Wise")) ? "ULTIMATE_" : "")
+			+ turboCheck(enchantmentName).replace(" ", "_").replace("-", "_").toUpperCase(Locale.ROOT)
 			+ ";" + Utils.parseRomanNumeral(romanLevel);
+	}
+
+	private static String turboCheck(String text) {
+		if (text.equals("Turbo-Cocoa")) return "Turbo-Coco";
+		if (text.equals("Turbo-Cacti")) return "Turbo-Cactus";
+
+		return text;
 	}
 
 	private String resolveCrabHatName() {
 		int crabHatYear = getExtraAttributes().getInteger("party_hat_year");
 		String color = getExtraAttributes().getString("party_hat_color");
 		return "PARTY_HAT_CRAB_" + color.toUpperCase(Locale.ROOT) + (crabHatYear == 2022 ? "_ANIMATED" : "");
+	}
+
+	private String resolveSlothHatName() {
+		String emoji = getExtraAttributes().getString("party_hat_emoji");
+		return "PARTY_HAT_SLOTH_" + emoji.toUpperCase(Locale.ROOT);
+	}
+
+	private String resolvePhoneCase() {
+		String model = getExtraAttributes().getString("model");
+		return "ABICASE_" + model.toUpperCase(Locale.ROOT);
 	}
 
 	private String resolveEnchantedBookNameFromNBT() {

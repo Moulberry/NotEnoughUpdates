@@ -21,13 +21,17 @@ package io.github.moulberry.notenoughupdates.mixins;
 
 import io.github.moulberry.notenoughupdates.NEUOverlay;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.events.DrawSlotReturnEvent;
+import io.github.moulberry.notenoughupdates.events.GuiContainerBackgroundDrawnEvent;
 import io.github.moulberry.notenoughupdates.events.SlotClickEvent;
 import io.github.moulberry.notenoughupdates.listener.RenderListener;
-import io.github.moulberry.notenoughupdates.miscfeatures.AbiphoneWarning;
+import io.github.moulberry.notenoughupdates.miscfeatures.AbiphoneFavourites;
 import io.github.moulberry.notenoughupdates.miscfeatures.AuctionBINWarning;
 import io.github.moulberry.notenoughupdates.miscfeatures.AuctionSortModeWarning;
 import io.github.moulberry.notenoughupdates.miscfeatures.BetterContainers;
 import io.github.moulberry.notenoughupdates.miscfeatures.EnchantingSolvers;
+import io.github.moulberry.notenoughupdates.miscfeatures.ItemCustomizeManager;
+import io.github.moulberry.notenoughupdates.miscfeatures.PresetWarning;
 import io.github.moulberry.notenoughupdates.miscfeatures.SlotLocking;
 import io.github.moulberry.notenoughupdates.miscgui.GuiCustomEnchant;
 import io.github.moulberry.notenoughupdates.miscgui.StorageOverlay;
@@ -53,6 +57,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -60,7 +65,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Set;
 
-@Mixin(GuiContainer.class)
+@Mixin(value = GuiContainer.class, priority = 500)
 public abstract class MixinGuiContainer extends GuiScreen {
 	private static boolean hasProfileViewerStack = false;
 	private static final ItemStack profileViewerStack = Utils.createItemStack(
@@ -72,6 +77,7 @@ public abstract class MixinGuiContainer extends GuiScreen {
 	@Inject(method = "drawSlot", at = @At("RETURN"))
 	public void drawSlotRet(Slot slotIn, CallbackInfo ci) {
 		SlotLocking.getInstance().drawSlot(slotIn);
+		new DrawSlotReturnEvent(slotIn).post();
 	}
 
 	@Inject(method = "drawSlot", at = @At("HEAD"), cancellable = true)
@@ -151,6 +157,10 @@ public abstract class MixinGuiContainer extends GuiScreen {
 				ci.cancel();
 				return;
 			}
+			if (AbiphoneFavourites.getInstance().onRenderStack(stack)) {
+				ci.cancel();
+				return;
+			}
 		}
 
 		RenderHelper.enableGUIStandardItemLighting();
@@ -160,22 +170,21 @@ public abstract class MixinGuiContainer extends GuiScreen {
 		}
 	}
 
-	@Redirect(method = "drawScreen", at = @At(
-		value = "INVOKE",
-		target = "Lnet/minecraft/client/gui/inventory/GuiContainer;renderToolTip(Lnet/minecraft/item/ItemStack;II)V"))
-	public void drawScreen_renderTooltip(GuiContainer guiContainer, ItemStack stack, int x, int y) {
+	@ModifyArg(method = "drawScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;renderToolTip(Lnet/minecraft/item/ItemStack;II)V"), index = 0)
+	public ItemStack adjustItemStack(ItemStack itemStack) {
 		if (theSlot.slotNumber == BetterContainers.profileViewerStackIndex) {
-			this.renderToolTip(profileViewerStack, x, y);
+			return profileViewerStack;
 		} else {
-			this.renderToolTip(stack, x, y);
+			return itemStack;
 		}
 	}
 
 	@Inject(method = "drawScreen",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/client/renderer/GlStateManager;popMatrix()V",
-			shift = At.Shift.AFTER
+			target = "Lnet/minecraft/entity/player/InventoryPlayer;getItemStack()Lnet/minecraft/item/ItemStack;",
+			shift = At.Shift.BEFORE,
+			ordinal = 1
 		)
 	)
 	public void drawScreen_after(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
@@ -193,7 +202,7 @@ public abstract class MixinGuiContainer extends GuiScreen {
 		GuiCustomEnchant.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
 		GuiCustomHex.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
 		AuctionBINWarning.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
-		AbiphoneWarning.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
+		PresetWarning.getInstance().overrideIsMouseOverSlot(slotIn, mouseX, mouseY, cir);
 	}
 
 	@Redirect(method = "drawScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;drawGradientRect(IIIIII)V"))
@@ -287,8 +296,10 @@ public abstract class MixinGuiContainer extends GuiScreen {
 
 	@Redirect(method = "drawScreen", at = @At(value = "INVOKE", target = TARGET_CANBEHOVERED))
 	public boolean drawScreen_canBeHovered(Slot slot) {
-		if (NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
-			BetterContainers.isOverriding() && BetterContainers.isBlankStack(slot.slotNumber, slot.getStack())) {
+		if ((NotEnoughUpdates.INSTANCE.config.improvedSBMenu.hideEmptyPanes &&
+			BetterContainers.isOverriding() && BetterContainers.isBlankStack(slot.slotNumber, slot.getStack())) ||
+			slot.getStack() != null &&
+				slot.getStack().hasTagCompound() && slot.getStack().getTagCompound().getBoolean("NEUHIDETOOLIP")) {
 			return false;
 		}
 		return slot.canBeHovered();
@@ -318,5 +329,20 @@ public abstract class MixinGuiContainer extends GuiScreen {
 			);
 			ci.cancel();
 		}
+	}
+
+	@Inject(method = "drawScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;color(FFFF)V", ordinal = 1))
+	private void drawBackground(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+		new GuiContainerBackgroundDrawnEvent(((GuiContainer) (Object) this), partialTicks).post();
+	}
+
+	@ModifyArg(method = "drawSlot", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/RenderItem;renderItemAndEffectIntoGUI(Lnet/minecraft/item/ItemStack;II)V", ordinal = 0))
+	public ItemStack drawSlot_renderItemAndEffectIntoGUI(ItemStack stack) {
+		return ItemCustomizeManager.useCustomItem(stack);
+	}
+
+	@ModifyArg(method = "drawSlot", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/RenderItem;renderItemOverlayIntoGUI(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/item/ItemStack;IILjava/lang/String;)V"))
+	public ItemStack drawSlot_renderItemOverlays(ItemStack stack) {
+		return ItemCustomizeManager.useCustomItem(stack);
 	}
 }

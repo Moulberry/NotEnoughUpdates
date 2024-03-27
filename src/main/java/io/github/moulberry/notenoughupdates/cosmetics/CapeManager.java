@@ -24,6 +24,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.shader.Framebuffer;
@@ -44,6 +45,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@NEUAutoSubscribe
 public class CapeManager {
 	public static final CapeManager INSTANCE = new CapeManager();
 	public long lastCapeUpdate = 0;
@@ -148,7 +150,7 @@ public class CapeManager {
 		NotEnoughUpdates.INSTANCE.manager.apiUtils
 			.newMoulberryRequest("activecapes.json")
 			.requestJson()
-			.thenAccept(jsonObject -> {
+			.thenAcceptAsync(jsonObject -> {
 				if (jsonObject.get("success").getAsBoolean()) {
 					lastJsonSync = jsonObject;
 
@@ -169,7 +171,7 @@ public class CapeManager {
 			NotEnoughUpdates.INSTANCE.manager.apiUtils
 				.newMoulberryRequest("permscapes.json")
 				.requestJson()
-				.thenAccept(jsonObject -> {
+				.thenAcceptAsync(jsonObject -> {
 					if (!jsonObject.get("success").getAsBoolean()) return;
 
 					permSyncTries = 0;

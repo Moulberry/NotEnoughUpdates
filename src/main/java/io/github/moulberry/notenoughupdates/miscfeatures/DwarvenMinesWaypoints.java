@@ -20,6 +20,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.options.NEUConfig;
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@NEUAutoSubscribe
 public class DwarvenMinesWaypoints {
 
 	private final HashMap<String, Vector3f> waypointsMap = new HashMap<String, Vector3f>() {{
@@ -80,11 +82,11 @@ public class DwarvenMinesWaypoints {
 		add(EnumChatFormatting.GOLD + "Emissary Lilith" + EnumChatFormatting.RESET);
 		add(EnumChatFormatting.GOLD + "Emissary Frasier" + EnumChatFormatting.RESET);
 		add(EnumChatFormatting.GOLD + "Emissary Eliza" + EnumChatFormatting.RESET);
-		add(EnumChatFormatting.GOLD.toString() + EnumChatFormatting.BOLD + "King Thormyr" + EnumChatFormatting.RESET);
+		add(EnumChatFormatting.GOLD.toString() + EnumChatFormatting.BOLD + "King" + EnumChatFormatting.RESET);
 	}};
 
 	private enum Emissary {
-		THORMYR("King Thormyr", 0, new Vector3f(129, 196, 196)),
+		KING("King", 0, new Vector3f(129, 196, 196)),
 		CEANNA("Emissary Ceanna", 1, new Vector3f(42, 134, 22)),
 		CARLTON("Emissary Carlton", 1, new Vector3f(-73, 153, -11)),
 		WILSON("Emissary Wilson", 2, new Vector3f(171, 150, 31)),
@@ -114,13 +116,13 @@ public class DwarvenMinesWaypoints {
 	@SubscribeEvent
 	public void onChat(ClientChatReceivedEvent event) {
 		Matcher matcherGhast = ghastRegex.matcher(event.message.getFormattedText());
-		if (matcherGhast.find()) {
+		if (matcherGhast.find() && NotEnoughUpdates.INSTANCE.config.mining.powderGhastWaypoint) {
 			dynamicLocation = Utils.cleanColour(matcherGhast.group(1).trim());
 			dynamicName = EnumChatFormatting.GOLD + "Powder Ghast";
 			dynamicMillis = System.currentTimeMillis();
 		} else {
 			Matcher matcherStar = fallenStarRegex.matcher(event.message.getFormattedText());
-			if (matcherStar.find()) {
+			if (matcherStar.find() && NotEnoughUpdates.INSTANCE.config.mining.fallenStarWaypoint) {
 				dynamicLocation = Utils.cleanColour(matcherStar.group(1).trim());
 				dynamicName = EnumChatFormatting.DARK_PURPLE + "Fallen Star";
 				dynamicMillis = System.currentTimeMillis();

@@ -25,10 +25,10 @@ import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.options.customtypes.NEUDebugFlag;
 import io.github.moulberry.notenoughupdates.util.NEUDebugLogger;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
+import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.util.BlockPos;
-import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.Vec3i;
@@ -148,14 +148,8 @@ public class CrystalMetalDetectorSolver {
 		// Delay to keep old chest location from being treated as the new chest location
 		if (chestRecentlyFound) {
 			long currentTimeMillis = System.currentTimeMillis();
-			if (chestLastFoundMillis == 0) {
-				chestLastFoundMillis = currentTimeMillis;
-				return;
-			} else if (currentTimeMillis - chestLastFoundMillis < 1000 && distToTreasure < 5.0) {
-				return;
-			}
-
-			chestLastFoundMillis = 0;
+			if (currentTimeMillis - chestLastFoundMillis < 1000 && distToTreasure < 5.0) return;
+			chestLastFoundMillis = currentTimeMillis;
 			chestRecentlyFound = false;
 		}
 
@@ -169,7 +163,7 @@ public class CrystalMetalDetectorSolver {
 					NEUDebugLogger.log(NEUDebugFlag.METAL, "Known location identified.");
 					// falls through
 				case FOUND:
-					mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "[NEU] Found solution."));
+					Utils.addChatMessage(EnumChatFormatting.YELLOW + "[NEU] Found solution.");
 					if (NEUDebugFlag.METAL.isSet() &&
 						(previousState == SolutionState.INVALID || previousState == SolutionState.FAILED)) {
 						NEUDebugLogger.log(
@@ -180,14 +174,12 @@ public class CrystalMetalDetectorSolver {
 					}
 					break;
 				case INVALID:
-					mc.thePlayer.addChatMessage(new ChatComponentText(
-						EnumChatFormatting.RED + "[NEU] Previous solution is invalid."));
+					Utils.addChatMessage(EnumChatFormatting.RED + "[NEU] Previous solution is invalid.");
 					logDiagnosticData(false);
 					resetSolution(false);
 					break;
 				case FAILED:
-					mc.thePlayer.addChatMessage(new ChatComponentText(
-						EnumChatFormatting.RED + "[NEU] Failed to find a solution."));
+					Utils.addChatMessage(EnumChatFormatting.RED + "[NEU] Failed to find a solution.");
 					logDiagnosticData(false);
 					resetSolution(false);
 					break;
@@ -195,8 +187,9 @@ public class CrystalMetalDetectorSolver {
 					NEUDebugLogger.log(NEUDebugFlag.METAL, "Multiple known locations identified:");
 					// falls through
 				case MULTIPLE:
-					mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW +
-						"[NEU] Need another position to find solution. Possible blocks: " + possibleBlocks.size()));
+					Utils.addChatMessage(
+						EnumChatFormatting.YELLOW + "[NEU] Need another position to find solution. Possible blocks: " +
+							possibleBlocks.size());
 					break;
 				default:
 					throw new IllegalStateException("Metal detector is in invalid state");
@@ -205,7 +198,8 @@ public class CrystalMetalDetectorSolver {
 	}
 
 	static void findPossibleSolutions(double distToTreasure, Vec3Comparable playerPos, boolean centerNewlyDiscovered) {
-		if (prevDistToTreasure == distToTreasure && prevPlayerPos.equals(playerPos) &&
+		if (Math.abs(prevDistToTreasure - distToTreasure) < 0.2 &&
+			prevPlayerPos.distanceTo(playerPos) <= 0.1 &&
 			!evaluatedPlayerPositions.containsKey(playerPos)) {
 			evaluatedPlayerPositions.put(playerPos, distToTreasure);
 			if (possibleBlocks.size() == 0) {
@@ -372,8 +366,8 @@ public class CrystalMetalDetectorSolver {
 
 		if (keeperEntities.size() == 0) {
 			if (!visitKeeperMessagePrinted) {
-				mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW +
-					"[NEU] Approach a Keeper while holding the metal detector to enable faster treasure hunting."));
+				Utils.addChatMessage(EnumChatFormatting.YELLOW +
+					"[NEU] Approach a Keeper while holding the metal detector to enable faster treasure hunting.");
 				visitKeeperMessagePrinted = true;
 			}
 			return false;
@@ -387,8 +381,8 @@ public class CrystalMetalDetectorSolver {
 		minesCenter = keeperEntity.getPosition().add(keeperOffsets.get(keeperType.toLowerCase()));
 		NEUDebugLogger.log(NEUDebugFlag.METAL, "Mines center: " +
 			EnumChatFormatting.WHITE + minesCenter.toString());
-		mc.thePlayer.addChatMessage(new ChatComponentText(
-			EnumChatFormatting.YELLOW + "[NEU] Faster treasure hunting is now enabled based on Keeper location."));
+		Utils.addChatMessage(
+			EnumChatFormatting.YELLOW + "[NEU] Faster treasure hunting is now enabled based on Keeper location.");
 		return true;
 	}
 
@@ -560,8 +554,7 @@ public class CrystalMetalDetectorSolver {
 		}
 
 		if (!NotEnoughUpdates.INSTANCE.config.mining.metalDetectorEnabled) {
-			mc.thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.RED +
-				"[NEU] Metal Detector Solver is not enabled."));
+			Utils.addChatMessage(EnumChatFormatting.RED + "[NEU] Metal Detector Solver is not enabled.");
 			return;
 		}
 

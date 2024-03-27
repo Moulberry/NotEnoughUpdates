@@ -4,11 +4,11 @@
 <div align="center">
     <!-- release -->
     <a href="https://github.com/Moulberry/NotEnoughUpdates/releases/latest" target="_blank">
-        <img src="https://img.shields.io/github/v/release/Moulberry/NotEnoughUpdates-REPO?color=informational&include_prereleases&label=release&logo=github&logoColor=white" alt="release">
+        <img src="https://img.shields.io/github/v/release/Moulberry/NotEnoughUpdates?color=informational&include_prereleases&label=release&logo=github&logoColor=white" alt="release">
     </a>
     <!-- lines -->
     <a href="https://github.com/NotEnoughUpdates/NotEnoughUpdates/graphs/code-frequency" target="_blank">
-        <img src="https://img.shields.io/tokei/lines/github/NotEnoughUpdates/NotEnoughUpdates?label=lines&color=informational&logo=GitHub" alt="lines">
+        <img src="https://tokei.rs/b1/github/NotEnoughUpdates/NotEnoughUpdates" alt="lines">
     </a>
     <!-- license -->
     <a href="./COPYING.LESSER" target="_blank">
@@ -30,6 +30,10 @@
 
 NotEnoughUpdates (NEU) is a feature rich 1.8.9 Minecraft forge mod for Hypixel Skyblock.
 
+## Active repository
+
+Ever since Moulberry has stopped working on NEU, other contributors have been working on new features and fixes for the mod. If you are interested in contributing yourself, make a pull request to [NotEnoughUpdates/NotEnoughUpdates](https://github.com/NotEnoughUpdates/NotEnoughUpdates) to contribute to the prereleases, which eventually will be merged in bulk to [Moulberry/NotEnoughUpdates](https://github.com/Moulberry/NotEnoughUpdates) for major releases.
+
 ## Getting Started
 
 #### Installing Forge
@@ -48,8 +52,7 @@ NotEnoughUpdates (NEU) is a feature rich 1.8.9 Minecraft forge mod for Hypixel S
    - If you have java installed, double click the file, click `install`
    - If not, press the windows key + R; type `%appdata%`; click on the folder called `.minecraft`; click on the folder called `mods` and drag the mods file in here.
 3. Open the Minecraft launcher and run your forge installation you set up earlier.
-4. Then, hop onto Skyblock and run the command `/api new`. Your api key is automatically filled out and all features should work.
-5. Type `/neu`. If you see the NotEnoughUpdates menu, you have done this correctly!
+4. Type `/neu`. If you see the NotEnoughUpdates menu, you have done this correctly!
 
 ## Features
 
@@ -63,7 +66,6 @@ NotEnoughUpdates (NEU) is a feature rich 1.8.9 Minecraft forge mod for Hypixel S
 - Customizable inventory command buttons accessed with `/neubuttons`.
 - The ability to change the line color of fishing rods.
 - Onscreen overlays for: Farming, Dwarven Mines, Pets, and the Accessory bag.
-- A custom auction house accessed with `/neuah`.
 - Solvers for: Enchanting and The Puzzler.
 - A custom Action House Search GUI.
 - A custom storage GUI.

@@ -21,6 +21,7 @@ package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.core.GuiElement;
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils;
 import io.github.moulberry.notenoughupdates.core.util.render.TextRenderUtils;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@NEUAutoSubscribe
 public class AuctionBINWarning extends GuiElement {
 	private static final AuctionBINWarning INSTANCE = new AuctionBINWarning();
 
@@ -105,6 +107,8 @@ public class AuctionBINWarning extends GuiElement {
 		}
 
 		ItemStack sellStack = event.guiContainer.inventorySlots.getSlot(13).getStack();
+		if (sellStack == null) return;
+
 		String internalname = NotEnoughUpdates.INSTANCE.manager.getInternalNameForItem(sellStack);
 		sellStackAmount = sellStack.stackSize;
 
@@ -179,7 +183,7 @@ public class AuctionBINWarning extends GuiElement {
 			0xff000000
 		);
 
-		TextRenderUtils.drawStringCenteredScaledMaxWidth("Are you SURE?", Minecraft.getMinecraft().fontRendererObj,
+		TextRenderUtils.drawStringCenteredScaledMaxWidth("Are you SURE?",
 			width / 2, height / 2 - 45 + 10, false, 170, 0xffff4040
 		);
 
@@ -199,19 +203,14 @@ public class AuctionBINWarning extends GuiElement {
 
 		String sellLine = "\u00a77[ \u00a7r" + sellingName + "\u00a77 ]";
 
-		TextRenderUtils.drawStringCenteredScaledMaxWidth(sellLine, Minecraft.getMinecraft().fontRendererObj,
+		TextRenderUtils.drawStringCenteredScaledMaxWidth(sellLine,
 			width / 2, height / 2 - 45 + 25, false, 170, 0xffffffff
 		);
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
 			(lowestPrice > 0
 				? "has a lowest BIN of \u00a76" + lowestPriceStr + "\u00a7r coins"
 				: "\u00a7cWarning: No lowest BIN found!"),
-			Minecraft.getMinecraft().fontRendererObj,
-			width / 2,
-			height / 2 - 45 + 34,
-			false,
-			170,
-			0xffa0a0a0
+			width / 2, height / 2 - 45 + 34, false, 170, 0xffa0a0a0
 		);
 
 		if (sellingPrice > lowestPrice * sellStackAmount) {
@@ -225,22 +224,12 @@ public class AuctionBINWarning extends GuiElement {
 
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
 			"Continue selling it for",
-			Minecraft.getMinecraft().fontRendererObj,
-			width / 2,
-			height / 2 - 45 + 50,
-			false,
-			170,
-			0xffa0a0a0
+			width / 2, height / 2 - 45 + 50, false, 170, 0xffa0a0a0
 		);
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
 			"\u00a76" + sellingPriceStr + "\u00a7r coins?" +
-				(lowestPrice > 0 ? "(\u00a7" + (isALoss ? "c-" : "a+") + buyPercentage + "%\u00a7r)" : ""),
-			Minecraft.getMinecraft().fontRendererObj,
-			width / 2,
-			height / 2 - 45 + 59,
-			false,
-			170,
-			0xffa0a0a0
+				(lowestPrice > 0 ? "(\u00a7" + (isALoss ? "c-" : "a+") + (buyPercentage >= 100 ? buyPercentage - 100 : buyPercentage) + "%\u00a7r)" : ""),
+			width / 2, height / 2 - 45 + 59, false, 170, 0xffa0a0a0
 		);
 
 		RenderUtils.drawFloatingRectDark(width / 2 - 43, height / 2 + 23, 40, 16, false);
@@ -248,21 +237,11 @@ public class AuctionBINWarning extends GuiElement {
 
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
 			EnumChatFormatting.GREEN + "[Y]es",
-			Minecraft.getMinecraft().fontRendererObj,
-			width / 2 - 23,
-			height / 2 + 31,
-			true,
-			36,
-			0xff00ff00
+			width / 2 - 23, height / 2 + 31, true, 36, 0xff00ff00
 		);
 		TextRenderUtils.drawStringCenteredScaledMaxWidth(
 			EnumChatFormatting.RED + "[N]o",
-			Minecraft.getMinecraft().fontRendererObj,
-			width / 2 + 23,
-			height / 2 + 31,
-			true,
-			36,
-			0xffff0000
+			width / 2 + 23, height / 2 + 31, true, 36, 0xffff0000
 		);
 
 		if (sellingTooltip != null) {
@@ -273,15 +252,7 @@ public class AuctionBINWarning extends GuiElement {
 
 			if (mouseX >= width / 2 - sellLineLength / 2 && mouseX <= width / 2 + sellLineLength / 2 &&
 				mouseY >= height / 2 - 45 + 20 && mouseY <= height / 2 - 45 + 30) {
-				Utils.drawHoveringText(
-					sellingTooltip,
-					mouseX,
-					mouseY,
-					width,
-					height,
-					-1,
-					Minecraft.getMinecraft().fontRendererObj
-				);
+				Utils.drawHoveringText(sellingTooltip, mouseX, mouseY, width, height, -1);
 			}
 		}
 

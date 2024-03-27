@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -24,21 +24,23 @@ import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.events.RepositoryReloadEvent;
-import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
 import io.github.moulberry.notenoughupdates.util.Calculator;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.ItemResolutionQuery;
 import io.github.moulberry.notenoughupdates.util.ItemUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Keyboard;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,10 +56,13 @@ public class ItemTooltipRngListener {
 	private final Pattern ODDS_PATTERN = Pattern.compile("§5§o§7Odds: (.+) §7\\(§7(.*)%\\)");
 	private final Pattern ODDS_SELECTED_PATTERN = Pattern.compile("§5§o§7Odds: (.+) §7\\(§8§m(.*)%§r §7(.+)%\\)");
 
-	private final Pattern RUNS_PATTERN = Pattern.compile("§5§o§7(Dungeon Score|Slayer XP): §d(.*)§5/§d(.+)");
-	private final Pattern RUNS_SELECTED_PATTERN = Pattern.compile("§5§o§d-(.+)- §d(.*)§5/§d(.+)");
+	private final Pattern RUNS_PATTERN = Pattern.compile("§5§o§7(?:Dungeon Score|Slayer XP): §d(.*)§5/§d(.+)");
+	private final Pattern RUNS_SELECTED_PATTERN = Pattern.compile(
+		"(?:§5§o)?§d§l§m *(?:§f§l§m *)?§r §d([0-9,]+)§5/§d([0-9kKmM,.]+)");
 
 	private final Pattern SLAYER_INVENTORY_TITLE_PATTERN = Pattern.compile("(.+) RNG Meter");
+
+	private final Pattern TIER_AMOUNT = Pattern.compile("§5§o§7Tier (.+) amount: §a(\\d+).*");
 
 	private final Map<String, Integer> dungeonData = new LinkedHashMap<>();
 	private final Map<String, LinkedHashMap<String, Integer>> slayerData = new LinkedHashMap<>();
@@ -70,7 +75,9 @@ public class ItemTooltipRngListener {
 	public void onItemTooltip(ItemTooltipEvent event) {
 		if (!neu.isOnSkyblock()) return;
 		if (event.toolTip == null) return;
-		if (!Utils.getOpenChestName().endsWith(" RNG Meter") && !slayerData.containsKey(Utils.getOpenChestName())) return;
+		if (!Utils.getOpenChestName().endsWith(" RNG Meter")
+			&& !slayerData.containsKey(Utils.getOpenChestName())
+			&& !ItemUtils.getLore(event.itemStack).contains("§dRNG Meter")) return;
 
 		List<String> newToolTip = new ArrayList<>();
 
@@ -97,14 +104,14 @@ public class ItemTooltipRngListener {
 				if (m != null) {
 					int having;
 					try {
-						having = Calculator.calculate(m.group(2).replace(",", "")).intValue();
+						having = Calculator.calculate(m.group(1).replace(",", "").toLowerCase(Locale.ROOT)).intValue();
 					} catch (Calculator.CalculatorException e) {
 						having = -1;
 					}
 
 					int needed;
 					try {
-						needed = Calculator.calculate(m.group(3).replace(",", "")).intValue();
+						needed = Calculator.calculate(m.group(2).replace(",", "").toLowerCase(Locale.ROOT)).intValue();
 					} catch (Calculator.CalculatorException e) {
 						needed = -1;
 					}
@@ -115,7 +122,7 @@ public class ItemTooltipRngListener {
 					if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.rngMeterProfitPerUnit) {
 						if (!NotEnoughUpdates.INSTANCE.config.tooltipTweaks.rngMeterRunsNeeded) {
 							String name = Utils.getOpenChestName().contains("Catacombs") ? "Score" : "XP";
-							String formatCoinsPer = getFormatCoinsPer(event.itemStack, needed, 1, name);
+							String formatCoinsPer = getFormatCoinsPer(event.itemStack, needed, 1, 1, 0, name);
 							if (formatCoinsPer != null) {
 								newToolTip.add(line);
 								newToolTip.add(formatCoinsPer);
@@ -137,18 +144,26 @@ public class ItemTooltipRngListener {
 		event.toolTip.addAll(newToolTip);
 	}
 
-	private String getFormatCoinsPer(ItemStack stack, int needed, int multiplier, String label) {
+	private String getFormatCoinsPer(
+		ItemStack stack,
+		int needed,
+		int multiplier,
+		int amountPerTier,
+		int cost,
+		String label
+	) {
 		String internalName = neu.manager.createItemResolutionQuery().withItemStack(stack).resolveInternalName();
-		double profit = neu.manager.auctionManager.getBazaarOrBin(internalName);
+		double profit = neu.manager.auctionManager.getBazaarOrBin(internalName, false) * amountPerTier;
 		if (profit <= 0) return null;
 
 		//ask hypixel nicely to release a 'chest price api' with 4 dimensions for us. the 4 dimensions needed are: item name, floor, normal/mm, s/s+
 //		double chestPrice = grabChestPrice(stack, internalName);
 //		profit -= chestPrice;
 
-		double coinsPer = (profit / needed) * multiplier;
+		double coinsPer = ((profit / needed) * multiplier) - cost;
 		String format = StringUtils.shortNumberFormat(coinsPer);
-		return "§7Coins per " + label + ": §6" + format + " coins";
+		EnumChatFormatting profitIndicator = coinsPer >= 0 ? EnumChatFormatting.GREEN : EnumChatFormatting.RED;
+		return "§7Coins per " + label + ": " + profitIndicator + format + " coins";
 	}
 
 	private void fractionDisplay(List<String> newToolTip, String line) {
@@ -164,17 +179,17 @@ public class ItemTooltipRngListener {
 		if (matcher.matches()) {
 			String odds = matcher.group(1);
 			int baseChance = calculateChance(matcher.group(2));
-			String baseFormat = GuiProfileViewer.numberFormat.format(baseChance);
+			String baseFormat = StringUtils.formatNumber(baseChance);
 
 			String fractionFormat = "§7(1/" + baseFormat + ")";
 			result = odds + " " + fractionFormat;
 		} else if (matcherSelected.matches()) {
 			String odds = matcherSelected.group(1);
 			int baseChance = calculateChance(matcherSelected.group(2));
-			String baseFormat = GuiProfileViewer.numberFormat.format(baseChance);
+			String baseFormat = StringUtils.formatNumber(baseChance);
 
 			int increasedChance = calculateChance(matcherSelected.group(3));
-			String increased = GuiProfileViewer.numberFormat.format(increasedChance);
+			String increased = StringUtils.formatNumber(increasedChance);
 			String fractionFormat = "§7(§8§m1/" + baseFormat + "§r §71/" + increased + ")";
 
 			result = odds + " " + fractionFormat;
@@ -210,17 +225,22 @@ public class ItemTooltipRngListener {
 		dungeonData.clear();
 
 		JsonObject leveling = Constants.LEVELING;
-		if (!leveling.has("slayer_boss_xp") ||
+		if (leveling == null) {
+			Utils.showOutdatedRepoNotification("leveling.json");
+			return;
+		} else if (!leveling.has("slayer_boss_xp") ||
 			!leveling.has("slayer_highest_tier") ||
 			!leveling.has("slayer_tier_colors") ||
-			!leveling.has("rng_meter_dungeon_score")) {
-			Utils.showOutdatedRepoNotification();
+			!leveling.has("rng_meter_dungeon_score") ||
+			!leveling.has("fancy_name_to_slayer") ||
+			!leveling.has("slayer_boss_xp_type")) {
+			Utils.showOutdatedRepoNotification("leveling.json (outdated)");
 			return;
 		}
 
-		List<Integer> slayerExp = new ArrayList<>();
+		List<Integer> defaultSlayerExp = new ArrayList<>();
 		for (JsonElement element : leveling.get("slayer_boss_xp").getAsJsonArray()) {
-			slayerExp.add(element.getAsInt());
+			defaultSlayerExp.add(element.getAsInt());
 		}
 
 		List<String> slayerColors = new ArrayList<>();
@@ -229,14 +249,23 @@ public class ItemTooltipRngListener {
 		}
 
 		for (Map.Entry<String, JsonElement> entry : leveling.get("slayer_highest_tier").getAsJsonObject().entrySet()) {
-			String slayerName = entry.getKey();
+			String slayerFancyName = entry.getKey();
+			String slayerName = leveling.get("fancy_name_to_slayer").getAsJsonObject().get(slayerFancyName).getAsString();
+
 			int maxTier = entry.getValue().getAsInt();
 			LinkedHashMap<String, Integer> singleSlayerData = new LinkedHashMap<>();
 			for (int i = 0; i < maxTier; i++) {
 				String name = slayerColors.get(i) + "Tier " + (i + 1);
-				singleSlayerData.put(name, slayerExp.get(i));
+				if (leveling.get("slayer_boss_xp_type").getAsJsonObject().get(slayerName) != null) {
+					singleSlayerData.put(
+						name,
+						leveling.get("slayer_boss_xp_type").getAsJsonObject().get(slayerName).getAsJsonArray().get(i).getAsInt()
+					);
+				} else {
+					singleSlayerData.put(name, defaultSlayerExp.get(i));
+				}
 			}
-			slayerData.put(slayerName, singleSlayerData);
+			slayerData.put(slayerFancyName, singleSlayerData);
 		}
 
 		for (Map.Entry<String, JsonElement> entry : leveling.get("rng_meter_dungeon_score").getAsJsonObject().entrySet()) {
@@ -281,6 +310,7 @@ public class ItemTooltipRngListener {
 			labelSingular = "Boss";
 			repoCategory = "slayer";
 		}
+		if (runsData == null) return;
 
 		int repoScore = getRepoScore(stack, repoCategory);
 		if (repoScore != -1) {
@@ -298,8 +328,8 @@ public class ItemTooltipRngListener {
 
 		int runsNeeded = (int) Math.floor((double) needed / (double) gainPerRun);
 		int runsHaving = having / gainPerRun;
-		String runsNeededFormat = GuiProfileViewer.numberFormat.format(runsNeeded);
-		String runsHavingFormat = GuiProfileViewer.numberFormat.format(runsHaving);
+		String runsNeededFormat = StringUtils.formatNumber(runsNeeded);
+		String runsHavingFormat = StringUtils.formatNumber(runsHaving);
 
 		String progressString = null;
 		if (nextLineProgress) {
@@ -310,8 +340,18 @@ public class ItemTooltipRngListener {
 		toolTip.add(
 			"   §7" + labelPlural + " completed: §e" + runsHavingFormat + " §7(of §e" + runsNeededFormat + " §7needed)");
 
+		int amountPerTier = parseAmountFromTooltip(toolTip);
+
+		int cost = 0;
+		if (repoCategory.equals("slayer")) {
+			JsonObject slayerCost = Constants.MISC;
+			if (slayerCost.has("slayer_cost")) {
+				cost = slayerCost.getAsJsonArray("slayer_cost").get(currentSelected).getAsInt();
+			}
+		}
+
 		if (NotEnoughUpdates.INSTANCE.config.tooltipTweaks.rngMeterProfitPerUnit) {
-			String formatCoinsPer = getFormatCoinsPer(stack, needed, gainPerRun, labelSingular);
+			String formatCoinsPer = getFormatCoinsPer(stack, needed, gainPerRun, amountPerTier, cost, labelSingular);
 			if (formatCoinsPer != null) {
 				toolTip.add("   " + formatCoinsPer);
 			}
@@ -323,6 +363,25 @@ public class ItemTooltipRngListener {
 		}
 	}
 
+	private int parseAmountFromTooltip(List<String> tooltip) {
+		Map<Integer, Integer> tierToAmount = new HashMap<>();
+
+		for (String line : tooltip) {
+			Matcher amountMatcher = TIER_AMOUNT.matcher(line);
+			if (amountMatcher.matches()) {
+				try {
+					int tier = Utils.parseRomanNumeral(amountMatcher.group(1));
+					int lowerBoundDrop = Integer.parseInt(amountMatcher.group(2));
+					tierToAmount.put(tier, lowerBoundDrop);
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return tierToAmount.get(currentSelected + 1) == null ? 1 : tierToAmount.get(currentSelected + 1);
+	}
+
 	private int getRepoScore(ItemStack stack, String repoCategory) {
 		ItemResolutionQuery query =
 			NotEnoughUpdates.INSTANCE.manager.createItemResolutionQuery().withItemStack(stack).withCurrentGuiContext();
@@ -330,7 +389,7 @@ public class ItemTooltipRngListener {
 
 		JsonObject jsonObject = Constants.RNGSCORE;
 		if (jsonObject == null) {
-			Utils.showOutdatedRepoNotification();
+			Utils.showOutdatedRepoNotification("rngscore.json");
 			return -1;
 		}
 

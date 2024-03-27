@@ -19,17 +19,14 @@
 
 package io.github.moulberry.notenoughupdates.core.util;
 
-import com.google.common.collect.Sets;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Set;
+import java.math.BigInteger;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class StringUtils {
-	public static final Set<String> PROTOCOLS = Sets.newHashSet("http", "https");
+	private final static DecimalFormat TENTHS_DECIMAL_FORMAT = new DecimalFormat("#.#");
+	public static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(Locale.US);
 
 	public static String cleanColour(String in) {
 		return in.replaceAll("(?i)\\u00A7.", "");
@@ -37,24 +34,6 @@ public class StringUtils {
 
 	public static String cleanColourNotModifiers(String in) {
 		return in.replaceAll("(?i)\\u00A7[0-9a-f]", "\u00A7r");
-	}
-
-	public static String trimToWidth(String str, int len) {
-		FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
-		String trim = fr.trimStringToWidth(str, len);
-
-		if (str.length() != trim.length() && !trim.endsWith(" ")) {
-			char next = str.charAt(trim.length());
-			if (next != ' ') {
-				String[] split = trim.split(" ");
-				String last = split[split.length - 1];
-				if (last.length() < 8) {
-					trim = trim.substring(0, trim.length() - last.length());
-				}
-			}
-		}
-
-		return trim;
 	}
 
 	public static String substringBetween(String str, String open, String close) {
@@ -67,13 +46,28 @@ public class StringUtils {
 		return Integer.parseInt(str);
 	}
 
+	public static String shortNumberFormat(int n) {
+		return shortNumberFormat(n, 0);
+	}
+
 	public static String shortNumberFormat(double n) {
 		return shortNumberFormat(n, 0);
 	}
 
-	private static final char[] c = new char[] { 'k', 'm', 'b', 't' };
+	private static final char[] sizeSuffix = new char[]{'k', 'm', 'b', 't'};
+
+	public static String shortNumberFormat(BigInteger bigInteger) {
+		BigInteger THOUSAND = BigInteger.valueOf(1000);
+		int i = -1;
+		while (bigInteger.compareTo(THOUSAND) > 0 && i < sizeSuffix.length) {
+			bigInteger = bigInteger.divide(THOUSAND);
+			i++;
+		}
+		return bigInteger.toString() + (i == -1 ? "" : sizeSuffix[i]);
+	}
 
 	public static String shortNumberFormat(double n, int iteration) {
+		if (n < 0) return "-" + shortNumberFormat(-n, iteration);
 		if (n < 1000) {
 			if (n % 1 == 0) {
 				return Integer.toString((int) n);
@@ -84,22 +78,45 @@ public class StringUtils {
 
 		double d = ((long) n / 100) / 10.0;
 		boolean isRound = (d * 10) % 10 == 0;
-		return d < 1000 ? (isRound || d > 9.99 ? (int) d * 10 / 10 : d + "") + "" + c[iteration] : shortNumberFormat(d, iteration + 1);
+		return d < 1000
+			? (isRound || d > 9.99 ? (int) d * 10 / 10 : d + "") + "" + sizeSuffix[iteration]
+			: shortNumberFormat(d, iteration + 1);
 	}
 
-	public static String urlEncode(String something) {
+	public static String removeLastWord(String string, String splitString) {
 		try {
-			return URLEncoder.encode(something, StandardCharsets.UTF_8.name());
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e); // UTF 8 should always be present
+			String[] split = string.split(splitString);
+			String rawTier = split[split.length - 1];
+			return string.substring(0, string.length() - rawTier.length() - 1);
+		} catch (StringIndexOutOfBoundsException e) {
+			throw new RuntimeException("removeLastWord: '" + string + "'", e);
 		}
 	}
 
-	/**
-	 * taken and modified from https://stackoverflow.com/a/23326014/5507634
-	 */
-	public static String replaceLast(String string, String toReplace, String replacement) {
-		int start = string.lastIndexOf(toReplace);
-		return string.substring(0, start) + replacement + string.substring(start + toReplace.length());
+	public static String firstUpperLetter(String text) {
+		if (text.isEmpty()) return text;
+		String firstLetter = ("" + text.charAt(0)).toUpperCase();
+		return firstLetter + text.substring(1);
+	}
+
+	public static boolean isNumeric(String string) {
+		if (string == null || string.isEmpty()) {
+			return false;
+		}
+
+		for (char c : string.toCharArray()) {
+			if (!Character.isDigit(c)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static String formatToTenths(Number num) {
+		return TENTHS_DECIMAL_FORMAT.format(num);
+	}
+
+	public static String formatNumber(Number num) {
+		return NUMBER_FORMAT.format(num);
 	}
 }

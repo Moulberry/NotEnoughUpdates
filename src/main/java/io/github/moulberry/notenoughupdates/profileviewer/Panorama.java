@@ -19,10 +19,7 @@
 
 package io.github.moulberry.notenoughupdates.profileviewer;
 
-import io.github.moulberry.notenoughupdates.util.TexLoc;
 import io.github.moulberry.notenoughupdates.util.Utils;
-import java.io.IOException;
-import java.util.HashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -32,14 +29,14 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 
+import java.io.IOException;
+import java.util.HashMap;
+
 public class Panorama {
 
-	private static final TexLoc tl = new TexLoc(97, 19, Keyboard.KEY_P);
-	private static final TexLoc tl2 = new TexLoc(37, 80, Keyboard.KEY_L);
 	private static final HashMap<String, ResourceLocation[]> panoramasMap = new HashMap<>();
 	private static ResourceLocation backgroundTexture = null;
 	private static int lastWidth = 0;

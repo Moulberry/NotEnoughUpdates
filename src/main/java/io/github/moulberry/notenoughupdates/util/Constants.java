@@ -29,14 +29,21 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.events.RepositoryReloadEvent;
+import io.github.moulberry.notenoughupdates.recipes.EssenceUpgrades;
+import io.github.moulberry.notenoughupdates.recipes.NeuRecipe;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
+@NEUAutoSubscribe
 public class Constants {
+
 	private static class PatternSerializer implements JsonDeserializer<Pattern>, JsonSerializer<Pattern> {
 		@Override
 		public Pattern deserialize(
@@ -72,6 +79,12 @@ public class Constants {
 	public static JsonObject TROPHYFISH;
 	public static JsonObject WEIGHT;
 	public static JsonObject RNGSCORE;
+	public static JsonObject ABIPHONE;
+	public static JsonObject ESSENCESHOPS;
+	public static JsonObject SBLEVELS;
+	public static JsonObject MUSEUM;
+	public static JsonObject BESTIARY;
+	public static JsonObject SACKS;
 
 	private static final ReentrantLock lock = new ReentrantLock();
 
@@ -94,10 +107,29 @@ public class Constants {
 			TROPHYFISH = Utils.getConstant("trophyfish", gson);
 			WEIGHT = Utils.getConstant("weight", gson);
 			RNGSCORE = Utils.getConstant("rngscore", gson);
+			ABIPHONE = Utils.getConstant("abiphone", gson);
+			ESSENCESHOPS = Utils.getConstant("essenceshops", gson);
+			SBLEVELS = Utils.getConstant("sblevels", gson);
+			MUSEUM = Utils.getConstant("museum", gson);
+			BESTIARY = Utils.getConstant("bestiary", gson);
+			SACKS = Utils.getConstant("sacks", gson);
+
+			parseEssenceCosts();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
 			lock.unlock();
+		}
+	}
+
+	public void parseEssenceCosts() {
+		for (Map.Entry<String, JsonElement> entry : ESSENCECOSTS.entrySet()) {
+			NeuRecipe parsed = EssenceUpgrades.parseFromEssenceCostEntry(entry);
+			if (parsed != null) {
+				NotEnoughUpdates.INSTANCE.manager.registerNeuRecipe(parsed);
+			} else {
+				System.out.println("NULL for: " + entry);
+			}
 		}
 	}
 }

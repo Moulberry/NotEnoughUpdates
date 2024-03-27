@@ -20,6 +20,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.events.SlotClickEvent;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -27,11 +28,19 @@ import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.client.C01PacketChatMessage;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+@NEUAutoSubscribe
 public class AntiCoopAdd {
+
+	private static final AntiCoopAdd INSTANCE = new AntiCoopAdd();
+
+	public static AntiCoopAdd getInstance() {
+		return INSTANCE;
+	}
 
 	@SubscribeEvent
 	public void onMouseClick(SlotClickEvent event) {
@@ -58,5 +67,16 @@ public class AntiCoopAdd {
 			Minecraft.getMinecraft().thePlayer.addChatMessage(storageChatMessage);
 			event.setCanceled(true);
 		}
+	}
+
+	public Boolean onPacketChatMessage(C01PacketChatMessage packet) {
+		if (!NotEnoughUpdates.INSTANCE.config.misc.coopWarning) return false;
+
+		String message = packet.getMessage().toLowerCase();
+		if (message.startsWith("/hypixelcommand:coopadd")) {
+			Utils.addChatMessage("§e[NEU] You just entered a malicious looking Co-op add command! If you truly want to add someone to your coop, type §e/coopadd <name>");
+			return true;
+		}
+		return false;
 	}
 }

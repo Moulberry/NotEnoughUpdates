@@ -20,6 +20,7 @@
 package io.github.moulberry.notenoughupdates.miscfeatures;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.events.SlotClickEvent;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -45,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+@NEUAutoSubscribe
 public class EnchantingSolvers {
 	public static SolverType currentSolver = SolverType.NONE;
 
@@ -275,7 +277,7 @@ public class EnchantingSolvers {
 										GlStateManager.disableDepth();
 										GlStateManager.enableBlend();
 										GlStateManager.disableLighting();
-										Utils.drawStringScaled((solveIndex + 1) + "", Minecraft.getMinecraft().fontRendererObj,
+										Utils.drawStringScaled((solveIndex + 1) + "",
 											x + 8.5f - w / 2f, y + 8.5f - 4, true, 0xffc0c0c0, 1f
 										);
 										return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2024 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -19,20 +19,22 @@
 
 package io.github.moulberry.notenoughupdates.profileviewer;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
 import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
-import io.github.moulberry.notenoughupdates.miscfeatures.PetInfoOverlay;
-import io.github.moulberry.notenoughupdates.profileviewer.bestiary.BestiaryPage;
+import io.github.moulberry.notenoughupdates.miscfeatures.profileviewer.bestiary.BestiaryPage;
+import io.github.moulberry.notenoughupdates.profileviewer.rift.RiftPage;
 import io.github.moulberry.notenoughupdates.profileviewer.trophy.TrophyFishPage;
+import io.github.moulberry.notenoughupdates.profileviewer.weight.weight.DungeonsWeight;
+import io.github.moulberry.notenoughupdates.profileviewer.weight.weight.SkillsWeight;
+import io.github.moulberry.notenoughupdates.profileviewer.weight.weight.Weight;
 import io.github.moulberry.notenoughupdates.util.AsyncDependencyLoader;
-import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.PronounDB;
+import io.github.moulberry.notenoughupdates.util.UrsaClient;
 import io.github.moulberry.notenoughupdates.util.Utils;
+import lombok.val;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.client.gui.GuiScreen;
@@ -54,17 +56,15 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 
+import javax.annotation.Nullable;
 import java.awt.*;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -74,10 +74,12 @@ public class GuiProfileViewer extends GuiScreen {
 	public static final ResourceLocation pv_dropdown = new ResourceLocation("notenoughupdates:pv_dropdown.png");
 	public static final ResourceLocation pv_bg = new ResourceLocation("notenoughupdates:pv_bg.png");
 	public static final ResourceLocation pv_elements = new ResourceLocation("notenoughupdates:pv_elements.png");
-	public static final ResourceLocation pv_ironman = new ResourceLocation("notenoughupdates:pv_ironman.png");
-	public static final ResourceLocation pv_bingo = new ResourceLocation("notenoughupdates:pv_bingo.png");
-	public static final ResourceLocation pv_stranded = new ResourceLocation("notenoughupdates:pv_stranded.png");
-	public static final ResourceLocation pv_unknown = new ResourceLocation("notenoughupdates:pv_unknown.png");
+	private static final Map<String, ResourceLocation> gamemodeToIcon = new HashMap<String, ResourceLocation>() {{
+		put("ironman", new ResourceLocation("notenoughupdates:pv_ironman.png"));
+		put("bingo", new ResourceLocation("notenoughupdates:pv_bingo.png"));
+		put("island", new ResourceLocation("notenoughupdates:pv_stranded.png")); // Stranded
+	}};
+	private static final ResourceLocation gamemodeIconUnknown = new ResourceLocation("notenoughupdates:pv_unknown.png");
 	public static final ResourceLocation resource_packs =
 		new ResourceLocation("minecraft:textures/gui/resource_packs.png");
 	public static final ResourceLocation icons = new ResourceLocation("textures/gui/icons.png");
@@ -140,12 +142,7 @@ public class GuiProfileViewer extends GuiScreen {
 				);
 			}
 		};
-
-	public static final NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
-
-	private static final char[] c = new char[]{'k', 'm', 'b', 't'};
-	public static ProfileViewerPage currentPage = ProfileViewerPage.BASIC;
-	public static HashMap<String, String> MINION_RARITY_TO_NUM = new HashMap<String, String>() {
+	public static final HashMap<String, String> RARITY_TO_NUM = new HashMap<String, String>() {
 		{
 			put("COMMON", "0");
 			put("UNCOMMON", "1");
@@ -155,10 +152,11 @@ public class GuiProfileViewer extends GuiScreen {
 			put("MYTHIC", "5");
 		}
 	};
+	public static ProfileViewerPage currentPage = ProfileViewerPage.BASIC;
 	private static int guiLeft;
 	private static int guiTop;
-	private static ProfileViewer.Profile profile;
-	private static String profileId = null;
+	private static SkyblockProfiles profile;
+	private static String profileName = null;
 	public static AsyncDependencyLoader<Optional<PronounDB.PronounChoice>> pronouns =
 		AsyncDependencyLoader.withEqualsInvocation(
 			() ->
@@ -171,6 +169,11 @@ public class GuiProfileViewer extends GuiScreen {
 		);
 	public final GuiElementTextField playerNameTextField;
 	public final GuiElementTextField inventoryTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
+	public final GuiElementTextField museumTextField = new GuiElementTextField("", GuiElementTextField.SCALE_TEXT);
+	public final GuiElementTextField killDeathSearchTextField = new GuiElementTextField(
+		"",
+		GuiElementTextField.SCALE_TEXT
+	);
 	private final Map<ProfileViewerPage, GuiProfileViewerPage> pages = new HashMap<>();
 	public int sizeX;
 	public int sizeY;
@@ -179,117 +182,47 @@ public class GuiProfileViewer extends GuiScreen {
 	public long lastTime = 0;
 	public long startTime = 0;
 	public List<String> tooltipToDisplay = null;
-	Shader blurShaderHorz = null;
-	Framebuffer blurOutputHorz = null;
-	Shader blurShaderVert = null;
-	Framebuffer blurOutputVert = null;
+	private Shader blurShaderHorz = null;
+	private Framebuffer blurOutputHorz = null;
+	private Shader blurShaderVert = null;
+	private Framebuffer blurOutputVert = null;
 	private boolean profileDropdownSelected = false;
-
 	private double lastBgBlurFactor = -1;
 	private boolean showBingoPage;
 
-	public GuiProfileViewer(ProfileViewer.Profile profile) {
+	public GuiProfileViewer(SkyblockProfiles profile) {
 		GuiProfileViewer.profile = profile;
-		GuiProfileViewer.profileId = profile.getLatestProfile();
-		String name = "";
-		if (profile.getHypixelProfile() != null) {
-			name = profile.getHypixelProfile().get("displayname").getAsString();
-		}
-		playerNameTextField = new GuiElementTextField(name, GuiElementTextField.SCALE_TEXT);
+		GuiProfileViewer.profileName = profile.getLatestProfileName();
+
+		String displayname = getDisplayName();
+		// Make search bar empty in case no name was found, e.g. while currently loading
+		if (displayname.startsWith("§")) displayname = "";
+
+		playerNameTextField = new GuiElementTextField(displayname, GuiElementTextField.SCALE_TEXT);
 		playerNameTextField.setSize(100, 20);
 
-		if (currentPage == ProfileViewerPage.LOADING) {
+		if (currentPage.isTransient()) {
 			currentPage = ProfileViewerPage.BASIC;
 		}
 
-		pages.put(ProfileViewerPage.BASIC, new BasicPage(this));
-		pages.put(ProfileViewerPage.DUNGEON, new DungeonPage(this));
-		pages.put(ProfileViewerPage.EXTRA, new ExtraPage(this));
-		pages.put(ProfileViewerPage.INVENTORIES, new InventoriesPage(this));
-		pages.put(ProfileViewerPage.COLLECTIONS, new CollectionsPage(this));
-		pages.put(ProfileViewerPage.PETS, new PetsPage(this));
-		pages.put(ProfileViewerPage.MINING, new MiningPage(this));
-		pages.put(ProfileViewerPage.BINGO, new BingoPage(this));
-		pages.put(ProfileViewerPage.TROPHY_FISH, new TrophyFishPage(this));
-		pages.put(ProfileViewerPage.BESTIARY, new BestiaryPage(this));
-	}
-
-	private static float getMaxLevelXp(JsonArray levels, int offset, int maxLevel) {
-		float xpTotal = 0;
-
-		for (int i = offset; i < offset + maxLevel - 1; i++) {
-			xpTotal += levels.get(i).getAsFloat();
+		try {
+			pages.put(ProfileViewerPage.BASIC, new BasicPage(this));
+			pages.put(ProfileViewerPage.DUNGEON, new DungeonPage(this));
+			pages.put(ProfileViewerPage.EXTRA, new ExtraPage(this));
+			pages.put(ProfileViewerPage.INVENTORIES, new InventoriesPage(this));
+			pages.put(ProfileViewerPage.COLLECTIONS, new CollectionsPage(this));
+			pages.put(ProfileViewerPage.PETS, new PetsPage(this));
+			pages.put(ProfileViewerPage.MINING, new MiningPage(this));
+			pages.put(ProfileViewerPage.BINGO, new BingoPage(this));
+			pages.put(ProfileViewerPage.TROPHY_FISH, new TrophyFishPage(this));
+			pages.put(ProfileViewerPage.BESTIARY, new BestiaryPage(this));
+			pages.put(ProfileViewerPage.CRIMSON_ISLE, new CrimsonIslePage(this));
+			pages.put(ProfileViewerPage.MUSEUM, new MuseumPage(this));
+			pages.put(ProfileViewerPage.RIFT, new RiftPage(this));
+		} catch (Exception ex) {
+			pages.put(ProfileViewerPage.CRASH_RECOVERY, new CrashRecoveryPage(this, ex, currentPage));
+			currentPage = ProfileViewerPage.CRASH_RECOVERY;
 		}
-
-		return xpTotal;
-	}
-
-	public static PetLevel getPetLevel(
-		String petType,
-		String rarity,
-		float exp
-	) {
-		int offset = PetInfoOverlay.Rarity.valueOf(rarity).petOffset;
-		int maxLevel = 100;
-
-		JsonArray levels = new JsonArray();
-		levels.addAll(Constants.PETS.get("pet_levels").getAsJsonArray());
-		JsonElement customLevelingJson = Constants.PETS.get("custom_pet_leveling").getAsJsonObject().get(petType);
-		if (customLevelingJson != null) {
-			switch (Utils.getElementAsInt(Utils.getElement(customLevelingJson, "type"), 0)) {
-				case 1:
-					levels.addAll(customLevelingJson.getAsJsonObject().get("pet_levels").getAsJsonArray());
-					break;
-				case 2:
-					levels = customLevelingJson.getAsJsonObject().get("pet_levels").getAsJsonArray();
-					break;
-			}
-			maxLevel = Utils.getElementAsInt(Utils.getElement(customLevelingJson, "max_level"), 100);
-		}
-
-		float maxXP = getMaxLevelXp(levels, offset, maxLevel);
-		boolean isMaxed = exp >= maxXP;
-
-		int level = 1;
-		float currentLevelRequirement = 0;
-		float xpThisLevel = 0;
-		float pct = 0;
-
-		if (isMaxed) {
-			level = maxLevel;
-			currentLevelRequirement = levels.get(offset + level - 2).getAsFloat();
-			xpThisLevel = currentLevelRequirement;
-			pct = 1;
-		} else {
-			long totalExp = 0;
-			for (int i = offset; i < levels.size(); i++) {
-				currentLevelRequirement = levels.get(i).getAsLong();
-				totalExp += currentLevelRequirement;
-				if (totalExp >= exp) {
-					xpThisLevel = currentLevelRequirement - (totalExp - exp);
-					level = Math.min(i - offset + 1, maxLevel);
-					break;
-				}
-			}
-			pct = currentLevelRequirement != 0 ? xpThisLevel / currentLevelRequirement : 0;
-			level += pct;
-		}
-
-		GuiProfileViewer.PetLevel levelObj = new GuiProfileViewer.PetLevel();
-		levelObj.level = level;
-		levelObj.maxLevel = maxLevel;
-		levelObj.currentLevelRequirement = currentLevelRequirement;
-		levelObj.maxXP = maxXP;
-		levelObj.levelPercentage = pct;
-		levelObj.levelXp = xpThisLevel;
-		levelObj.totalXp = exp;
-		return levelObj;
-	}
-
-	@Deprecated
-	public static String shortNumberFormat(double n, int iteration) {
-		return StringUtils.shortNumberFormat(n, iteration
-		);
 	}
 
 	public static int getGuiLeft() {
@@ -300,12 +233,16 @@ public class GuiProfileViewer extends GuiScreen {
 		return guiTop;
 	}
 
-	public static ProfileViewer.Profile getProfile() {
+	public static SkyblockProfiles getProfile() {
 		return profile;
 	}
 
-	public static String getProfileId() {
-		return profileId;
+	public static String getProfileName() {
+		return profileName;
+	}
+
+	public static @Nullable SkyblockProfiles.SkyblockProfile getSelectedProfile() {
+		return profile.getProfile(profileName);
 	}
 
 	@Override
@@ -314,22 +251,24 @@ public class GuiProfileViewer extends GuiScreen {
 		if (startTime == 0) startTime = currentTime;
 
 		ProfileViewerPage page = currentPage;
-		if (profile == null) {
-			page = ProfileViewerPage.INVALID_NAME;
-		} else if (profile.getSkyblockProfiles(null) == null) {
-			page = ProfileViewerPage.LOADING;
-		} else if (profile.getLatestProfile() == null) {
-			page = ProfileViewerPage.NO_SKYBLOCK;
+		if (page != ProfileViewerPage.CRASH_RECOVERY) {
+			if (profile == null) {
+				page = ProfileViewerPage.INVALID_NAME;
+			} else if (profile.getOrLoadSkyblockProfiles(null) == null) {
+				page = ProfileViewerPage.LOADING;
+			}
+
+			if (profile != null && profile.getLatestProfileName() == null &&
+				!profile.getUpdatingSkyblockProfilesState().get()) {
+				page = ProfileViewerPage.NO_SKYBLOCK;
+			}
 		}
 
-		if (profileId == null && profile != null && profile.getLatestProfile() != null) {
-			profileId = profile.getLatestProfile();
-		}
-		{
-			//this is just to cache the guild info
-			if (profile != null) {
-				profile.getGuildInformation(null);
+		if (profile != null) {
+			if (profileName == null && profile.getLatestProfileName() != null) {
+				profileName = profile.getLatestProfileName();
 			}
+
 		}
 
 		this.sizeX = 431;
@@ -337,17 +276,17 @@ public class GuiProfileViewer extends GuiScreen {
 		guiLeft = (this.width - this.sizeX) / 2;
 		guiTop = (this.height - this.sizeY) / 2;
 
-		JsonObject currProfileInfo = profile != null ? profile.getProfileInformation(profileId) : null;
+		SkyblockProfiles.SkyblockProfile selectedProfile = profile != null ? profile.getProfile(profileName) : null;
 		if (NotEnoughUpdates.INSTANCE.config.profileViewer.alwaysShowBingoTab) {
 			showBingoPage = true;
 		} else {
-			showBingoPage =
-				currProfileInfo != null &&
-					currProfileInfo.has("game_mode") &&
-					currProfileInfo.get("game_mode").getAsString().equals("bingo");
+			showBingoPage = selectedProfile != null && selectedProfile.getGamemode() != null &&
+				selectedProfile.getGamemode().equals("bingo");
 		}
 
-		if (!showBingoPage && currentPage == ProfileViewerPage.BINGO) currentPage = ProfileViewerPage.BASIC;
+		if (!showBingoPage && currentPage == ProfileViewerPage.BINGO) {
+			currentPage = ProfileViewerPage.BASIC;
+		}
 
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		drawDefaultBackground();
@@ -358,11 +297,13 @@ public class GuiProfileViewer extends GuiScreen {
 		GlStateManager.enableDepth();
 		GlStateManager.translate(0, 0, 5);
 		renderTabs(true);
+		renderRecentPlayers(true);
 		GlStateManager.translate(0, 0, -3);
 
 		GlStateManager.disableDepth();
 		GlStateManager.translate(0, 0, -2);
 		renderTabs(false);
+		renderRecentPlayers(false);
 		GlStateManager.translate(0, 0, 2);
 
 		GlStateManager.disableLighting();
@@ -375,7 +316,7 @@ public class GuiProfileViewer extends GuiScreen {
 		Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bg);
 		Utils.drawTexturedRect(guiLeft, guiTop, sizeX, sizeY, GL11.GL_NEAREST);
 
-		if (!(page == ProfileViewerPage.LOADING)) {
+		if (page != ProfileViewerPage.LOADING) {
 			playerNameTextField.render(guiLeft + sizeX - 100, guiTop + sizeY + 5);
 			ScaledResolution scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
 
@@ -385,57 +326,25 @@ public class GuiProfileViewer extends GuiScreen {
 				Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
 				Utils.drawTexturedRect(guiLeft, guiTop + sizeY + 3, 100, 20, 0, 100 / 200f, 0, 20 / 185f, GL11.GL_NEAREST);
 				Utils.drawStringCenteredScaledMaxWidth(
-					profileId,
-					Minecraft.getMinecraft().fontRendererObj,
+					profileName,
 					guiLeft + 50,
 					guiTop + sizeY + 3 + 10,
 					true,
 					90,
 					new Color(63, 224, 208, 255).getRGB()
 				);
-				//ironman icon
-				if (
-					currProfileInfo != null &&
-						currProfileInfo.has("game_mode") &&
-						currProfileInfo.get("game_mode").getAsString().equals("ironman")
-				) {
+
+				if (selectedProfile != null && selectedProfile.getGamemode() != null) {
 					GlStateManager.color(1, 1, 1, 1);
-					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_ironman);
+					ResourceLocation gamemodeIcon = gamemodeToIcon.getOrDefault(
+						selectedProfile.getGamemode(),
+						gamemodeIconUnknown
+					);
+					Minecraft.getMinecraft().getTextureManager().bindTexture(gamemodeIcon);
 					Utils.drawTexturedRect(guiLeft - 16 - 5, guiTop + sizeY + 5, 16, 16, GL11.GL_NEAREST);
 				}
-				//bingo! icon
-				if (
-					currProfileInfo != null &&
-						currProfileInfo.has("game_mode") &&
-						currProfileInfo.get("game_mode").getAsString().equals("bingo")
-				) {
-					GlStateManager.color(1, 1, 1, 1);
-					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bingo);
-					Utils.drawTexturedRect(guiLeft - 16 - 5, guiTop + sizeY + 5, 16, 16, GL11.GL_NEAREST);
-				}
-				//stranded icon
-				if (
-					currProfileInfo != null &&
-						currProfileInfo.has("game_mode") &&
-						currProfileInfo.get("game_mode").getAsString().equals("island")
-				) {
-					GlStateManager.color(1, 1, 1, 1);
-					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_stranded);
-					Utils.drawTexturedRect(guiLeft - 16 - 5, guiTop + sizeY + 5, 16, 16, GL11.GL_NEAREST);
-				}
-				//icon if game mode is unknown
-				if (
-					currProfileInfo != null &&
-						currProfileInfo.has("game_mode") &&
-						!currProfileInfo.get("game_mode").getAsString().equals("island") &&
-						!currProfileInfo.get("game_mode").getAsString().equals("bingo") &&
-						!currProfileInfo.get("game_mode").getAsString().equals("ironman")
-				) {
-					GlStateManager.color(1, 1, 1, 1);
-					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_unknown);
-					Utils.drawTexturedRect(guiLeft - 16 - 5, guiTop + sizeY + 5, 16, 16, GL11.GL_NEAREST);
-				}
-				//Render Open In Skycrypt button
+
+				// Render Open In SkyCrypt button
 				renderBlurredBackground(width, height, guiLeft + 100 + 6 + 2, guiTop + sizeY + 3 + 2, 100 - 4, 20 - 4);
 				Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
 				Utils.drawTexturedRect(
@@ -450,8 +359,7 @@ public class GuiProfileViewer extends GuiScreen {
 					GL11.GL_NEAREST
 				);
 				Utils.drawStringCenteredScaledMaxWidth(
-					"Open in Skycrypt",
-					Minecraft.getMinecraft().fontRendererObj,
+					"Open in SkyCrypt",
 					guiLeft + 50 + 100 + 6,
 					guiTop + sizeY + 3 + 10,
 					true,
@@ -461,9 +369,7 @@ public class GuiProfileViewer extends GuiScreen {
 
 				if (profileDropdownSelected && !profile.getProfileNames().isEmpty() && scaledResolution.getScaleFactor() < 4) {
 					int dropdownOptionSize = scaledResolution.getScaleFactor() == 3 ? 10 : 20;
-
-					int numProfiles = profile.getProfileNames().size();
-					int sizeYDropdown = numProfiles * dropdownOptionSize;
+					int sizeYDropdown = profile.getProfileNames().size() * dropdownOptionSize;
 					renderBlurredBackground(width, height, guiLeft + 2, guiTop + sizeY + 23, 100 - 4, sizeYDropdown - 2);
 					Minecraft.getMinecraft().getTextureManager().bindTexture(pv_dropdown);
 					Utils.drawTexturedRect(guiLeft, guiTop + sizeY + 23 - 3, 100, 3, 100 / 200f, 1, 0, 3 / 185f, GL11.GL_NEAREST);
@@ -491,71 +397,25 @@ public class GuiProfileViewer extends GuiScreen {
 					);
 
 					for (int yIndex = 0; yIndex < profile.getProfileNames().size(); yIndex++) {
-						String otherProfileId = profile.getProfileNames().get(yIndex);
+						String otherProfileName = profile.getProfileNames().get(yIndex);
+						selectedProfile = profile.getProfile(otherProfileName);
+
 						Utils.drawStringCenteredScaledMaxWidth(
-							otherProfileId,
-							Minecraft.getMinecraft().fontRendererObj,
+							otherProfileName,
 							guiLeft + 50,
 							guiTop + sizeY + 23 + dropdownOptionSize / 2f + dropdownOptionSize * yIndex,
 							true,
 							90,
 							new Color(33, 112, 104, 255).getRGB()
 						);
-						currProfileInfo = profile.getProfileInformation(otherProfileId);
-						if (
-							currProfileInfo != null &&
-								currProfileInfo.has("game_mode") &&
-								currProfileInfo.get("game_mode").getAsString().equals("ironman")
-						) {
+
+						if (selectedProfile != null && selectedProfile.getGamemode() != null) {
 							GlStateManager.color(1, 1, 1, 1);
-							Minecraft.getMinecraft().getTextureManager().bindTexture(pv_ironman);
-							Utils.drawTexturedRect(
-								guiLeft - 16 - 5,
-								guiTop + sizeY + 2 + 23 + dropdownOptionSize * yIndex,
-								16,
-								16,
-								GL11.GL_NEAREST
+							ResourceLocation gamemodeIcon = gamemodeToIcon.getOrDefault(
+								selectedProfile.getGamemode(),
+								gamemodeIconUnknown
 							);
-						}
-						if (
-							currProfileInfo != null &&
-								currProfileInfo.has("game_mode") &&
-								currProfileInfo.get("game_mode").getAsString().equals("bingo")
-						) {
-							GlStateManager.color(1, 1, 1, 1);
-							Minecraft.getMinecraft().getTextureManager().bindTexture(pv_bingo);
-							Utils.drawTexturedRect(
-								guiLeft - 16 - 5,
-								guiTop + sizeY + 2 + 23 + dropdownOptionSize * yIndex,
-								16,
-								16,
-								GL11.GL_NEAREST
-							);
-						}
-						if (
-							currProfileInfo != null &&
-								currProfileInfo.has("game_mode") &&
-								currProfileInfo.get("game_mode").getAsString().equals("island")
-						) {
-							GlStateManager.color(1, 1, 1, 1);
-							Minecraft.getMinecraft().getTextureManager().bindTexture(pv_stranded);
-							Utils.drawTexturedRect(
-								guiLeft - 16 - 5,
-								guiTop + sizeY + 2 + 23 + dropdownOptionSize * yIndex,
-								16,
-								16,
-								GL11.GL_NEAREST
-							);
-						}
-						if (
-							currProfileInfo != null &&
-								currProfileInfo.has("game_mode") &&
-								!currProfileInfo.get("game_mode").getAsString().equals("island") &&
-								!currProfileInfo.get("game_mode").getAsString().equals("bingo") &&
-								!currProfileInfo.get("game_mode").getAsString().equals("ironman")
-						) {
-							GlStateManager.color(1, 1, 1, 1);
-							Minecraft.getMinecraft().getTextureManager().bindTexture(pv_unknown);
+							Minecraft.getMinecraft().getTextureManager().bindTexture(gamemodeIcon);
 							Utils.drawTexturedRect(
 								guiLeft - 16 - 5,
 								guiTop + sizeY + 2 + 23 + dropdownOptionSize * yIndex,
@@ -572,7 +432,14 @@ public class GuiProfileViewer extends GuiScreen {
 		GlStateManager.color(1, 1, 1, 1);
 
 		if (pages.containsKey(page)) {
-			pages.get(page).drawPage(mouseX, mouseY, partialTicks);
+			try {
+				pages.get(page).drawPage(mouseX, mouseY, partialTicks);
+			} catch (Exception ex) {
+				if (page == ProfileViewerPage.CRASH_RECOVERY)
+					throw ex; // Rethrow if the exception handler crashes.
+				pages.put(ProfileViewerPage.CRASH_RECOVERY, new CrashRecoveryPage(this, ex, currentPage));
+				currentPage = ProfileViewerPage.CRASH_RECOVERY;
+			}
 		} else {
 			switch (page) {
 				case LOADING:
@@ -586,53 +453,52 @@ public class GuiProfileViewer extends GuiScreen {
 						}
 					}
 
-					Utils.drawStringCentered(
-						str,
-						Minecraft.getMinecraft().fontRendererObj,
-						guiLeft + sizeX / 2f,
-						guiTop + 101,
-						true,
-						0
-					);
+					Utils.drawStringCentered(str, guiLeft + sizeX / 2f, guiTop + 101, true, 0);
 
 					//This is just here to inform the player what to do
-					//like typing /api new or telling them to go find a psychotherapist
+					//like telling them to go find a psychotherapist
 					long timeDiff = System.currentTimeMillis() - startTime;
 
-					if (timeDiff > 20000) {
+					val authState = NotEnoughUpdates.INSTANCE.manager.ursaClient.getAuthenticationState();
+					if (authState == UrsaClient.AuthenticationState.FAILED_TO_JOINSERVER) {
 						Utils.drawStringCentered(
-							EnumChatFormatting.YELLOW + "Its taking a while...",
-							Minecraft.getMinecraft().fontRendererObj,
-							guiLeft + sizeX / 2f,
-							guiTop + 111,
-							true,
-							0
+							EnumChatFormatting.RED +
+								"Looks like we cannot authenticate with Mojang.",
+							guiLeft + sizeX / 2f, guiTop + 111, true, 0
 						);
 						Utils.drawStringCentered(
-							EnumChatFormatting.YELLOW + "Try \"/api new\".",
-							Minecraft.getMinecraft().fontRendererObj,
-							guiLeft + sizeX / 2f,
-							guiTop + 121,
-							true,
-							0
+							EnumChatFormatting.RED + "Is your game open for more than 24 hours?",
+							guiLeft + sizeX / 2f, guiTop + 121, true, 0
+						);
+					} else if (authState == UrsaClient.AuthenticationState.REJECTED) {
+						Utils.drawStringCentered(
+							EnumChatFormatting.RED +
+								"Looks like we cannot authenticate with Ursa.",
+							guiLeft + sizeX / 2f, guiTop + 111, true, 0
+						);
+						Utils.drawStringCentered(
+							EnumChatFormatting.RED + "Is your game open for more than 24 hours?",
+							guiLeft + sizeX / 2f, guiTop + 121, true, 0
+						);
+
+					} else if (timeDiff > 20000) {
+						Utils.drawStringCentered(
+							EnumChatFormatting.YELLOW + "Its taking a while...",
+							guiLeft + sizeX / 2f, guiTop + 111, true, 0
+						);
+						Utils.drawStringCentered(
+							EnumChatFormatting.YELLOW + "Might be hypixel's fault.",
+							guiLeft + sizeX / 2f, guiTop + 121, true, 0
 						);
 						if (timeDiff > 60000) {
 							Utils.drawStringCentered(
-								EnumChatFormatting.YELLOW + "Might be hypixel's fault.",
-								Minecraft.getMinecraft().fontRendererObj,
-								guiLeft + sizeX / 2f,
-								guiTop + 131,
-								true,
-								0
+								EnumChatFormatting.YELLOW + "Might be our fault :/.",
+								guiLeft + sizeX / 2f, guiTop + 131, true, 0
 							);
 							if (timeDiff > 180000) {
 								Utils.drawStringCentered(
 									EnumChatFormatting.YELLOW + "Wow you're still here?",
-									Minecraft.getMinecraft().fontRendererObj,
-									guiLeft + sizeX / 2f,
-									guiTop + 141,
-									true,
-									0
+									guiLeft + sizeX / 2f, guiTop + 141, true, 0
 								);
 								if (timeDiff > 360000) {
 									long second = (timeDiff / 1000) % 60;
@@ -642,70 +508,42 @@ public class GuiProfileViewer extends GuiScreen {
 									String time = String.format("%02d:%02d:%02d", hour, minute, second);
 									Utils.drawStringCentered(
 										EnumChatFormatting.YELLOW + "You've wasted your time here for: " + time,
-										Minecraft.getMinecraft().fontRendererObj,
-										guiLeft + sizeX / 2f,
-										guiTop + 151,
-										true,
-										0
+										guiLeft + sizeX / 2f, guiTop + 151, true, 0
 									);
 									Utils.drawStringCentered(
-										EnumChatFormatting.YELLOW + "" + EnumChatFormatting.BOLD + "What are you doing with your life?",
-										Minecraft.getMinecraft().fontRendererObj,
-										guiLeft + sizeX / 2f,
-										guiTop + 161,
-										true,
-										0
+										EnumChatFormatting.YELLOW + String.valueOf(EnumChatFormatting.BOLD) +
+											"What are you doing with your life?",
+										guiLeft + sizeX / 2f, guiTop + 161, true, 0
 									);
 									if (timeDiff > 600000) {
 										Utils.drawStringCentered(
-											EnumChatFormatting.RED + "" + EnumChatFormatting.BOLD + "Maniac",
-											Minecraft.getMinecraft().fontRendererObj,
-											guiLeft + sizeX / 2f,
-											guiTop + 171,
-											true,
-											0
+											EnumChatFormatting.RED + String.valueOf(EnumChatFormatting.BOLD) + "Maniac",
+											guiLeft + sizeX / 2f, guiTop + 171, true, 0
 										);
 										if (timeDiff > 1200000) {
 											Utils.drawStringCentered(
-												EnumChatFormatting.RED + "" + EnumChatFormatting.BOLD + "You're a menace to society",
-												Minecraft.getMinecraft().fontRendererObj,
-												guiLeft + sizeX / 2f,
-												guiTop + 181,
-												true,
-												0
+												EnumChatFormatting.RED + String.valueOf(EnumChatFormatting.BOLD) +
+													"You're a menace to society",
+												guiLeft + sizeX / 2f, guiTop + 181, true, 0
 											);
 											if (timeDiff > 1800000) {
 												Utils.drawStringCentered(
-													EnumChatFormatting.RED +
-														"" +
-														EnumChatFormatting.BOLD +
+													EnumChatFormatting.RED + String.valueOf(EnumChatFormatting.BOLD) +
 														"You don't know what's gonna happen to you",
-													Minecraft.getMinecraft().fontRendererObj,
-													guiLeft + sizeX / 2f,
-													guiTop + 191,
-													true,
-													0
+													guiLeft + sizeX / 2f, guiTop + 191, true, 0
 												);
 												if (timeDiff > 3000000) {
 													Utils.drawStringCentered(
-														EnumChatFormatting.RED + "" + EnumChatFormatting.BOLD + "You really want this?",
-														Minecraft.getMinecraft().fontRendererObj,
-														guiLeft + sizeX / 2f,
-														guiTop + 91,
-														true,
-														0
+														EnumChatFormatting.RED + String.valueOf(EnumChatFormatting.BOLD) +
+															"You really want this?",
+														guiLeft + sizeX / 2f, guiTop + 91, true, 0
 													);
 													if (timeDiff > 3300000) {
 														Utils.drawStringCentered(
 															EnumChatFormatting.DARK_RED +
-																"" +
-																EnumChatFormatting.BOLD +
+																String.valueOf(EnumChatFormatting.BOLD) +
 																"OW LORD FORGIVE ME FOR THIS",
-															Minecraft.getMinecraft().fontRendererObj,
-															guiLeft + sizeX / 2f,
-															guiTop + 71,
-															true,
-															0
+															guiLeft + sizeX / 2f, guiTop + 71, true, 0
 														);
 														if (timeDiff > 3600000) {
 															throw new Error("Go do something productive") {
@@ -729,21 +567,13 @@ public class GuiProfileViewer extends GuiScreen {
 				case INVALID_NAME:
 					Utils.drawStringCentered(
 						EnumChatFormatting.RED + "Invalid name or API is down!",
-						Minecraft.getMinecraft().fontRendererObj,
-						guiLeft + sizeX / 2f,
-						guiTop + 101,
-						true,
-						0
+						guiLeft + sizeX / 2f, guiTop + 101, true, 0
 					);
 					break;
 				case NO_SKYBLOCK:
 					Utils.drawStringCentered(
-						EnumChatFormatting.RED + "No skyblock data found!",
-						Minecraft.getMinecraft().fontRendererObj,
-						guiLeft + sizeX / 2f,
-						guiTop + 101,
-						true,
-						0
+						EnumChatFormatting.RED + "No SkyBlock data found!",
+						guiLeft + sizeX / 2f, guiTop + 101, true, 0
 					);
 					break;
 			}
@@ -778,13 +608,32 @@ public class GuiProfileViewer extends GuiScreen {
 				}
 			}
 		}
+		int x = guiLeft + sizeX;
+		int y = guiTop;
+		List<String> previousProfileSearches = NotEnoughUpdates.INSTANCE.config.hidden.previousProfileSearches;
+
+		if (mouseX > x && mouseX < x + 29) {
+			if (mouseY > y && mouseY < y + 28) {
+				tooltipToDisplay = new ArrayList<>();
+				tooltipToDisplay.add(Minecraft.getMinecraft().thePlayer.getName());
+			}
+		}
+
+		for (int i = 0; i < previousProfileSearches.size(); i++) {
+			if (mouseX > x && mouseX < x + 28) {
+				if (mouseY > y + 28 * (i + 1) && mouseY < y + 28 * (i + 2)) {
+					tooltipToDisplay = new ArrayList<>();
+					tooltipToDisplay.add(previousProfileSearches.get(i));
+				}
+			}
+		}
 
 		if (tooltipToDisplay != null) {
 			List<String> grayTooltip = new ArrayList<>(tooltipToDisplay.size());
 			for (String line : tooltipToDisplay) {
 				grayTooltip.add(EnumChatFormatting.GRAY + line);
 			}
-			Utils.drawHoveringText(grayTooltip, mouseX, mouseY, width, height, -1, Minecraft.getMinecraft().fontRendererObj);
+			Utils.drawHoveringText(grayTooltip, mouseX, mouseY, width, height, -1);
 			tooltipToDisplay = null;
 		}
 	}
@@ -847,6 +696,77 @@ public class GuiProfileViewer extends GuiScreen {
 		Utils.drawItemStack(stack, x + 6, y + 9);
 	}
 
+	private static String getDisplayName() {
+		return Utils.getElementOrDefault(
+			profile.getHypixelProfile(),
+			"displayname",
+			new JsonPrimitive(EnumChatFormatting.RED + "ERROR")
+		).getAsString();
+	}
+
+	private void renderRecentPlayers(boolean renderCurrent) {
+		String playerName = getDisplayName();
+
+		boolean selected = Objects.equals(Minecraft.getMinecraft().thePlayer.getName(), playerName);
+		if (selected == renderCurrent) {
+			renderRecentPlayer(Minecraft.getMinecraft().thePlayer.getName().toLowerCase(), 0, selected);
+		}
+
+		List<String> previousProfileSearches = NotEnoughUpdates.INSTANCE.config.hidden.previousProfileSearches;
+
+		for (int i = 0; i < previousProfileSearches.size(); i++) {
+			selected = Objects.equals(previousProfileSearches.get(i), playerName.toLowerCase());
+			if (selected == renderCurrent) {
+				renderRecentPlayer(previousProfileSearches.get(i), i + 1, selected);
+			}
+		}
+	}
+
+	private void renderRecentPlayer(String name, int yIndex, boolean selected) {
+		GlStateManager.disableLighting();
+		GlStateManager.enableBlend();
+		GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GlStateManager.enableAlpha();
+		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
+
+		int x = guiLeft + sizeX;
+		int y = guiTop + yIndex * 28;
+
+		float uMin = 226 / 256f;
+		float uMax = 1f;
+		float vMin = 144 / 256f;
+		float vMax = 172 / 256f;
+
+		if (yIndex != 0) {
+			vMin = 172 / 256f;
+			vMax = 200 / 256f;
+		}
+
+		if (selected) {
+			uMin = 196 / 256f;
+			uMax = 226 / 256f;
+
+			renderBlurredBackground(width, height, x - 2, y + 2, 30 - 2, 28 - 4);
+		} else {
+			renderBlurredBackground(width, height, x, y + 2, 28 - 2, 28 - 4);
+		}
+
+		GlStateManager.disableLighting();
+		GlStateManager.enableBlend();
+		GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GlStateManager.enableAlpha();
+		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
+
+		Minecraft.getMinecraft().getTextureManager().bindTexture(pv_elements);
+		Utils.drawTexturedRect(x - 3, y, 32, 28, uMin, uMax, vMin, vMax, GL11.GL_NEAREST);
+
+		GlStateManager.enableDepth();
+
+		ItemStack playerHead = ProfileViewerUtils.getPlayerData(name);
+
+		Utils.drawItemStack(playerHead, x + 3, y + 6);
+	}
+
 	@Override
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
 		if (currentPage != ProfileViewerPage.LOADING && currentPage != ProfileViewerPage.INVALID_NAME) {
@@ -869,6 +789,8 @@ public class GuiProfileViewer extends GuiScreen {
 						currentPage = page;
 						inventoryTextField.otherComponentClick();
 						playerNameTextField.otherComponentClick();
+						killDeathSearchTextField.otherComponentClick();
+						museumTextField.otherComponentClick();
 						return;
 					}
 				}
@@ -876,8 +798,44 @@ public class GuiProfileViewer extends GuiScreen {
 		}
 
 		if (pages.containsKey(currentPage)) {
-			if (pages.get(currentPage).mouseClicked(mouseX, mouseY, mouseButton)) {
-				return;
+			try {
+				if (pages.get(currentPage).mouseClicked(mouseX, mouseY, mouseButton)) {
+					return;
+				}
+			} catch (Exception ex) {
+				if (currentPage == ProfileViewerPage.CRASH_RECOVERY) throw ex;
+				pages.put(ProfileViewerPage.CRASH_RECOVERY, new CrashRecoveryPage(this, ex, currentPage));
+				currentPage = ProfileViewerPage.CRASH_RECOVERY;
+			}
+		}
+
+		String playerName = getDisplayName();
+
+		int x = guiLeft + sizeX;
+		int y = guiTop;
+		List<String> previousProfileSearches = NotEnoughUpdates.INSTANCE.config.hidden.previousProfileSearches;
+
+		if (mouseX > x && mouseX < x + 29) {
+			if (mouseY > y && mouseY < y + 28) {
+				if (!playerName.equals(Minecraft.getMinecraft().thePlayer.getName().toLowerCase())) {
+					NotEnoughUpdates.profileViewer.loadPlayerByName(Minecraft.getMinecraft().thePlayer.getName(), profile -> {
+						profile.resetCache();
+						NotEnoughUpdates.INSTANCE.openGui = new GuiProfileViewer(profile);
+					});
+				}
+			}
+		}
+
+		for (int i = 0; i < previousProfileSearches.size(); i++) {
+			if (mouseX > x && mouseX < x + 28) {
+				if (mouseY > y + 28 * (i + 1) && mouseY < y + 28 * (i + 2)) {
+					if (!playerName.equals(previousProfileSearches.get(i))) {
+						NotEnoughUpdates.profileViewer.loadPlayerByName(previousProfileSearches.get(i), profile -> {
+							profile.resetCache();
+							NotEnoughUpdates.INSTANCE.openGui = new GuiProfileViewer(profile);
+						});
+					}
+				}
 			}
 		}
 
@@ -885,6 +843,8 @@ public class GuiProfileViewer extends GuiScreen {
 			if (mouseY > guiTop + sizeY + 5 && mouseY < guiTop + sizeY + 25) {
 				playerNameTextField.mouseClicked(mouseX, mouseY, mouseButton);
 				inventoryTextField.otherComponentClick();
+				killDeathSearchTextField.otherComponentClick();
+				museumTextField.otherComponentClick();
 				return;
 			}
 		}
@@ -893,24 +853,15 @@ public class GuiProfileViewer extends GuiScreen {
 				mouseX < guiLeft + 106 + 100 &&
 				profile != null &&
 				!profile.getProfileNames().isEmpty() &&
-				profileId != null
+				profileName != null
 		) {
 			if (mouseY > guiTop + sizeY + 3 && mouseY < guiTop + sizeY + 23) {
-				try {
-					Desktop desk = Desktop.getDesktop();
-					desk.browse(
-						new URI(
-							"https://sky.shiiyu.moe/stats/" + profile.getHypixelProfile().get("displayname").getAsString() + "/" +
-								profileId
-						)
-					);
-					Utils.playPressSound();
-					return;
-				} catch (UnsupportedOperationException | IOException | URISyntaxException ignored) {
-					//no idea how this sounds, but ya know just in case
-					Utils.playSound(new ResourceLocation("game.player.hurt"), true);
-					return;
-				}
+				String url =
+					"https://sky.shiiyu.moe/stats/" + getDisplayName() + "/" +
+						profileName;
+				Utils.openUrl(url);
+				Utils.playPressSound();
+				return;
 			}
 		}
 
@@ -921,7 +872,7 @@ public class GuiProfileViewer extends GuiScreen {
 					profileDropdownSelected = false;
 					int profileNum = 0;
 					for (int index = 0; index < profile.getProfileNames().size(); index++) {
-						if (profile.getProfileNames().get(index).equals(profileId)) {
+						if (profile.getProfileNames().get(index).equals(profileName)) {
 							profileNum = index;
 							break;
 						}
@@ -934,11 +885,11 @@ public class GuiProfileViewer extends GuiScreen {
 					if (profileNum >= profile.getProfileNames().size()) profileNum = 0;
 					if (profileNum < 0) profileNum = profile.getProfileNames().size() - 1;
 
-					String newProfileId = profile.getProfileNames().get(profileNum);
-					if (profileId != null && !profileId.equals(newProfileId)) {
+					String newProfileName = profile.getProfileNames().get(profileNum);
+					if (profileName != null && !profileName.equals(newProfileName)) {
 						resetCache();
 					}
-					profileId = newProfileId;
+					profileName = newProfileName;
 				} else {
 					profileDropdownSelected = !profileDropdownSelected;
 				}
@@ -947,20 +898,24 @@ public class GuiProfileViewer extends GuiScreen {
 				int extraY = mouseY - (guiTop + sizeY + 23);
 				int index = extraY / dropdownOptionSize;
 				if (index >= 0 && index < profile.getProfileNames().size()) {
-					String newProfileId = profile.getProfileNames().get(index);
-					if (profileId != null && !profileId.equals(newProfileId)) {
+					String newProfileName = profile.getProfileNames().get(index);
+					if (profileName != null && !profileName.equals(newProfileName)) {
 						resetCache();
 					}
-					profileId = newProfileId;
+					profileName = newProfileName;
 				}
 			}
 			playerNameTextField.otherComponentClick();
 			inventoryTextField.otherComponentClick();
+			killDeathSearchTextField.otherComponentClick();
+			museumTextField.otherComponentClick();
 			return;
 		}
 		profileDropdownSelected = false;
 		playerNameTextField.otherComponentClick();
 		inventoryTextField.otherComponentClick();
+		killDeathSearchTextField.otherComponentClick();
+		museumTextField.otherComponentClick();
 	}
 
 	@Override
@@ -968,16 +923,25 @@ public class GuiProfileViewer extends GuiScreen {
 		super.keyTyped(typedChar, keyCode);
 
 		if (pages.containsKey(currentPage)) {
-			pages.get(currentPage).keyTyped(typedChar, keyCode);
+			try {
+				pages.get(currentPage).keyTyped(typedChar, keyCode);
+			} catch (Exception ex) {
+				if (currentPage == ProfileViewerPage.CRASH_RECOVERY) throw ex;
+				pages.put(ProfileViewerPage.CRASH_RECOVERY, new CrashRecoveryPage(this, ex, currentPage));
+				currentPage = ProfileViewerPage.CRASH_RECOVERY;
+			}
 		}
 
 		if (playerNameTextField.getFocus()) {
 			if (keyCode == Keyboard.KEY_RETURN) {
 				currentPage = ProfileViewerPage.LOADING;
-				NotEnoughUpdates.profileViewer.getProfileByName(
+				NotEnoughUpdates.profileViewer.loadPlayerByName(
 					playerNameTextField.getText(),
 					profile -> { //todo: invalid name
-						if (profile != null) profile.resetCache();
+						if (profile != null) {
+							profile.resetCache();
+							ProfileViewerUtils.saveSearch(playerNameTextField.getText());
+						}
 						Minecraft.getMinecraft().displayGuiScreen(new GuiProfileViewer(profile));
 					}
 				);
@@ -1013,7 +977,9 @@ public class GuiProfileViewer extends GuiScreen {
 		if (levelObj.maxed) {
 			renderGoldBar(x, y + 6, xSize);
 		} else {
-			if (skillName.contains("Catacombs") && levelObj.level >= 50) {
+			if ((skillName.contains("Catacombs") || Weight.DUNGEON_CLASS_NAMES.stream().anyMatch(e -> skillName
+				.toLowerCase()
+				.contains(e))) && levelObj.level >= 50) {
 				renderGoldBar(x, y + 6, xSize);
 			} else {
 				renderBar(x, y + 6, xSize, level % 1);
@@ -1024,18 +990,35 @@ public class GuiProfileViewer extends GuiScreen {
 			if (mouseY > y - 4 && mouseY < y + 13) {
 				String levelStr;
 				String totalXpStr = null;
-				if (skillName.contains("Catacombs")) totalXpStr =
-					EnumChatFormatting.GRAY + "Total XP: " + EnumChatFormatting.DARK_PURPLE +
-						numberFormat.format(levelObj.totalXp);
+				if (skillName.contains("Catacombs")) {
+					totalXpStr = EnumChatFormatting.GRAY + "Total XP: " + EnumChatFormatting.DARK_PURPLE +
+						StringUtils.formatNumber(levelObj.totalXp) + EnumChatFormatting.DARK_GRAY + " (" +
+						StringUtils.formatToTenths(getPercentage(skillName.toLowerCase(), levelObj)) + "% to 50)";
+				}
+				// Adds overflow level to each level object that is maxed, avoids hotm level as there is no overflow xp for it
 				if (levelObj.maxed) {
-					levelStr = EnumChatFormatting.GOLD + "MAXED!";
+					levelStr = levelObj.maxLevel != 7 ?
+						EnumChatFormatting.GOLD + "MAXED!" + EnumChatFormatting.GRAY + " (Overflow level: " + String.format(
+							"%.2f",
+							levelObj.level
+						) + ")" :
+						EnumChatFormatting.GOLD + "MAXED!";
 				} else {
-					int maxXp = (int) levelObj.maxXpForLevel;
-					levelStr =
-						EnumChatFormatting.DARK_PURPLE +
-							StringUtils.shortNumberFormat(Math.round((level % 1) * maxXp)) +
-							"/" +
-							StringUtils.shortNumberFormat(maxXp);
+					if (skillName.contains("Class Average")) {
+						levelStr = "Progress: " + EnumChatFormatting.DARK_PURPLE + String.format("%.1f", (level % 1 * 100)) + "%";
+						totalXpStr = "Exact Class Average: " + EnumChatFormatting.WHITE + String.format("%.2f", levelObj.level);
+					} else {
+						int maxXp = (int) levelObj.maxXpForLevel;
+						levelStr =
+							EnumChatFormatting.DARK_PURPLE +
+								StringUtils.shortNumberFormat(Math.round((level % 1) * maxXp)) +
+								"/" +
+								StringUtils.shortNumberFormat(maxXp) +
+								// Since catacombs isn't considered 'maxed' at level 50 (since the cap is '99'), we can add
+								// a conditional here to add the overflow level rather than above
+								(skillName.contains("Catacombs") && levelObj.level >= 50 ?
+									EnumChatFormatting.GRAY + " (Overflow level: " + String.format("%.2f", levelObj.level) + ")" : "");
+					}
 				}
 				if (totalXpStr != null) {
 					tooltipToDisplay = Utils.createList(levelStr, totalXpStr);
@@ -1238,6 +1221,25 @@ public class GuiProfileViewer extends GuiScreen {
 		}
 	}
 
+	public float getPercentage(String skillName, ProfileViewer.Level level) {
+		if (level.maxed) {
+			return 100;
+		}
+		if (skillName.contains("catacombs")) {
+			return (level.totalXp / DungeonsWeight.CATACOMBS_LEVEL_50_XP) * 100;
+		} else if (Weight.SLAYER_NAMES.contains(skillName)) {
+			return (level.totalXp / 1000000) * 100;
+		} else if (skillName.equalsIgnoreCase("social")) {
+			return (level.totalXp / 272800) * 100;
+		} else {
+			if (level.maxLevel == 60) {
+				return (level.totalXp / SkillsWeight.SKILLS_LEVEL_60) * 100;
+			} else {
+				return (level.totalXp / SkillsWeight.SKILLS_LEVEL_50) * 100;
+			}
+		}
+	}
+
 	/**
 	 * Renders a subsection of the blurred framebuffer on to the corresponding section of the screen.
 	 * Essentially, this method will "blur" the background inside the bounds specified by [x->x+blurWidth, y->y+blurHeight]
@@ -1262,7 +1264,8 @@ public class GuiProfileViewer extends GuiScreen {
 		LOADING(),
 		INVALID_NAME(),
 		NO_SKYBLOCK(),
-		BASIC(0, Items.paper, "§9Your Skills"),
+		CRASH_RECOVERY(),
+		BASIC(0, Items.paper, "§9Skills"),
 		DUNGEON(1, Item.getItemFromBlock(Blocks.deadbush), "§eDungeoneering"),
 		EXTRA(2, Items.book, "§7Profile Stats"),
 		INVENTORIES(3, Item.getItemFromBlock(Blocks.ender_chest), "§bStorage"),
@@ -1271,7 +1274,10 @@ public class GuiProfileViewer extends GuiScreen {
 		MINING(6, Items.iron_pickaxe, "§5Heart of the Mountain"),
 		BINGO(7, Items.filled_map, "§zBingo"),
 		TROPHY_FISH(8, Items.fishing_rod, "§3Trophy Fish"),
-		BESTIARY(9, Items.iron_sword, "§cBestiary");
+		BESTIARY(9, Items.iron_sword, "§cBestiary"),
+		CRIMSON_ISLE(10, Item.getItemFromBlock(Blocks.netherrack), "§4Crimson Isle"),
+		MUSEUM(11, Items.leather_chestplate, "§6Museum"),
+		RIFT(12, Items.ender_eye, "§5Rift");
 
 		public final ItemStack stack;
 		public final int id;
@@ -1303,19 +1309,12 @@ public class GuiProfileViewer extends GuiScreen {
 			return null;
 		}
 
+		public boolean isTransient() {
+			return this == LOADING || this == NO_SKYBLOCK || this == INVALID_NAME || this == CRASH_RECOVERY;
+		}
+
 		public Optional<ItemStack> getItem() {
 			return Optional.ofNullable(stack);
 		}
-	}
-
-	public static class PetLevel {
-
-		public float level;
-		public float maxLevel;
-		public float currentLevelRequirement;
-		public float maxXP;
-		public float levelPercentage;
-		public float levelXp;
-		public float totalXp;
 	}
 }

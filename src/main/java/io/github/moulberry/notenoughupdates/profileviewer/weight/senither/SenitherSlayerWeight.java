@@ -25,6 +25,7 @@ import io.github.moulberry.notenoughupdates.profileviewer.weight.weight.SlayerWe
 import io.github.moulberry.notenoughupdates.profileviewer.weight.weight.WeightStruct;
 import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.Utils;
+
 import java.util.Map;
 
 public class SenitherSlayerWeight extends SlayerWeight {
@@ -34,7 +35,7 @@ public class SenitherSlayerWeight extends SlayerWeight {
 	}
 
 	public void getSlayerWeight(String slayerName) {
-		if (slayerName.equals("blaze")) {
+		if (slayerName.equals("blaze") || slayerName.equals("vampire")) {
 			return;
 		}
 

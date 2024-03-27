@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -79,8 +79,13 @@ public class CombatSkillOverlay
 	}
 
 	@Override
+	public boolean isEnabled() {
+		return NotEnoughUpdates.INSTANCE.config.skillOverlays.combatSkillOverlay;
+	}
+
+	@Override
 	public void update() {
-		if (!NotEnoughUpdates.INSTANCE.config.skillOverlays.combatSkillOverlay) {
+		if (!isEnabled()) {
 			kill = -1;
 			championXp = -1;
 			overlayStrings = null;
@@ -179,7 +184,7 @@ public class CombatSkillOverlay
 				float delta = totalXp - lastTotalXp;
 
 				if (delta > 0 && delta < 1000) {
-					xpGainTimer = 3;
+					xpGainTimer = NotEnoughUpdates.INSTANCE.config.skillOverlays.combatPauseTimer;
 
 					xpGainQueue.add(0, delta);
 					while (xpGainQueue.size() > 30) {
@@ -245,7 +250,7 @@ public class CombatSkillOverlay
 				lineMap.put(0, EnumChatFormatting.AQUA + "Kills: " + EnumChatFormatting.YELLOW + format.format(counterInterp));
 			}
 
-			if (championTier <= 9) {
+			if (championTier <= 9 && championXp >= 0) {
 				int counterInterp = (int) interp(championXp, championXpLast);
 				lineMap.put(
 					6,

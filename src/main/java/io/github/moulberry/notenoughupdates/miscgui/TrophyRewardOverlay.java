@@ -22,9 +22,13 @@ package io.github.moulberry.notenoughupdates.miscgui;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
+import io.github.moulberry.notenoughupdates.events.ButtonExclusionZoneEvent;
 import io.github.moulberry.notenoughupdates.events.RepositoryReloadEvent;
 import io.github.moulberry.notenoughupdates.mixins.AccessorGuiContainer;
 import io.github.moulberry.notenoughupdates.util.Constants;
+import io.github.moulberry.notenoughupdates.util.ItemUtils;
+import io.github.moulberry.notenoughupdates.util.Rectangle;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -50,6 +54,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@NEUAutoSubscribe
 public class TrophyRewardOverlay {
 	private static TrophyRewardOverlay instance = null;
 
@@ -77,13 +82,15 @@ public class TrophyRewardOverlay {
 	@SubscribeEvent(priority = EventPriority.LOW)
 	public void onItemTooltipLow(ItemTooltipEvent event) {
 		if (!inTrophyFishingInventory()) return;
+		if (!NotEnoughUpdates.INSTANCE.config.fishing.trophyRewardTooltips) return;
 
 		ItemStack itemStack = event.itemStack;
 		if (itemStack == null) return;
 		if (!"§aFillet Trophy Fish".equals(itemStack.getDisplayName())) return;
+		if (ItemUtils.getLore(itemStack).contains("§8Sacks")) return;
 
-		event.toolTip.add(4, getToolTip());
-		event.toolTip.add(4, "");
+		event.toolTip.add(2, getToolTip());
+		event.toolTip.add(2, "");
 	}
 
 	private String getToolTip() {
@@ -95,9 +102,25 @@ public class TrophyRewardOverlay {
 		return line.get(1);
 	}
 
+	@SubscribeEvent
+	public void onButtonExclusionZones(ButtonExclusionZoneEvent event) {
+		if (inTrophyFishingInventory() && NotEnoughUpdates.INSTANCE.config.fishing.trophyRewardOverlay) {
+			event.blockArea(
+				new Rectangle(
+					event.getGuiBaseRect().getRight(),
+					event.getGuiBaseRect().getTop(),
+					158 /*width*/ + 7 /*space*/,
+					128
+				),
+				ButtonExclusionZoneEvent.PushDirection.TOWARDS_RIGHT
+			);
+		}
+	}
+
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public void onDrawBackground(GuiScreenEvent.BackgroundDrawnEvent event) {
 		if (!inTrophyFishingInventory()) return;
+		if (!NotEnoughUpdates.INSTANCE.config.fishing.trophyRewardOverlay) return;
 
 		GuiScreen screen = Minecraft.getMinecraft().currentScreen;
 		if (!(screen instanceof GuiChest)) return;
@@ -160,7 +183,7 @@ public class TrophyRewardOverlay {
 		texts.add("Trophy Fish Exchange");
 		texts.add("Magma Fish: §e" + total);
 
-		for (Map.Entry<String, Integer> entry : sortByValue(totalExchange).entrySet()) {
+		for (Map.Entry<String, Integer> entry : sortByValueReverse(totalExchange).entrySet()) {
 			String name = entry.getKey();
 			int amount = totalAmount.get(name);
 			String[] split = name.split(" ");
@@ -204,6 +227,19 @@ public class TrophyRewardOverlay {
 
 	//TODO move into utils class maybe?
 	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
+		List<Map.Entry<K, V>> list = new ArrayList<>(map.entrySet());
+		list.sort(Map.Entry.comparingByValue());
+
+		Map<K, V> result = new LinkedHashMap<>();
+		for (Map.Entry<K, V> entry : list) {
+			result.put(entry.getKey(), entry.getValue());
+		}
+
+		return result;
+	}
+
+	//TODO move into utils class maybe?
+	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValueReverse(Map<K, V> map) {
 		List<Map.Entry<K, V>> list = new ArrayList<>(map.entrySet());
 		list.sort(Map.Entry.comparingByValue());
 		Collections.reverse(list);
@@ -260,7 +296,6 @@ public class TrophyRewardOverlay {
 
 	public static boolean inTrophyFishingInventory() {
 		if (!NotEnoughUpdates.INSTANCE.isOnSkyblock()) return false;
-		if (!NotEnoughUpdates.INSTANCE.config.fishing.trophyRewardOverlay) return false;
 
 		Minecraft minecraft = Minecraft.getMinecraft();
 		if (minecraft == null || minecraft.thePlayer == null) return false;

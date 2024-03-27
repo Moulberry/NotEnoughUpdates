@@ -20,6 +20,7 @@
 package io.github.moulberry.notenoughupdates.miscgui;
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates;
+import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe;
 import io.github.moulberry.notenoughupdates.events.SignSubmitEvent;
 import io.github.moulberry.notenoughupdates.mixins.AccessorGuiEditSign;
 import io.github.moulberry.notenoughupdates.util.Calculator;
@@ -31,10 +32,11 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import java.text.DecimalFormat;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.Objects;
 
+@NEUAutoSubscribe
 public class SignCalculator {
 
 	String lastSource = null;
@@ -60,14 +62,7 @@ public class SignCalculator {
 		int calculationMode = NotEnoughUpdates.INSTANCE.config.misc.calculationMode;
 		if ((calculationMode == 1 && !source.startsWith("!"))) return;
 
-		Utils.drawStringCentered(
-			getRenderedString(),
-			Minecraft.getMinecraft().fontRendererObj,
-			guiEditSign.width / 2F,
-			58,
-			false,
-			0x808080FF
-		);
+		Utils.drawStringCentered(getRenderedString(), guiEditSign.width / 2F, 58, false, 0x808080FF);
 	}
 
 	@SubscribeEvent
