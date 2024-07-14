@@ -42,7 +42,7 @@ public class Ingredient {
 		String[] parts = ingredientIdentifier.split(":");
 		internalItemId = parts[0];
 		if (parts.length == 2) {
-			count = Integer.parseInt(parts[1]);
+			count = (int) Math.floor(Double.parseDouble(parts[1]));
 		} else if (parts.length == 1) {
 			count = 1;
 		} else {
